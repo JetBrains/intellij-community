@@ -1,0 +1,41 @@
+### auto-generated section `build intellij.java.analysis` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_analysis",
+  x_explicit_api_mode = "strict"
+)
+
+resourcegroup(
+  name = "analysis_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "analysis",
+  module_name = "intellij.java.analysis",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":analysis_resources"],
+  kotlinc_opts = ":custom_analysis",
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//java/java-psi-api:psi",
+    "//platform/core-api:core",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "@lib//:kotlin-stdlib",
+    "//uast/uast-common:uast",
+    "//uast/uast-common-ide:ide",
+    "//platform/workspace/jps",
+    "//platform/workspace/storage",
+  ],
+  exports = [
+    "//uast/uast-common:uast",
+    "//uast/uast-common-ide:ide",
+  ]
+)
+### auto-generated section `build intellij.java.analysis` end

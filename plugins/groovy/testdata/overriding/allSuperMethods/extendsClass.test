@@ -1,0 +1,10 @@
+//import abc.Foo
+class Foo {
+  def int foo () {}
+}
+
+class A extends Foo {
+  def int foo () {}
+}
+-----
+Class definition: Foo; HierarchicalMethodSignatureImpl: foo([])

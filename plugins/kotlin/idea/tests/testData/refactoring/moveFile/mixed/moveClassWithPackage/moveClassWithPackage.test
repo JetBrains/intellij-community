@@ -1,0 +1,7 @@
+{
+  "filesToMove": ["a/b/KotlinClass.kt", "a/b/KotlinObject.kt", "a/b/JavaClass.java", "a/b/x"],
+  "type": "MOVE_FILES",
+  "targetPackage": "a.c",
+  "enabledInK1": "false",
+  "enabledInK2": "true"
+}

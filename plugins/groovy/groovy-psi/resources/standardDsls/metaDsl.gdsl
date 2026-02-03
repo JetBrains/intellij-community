@@ -1,0 +1,145 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package standardDsls
+
+def gdslScriptContext = context(scope: scriptScope(), filetypes:['gdsl'])
+
+contributor([gdslScriptContext]) {
+  method name: "context", params: [args: [:]], type: "java.lang.Object"
+  method name: "context", params: [:], type: "java.lang.Object"
+  method name: "contributor", params: [contexts: "java.util.List", body: {}], type: void
+  method name: "contributor", params: [contexts: "java.util.Map", body: {}], type: void
+  method name: "contributor", params: [contexts: "java.lang.Object", body: {}], type: void
+  method name: "contribute", params: [pointcut: "Pointcut", body: {}], type: void
+  method name: "scriptSuperClass", params: [args: [pattern: 'java.lang.String', superClass: 'java.lang.String']]
+
+  method name: "currentType", params: [qName: String.name], type: "Pointcut", doc:'Matches when the current (qualifier or this) type is a subtype of the type described by the parameter'
+
+  method name: "category", params: [categoryClass: "java.lang.String", isStatic:"java.lang.Boolean"], type: void
+  method name: "category", params: [categoryClass: "java.lang.String"], type: void
+
+  method name: "supportsVersion", params: [version: "java.lang.String"], type: boolean
+
+  def version = [
+          parameter(name: 'dsl', type: String.name),
+          parameter(name: 'intellij', type: String.name),
+  ]
+  method name: "supportsVersion", namedParams: version, type: boolean
+  method name: "assertVersion", namedParams: version, type: void
+
+  // scopes
+  method name: "closureScope", params: [contexts: "java.util.Map"], type: {}
+  method name: "scriptScope", params: [contexts: "java.util.Map"], type: {}
+  method name: "annotatedScope", params: [contexts: "java.util.Map"], type: {}
+
+  method name: "hasAnnotation", params:[fqn: "java.lang.String"], type: "java.lang.Object"
+  method name: "hasMethod", params:[memberPattern: "java.lang.Object"], type: "java.lang.Object"
+  method name: "hasField", params:[memberPattern: "java.lang.Object"], type: "java.lang.Object"
+}
+
+def contributorBody = context(scope: closureScope(isArg: true), filetypes:['gdsl'])
+
+contributor([contributorBody]) {
+  if (enclosingCall("contributor") || enclosingCall("contribute")) {
+    method name: "method", type: "void", params: [args: [
+            parameter(name:'name', type:String.name, doc:'Method name'),
+            parameter(name:'params', type:Map.name, doc:'A map representing method parameters'),
+            parameter(name:'namedParams', type:Object.name, doc:'''A list representing method named parameters.<br>
+Its elements should be calls to <code>parameter</code> method.'''),
+            parameter(name:'type', type:Object.name, doc:'Return type name of the method'),
+            parameter(name:'doc', type:String.name, doc:'Method documentation text'),
+    ]], doc:'Describe a DSL method'
+    method name: "variable", type: "void", params: [args: [
+            parameter(name: "name", type: String.name, doc: 'Variable name'),
+            parameter(name: 'type', type: String.name, doc: 'Variable type')
+    ]], doc: 'Describe a DSL local variable'
+    method name: "property", type: "void", params: [args: [
+            parameter(name:'name', type:String.name, doc:'Property name'),
+            parameter(name:'type', type:Object.name, doc:'Property type name'),
+            parameter(name:'doc', type:String.name, doc:'Property documentation text'),
+    ]], doc:'Describe a DSL property'
+    method name: "parameter", type: "Parameter", params: [args: [
+            parameter(name:'name', type:String.name, doc:'Parameter name'),
+            parameter(name:'type', type:Object.name, doc:'Parameter type name'),
+            parameter(name:'doc', type:String.name, doc:'Parameter documentation text'),
+    ]], doc:'Describe a method named parameter'
+    method name: "methodCall", type: "void", params: [generator: Closure.name]
+    closureInMethod(method:[name: 'methodCall', type: 'void', params: [Closure.name]], params: [args: [
+            parameter(name: 'name', type: String.name, doc: 'Called method name'),
+            parameter(name: 'argumentTypes', type: 'java.lang.String[]', doc: 'Call\'s argument types')
+    ]])
+
+    method name: 'closureInMethod', params: [args: [
+            parameter(name: 'method', type: Map.name),
+            parameter(name: 'params', type: Map.name)
+    ]]
+
+    method name: "add", type: "void", params: [member: "com.intellij.psi.PsiMember"]
+    method name: "findClass", type: "com.intellij.psi.PsiClass", params: [name: "java.lang.String"]
+    method name: "delegatesTo", type: "void", params: [elem: "com.intellij.psi.PsiElement"]
+
+    method name: "enclosingCall",
+           type: "com.intellij.psi.PsiElement",
+           params: [methodName: "java.lang.String"], doc:'Returns an enclosing method call with <code>methodCall</code> name'
+
+    method name: "enclosingMethod", type: "com.intellij.psi.PsiMethod"
+    method name: "enclosingMember", type: "com.intellij.psi.PsiMember"
+    method name: "enclosingClass", type: "com.intellij.psi.PsiClass"
+
+    property name: "place", type: "com.intellij.psi.PsiElement"
+    property name: "classType", type: "com.intellij.psi.PsiClass"
+    property name: "psiClass", type: "com.intellij.psi.PsiClass"
+    property name: "psiType", type: "com.intellij.psi.PsiType"
+  }
+}
+
+def enrich(String className) {
+  context(scope: closureScope(isArg: true), ctype: className, filetypes:['gdsl'])
+}
+
+contributor(enrich("com.intellij.psi.PsiClass")) {
+  method name: "getMethods", type: "java.util.Collection"
+  method name: "getQualName", type: "java.lang.String"
+}
+
+contributor(enrich("com.intellij.psi.PsiMember")) {
+  method name: "hasAnnotation", params: [name: "java.lang.String"], type: "boolean"
+  method name: "hasAnnotation", type: "boolean"
+  method name: "getAnnotation", params: [name: "java.lang.String"], type: "com.intellij.psi.PsiAnnotation"
+  method name: "getAnnotations", params: [name: "java.lang.String"], type: "java.util.Collection<com.intellij.psi.PsiAnnotation>"
+}
+
+contributor(enrich("com.intellij.psi.PsiField")) {
+  method name: "getClassType", type: "com.intellij.psi.PsiClass"
+}
+
+contributor(enrich("com.intellij.psi.PsiMethod")) {
+  method name: "getParamStringVector", type: "java.util.Map"
+}
+
+contributor(enrich("com.intellij.psi.PsiElement")) {
+  method name: "bind", type: "com.intellij.psi.PsiElement"
+  method name: "eval", type: "java.lang.Object"
+  method name: "asList", type: "java.util.collection<com.intellij.psi.PsiElement>"
+  method name: "getQualifier", type: "com.intellij.psi.PsiElement"
+}
+
+contributor(enrich("org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression")) {
+  method name: "getArguments", type: "java.util.Collection"
+  method name: "getClassType", type: "com.intellij.psi.PsiClass"
+}
+

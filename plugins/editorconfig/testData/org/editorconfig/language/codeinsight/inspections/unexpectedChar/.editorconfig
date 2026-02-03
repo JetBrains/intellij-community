@@ -1,0 +1,2 @@
+[*]
+property_with_form_feed_in_value = va<error descr="Expected a valid string character"></error>lue

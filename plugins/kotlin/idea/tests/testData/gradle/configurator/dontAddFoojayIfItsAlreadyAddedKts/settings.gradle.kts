@@ -1,0 +1,4 @@
+plugins {
+    id("org.gradle.toolchains.foojay-resolver") version "0.5.0"
+}
+rootProject.name = "project"

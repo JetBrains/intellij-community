@@ -1,0 +1,20 @@
+3 **
+++
+--
+3
+-----
+Groovy script
+  Power expression
+    Literal
+      PsiElement(Integer)('3')
+    PsiWhiteSpace(' ')
+    PsiElement(**)('**')
+    PsiElement(new line)('\n')
+    Unary expression
+      PsiElement(++)('++')
+      PsiElement(new line)('\n')
+      Unary expression
+        PsiElement(--)('--')
+        PsiElement(new line)('\n')
+        Literal
+          PsiElement(Integer)('3')

@@ -1,0 +1,10 @@
+import foo.Intf
+
+class Impl(): Intf {
+    override fun getFooBar(): String {
+        <selection><caret>TODO("Not yet implemented")</selection>
+    }
+}
+
+// MEMBER_K2: "getFooBar(): String?"
+// MEMBER_K1: "getFooBar(): String!"

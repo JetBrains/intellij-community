@@ -1,0 +1,6 @@
+// PRIORITY: LOW
+enum class E {
+    SINGLE;
+
+    open fun bar() {}
+}

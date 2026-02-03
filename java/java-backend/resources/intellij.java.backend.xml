@@ -1,0 +1,80 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" visibility="public">
+
+
+  <dependencies>
+
+    <!--dependencies for the whole java.backend plugin-->
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="com.intellij.modules.vcs"/>
+    <plugin id="com.intellij.modules.xdebugger"/>
+    <plugin id="com.intellij.modules.xml"/>
+
+    <module name="intellij.platform.vcs.impl.lang"/>
+    <module name="intellij.spellchecker"/>
+    <module name="intellij.xml.dom.impl"/>
+    <module name="intellij.regexp"/>
+
+    <!--  java modules for backend from old layout -->
+    <module name="intellij.java.syntax"/>
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.frontback.psi.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.psi.impl"/>
+    <module name="intellij.java.frontback.impl"/>
+
+    <module name="intellij.java.indexing"/>
+    <module name="intellij.platform.uast"/>
+    <module name="intellij.platform.uast.ide"/>
+    <module name="intellij.java.uast"/>
+    <module name="intellij.java.compiler"/>
+    <module name="intellij.java.analysis"/>
+    <module name="intellij.java"/>
+    <module name="intellij.java.resources"/>
+    <module name="intellij.java.execution"/>
+    <module name="intellij.jvm.analysis"/>
+    <module name="intellij.jsp"/>
+
+    <module name="intellij.java.resources.en"/>
+    <module name="intellij.java.debugger"/>
+    <module name="intellij.java.codeserver.core"/>
+    <module name="intellij.java.codeserver.highlighting"/>
+
+    <module name="intellij.jsp.spi"/>
+    <module name="intellij.java.indexing.impl"/>
+    <module name="intellij.java.analysis.impl"/>
+    <module name="intellij.java.structureView"/>
+
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.impl.refactorings"/>
+    <module name="intellij.java.compiler.impl"/>
+    <module name="intellij.java.typeMigration"/>
+    <module name="intellij.java.impl.inspections"/>
+    <module name="intellij.jvm.analysis.refactoring"/>
+    <module name="intellij.jvm.analysis.quickFix"/>
+    <module name="intellij.uiDesigner"/>
+    <module name="intellij.java.manifest"/>
+    <module name="intellij.java.ui"/>
+    <module name="intellij.java.execution.impl"/>
+    <module name="intellij.java.debugger.impl"/>
+    <module name="intellij.java.debugger.impl.backend"/>
+    <module name="intellij.java.debugger.memory.agent"/>
+    <module name="intellij.java.uast.ide"/>
+
+    <module name="intellij.platform.jps.build"/>
+
+    <!--only backend-->
+    <module name="intellij.platform.backend"/>
+    <plugin id="com.intellij.modules.java-capable"/>
+  </dependencies>
+
+  <!--only main settings-->
+  <xi:include href="/META-INF/JavaPlugin.xml"/>
+
+  <!--from plugin.xml, needs only for backend-->
+  <extensions defaultExtensionNs="com.intellij">
+    <moduleType id="JAVA_MODULE" classpathProvider="true" implementationClass="com.intellij.openapi.module.JavaModuleType"/>
+    <moduleType id="GENERAL_MODULE" implementationClass="com.intellij.ide.projectWizard.GeneralModuleTypeForIdea"/>
+    <newProjectWizard.generator implementation="com.intellij.ide.wizard.language.EmptyProjectGeneratorNewProjectWizard"/>
+  </extensions>
+</idea-plugin>
+

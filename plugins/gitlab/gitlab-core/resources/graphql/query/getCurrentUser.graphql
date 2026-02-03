@@ -1,0 +1,5 @@
+query {
+  currentUser {
+    ...user
+  }
+}

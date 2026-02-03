@@ -1,0 +1,11 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.gradle.versionCatalog.toml.k2">
+
+  <dependencies>
+    <module name="intellij.kotlin.gradle.codeInsight.toml"/>
+    <plugin id="com.intellij.modules.kotlin.k2"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <psiReferenceProvider implementation="org.jetbrains.kotlin.idea.gradle.versionCatalog.toml.k2.K2GradleTomlVersionCatalogPsiReferenceProviderContributor"/>
+  </extensions>
+</idea-plugin>

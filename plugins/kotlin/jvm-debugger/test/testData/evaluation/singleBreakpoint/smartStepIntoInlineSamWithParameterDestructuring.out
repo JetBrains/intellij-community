@@ -1,0 +1,12 @@
+LineBreakpoint created at smartStepIntoInlineSamWithParameterDestructuring.kt:21
+Run Java
+Connected to the target VM
+smartStepIntoInlineSamWithParameterDestructuring.kt:21
+smartStepIntoInlineSamWithParameterDestructuring.kt:24
+smartStepIntoInlineSamWithParameterDestructuring.kt:24
+Compile bytecode for a + b + c + d + e + f + g
+KotlinStackFrame (smartStepIntoInlineSamWithParameterDestructuring.kt:24)
+    JavaValue[local] g: int = 1 (smartStepIntoInlineSamWithParameterDestructuring.kt:24)
+Disconnected from the target VM
+
+Process finished with exit code 0

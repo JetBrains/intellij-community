@@ -1,0 +1,105 @@
+### auto-generated section `build intellij.maven.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "maven-tests_test_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "maven-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/vcs-api:vcs",
+    "//platform/util/progress",
+    "//plugins/repository-search/common",
+  ]
+)
+
+jvm_library(
+  name = "maven-tests_test_lib",
+  module_name = "intellij.maven.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["java/**/*.kt", "java/**/*.java", "java/**/*.form"], allow_empty = True),
+  resources = [":maven-tests_test_resources"],
+  deps = [
+    "//plugins/maven",
+    "//plugins/maven/testFramework",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//xml/xml-analysis-api:analysis",
+    "//platform/execution-impl",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/testFramework",
+    "//platform/workspace/storage",
+    "//plugins/repository-search",
+    "@lib//:assert_j",
+    "//platform/external-system-api/dependency-updater",
+    "//platform/external-system-impl:externalSystem-tests_test_lib",
+    "//plugins/properties/properties-psi-api:psi",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
+    "//plugins/grazie/src/test:grazie-tests_test_lib",
+    "//platform/vcs-api:vcs",
+    "//plugins/groovy",
+    "//plugins/groovy:groovy_test_lib",
+    "//plugins/groovy/jps-plugin:jps",
+    "//platform/platform-util-io:ide-util-io",
+    "//jps/model-impl",
+    "//platform/util/progress",
+    "//platform/workspace/jps",
+    "//libraries/guava",
+    "//plugins/maven/artifact-resolver/common",
+    "//libraries/mockito",
+    "//plugins/maven/jps-plugin:jps",
+    "//plugins/maven/jps-plugin:jps_test_lib",
+    "//plugins/maven/maven3-server-common:server-m3-common",
+    "//platform/util/jdom",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/external-system-api/testFramework",
+    "//platform/backend/workspace",
+    "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
+    "//platform/backend/observation",
+    "//platform/backend/observation:observation_test_lib",
+    "//libraries/hash4j",
+    "//libraries/kotlin/reflect",
+    "//libraries/kotlinx/serialization/core",
+    "//platform/statistics/testFramework",
+    "//xml/xml-psi-api:psi",
+    "//platform/xdebugger-api:debugger",
+    "//libraries/hamcrest",
+    "//platform/testFramework/eelJava",
+    "//platform/eel-provider",
+    "//xml/xml-psi-impl:psi-impl",
+    "//xml/xml-ui-common:ui-common",
+    "//platform/execution",
+    "//plugins/repository-search/common",
+    "//plugins/repository-search/common:common_test_lib",
+  ],
+  runtime_deps = [":maven-tests"]
+)
+### auto-generated section `build intellij.maven.tests` end
+
+### auto-generated section `test intellij.maven.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "maven-tests_test",
+  runtime_deps = [":maven-tests_test_lib"]
+)
+### auto-generated section `test intellij.maven.tests` end

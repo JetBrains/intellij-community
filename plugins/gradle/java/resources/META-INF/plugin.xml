@@ -1,0 +1,183 @@
+<idea-plugin allow-bundled-update="true">
+  <name>Gradle for Java</name>
+  <!-- "org.jetbrains.plugins.gradle" id has been reused to avoid dependent plugins breakage-->
+  <id>org.jetbrains.plugins.gradle</id>
+  <vendor>JetBrains</vendor>
+  <category>Build Tools</category>
+  <description>
+    Provides Java Gradle projects import, run configuration and profiler integrations.
+  </description>
+
+  <depends>com.intellij.java</depends>
+  <depends>com.intellij.gradle</depends>
+
+  <module value="com.intellij.modules.gradle.java"/>
+  <module value="org.jetbrains.plugins.gradle.java"/>
+
+  <depends optional="true" config-file="gradle-maven-integration.xml">org.jetbrains.idea.maven</depends>
+  <depends optional="true" config-file="gradle-coverage-integration.xml">Coverage</depends>
+  <depends optional="true" config-file="gradle-groovy-integration.xml">org.intellij.groovy</depends>
+  <depends optional="true" config-file="gradle-properties-integration.xml">com.intellij.properties</depends>
+  <depends optional="true" config-file="gradle-toml-integration.xml">org.toml.lang</depends>
+
+  <content namespace="jetbrains">
+    <module name="intellij.gradle.profiler"/>
+    <module name="intellij.gradle.java.maven"/>
+    <module name="intellij.gradle.analysis"/>
+    <module name="intellij.gradle.dependencyUpdater"/>
+    <module name="intellij.gradle.java.performance"/>
+  </content>
+
+  <resource-bundle>messages.GradleInspectionBundle</resource-bundle>
+
+  <extensionPoints>
+    <extensionPoint name="frameworkSupport" interface="org.jetbrains.plugins.gradle.frameworkSupport.GradleFrameworkSupportProvider"
+                    dynamic="true"/>
+    <extensionPoint name="kotlinDslFrameworkSupport" interface="org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleFrameworkSupportProvider"
+                    dynamic="true"/>
+    <extensionPoint name="buildTasksProvider" interface="org.jetbrains.plugins.gradle.execution.build.GradleBuildTasksProvider"
+                    dynamic="true"/>
+    <extensionPoint name="testTasksProvider" interface="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestTasksProvider"
+                    dynamic="true"/>
+    <extensionPoint name="externallyHandledExtensions" interface="org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogHandler"
+                    dynamic="true"/>
+    <extensionPoint name="dslInspectionProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.plugins.gradle.codeInspection.GradleDslInspectionProvider"/>
+    </extensionPoint>
+    <extensionPoint name="initScriptGenerator" interface="org.jetbrains.plugins.gradle.execution.build.GradleInitScriptGenerator"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <taskManager implementation="org.jetbrains.plugins.gradle.service.task.JavaGradleTaskManagerExtension"/>
+
+    <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncContributor.GradleSourceRootSyncContributor"/>
+
+    <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.JavaGradleProjectResolver"/>
+    <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.MavenRepositoriesProjectResolver"/>
+    <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.JavaGradleManifestResolver"/>
+    <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.ProjectRepositoriesResolver"/>
+    <executionEnvironmentProvider implementation="org.jetbrains.plugins.gradle.execution.build.GradleApplicationEnvironmentProvider"/>
+
+    <settingsControlProvider implementation="org.jetbrains.plugins.gradle.service.settings.JavaGradleSettingsControlProvider"/>
+    <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleJavaFrameworkSupportProvider"/>
+    <kotlinDslFrameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleJavaFrameworkSupportProvider" />
+    <targetEnvironmentAware implementation="org.jetbrains.plugins.gradle.execution.target.GradleServerDebugAware" />
+
+    <externallyHandledExtensions implementation="org.jetbrains.plugins.gradle.service.resolve.GradleWsmVersionCatalogHandler" order="first"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="org.jetbrains.plugins.gradle.GradleIdeManager"
+                        serviceImplementation="org.jetbrains.plugins.gradle.GradleJavaIdeManager"/>
+
+    <treeStructureProvider implementation="org.jetbrains.plugins.gradle.projectView.GradleTreeStructureProvider" order="last"/>
+    <attachSourcesProviderFilter implementation="org.jetbrains.plugins.gradle.editor.GradleAttachSourcesProviderFilter"/>
+
+    <compileServer.plugin classpath="gradle-jps.jar"/>
+    <postStartupActivity implementation="org.jetbrains.plugins.gradle.startup.GradleJvmStartupActivity"/>
+    <projectTaskRunner implementation="org.jetbrains.plugins.gradle.execution.build.GradleProjectTaskRunner" id="gradle" order="first"/>
+    <buildProcess.parametersProvider implementation="org.jetbrains.plugins.gradle.compiler.GradleBuildProcessParametersProvider"/>
+    <externalSystemNotificationExtension implementation="org.jetbrains.plugins.gradle.service.notification.GradleNotificationJavaExtension"/>
+    <externalSystem.debuggerBackend implementation="org.jetbrains.plugins.gradle.service.debugger.GradleJvmDebuggerBackend" />
+    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.BuildClasspathModuleGradleDataService"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager"/>
+
+    <compiler.updateResourcesBuildContributor
+        implementation="org.jetbrains.plugins.gradle.execution.build.GradleUpdateResourcesBuildContributor"/>
+    <compiler.task execute="BEFORE" implementation="org.jetbrains.plugins.gradle.config.GradleResourceConfigurationGeneratorCompileTask"/>
+
+    <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.JavaGradleProjectImportProvider"/>
+
+    <defender.config implementation="org.jetbrains.plugins.gradle.util.GradleWindowsDefenderCheckerExt"/>
+
+    <!--Gradle Test Runner-->
+    <testActionProvider implementation="org.jetbrains.plugins.gradle.execution.test.runner.OpenGradleTestResultActionProvider"/>
+
+    <externalSystemExecutionConsoleManager
+        implementation="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager" id="gradleTest" order="before gradle"/>
+    <runConfigurationProducer id="allInPackageGradleConfigurationProducer"
+                              implementation="org.jetbrains.plugins.gradle.execution.test.runner.AllInPackageGradleConfigurationProducer"
+                              order="last"/>
+    <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.AllInDirectoryGradleConfigurationProducer"
+                              order="last"/>
+    <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer"
+                              order="last"/>
+    <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer"
+                              order="last"/>
+    <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.PatternGradleConfigurationProducer"
+                              order="last"/>
+
+    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.ExternalAnnotationsDataService"/>
+    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.ExternalAnnotationsModuleLibrariesService"/>
+    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.MavenRepositoriesDataService"/>
+    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.AnnotationProcessingDataService"/>
+
+    <documentation.documentationDownloader
+      implementation="org.jetbrains.plugins.gradle.codeInsight.documentation.GradleDocumentationDownloader"/>
+
+    <starter.moduleImporter implementation="org.jetbrains.plugins.gradle.starters.GradleStarterModuleImporter"/>
+
+    <statistics.validation.customValidationRule implementation="org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleVersionValidationRule"/>
+
+    <externalSystemTaskNotificationListener implementation="org.jetbrains.plugins.gradle.service.GradleProjectOutputsUpdater"/>
+    <dependencyCollector kind="java" implementation="org.jetbrains.plugins.gradle.service.project.GradleDependencyCollector"/>
+    <externalSystemTaskNotificationListener implementation="org.jetbrains.plugins.gradle.service.project.GradleDependencyUpdater"/>
+    <newProjectWizard.java.buildSystem implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizard"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.externalSystem.statistics.ExternalSystemSyncActionsCollector"/>
+    <registryKey key="gradle.execution.target.server.debug.port" defaultValue="-1"
+                 description="Specifies port at which Gradle target server process will wait for debugger connections. -1 means disabled feature."/>
+    <registryKey key="gradle.refresh.project.outputs" defaultValue="true"
+                 description="After a Gradle task, do a shallow refresh of modules outputs in VFS"/>
+    <registryKey key="android.gradle.project.startup.activity.disabled" defaultValue="false"
+                 description="Disable Gradle post-startup activity for Android projects"/>
+    <registryKey key="android.sdk.local.properties.update.disabled" defaultValue="false"
+                 description="Disable update android sdk for local.properties"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="ConfigurationAvoidance"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.configuration.avoidance" groupKey="inspection.best.practises" groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleConfigurationAvoidanceInspection"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="DependencyNotationArgument"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.unrecognized.dependency.notation" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleIncorrectDependencyNotationArgumentInspection"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="ForeignDelegate"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.foreign.delegate" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleForeignDelegateInspection"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="IncorrectPluginDslStructure"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.incorrect.plugin.dsl.structure" groupKey="inspection.validity" groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradlePluginDslStructureInspection"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="DeprecatedConfigurations"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.deprecated.configurations" groupKey="inspection.validity" groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleDeprecatedConfigurationInspection"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="AvoidDependencyNamedArgumentsNotation"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.avoid.dependency.named.arguments.notation" groupKey="inspection.best.practises"
+                     groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDependencyNamedArgumentsNotationInspection"
+                     isInternal="true"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="RedundantKotlinStdLibDependency"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.redundant.kotlin.std.lib.dependency" groupKey="inspection.best.practises"
+                     groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleRedundantKotlinStdLibInspection"
+                     isInternal="true"/>
+  </extensions>
+</idea-plugin>

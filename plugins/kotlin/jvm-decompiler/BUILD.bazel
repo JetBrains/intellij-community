@@ -1,0 +1,37 @@
+### auto-generated section `build intellij.kotlin.jvm.decompiler` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "jvm-decompiler_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jvm-decompiler",
+  module_name = "intellij.kotlin.jvm.decompiler",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":jvm-decompiler_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/jvm/shared",
+    "//platform/core-ui",
+    "//java/openapi:java",
+    "//java/java-psi-impl:psi-impl",
+    "//plugins/java-decompiler/plugin:java-decompiler",
+    "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
+    "//platform/analysis-impl",
+  ]
+)
+### auto-generated section `build intellij.kotlin.jvm.decompiler` end

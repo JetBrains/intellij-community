@@ -1,0 +1,1063 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.eel.codegen
+
+import com.intellij.analysis.AnalysisBundle
+import com.intellij.analysis.AnalysisScope
+import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.actions.OptimizeImportsProcessor
+import com.intellij.codeInsight.actions.RearrangeCodeProcessor
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase
+import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.command.writeCommandAction
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.module.JavaModuleType
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.modules
+import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
+import com.intellij.openapi.vfs.readText
+import com.intellij.openapi.vfs.writeText
+import com.intellij.platform.eel.codegen.BuilderRequest.Ownership
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager
+import com.intellij.project.IntelliJProjectConfiguration
+import com.intellij.project.stateStore
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor
+import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.stubs.StubUpdatingIndex
+import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.TestApplicationManager
+import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.junit5.fixture.TestFixtures
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.io.copyRecursively
+import com.intellij.util.io.createDirectories
+import com.maddyhome.idea.copyright.actions.UpdateCopyrightProcessor
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import org.intellij.lang.annotations.Language
+import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.java.JavaSourceRootProperties
+import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.library.JpsLibrary
+import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.jetbrains.jps.model.module.JpsLibraryDependency
+import org.jetbrains.jps.model.module.JpsModuleDependency
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.asJava.elements.KtLightField
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.ALL
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.CONSTRUCTOR_PARAMETER
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.FIELD
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.FILE
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_DELEGATE_FIELD
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_GETTER
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_SETTER
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.RECEIVER
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.SETTER_PARAMETER
+import org.jetbrains.kotlin.idea.test.UseK2PluginMode
+import org.jetbrains.kotlin.kdoc.psi.api.KDoc
+import org.jetbrains.kotlin.psi.KtAnnotated
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassLiteralExpression
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.types.Variance
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.TestFactory
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.Optional
+import java.util.TreeSet
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.pathString
+import kotlin.io.path.readText
+import kotlin.io.path.walk
+import kotlin.jvm.optionals.getOrNull
+
+/**
+ * This test generates builders for `com.intellij.platform.eel.EelApi`.
+ *
+ * If you want to regenerate some builders, run the test.
+ * No specific arguments or prerequisites are required.
+ * Remember to commit new builders.
+ */
+@TestFixtures
+@UseK2PluginMode
+class BuildersGeneratorTest {
+  companion object {
+    private var oldInitInspections = false
+    private lateinit var testClassDisposable: Disposable
+
+    @AfterAll
+    @JvmStatic
+    fun releaseDisposable() {
+      if (::testClassDisposable.isInitialized) {
+        Disposer.dispose(testClassDisposable)
+      }
+    }
+
+    @BeforeAll
+    @JvmStatic
+    fun beforeAll() {
+      TestApplicationManager.getInstance()
+      testClassDisposable = Disposer.newDisposable()
+
+      oldInitInspections = InspectionProfileImpl.INIT_INSPECTIONS
+      InspectionProfileImpl.INIT_INSPECTIONS = true
+      Disposer.register(testClassDisposable) {
+        InspectionProfileImpl.INIT_INSPECTIONS = oldInitInspections
+      }
+    }
+  }
+
+  val tempProject = projectFixture(openAfterCreation = false)
+
+  @BeforeEach
+  @AfterEach
+  fun invalidateIndexes() {
+    // For some reason, the test doesn't work correctly if it's launched a second time with old indexes.
+    // Also, this test would break further tests without dropping indexes.
+    FileBasedIndex.getInstance().requestRebuild(StubUpdatingIndex.INDEX_ID)
+  }
+
+  @TestFactory
+  fun `generate sources and check changes`(): List<DynamicTest> = runBlocking(Dispatchers.Default) {
+    val moduleName = "intellij.platform.eel"
+    var tempProject = tempProject.get()
+    try {
+      val thisProject = Path.of(PathManager.getHomePath())
+
+      run {
+        val tempProjectPath = Path.of(tempProject.basePath!!)
+        Files.createDirectories(tempProjectPath.resolve(".idea"))
+        for (subpath in listOf(".idea/copyright", ".idea/scopes", ".idea/codeStyleSettings.xml")) {
+          thisProject.resolve(subpath).copyRecursively(tempProjectPath.resolve(subpath))
+        }
+      }
+
+      tempProject = ProjectManagerEx.getInstanceEx().openProjectAsync(Path.of(tempProject.basePath!!))!!
+
+      val (newEelModule: Module, genSrcDirName: Path) = createModuleMirror(tempProject, moduleName)
+
+      synchronizeVariousCaches(tempProject)
+
+      // The value is the pair of the old and the new content.
+      val filesContent: Map<Path, Pair<Optional<String>, Optional<String>>> = fillRequests(tempProject, newEelModule, genSrcDirName)
+
+      for ((path, contentPair) in filesContent) {
+        if (contentPair.first.isPresent) {
+          val virtualFile = VfsUtil.findFile(path, true)!!
+          prettifyFile(tempProject, virtualFile)
+        }
+      }
+
+      synchronizeVariousCaches(tempProject)
+
+      val oldPrettifiedFiles = mutableMapOf<Path, String>()
+
+      val unimportantChanges = filesContent.mapNotNull { (path, contentPair) ->
+        val oldContent = contentPair.first.getOrNull()
+        val newContent =
+          if (contentPair.first.isPresent) {
+            VfsUtil.findFile(path, true)?.run { readAction { readText() } }
+          }
+          else {
+            null
+          }
+        if (newContent != null) {
+          oldPrettifiedFiles[path] = newContent
+        }
+        if (oldContent != newContent)
+          "changed: ${thisProject.relativize(path)}"
+        else
+          null
+      }
+
+      for ((path, contentPair) in filesContent) {
+        path.parent.createDirectories()
+        if (!Files.exists(path)) Files.createFile(path)
+        val virtualFile = VfsUtil.findFile(path, true)!!
+        val (_, newContent) = contentPair
+        writeAction {
+          if (newContent.isPresent) {
+            virtualFile.writeText(newContent.get())
+          }
+          else {
+            virtualFile.delete(this)
+          }
+        }
+      }
+
+      for ((path, contentPair) in filesContent) {
+        if (contentPair.second.isEmpty) continue
+        val virtualFile = VfsUtil.findFile(path, true) ?: error("Failed to find the VFS file for $path")
+        val (_, newContent) = contentPair
+        if (newContent.isPresent) {
+          prettifyFile(tempProject, virtualFile)
+        }
+      }
+
+      synchronizeVariousCaches(tempProject)
+
+      if (unimportantChanges.isNotEmpty()) {
+        logger<BuildersGeneratorTest>().warn(
+          """
+          |Some styling options in the project has changed. It is recommended to commit new generated builders.
+          |
+          |${unimportantChanges.joinToString("\n")}
+          """.trimMargin()
+        )
+      }
+
+      filesContent.keys.map { path ->
+        val oldPrettifiedContent = oldPrettifiedFiles[path]
+        val newContent = VfsUtil.findFile(path, true)?.run { readAction { readText() } }
+        DynamicTest.dynamicTest(thisProject.relativize(path).toString()) {
+          val errorMsg =
+            if (UsefulTestCase.IS_UNDER_TEAMCITY)
+              "${path.toUri()} : " +
+              "The generated file was manually modified," +
+              " or it was not regenerated after changing interfaces," +
+              " or some changes were not committed."
+            else
+              "${path.toUri()} : " +
+              "The new version of the file has been written to the disk, don't forget to commit it."
+          assertEquals(oldPrettifiedContent.orEmpty(), newContent.orEmpty(), errorMsg)
+        }
+      }
+    }
+    finally {
+      withContext(Dispatchers.EDT) {
+        ProjectManagerEx.getInstanceEx().forceCloseProject(tempProject, true)
+      }
+    }
+  }
+
+  private suspend fun synchronizeVariousCaches(tempProject: Project) {
+    writeAction {
+      FileDocumentManager.getInstance().saveAllDocuments()
+    }
+    IndexingTestUtil.suspendUntilIndexesAreReady(tempProject)
+  }
+
+  private suspend fun prettifyFile(tempProject: Project, virtualFile: VirtualFile) {
+    val inspectionManager = InspectionManager.getInstance(tempProject)
+    val globalContext = inspectionManager.createNewGlobalContext() as GlobalInspectionContextBase
+    val psiFile = readAction {
+      PsiManager.getInstance(tempProject).findFile(virtualFile)!!
+    }
+    val module = readAction {
+      ModuleUtilCore.findModuleForPsiElement(psiFile)
+    }
+    val scope = AnalysisScope(psiFile)
+
+    globalContext.codeCleanup(
+      scope,
+      InspectionProjectProfileManager.getInstance(tempProject).currentProfile,
+      AnalysisBundle.message("cleanup.in.file"),
+      null,
+      false,
+    )
+
+    writeCommandAction(tempProject, "reformat") {
+      OptimizeImportsProcessor(tempProject, psiFile).run()
+
+      RearrangeCodeProcessor(psiFile).run()
+
+      val codeInsightSettings = CodeInsightSettings.getInstance()
+      try {
+        codeInsightSettings.ENABLE_SECOND_REFORMAT = false
+        CodeStyleManager.getInstance(tempProject).reformat(psiFile)
+        codeInsightSettings.ENABLE_SECOND_REFORMAT = true
+        CodeStyleManager.getInstance(tempProject).reformat(psiFile)
+      }
+      finally {
+        codeInsightSettings.ENABLE_SECOND_REFORMAT = false
+      }
+
+      UpdateCopyrightProcessor(tempProject, module, psiFile).run()
+    }
+  }
+
+  private suspend fun createModuleMirror(
+    tempProject: Project,
+    moduleName: String,
+  ): Pair<Module, Path> {
+    var genSrcDirName: Path? = null
+    val ultimateProject: JpsProject = IntelliJProjectConfiguration.loadIntelliJProject(Path.of(PathManager.getHomePath()).pathString)
+
+    val libraries = mutableSetOf<JpsLibrary>()
+
+    val newEelModule: Module = writeAction {
+      val projectModel = ModuleManager.getInstance(tempProject).getModifiableModel()
+
+      val jpsModuleQueue = mutableListOf(ultimateProject.findModuleByName(moduleName)!!)
+
+      val jdkName = "jbr-21"
+      val projectJdkTable = ProjectJdkTable.getInstance(tempProject)
+      val projectJdk = JavaSdk.getInstance().createJdk("jbr-21", System.getProperty("java.home"))
+      projectJdkTable.addJdk(projectJdk)
+      ProjectRootManager.getInstance(tempProject).setProjectSdkName(jdkName, JavaSdk.getInstance().name)
+
+      // TODO Dependencies don't work well. Kotlin can't resolve types from them.
+      run {
+        var i = 0
+        while (i < jpsModuleQueue.size) {
+          val jpsModule = jpsModuleQueue[i]
+          for (dependencyElement in jpsModule.dependenciesList.dependencies) {
+            when (dependencyElement) {
+              is JpsModuleDependency -> jpsModuleQueue.add(dependencyElement.module!!)
+              is JpsLibraryDependency -> libraries.add(dependencyElement.library!!)
+            }
+          }
+          ++i
+        }
+      }
+
+      val platformLibs = libraries.map { jpsLibrary ->
+        val tempProjectLibrary = LibraryTablesRegistrar.getInstance().getLibraryTable(tempProject).createLibrary(jpsLibrary.name)
+        val libModel = tempProjectLibrary.modifiableModel
+        for (root in jpsLibrary.getRoots(JpsOrderRootType.COMPILED)) {
+          libModel.addRoot(root.url, OrderRootType.CLASSES)
+        }
+        libModel.commit()
+        tempProjectLibrary
+      }
+
+      while (true) {
+        val jpsModule = jpsModuleQueue.removeLastOrNull() ?: break
+        val module = projectModel.newModule(Path.of(tempProject.basePath!!).resolve(".idea/${jpsModule.name}.iml"), JavaModuleType.getModuleType().id)
+
+        val rootModel = module.rootManager.modifiableModel
+
+        rootModel.sdk = projectJdk
+        rootModel.addLibraryEntries(platformLibs, DependencyScope.COMPILE, false)
+
+        for (sourceRoot in jpsModule.sourceRoots) {
+          when (val rootType = sourceRoot.rootType) {
+            is JavaSourceRootType -> {
+              if (!rootType.isForTests) {
+                val properties = sourceRoot.properties as JavaSourceRootProperties
+                if (properties.isForGeneratedSources) {
+                  check(genSrcDirName == null) { "Multiple gen src dirs: $genSrcDirName, ${sourceRoot.path}" }
+                  genSrcDirName = sourceRoot.path
+                }
+                rootModel.addContentEntry(sourceRoot.url).addSourceFolder(sourceRoot.url, false)
+              }
+            }
+          }
+        }
+        rootModel.commit()
+      }
+
+      projectModel.commit()
+
+      tempProject.modules.first { it.name == moduleName }
+    }
+
+    check(genSrcDirName != null) { "No gen src dir found" }
+
+    tempProject.stateStore.save(forceSavingAllSettings = true)
+    return Pair(newEelModule, genSrcDirName)
+  }
+}
+
+private suspend fun fillRequests(
+  tempProject: Project,
+  newEelModule: Module,
+  genSrcDirName: Path,
+): LinkedHashMap<Path, Pair<Optional<String>, Optional<String>>> {
+  val methods = mutableListOf<BuilderRequest>()
+
+  val queue = ArrayDeque<VirtualFile>()
+  queue.addAll(newEelModule.rootManager.contentRoots)
+  RefreshQueue.getInstance().refresh(false, true, null, *newEelModule.rootManager.contentRoots)
+  while (true) {
+    val virtualFile = queue.removeFirstOrNull() ?: break
+    if (virtualFile.isDirectory) {
+      if (virtualFile.toNioPath() != genSrcDirName) {
+        queue.addAll(virtualFile.children)
+      }
+    }
+    else if (virtualFile.extension == "kt") {
+      val document = withContext(Dispatchers.EDT) {
+        FileDocumentManager.getInstance().getDocument(virtualFile, tempProject)!!
+      }
+      readAction {
+        val psiFile = PsiDocumentManager.getInstance(tempProject).getPsiFile(document)!!
+        findBuilders(psiFile, methods)
+      }
+    }
+  }
+
+  return writeBuilderFiles(methods, tempProject, genSrcDirName)
+}
+
+private class BuilderRequest(
+  val shouldCheckReturnValue: Boolean,
+  val throwsAnnotation: String?,
+  val annotations: Collection<String>,
+  val argsInterfaceFqn: String,
+  val packageFqn: String,
+  val declarationFileName: String,
+  val ownership: Ownership,
+  val methodName: String,
+  val methodKDoc: String,
+  val returnTypeFqn: String,
+  val imports: Set<String>,
+) {
+  sealed class Ownership {
+    // Autogenerated toString() are used for ordering.
+    data object None : Ownership()
+    data class Method(val simpleClsName: String, val clsFqn: String) : Ownership()
+    data class ExtensionFunction(val renderedReceiver: String, val outerTypeFqn: String) : Ownership()
+  }
+}
+
+private fun findBuilders(psiFile: PsiFile, methods: MutableList<BuilderRequest>) {
+  val imports = mutableSetOf<String>()
+  psiFile.acceptChildren(object : PsiRecursiveElementWalkingVisitor() {
+    override fun visitElement(element: PsiElement) {
+      when {
+        element is KtImportDirective -> {
+          imports += element.text
+        }
+        element is KtAnnotationEntry && element.typeReference?.renderWithFqnTypes()?.contains("GeneratedBuilder") ?: false -> {
+          val valueParameter = element.parent.parent as? KtParameter ?: return
+
+          // Resolves the fully qualified type name for a value parameter by analyzing annotation arguments.
+          // First attempts to extract the type from a class literal expression in the annotation's first argument,
+          // then falls back to the value parameter's declared type if no annotation type is found.
+          // Filters out the GeneratedBuilder type and ensures type compatibility before returning the FQN.
+          val typeFqn = analyze(valueParameter) {
+            val valueParameterType = valueParameter.typeReference?.type ?: error("Parameter type is null")
+            val valueParameterTypeFqn = valueParameterType.toString().replace("/", ".")
+
+            val annotationParameterExpression = (element.valueArguments.firstOrNull() as KtValueArgument?)?.getArgumentExpression() as KtClassLiteralExpression?
+            if (annotationParameterExpression == null) return@analyze valueParameterTypeFqn
+
+            return@analyze analyze(annotationParameterExpression) {
+              val annotationParameterType = annotationParameterExpression.receiverType ?: return@analyze null
+              val annotationParameterTypeFqn = annotationParameterType.toString().replace("/", ".").takeIf {
+                it != "com.intellij.platform.eel.GeneratedBuilder"
+              }
+              if (annotationParameterTypeFqn == null) return@analyze null
+
+              assert(annotationParameterType.isSubtypeOf(valueParameterType)) { "Specified type $this is not a subtype of the value parameter type $valueParameterType" }
+
+              return@analyze annotationParameterTypeFqn
+            } ?: valueParameterTypeFqn
+          }
+
+          val fn = valueParameter.parent.parent as? KtNamedFunction ?: return
+          val methodName = fn.name ?: return
+          val methodPackage = fn.containingKtFile.packageFqName.asString()
+          val ownership =
+            fn.receiverTypeReference
+              ?.let { type ->
+                Ownership.ExtensionFunction(
+                  renderedReceiver = type.renderWithFqnTypes(),
+                  outerTypeFqn = analyze(type) {
+                    type.type.symbol?.classId?.asSingleFqName()?.asString() ?: return@let null
+                  },
+                )
+              }
+            ?: valueParameter.containingClass()
+              ?.fqName
+              ?.let { fqName ->
+                Ownership.Method(simpleClsName = fqName.shortName().asString(), clsFqn = fqName.asString())
+              }
+            ?: Ownership.None
+
+          val annotationsToCopyRegex = Regex("""
+            (
+            org[.]jetbrains[.]annotations[.]ApiStatus[.](Internal|Experimental|Obsolete|ScheduledForRemoval)
+            |
+            kotlin[.]Deprecated
+            )
+          """.trimIndent(), RegexOption.COMMENTS)
+
+          methods += BuilderRequest(
+            shouldCheckReturnValue = fn.annotationEntries.mapNotNull { it.shortName?.asString() }.contains("CheckReturnValue"),
+            annotations = generateSequence(fn, PsiElement::getParent)
+              .takeWhile { it !is PsiFile }
+              .filterIsInstance<KtAnnotated>()
+              .flatMap { it.annotationEntries }
+              .filter {
+                analyze(it) {
+                  it.typeReference?.renderWithFqnTypes()?.matches(annotationsToCopyRegex) == true
+                }
+              }
+              .map { it.text.trim() }
+              .toList()
+              .let(::preferInternalAnnotation),
+            throwsAnnotation = fn.annotationEntries.filter { it.shortName?.asString() in listOf("Throws", "ThrowsChecked") }.joinToString(" ") { it.text.trim() },
+            argsInterfaceFqn = typeFqn,
+            packageFqn = methodPackage,
+            ownership = ownership,
+            declarationFileName = fn.containingKtFile.name,
+            methodName = methodName,
+            methodKDoc = fn.docComment?.extractText() ?: "",
+            returnTypeFqn = fn.typeReference?.renderWithFqnTypes() ?: "Unit",
+            imports = imports,
+          )
+        }
+        else -> {
+          super.visitElement(element)
+        }
+      }
+    }
+  })
+}
+
+@OptIn(ExperimentalPathApi::class)
+private suspend fun writeBuilderFiles(
+  methods: MutableList<BuilderRequest>,
+  tempProject: Project,
+  genSrcDirName: Path,
+): LinkedHashMap<Path, Pair<Optional<String>, Optional<String>>> {
+  val filesContent: LinkedHashMap<Path, Pair<Optional<String>, Optional<String>>> =
+    genSrcDirName.walk().associateWithTo(linkedMapOf()) { path ->
+      Optional.of(path.readText()) to Optional.empty()
+    }
+
+  methods.sortBy { listOfNotNull(it.argsInterfaceFqn, it.packageFqn, it.ownership.toString(), it.methodName).joinToString() }
+  val imports = TreeSet<String>()
+  methods.mapTo(imports) { it.argsInterfaceFqn }
+  methods.mapNotNullTo(imports) {
+    when (val o = it.ownership) {
+      is Ownership.Method -> o.clsFqn
+      Ownership.None, is Ownership.ExtensionFunction -> null
+    }
+  }
+  methods.flatMapTo(imports) { request -> request.imports.map { import -> import.removePrefix("import ") } }
+
+  val filesToWrite = mutableMapOf<Path, String>()
+
+  for ((key, clsBuilderRequests) in methods.groupByTo(linkedMapOf()) { builderRequest ->
+    builderRequest.packageFqn to when (val o = builderRequest.ownership) {
+      is Ownership.ExtensionFunction -> o.outerTypeFqn
+        .removePrefix(builderRequest.packageFqn + ".")
+        .replace(Regex("[.]\\w")) { it.value.substring(1).uppercase() }
+        .plus("Helpers")
+
+      is Ownership.Method -> o.simpleClsName + "Helpers"
+
+      Ownership.None -> builderRequest.declarationFileName.removeSuffix(".kt") + "KtHelpers"
+    }
+  }) {
+    val (sourcePackage, helpersClassName) = key
+
+    @Language("kotlin")
+    var text = ""
+
+    readAction {
+      val argsInterfacesByFqn: Map<String, ArgInterfaceInfo> = clsBuilderRequests.associate { builderRequest ->
+        val javaPsiFacade = JavaPsiFacade.getInstance(tempProject)
+        val projectScope = GlobalSearchScope.projectScope(tempProject)
+        val argsInterface = getKtClassFromKtLightClass(
+          javaPsiFacade.findClass(builderRequest.argsInterfaceFqn, projectScope))
+        check(argsInterface != null) { "PsiClass for ${builderRequest.argsInterfaceFqn} not found" }
+
+        val argsAllInterfaces: Collection<KtClass> = run {
+          val tree = hashSetOf<KtClass>()
+          val queue = ArrayDeque(listOf(argsInterface))
+          while (true) {
+            val iface = queue.removeFirstOrNull() ?: break
+            if (tree.add(iface)) {
+              iface.getSuperTypeList()
+                ?.entries
+                ?.mapNotNull { superTypeListEntry -> superTypeListEntry.typeReference }
+                ?.map(KtTypeReference::renderWithFqnTypes)
+                ?.map { fqn ->
+                  val cls = getKtClassFromKtLightClass(javaPsiFacade.findClass(fqn, projectScope))
+                  check(cls != null) { "PsiClass for $fqn not found" }
+                  cls
+                }
+                ?.let(queue::addAll)
+            }
+          }
+          tree
+        }
+
+        val requiredArguments: List<RequiredArgument> = argsAllInterfaces
+          .flatMap { iface -> iface.getProperties() }
+          .filter { property -> !property.hasBody() }
+          .map { property ->
+            RequiredArgument(
+              name = property.name!!,
+              typeFqn = property.typeReference!!.renderWithFqnTypes(),
+              kdoc = property.docComment?.extractText() ?: "",
+              imports = property.getImportableTypes(),
+            )
+          }
+          .sortedBy { it.name }
+          .distinct()
+
+        val optionalArguments: List<OptionalArgument> = argsAllInterfaces
+          .flatMap { iface -> iface.getProperties() }
+          .filter { property -> property.hasBody() }
+          .map { property ->
+            OptionalArgument(
+              name = property.name!!,
+              typeFqn = property.typeReference!!.renderWithFqnTypes(),
+              body = property.getter!!.bodyExpression!!.renderWithFqnTypes(),
+              kdoc = property.docComment?.extractText() ?: "",
+              imports = property.getImportableTypes(),
+            )
+          }
+          .sortedBy { it.name }
+          .distinct()
+
+        val properties = argsAllInterfaces
+          .flatMap { iface -> iface.getProperties() }
+          .map { ktProperty ->
+            Property(
+              name = ktProperty.name!!,
+              annotations = ktProperty.annotationEntries
+                .filter { annotationEntry ->
+                  when (annotationEntry.useSiteTarget?.getAnnotationUseSiteTarget()) {
+                    null, ALL, FIELD, PROPERTY, PROPERTY_GETTER -> true
+                    FILE, PROPERTY_SETTER, RECEIVER, CONSTRUCTOR_PARAMETER, SETTER_PARAMETER, PROPERTY_DELEGATE_FIELD -> false
+                  }
+                }
+                .map { annotation ->
+                  annotation.renderWithFqnTypes().trim()
+                    .replace(Regex("^@[^(]+:"), "@")  // TODO I don't know how to make it clearer.
+                }
+                .let(::preferInternalAnnotation),
+            )
+          }
+          .sortedBy { it.name }
+
+        requiredArguments.flatMapTo(imports) { it.imports }
+        optionalArguments.flatMapTo(imports) { it.imports }
+
+        builderRequest.argsInterfaceFqn to ArgInterfaceInfo(
+          name = argsInterface.name!!,
+          requiredArguments = requiredArguments,
+          optionalArguments = optionalArguments,
+          properties = properties,
+          annotations = preferExperimentalAnnotation(builderRequest.annotations),
+        )
+      }
+
+      val fileHeader = """
+      /**
+       * This file is generated by [${BuildersGeneratorTest::class.java.name}].
+       */
+      package $sourcePackage
+      
+      ${imports.filter(String::isNotEmpty).joinToString("\n") { "import $it" }}
+      
+      """
+
+      for (builderRequest in clsBuilderRequests) {
+        val ownedBuilderFqn = listOf(
+          sourcePackage,
+          helpersClassName,
+          builderRequest.methodName.replaceFirstChar(Char::uppercaseChar),
+        ).joinToString(".")
+
+        val requiredArguments = argsInterfacesByFqn[builderRequest.argsInterfaceFqn]!!.requiredArguments
+
+        val kdoc = buildString {
+          append(builderRequest.methodKDoc)
+          append("\n")
+          for (prop in requiredArguments) {
+            val kdoc = prop.kdoc.takeIf(String::isNotEmpty) ?: continue
+            append("\n@param ${prop.name} ${kdoc.prependIndent(" ").trim()}")
+          }
+        }
+
+        val methodReceiver = when (val o = builderRequest.ownership) {
+          is Ownership.ExtensionFunction -> o.renderedReceiver
+          is Ownership.Method -> o.clsFqn
+          Ownership.None -> null
+        }
+        text += """
+        ${kdoc.renderKdoc()}@GeneratedBuilder.Result${builderRequest.annotations.joinToString("\n")}
+        fun ${methodReceiver?.plus(".").orEmpty()}${builderRequest.methodName}(${
+          requiredArguments.joinToString("") { prop ->
+            "\n${prop.name}: ${prop.typeFqn},"
+          }.surroundWithNewlinesIfNotBlank()
+        }): $ownedBuilderFqn =
+          $ownedBuilderFqn(
+            ${if (methodReceiver != null) "owner = this," else ""} ${requiredArguments.joinToString("") { prop -> "\n${prop.name} = ${prop.name}," }}
+          )
+        """
+      }
+
+      val annotationGroups = clsBuilderRequests.map { it.annotations }
+      val annotationsForGroup = annotationGroups
+        .reduce { a, b -> a intersect b }
+        .plus(annotationGroups.flatten().filterTo(hashSetOf()) { it.endsWith(".Experimental") || it.endsWith(".Internal") })
+        .let(::preferExperimentalAnnotation)
+        .sorted()
+        .joinToString("\n")
+
+      text += "$annotationsForGroup object $helpersClassName {"
+
+      for (builderRequest in clsBuilderRequests) {
+        val argsInterfaceInfo = argsInterfacesByFqn[builderRequest.argsInterfaceFqn]!!
+
+        val ownerForKdoc = when (val o = builderRequest.ownership) {
+          is Ownership.ExtensionFunction -> o.outerTypeFqn
+          is Ownership.Method -> o.clsFqn
+          Ownership.None -> null
+        }
+        val ownerForPropertyType = when (val o = builderRequest.ownership) {
+          is Ownership.ExtensionFunction -> o.renderedReceiver
+          is Ownership.Method -> o.clsFqn
+          else -> null
+        }
+
+        text += """
+        /**
+         * Create it via [${ownerForKdoc?.plus(".").orEmpty()}${builderRequest.methodName}]. 
+         */
+        @GeneratedBuilder.Result${builderRequest.annotations.joinToString("\n")}
+        class ${builderRequest.methodName.replaceFirstChar(Char::uppercaseChar)}(
+          ${if (ownerForPropertyType != null) "private val owner: $ownerForPropertyType," else ""} ${
+          argsInterfaceInfo.requiredArguments.joinToString("") { prop ->
+            "\nprivate var ${prop.name}: ${prop.typeFqn},"
+          }
+        }
+        ) : com.intellij.platform.eel.OwnedBuilder<${builderRequest.returnTypeFqn}> {
+        ${
+          argsInterfaceInfo.optionalArguments.joinToString("\n\n") { prop ->
+            "private var ${prop.name}: ${prop.typeFqn} = ${prop.body}"
+          }
+        }
+        ${
+          argsInterfaceInfo.properties.joinToString("\n") { property ->
+            renderPropertyInBuilder(
+              tempProject = tempProject,
+              property = property,
+              builderName = builderRequest.methodName.replaceFirstChar(Char::uppercaseChar),
+              requiredArguments = argsInterfaceInfo.requiredArguments,
+              optionalArguments = argsInterfaceInfo.optionalArguments,
+            )
+          }
+        }
+
+          /**
+          * Complete the builder and call [${ownerForKdoc?.plus(".").orEmpty()}${builderRequest.methodName}] 
+          * with an instance of [${builderRequest.argsInterfaceFqn}].
+          */${if (builderRequest.shouldCheckReturnValue) "@org.jetbrains.annotations.CheckReturnValue" else ""}${builderRequest.throwsAnnotation ?: ""}
+          override suspend fun eelIt(): ${builderRequest.returnTypeFqn} =
+            ${if (ownerForPropertyType != null) "owner." else ""}${builderRequest.methodName}(${argsInterfaceInfo.name}Impl(
+            ${
+          argsInterfaceInfo.properties.map { it.name }.joinToString("\n") { name -> "$name = $name," }
+        })
+            )
+        }
+        """
+      }
+
+      text += "}"
+
+      filesToWrite[Path.of(genSrcDirName.toString(), sourcePackage.replace('.', '/'), "$helpersClassName.kt")] = fileHeader + text
+
+      for ((argsInterfaceFqn, argsInterfaceInfo) in argsInterfacesByFqn) {
+        text = """
+        @GeneratedBuilder.Result
+        ${argsInterfaceInfo.annotations.sorted().joinToString("\n")} class ${argsInterfaceInfo.name}Builder${
+          argsInterfaceInfo.requiredArguments.joinToString("", "(", ")") { prop ->
+            "\n${prop.kdoc.renderKdoc()}private var ${prop.name}: ${prop.typeFqn},"
+          }
+        } {
+        ${
+          argsInterfaceInfo.optionalArguments.joinToString("\n\n") { prop ->
+            "private var ${prop.name}: ${prop.typeFqn} = ${prop.body}"
+          }
+        }
+        ${
+          argsInterfaceInfo.properties.joinToString("\n") { property ->
+            renderPropertyInBuilder(
+              tempProject = tempProject,
+              builderName = "${argsInterfaceInfo.name}Builder",
+              property = property,
+              requiredArguments = argsInterfaceInfo.requiredArguments,
+              optionalArguments = argsInterfaceInfo.optionalArguments,
+            )
+          }
+        }
+    
+          fun build(): ${argsInterfaceInfo.name} =
+            ${argsInterfaceInfo.name}Impl(
+            ${argsInterfaceInfo.properties.map { it.name }.joinToString("\n") { name -> "$name = $name," }}
+            )
+        }
+    
+        @GeneratedBuilder.Result
+        internal class ${argsInterfaceInfo.name}Impl(${
+          argsInterfaceInfo.properties.map { it.name }.joinToString("\n") { name ->
+            val typeFqn =
+              argsInterfaceInfo.requiredArguments.firstOrNull { it.name == name }?.typeFqn
+              ?: argsInterfaceInfo.optionalArguments.first { it.name == name }.typeFqn
+            "override val $name: $typeFqn,"
+          }
+        }) : $argsInterfaceFqn"""
+
+        filesToWrite[Path.of(genSrcDirName.toString(), sourcePackage.replace('.', '/'), "${argsInterfaceInfo.name}Builder.kt")] =
+          fileHeader + text
+      }
+    }
+
+    for ((filePath, text) in filesToWrite) {
+      filesContent.compute(filePath) { _, old ->
+        (old?.first ?: Optional.empty()) to Optional.of(text)
+      }
+    }
+  }
+
+  return filesContent
+}
+
+private fun preferInternalAnnotation(annotations: Collection<String>): Collection<String> {
+  val result = annotations.toMutableSet()
+  if (result.any { it.endsWith(".Internal") }) {
+    result.removeIf { it.endsWith(".Experimental") }
+  }
+  return result
+}
+
+private fun preferExperimentalAnnotation(annotations: Collection<String>): Collection<String> {
+  val result = annotations.toMutableSet()
+  if (result.any { it.endsWith(".Experimental") }) {
+    result.removeIf { it.endsWith(".Internal") }
+  }
+  return result
+}
+
+private fun renderPropertyInBuilder(
+  tempProject: Project,
+  builderName: String,
+  property: Property,
+  requiredArguments: List<RequiredArgument>,
+  optionalArguments: List<OptionalArgument>,
+): String = buildString {
+  val typeFqn =
+    requiredArguments.firstOrNull { it.name == property.name }?.typeFqn ?: optionalArguments.first { it.name == property.name }.typeFqn
+  val kdoc =
+    requiredArguments.firstOrNull { it.name == property.name }?.kdoc ?: optionalArguments.first { it.name == property.name }.kdoc
+
+  append("""
+    ${kdoc.renderKdoc()} ${property.annotations.joinToString("\n")} fun ${property.name}(arg: $typeFqn): $builderName = apply {
+      this.${property.name} = arg
+    }""")
+
+  if (typeFqn.startsWith("kotlin.collections.List<")) {
+    append("""
+      ${kdoc.renderKdoc()}fun ${property.name}(vararg arg: ${typeFqn.run { substring(24, length - 1) }}): $builderName = apply {
+        this.${property.name} = listOf(*arg)
+      }""")
+  }
+
+  val psiClass = JavaPsiFacade.getInstance(tempProject).findClass(typeFqn, GlobalSearchScope.allScope(tempProject))
+
+  if (psiClass?.isEnum == true) {
+    val fields = psiClass.allFields
+      .filterIsInstance<KtLightField>()  // It filters out default methods like `name`, `order`. Also, on some JDKS enums have methods `hash`.
+      .associateByTo(sortedMapOf()) { field ->
+        Regex("(?:^|_)[a-z0-9]+").findAll(field.name.lowercase())
+          .joinToString("") { match ->
+            match.value.trimStart('_').replaceFirstChar(Char::uppercase)
+          }
+          .replaceFirstChar(Char::lowercase)
+      }
+
+    for ((enumMethodName, field) in fields) {
+      val passingAnnotations = field.annotations
+        .filter { annotation ->
+          val annotationClass =
+            annotation.nameReferenceElement?.resolve()?.let { it as? KtClass }
+            ?: return@filter false
+          annotationClass.annotationEntries.none { annotationOfAnnotation ->
+            annotationOfAnnotation.name == null &&
+            annotationOfAnnotation.shortName?.asString() == "Target" &&
+            annotationOfAnnotation.valueArguments.none { target ->
+              (target as KtValueArgument).renderWithFqnTypes() == "AnnotationTarget.FUNCTION"
+            }
+          }
+        }
+        .joinToString("") { "$it\n" }
+
+      // org.jetbrains.kotlin.light.classes.symbol.SymbolLightMemberBase.getDocComment
+      // is not implemented, it returns null and has a to-do comment.
+      val fieldDocComment = field.text.run {
+        val start = indexOf("/**")
+        val end = indexOf("*/")
+        if (start != -1 && end != -1) substring(start, end + 2) else ""
+      }
+
+      append("""
+        ${fieldDocComment}${passingAnnotations}fun $enumMethodName(): $builderName =
+          ${property.name}($typeFqn.${field.name})""")
+    }
+  }
+}
+
+/**
+ * Renders some PSI element into a string, but all type references are specified with their full qualified names.
+ */
+@OptIn(KaExperimentalApi::class)
+private fun PsiElement.renderWithFqnTypes(): String {
+  return buildString {
+    accept(object : PsiRecursiveElementWalkingVisitor() {
+      override fun visitElement(element: PsiElement) {
+        when {
+          element is KtTypeReference -> {
+            analyze(element) {
+              append(element.type.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT))
+            }
+          }
+          element is KtQualifiedExpression -> {
+            val fqName =
+              element.children
+                .takeIf { children ->
+                  assert(children.size == 2)
+                  children.first() is KtSimpleNameExpression
+                }
+                ?.last()
+                ?.let { it as KtSimpleNameExpression }
+                ?.fqName()
+            if (fqName != null) {
+              append(fqName)
+            }
+            else {
+              super.visitElement(element)
+            }
+          }
+          element.firstChild == null -> {
+            append(element.text)
+          }
+          else -> {
+            super.visitElement(element)
+          }
+        }
+      }
+
+      private fun KtSimpleNameExpression.fqName(): String? =
+        analyze(this) {
+          val declaration = this@fqName.references.firstOrNull()?.resolve() as? KtNamedDeclaration
+          declaration?.fqName?.asString()
+        }
+    })
+  }
+}
+
+private fun PsiElement.getImportableTypes(): Collection<String> {
+  val result = hashSetOf<String>()
+  accept(object : PsiRecursiveElementWalkingVisitor() {
+    override fun visitElement(element: PsiElement) {
+      if (element is KtTypeReference) {
+        val clsName = analyze(element) {
+          val maybeNestedClass = element.type.takeIf { !it.isPrimitive && !it.isAnyType && !it.isNothingType }?.expandedSymbol?.classId
+          val rootClass = generateSequence(maybeNestedClass) { it.parentClassId }.lastOrNull()
+          rootClass?.asFqNameString()
+        }
+        if (clsName != null) {
+          result += clsName
+        }
+      }
+      else {
+        super.visitElement(element)
+      }
+    }
+  })
+  return result
+}
+
+private fun KDoc.extractText(): String =
+  text
+    .trimIndent()
+    .removePrefix("/**")
+    .removeSuffix("*/")
+    .trim()
+    .lines()
+    .joinToString("\n") { line -> line.replace(Regex("^\\s*\\* ?"), "").trimEnd() }
+
+private fun String.renderKdoc(): String =
+  if (isBlank()) {
+    ""
+  }
+  else {
+    // `prependIndent` doesn't indent empty lines, hence it's not used here.
+    "/**\n${trim().lines().joinToString("\n") { line -> " * $line" }}\n */"
+  }
+
+private fun String.surroundWithNewlinesIfNotBlank(): String =
+  if (isBlank()) ""
+  else "\n${trim()}\n"
+
+private fun getKtClassFromKtLightClass(lightClass: PsiClass?): KtClass? {
+  return when (val originalElement = (lightClass as? KtLightClass)?.kotlinOrigin) {
+    is KtClass -> originalElement
+    else -> null
+  }
+}
+
+private class RequiredArgument(val name: String, val typeFqn: String, val kdoc: String, val imports: Collection<String>)
+private class OptionalArgument(val name: String, val typeFqn: String, val kdoc: String, val body: String, val imports: Collection<String>)
+
+private class Property(val name: String, val annotations: Collection<String>) {
+  override fun toString(): String {
+    error("oops")
+  }
+}
+
+private class ArgInterfaceInfo(
+  val name: String,
+  val requiredArguments: List<RequiredArgument>,
+  val optionalArguments: List<OptionalArgument>,
+  val properties: List<Property>,
+  val annotations: Collection<String>,
+)

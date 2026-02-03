@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.execution.process.mediator.client.jar
+  modules:
+  - name: intellij.execution.process.mediator.client
+    libraries:
+      grpc-inprocess:
+      - name: $MAVEN_REPOSITORY$/io/grpc/grpc-inprocess/1/grpc-inprocess-1.jar

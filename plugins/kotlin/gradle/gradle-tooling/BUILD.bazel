@@ -1,0 +1,17 @@
+### auto-generated section `build intellij.kotlin.gradle.tooling` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "kotlin-gradle-tooling_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-gradle-tooling",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":kotlin-gradle-tooling_resources"],
+  runtime_deps = ["//plugins/kotlin/base/frontend-agnostic"]
+)
+### auto-generated section `build intellij.kotlin.gradle.tooling` end

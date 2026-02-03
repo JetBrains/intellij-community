@@ -1,0 +1,12 @@
+class X {
+    def getFoo(){2}
+}
+def <selection>s</selection> = new X()
+
+print "foo $s.foo x"
+-----
+class X {
+    def getFoo(){2}
+}
+
+print "foo ${new X().foo} x"

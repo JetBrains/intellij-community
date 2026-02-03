@@ -1,0 +1,12 @@
+// FILE: buildSrc/build.gradle.kts
+// "NO-EXPECTED-SUGGESTIONS"
+plugins {
+    id("java")
+}
+
+aaaaaa<caret>
+
+repositories {
+    mavenCentral()
+}
+

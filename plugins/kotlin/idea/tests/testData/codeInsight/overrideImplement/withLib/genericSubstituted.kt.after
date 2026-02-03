@@ -1,0 +1,15 @@
+// FIR_IDENTICAL
+package test
+
+import dependency.D
+
+class C: D<Int>() {
+    override fun id(t: Int): Int {
+        <selection><caret>return super.id(t)</selection>
+    }
+}
+
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "id(t: Int): Int"
+// MEMBER: "toString(): String"

@@ -1,0 +1,19 @@
+def playerStatuses =
+setup.regions[ts].collect {
+
+  }
+
+  playerStatuses =
+  setup.regions[ts].collect {
+
+    }
+-----
+def playerStatuses =
+    setup.regions[ts].collect {
+
+    }
+
+playerStatuses =
+    setup.regions[ts].collect {
+
+    }

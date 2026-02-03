@@ -1,0 +1,79 @@
+### auto-generated section `build intellij.devkit` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "devkit_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "devkit",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":devkit_resources"]
+)
+### auto-generated section `build intellij.devkit` end
+
+### auto-generated section `build intellij.devkit.plugin.main` start
+jvm_library(
+  name = "devkit-plugin-main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/devkit:devkit-plugin-main-noKotlin",
+    "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
+    "//plugins/devkit/intellij.kotlin.devkit/k1",
+    "//plugins/devkit/intellij.kotlin.devkit/k2",
+    "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
+    "//plugins/devkit/intellij.devkit.compose:compose",
+  ]
+)
+
+jvm_library(
+  name = "devkit-plugin-main_test_lib",
+  module_name = "intellij.devkit.plugin.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":devkit-plugin-main",
+    "//plugins/devkit/devkit-kotlin-tests:kotlin-tests_test_lib",
+    "//plugins/devkit/intellij.devkit.workspaceModel/tests:tests_test_lib",
+  ]
+)
+### auto-generated section `build intellij.devkit.plugin.main` end
+
+### auto-generated section `build intellij.devkit.plugin.main.noKotlin` start
+jvm_library(
+  name = "devkit-plugin-main-noKotlin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/devkit",
+    "//plugins/devkit/devkit-core:core",
+    "//plugins/devkit/intellij.devkit.debugger:debugger",
+    "//plugins/devkit/intellij.devkit.gradle:gradle",
+    "//plugins/devkit/intellij.devkit.i18n:i18n",
+    "//plugins/devkit/intellij.devkit.intelliLang:intelliLang",
+    "//plugins/devkit/intellij.devkit.themes:themes",
+    "//plugins/devkit/intellij.devkit.uiDesigner:uiDesigner",
+    "//plugins/devkit/jps-plugin:jps",
+    "//plugins/devkit/runtimeModuleRepository/jps",
+    "//plugins/devkit/intellij.devkit.scaffolding:scaffolding",
+    "//plugins/devkit/intellij.devkit.stacktrace:stacktrace",
+    "//plugins/devkit/api-dump",
+    "//plugins/devkit/api-dump-lang:apiDump-lang",
+  ]
+)
+
+jvm_library(
+  name = "devkit-plugin-main-noKotlin_test_lib",
+  module_name = "intellij.devkit.plugin.main.noKotlin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":devkit-plugin-main-noKotlin",
+    "//plugins/devkit/devkit-java-tests:java-tests_test_lib",
+  ]
+)
+### auto-generated section `build intellij.devkit.plugin.main.noKotlin` end

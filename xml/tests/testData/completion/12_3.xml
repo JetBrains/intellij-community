@@ -1,0 +1,7 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:complexType name="AAA">
+    <xs:sequence>
+      <xs:element minOccurs="1" maxOccurs="un<caret>"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

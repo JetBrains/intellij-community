@@ -1,0 +1,10 @@
+// "Surround with *arrayOf(...)" "true"
+// LANGUAGE_VERSION: 1.2
+
+fun anyFoo(vararg a: Any) {}
+
+fun test() {
+    anyFoo(a = *arrayOf(intArrayOf(1)))
+}
+// IGNORE_K2
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SurroundWithArrayOfWithSpreadOperatorInFunctionFix

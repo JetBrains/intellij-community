@@ -1,0 +1,134 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.debugger;
+
+import com.intellij.lang.LangBundle;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.JBTabsFactory;
+import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.UiDecorator;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
+import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.BorderLayout;
+import java.awt.Insets;
+import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.util.List;
+
+public class UiDebugger extends JPanel implements Disposable {
+  private final DialogWrapper myDialog;
+  private final JBTabs myTabs;
+  private final List<UiDebuggerExtension> myExtensions;
+
+  public UiDebugger() {
+    Disposer.register(ApplicationManager.getApplication(), this);
+
+    myTabs = JBTabsFactory.createTabs(null, this);
+    myTabs.getPresentation().setInnerInsets(new Insets(4, 0, 0, 0)).setUiDecorator(new UiDecorator() {
+      @Override
+      public @NotNull UiDecoration getDecoration() {
+        return new UiDecoration(null, JBUI.insets(4, 0));
+      }
+    });
+
+    myExtensions = UiDebuggerExtension.EP_NAME.getExtensionList();
+    addToUi(myExtensions);
+
+    myDialog = new DialogWrapper((Project)null, true) {
+      {
+        init();
+      }
+
+      @Override
+      protected JComponent createCenterPanel() {
+        Disposer.register(getDisposable(), UiDebugger.this);
+        return myTabs.getComponent();
+      }
+
+      @Override
+      public JComponent getPreferredFocusedComponent() {
+        return myTabs.getComponent();
+      }
+
+      @Override
+      protected String getDimensionServiceKey() {
+        return "UiDebugger";
+      }
+
+      @Override
+      protected JComponent createSouthPanel() {
+        final JPanel result = new JPanel(new BorderLayout());
+        result.add(super.createSouthPanel(), BorderLayout.EAST);
+        final JSlider slider = new JSlider(0, 100);
+        slider.setValue(100);
+        slider.addChangeListener(new ChangeListener() {
+          @Override
+          public void stateChanged(ChangeEvent e) {
+            final int value = slider.getValue();
+            float alpha = value / 100f;
+
+            final Window wnd = SwingUtilities.getWindowAncestor(slider);
+            if (wnd != null) {
+              final WindowManagerEx mgr = WindowManagerEx.getInstanceEx();
+              if (value == 100) {
+                mgr.setAlphaModeEnabled(wnd, false);
+              } else {
+                mgr.setAlphaModeEnabled(wnd, true);
+                mgr.setAlphaModeRatio(wnd, 1f - alpha);
+              }
+            }
+          }
+        });
+        result.add(slider, BorderLayout.WEST);
+        return result;
+      }
+
+      @Override
+      protected Action @NotNull [] createActions() {
+        return new Action[] {new AbstractAction(LangBundle.message("button.close")) {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            doOKAction();
+          }
+        }};
+      }
+    };
+    myDialog.setModal(false);
+    myDialog.setTitle(LangBundle.message("dialog.title.ui.debugger"));
+    myDialog.setResizable(true);
+
+    myDialog.show();
+  }
+
+  @Override
+  public void show() {
+    myDialog.getPeer().getWindow().toFront();
+  }
+
+  private void addToUi(List<? extends UiDebuggerExtension> extensions) {
+    for (UiDebuggerExtension each : extensions) {
+      myTabs.addTab(new TabInfo(each.getComponent()).setText(each.getName()));
+    }
+  }
+
+  @Override
+  public void dispose() {
+    for (UiDebuggerExtension each : myExtensions) {
+      each.disposeUiResources();
+    }
+  }
+}

@@ -1,0 +1,126 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.notebooks.ui"/>
+    <plugin id="org.intellij.plugins.markdown"/>
+    <module name="intellij.notebooks.jupyter.core"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.editor.notebookEditorAppearanceProvider"
+                    interface="com.intellij.notebooks.visualization.NotebookEditorAppearanceProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookCellLinesProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.notebooks.visualization.NotebookCellLinesProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookCellSelectionModelProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.notebooks.visualization.NotebookCellSelectionModelProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookIntervalPointerFactoryProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.notebooks.visualization.NotebookIntervalPointerFactoryProvider"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookCellSelfManagedController"
+                    interface="com.intellij.notebooks.visualization.controllers.selfUpdate.SelfManagedControllerFactory"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.editorNotebookEndInlayProvider"
+                    interface="com.intellij.notebooks.visualization.ui.endInlay.EditorNotebookEndInlayProvider"
+                    dynamic="true"/>
+
+
+    <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.inputFactory"
+                    interface="com.intellij.notebooks.visualization.EditorCellInputFactory"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <actions resource-bundle="messages.VisualizationBundle">
+    <group id="NotebookOutputCollapseActions" popup="true">
+      <action id="NotebookOutputCollapseSingleInCellAction"
+              class="com.intellij.notebooks.visualization.outputs.action.NotebookOutputCollapseSingleInCellAction"/>
+      <action id="NotebookOutputCollapseAllInCellAction"
+              class="com.intellij.notebooks.visualization.outputs.action.NotebookOutputCollapseAllInCellAction"/>
+      <action id="NotebookOutputCollapseAllInSelectedCellsAction"
+              class="com.intellij.notebooks.visualization.outputs.action.NotebookOutputCollapseAllInSelectedCellsAction"/>
+      <action id="NotebookOutputCollapseAllAction"
+              class="com.intellij.notebooks.visualization.outputs.action.NotebookOutputCollapseAllAction"/>
+    </group>
+
+    <action id="NotebookOutputSelectAllAction"
+            class="com.intellij.notebooks.visualization.r.inlays.components.NotebookOutputSelectAllAction"
+            use-shortcut-of="$SelectAll"/>
+
+    <action id="NotebookResetCellOutputSizeAction"
+            class="com.intellij.notebooks.visualization.outputs.action.NotebookResetCellOutputSizeAction"/>
+
+    <action id="CellToolbarStickyVisibilityToggleAction"
+            class="com.intellij.notebooks.visualization.ui.cell.toolbar.CellToolbarStickyVisibilityToggleAction"/>
+
+    <action id="ShowToolbarForSelectedCellToggleAction"
+            class="com.intellij.notebooks.visualization.ui.cell.toolbar.ShowToolbarForSelectedCellToggleAction"/>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup displayType="BALLOON" id="Notebook Table" bundle="messages.VisualizationBundle"
+                       key="inlay.output.table.notification.group.name"/>
+
+    <editorFactoryDocumentListener implementation="com.intellij.notebooks.visualization.UndoableActionListener"
+                                   order="last"/>
+
+    <applicationService serviceImplementation="com.intellij.notebooks.visualization.settings.NotebookSettings"/>
+    <applicationSettings service="com.intellij.notebooks.visualization.settings.NotebookSettings"/>
+  </extensions>
+
+  <!-- New output inlays -->
+  <extensionPoints>
+    <extensionPoint
+      qualifiedName="org.jetbrains.plugins.notebooks.editor.outputs.notebookOutputComponentFactory"
+      interface="com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFactory"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="org.jetbrains.plugins.notebooks.editor.outputs.notebookOutputDataKeyExtractor"
+      interface="com.intellij.notebooks.visualization.outputs.NotebookOutputDataKeyExtractor"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="org.jetbrains.plugins.notebooks.editor.outputs.notebookOutputComponentWrapper"
+      interface="com.intellij.notebooks.visualization.outputs.NotebookOutputComponentWrapper"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="org.jetbrains.plugins.notebooks.editor.outputs.editorCellOutputsPreprocessor"
+      interface="com.intellij.notebooks.visualization.ui.EditorCellOutputsPreprocessor"
+      dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="true"
+                 description="Enables floating toolbar for markdown cells"
+                 key="jupyter.markdown.cells.floating.toolbar"
+                 restartRequired="false"/>
+
+    <registryKey key="jupyter.diff.viewer.output" defaultValue="false" description="Show outputs in the Jupyter diff viewer"/>
+
+    <textEditorCustomizer implementation="com.intellij.notebooks.visualization.ui.NotebookFloatingToolbarCustomizer"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.notebooks">
+    <notebookCellSelfManagedController
+      implementation="com.intellij.notebooks.visualization.ui.cell.background.CodeCellBackgroundControllerFactory"/>
+    <notebookCellSelfManagedController
+      implementation="com.intellij.notebooks.visualization.ui.cell.toolbar.CellToolbarControllerFactory"/>
+    <notebookCellSelfManagedController
+      implementation="com.intellij.notebooks.visualization.ui.cell.runCell.EditorCellRunGutterControllerFactory"/>
+
+    <notebookCellSelectionModelProvider language="Python"
+                                        implementationClass="com.intellij.notebooks.visualization.PythonCellSelectionModelProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <notebooks.ui.cellCaretTracker implementation="com.intellij.notebooks.visualization.NotebookCellCaretTrackerImpl"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.intellij.markdown">
+    <markdownCompatibilityChecker implementation="com.intellij.notebooks.visualization.JupyterMarkdownCompatibilityChecker"/>
+  </extensions>
+</idea-plugin>

@@ -1,0 +1,73 @@
+### auto-generated section `build intellij.kotlin.codeInsight.fixes` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_kotlin-codeInsight-fixes",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+  ],
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "kotlin-codeInsight-fixes_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-codeInsight-fixes",
+  module_name = "intellij.kotlin.codeInsight.fixes",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-codeInsight-fixes_resources"],
+  kotlinc_opts = ":custom_kotlin-codeInsight-fixes",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fir",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-k2",
+    "@lib//:kotlinc-analysis-api-impl-base",
+    "//libraries/guava",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-impl",
+    "//platform/core-impl",
+    "//platform/core-ui",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+    "//java/java-analysis-impl:analysis-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/code-insight/utils",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/fir",
+    "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement",
+    "//plugins/kotlin/code-insight/api",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/kdoc",
+    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/kotlin.searching",
+  ]
+)
+### auto-generated section `build intellij.kotlin.codeInsight.fixes` end

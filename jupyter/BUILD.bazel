@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.notebooks.jupyter.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "notebooks-jupyter-core_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "notebooks-jupyter-core",
+  module_name = "intellij.notebooks.jupyter.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":notebooks-jupyter-core_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/built-in-server-api:builtInServer",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//libraries/http-client",
+    "//platform/util",
+    "//libraries/netty/buffer",
+    "//libraries/netty/codec-http:libraries-netty-codec-http",
+    "//platform/projectModel-api:projectModel",
+    "//platform/analysis-api:analysis",
+  ]
+)
+### auto-generated section `build intellij.notebooks.jupyter.core` end

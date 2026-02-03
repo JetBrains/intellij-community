@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="easymock" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.easymock:easymock:5.6.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/easymock/easymock/5.6.0/easymock-5.6.0.jar">
+          <sha256sum>63efc00da99774fb0253330ef9b5788b261022ba73f36bf76889ce7edf3d2b31</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/easymock/easymock/5.6.0/easymock-5.6.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/easymock/easymock/5.6.0/easymock-5.6.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -1,0 +1,95 @@
+### auto-generated section `build intellij.kotlin.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "test-framework",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["//java/testFramework"],
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/ide-core-impl",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/project-model",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/project-configuration",
+  ]
+)
+
+jvm_library(
+  name = "test-framework_test_lib",
+  module_name = "intellij.kotlin.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/analysis-api:analysis",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlin/reflect",
+    "@lib//:kotlin-test",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//java/idea-ui:ui",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "@lib//:test_n_g",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/execution",
+    "//platform/lang-core",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinc-analysis-api",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/ide-core-impl",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//java/openapi:java",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/project-model",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/jvm/shared",
+    "//plugins/kotlin/formatter",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//java/testFramework",
+    "//platform/core-impl",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//plugins/kotlin/code-insight/api",
+    "//plugins/kotlin/gradle/gradle",
+    "//libraries/gson",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/kotlin/base/external-build-system:kotlin-base-externalSystem",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "@lib//:junit5Pioneer",
+    "//platform/statistics/testFramework",
+    "//plugins/kotlin/base/frontend-agnostic",
+  ],
+  exports = ["//java/testFramework"],
+  runtime_deps = [":test-framework"]
+)
+### auto-generated section `build intellij.kotlin.testFramework` end
+
+### auto-generated section `test intellij.kotlin.testFramework` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "test-framework_test",
+  runtime_deps = [":test-framework_test_lib"]
+)
+### auto-generated section `test intellij.kotlin.testFramework` end

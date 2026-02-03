@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.velocity` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "velocity_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "velocity",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":velocity_resources"],
+  exports = ["@lib//:libraries-velocity-_velocity"],
+  runtime_deps = ["@lib//:libraries-velocity-_velocity"]
+)
+### auto-generated section `build intellij.libraries.velocity` end

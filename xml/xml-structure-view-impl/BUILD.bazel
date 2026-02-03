@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.xml.structureView.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "structureView-impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "structureView-impl",
+  module_name = "intellij.xml.structureView.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":structureView-impl_resources"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//xml/xml-psi-api:psi",
+    "//xml/xml-structure-view-api:structureView",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/core-impl",
+    "//platform/util:util-ui",
+    "//xml/xml-parser:parser",
+    "//platform/lang-impl",
+  ],
+  runtime_deps = ["//platform/backend"]
+)
+### auto-generated section `build intellij.xml.structureView.impl` end

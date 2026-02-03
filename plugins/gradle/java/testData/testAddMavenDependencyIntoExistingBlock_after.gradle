@@ -1,0 +1,4 @@
+dependencies{
+  implementation 'someGroupId:someArtifactId:1.0'
+implementation 'testGroupId:testArtifactId:1.0'
+}

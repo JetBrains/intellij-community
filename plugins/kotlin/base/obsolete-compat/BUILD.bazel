@@ -1,0 +1,37 @@
+### auto-generated section `build kotlin.base.obsolete-compat` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_obsolete-compat",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
+
+jvm_library(
+  name = "obsolete-compat",
+  module_name = "kotlin.base.obsolete-compat",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_obsolete-compat",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/core-api:core",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/project-structure",
+    "//platform/util",
+    "//platform/core-impl",
+    "//plugins/kotlin/code-insight/api",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/code-insight/utils",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//plugins/kotlin/base/fe10/analysis",
+  ]
+)
+### auto-generated section `build kotlin.base.obsolete-compat` end

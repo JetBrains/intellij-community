@@ -1,0 +1,3 @@
+version = "1.6.6"
+upstream_repository = "https://github.com/lepture/authlib"
+requires = ["cryptography"]

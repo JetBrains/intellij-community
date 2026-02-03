@@ -1,0 +1,739 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <item name="javax.swing">
+    <annotation name="org.jetbrains.annotations.Nls" />
+  </item>
+  <item name='javax.swing.AbstractAction void putValue(java.lang.String, java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.AbstractButton boolean isSelected()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.AbstractButton int getDisplayedMnemonicIndex()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.AbstractButton int getMnemonic()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.AbstractButton java.lang.String getActionCommand()'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.AbstractButton javax.swing.ButtonModel getModel()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.AbstractButton void setActionCommand(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.Action ACCELERATOR_KEY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.Action ACTION_COMMAND_KEY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.Action DISPLAYED_MNEMONIC_INDEX_KEY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.Action LARGE_ICON_KEY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.Action LONG_DESCRIPTION'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.Action MNEMONIC_KEY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.Action NAME'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.Action SELECTED_KEY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.Action SHORT_DESCRIPTION'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.Action SMALL_ICON'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.Action java.lang.Object getValue(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.Action void putValue(java.lang.String, java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name="javax.swing.ActionMap javax.swing.Action get(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="javax.swing.ActionMap void put(java.lang.Object, javax.swing.Action) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="javax.swing.BoxLayout BoxLayout(java.awt.Container, int) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="valuesFromClass" val="javax.swing.BoxLayout.class" />
+    </annotation>
+  </item>
+  <item name="javax.swing.BoxLayout BoxLayout(java.awt.Container, int, java.io.PrintStream) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="valuesFromClass" val="javax.swing.BoxLayout.class" />
+    </annotation>
+  </item>
+  <item name="javax.swing.BoxLayout int getAxis()">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="valuesFromClass" val="javax.swing.BoxLayout.class" />
+    </annotation>
+  </item>
+  <item name='javax.swing.ButtonModel boolean isArmed()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.ButtonModel boolean isEnabled()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.ButtonModel boolean isPressed()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.ButtonModel boolean isRollover()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.ButtonModel boolean isSelected()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+  <item name='javax.swing.ButtonModel int getMnemonic()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.ButtonModel java.lang.String getActionCommand()'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.ButtonModel void setActionCommand(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.ButtonModel void setActionCommand(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.ButtonModel void setArmed(boolean)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.ButtonModel void setEnabled(boolean)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.ButtonModel void setMnemonic(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.ButtonModel void setPressed(boolean)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.ButtonModel void setRollover(boolean)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.ButtonModel void setSelected(boolean)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+    <item name='javax.swing.ComboBoxModel java.lang.Object getSelectedItem()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.ImageIcon ImageIcon(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.ImageIcon ImageIcon(java.lang.String, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name="javax.swing.InputMap void put(javax.swing.KeyStroke, java.lang.Object) 1">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name='javax.swing.JComboBox java.lang.Object getSelectedItem()'>
+    <annotation name='org.jetbrains.annotations.Nullable' />
+  </item>
+  <item name="javax.swing.JComponent boolean processKeyBinding(javax.swing.KeyStroke, java.awt.event.KeyEvent, int, boolean) 2">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JComponent.WHEN_FOCUSED,javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW,javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JComponent java.lang.Object getClientProperty(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="javax.swing.JComponent javax.swing.InputMap getInputMap(int) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JComponent.WHEN_FOCUSED,javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW,javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JComponent javax.swing.InputMap getInputMap(int, boolean) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JComponent.WHEN_FOCUSED,javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW,javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT}" />
+    </annotation>
+  </item>
+  <item name='javax.swing.JComponent void firePropertyChange(java.lang.String, boolean, boolean) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JComponent void firePropertyChange(java.lang.String, int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name="javax.swing.JComponent void putClientProperty(java.lang.Object, java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="javax.swing.JComponent void putClientProperty(java.lang.Object, java.lang.Object) 1">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name='javax.swing.JComponent void registerKeyboardAction(java.awt.event.ActionListener, java.lang.String, javax.swing.KeyStroke, int) 1'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name="javax.swing.JComponent void registerKeyboardAction(java.awt.event.ActionListener, java.lang.String, javax.swing.KeyStroke, int) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JComponent.WHEN_FOCUSED,javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW,javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JComponent void registerKeyboardAction(java.awt.event.ActionListener, javax.swing.KeyStroke, int) 2">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JComponent.WHEN_FOCUSED,javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW,javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JComponent void setInputMap(int, javax.swing.InputMap) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JComponent.WHEN_FOCUSED,javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW,javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JEditorPane JEditorPane(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name='javax.swing.JEditorPane void scrollToReference(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JEditorPane void setContentType(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JFormattedTextField.AbstractFormatter java.lang.Object stringToValue(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JFormattedTextField.AbstractFormatter java.lang.String valueToString(java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JFrame void setDefaultCloseOperation(int) 0'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE, javax.swing.WindowConstants.HIDE_ON_CLOSE, javax.swing.WindowConstants.DISPOSE_ON_CLOSE, javax.swing.WindowConstants.EXIT_ON_CLOSE, javax.swing.JFrame.EXIT_ON_CLOSE}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JLabel JLabel(java.lang.String, int) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.SwingConstants.LEFT, javax.swing.SwingConstants.CENTER, javax.swing.SwingConstants.RIGHT, javax.swing.SwingConstants.LEADING, javax.swing.SwingConstants.TRAILING}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JLabel JLabel(java.lang.String, javax.swing.Icon, int) 2">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.SwingConstants.LEFT, javax.swing.SwingConstants.CENTER, javax.swing.SwingConstants.RIGHT, javax.swing.SwingConstants.LEADING, javax.swing.SwingConstants.TRAILING}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JLabel JLabel(javax.swing.Icon, int) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.SwingConstants.LEFT, javax.swing.SwingConstants.CENTER, javax.swing.SwingConstants.RIGHT, javax.swing.SwingConstants.LEADING, javax.swing.SwingConstants.TRAILING}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane JOptionPane(java.lang.Object, int) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.INFORMATION_MESSAGE,javax.swing.JOptionPane.WARNING_MESSAGE,javax.swing.JOptionPane.ERROR_MESSAGE,javax.swing.JOptionPane.QUESTION_MESSAGE,javax.swing.JOptionPane.PLAIN_MESSAGE}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane JOptionPane(java.lang.Object, int, int) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.INFORMATION_MESSAGE,javax.swing.JOptionPane.WARNING_MESSAGE,javax.swing.JOptionPane.ERROR_MESSAGE,javax.swing.JOptionPane.QUESTION_MESSAGE,javax.swing.JOptionPane.PLAIN_MESSAGE}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane JOptionPane(java.lang.Object, int, int) 2">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.DEFAULT_OPTION, javax.swing.JOptionPane.YES_NO_OPTION, javax.swing.JOptionPane.YES_NO_CANCEL_OPTION, javax.swing.JOptionPane.OK_CANCEL_OPTION}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane JOptionPane(java.lang.Object, int, int, javax.swing.Icon) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.INFORMATION_MESSAGE,javax.swing.JOptionPane.WARNING_MESSAGE,javax.swing.JOptionPane.ERROR_MESSAGE,javax.swing.JOptionPane.QUESTION_MESSAGE,javax.swing.JOptionPane.PLAIN_MESSAGE}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane JOptionPane(java.lang.Object, int, int, javax.swing.Icon) 2">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.DEFAULT_OPTION, javax.swing.JOptionPane.YES_NO_OPTION, javax.swing.JOptionPane.YES_NO_CANCEL_OPTION, javax.swing.JOptionPane.OK_CANCEL_OPTION}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane JOptionPane(java.lang.Object, int, int, javax.swing.Icon, java.lang.Object[]) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.INFORMATION_MESSAGE,javax.swing.JOptionPane.WARNING_MESSAGE,javax.swing.JOptionPane.ERROR_MESSAGE,javax.swing.JOptionPane.QUESTION_MESSAGE,javax.swing.JOptionPane.PLAIN_MESSAGE}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane JOptionPane(java.lang.Object, int, int, javax.swing.Icon, java.lang.Object[]) 2">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.DEFAULT_OPTION, javax.swing.JOptionPane.YES_NO_OPTION, javax.swing.JOptionPane.YES_NO_CANCEL_OPTION, javax.swing.JOptionPane.OK_CANCEL_OPTION}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane JOptionPane(java.lang.Object, int, int, javax.swing.Icon, java.lang.Object[], java.lang.Object) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.INFORMATION_MESSAGE,javax.swing.JOptionPane.WARNING_MESSAGE,javax.swing.JOptionPane.ERROR_MESSAGE,javax.swing.JOptionPane.QUESTION_MESSAGE,javax.swing.JOptionPane.PLAIN_MESSAGE}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane JOptionPane(java.lang.Object, int, int, javax.swing.Icon, java.lang.Object[], java.lang.Object) 2">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.DEFAULT_OPTION, javax.swing.JOptionPane.YES_NO_OPTION, javax.swing.JOptionPane.YES_NO_CANCEL_OPTION, javax.swing.JOptionPane.OK_CANCEL_OPTION}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane int getOptionType()">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.DEFAULT_OPTION, javax.swing.JOptionPane.YES_NO_OPTION, javax.swing.JOptionPane.YES_NO_CANCEL_OPTION, javax.swing.JOptionPane.OK_CANCEL_OPTION}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane int showConfirmDialog(java.awt.Component, java.lang.Object, java.lang.String, int) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.DEFAULT_OPTION, javax.swing.JOptionPane.YES_NO_OPTION, javax.swing.JOptionPane.YES_NO_CANCEL_OPTION, javax.swing.JOptionPane.OK_CANCEL_OPTION}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane int showConfirmDialog(java.awt.Component, java.lang.Object, java.lang.String, int, int) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.DEFAULT_OPTION, javax.swing.JOptionPane.YES_NO_OPTION, javax.swing.JOptionPane.YES_NO_CANCEL_OPTION, javax.swing.JOptionPane.OK_CANCEL_OPTION}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane int showConfirmDialog(java.awt.Component, java.lang.Object, java.lang.String, int, int) 4">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.INFORMATION_MESSAGE,javax.swing.JOptionPane.WARNING_MESSAGE,javax.swing.JOptionPane.ERROR_MESSAGE,javax.swing.JOptionPane.QUESTION_MESSAGE,javax.swing.JOptionPane.PLAIN_MESSAGE}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane int showConfirmDialog(java.awt.Component, java.lang.Object, java.lang.String, int, int, javax.swing.Icon) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.DEFAULT_OPTION, javax.swing.JOptionPane.YES_NO_OPTION, javax.swing.JOptionPane.YES_NO_CANCEL_OPTION, javax.swing.JOptionPane.OK_CANCEL_OPTION}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane int showConfirmDialog(java.awt.Component, java.lang.Object, java.lang.String, int, int, javax.swing.Icon) 4">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.INFORMATION_MESSAGE,javax.swing.JOptionPane.WARNING_MESSAGE,javax.swing.JOptionPane.ERROR_MESSAGE,javax.swing.JOptionPane.QUESTION_MESSAGE,javax.swing.JOptionPane.PLAIN_MESSAGE}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane int showInternalConfirmDialog(java.awt.Component, java.lang.Object, java.lang.String, int) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.DEFAULT_OPTION, javax.swing.JOptionPane.YES_NO_OPTION, javax.swing.JOptionPane.YES_NO_CANCEL_OPTION, javax.swing.JOptionPane.OK_CANCEL_OPTION}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane int showInternalConfirmDialog(java.awt.Component, java.lang.Object, java.lang.String, int, int) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.DEFAULT_OPTION, javax.swing.JOptionPane.YES_NO_OPTION, javax.swing.JOptionPane.YES_NO_CANCEL_OPTION, javax.swing.JOptionPane.OK_CANCEL_OPTION}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane int showInternalConfirmDialog(java.awt.Component, java.lang.Object, java.lang.String, int, int) 4">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.INFORMATION_MESSAGE,javax.swing.JOptionPane.WARNING_MESSAGE,javax.swing.JOptionPane.ERROR_MESSAGE,javax.swing.JOptionPane.QUESTION_MESSAGE,javax.swing.JOptionPane.PLAIN_MESSAGE}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane int showInternalConfirmDialog(java.awt.Component, java.lang.Object, java.lang.String, int, int, javax.swing.Icon) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.DEFAULT_OPTION, javax.swing.JOptionPane.YES_NO_OPTION, javax.swing.JOptionPane.YES_NO_CANCEL_OPTION, javax.swing.JOptionPane.OK_CANCEL_OPTION}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane int showInternalConfirmDialog(java.awt.Component, java.lang.Object, java.lang.String, int, int, javax.swing.Icon) 4">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.INFORMATION_MESSAGE,javax.swing.JOptionPane.WARNING_MESSAGE,javax.swing.JOptionPane.ERROR_MESSAGE,javax.swing.JOptionPane.QUESTION_MESSAGE,javax.swing.JOptionPane.PLAIN_MESSAGE}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane int showInternalOptionDialog(java.awt.Component, java.lang.Object, java.lang.String, int, int, javax.swing.Icon, java.lang.Object[], java.lang.Object) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.DEFAULT_OPTION, javax.swing.JOptionPane.YES_NO_OPTION, javax.swing.JOptionPane.YES_NO_CANCEL_OPTION, javax.swing.JOptionPane.OK_CANCEL_OPTION}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane int showInternalOptionDialog(java.awt.Component, java.lang.Object, java.lang.String, int, int, javax.swing.Icon, java.lang.Object[], java.lang.Object) 4">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.INFORMATION_MESSAGE,javax.swing.JOptionPane.WARNING_MESSAGE,javax.swing.JOptionPane.ERROR_MESSAGE,javax.swing.JOptionPane.QUESTION_MESSAGE,javax.swing.JOptionPane.PLAIN_MESSAGE}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane int showOptionDialog(java.awt.Component, java.lang.Object, java.lang.String, int, int, javax.swing.Icon, java.lang.Object[], java.lang.Object) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.DEFAULT_OPTION, javax.swing.JOptionPane.YES_NO_OPTION, javax.swing.JOptionPane.YES_NO_CANCEL_OPTION, javax.swing.JOptionPane.OK_CANCEL_OPTION}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane int showOptionDialog(java.awt.Component, java.lang.Object, java.lang.String, int, int, javax.swing.Icon, java.lang.Object[], java.lang.Object) 4">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.INFORMATION_MESSAGE,javax.swing.JOptionPane.WARNING_MESSAGE,javax.swing.JOptionPane.ERROR_MESSAGE,javax.swing.JOptionPane.QUESTION_MESSAGE,javax.swing.JOptionPane.PLAIN_MESSAGE}" />
+    </annotation>
+  </item>
+  <item name='javax.swing.JOptionPane java.awt.Frame getRootFrame()'>
+    <annotation name='org.jetbrains.annotations.NotNull' />
+  </item>
+  <item name="javax.swing.JOptionPane java.lang.Object showInputDialog(java.awt.Component, java.lang.Object, java.lang.String, int, javax.swing.Icon, java.lang.Object[], java.lang.Object) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.INFORMATION_MESSAGE,javax.swing.JOptionPane.WARNING_MESSAGE,javax.swing.JOptionPane.ERROR_MESSAGE,javax.swing.JOptionPane.QUESTION_MESSAGE,javax.swing.JOptionPane.PLAIN_MESSAGE}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane java.lang.Object showInternalInputDialog(java.awt.Component, java.lang.Object, java.lang.String, int, javax.swing.Icon, java.lang.Object[], java.lang.Object) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.INFORMATION_MESSAGE,javax.swing.JOptionPane.WARNING_MESSAGE,javax.swing.JOptionPane.ERROR_MESSAGE,javax.swing.JOptionPane.QUESTION_MESSAGE,javax.swing.JOptionPane.PLAIN_MESSAGE}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane java.lang.String showInputDialog(java.awt.Component, java.lang.Object, java.lang.String, int) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.INFORMATION_MESSAGE,javax.swing.JOptionPane.WARNING_MESSAGE,javax.swing.JOptionPane.ERROR_MESSAGE,javax.swing.JOptionPane.QUESTION_MESSAGE,javax.swing.JOptionPane.PLAIN_MESSAGE}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane java.lang.String showInternalInputDialog(java.awt.Component, java.lang.Object, java.lang.String, int) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.INFORMATION_MESSAGE,javax.swing.JOptionPane.WARNING_MESSAGE,javax.swing.JOptionPane.ERROR_MESSAGE,javax.swing.JOptionPane.QUESTION_MESSAGE,javax.swing.JOptionPane.PLAIN_MESSAGE}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane void setOptionType(int) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.DEFAULT_OPTION, javax.swing.JOptionPane.YES_NO_OPTION, javax.swing.JOptionPane.YES_NO_CANCEL_OPTION, javax.swing.JOptionPane.OK_CANCEL_OPTION}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane void showInternalMessageDialog(java.awt.Component, java.lang.Object, java.lang.String, int) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.INFORMATION_MESSAGE,javax.swing.JOptionPane.WARNING_MESSAGE,javax.swing.JOptionPane.ERROR_MESSAGE,javax.swing.JOptionPane.QUESTION_MESSAGE,javax.swing.JOptionPane.PLAIN_MESSAGE}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane void showInternalMessageDialog(java.awt.Component, java.lang.Object, java.lang.String, int, javax.swing.Icon) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.INFORMATION_MESSAGE,javax.swing.JOptionPane.WARNING_MESSAGE,javax.swing.JOptionPane.ERROR_MESSAGE,javax.swing.JOptionPane.QUESTION_MESSAGE,javax.swing.JOptionPane.PLAIN_MESSAGE}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane void showMessageDialog(java.awt.Component, java.lang.Object, java.lang.String, int) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.INFORMATION_MESSAGE,javax.swing.JOptionPane.WARNING_MESSAGE,javax.swing.JOptionPane.ERROR_MESSAGE,javax.swing.JOptionPane.QUESTION_MESSAGE,javax.swing.JOptionPane.PLAIN_MESSAGE}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JOptionPane void showMessageDialog(java.awt.Component, java.lang.Object, java.lang.String, int, javax.swing.Icon) 3">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JOptionPane.INFORMATION_MESSAGE,javax.swing.JOptionPane.WARNING_MESSAGE,javax.swing.JOptionPane.ERROR_MESSAGE,javax.swing.JOptionPane.QUESTION_MESSAGE,javax.swing.JOptionPane.PLAIN_MESSAGE}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JPasswordField void setText(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="javax.swing.JScrollBar JScrollBar(int) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.awt.Adjustable.HORIZONTAL, java.awt.Adjustable.VERTICAL}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JScrollBar JScrollBar(int, int, int, int, int) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.awt.Adjustable.HORIZONTAL, java.awt.Adjustable.VERTICAL}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JScrollPane JScrollPane(int, int) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JScrollPane JScrollPane(int, int) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED, javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER, javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JScrollPane JScrollPane(java.awt.Component, int, int) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JScrollPane JScrollPane(java.awt.Component, int, int) 2">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED, javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER, javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JScrollPane int getHorizontalScrollBarPolicy()">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED, javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER, javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JScrollPane int getVerticalScrollBarPolicy()">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS}" />
+    </annotation>
+  </item>
+  <item name='javax.swing.JScrollPane void setCorner(java.lang.String, java.awt.Component) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name="javax.swing.JSplitPane JSplitPane(int, boolean) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JSplitPane.HORIZONTAL_SPLIT,javax.swing.JSplitPane.VERTICAL_SPLIT}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JSplitPane JSplitPane(int, boolean, java.awt.Component, java.awt.Component) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JSplitPane.HORIZONTAL_SPLIT,javax.swing.JSplitPane.VERTICAL_SPLIT}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JSplitPane JSplitPane(int, java.awt.Component, java.awt.Component) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JSplitPane.HORIZONTAL_SPLIT,javax.swing.JSplitPane.VERTICAL_SPLIT}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JTabbedPane JTabbedPane(int) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.SwingConstants.TOP, javax.swing.SwingConstants.BOTTOM, javax.swing.SwingConstants.LEFT, javax.swing.SwingConstants.RIGHT}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JTabbedPane JTabbedPane(int, int) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.SwingConstants.TOP, javax.swing.SwingConstants.BOTTOM, javax.swing.SwingConstants.LEFT, javax.swing.SwingConstants.RIGHT}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JTabbedPane JTabbedPane(int, int) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JTabbedPane.WRAP_TAB_LAYOUT, javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JTabbedPane int getTabLayoutPolicy()">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.JTabbedPane.WRAP_TAB_LAYOUT, javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JTabbedPane int getTabPlacement()">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.SwingConstants.TOP, javax.swing.SwingConstants.BOTTOM, javax.swing.SwingConstants.LEFT, javax.swing.SwingConstants.RIGHT}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.JTable JTable(java.lang.Object[][], java.lang.Object[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="javax.swing.JTable JTable(java.lang.Object[][], java.lang.Object[]) 1">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="javax.swing.JTable int columnAtPoint(java.awt.Point) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="javax.swing.JTable int rowAtPoint(java.awt.Point) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="javax.swing.JTable java.awt.Dimension getIntercellSpacing()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="javax.swing.JTable java.awt.Rectangle getCellRect(int, int, boolean)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="javax.swing.JTable java.lang.String getToolTipText(java.awt.event.MouseEvent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="javax.swing.JTable javax.swing.table.TableColumn getColumn(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="javax.swing.JTable void addColumn(javax.swing.table.TableColumn) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="javax.swing.JTable void removeColumn(javax.swing.table.TableColumn) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="javax.swing.JTable void setColumnModel(javax.swing.table.TableColumnModel) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="javax.swing.JTable void setDropMode(javax.swing.DropMode) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="javax.swing.JTable void setGridColor(java.awt.Color) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="javax.swing.JTable void setIntercellSpacing(java.awt.Dimension) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="javax.swing.JTable void setModel(javax.swing.table.TableModel) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="javax.swing.JTable void setSelectionModel(javax.swing.ListSelectionModel) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="javax.swing.JTable void sorterChanged(javax.swing.event.RowSorterEvent) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='javax.swing.JTree ANCHOR_SELECTION_PATH_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree CELL_EDITOR_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree CELL_RENDERER_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree EDITABLE_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree EXPANDS_SELECTED_PATHS_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree INVOKES_STOP_CELL_EDITING_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree LARGE_MODEL_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree LEAD_SELECTION_PATH_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree ROOT_VISIBLE_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree ROW_HEIGHT_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree SCROLLS_ON_EXPAND_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree SELECTION_MODEL_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree SHOWS_ROOT_HANDLES_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree TOGGLE_CLICK_COUNT_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree TREE_MODEL_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree VISIBLE_ROW_COUNT_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree int[] getSelectionRows()'>
+    <annotation name='org.jetbrains.annotations.Nullable' />
+  </item>
+  <item name="javax.swing.JTree java.awt.Rectangle getPathBounds(javax.swing.tree.TreePath)">
+    <annotation name="org.jetbrains.annotations.Nullable" />
+  </item>
+  <item name="javax.swing.JTree javax.swing.tree.TreePath getPathForLocation(int, int)">
+    <annotation name="org.jetbrains.annotations.Nullable" />
+  </item>
+  <item name="javax.swing.JTree javax.swing.tree.TreePath getSelectionPath()">
+    <annotation name="org.jetbrains.annotations.Nullable" />
+  </item>
+  <item name="javax.swing.JTree javax.swing.tree.TreePath[] getSelectionPaths()">
+    <annotation name="org.jetbrains.annotations.Nullable" />
+  </item>
+  <item name="javax.swing.JViewport java.awt.Rectangle getViewRect()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="javax.swing.KeyStroke">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="javax.swing.KeyStroke KeyStroke(char, int, int, boolean) 2">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
+    </annotation>
+  </item>
+  <item name="javax.swing.KeyStroke javax.swing.KeyStroke getKeyStroke(int, int) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
+    </annotation>
+  </item>
+  <item name="javax.swing.KeyStroke javax.swing.KeyStroke getKeyStroke(int, int, boolean) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
+    </annotation>
+  </item>
+  <item name="javax.swing.KeyStroke javax.swing.KeyStroke getKeyStroke(java.lang.Character, int) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
+    </annotation>
+  </item>
+  <item name='javax.swing.KeyboardManager void registerKeyStroke(javax.swing.KeyStroke, javax.swing.JComponent) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull' />
+  </item>
+  <item name="javax.swing.ListSelectionModel int getSelectionMode()">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="valuesFromClass" val="javax.swing.ListSelectionModel.class" />
+    </annotation>
+  </item>
+  <item name="javax.swing.ListSelectionModel void setSelectionMode(int) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="valuesFromClass" val="javax.swing.ListSelectionModel.class" />
+    </annotation>
+  </item>
+  <item name="javax.swing.LookAndFeel java.lang.String getID()">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="javax.swing.LookAndFeel void installBorder(javax.swing.JComponent, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="javax.swing.LookAndFeel void installColorsAndFont(javax.swing.JComponent, java.lang.String, java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="javax.swing.LookAndFeel void installColorsAndFont(javax.swing.JComponent, java.lang.String, java.lang.String, java.lang.String) 2">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="javax.swing.LookAndFeel void installColorsAndFont(javax.swing.JComponent, java.lang.String, java.lang.String, java.lang.String) 3">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name='javax.swing.LookAndFeel void installProperty(javax.swing.JComponent, java.lang.String, java.lang.Object) 1'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name="javax.swing.RowSorter.SortKey SortKey(int, javax.swing.SortOrder) 1">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='javax.swing.ScrollPaneConstants'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name="javax.swing.Scrollable int getScrollableBlockIncrement(java.awt.Rectangle, int, int) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.SwingConstants.HORIZONTAL, javax.swing.SwingConstants.VERTICAL}" />
+    </annotation>
+  </item>
+  <item name="javax.swing.Scrollable int getScrollableUnitIncrement(java.awt.Rectangle, int, int) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.SwingConstants.HORIZONTAL, javax.swing.SwingConstants.VERTICAL}" />
+    </annotation>
+  </item>
+  <item name='javax.swing.SwingUtilities java.awt.Frame getSharedOwnerFrame()'>
+    <annotation name='org.jetbrains.annotations.NotNull' />
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.Point convertPoint(java.awt.Component, java.awt.Point, java.awt.Component)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="javax.swing.SwingUtilities java.awt.Point convertPoint(java.awt.Component, java.awt.Point, java.awt.Component) 1">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='javax.swing.SwingUtilities void convertPointFromScreen(java.awt.Point, java.awt.Component) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull' />
+  </item>
+  <item name='javax.swing.SwingUtilities void convertPointFromScreen(java.awt.Point, java.awt.Component) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull' />
+  </item>
+  <item name="javax.swing.TransferHandler java.awt.datatransfer.Transferable createTransferable(javax.swing.JComponent)">
+    <annotation name="org.jetbrains.annotations.Nullable" />
+  </item>
+  <item name='javax.swing.UIDefaults'>
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="javax.swing.UIManager">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name='javax.swing.UIManager java.lang.String getCrossPlatformLookAndFeelClassName()'>
+    <annotation name='org.jetbrains.annotations.NotNull' />
+  </item>
+  <item name='javax.swing.UIManager java.lang.String getSystemLookAndFeelClassName()'>
+    <annotation name='org.jetbrains.annotations.NotNull' />
+  </item>
+  <item name='javax.swing.UIManager.LookAndFeelInfo java.lang.String getName()'>
+    <annotation name='org.jetbrains.annotations.Nls' />
+  </item>
+</root>
+

@@ -1,0 +1,2 @@
+start = start.element
+start.element = element foo { empty }

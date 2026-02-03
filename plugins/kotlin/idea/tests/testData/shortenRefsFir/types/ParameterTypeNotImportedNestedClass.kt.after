@@ -1,0 +1,5 @@
+package test
+
+import dependency.T
+
+fun foo(p: T.TT) {}

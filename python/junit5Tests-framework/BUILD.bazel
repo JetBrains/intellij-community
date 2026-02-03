@@ -1,0 +1,81 @@
+### auto-generated section `build intellij.python.community.junit5Tests.framework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "community-junit5Tests-framework_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "community-junit5Tests-framework",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["//libraries/system-stubs-jupiter"],
+  runtime_deps = ["//python/pluginCore:community-plugin"]
+)
+
+jvm_library(
+  name = "community-junit5Tests-framework_test_lib",
+  module_name = "intellij.python.community.junit5Tests.framework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":community-junit5Tests-framework_test_resources"],
+  deps = [
+    "@lib//:junit4",
+    "@lib//:junit5",
+    "@lib//:junit5Jupiter",
+    "@lib//:junit5Params",
+    "@lib//:junit5Pioneer",
+    "@lib//:apache-sshd-osgi",
+    "@lib//:hamcrest",
+    "@lib//:io-mockk-jvm",
+    "@lib//:jna",
+    "@lib//:kotlin-stdlib",
+    "//wintools",
+    "//wintools:wintools_test_lib",
+    "//libraries/system-stubs-jupiter",
+    "//libraries/testcontainers",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-impl",
+    "//platform/core-api:core",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/eel-provider",
+    "//platform/execution",
+    "//platform/execution-impl",
+    "//platform/ide-core",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/util",
+    "//platform/util/coroutines",
+    "//python/openapi:community",
+    "//python/openapi:community_test_lib",
+    "//python/pipenv",
+    "//python/python-sdk:sdk",
+    "//python/python-sdk:sdk_test_lib",
+    "//python/python-poetry/common",
+    "//python/python-psi-impl:psi-impl",
+    "//platform/testFramework/junit5/projectStructure",
+    "//platform/testFramework/junit5/projectStructure:projectStructure_test_lib",
+    "//platform/lang-core",
+    "//platform/util/jdom",
+  ],
+  exports = ["//libraries/system-stubs-jupiter"],
+  runtime_deps = [":community-junit5Tests-framework"]
+)
+### auto-generated section `build intellij.python.community.junit5Tests.framework` end
+
+### auto-generated section `test intellij.python.community.junit5Tests.framework` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "community-junit5Tests-framework_test",
+  runtime_deps = [":community-junit5Tests-framework_test_lib"]
+)
+### auto-generated section `test intellij.python.community.junit5Tests.framework` end

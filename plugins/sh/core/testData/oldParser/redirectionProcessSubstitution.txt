@@ -1,0 +1,116 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('cat')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(<)('<')
+          PsiWhiteSpace(' ')
+          PROCESS_SUBSTITUTION
+            PsiElement(<()('<(')
+            COMPOUND_LIST
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('true')
+            PsiElement())(')')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('cat')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PROCESS_SUBSTITUTION
+            PsiElement(>()('>(')
+            COMPOUND_LIST
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('true')
+            PsiElement())(')')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('cat')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(<)('<')
+          PsiWhiteSpace(' ')
+          PROCESS_SUBSTITUTION
+            PsiElement(<()('<(')
+            COMPOUND_LIST
+              PIPELINE_COMMAND_LIST
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('true')
+                PsiWhiteSpace(' ')
+                PsiElement(&&)('&&')
+                PsiWhiteSpace(' ')
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('false')
+            PsiElement())(')')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('cat')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PROCESS_SUBSTITUTION
+            PsiElement(>()('>(')
+            COMPOUND_LIST
+              PIPELINE_COMMAND_LIST
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('true')
+                PsiWhiteSpace(' ')
+                PsiElement(&&)('&&')
+                PsiWhiteSpace(' ')
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('false')
+            PsiElement())(')')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('cat')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(<)('<')
+          PsiWhiteSpace(' ')
+          PROCESS_SUBSTITUTION
+            PsiElement(<()('<(')
+            COMPOUND_LIST
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('true')
+            PsiElement())(')')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('cat')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PROCESS_SUBSTITUTION
+            PsiElement(>()('>(')
+            COMPOUND_LIST
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('true')
+            PsiElement())(')')

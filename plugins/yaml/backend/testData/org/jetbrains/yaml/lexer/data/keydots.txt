@@ -1,0 +1,8 @@
+scalar key ('my.testevent.pre')
+: (':')
+Eol ('\n')
+indent ('  ')
+scalar key ('type')
+: (':')
+whitespace ('     ')
+text ('sfEvent')

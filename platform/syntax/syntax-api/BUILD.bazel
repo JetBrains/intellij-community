@@ -1,0 +1,55 @@
+### auto-generated section `build intellij.platform.syntax` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+
+create_kotlinc_options(
+  name = "custom_syntax",
+  jvm_target = "8",
+  x_no_call_assertions = True,
+  x_no_param_assertions = True
+)
+
+jvm_provided_library(
+  name = "platform_multiplatformSupport_provided",
+  lib = "//platform/multiplatformSupport"
+)
+
+jvm_library(
+  name = "syntax",
+  module_name = "intellij.platform.syntax",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "srcJvm/**/*.kt", "srcJvm/**/*.java", "srcJvm/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_syntax",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/multiplatform",
+    ":platform_multiplatformSupport_provided",
+  ]
+)
+
+jvm_library(
+  name = "syntax_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_syntax",
+  associates = [":syntax"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/multiplatform",
+    "@lib//:junit5",
+    "@lib//:kotlin-test",
+    ":platform_multiplatformSupport_provided",
+  ]
+)
+### auto-generated section `build intellij.platform.syntax` end
+
+### auto-generated section `test intellij.platform.syntax` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "syntax_test",
+  runtime_deps = [":syntax_test_lib"]
+)
+### auto-generated section `test intellij.platform.syntax` end

@@ -1,0 +1,105 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.ui.playback.commands;
+
+import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.ui.playback.PlaybackContext;
+import com.intellij.openapi.wm.IdeFocusManager;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
+
+import java.awt.*;
+import java.util.*;
+
+@ApiStatus.Internal
+public final class AssertFocused extends AbstractCommand {
+
+  public static final String PREFIX = CMD_PREFIX + "assert focused";
+
+  public AssertFocused(String text, int line) {
+    super(text, line);
+  }
+
+  @Override
+  protected @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
+    String text = getText().substring(PREFIX.length()).trim();
+    final Map<String, String> expected = new LinkedHashMap<>();
+
+    if (!text.isEmpty()) {
+      final String[] keyValue = text.split(",");
+      for (String each : keyValue) {
+        final String[] eachPair = each.split("=");
+        if (eachPair.length != 2) {
+          String error = "Syntax error, must be comma-separated pairs key=value";
+          context.error(error, getLine());
+          return Promises.rejectedPromise(error);
+        }
+
+        expected.put(eachPair[0], eachPair[1]);
+      }
+    }
+
+    final AsyncPromise<Object> result = new AsyncPromise<>();
+    IdeFocusManager.findInstance().doWhenFocusSettlesDown(() -> {
+      try {
+        doAssert(expected, context);
+        result.setResult(null);
+      }
+      catch (AssertionError error) {
+        context.error("Assertion failed: " + error.getMessage(), getLine());
+        result.setError(error);
+      }
+    });
+
+    return result;
+  }
+
+  private void doAssert(Map<String, String> expected, PlaybackContext context) throws AssertionError {
+    final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+
+    if (owner == null) {
+      throw new AssertionError("No component focused");
+    }
+
+    Component eachParent = owner;
+    final LinkedHashMap<String, String> actual = new LinkedHashMap<>();
+    while (eachParent != null) {
+      if (eachParent instanceof Queryable) {
+        ((Queryable)eachParent).putInfo(actual);
+      }
+
+      eachParent = eachParent.getParent();
+    }
+
+    Set testedKeys = new LinkedHashSet<String>();
+    for (String eachKey : expected.keySet()) {
+      testedKeys.add(eachKey);
+
+      final String actualValue = actual.get(eachKey);
+      final String expectedValue = expected.get(eachKey);
+
+      if (!expectedValue.equals(actualValue)) {
+        throw new AssertionError(eachKey + " expected: " + expectedValue + " but was: " + actualValue);
+      }
+    }
+
+    Map<String, String> untested = new HashMap<>();
+    for (String eachKey : actual.keySet()) {
+      if (testedKeys.contains(eachKey)) continue;
+      untested.put(eachKey, actual.get(eachKey));
+    }
+
+    StringBuilder untestedText = new StringBuilder();
+    for (String each : untested.keySet()) {
+      if (!untestedText.isEmpty()) {
+        untestedText.append(",");
+      }
+      untestedText.append(each).append("=").append(untested.get(each));
+    }
+
+    context.message("Untested info: " + untestedText, getLine());
+  }
+
+}

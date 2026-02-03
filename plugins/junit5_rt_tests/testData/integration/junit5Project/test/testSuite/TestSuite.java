@@ -1,0 +1,15 @@
+package testSuite;
+
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.platform.suite.api.*;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@Suite
+@SuiteDisplayName("Example Test Suite")
+@SelectPackages("testSuite")
+@IncludeClassNamePatterns(".*SuiteTest")
+@IncludeTags("important")
+@ExcludeTags("skip")
+public class TestSuite { }

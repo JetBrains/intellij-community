@@ -1,0 +1,49 @@
+### auto-generated section `build intellij.kotlin.codeInsight.overrideImplement` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_kotlin-codeInsight-overrideImplement",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+  ],
+  x_context_parameters = True
+)
+
+jvm_library(
+  name = "kotlin-codeInsight-overrideImplement",
+  module_name = "intellij.kotlin.codeInsight.overrideImplement",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-codeInsight-overrideImplement",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-k2",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/kdoc",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/code-insight/api",
+    "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
+    "//platform/core-impl",
+    "//platform/lang-impl",
+    "//platform/lang-api:lang",
+    "//java/java-psi-api:psi",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+    "//platform/core-ui",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+    "//plugins/kotlin/base/analysis",
+    "@lib//:kotlinc-analysis-api-impl-base",
+  ]
+)
+### auto-generated section `build intellij.kotlin.codeInsight.overrideImplement` end

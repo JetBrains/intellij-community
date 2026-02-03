@@ -1,0 +1,50 @@
+### auto-generated section `build intellij.platform.projectModel.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "projectModel-impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "projectModel-impl",
+  module_name = "intellij.platform.projectModel.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":projectModel-impl_resources"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/core-impl",
+    "//jps/model-api:model",
+    "//jps/model-impl",
+    "//platform/util",
+    "//jps/model-serialization",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/util-ex",
+    "//platform/util/concurrency",
+    "//platform/workspace/storage",
+    "//platform/workspace/jps",
+    "//libraries/fastutil",
+    "//libraries/guava",
+    "//platform/util/jdom",
+    "//libraries/kryo5",
+    "//platform/diagnostic/telemetry",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//libraries/hash4j",
+    "//platform/backend/workspace",
+    "//platform/diagnostic",
+    "//platform/eel-provider",
+    "//platform/util/coroutines",
+    "//platform/diagnostic/telemetry-impl",
+    "//platform/analysis-api:analysis",
+  ],
+  exports = [
+    "//jps/model-serialization",
+    "//platform/util-ex",
+  ]
+)
+### auto-generated section `build intellij.platform.projectModel.impl` end

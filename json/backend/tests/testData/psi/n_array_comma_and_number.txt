@@ -1,0 +1,9 @@
+JsonFile: n_array_comma_and_number.json
+  JsonArray
+    PsiElement([)('[')
+    PsiErrorElement:<value> expected, got ','
+      PsiElement(,)(',')
+  JsonNumberLiteral
+    PsiElement(NUMBER)('1')
+  PsiErrorElement:<value> expected, got ']'
+    PsiElement(])(']')

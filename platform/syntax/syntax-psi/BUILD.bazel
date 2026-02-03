@@ -1,0 +1,38 @@
+### auto-generated section `build intellij.platform.syntax.psi` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_psi",
+  jvm_target = "8",
+  x_no_call_assertions = True,
+  x_no_param_assertions = True
+)
+
+resourcegroup(
+  name = "psi_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "psi",
+  module_name = "intellij.platform.syntax.psi",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":psi_resources"],
+  kotlinc_opts = ":custom_psi",
+  deps = [
+    "//platform/util",
+    "//platform/util-rt",
+    "//platform/syntax/syntax-api:syntax",
+    "//platform/core-api:core",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-impl",
+    "//libraries/fastutil",
+    "//platform/syntax/syntax-util:util",
+    "//platform/syntax/syntax-extensions:extensions",
+  ],
+  exports = ["//platform/syntax/syntax-api:syntax"]
+)
+### auto-generated section `build intellij.platform.syntax.psi` end

@@ -1,0 +1,53 @@
+### auto-generated section `build intellij.execution.process.mediator.common` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "common_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "common",
+  module_name = "intellij.execution.process.mediator.common",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":common_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:jetbrains-annotations",
+    "//libraries/guava",
+    "//libraries/protobuf",
+    "//libraries/javax/annotation",
+    "//libraries/grpc",
+  ]
+)
+
+jvm_library(
+  name = "common_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":common"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:jetbrains-annotations",
+    "//libraries/guava",
+    "//libraries/protobuf",
+    "//libraries/javax/annotation",
+    "@lib//:junit5",
+    "@lib//:execution-process-mediator-common-com-willowtreeapps-assertk-assertk-jvm",
+    "//libraries/grpc",
+  ]
+)
+### auto-generated section `build intellij.execution.process.mediator.common` end
+
+### auto-generated section `test intellij.execution.process.mediator.common` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "common_test",
+  runtime_deps = [":common_test_lib"]
+)
+### auto-generated section `test intellij.execution.process.mediator.common` end

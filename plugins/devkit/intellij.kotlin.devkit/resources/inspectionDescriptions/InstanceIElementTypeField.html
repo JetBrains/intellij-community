@@ -1,0 +1,59 @@
+<html>
+<body>
+Reports instance fields initialized with <code>IElementType</code> or its subtypes.
+<p>
+  <code>IElementType</code> instances represent token types in the IntelliJ Platform's lexer/parser infrastructure
+  and should be defined as static constants to ensure they are singletons.
+  When defined as instance fields, a new <code>IElementType</code> instance is created for each class instance.
+  All such instances are registered in IElementType internal storage and kept there until the app is closed.
+  Currently, the infrastructure allows storing only ~16k of element types, which is not that many.
+</p>
+<p>
+  The inspection suggests converting instance fields to static constants in Java
+  or moving them to a companion object in Kotlin.
+</p>
+<p>Bad pattern (Java):</p>
+<pre><code lang="java">
+class MyTokens {
+  // New IElementType created for each MyTokens instance
+  IElementType myToken = new IElementType("MY_TOKEN");
+}
+</code></pre>
+<p>Good pattern (Java):</p>
+<pre><code lang="java">
+class MyTokens {
+  // Singleton IElementType shared across all instances
+  static final IElementType MY_TOKEN = new IElementType("MY_TOKEN");
+}
+</code></pre>
+<p>Bad pattern (Kotlin):</p>
+<pre><code lang="kotlin">
+class MyTokens {
+  // New IElementType created for each MyTokens instance
+  val myToken = IElementType("MY_TOKEN")
+}
+</code></pre>
+<p>Good pattern (Kotlin):</p>
+<pre><code lang="kotlin">
+class MyTokens {
+  companion object {
+    // Singleton IElementType shared across all instances
+    val MY_TOKEN = IElementType("MY_TOKEN")
+  }
+}
+</code></pre>
+<p>
+  Alternatively in Kotlin, token types can be defined as top-level or object declarations:
+</p>
+<pre><code lang="kotlin">
+// Top-level constant
+private val MY_TOKEN = IElementType("MY_TOKEN")
+
+// Or in an object
+object MyTokens {
+  val MY_TOKEN = IElementType("MY_TOKEN")
+}
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

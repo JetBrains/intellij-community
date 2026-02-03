@@ -1,0 +1,7 @@
+# The implementation has defaults for the arguments that would make the
+# created instances unusable, so we require the arguments in the stub.
+pika.spec.Queue.DeclareOk.__init__
+
+# Arguments have a sentinel default, which is not reflected in the stubs.
+pika.ConnectionParameters.__init__
+pika.connection.ConnectionParameters.__init__

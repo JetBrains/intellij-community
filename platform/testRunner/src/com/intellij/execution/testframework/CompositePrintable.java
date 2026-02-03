@@ -1,0 +1,413 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.execution.testframework;
+
+import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
+import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
+import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.IOUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+
+public class CompositePrintable extends UserDataHolderBase implements Printable, Disposable {
+  public static final String NEW_LINE = "\n";
+
+  protected final List<Printable> myNestedPrintables = new ArrayList<>();
+  private final PrintablesWrapper myWrapper = new PrintablesWrapper();
+  protected int myExceptionMark;
+  private int myCurrentSize = 0;
+  private String myOutputFile = null;
+  private String myFrameworkOutputFile;
+  private static final ExecutorService ourTestExecutorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
+    "Tests Executor");
+
+  public void flush() {
+    synchronized (myNestedPrintables) {
+      myWrapper.flush(myNestedPrintables);
+      clear();
+    }
+  }
+
+  public void flushOutputFile() {
+    synchronized (myNestedPrintables) {
+      ArrayList<Printable> printables = new ArrayList<>(myNestedPrintables);
+      invokeInAlarm(() -> printOutputFile(printables));
+    }
+  }
+
+  public static void invokeInAlarm(Runnable runnable) {
+    invokeInAlarm(runnable, !ApplicationManager.getApplication().isDispatchThread() ||
+                            ApplicationManager.getApplication().isUnitTestMode());
+  }
+
+  public static void invokeInAlarm(Runnable runnable, final boolean sync) {
+    if (sync) {
+      runnable.run();
+    } else {
+      ourTestExecutorService.execute(runnable);
+    }
+  }
+
+  @Override
+  public void printOn(final Printer printer) {
+    final ArrayList<Printable> printables;
+    synchronized (myNestedPrintables) {
+      printables = new ArrayList<>(myNestedPrintables);
+    }
+    myWrapper.printOn(printer, printables);
+  }
+
+  public void printOwnPrintablesOn(final Printer printer) {
+    printOwnPrintablesOn(printer, true);
+  }
+
+  public void printOwnPrintablesOn(@NotNull Printer printer, boolean skipFileContent) {
+    List<Printable> printables;
+    synchronized (myNestedPrintables) {
+      printables = ContainerUtil.filter(myNestedPrintables, printable -> !(printable instanceof AbstractTestProxy));
+    }
+    myWrapper.printOn(printer, printables, skipFileContent);
+  }
+
+  public void addLast(final @NotNull Printable printable) {
+    synchronized (myNestedPrintables) {
+      myNestedPrintables.add(printable);
+      if (myNestedPrintables.size() > 500) {
+        flush();
+      }
+    }
+  }
+
+  public void insert(final @NotNull Printable printable, int i) {
+    synchronized (myNestedPrintables) {
+      if (i >= myNestedPrintables.size()) {
+        myNestedPrintables.add(printable);
+      } else {
+        myNestedPrintables.add(i, printable);
+      }
+      if (myNestedPrintables.size() > 500) {
+        flush();
+      }
+    }
+  }
+
+  protected void clear() {
+    synchronized (myNestedPrintables) {
+      myCurrentSize += myNestedPrintables.size();
+      myNestedPrintables.clear();
+    }
+  }
+
+  public int getCurrentSize() {
+    synchronized (myNestedPrintables) {
+      return myCurrentSize + myNestedPrintables.size();
+    }
+  }
+
+  @Override
+  public void dispose() {
+    clear();
+    myWrapper.dispose();
+  }
+
+  public int getExceptionMark() {
+    return myExceptionMark;
+  }
+
+  public void setExceptionMark(int exceptionMark) {
+    myExceptionMark = exceptionMark;
+  }
+
+  public void setOutputFilePath(String outputFile) {
+    myOutputFile = outputFile;
+  }
+
+  public void setFrameworkOutputFile(String frameworkOutputFile) {
+    myFrameworkOutputFile = frameworkOutputFile;
+  }
+
+  public void printFromFrameworkOutputFile(final Printer console) {
+    if (myFrameworkOutputFile != null) {
+      final Runnable runnable = () -> {
+        final File inputFile = new File(myFrameworkOutputFile);
+        if (inputFile.exists()) {
+          try {
+            final String fileText = FileUtil.loadFile(inputFile);
+            console.print(fileText, ConsoleViewContentType.NORMAL_OUTPUT);
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+        }
+      };
+      invokeInAlarm(runnable);
+    }
+  }
+
+  private static final Logger LOG = Logger.getInstance(PrintablesWrapper.class);
+
+  private class PrintablesWrapper {
+
+    private static final @NonNls String HYPERLINK = "hyperlink";
+
+    private File myFile;
+    private final MyFlushToFilePrinter myPrinter = new MyFlushToFilePrinter();
+    private final Object myFileLock = new Object();
+
+    private synchronized @Nullable File getFile() {
+      if (myFile == null) {
+        try {
+          final File tempFile = FileUtil.createTempFile("idea_test_", ".out");
+          if (tempFile.exists()) {
+            myFile = tempFile;
+            return myFile;
+          }
+        }
+        catch (IOException e) {
+          LOG.error(e);
+          return null;
+        }
+      }
+      return myFile;
+    }
+
+    public synchronized void dispose() {
+      if (myFile != null) FileUtil.delete(myFile);
+    }
+
+    public synchronized boolean hasOutput() {
+      return myFile != null;
+    }
+
+    public void flush(final List<? extends Printable> printables) {
+      if (printables.isEmpty()) return;
+      final ArrayList<Printable> currentPrintables = new ArrayList<>(printables);
+      //move out from AWT thread
+      final Runnable request = () -> {
+        synchronized (myFileLock) {
+          for (final Printable printable : currentPrintables) {
+            printable.printOn(myPrinter);
+          }
+          myPrinter.close();
+        }
+        printOutputFile(currentPrintables);
+      };
+      invokeInAlarm(request, ApplicationManager.getApplication().isUnitTestMode());
+    }
+
+    public void printOn(final Printer console, final List<? extends Printable> printables) {
+      printOn(console, printables, false);
+    }
+
+    public void printOn(final Printer console, final List<? extends Printable> printables, final boolean skipFileContent) {
+      final Runnable request = () -> {
+        if (skipFileContent) {
+          readFileContentAndPrint(console, null, printables);
+          return;
+        }
+        final File file = hasOutput() ? getFile() : null;
+        synchronized (myFileLock) {
+          readFileContentAndPrint(console, file, printables);
+        }
+      };
+      invokeInAlarm(request);
+    }
+
+    private class MyFlushToFilePrinter implements Printer {
+      //all access is performed from alarm thread
+      private DataOutputStream myFileWriter;
+
+      private DataOutputStream getFileWriter() {
+        if (myFileWriter == null) {
+          try {
+            final File file = getFile();
+            LOG.assertTrue(file != null);
+            myFileWriter = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file, true)));
+          }
+          catch (FileNotFoundException e) {
+            LOG.info(e);
+            return null;
+          }
+        }
+        return myFileWriter;
+      }
+
+      private void close() {
+        if (myFileWriter != null) {
+          try {
+            myFileWriter.close();
+          }
+          catch (FileNotFoundException e) {
+            LOG.info(e);
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+          myFileWriter = null;
+        }
+      }
+
+      @Override
+      public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
+        try {
+          final DataOutputStream writer = getFileWriter();
+          if (writer != null) {
+            IOUtil.writeString(contentType.toString(), writer);
+            IOUtil.writeString(text, writer);
+          }
+        }
+        catch (FileNotFoundException e) {
+          LOG.info(e);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+
+      @Override
+      public void printHyperlink(@NotNull String text, HyperlinkInfo info) {
+        if (info instanceof DiffHyperlink.DiffHyperlinkInfo) {
+          final DiffHyperlink diffHyperlink = ((DiffHyperlink.DiffHyperlinkInfo)info).getPrintable();
+          try {
+            final DataOutputStream fileWriter = getFileWriter();
+            if (fileWriter != null) {
+              IOUtil.writeString(HYPERLINK, fileWriter);
+              IOUtil.writeString(diffHyperlink.getLeft(), fileWriter);
+              IOUtil.writeString(diffHyperlink.getRight(), fileWriter);
+              IOUtil.writeString(diffHyperlink.getFilePath(), fileWriter);
+              IOUtil.writeString(diffHyperlink.getActualFilePath(), fileWriter);
+            }
+          }
+          catch (FileNotFoundException e) {
+            LOG.info(e);
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+        }
+        else {
+          print(text, ConsoleViewContentType.NORMAL_OUTPUT);
+        }
+      }
+
+      @Override
+      public void onNewAvailable(@NotNull Printable printable) {}
+
+      @Override
+      public void mark() {}
+
+      @Override
+      public void printWithAnsiColoring(@NotNull String text, @NotNull Key processOutputType) {
+        // Write text to a file as a single chunk. ANSI coloring will be applied when reading the file.
+        print(text, ConsoleViewContentType.getConsoleViewType(processOutputType));
+      }
+    }
+
+    private void readFileContentAndPrint(Printer printer, @Nullable File file, List<? extends Printable> nestedPrintables) {
+      if (file != null) {
+        int lineNum = 0;
+        Map<String, ConsoleViewContentType> contentTypeByNameMap = ContainerUtil.newMapFromValues(
+          ConsoleViewContentType.getRegisteredTypes().iterator(), contentType -> contentType.toString()
+        );
+        try (DataInputStream reader = new DataInputStream(new BufferedInputStream(new FileInputStream(file)))) {
+          while (reader.available() > 0 && !wasPrintableChanged(printer)) {
+            if (lineNum == CompositePrintable.this.getExceptionMark() && lineNum > 0) printer.mark();
+            final String firstToken = IOUtil.readString(reader);
+            if (firstToken == null) break;
+            if (firstToken.equals(HYPERLINK)) {
+              createHyperlink(IOUtil.readString(reader), IOUtil.readString(reader), IOUtil.readString(reader), IOUtil.readString(reader), false).printOn(printer);
+            }
+            else {
+              ConsoleViewContentType contentType = contentTypeByNameMap.getOrDefault(firstToken, ConsoleViewContentType.NORMAL_OUTPUT);
+              String text = IOUtil.readString(reader);
+              if (text != null) {
+                printText(printer, text, contentType);
+              }
+            }
+            lineNum++;
+          }
+        }
+        catch (FileNotFoundException e) {
+          LOG.info(e);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+      for (int i = 0; i < nestedPrintables.size(); i++) {
+        if (i == getExceptionMark() && i > 0) printer.mark();
+        nestedPrintables.get(i).printOn(printer);
+      }
+    }
+
+    private static void printText(@NotNull Printer printer, @NotNull String text, @NotNull ConsoleViewContentType contentType) {
+      if (ConsoleViewContentType.NORMAL_OUTPUT.equals(contentType)) {
+        printer.printWithAnsiColoring(text, ProcessOutputTypes.STDOUT);
+      }
+      else if (ConsoleViewContentType.ERROR_OUTPUT.equals(contentType)) {
+        printer.printWithAnsiColoring(text, ProcessOutputTypes.STDERR);
+      }
+      else {
+        printer.print(text, contentType);
+      }
+    }
+
+    private boolean wasPrintableChanged(Printer printer) {
+      return printer instanceof TestsOutputConsolePrinter && !((TestsOutputConsolePrinter)printer).isCurrent(CompositePrintable.this);
+    }
+  }
+
+  protected DiffHyperlink createHyperlink(final String expected,
+                                          final String actual,
+                                          final String filePath,
+                                          final String actualFilePath, final boolean printOneLine) {
+    return new DiffHyperlink(expected, actual, filePath, actualFilePath, printOneLine);
+  }
+
+  private void printOutputFile(List<? extends Printable> currentPrintables) {
+    if (myOutputFile != null && new File(myOutputFile).isFile()) {
+      try (PrintStream printStream = new PrintStream(new FileOutputStream(myOutputFile, true))) {
+        for (Printable currentPrintable : currentPrintables) {
+          currentPrintable.printOn(new Printer() {
+            @Override
+            public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
+              if (contentType != ConsoleViewContentType.SYSTEM_OUTPUT) {
+                printStream.print(text);
+              }
+            }
+
+            @Override
+            public void printHyperlink(@NotNull String text, HyperlinkInfo info) {
+              printStream.print(text);
+            }
+
+            @Override
+            public void onNewAvailable(@NotNull Printable printable) {}
+
+            @Override
+            public void mark() {}
+          });
+        }
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+  }
+}

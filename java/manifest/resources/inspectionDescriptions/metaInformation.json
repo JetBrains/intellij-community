@@ -1,0 +1,12 @@
+{
+  "inspections": [
+    {
+      "id": "MissingFinalNewline",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MisspelledHeader",
+      "codeQualityCategory": "Reliability"
+    }
+  ]
+}

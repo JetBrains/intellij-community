@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/gen" isTestSource="false" generated="true" />
+      <excludeFolder url="file://$MODULE_DIR$/work" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module" module-name="intellij.xml.psi" />
+    <orderEntry type="module" module-name="intellij.xml.psi.impl" />
+    <orderEntry type="module" module-name="intellij.relaxng" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.impl" />
+    <orderEntry type="library" name="jackson-databind" level="project" />
+    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="library" name="jackson-module-kotlin" level="project" />
+    <orderEntry type="module" module-name="intellij.xml.langInjection" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" />
+    <orderEntry type="module" module-name="intellij.xml.parser" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" />
+    <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
+    <orderEntry type="module" module-name="intellij.javascript.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.angular.backend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.vuejs.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.javascript.web.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.css.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.html.tools.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.react.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.astro.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.angular.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.javascript.analysis.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.javascript.psi.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.idea.ultimate.tests.main" scope="TEST" />
+  </component>
+</module>

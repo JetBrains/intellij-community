@@ -1,0 +1,19 @@
+when:
+def (h,
+i,
+           j)
+
+then:
+def  k,
+l,
+          m
+-----
+when:
+def (h,
+     i,
+     j)
+
+then:
+def k,
+    l,
+    m

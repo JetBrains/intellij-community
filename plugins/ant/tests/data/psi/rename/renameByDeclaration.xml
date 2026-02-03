@@ -1,0 +1,8 @@
+<project name="build" default="test">
+  <target name="<ren>init">
+  </target>
+
+  <target name="test" depends="init">
+
+  </target>
+</project>

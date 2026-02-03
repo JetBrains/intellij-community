@@ -1,0 +1,64 @@
+<idea-plugin>
+  <resource-bundle>messages.KotlinBundle</resource-bundle>
+
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idePlatformKind"
+            interface="org.jetbrains.kotlin.platform.IdePlatformKind"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idePlatformKindTooling"
+            interface="org.jetbrains.kotlin.idea.base.codeInsight.tooling.IdePlatformKindTooling"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <jps.plugin/>
+
+    <sdkType implementation="org.jetbrains.kotlin.idea.framework.KotlinSdkType"/>
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.framework.CreateKotlinSdkActivity"/>
+    <facetType implementation="org.jetbrains.kotlin.idea.facet.KotlinFacetTypeImpl"/>
+    <library.type implementation="org.jetbrains.kotlin.idea.framework.CommonLibraryType"/>
+
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.config.KotlinFacetSettingsProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.facet.KotlinFacetSettingsProviderImpl"/>
+
+    <buildProcess.parametersProvider implementation="org.jetbrains.kotlin.idea.jps.KotlinJpsBuildProcessParametersProvider"/>
+    <compiler.task execute="BEFORE" implementation="org.jetbrains.kotlin.idea.jps.SetupKotlinJpsPluginBeforeCompileTask"/>
+    <projectFacetListener facet-type="kotlin-language" implementation="org.jetbrains.kotlin.idea.jps.KotlinFacetListener"/>
+
+    <notificationGroup
+            id="Kotlin JPS plugin"
+            displayType="STICKY_BALLOON"
+            key="kotlin.jps.plugin.group.name"
+    />
+
+    <!-- Workspace Model -->
+    <workspaceModel.customFacetRelatedEntitySerializer implementation="org.jetbrains.kotlin.idea.workspaceModel.KotlinModuleSettingsSerializer" />
+    <workspaceModel.facetContributor implementation="org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetContributor" />
+    <registryKey key="workspace.model.kotlin.facet.bridge" defaultValue="true" restartRequired="true"
+                 description="Enable Kotlin facet work via own entities at workspace model"/>
+    <registryKey key="kotlin.jps.cache.external.system.id" defaultValue="true"
+                 description="KTIJ-29020 - cache info about external system id for evaluating the final Kotlin JPS compiler version.
+                 It is necessary when the workspace has two projects with different build systems and different versions of the Kotlin compiler"  />
+    <registryKey key="kotlin.jps.instrument.bytecode"
+                 description="Enable bytecode instrumentation for Kotlin classes"
+                 defaultValue="false"
+                 restartRequired="false"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.jps.KotlinGlobalSettingsChangeListener"
+              topic="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener"/>
+  </projectListeners>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind"/>
+    <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.JsIdePlatformKind"/>
+    <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.WasmJsIdePlatformKind"/>
+    <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.WasmWasiIdePlatformKind"/>
+    <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.CommonIdePlatformKind"/>
+
+    <kotlinCompilerVersionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.DefaultKotlinCompilerVersionProvider"
+                                   order="last"/>
+  </extensions>
+</idea-plugin>

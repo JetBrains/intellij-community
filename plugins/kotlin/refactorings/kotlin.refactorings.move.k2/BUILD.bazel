@@ -1,0 +1,136 @@
+### auto-generated section `build intellij.kotlin.refactorings.move` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_kotlin-refactorings-move",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+  ],
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "kotlin-refactorings-move_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-refactorings-move",
+  module_name = "intellij.kotlin.refactorings.move",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-refactorings-move_resources"],
+  kotlinc_opts = ":custom_kotlin-refactorings-move",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-ui",
+    "//platform/core-api:core",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/fir",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//plugins/kotlin/code-insight/utils",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+    "//platform/platform-api:ide",
+    "//platform/usageView",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/kotlin.searching",
+    "//plugins/kotlin/base/facet",
+    "//platform/observable",
+    "//java/openapi:java",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "//plugins/kotlin/base/external-build-system:kotlin-base-externalSystem",
+    "//platform/util/jdom",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-refactorings-move_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-refactorings-move",
+  associates = [":kotlin-refactorings-move"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//libraries/gson",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//plugins/kotlin/plugin/k2",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-ui",
+    "//platform/core-api:core",
+    "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//java/testFramework",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/fir",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//plugins/kotlin/code-insight/utils",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+    "//platform/platform-api:ide",
+    "//platform/usageView",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/kotlin.searching",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/facet",
+    "//platform/observable",
+    "//java/openapi:java",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "//plugins/kotlin/base/external-build-system:kotlin-base-externalSystem",
+    "//platform/util/jdom",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+  ]
+)
+### auto-generated section `build intellij.kotlin.refactorings.move` end
+
+### auto-generated section `test intellij.kotlin.refactorings.move` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "kotlin-refactorings-move_test",
+  runtime_deps = [":kotlin-refactorings-move_test_lib"]
+)
+### auto-generated section `test intellij.kotlin.refactorings.move` end

@@ -1,0 +1,5 @@
+print(unicode())
+print(unicode(''))
+print(unicode('', 'utf-8'))
+print(unicode('', 'utf-8', 'ignore'))
+print(unicode<warning descr="Unexpected argument(s)Possible callees:unicode(self: Self@unicode)unicode(self: Self@unicode, o: object)unicode(self: Self@unicode, o: str, encoding: unicode = ..., errors: unicode = ...)">('', 'utf-8', 'ignore', foo)</warning>)

@@ -1,0 +1,104 @@
+### auto-generated section `build intellij.platform.statistics` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "statistics_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "statistics",
+  module_name = "intellij.platform.statistics",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":statistics_resources"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/jdom",
+    "//platform/statistics/uploader",
+    "//libraries/fastutil",
+    "//platform/util/concurrency",
+    "//platform/core-ui",
+    "@lib//:jna",
+    "//platform/util",
+    "//platform/runtime/product",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util-ex",
+    "//libraries/caffeine",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/ide-core",
+    "//platform/ide-core/plugins",
+    "//platform/projectModel-api:projectModel",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/kotlin/reflect",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/core",
+    "@lib//:com-jetbrains-fus-reporting-api",
+    "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+  ],
+  exports = [
+    "@lib//:com-jetbrains-fus-reporting-api",
+    "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+  ]
+)
+
+jvm_library(
+  name = "statistics_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [":statistics"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/jdom",
+    "//platform/statistics/uploader",
+    "//libraries/fastutil",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-ui",
+    "@lib//:jna",
+    "//platform/util",
+    "//platform/runtime/product",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util-ex",
+    "//libraries/caffeine",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/ide-core",
+    "//platform/ide-core/plugins",
+    "//platform/projectModel-api:projectModel",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/kotlin/reflect",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:junit5",
+    "@lib//:assert_j",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/core",
+    "@lib//:com-jetbrains-fus-reporting-api",
+    "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+  ],
+  exports = [
+    "@lib//:com-jetbrains-fus-reporting-api",
+    "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+  ]
+)
+### auto-generated section `build intellij.platform.statistics` end
+
+### auto-generated section `test intellij.platform.statistics` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "statistics_test",
+  runtime_deps = [":statistics_test_lib"]
+)
+### auto-generated section `test intellij.platform.statistics` end

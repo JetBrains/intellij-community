@@ -1,0 +1,31 @@
+c:com.intellij.xdebugger.impl.frame.XDebuggerFramesList
+- com.intellij.ide.OccurenceNavigator
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
+- com.intellij.ui.components.JBList
+- <init>(com.intellij.openapi.project.Project):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.XDebugSession):V
+- p:createListRenderer():javax.swing.ListCellRenderer
+- p:getFrameNavigatable(com.intellij.xdebugger.frame.XStackFrame,Z):com.intellij.pom.Navigatable
+- p:getProject():com.intellij.openapi.project.Project
+- getSelectedFrame():com.intellij.xdebugger.frame.XStackFrame
+- p:getSelectedFrameNavigatable():com.intellij.pom.Navigatable
+- selectFrame(I):Z
+- selectFrame(com.intellij.xdebugger.frame.XStackFrame):Z
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
+- updateUI():V
+c:com.intellij.xdebugger.impl.frame.XDebuggerFramesList$CopyStackAction
+- com.intellij.openapi.project.DumbAwareAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+com.intellij.xdebugger.impl.frame.XDebuggerFramesList$ItemWithCustomBackgroundColor
+- com.intellij.xdebugger.impl.frame.XStackFrameWithCustomBackgroundColor
+com.intellij.xdebugger.impl.frame.XDebuggerFramesList$ItemWithSeparatorAbove
+- com.intellij.xdebugger.impl.frame.XStackFrameWithSeparatorAbove
+c:com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox
+- com.intellij.openapi.ui.ComboBox
+- <init>():V
+- <init>(javax.swing.ComboBoxModel,I):V
+- setExtension(javax.swing.JComponent):V
+- setUI(javax.swing.plaf.ComboBoxUI):V

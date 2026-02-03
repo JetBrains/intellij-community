@@ -1,0 +1,181 @@
+<idea-plugin>
+  <name>JUnit</name>
+  <id>JUnit</id>
+  <description>
+      <![CDATA[
+      Supports <a href="https://junit.org">JUnit</a> tests.
+      The following features are available:
+        <ul>
+        <li>Ability to create JUnit 3.x, JUnit 4.x, JUnit 5.x or JUnit 6.x tests.</li>
+        <li>Navigation between a test and test subject.</li>
+        <li>Running tests.</li>
+        <li>Viewing test results in the dedicated Test Runner tab of the Run tool window.</li>
+        </ul>
+      ]]>
+   </description>
+  <category>Test Tools</category>
+  <depends>com.intellij.java</depends>
+  <depends optional="true" config-file="junit-properties.xml">com.intellij.properties</depends>
+  <vendor>JetBrains</vendor>
+  <resource-bundle>messages.JUnitBundle</resource-bundle>
+  <extensions defaultExtensionNs="com.intellij">
+    <runConfigurationProducer implementation="com.intellij.execution.junit.AbstractAllInDirectoryConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.intellij.execution.junit.AllInPackageConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.intellij.execution.junit.PatternConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.intellij.execution.junit.TestInClassConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.intellij.execution.junit.UniqueIdConfigurationProducer"/>
+    <deadCode implementation="com.intellij.execution.junit2.inspection.JUnitEntryPoint"/>
+    <cantBeStatic implementation="com.intellij.execution.junit2.inspection.JUnitCantBeStaticExtension" />
+    <testFramework implementation="com.intellij.execution.junit.JUnit4Framework" id="junit4"/>
+    <testFramework implementation="com.intellij.execution.junit.JUnit3Framework" id="junit3" order="after junit4"/>
+    <testFramework implementation="com.intellij.execution.junit.JUnit6Framework" id="junit6" order="after junit3"/>
+    <testFramework implementation="com.intellij.execution.junit.JUnit5Framework" id="junit5" order="after junit6"/>
+    <configurationType implementation="com.intellij.execution.junit.JUnitConfigurationType"/>
+    <library.dependencyScopeSuggester implementation="com.intellij.execution.junit.JUnitDependencyScopeSuggester"/>
+    <externalSystem.runConfigurationImporter implementation="com.intellij.execution.junit.JUnitRunConfigurationImporter"/>
+
+    <stacktrace.fold substring="at org.junit.internal.runners."/>
+    <stacktrace.fold substring="at org.junit.runners."/>
+    <stacktrace.fold substring="at org.junit.runner.JUnitCore."/>
+    <stacktrace.fold substring="at org.junit.rules."/>
+    <stacktrace.fold substring="at org.junit.Assert.fail("/>
+    <stacktrace.fold substring="at org.junit.Assert.failNotSame("/>
+    <stacktrace.fold substring="at org.junit.Assert.failSame("/>
+    <stacktrace.fold substring="at junit.framework.Assert.assert"/>
+    <stacktrace.fold substring="at junit.framework.Assert.fail"/>
+    <stacktrace.fold substring="at junit.framework.TestCase.assert"/>
+    <stacktrace.fold substring="at org.junit.Assert.internalArrayEquals("/>
+    <stacktrace.fold substring="at org.junit.internal.ComparisonCriteria.arrayEquals("/>
+    <stacktrace.fold substring="at org.junit.Assert.assert"/>
+    <stacktrace.fold substring="at com.intellij.junit3."/>
+    <stacktrace.fold substring="at com.intellij.junit4."/>
+    <stacktrace.fold substring="at com.intellij.junit5."/>
+    <stacktrace.fold substring="at com.intellij.junit6."/>
+    <stacktrace.fold substring="at com.intellij.rt.junit."/>
+    <stacktrace.fold substring="at junit.framework.TestSuite.run"/>
+    <stacktrace.fold substring="at junit.framework.TestCase.run"/>
+    <stacktrace.fold substring="at junit.framework.TestResult"/>
+    <stacktrace.fold substring="at org.junit.platform."/>
+    <stacktrace.fold substring="at org.junit.jupiter."/>
+    <stacktrace.fold substring="at org.junit.vintage."/>
+    <stacktrace.fold substring="at org.mockito.internal."/>
+    <programRunner implementation="com.intellij.execution.junit.JUnitDebuggerRunner"/>
+    <codeInsight.externalLibraryResolver implementation="com.intellij.execution.junit.codeInsight.JUnitExternalLibraryResolver"/>
+    <codeInsight.externalLibraryResolver implementation="com.intellij.execution.junit.codeInsight.JUnit5ExternalLibraryResolver"/>
+    <codeInsight.externalLibraryResolver implementation="com.intellij.execution.junit.codeInsight.JUnit6ExternalLibraryResolver"/>
+    <junitListener implementation="com.intellij.junit4.JUnitTestDiscoveryListener"/>
+    <runConfigurationProducer implementation="com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationProducer"/>
+    <testDiscoveryProducer implementation="com.intellij.execution.testDiscovery.LocalTestDiscoveryProducer"/>
+    <testDiscoveryProducer implementation="com.intellij.execution.testDiscovery.IntellijTestDiscoveryProducer"/>
+    <implicitUsageProvider implementation="com.intellij.execution.junit.codeInspection.deadCode.JUnit5ImplicitUsageProvider"/>
+    <predefinedMigrationMapProvider implementation="com.intellij.execution.junit2.refactoring.JUnit5Migration"/>
+
+    <runDashboardCustomizer implementation="com.intellij.execution.junit.JUnitRunDashboardCustomizer"
+                            order="before commonJavaCustomizer"/>
+
+    <dependencySupport kind="java" coordinate="junit:junit" displayName="JUnit"/>
+    <gotoRelatedProvider implementation="com.intellij.execution.junit.JUnitParameterizedFieldSourceGotoRelatedProvider"/>
+    <gotoRelatedProvider implementation="com.intellij.execution.junit.JUnitParameterizedMethodSourceGotoRelatedProvider"/>
+    <psi.referenceContributor language="UAST" implementation="com.intellij.execution.junit.references.JUnitReferenceContributor"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="MigrateAssertToMatcherAssert"
+                     groupBundle="messages.JUnitBundle" bundle="messages.JUnitBundle"
+                     groupKey="junit.inspections.group.name" key="jvm.inspections.migrate.assertion.name"
+                     implementationClass="com.intellij.execution.junit.codeInspection.HamcrestAssertionsConverterInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="SuperTearDownInFinally"
+                     groupBundle="messages.JUnitBundle" bundle="messages.JUnitBundle"
+                     groupKey="junit.inspections.group.name" key="jvm.inspections.junit3.super.teardown.display.name"
+                     implementationClass="com.intellij.execution.junit.codeInspection.JUnit3SuperTearDownInspection"/>
+    <localInspection language="JVM" enabledByDefault="true" level="WARNING" shortName="JUnitMixedFramework"
+                     groupBundle="messages.JUnitBundle" bundle="messages.JUnitBundle"
+                     groupKey="junit.inspections.group.name" key="jvm.inspections.junit.mixed.annotations.name"
+                     implementationClass="com.intellij.execution.junit.codeInspection.JUnitMixedFrameworkInspection"/>
+    <inspectionElementsMerger implementation="com.intellij.execution.junit.codeInspection.JUnitMixedFrameworkInspectionMerger"/>
+    <localInspection language="UAST" enabledByDefault="true" level="INFORMATION" shortName="Junit4Converter"
+                     groupBundle="messages.JUnitBundle" bundle="messages.JUnitBundle"
+                     groupKey="junit.inspections.group.name" key="jvm.inspections.junit4.converter.display.name"
+                     implementationClass="com.intellij.execution.junit.codeInspection.JUnit4ConverterInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="Junit4RunWithInspection"
+                     groupBundle="messages.JUnitBundle" bundle="messages.JUnitBundle"
+                     groupKey="junit.inspections.group.name" key="jvm.inspections.junit4.inherited.runwith.display.name"
+                     implementationClass="com.intellij.execution.junit.codeInspection.TestCaseWithMultipleRunnersInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="JUnit5AssertionsConverter"
+                     groupBundle="messages.JUnitBundle" bundle="messages.JUnitBundle"
+                     groupKey="junit.inspections.group.name" key="jvm.inspections.junit5.assertions.converter.display.name"
+                     implementationClass="com.intellij.execution.junit.codeInspection.JUnit5AssertionsConverterInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="JUnit5Converter"
+                     groupBundle="messages.JUnitBundle" bundle="messages.JUnitBundle"
+                     groupKey="junit.inspections.group.name" key="jvm.inspections.junit5.converter.display.name"
+                     implementationClass="com.intellij.execution.junit.codeInspection.JUnit5ConverterInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="IgnoredJUnitTest"
+                     groupBundle="messages.JUnitBundle" bundle="messages.JUnitBundle"
+                     groupKey="junit.inspections.group.name" key="jvm.inspections.junit.ignored.test.display.name"
+                     implementationClass="com.intellij.execution.junit.codeInspection.JUnitIgnoredTestInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" cleanupTool="true" level="WARNING" shortName="AssertEqualsCalledOnArray"
+                     groupBundle="messages.JUnitBundle" bundle="messages.JUnitBundle"
+                     groupKey="junit.inspections.group.name" key="jvm.inspections.junit.assertequals.on.array.display.name"
+                     implementationClass="com.intellij.execution.junit.codeInspection.JUnitAssertEqualsOnArrayInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" cleanupTool="true" level="WARNING" shortName="AssertEqualsMayBeAssertSame"
+                     groupBundle="messages.JUnitBundle" bundle="messages.JUnitBundle"
+                     groupKey="junit.inspections.group.name" key="jvm.inspections.junit.assertequals.may.be.assertsame.display.name"
+                     implementationClass="com.intellij.execution.junit.codeInspection.JUnitAssertEqualsMayBeAssertSameInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="ERROR" shortName="JUnitMalformedDeclaration"
+                     groupBundle="messages.JUnitBundle" bundle="messages.JUnitBundle"
+                     groupKey="junit.inspections.group.name" key="jvm.inspections.junit.malformed.declaration.name"
+                     implementationClass="com.intellij.execution.junit.codeInspection.JUnitMalformedDeclarationInspection"/>
+    <inspectionElementsMerger implementation="com.intellij.execution.junit.codeInspection.JUnitMalformedDeclarationInspectionMerger"/>
+    <localInspection language="JAVA" enabledByDefault="false" level="WARNING" shortName="ParameterizedParametersStaticCollection"
+                     groupBundle="messages.JUnitBundle" bundle="messages.JUnitBundle"
+                     groupKey="junit.inspections.group.name" key="inspection.parameterized.parameters.static.collection.display.name"
+                     implementationClass="com.intellij.execution.junit.codeInspection.ParameterizedParametersStaticCollectionInspection"/>
+    <localInspection language="JAVA" enabledByDefault="false" level="WARNING" shortName="ExpectedExceptionNeverThrown"
+                     groupBundle="messages.JUnitBundle" bundle="messages.JUnitBundle"
+                     groupKey="junit.inspections.group.name" key="expected.exception.never.thrown.display.name"
+                     implementationClass="com.intellij.execution.junit.codeInspection.ExpectedExceptionNeverThrownInspection"/>
+    <localInspection language="JAVA" enabledByDefault="true" level="WARNING" shortName="JUnit3StyleTestMethodInJUnit4Class"
+                     groupBundle="messages.JUnitBundle" bundle="messages.JUnitBundle"
+                     groupKey="junit.inspections.group.name" key="junit3.style.test.method.in.junit4.class.display.name"
+                     implementationClass="com.intellij.execution.junit.codeInspection.JUnit3StyleTestMethodInJUnit4ClassInspection"/>
+    <localInspection language="JAVA" enabledByDefault="false" cleanupTool="true" level="WARNING"
+                     shortName="MultipleExceptionsDeclaredOnTestMethod"
+                     groupBundle="messages.JUnitBundle" bundle="messages.JUnitBundle"
+                     groupKey="junit.inspections.group.name" key="multiple.exceptions.declared.on.test.method.display.name"
+                     implementationClass="com.intellij.execution.junit.codeInspection.MultipleExceptionsDeclaredOnTestMethodInspection" />
+    <localInspection language="JAVA" enabledByDefault="false" cleanupTool="true" shortName="UseOfObsoleteAssert"
+                     groupBundle="messages.JUnitBundle" bundle="messages.JUnitBundle"
+                     groupKey="junit.inspections.group.name" key="usage.of.obsolete.assert.display.name"
+                     implementationClass="com.intellij.execution.junit.codeInspection.UseOfObsoleteAssertInspection" />
+
+    <naming.convention.class implementation="com.intellij.execution.junit.codeInspection.naming.AbstractTestClassNamingConvention" id="JUnitAbstractTestClassNamingConvention" order="first"/>
+    <naming.convention.class implementation="com.intellij.execution.junit.codeInspection.naming.TestSuiteNamingConvention" id="TestSuiteNamingConvention" order="after JUnitAbstractTestClassNamingConvention"/>
+    <naming.convention.class implementation="com.intellij.execution.junit.codeInspection.naming.TestClassNamingConvention" id="JUnitTestClassNamingConvention" order="after TestSuiteNamingConvention"/>
+    <naming.convention.method implementation="com.intellij.execution.junit.codeInspection.naming.JUnit3MethodNamingConvention" id="JUnit3MethodNamingConvention" order="first"/>
+    <naming.convention.method implementation="com.intellij.execution.junit.codeInspection.naming.JUnit4MethodNamingConvention" id="JUnit4MethodNamingConvention" order="after JUnit3MethodNamingConvention"/>
+
+    <registryKey key="junit4.search.4.tests.all.in.scope"
+                 defaultValue="true"
+                 description="Check each class in scope if its test, then include as test"/>
+    <registryKey key="junit4.accept.inner.classes"
+                 defaultValue="true"
+                 description="If false, inner classes won't be included in search for tests in package"/>
+    <registryKey key="idea.test.graceful.shutdown.timeout.seconds"
+                 defaultValue="600"
+                 description="Timeout in seconds for the test runner to terminate gracefully after receiving a shutdown signal. A negative value disables the timeout, allowing unlimited wait."/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.junitListener" interface="com.intellij.rt.execution.junit.IDEAJUnitListener" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.testDiscoveryProducer" interface="com.intellij.execution.testDiscovery.TestDiscoveryProducer" dynamic="true"/>
+  </extensionPoints>
+
+  <actions>
+    <group id="junit.exclude.group">
+      <action class="com.intellij.execution.junit.JUnitExcludeFromRunAction" id="excludeFromSuite"/>
+      <separator/>
+      <add-to-group relative-to-action="openAssertEqualsDiff" anchor="after" group-id="TestTreePopupMenu"/>
+    </group>
+    <group id="junit.add.to.pattern.group">
+      <action class="com.intellij.execution.junit.JUnitAddToTestsPatternAction" id="AddToISuite"/>
+      <add-to-group anchor="last" group-id="RunContextGroup"/>
+    </group>
+  </actions>
+</idea-plugin>

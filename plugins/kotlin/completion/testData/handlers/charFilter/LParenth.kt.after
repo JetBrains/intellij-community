@@ -1,0 +1,10 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
+fun foo() { }
+
+fun bar() {
+    foo(<caret>)
+}
+
+// ELEMENT: foo
+// CHAR: (

@@ -1,0 +1,358 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.daemon.impl
+
+import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.EMPTY_RESULT
+import com.intellij.codeInsight.highlighting.CodeBlockSupportHandler
+import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector
+import com.intellij.codeInsight.highlighting.getUsageRanges
+import com.intellij.find.FindManager
+import com.intellij.find.impl.FindManagerImpl
+import com.intellij.inlinePrompt.isInlinePromptShown
+import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.model.Symbol
+import com.intellij.model.psi.PsiSymbolService
+import com.intellij.model.psi.impl.targetSymbols
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.util.ProperTextRange
+import com.intellij.openapi.util.Segment
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiReference
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.util.AstLoadingFilter
+import com.intellij.util.ThrowableRunnable
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.annotations.ApiStatus
+
+/**
+ * Computes identifier highlighting ranges by doing find usages/calling [com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase.computeUsages]
+ * @param myPsiFile may be injected fragment, in which case the `editor` must be corresponding injected editor and  `visibleRange` must have consistent offsets inside the injected document.
+ * In both cases, [computeRanges] will produce and apply HighlightInfos to the host file.
+ */
+@ApiStatus.Internal
+class IdentifierHighlightingComputer(
+  private val myPsiFile: PsiFile,
+  private val myEditor: Editor,
+  private val myVisibleRange: ProperTextRange,
+  private val myCaretOffset: Int,
+) {
+  private val myEnabled: Boolean
+
+  init {
+    val model = myEditor.getCaretModel()
+    val highlightSelectionOccurrences = myEditor.getSettings().isHighlightSelectionOccurrences()
+    myEnabled = !highlightSelectionOccurrences || !model.getPrimaryCaret().hasSelection()
+  }
+
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  @ApiStatus.Internal
+  fun computeRanges(): IdentifierHighlightingResult {
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    ApplicationManager.getApplication().assertReadAccessAllowed()
+    if (myCaretOffset < 0 || !myEnabled || isInlinePromptShown(myEditor)) {
+      if (LOG.isDebugEnabled) {
+        LOG.debug("IdentifierHighlightingComputer.computeRanges empty $myCaretOffset $myEnabled ${isInlinePromptShown(myEditor)}")
+      }
+      return EMPTY_RESULT
+    }
+    val myInfos: MutableCollection<IdentifierOccurrence> = LinkedHashSet()
+    val myTargets: MutableCollection<Segment> = LinkedHashSet()
+
+    val highlightUsagesHandler = HighlightUsagesHandler.createCustomHandler<PsiElement?>(myEditor, myPsiFile, myVisibleRange)
+    var runFindUsages = true
+    if (highlightUsagesHandler != null) {
+      val targets = highlightUsagesHandler.getTargets()
+      highlightUsagesHandler.computeUsages(targets)
+      val readUsages = highlightUsagesHandler.readUsages
+      for (readUsage in readUsages) {
+        @Suppress("SENSELESS_COMPARISON")
+        LOG.assertTrue(readUsage != null, "null text range from $highlightUsagesHandler")
+      }
+      myInfos.addAll(readUsages.map { u: TextRange ->
+        IdentifierOccurrence(u, HighlightInfoType.ELEMENT_UNDER_CARET_READ)
+      })
+      val writeUsages = highlightUsagesHandler.writeUsages
+      for (writeUsage in writeUsages) {
+        @Suppress("SENSELESS_COMPARISON")
+        LOG.assertTrue(writeUsage != null, "null text range from $highlightUsagesHandler")
+      }
+      myInfos.addAll(writeUsages.map { u: TextRange ->
+        IdentifierOccurrence(u, HighlightInfoType.ELEMENT_UNDER_CARET_WRITE)
+      })
+      if (!highlightUsagesHandler.highlightReferences()) {
+        runFindUsages = false
+      }
+      val target: PsiElement? = findTarget(myEditor, myPsiFile, myCaretOffset)
+      if (target != null) {
+        myTargets.add(target.getTextRange())
+      }
+    }
+
+    if (runFindUsages) {
+      collectCodeBlockMarkerRanges(myInfos, myTargets)
+
+      try {
+        DumbService.getInstance(myPsiFile.project).withAlternativeResolveEnabled(
+          Runnable {
+            highlightReferencesAndDeclarations(myInfos, myTargets)
+          })
+      }
+      catch (e: IndexNotReadyException) {
+        logIndexNotReadyException(e)
+        // Ignoring IndexNotReadyException.
+        // We can't show a warning because this usage search is triggered automatically and user does not control it.
+      }
+    }
+    if (!myTargets.any { it.contains(myCaretOffset) }) {
+      // no target contains our real caret offset, because there's nothing interesting at that offset;
+      // instead, computed targets are slightly off, typically at the previous/next caret offset, e.g. when we are standing at the space char, and the previous char is ')'
+      // in this case, we should not store these adjusted targets for this offset, because
+      // the next time whenever caret happened to be inside one of those targets it would not mean we should use this result computed for this offset because it would be incorrect
+      myTargets.clear()
+      myTargets.add(TextRange(myCaretOffset, myCaretOffset))
+    }
+    val result = IdentifierHighlightingResult(myInfos, myTargets)
+    if (LOG.isDebugEnabled) {
+      LOG.debug("IdentifierHighlightingComputer.computeRanges($myPsiFile, $myCaretOffset) = $result")
+    }
+    assert(IdentifierHighlightingManagerImpl.containsTargetOffset(result, myCaretOffset)) { "$result, caret offset:$myCaretOffset" }
+    return result
+  }
+
+  /**
+   * Collects code block markers ranges to highlight. E.g. if/elsif/else. Collected ranges will be highlighted the same way as braces
+   */
+  private fun collectCodeBlockMarkerRanges(
+    myMarkupInfos: MutableCollection<in IdentifierOccurrence>,
+    myTargets: MutableCollection<in TextRange>,
+  ) {
+    val contextElement = myPsiFile.findElementAt(TargetElementUtil.adjustOffset(myPsiFile, myEditor.getDocument(), myCaretOffset))
+    if (contextElement != null) {
+      if (isCacheableTarget(contextElement)) {
+        myTargets.add(contextElement.getTextRange())
+      }
+      val manager = InjectedLanguageManager.getInstance(myPsiFile.getProject())
+      for (range in CodeBlockSupportHandler.findMarkersRanges(contextElement)) {
+        myMarkupInfos.add(IdentifierOccurrence(manager.injectedToHost(contextElement, range), HighlightInfoType.ELEMENT_UNDER_CARET_STRUCTURAL))
+      }
+    }
+  }
+
+  /**
+   * true if the [contextElement] can be an identifier highlighting target, i.e. if the caret is inside this element then [computeRanges].myTargets should be added to the editor markup
+   *
+   * it just checks that the symbols under all offsets in this identifier are the same
+   */
+  private fun isCacheableTarget(contextElement: PsiElement): Boolean {
+    val textRange = contextElement.textRange
+    var reference: PsiReference? = null
+    var symbols:Collection<Symbol>? = null
+
+    for (offset in textRange.startOffset..< textRange.endOffset) {
+      ProgressManager.checkCanceled()
+      val smb = targetSymbols(myPsiFile, offset)
+      if (symbols != null && symbols.map{ PsiSymbolService.getInstance().extractElementFromSymbol(it) } != smb.map{ PsiSymbolService.getInstance().extractElementFromSymbol(it) }) {
+        return false
+      }
+      symbols = smb
+      val ref = TargetElementUtil.findReference(myEditor, offset)
+      if (reference != null && (ref == null || !referencesEqual(ref, reference))) {
+        return false
+      }
+      reference = ref
+    }
+    return true
+  }
+
+  private fun referencesEqual(ref1: PsiReference, ref2: PsiReference): Boolean {
+    if (ref1 == ref2) {
+      return true
+    }
+    if (ref1 is PsiMultiReference && ref2 is PsiMultiReference) {
+      val references1 = ref1.references
+      val references2 = ref2.references
+      return references1.size == references2.size && references1.zip(references2).all {
+        referencesEqual(it.first, it.second)
+      }
+    }
+    if (ref1.element == ref2.element && ref1.rangeInElement == ref2.rangeInElement && ref1.javaClass == ref2.javaClass) {
+      // oftentimes developers are too lazy to cache the references for the PsiElement
+      // in this case we assume the same kind references based on the same place are actually the same
+      return true
+    }
+    return false
+  }
+
+  private fun highlightReferencesAndDeclarations(
+    myMarkupInfos: MutableCollection<in IdentifierOccurrence>,
+    myTargets: MutableCollection<in Segment>,
+  ) {
+    val targetSymbols = getTargetSymbols()
+    for (symbol in targetSymbols) {
+      highlightTargetUsages(symbol, myMarkupInfos, myTargets, myPsiFile)
+    }
+  }
+
+  fun highlightTargetUsages(
+    target: Symbol,
+    myMarkupInfos: MutableCollection<in IdentifierOccurrence>,
+    myTargets: MutableCollection<in Segment>,
+    myPsiFile: PsiFile,
+  ) {
+    try {
+      AstLoadingFilter.disallowTreeLoading<RuntimeException?>(ThrowableRunnable {
+        val hostRanges = getUsageRanges(myPsiFile, target) ?: return@ThrowableRunnable
+        val reads = hostRanges.readRanges.map { u: TextRange ->
+          IdentifierOccurrence(u, HighlightInfoType.ELEMENT_UNDER_CARET_READ)
+        }
+        val readDecls = hostRanges.readDeclarationRanges.map { u: TextRange ->
+          IdentifierOccurrence(u, HighlightInfoType.ELEMENT_UNDER_CARET_READ)
+        }
+        val writes = hostRanges.writeRanges.map { u: TextRange ->
+          IdentifierOccurrence(u, HighlightInfoType.ELEMENT_UNDER_CARET_WRITE)
+        }
+        val writeDecls = hostRanges.writeDeclarationRanges.map { u: TextRange ->
+          IdentifierOccurrence(u, HighlightInfoType.ELEMENT_UNDER_CARET_WRITE)
+        }
+        myMarkupInfos.addAll(reads)
+        myMarkupInfos.addAll(readDecls)
+        myMarkupInfos.addAll(writes)
+        myMarkupInfos.addAll(writeDecls)
+        myTargets.addAll(reads.map { o -> o.range })
+        myTargets.addAll(readDecls.map { o -> o.range })
+        myTargets.addAll(writes.map { o -> o.range })
+        myTargets.addAll(writeDecls.map { o -> o.range })
+      }) {
+        "Currently highlighted file: \n" +
+        "psi file: " + myPsiFile + ";\n" +
+        "virtual file: " + myPsiFile.getVirtualFile()
+      }
+    }
+    catch (e: IndexNotReadyException) {
+      Logger.getInstance(IdentifierHighlightingComputer::class.java).trace(e)
+    }
+  }
+
+  private fun getTargetSymbols(): Collection<Symbol> {
+    if (myCaretOffset < 0 || !myEnabled) {
+      return listOf()
+    }
+    try {
+      val fromHostFile: Collection<Symbol> = targetSymbols(myPsiFile, myCaretOffset)
+      if (!fromHostFile.isEmpty()) {
+        return fromHostFile
+      }
+    }
+    catch (e: IndexNotReadyException) {
+      logIndexNotReadyException(e)
+    }
+    val injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myPsiFile, myCaretOffset)
+    val injectedFile = PsiDocumentManager.getInstance(myPsiFile.getProject()).getPsiFile(injectedEditor!!.getDocument())
+    if (injectedFile == null || injectedFile === myPsiFile) {
+      return listOf()
+    }
+    val injectedOffset = injectedEditor.getCaretModel().offset
+    return targetSymbols(injectedFile, injectedOffset)
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(IdentifierHighlightingComputer::class.java)
+
+    private fun findTarget(editor: Editor, file: PsiFile, myCaretOffset: Int): PsiElement? {
+      val offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), myCaretOffset)
+      val psiElement = file.findElementAt(offset)
+      // LSP has an edge case when it tries to highlight a file with no (finegrained) PSI, where the only PSI element is the whole file.
+      // In this situation we wouldn't want to cache the whole file as an underlying identifier
+      return if (psiElement != null && psiElement.textRange == file.textRange) null else psiElement
+    }
+
+    /**
+     * Returns read and write usages of psi element inside a single element
+     *
+     * @param target target psi element
+     * @param psiElement psi element to search in
+     */
+    @JvmStatic
+    fun getHighlightUsages(
+      target: PsiElement,
+      psiElement: PsiElement,
+      withDeclarations: Boolean,
+      readRanges: MutableCollection<in TextRange>,
+      writeRanges: MutableCollection<in TextRange>,
+    ) {
+      getUsages(target, psiElement, withDeclarations, true, readRanges, writeRanges)
+    }
+
+    /**
+     * Returns usages of psi element inside a single element
+     * @param target target psi element
+     * @param psiElement psi element to search in
+     */
+    @JvmStatic
+    fun getUsages(target: PsiElement, psiElement: PsiElement, withDeclarations: Boolean): Collection<TextRange> {
+      val ranges: MutableList<TextRange> = ArrayList()
+      getUsages(target, psiElement, withDeclarations, false, ranges, ranges)
+      return ranges
+    }
+
+    private fun getUsages(
+      target: PsiElement,
+      scopeElement: PsiElement,
+      withDeclarations: Boolean,
+      detectAccess: Boolean,
+      readRanges: MutableCollection<in TextRange>,
+      writeRanges: MutableCollection<in TextRange>,
+    ) {
+      val detector = if (detectAccess) ReadWriteAccessDetector.findDetector(target) else null
+      val findUsagesManager = (FindManager.getInstance(target.getProject()) as FindManagerImpl).findUsagesManager
+      val findUsagesHandler = findUsagesManager.getFindUsagesHandler(target, true)
+      val scope = LocalSearchScope(scopeElement)
+      val refs = findUsagesHandler?.findReferencesToHighlight(target, scope) ?: ReferencesSearch.search(target, scope).findAll()
+      for (psiReference in refs) {
+        if (psiReference == null) {
+          LOG.error("Null reference returned, findUsagesHandler=" + findUsagesHandler + "; target=" + target + " of " + target.javaClass)
+          continue
+        }
+        val destination: MutableCollection<in TextRange> = if (detector == null || detector.getReferenceAccess(target, psiReference) == ReadWriteAccessDetector.Access.Read) {
+          readRanges
+        }
+        else {
+          writeRanges
+        }
+        HighlightUsagesHandler.collectHighlightRanges(psiReference, destination)
+      }
+
+      if (withDeclarations) {
+        val declRange = HighlightUsagesHandler.getNameIdentifierRange(scopeElement.getContainingFile(), target)
+        if (declRange != null) {
+          if (detector != null && detector.isDeclarationWriteAccess(target)) {
+            writeRanges.add(declRange)
+          }
+          else {
+            readRanges.add(declRange)
+          }
+        }
+      }
+    }
+
+    private fun logIndexNotReadyException(e: IndexNotReadyException) {
+      if (LOG.isTraceEnabled) {
+        LOG.trace(e)
+      }
+    }
+  }
+}

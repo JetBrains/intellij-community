@@ -1,0 +1,8 @@
+[foo]
+charset=utf-8
+end_of_line=crlf
+insert_final_newline=true
+
+[bar]
+charset=utf-8
+

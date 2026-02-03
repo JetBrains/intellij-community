@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.kotlin.compilerPlugins.scripting` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "scripting_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "scripting",
+  module_name = "intellij.kotlin.compilerPlugins.scripting",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":scripting_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/gradle/gradle-java",
+    "//platform/lang-api:lang",
+    "//plugins/gradle:gradle-common",
+  ]
+)
+### auto-generated section `build intellij.kotlin.compilerPlugins.scripting` end

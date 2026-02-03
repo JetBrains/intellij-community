@@ -1,0 +1,12 @@
+interface I {
+
+    fun newFun(p1: String, p2: Int = 1, p3: Int = 1)
+}
+
+abstract class C : I {
+    override fun newFun(p1: String, p2: Int, p3: Int) { }
+}
+
+fun foo(c: C) {
+    c.newFun("", 0)
+}

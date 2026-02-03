@@ -1,0 +1,108 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.bootstrap
+
+import com.intellij.ide.plugins.DataLoader
+import com.intellij.ide.plugins.PathResolver
+import com.intellij.ide.plugins.PluginModuleId
+import com.intellij.ide.plugins.PluginXmlPathResolver
+import com.intellij.ide.plugins.createXIncludeLoader
+import com.intellij.platform.plugins.parser.impl.LoadedXIncludeReference
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
+import com.intellij.platform.plugins.parser.impl.consume
+import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
+import com.intellij.platform.runtime.product.IncludedRuntimeModule
+import com.intellij.platform.runtime.repository.RuntimeModuleId
+import java.nio.file.Path
+
+/**
+ * Implementation of [PathResolver] which can load module descriptors not only from the main plugin JAR file, unlike [PluginXmlPathResolver]
+ * which always loads them from the JAR file containing plugin.xml file.
+ */
+internal class ModuleBasedPluginXmlPathResolver(
+  private val includedModules: List<IncludedRuntimeModule>,
+  private val optionalModuleIds: Set<RuntimeModuleId>,
+  private val notLoadedModuleIds: Map<RuntimeModuleId, List<RuntimeModuleId>>,
+  private val fallbackResolver: PathResolver,
+) : PathResolver {
+
+  override fun resolveModuleFile(
+    readContext: PluginDescriptorReaderContext,
+    dataLoader: DataLoader,
+    path: String,
+  ): PluginDescriptorBuilder {
+    // if there are multiple JARs,
+    // it may happen that module descriptor is located in other JARs (e.g., in case of 'com.intellij.java.frontend' plugin),
+    // so try loading it from the root of the corresponding module
+    val moduleName = path.removeSuffix(".xml")
+    val moduleDescriptor = includedModules.find { it.moduleDescriptor.moduleId.stringId == moduleName }?.moduleDescriptor
+    if (moduleDescriptor != null) {
+      val input = moduleDescriptor.readFile(path) ?: error("Cannot resolve $path in $moduleDescriptor")
+      val reader = PluginDescriptorFromXmlStreamConsumer(readContext, createXIncludeLoader(this@ModuleBasedPluginXmlPathResolver, dataLoader))
+      reader.consume(input, path)
+      return reader.getBuilder()
+    }
+    else {
+      val moduleId = RuntimeModuleId.module(moduleName)
+      if (moduleId in optionalModuleIds) {
+        // TODO here we should restore the actual content module "header" with dependency information
+        return PluginDescriptorBuilder.builder().apply {
+          `package` = "unresolved.$moduleName"
+
+          val reasonsWhyNotLoaded = notLoadedModuleIds[moduleId] ?: emptyList()
+          if (reasonsWhyNotLoaded.isNotEmpty()) {
+            for (reason in reasonsWhyNotLoaded) {
+              addDependency(DependenciesElement.ModuleDependency(reason.stringId, null))
+            }
+          }
+          else {
+            addDependency(DependenciesElement.ModuleDependency("incompatible.with.product.mode.or.unresolved", null))
+          }
+        }
+      }
+    }
+    return fallbackResolver.resolveModuleFile(readContext = readContext, dataLoader = dataLoader, path = path)
+  }
+
+  override fun resolveCustomModuleClassesRoots(moduleId: PluginModuleId): List<Path> {
+    val moduleDescriptor = includedModules.find { it.moduleDescriptor.moduleId.stringId == moduleId.name }?.moduleDescriptor
+    return moduleDescriptor?.resourceRootPaths ?: emptyList()
+  }
+
+  override fun loadXIncludeReference(
+    dataLoader: DataLoader,
+    path: String,
+  ): LoadedXIncludeReference? {
+    val reference = fallbackResolver.loadXIncludeReference(
+      dataLoader = dataLoader,
+      path = path,
+    )
+    if (reference != null) {
+      return reference
+    }
+
+    /* If the IDE is running in 'dev build' mode from sources without using Bazel build, the modules aren't packed to JARs, so the included
+       file may be located in a different directory. We need to search for it in all plugin's modules. */
+    for (module in includedModules) {
+      val inputStream = module.moduleDescriptor.readFile(path)
+      if (inputStream != null) {
+        val bytes = inputStream.use { it.readBytes() }
+        return LoadedXIncludeReference(bytes, module.moduleDescriptor.moduleId.stringId)
+      }
+    }
+    return null
+  }
+
+  override fun resolvePath(
+    readContext: PluginDescriptorReaderContext,
+    dataLoader: DataLoader,
+    relativePath: String,
+  ): PluginDescriptorBuilder? {
+    return fallbackResolver.resolvePath(
+      readContext = readContext,
+      dataLoader = dataLoader,
+      relativePath = relativePath,
+    )
+  }
+}

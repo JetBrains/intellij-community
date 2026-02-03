@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.python.langInjection` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "langInjection_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "langInjection",
+  module_name = "intellij.python.langInjection",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":langInjection_resources"],
+  deps = [
+    "//platform/core-api:core",
+    "//plugins/IntelliLang:langInjection",
+    "//platform/projectModel-api:projectModel",
+    "//python:python-community-impl",
+    "//platform/lang-impl",
+    "//libraries/stream",
+  ]
+)
+### auto-generated section `build intellij.python.langInjection` end

@@ -1,0 +1,8 @@
+JsonFile: n_array_comma_after_close.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('""')
+    PsiElement(])(']')
+  PsiErrorElement:<value> expected, got ','
+    PsiElement(,)(',')

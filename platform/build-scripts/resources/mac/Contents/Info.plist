@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>English</string>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+      @@doc_types@@
+      <dict>
+        <key>CFBundleTypeExtensions</key>
+        <array>
+          <string>*</string>
+        </array>
+        <key>CFBundleTypeName</key>
+        <string>All documents</string>
+        <key>CFBundleTypeOSTypes</key>
+        <array>
+          <string>****</string>
+        </array>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>LSTypeIsPackage</key>
+        <false/>
+      </dict>
+    </array>
+    <key>CFBundleExecutable</key>
+    <string>@@executable@@</string>
+    <key>CFBundleIconFile</key>
+    <string>@@icns@@</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>@@bundle_name@@@@product_state@@</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleIdentifier</key>
+    <string>@@bundle_identifier@@@@product_state@@</string>
+    <key>CFBundleGetInfoString</key>
+    <string>@@bundle_name@@ @@version@@, build @@build@@. Copyright JetBrains s.r.o., (c) 2000-@@year@@</string>
+    <key>CFBundleShortVersionString</key>
+    <string>@@version@@</string>
+    <key>CFBundleVersion</key>
+    <string>@@build@@</string>
+    @@url_schemes@@
+
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.developer-tools</string>
+    <key>LSArchitecturePriority</key>
+    <array>
+      <string>@@architecture@@</string>
+    </array>
+    <key>LSRequiresNativeExecution</key>
+    <string>YES</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>@@min_osx@@</string>
+
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSSupportsAutomaticGraphicsSwitching</key>
+    <true/>
+
+    <key>NSCameraUsageDescription</key>
+    <string>An application in @@bundle_name@@ requests access to the device's camera.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>An application in @@bundle_name@@ requests access to the device's microphone.</string>
+    <key>NSLocationUsageDescription</key>
+    <string>An application in @@bundle_name@@ requests access to the user's location information.</string>
+    <key>NSDesktopFolderUsageDescription</key>
+    <string>An application in @@bundle_name@@ requests access to the user's Desktop folder.</string>
+    <key>NSDocumentsFolderUsageDescription</key>
+    <string>An application in @@bundle_name@@ requests access to the user's Documents folder.</string>
+    <key>NSDownloadsFolderUsageDescription</key>
+    <string>An application in @@bundle_name@@ requests access to the user's Downloads folder.</string>
+    <key>NSNetworkVolumesUsageDescription</key>
+    <string>An application in @@bundle_name@@ requests access to files on a network volume.</string>
+    <key>NSRemovableVolumesUsageDescription</key>
+    <string>An application in @@bundle_name@@ requests access to files on a removable volume.</string>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>An application in @@bundle_name@@ requests access to Bluetooth.</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>An application in @@bundle_name@@ requests the ability to send Apple events.</string>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>@@bundle_name@@'s features, such as SSH and database connectivity, require permissions for accessing the local network and sending broadcast requests.</string>
+  </dict>
+</plist>

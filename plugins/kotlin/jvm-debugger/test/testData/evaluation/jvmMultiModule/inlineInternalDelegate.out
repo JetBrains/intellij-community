@@ -1,0 +1,8 @@
+LineBreakpoint created at call.kt:12
+Run Java
+Connected to the target VM
+call.kt:12
+Compile bytecode for val delegate by C(); delegate
+Disconnected from the target VM
+
+Process finished with exit code 0

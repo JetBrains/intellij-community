@@ -1,0 +1,20 @@
+LineBreakpoint created at twoWithContextBlocks.kt:22
+Run Java
+Connected to the target VM
+twoWithContextBlocks.kt:22
+vvv stack trace vvv
+  invokeSuspend:22, TwoWithContextBlocksKt$main$1$1$1$2
+  invokeSuspend:19, TwoWithContextBlocksKt$main$1$1$1
+  koo:38, TwoWithContextBlocksKt
+  invokeSuspend:12, TwoWithContextBlocksKt$main$1$1
+  doo:32, TwoWithContextBlocksKt
+  invokeSuspend:10, TwoWithContextBlocksKt$main$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  main:8, TwoWithContextBlocksKt
+  main:-1, TwoWithContextBlocksKt
+^^^ stack trace ^^^
+Disconnected from the target VM
+
+Process finished with exit code 0

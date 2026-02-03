@@ -1,0 +1,7 @@
+<x>
+    <b c="d"
+      a = "b"
+    >
+    </b>
+</x>
+<caret><<selection>a/</selection>>

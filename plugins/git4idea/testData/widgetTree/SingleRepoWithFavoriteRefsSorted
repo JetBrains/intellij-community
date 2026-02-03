@@ -1,0 +1,26 @@
+-Update Project...
+-Commit…
+-Push…
+------
+-New Branch…
+-Checkout Tag or Revision…
+------
+-Local
+ master [icons/currentBranchFavoriteLabel.svg]
+ d [nodes/favorite.svg]
+ -e-group [nodes/folder.svg]
+  a [vcs/branchNode.svg]
+ -f-group [nodes/folder.svg]
+  a [vcs/branchNode.svg]
+  b [vcs/branchNode.svg]
+ a [vcs/branchNode.svg]
+ b [vcs/branchNode.svg]
+ Bb [vcs/branchNode.svg]
+ c [vcs/branchNode.svg]
+-Remote
+ -origin [nodes/folder.svg]
+  master [nodes/favorite.svg]
+-Tags
+ c-tag [nodes/favorite.svg]
+ a-tag [icons/branchLabel.svg]
+ b-tag [icons/branchLabel.svg]

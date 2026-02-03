@@ -1,0 +1,20 @@
+LineBreakpoint created at suspendFramesBeforeWithContext.kt:17
+Run Java
+Connected to the target VM
+suspendFramesBeforeWithContext.kt:17
+vvv stack trace vvv
+  invokeSuspend:17, SuspendFramesBeforeWithContextKt$main$1$1$1$1
+  invokeSuspend:14, SuspendFramesBeforeWithContextKt$main$1$1$1
+  koo:32, SuspendFramesBeforeWithContextKt
+  invokeSuspend:12, SuspendFramesBeforeWithContextKt$main$1$1
+  doo:26, SuspendFramesBeforeWithContextKt
+  invokeSuspend:10, SuspendFramesBeforeWithContextKt$main$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  main:8, SuspendFramesBeforeWithContextKt
+  main:-1, SuspendFramesBeforeWithContextKt
+^^^ stack trace ^^^
+Disconnected from the target VM
+
+Process finished with exit code 0

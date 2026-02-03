@@ -1,0 +1,185 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <toolWindow id="Terminal" anchor="bottom" icon="org.jetbrains.plugins.terminal.TerminalIcons.OpenTerminal_13x13"
+                factoryClass="org.jetbrains.plugins.terminal.TerminalToolWindowFactory"
+                secondary="false"
+                canCloseContents="true"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.terminal.DefaultTerminalRunnerFactory" open="true"/>
+
+    <projectConfigurable groupId="tools"
+                         bundle="messages.IdeBundle"
+                         key="configurable.TerminalOptionsConfigurable.display.name"
+                         id="terminal" instance="org.jetbrains.plugins.terminal.TerminalOptionsConfigurable"/>
+
+    <fileEditorProvider id="classic-terminal-session-editor"
+                        implementation="org.jetbrains.plugins.terminal.vfs.ClassicTerminalSessionEditorProvider"/>
+
+    <applicationService serviceImplementation="org.jetbrains.plugins.terminal.TerminalOptionsProvider"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.terminal.settings.TerminalLocalOptions"
+                        serviceImplementation="org.jetbrains.plugins.terminal.settings.impl.TerminalLocalOptionsImpl"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.terminal.TerminalFontSettingsService"/>
+
+    <projectService serviceInterface="org.jetbrains.plugins.terminal.block.reworked.TerminalPortForwardingUiProvider" open="true"
+                    serviceImplementation="org.jetbrains.plugins.terminal.block.reworked.TerminalNoPortForwardingUiProvider"/>
+
+    <rdct.remoteSettingProvider implementation="org.jetbrains.plugins.terminal.TerminalRemoteSettingsInfoProvider"/>
+    <applicationSettings service="org.jetbrains.plugins.terminal.block.BlockTerminalOptions"/>
+    <applicationSettings service="org.jetbrains.plugins.terminal.TerminalOptionsProvider"/>
+    <applicationSettings service="org.jetbrains.plugins.terminal.TerminalFontSettingsService"/>
+
+    <applicationService serviceImplementation="org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector"/>
+    <statistics.validation.customValidationRule implementation="org.jetbrains.plugins.terminal.fus.TerminalFocusRule"/>
+    <statistics.applicationUsagesCollector implementation="org.jetbrains.plugins.terminal.fus.TerminalSettingsStateCollector"/>
+
+    <registryKey key="terminal.persistent.tabs" defaultValue="true"
+                 description="Save state of terminal tabs between IDE restarts"/>
+
+    <registryKey key="terminal.Ctrl-E.opens.RecentFiles.popup" defaultValue="false"
+                 description="Ctrl+E in terminal opens 'Recent Files' popup on Linux/Windows"/>
+
+    <!--
+     Change of these keys in the Registry UI is actually no-op.
+     But change of default values of these keys affects the initial value of the Terminal Engine option
+     when migration is performed in `TerminalOptionsProvider#loadState`.
+     So, these keys still can be used to specify the initial value of Terminal Engine setting.
+     -->
+    <registryKey key="terminal.new.ui" defaultValue="false"
+                 description="No-op, use Terminal Engine option in Terminal settings instead"/>
+    <registryKey key="terminal.new.ui.reworked" defaultValue="false"
+                 description="No-op, use Terminal Engine option in Terminal settings instead"/>
+
+    <registryKey key="terminal.new.ui.option.visible" defaultValue="false"
+                 description="Whether Experimental 2024 terminal engine option visible in the settings"/>
+    <registryKey key="terminal.new.ui.fish" defaultValue="false"
+                 description="Enable new terminal for Fish"/>
+    <registryKey key="terminal.new.ui.show.promotion" defaultValue="false"
+                 description="Whether to show the GotIt tooltip with a proposal to try the New Terminal"/>
+    <registryKey key="terminal.new.ui.autocompletion" defaultValue="true"
+                 description="Whether to run autocompletion in the New Terminal"/>
+    <registryKey key="terminal.classic.refresh.vfs.on.shell.command.finished" defaultValue="true"
+                 description="Refresh VFS when shell commands are finished in the Classic Terminal.
+                  May not work 100% reliably as it uses heuristics to determine when command is finished."/>
+    <registryKey key="terminal.use.EelApi" defaultValue="true"
+                 description="Use EelApi to launch a shell process. Launching a local shell works the same as before.
+                  For WSL environments, the shell process in WSL will be launched via IJEnt instead of using wsl.exe."/>
+    <registryKey key="terminal.new.ui.completion.popup" defaultValue="true"
+                 description="Whether popup-based command completion feature is enabled in the Reworked Terminal"/>
+    <registryKey key="terminal.type.ahead" defaultValue="true"
+                 description="Whether terminal should predict how shell handles typing to minimize the typing latency. Monolith-only at the moment"/>
+    <registryKey key="terminal.generic.hyperlinks" defaultValue="true"
+                 description="Show generic file hyperlinks in the reworked terminal. Such hyperlinks are highlighted on mouse hover.
+                  Open a new terminal after enabling this option to take effect."/>
+    <registryKey key="terminal.ai.inline.completion.enabled" defaultValue="false"
+                 description="Whether Terminal AI Inline Completion is enabled and visible in the settings"/>
+    <consoleFilterProvider implementation="org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalGenericFileFilterProvider"/>
+
+    <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
+    <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.RunAnythingTerminalBridge"/>
+    <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.OpenFileShellCommandHandler"/>
+
+    <actionPromoter implementation="org.jetbrains.plugins.terminal.action.TerminalCtrlCActionsPromoter"/>
+    <editorActionHandler action="EditorEnter" implementationClass="org.jetbrains.plugins.terminal.block.prompt.TerminalEnterHandler"
+                         id="terminalEnter" order="first"/>
+    <editorActionHandler action="EditorUp" implementationClass="org.jetbrains.plugins.terminal.block.history.TerminalCaretUpHandler"
+                         id="terminalUp" order="first"/>
+    <editorActionHandler action="EditorDown" implementationClass="org.jetbrains.plugins.terminal.block.history.TerminalCaretDownHandler"
+                         id="terminalDown" order="first"/>
+    <editorActionHandler action="Terminal.SearchInCommandHistory"
+                         implementationClass="org.jetbrains.plugins.terminal.block.history.CommandSearchSelectNextHandler"
+                         id="terminalCommandSearchSelectNext" order="first"/>
+    <editorActionHandler action="$SelectAll" implementationClass="org.jetbrains.plugins.terminal.block.prompt.TerminalPromptSelectAllHandler"
+                         id="terminalSelectAll" order="first"/>
+    <typedHandler implementation="org.jetbrains.plugins.terminal.block.prompt.TerminalCompletionAutoPopupHandler"
+                  id="terminalCompletionAutoPopup" order="first"/>
+    <lookup.charFilter implementation="org.jetbrains.plugins.terminal.block.prompt.TerminalCharFilter"
+                       id="terminal" order="first"/>
+    <completion.contributor language="any"
+                            id="terminalCommandSpecGen1"
+                            implementationClass="org.jetbrains.plugins.terminal.block.completion.TerminalCommandSpecCompletionContributorGen1"
+                            order="first, before terminalPowerShell, after ml_context"/>
+    <completion.contributor language="any"
+                            id="terminalPowerShell"
+                            implementationClass="org.jetbrains.plugins.terminal.block.completion.powershell.PowerShellCompletionContributor"
+                            order="first, before shShebang, before liveTemplates, after ml_context"/>
+    <completion.ml.model implementation="org.jetbrains.plugins.terminal.block.completion.ml.ShMLRankingProvider"/>
+    <weigher key="completion"
+             id="terminalCommandSpecGen2"
+             order="before stats"
+             implementationClass="org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecCompletionWeigher"/>
+    <feedback.idleFeedbackSurvey implementation="org.jetbrains.plugins.terminal.block.feedback.ReworkedTerminalFeedbackSurvey"/>
+    <feedback.idleFeedbackSurvey implementation="org.jetbrains.plugins.terminal.block.completion.feedback.TerminalCompletionFeedbackSurvey"/>
+
+    <lang.fileViewProviderFactory language="Terminal Prompt"
+                                  implementationClass="org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptFileViewProviderFactory"/>
+    <highlightErrorFilter implementation="org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptErrorFilter"/>
+
+    <lang.parserDefinition language="TerminalOutput"
+                           implementationClass="org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputParserDefinition"/>
+
+    <advancedSetting bundle="messages.TerminalBundle"  id="terminal.character.encoding" default="UTF-8" groupKey="group.advanced.settings.terminal"/>
+    <applicationService serviceInterface="com.intellij.terminal.search.JediTermSearchComponentProvider"
+                        serviceImplementation="org.jetbrains.plugins.terminal.search.JediTermSearchComponentProviderImpl"/>
+    <advancedSetting id="new.terminal.output.capacity.kb" default="1024" groupKey="group.advanced.settings.terminal"/>
+
+    <postStartupActivity implementation="org.jetbrains.plugins.terminal.block.GenOneTerminalOptionHidingActivity"/>
+
+    <remote.customDataContextSerializer implementation="org.jetbrains.plugins.terminal.block.reworked.TerminalSessionIdDataContextSerializer" />
+    <remote.customDataContextSerializer implementation="org.jetbrains.plugins.terminal.block.reworked.IsAlternateBufferDataContextSerializer" />
+    <remote.customDataContextSerializer implementation="org.jetbrains.plugins.terminal.block.reworked.hyperlinks.HyperlinkIdDataContextSerializer" />
+
+    <notificationGroup displayType="BALLOON" id="terminal" bundle="messages.TerminalBundle" key="notification.group.terminal"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
+    <commandSpecsProvider implementation="org.jetbrains.plugins.terminal.block.completion.spec.json.ShellDefaultCommandSpecsProvider"/>
+    <commandSpecsProvider implementation="org.jetbrains.plugins.terminal.block.completion.spec.specs.ShellCodeBasedCommandSpecsProvider"/>
+    <commandSpecsProvider implementation="org.jetbrains.plugins.terminal.block.completion.spec.specs.PowerShellCommandSpecsProvider"/>
+
+    <shellSupport key="zsh" implementationClass="org.jetbrains.plugins.terminal.block.shellSupport.zsh.ZshSupport"/>
+    <shellSupport key="bash" implementationClass="org.jetbrains.plugins.terminal.block.shellSupport.bash.BashSupport"/>
+    <shellSupport key="powershell" implementationClass="org.jetbrains.plugins.terminal.block.shellSupport.powershell.PowerShellSupport"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.shellParametersCustomizer"
+                    interface="org.jetbrains.plugins.terminal.starter.ShellCustomizer" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.localTerminalCustomizer"
+                    interface="org.jetbrains.plugins.terminal.LocalTerminalCustomizer" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.terminal.shellCommandHandler"
+                    interface="com.intellij.terminal.TerminalShellCommandHandler" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.openPredefinedTerminalProvider"
+                    interface="org.jetbrains.plugins.terminal.ui.OpenPredefinedTerminalActionProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.commandSpecsProvider"
+                    interface="org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.shellSupport"
+                    beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.promptCustomEnterHandler" dynamic="true"
+                    interface="org.jetbrains.plugins.terminal.block.prompt.TerminalPromptCustomEnterHandler"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.commandHistoryProvider" dynamic="true"
+                    interface="org.jetbrains.plugins.terminal.block.history.TerminalCommandHistoryProvider"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.exp.commandBlockHighlighterProvider"
+                    interface="org.jetbrains.plugins.terminal.block.output.highlighting.TerminalCommandBlockHighlighterProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.terminalCloudCompletionSettingsProvider" dynamic="true"
+                    interface="org.jetbrains.plugins.terminal.TerminalCloudCompletionSettingsProvider"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.toolWindowInitializer"
+                    interface="org.jetbrains.plugins.terminal.TerminalToolWindowInitializer" dynamic="true"/>
+  </extensionPoints>
+
+  <applicationListeners>
+    <listener class="org.jetbrains.plugins.terminal.TerminalNewUserTracker"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
+
+  <projectListeners>
+    <listener class="org.jetbrains.plugins.terminal.block.prompt.TerminalLookupManagerListener"
+              topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
+  </projectListeners>
+
+  <actions resource-bundle="messages.TerminalBundle">
+    <group id="Terminal.HyperlinkContextMenu" class="org.jetbrains.plugins.terminal.hyperlinks.HyperlinkContextMenuActionGroup" />
+  </actions>
+</idea-plugin>

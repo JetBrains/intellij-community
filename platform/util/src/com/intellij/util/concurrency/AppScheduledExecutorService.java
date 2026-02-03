@@ -1,0 +1,299 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util.concurrency;
+
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.LowMemoryWatcherManager;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.BiConsumer;
+
+import static com.intellij.util.concurrency.AppExecutorUtil.propagateContext;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
+
+/**
+ * A ThreadPoolExecutor which also implements {@link ScheduledExecutorService} by awaiting scheduled tasks in a separate thread
+ * and then executing them in the owned ThreadPoolExecutor.
+ * Unlike the existing {@link ScheduledThreadPoolExecutor}, this pool is unbounded.
+ * @see AppExecutorUtil#getAppScheduledExecutorService()
+ */
+@ApiStatus.Internal
+public final class AppScheduledExecutorService extends SchedulingWrapper {
+  public static final String POOLED_THREAD_PREFIX = "ApplicationImpl pooled thread ";
+
+  private final @NotNull String myName;
+  private final LowMemoryWatcherManager myLowMemoryWatcherManager;
+
+  private static final class Holder {
+    private static final AppScheduledExecutorService INSTANCE = new AppScheduledExecutorService("Global instance", 1, MINUTES, true);
+  }
+  static @NotNull ScheduledExecutorService getInstance() {
+    return Holder.INSTANCE;
+  }
+
+  /**
+   * @param initLowMemoryWatcherManager introduced to test AppScheduledExecutorService without initializing LowMemoryWatcherManager inside.
+   *                                    LowMemoryWatcherManager complicates the behavior of the AppScheduledExecutorService which makes it
+   *                                    harder to test
+   */
+  private AppScheduledExecutorService(@NotNull String name, long keepAliveTime, @NotNull TimeUnit unit, boolean initLowMemoryWatcherManager) {
+    super(new BackendThreadPoolExecutor(new MyThreadFactory(), keepAliveTime, unit), new AppDelayQueue());
+    myName = name;
+    //TODO RC: why LowMemoryWatcher is owned by AppScheduledExecutorService? Shouldn't it be a dedicated service itself?
+    //         There are issues in LowMemoryWatcherManager initialization because of that, and also issues in tests,
+    //         (for those issues initLowMemoryWatcherManager=false option was introduced)
+    if (initLowMemoryWatcherManager) {
+      myLowMemoryWatcherManager = new LowMemoryWatcherManager(this);
+    }
+    else {
+      myLowMemoryWatcherManager = null;
+    }
+  }
+
+  private MyThreadFactory getCountingThreadFactory() {
+    return (MyThreadFactory)((BackendThreadPoolExecutor)backendExecutorService).getThreadFactory();
+  }
+
+  public LowMemoryWatcherManager getLowMemoryWatcherManager() {
+    return myLowMemoryWatcherManager;
+  }
+
+  private static final class MyThreadFactory extends CountingThreadFactory {
+    private BiConsumer<? super Thread, ? super Runnable> newThreadListener;
+    private final ThreadFactory myThreadFactory = Executors.privilegedThreadFactory();
+    @Override
+    public @NotNull Thread newThread(final @NotNull Runnable r) {
+      Thread thread = myThreadFactory.newThread(r);
+      thread.setName(POOLED_THREAD_PREFIX + counter.incrementAndGet());
+
+      thread.setPriority(Thread.NORM_PRIORITY - 1);
+
+      BiConsumer<? super Thread, ? super Runnable> listener = newThreadListener;
+      if (listener != null) {
+        listener.accept(thread, r);
+      }
+      return thread;
+    }
+
+    void setNewThreadListener(@NotNull BiConsumer<? super Thread, ? super Runnable> threadListener) {
+      if (newThreadListener != null) throw new IllegalStateException("Listener was already set: " + newThreadListener);
+      newThreadListener = threadListener;
+    }
+  }
+  public void setNewThreadListener(@NotNull BiConsumer<? super Thread, ? super Runnable> threadListener) {
+    getCountingThreadFactory().setNewThreadListener(threadListener);
+  }
+
+  @Override
+  public @NotNull List<Runnable> shutdownNow() {
+    return notAllowedMethodCall();
+  }
+
+  @Override
+  public void shutdown() {
+    notAllowedMethodCall();
+  }
+
+  public static @NotNull List<Runnable> notAllowedMethodCall() {
+    throw new IncorrectOperationException("You must not call this method on the global app pool");
+  }
+
+  @Override
+  void onDelayQueuePurgedOnShutdown() {
+    ((BackendThreadPoolExecutor)backendExecutorService).superShutdown();
+  }
+
+  void shutdownAppScheduledExecutorService() {
+    // LowMemoryWatcher starts background tasks so stop it now to avoid RejectedExecutionException
+    if (myLowMemoryWatcherManager != null) {
+      myLowMemoryWatcherManager.shutdown();
+    }
+    doShutdown(true);
+    delayQueue.shutdown(this);
+  }
+
+  @Override
+  public boolean awaitTermination(long timeout, @NotNull TimeUnit unit) throws InterruptedException {
+    // let this task to bubble through the AppDelayQueue global queue to make sure there are no in-flight tasks leaked on stack of com.intellij.util.concurrency.AppDelayQueue.transferrerThread
+    long deadline = System.nanoTime() + unit.toNanos(timeout);
+    if (!delayQueue.awaitTermination(deadline - System.nanoTime(), TimeUnit.NANOSECONDS)) {
+      return false;
+    }
+
+    return super.awaitTermination(deadline - System.nanoTime(), TimeUnit.NANOSECONDS);
+  }
+
+  @TestOnly
+  public @NotNull String statistics() {
+    return myName + " threads created counter = " + getCountingThreadFactory().counter;
+  }
+
+  @TestOnly
+  public String dumpQueue() {
+    return delayQueue.toString();
+  }
+
+  public int getBackendPoolExecutorSize() {
+    return ((BackendThreadPoolExecutor)backendExecutorService).getPoolSize();
+  }
+
+  private static final class BackendThreadPoolExecutor extends ThreadPoolExecutor {
+    BackendThreadPoolExecutor(@NotNull ThreadFactory factory,
+                              long keepAliveTime,
+                              @NotNull TimeUnit unit) {
+      super(1, Integer.MAX_VALUE, keepAliveTime, unit, new SynchronousQueue<>(), factory);
+    }
+    @Override
+    public void execute(@NotNull Runnable command) {
+      super.execute(capturePropagationAndCancellationContext(command));
+    }
+
+    @Override
+    protected <T> RunnableFuture<T> newTaskFor(Runnable runnable, T value) {
+      return newTaskFor(Executors.callable(runnable, value));
+    }
+
+    @Override
+    protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
+      return capturePropagationAndCancellationContext(callable);
+    }
+
+    @Override
+    protected void afterExecute(Runnable r, Throwable t) {
+      if (t != null && !(t instanceof ProcessCanceledException)) {
+        Logger.getInstance(SchedulingWrapper.class).error("Worker exited due to exception", t);
+      }
+    }
+
+    private void superShutdown() {
+      super.shutdown();
+    }
+
+    // stub out sensitive methods
+    @Override
+    public void shutdown() {
+      notAllowedMethodCall();
+    }
+    @Override
+    public @NotNull List<Runnable> shutdownNow() {
+      return notAllowedMethodCall();
+    }
+
+    @Override
+    public void setCorePoolSize(int corePoolSize) {
+      notAllowedMethodCall();
+    }
+
+    private void superSetCorePoolSize(int corePoolSize) {
+      super.setCorePoolSize(corePoolSize);
+    }
+
+    @Override
+    public void allowCoreThreadTimeOut(boolean value) {
+      notAllowedMethodCall();
+    }
+
+    @Override
+    public void setMaximumPoolSize(int maximumPoolSize) {
+      notAllowedMethodCall();
+    }
+
+    @Override
+    public void setKeepAliveTime(long time, TimeUnit unit) {
+      notAllowedMethodCall();
+    }
+
+    private void superSetKeepAliveTime(long time, TimeUnit unit) {
+      super.setKeepAliveTime(time, unit);
+    }
+
+    @Override
+    public void setThreadFactory(@NotNull ThreadFactory threadFactory) {
+      notAllowedMethodCall();
+    }
+  }
+  public static @NotNull Thread getPeriodicTasksThread() {
+    return Holder.INSTANCE.delayQueue.getThread();
+  }
+
+  public static @NotNull Runnable capturePropagationAndCancellationContext(@NotNull Runnable command) {
+    if (!propagateContext()) {
+      return command;
+    }
+    return Propagation.capturePropagationContext(command, false);
+  }
+
+  /**
+   * This function intentionally has a scary name so that no one would try to use it.
+   */
+  public static @NotNull Runnable captureContextCancellationForRunnableThatDoesNotOutliveContextScope(@NotNull Runnable r) {
+    return Propagation.capturePropagationContext(r, true);
+  }
+
+  public static <T> @NotNull FutureTask<T> capturePropagationAndCancellationContext(@NotNull Callable<T> callable) {
+    if (!propagateContext()) {
+      return new FutureTask<>(callable);
+    }
+    return Propagation.capturePropagationContext(callable);
+  }
+
+  @TestOnly
+  public void waitUntilAllTasksAreTransferredInTests(long timeout, @NotNull TimeUnit timeUnit) throws TimeoutException {
+    AppDelayQueue delayQueue = getDelayQueue();
+    long deadline = System.nanoTime() + timeUnit.toNanos(timeout);
+    while (!delayQueue.isEmpty()) {
+      Thread.yield();
+      // wait till all tasks transferred from delayQueue to backend executor:
+      if (System.nanoTime() > deadline) {
+        List<Runnable> unprocessedTasks = new ArrayList<>(delayQueue);
+        if (!unprocessedTasks.isEmpty()) {
+          throw new TimeoutException("Not transferred after 20 seconds: " + ContainerUtil.map(unprocessedTasks, info -> BoundedTaskExecutor.info(info)) + ";\n" + unprocessedTasks);
+        }
+      }
+    }
+  }
+
+
+  @TestOnly
+  public void setBackendThreadPoolExecutorKeepAliveTimeInTests(int i, TimeUnit unit) {
+    ((BackendThreadPoolExecutor)backendExecutorService).superSetKeepAliveTime(i, unit);
+  }
+  @TestOnly
+  public void setBackendThreadPoolCorePoolSizeAndPrestartCoreThreadInTests(int size) {
+    ((BackendThreadPoolExecutor)backendExecutorService).superSetCorePoolSize(size);
+    ((ThreadPoolExecutor)backendExecutorService).prestartCoreThread();
+  }
+  @TestOnly
+  public static void withTemporaryAppScheduledServiceInTests(@NotNull String name,
+                                                             @NotNull ThrowableConsumer<? super AppScheduledExecutorService, Throwable> consumer)
+    throws Throwable {
+    AppScheduledExecutorService service = new AppScheduledExecutorService(name, 10, MINUTES, false);
+    try {
+      consumer.consume(service);
+    }
+    finally {
+      service.shutdownAppScheduledExecutorService();
+      boolean terminated = service.awaitTermination(20, SECONDS);
+      assert terminated;
+    }
+  }
+}

@@ -1,0 +1,14 @@
+// "Specify return type explicitly" "true"
+// COMPILER_ARGUMENTS: -Xexplicit-api=strict
+// ERROR: Visibility must be specified in explicit API mode
+// ERROR: Visibility must be specified in explicit API mode
+// K2_AFTER_ERROR: Visibility must be specified in explicit API mode.
+// K2_AFTER_ERROR: Visibility must be specified in explicit API mode.
+package a
+
+interface A {
+    fun <caret>foo() = ""
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SpecifyTypeExplicitlyFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils$SpecifyExplicitTypeQuickFix

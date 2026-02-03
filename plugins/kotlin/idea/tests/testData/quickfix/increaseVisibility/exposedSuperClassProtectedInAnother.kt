@@ -1,0 +1,17 @@
+// "Make 'Data' public" "true"
+// PRIORITY: HIGH
+// ACTION: Add import for 'Other.Data'
+// ACTION: Add names to call arguments
+// ACTION: Introduce import alias
+// ACTION: Make 'Data' public
+// ACTION: Make 'First' private
+
+class Other {
+    internal open class Data(val x: Int)
+}
+
+class Another {
+    protected class First : Other.<caret>Data(42)
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToPublicFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeVisibilityFixFactories$ChangeToPublicModCommandAction

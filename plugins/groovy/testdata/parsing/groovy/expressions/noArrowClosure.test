@@ -1,0 +1,21 @@
+{ String key, }
+-----
+Groovy script
+  Block statement
+    Open block
+      PsiElement({)('{')
+      PsiWhiteSpace(' ')
+      Variable definitions
+        Modifiers
+          <empty list>
+        Type element
+          Reference element
+            PsiElement(identifier)('String')
+        PsiWhiteSpace(' ')
+        Variable
+          PsiElement(identifier)('key')
+        PsiElement(,)(',')
+        PsiErrorElement:identifier expected, got '}'
+          <empty list>
+      PsiWhiteSpace(' ')
+      PsiElement(})('}')

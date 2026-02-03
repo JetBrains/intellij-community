@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.spellchecker.xml` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "xml_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "xml",
+  module_name = "intellij.spellchecker.xml",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":xml_resources"],
+  deps = [
+    "//platform/core-api:core",
+    "//spellchecker",
+    "//xml/dom-openapi:dom",
+    "//xml/xml-parser:parser",
+    "//xml/impl",
+    "//platform/util",
+    "//platform/analysis-api:analysis",
+    "//xml/xml-psi-api:psi",
+    "//platform/core-impl",
+  ]
+)
+### auto-generated section `build intellij.spellchecker.xml` end

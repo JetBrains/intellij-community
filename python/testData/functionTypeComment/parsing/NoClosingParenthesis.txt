@@ -1,0 +1,8 @@
+FunctionTypeComment:a.functionTypeComment
+  PyFunctionTypeAnnotation
+    PyParameterTypeList
+      PsiElement(Py:LPAR)('(')
+      PyReferenceExpression: int
+        PsiElement(Py:IDENTIFIER)('int')
+      PsiErrorElement:')' expected
+        <empty list>

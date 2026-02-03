@@ -1,0 +1,12 @@
+LineBreakpoint created at stepOverLaunch.kt:9
+Run Java
+Connected to the target VM
+stepOverLaunch.kt:9
+stepOverLaunch.kt:10
+stepOverLaunch.kt:13
+stepOverLaunch.kt:16
+stepOverLaunch.kt:19
+stepOverLaunch.kt:22
+Disconnected from the target VM
+
+Process finished with exit code 0

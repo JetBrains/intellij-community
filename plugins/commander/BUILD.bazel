@@ -1,0 +1,71 @@
+### auto-generated section `build intellij.commander` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "commander_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "commander",
+  module_name = "intellij.commander",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":commander_resources"],
+  deps = [
+    "//java/java-impl:impl",
+    "//platform/analysis-api:analysis",
+    "//platform/lang-api:lang",
+    "//platform/diff-api:diff",
+    "//platform/diff-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-ui",
+    "//platform/lang-core",
+    "//platform/lvcs-api:lvcs",
+    "//platform/projectModel-api:projectModel",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/util/jdom",
+    "//platform/core-api:core",
+  ]
+)
+
+jvm_library(
+  name = "commander_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [":commander"],
+  deps = [
+    "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
+    "//platform/analysis-api:analysis",
+    "//platform/lang-api:lang",
+    "//platform/diff-api:diff",
+    "//platform/diff-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//java/testFramework",
+    "//plugins/ui-designer:java-guiForms-designer",
+    "//plugins/ui-designer:java-guiForms-designer_test_lib",
+    "//platform/core-ui",
+    "//platform/lang-core",
+    "//platform/lvcs-api:lvcs",
+    "//platform/projectModel-api:projectModel",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/util/jdom",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/core-api:core",
+  ]
+)
+### auto-generated section `build intellij.commander` end
+
+### auto-generated section `test intellij.commander` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "commander_test",
+  runtime_deps = [":commander_test_lib"]
+)
+### auto-generated section `test intellij.commander` end

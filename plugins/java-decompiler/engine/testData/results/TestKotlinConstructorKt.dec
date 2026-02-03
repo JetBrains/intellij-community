@@ -1,0 +1,120 @@
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import kotlin.Metadata;
+import kotlin.TypeCastException;
+import kotlin.collections.CollectionsKt;
+
+@Metadata(
+   mv = {1, 1, 1},
+   bv = {1, 0, 0},
+   k = 2,
+   d1 = {"\u0000\u0016\n\u0000\n\u0002\u0010 \n\u0002\u0018\u0002\n\u0000\n\u0002\u0010\u001e\n\u0002\u0010\u000e\n\u0000\u001a\u001c\u0010\u0000\u001a\b\u0012\u0004\u0012\u00020\u00020\u00012\f\u0010\u0003\u001a\b\u0012\u0004\u0012\u00020\u00050\u0004H\u0002¨\u0006\u0006"},
+   d2 = {"foo", "", "LMapping;", "list", "", "", "module1"}
+)
+public final class TestKotlinConstructorKt {
+   private static final List<Mapping> foo(Collection<String> list) {
+      Iterable $receiver$iv = (Iterable)list;// 2 4
+      Collection destination$iv$iv = (Collection)(new ArrayList(CollectionsKt.collectionSizeOrDefault($receiver$iv, 10)));
+
+      for(Object item$iv$iv : $receiver$iv) {// 10 11
+         String it = (String)item$iv$iv;
+         Mapping var10000 = new Mapping;
+         if (it == null) {// 3
+            throw new TypeCastException("null cannot be cast to non-null type kotlin.String");
+         }
+
+         var10000.<init>(it);
+         Mapping var11 = var10000;
+         destination$iv$iv.add(var11);// 12
+      }
+
+      return CollectionsKt.toList((Iterable)((List)destination$iv$iv));// 13
+   }
+}
+
+class 'TestKotlinConstructorKt' {
+   method 'foo (Ljava/util/Collection;)Ljava/util/List;' {
+      0      16
+      1      16
+      2      16
+      3      16
+      4      16
+      6      19
+      c      17
+      d      17
+      e      17
+      f      17
+      10      17
+      11      17
+      15      17
+      16      17
+      17      17
+      18      17
+      1b      19
+      1c      19
+      1d      19
+      1e      19
+      1f      19
+      20      19
+      21      19
+      2c      19
+      2d      19
+      2e      19
+      2f      19
+      30      19
+      31      19
+      32      19
+      33      19
+      34      19
+      35      28
+      36      20
+      37      20
+      38      20
+      39      20
+      3a      20
+      3b      20
+      3c      20
+      43      22
+      44      22
+      46      22
+      4d      23
+      4e      23
+      52      23
+      53      26
+      54      26
+      55      26
+      56      26
+      57      26
+      58      26
+      59      27
+      5a      27
+      5d      28
+      5e      28
+      5f      28
+      60      28
+      61      28
+      62      28
+      63      28
+      68      31
+      69      31
+      6a      31
+      6b      31
+      6c      31
+      6d      31
+      6e      31
+      6f      31
+      70      31
+      71      31
+      72      31
+   }
+}
+
+Lines mapping:
+2 <-> 17
+3 <-> 23
+4 <-> 17
+10 <-> 20
+11 <-> 20
+12 <-> 29
+13 <-> 32

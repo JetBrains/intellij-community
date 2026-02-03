@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="procedure">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="parameter" type="parameterType" minOccurs="0" maxOccurs="1300"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="parameterType">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="string" type="strVarType">
+                </xs:element>
+            </xs:choice>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="strVarType">
+        <xs:sequence>
+            <xs:choice>
+                <xs:sequence minOccurs="0">
+                    <xs:element name="processingType" minOccurs="0">
+                        <xs:simpleType>
+                            <xs:restriction base="xs:string">
+                                <xs:enumeration value="TYPE1"/>
+                            </xs:restriction>
+                        </xs:simpleType>
+                    </xs:element>
+                </xs:sequence>
+            </xs:choice>
+            <xs:element name="choice" type="xs:string" minOccurs="0" maxOccurs="1300"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>

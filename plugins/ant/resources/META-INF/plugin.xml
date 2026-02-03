@@ -1,0 +1,117 @@
+<idea-plugin>
+  <name>Ant</name>
+  <id>AntSupport</id>
+  <category>Build Tools</category>
+  <description><![CDATA[
+  Provides integration with the <a href="https://ant.apache.org/">Ant</a> build tool.
+<ul><li>Dedicated tool window</li>
+<li>Coding assistance for build files</li>
+<li>Possibility to execute tasks</li></ul>
+To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant</b>.
+  ]]></description>
+  <vendor>JetBrains</vendor>
+
+  <resource-bundle>messages.AntActionsBundle</resource-bundle>
+  <depends>com.intellij.java</depends>
+  <depends>com.intellij.properties</depends>
+
+  <extensionPoints>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="AntMessageCustomizer" interface="com.intellij.lang.ant.config.execution.AntMessageCustomizer" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <tipAndTrick file="CreateTargetTag.html" />
+
+    <statistics.projectUsagesCollector implementation="com.intellij.lang.ant.AntSettingsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.lang.ant.AntActionsUsagesCollector"/>
+
+    <projectService serviceInterface="com.intellij.lang.ant.config.AntConfiguration" serviceImplementation="com.intellij.lang.ant.config.impl.AntConfigurationImpl"/>
+
+    <renameHandler implementation="com.intellij.lang.ant.refactoring.AntRenameHandler"/>
+    <stepsBeforeRunProvider implementation="com.intellij.lang.ant.config.impl.AntBeforeRunTaskProvider"/>
+    <packaging.artifactPropertiesProvider implementation="com.intellij.lang.ant.config.impl.artifacts.AntArtifactPostprocessingPropertiesProvider"/>
+    <packaging.artifactPropertiesProvider implementation="com.intellij.lang.ant.config.impl.artifacts.AntArtifactPreProcessingPropertiesProvider"/>
+    <compileServer.plugin classpath="ant-jps.jar"/>
+
+    <keymapExtension implementation="com.intellij.lang.ant.config.impl.AntKeymapExtension"/>
+    <highlightRangeExtension implementation="com.intellij.lang.ant.AntHighlightRangeExtension"/>
+    <renamePsiElementProcessor implementation="com.intellij.lang.ant.dom.AntRenameProcessor"/>
+    <daemon.externalAnnotatorsFilter implementation="com.intellij.lang.ant.validation.AntAnnotatorsFilter"/>
+    <lang.documentationProvider language="XML" implementationClass="com.intellij.lang.ant.doc.AntDomDocumentationProvider"/>
+
+    <fileBasedIndex implementation="com.intellij.lang.ant.AntImportsIndex"/>
+    <codeInsight.unresolvedReferenceQuickFixProvider implementation="com.intellij.lang.ant.quickfix.AntUnresolvedRefsFixProvider"/>
+    <hectorComponentProvider implementation="com.intellij.lang.ant.validation.AntHectorPanelProvider"/>
+
+    <localInspection language="XML" shortName="AntDuplicateTargetsInspection" bundle="messages.AntBundle" key="inspection.ant.duplicate.targets"
+                     groupKey="ant.inspections.display.name" enabledByDefault="true" level="ERROR"
+                     implementationClass="com.intellij.lang.ant.validation.AntDuplicateTargetsInspection"/>
+    <localInspection language="XML" shortName="AntMissingPropertiesFileInspection" bundle="messages.AntBundle" key="inspection.ant.missing.properties.file"
+                     groupKey="ant.inspections.display.name" enabledByDefault="true" level="ERROR"
+                     implementationClass="com.intellij.lang.ant.validation.AntMissingPropertiesFileInspection"/>
+    <localInspection language="XML" shortName="AntResolveInspection" bundle="messages.AntBundle"
+                     groupKey="ant.inspections.display.name"
+                     enabledByDefault="true" level="ERROR" implementationClass="com.intellij.lang.ant.dom.AntResolveInspection"
+                     key="inspection.ant.resolve.inspection.display.name"/>
+
+    <dom.fileMetaData implementation="com.intellij.lang.ant.dom.AntDomFileDescription" rootTagName="project"/>
+    <dom.fileMetaData implementation="com.intellij.lang.ant.dom.AntlibDomFileDescription" rootTagName="antlib"/>
+    <dom.extender domClass="com.intellij.lang.ant.dom.AntDomElement" extenderClass="com.intellij.lang.ant.dom.AntDomExtender"/>
+    <pom.declarationSearcher implementation="com.intellij.lang.ant.dom.AntDomDeclarationSearcher"/>
+
+    <!--Type Presentation-->
+    <typeName className="com.intellij.lang.ant.dom.AntDomMacroDef" name="Macro Definition"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomMacrodefElement" name="Macrodef Nested Element"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomTypeDef" name="Type Definition"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomTaskdef" name="Task Definition"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomPresetDef" name="Preset Definition"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomScriptDef" name="Script Definition"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomProperty" name="Property"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomDirSet" name="Directory Set"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomFileSet" name="File Set"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomFileList" name="File List"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomPath" name="Path"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomPathElement" name="Pathelement"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomTarget" name="Target"/>
+    <typeName className="com.intellij.lang.ant.dom.AntDomAntCallParam" name="Antcall Parameter"/>
+
+    <toolWindow anchor="right" icon="AllIcons.Toolwindows.ToolWindowAnt" id="Ant"
+                factoryClass="com.intellij.lang.ant.config.impl.AntToolWindowFactory"/>
+    <toolWindowExtractorMode id="Ant" mode="mirror"/>
+    <configurationType implementation="com.intellij.lang.ant.config.execution.AntRunConfigurationType"/>
+    <programRunner implementation="com.intellij.lang.ant.config.execution.AntRunner"/>
+
+    <applicationService serviceImplementation="com.intellij.lang.ant.config.impl.GlobalAntConfiguration"/>
+
+    <compiler.task execute="BEFORE" implementation="com.intellij.lang.ant.config.impl.AntBeforeCompileTask"/>
+    <compiler.task execute="AFTER" implementation="com.intellij.lang.ant.config.impl.AntAfterCompileTask"/>
+    <backgroundPostStartupActivity implementation="com.intellij.lang.ant.config.impl.AntShortcutStartupActivity"/>
+
+    <externalSystemUnlinkedProjectAware implementation="com.intellij.lang.ant.config.impl.AntUnlinkedProjectAware"/>
+    <externalTextProvider implementation="com.intellij.lang.ant.config.impl.AntTextProvider"/>
+
+    <buildProcess.parametersProvider implementation="com.intellij.lang.ant.AntBuildParametersProvider"/>
+  </extensions>
+
+  <actions>
+    <group id="AntBuildGroup" class="com.intellij.lang.ant.config.actions.AntBuildGroup">
+      <add-to-group group-id="BuildMenu" relative-to-action="BuildJar" anchor="before"/>
+    </group>
+    <action id="AddAntBuildFile" class="com.intellij.lang.ant.config.actions.AddAntBuildFile" icon="AntIcons.Build">
+      <add-to-group group-id="ToolsXmlGroup"/>
+      <add-to-group group-id="EditorPopupMenu" relative-to-action="PackageFile" anchor="after"/>
+      <add-to-group group-id="ProjectViewPopupMenu"/>
+      <add-to-group group-id="ScopeViewPopupMenu"/>
+      <add-to-group group-id="CommanderPopupMenu"/>
+    </action>
+    <action id="RunTargetAction" class="com.intellij.lang.ant.config.actions.RunTargetAction">
+      <add-to-group group-id="BuildMenu" relative-to-action="BuildJar" anchor="before"/>
+      <keyboard-shortcut first-keystroke="control shift F10" keymap="$default"/>
+    </action>
+    <action id="ActivateAntToolWindow" class="com.intellij.lang.ant.config.actions.ActivateAntToolWindowAction">
+      <add-to-group group-id="ActivateToolWindowActions"/>
+    </action>
+  </actions>
+</idea-plugin>
+

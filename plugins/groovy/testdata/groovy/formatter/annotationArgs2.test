@@ -1,0 +1,11 @@
+@Foo
+(
+arg
+)
+class Foo{}
+-----
+@Foo
+    (
+        arg
+    )
+class Foo {}

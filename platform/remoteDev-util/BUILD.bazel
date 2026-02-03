@@ -1,0 +1,128 @@
+### auto-generated section `build intellij.remoteDev.util` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "remoteDev-util_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "remoteDev-util",
+  module_name = "intellij.remoteDev.util",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "modelGenerated/**/*.kt", "modelGenerated/**/*.java"], allow_empty = True),
+  resources = [":remoteDev-util_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/rd/core",
+    "//libraries/rd/framework",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/concurrency",
+    "//platform/analysis-api:analysis",
+    "@lib//:jna",
+    "@lib//:download-pgp-verifier",
+    "//libraries/bouncy-castle-pgp",
+    "//platform/platform-impl:ide-impl",
+    "//libraries/miglayout-swing",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//platform/rd-platform-community:rd-community",
+    "//platform/statistics",
+    "//libraries/gson",
+    "//platform/util/progress",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//platform/core-ui",
+    "//libraries/kotlin/reflect",
+    "//platform/ide-core-impl",
+    "@lib//:rd-gen",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/diagnostic/telemetry",
+    "//platform/diagnostic/telemetry.exporters",
+    "//platform/diagnostic/telemetry-impl",
+    "//platform/diagnostic",
+    "//platform/bootstrap",
+    "//platform/platform-impl/ui",
+    "//platform/lang-core",
+    "//platform/runtime/repository",
+    "//platform/core-impl",
+    "//platform/runtime/product",
+    "//platform/execution",
+    "//platform/util/coroutines",
+  ]
+)
+
+jvm_library(
+  name = "remoteDev-util_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":remoteDev-util"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/rd/core",
+    "//libraries/rd/framework",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/analysis-api:analysis",
+    "@lib//:jna",
+    "@lib//:download-pgp-verifier",
+    "//libraries/bouncy-castle-pgp",
+    "//platform/platform-impl:ide-impl",
+    "//libraries/miglayout-swing",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//platform/rd-platform-community:rd-community",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//libraries/gson",
+    "@lib//:junit5",
+    "//platform/util/progress",
+    "@lib//:junit5Params",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//platform/core-ui",
+    "//libraries/kotlin/reflect",
+    "//platform/ide-core-impl",
+    "@lib//:rd-gen",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/diagnostic/telemetry",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/diagnostic/telemetry.exporters",
+    "//platform/diagnostic/telemetry-impl",
+    "//platform/diagnostic",
+    "//platform/bootstrap",
+    "//platform/platform-impl/ui",
+    "//platform/lang-core",
+    "//platform/runtime/repository",
+    "//platform/core-impl",
+    "//platform/runtime/product",
+    "//platform/execution",
+    "//platform/util/coroutines",
+  ]
+)
+### auto-generated section `build intellij.remoteDev.util` end
+
+### auto-generated section `test intellij.remoteDev.util` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "remoteDev-util_test",
+  runtime_deps = [":remoteDev-util_test_lib"]
+)
+### auto-generated section `test intellij.remoteDev.util` end

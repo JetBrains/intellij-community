@@ -1,0 +1,117 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.maven.navigator;
+
+import com.intellij.navigation.EmptyNavigatable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
+import com.intellij.pom.NavigatableAdapter;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependencies;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.model.MavenArtifact;
+import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Objects;
+import java.util.Optional;
+
+/**
+ * @author Konstantin Bulenkov
+ */
+public final class MavenNavigationUtil {
+  private static final String ARTIFACT_ID = "artifactId";
+
+  private MavenNavigationUtil() { }
+
+  public static @Nullable Navigatable createNavigatableForPom(final Project project, final VirtualFile file) {
+    if (file == null || !file.isValid()) return null;
+    final PsiFile result = PsiManager.getInstance(project).findFile(file);
+    return result == null ? null : new NavigatableAdapter() {
+      @Override
+      public void navigate(boolean requestFocus) {
+        int offset = 0;
+        if (result instanceof XmlFile) {
+          final XmlDocument xml = ((XmlFile)result).getDocument();
+          if (xml != null) {
+            final XmlTag rootTag = xml.getRootTag();
+            if (rootTag != null) {
+              final XmlTag[] id = rootTag.findSubTags(ARTIFACT_ID, rootTag.getNamespace());
+              if (id.length > 0) {
+                offset = id[0].getValue().getTextRange().getStartOffset();
+              }
+            }
+          }
+        }
+        navigate(project, file, offset, requestFocus);
+      }
+    };
+  }
+
+  public static @NotNull Navigatable createNavigatableForDependency(@NotNull Project project,
+                                                                    @NotNull VirtualFile file,
+                                                                    @NotNull MavenArtifact artifact) {
+    return createNavigatableForDependency(project, file, artifact.getGroupId(), artifact.getArtifactId());
+  }
+
+  public static @NotNull Navigatable createNavigatableForDependency(@NotNull Project project,
+                                                                    @NotNull VirtualFile file,
+                                                                    @NotNull String groupId,
+                                                                    @NotNull String artifactId) {
+
+    return Optional.of(file).filter(VirtualFile::isValid)
+      .map(f -> MavenDomUtil.getMavenDomProjectModel(project, f))
+      .map(projectModel -> findDependency(projectModel, groupId, artifactId))
+      .map(dependency -> dependency.getArtifactId().getXmlTag())
+      .map(artifactIdTag -> Pair.create(artifactIdTag.getContainingFile().getVirtualFile(),
+                                        artifactIdTag.getTextOffset() + artifactIdTag.getName().length() + 2))
+      .<Navigatable>map(pair ->
+                          new NavigatableAdapter() {
+                            @Override
+                            public void navigate(boolean requestFocus) {
+                              navigate(project, pair.getFirst(), pair.getSecond(), requestFocus);
+                            }
+                          }
+      ).orElse(EmptyNavigatable.INSTANCE);
+  }
+
+  public static @Nullable VirtualFile getArtifactFile(Project project, MavenId id) {
+    Path path = MavenArtifactUtil.getArtifactFile(MavenProjectsManager.getInstance(project).getRepositoryPath(), id);
+    return Files.exists(path) ? LocalFileSystem.getInstance().findFileByNioFile(path) : null;
+  }
+
+  public static @Nullable MavenDomDependency findDependency(@NotNull MavenDomProjectModel projectDom, final String groupId, final String artifactId) {
+    MavenDomProjectProcessorUtils.SearchProcessor<MavenDomDependency, MavenDomDependencies> processor =
+      new MavenDomProjectProcessorUtils.SearchProcessor<>() {
+        @Override
+        protected @Nullable MavenDomDependency find(MavenDomDependencies element) {
+          for (MavenDomDependency dependency : element.getDependencies()) {
+            if (Objects.equals(groupId, dependency.getGroupId().getStringValue()) &&
+                Objects.equals(artifactId, dependency.getArtifactId().getStringValue())) {
+              return dependency;
+            }
+          }
+
+          return null;
+        }
+      };
+
+    MavenDomProjectProcessorUtils.processDependencies(projectDom, processor);
+
+    return processor.getResult();
+  }
+}

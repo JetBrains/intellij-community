@@ -1,0 +1,1363 @@
+a:com.intellij.xdebugger.attach.EnvironmentAwareHost
+- com.intellij.xdebugger.attach.XAttachHost
+- <init>():V
+- a:canReadFile(java.lang.String):Z
+- a:getFileContent(java.lang.String):java.io.InputStream
+- a:getFileSystemHostId():java.lang.String
+- getOsHandler():com.intellij.xdebugger.attach.osHandlers.AttachOSHandler
+- a:getProcessHandler(com.intellij.execution.configurations.GeneralCommandLine):com.intellij.execution.process.BaseProcessHandler
+- getProcessOutput(com.intellij.execution.configurations.GeneralCommandLine):com.intellij.execution.process.ProcessOutput
+- isSameHost(java.lang.Object):Z
+c:com.intellij.xdebugger.attach.LocalAttachHost
+- com.intellij.xdebugger.attach.EnvironmentAwareHost
+- sf:INSTANCE:com.intellij.xdebugger.attach.LocalAttachHost
+- <init>():V
+- canReadFile(java.lang.String):Z
+- getFileContent(java.lang.String):java.io.InputStream
+- getFileSystemHostId():java.lang.String
+- getProcessHandler(com.intellij.execution.configurations.GeneralCommandLine):com.intellij.execution.process.BaseProcessHandler
+- getProcessList():java.util.List
+c:com.intellij.xdebugger.attach.WslAttachHost
+- com.intellij.xdebugger.attach.XAttachHost
+- <init>(com.intellij.execution.wsl.WSLDistribution):V
+- equals(java.lang.Object):Z
+- getProcessList():java.util.List
+- getWsl():com.intellij.execution.wsl.WSLDistribution
+- hashCode():I
+com.intellij.xdebugger.attach.XAttachHost$Async
+- com.intellij.xdebugger.attach.XAttachHost
+- getProcessList():java.util.List
+- a:getProcessListAsync(kotlin.coroutines.Continuation):java.lang.Object
+com.intellij.xdebugger.attach.XAttachHostProvider$Async
+- com.intellij.xdebugger.attach.XAttachHostProvider
+- getAvailableHosts(com.intellij.openapi.project.Project):java.util.List
+- a:getAvailableHostsAsync(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.xdebugger.attach.XAttachHostProvider$Companion
+f:com.intellij.xdebugger.attach.fs.LazyAttachVirtualFS
+- com.intellij.openapi.vfs.VirtualFileSystem
+- <init>():V
+- addVirtualFileListener(com.intellij.openapi.vfs.VirtualFileListener):V
+- findFileByPath(java.lang.String):com.intellij.openapi.vfs.VirtualFile
+- findFileByPath(java.lang.String,com.intellij.xdebugger.attach.EnvironmentAwareHost):com.intellij.openapi.vfs.VirtualFile
+- s:getInstance():com.intellij.xdebugger.attach.fs.LazyAttachVirtualFS
+- getProtocol():java.lang.String
+- isReadOnly():Z
+- refresh(Z):V
+- refreshAndFindFileByPath(java.lang.String):com.intellij.openapi.vfs.VirtualFile
+- removeVirtualFileListener(com.intellij.openapi.vfs.VirtualFileListener):V
+a:com.intellij.xdebugger.attach.osHandlers.AttachOSHandler
+- pf:myHost:com.intellij.xdebugger.attach.EnvironmentAwareHost
+- <init>(com.intellij.xdebugger.attach.EnvironmentAwareHost,com.intellij.xdebugger.attach.osHandlers.AttachOSHandler$OSType):V
+- s:getAttachOsHandler(com.intellij.xdebugger.attach.EnvironmentAwareHost):com.intellij.xdebugger.attach.osHandlers.AttachOSHandler
+- getOSType():com.intellij.xdebugger.attach.osHandlers.AttachOSHandler$OSType
+e:com.intellij.xdebugger.attach.osHandlers.AttachOSHandler$OSType
+- java.lang.Enum
+- sf:LINUX:com.intellij.xdebugger.attach.osHandlers.AttachOSHandler$OSType
+- sf:MACOSX:com.intellij.xdebugger.attach.osHandlers.AttachOSHandler$OSType
+- sf:UNKNOWN:com.intellij.xdebugger.attach.osHandlers.AttachOSHandler$OSType
+- sf:WINDOWS:com.intellij.xdebugger.attach.osHandlers.AttachOSHandler$OSType
+- s:valueOf(java.lang.String):com.intellij.xdebugger.attach.osHandlers.AttachOSHandler$OSType
+- s:values():com.intellij.xdebugger.attach.osHandlers.AttachOSHandler$OSType[]
+a:com.intellij.xdebugger.attach.osHandlers.UnixAttachOSHandler
+- com.intellij.xdebugger.attach.osHandlers.AttachOSHandler
+- <init>(com.intellij.xdebugger.attach.EnvironmentAwareHost,com.intellij.xdebugger.attach.osHandlers.AttachOSHandler$OSType):V
+- getPtraceScope():I
+- getUid():I
+- p:getenv(java.lang.String):java.lang.String
+- isOurProcess(I):Z
+f:com.intellij.xdebugger.impl.InlayRunToCursorEditorListener
+- com.intellij.openapi.editor.event.EditorMouseListener
+- com.intellij.openapi.editor.event.EditorMouseMotionListener
+- sf:Companion:com.intellij.xdebugger.impl.InlayRunToCursorEditorListener$Companion
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
+- sf:isInlayRunToCursorEnabled():Z
+- mouseMoved(com.intellij.openapi.editor.event.EditorMouseEvent):V
+- f:reshowInlayRunToCursor(com.intellij.openapi.editor.Editor):V
+f:com.intellij.xdebugger.impl.InlayRunToCursorEditorListener$Companion
+- f:isInlayRunToCursorEnabled():Z
+a:com.intellij.xdebugger.impl.XDebugProcessConfiguratorStarter
+- com.intellij.xdebugger.XDebugProcessStarter
+- <init>():V
+- a:configure(com.intellij.xdebugger.impl.ui.XDebugSessionData):V
+f:com.intellij.xdebugger.impl.XDebuggerHistoryManager
+- com.intellij.openapi.components.PersistentStateComponent
+- <init>():V
+- addRecentExpression(java.lang.String,com.intellij.xdebugger.XExpression):Z
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.xdebugger.impl.XDebuggerHistoryManager
+- getRecentExpressions(java.lang.String):java.util.List
+- getState():org.jdom.Element
+- loadState(org.jdom.Element):V
+f:com.intellij.xdebugger.impl.XDebuggerHistoryManager$XDebuggerHistoryPathMacroFilter
+- com.intellij.openapi.application.PathMacroFilter
+- <init>():V
+- skipPathMacros(org.jdom.Element):Z
+com.intellij.xdebugger.impl.XSourcePositionEx
+- com.intellij.xdebugger.XSourcePosition
+- getPositionUpdateFlow():kotlinx.coroutines.flow.Flow
+a:com.intellij.xdebugger.impl.XSourcePositionImpl
+- com.intellij.xdebugger.XSourcePosition
+- s:create(com.intellij.openapi.vfs.VirtualFile,I):com.intellij.xdebugger.impl.XSourcePositionImpl
+- s:create(com.intellij.openapi.vfs.VirtualFile,I,I):com.intellij.xdebugger.impl.XSourcePositionImpl
+- s:createByElement(com.intellij.psi.PsiElement):com.intellij.xdebugger.impl.XSourcePositionImpl
+- s:createByOffset(com.intellij.openapi.vfs.VirtualFile,I):com.intellij.xdebugger.impl.XSourcePositionImpl
+- createNavigatable(com.intellij.openapi.project.Project):com.intellij.pom.Navigatable
+- getFile():com.intellij.openapi.vfs.VirtualFile
+c:com.intellij.xdebugger.impl.actions.AttachToProcessAction
+- com.intellij.openapi.actionSystem.AnAction
+- com.intellij.openapi.project.DumbAware
+- <init>():V
+a:com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler
+- <init>():V
+- a:isEnabled(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):Z
+- a:isSelected(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):Z
+- a:setSelected(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent,Z):V
+c:com.intellij.xdebugger.impl.actions.ForceRunToCursorAction
+- com.intellij.xdebugger.impl.actions.XDebuggerActionBase
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+c:com.intellij.xdebugger.impl.actions.ForceStepIntoAction
+- com.intellij.xdebugger.impl.actions.XDebuggerActionBase
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+c:com.intellij.xdebugger.impl.actions.ForceStepOverAction
+- com.intellij.xdebugger.impl.actions.XDebuggerActionBase
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+c:com.intellij.xdebugger.impl.actions.MuteBreakpointAction
+- com.intellij.openapi.actionSystem.ToggleAction
+- <init>():V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- isDumbAware():Z
+- isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+c:com.intellij.xdebugger.impl.actions.PauseAction
+- com.intellij.openapi.project.DumbAwareAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+c:com.intellij.xdebugger.impl.actions.ResumeAction
+- com.intellij.openapi.project.DumbAwareAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+c:com.intellij.xdebugger.impl.actions.RunToCursorAction
+- com.intellij.xdebugger.impl.actions.XDebuggerActionBase
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+c:com.intellij.xdebugger.impl.actions.StepIntoAction
+- com.intellij.xdebugger.impl.actions.XDebuggerActionBase
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+c:com.intellij.xdebugger.impl.actions.StepOutAction
+- com.intellij.xdebugger.impl.actions.XDebuggerActionBase
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+c:com.intellij.xdebugger.impl.actions.StepOverAction
+- com.intellij.openapi.project.DumbAware
+- com.intellij.xdebugger.impl.actions.XDebuggerActionBase
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+c:com.intellij.xdebugger.impl.actions.ViewBreakpointsAction
+- com.intellij.openapi.project.DumbAwareAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+a:com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler
+- com.intellij.xdebugger.impl.actions.handlers.XDebuggerActionHandler
+- <init>():V
+- sf:isEnabled(com.intellij.xdebugger.XDebugSession):Z
+- p:isEnabled(com.intellij.xdebugger.XDebugSession,com.intellij.openapi.actionSystem.DataContext):Z
+a:com.intellij.xdebugger.impl.actions.handlers.XDebuggerActionHandler
+- com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+- <init>():V
+- isEnabled(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):Z
+- perform(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):V
+com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeWithDocumentDelegation
+- a:getDocumentForHighlighting(com.intellij.openapi.editor.Document):com.intellij.openapi.editor.Document
+f:com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
+- sf:INSTANCE:com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
+- sf:findSelectedBreakpoint(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):com.intellij.openapi.util.Pair
+- sf:findType(java.lang.String):com.intellij.xdebugger.breakpoints.XBreakpointType
+- sf:getDisplayText(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
+- sf:getGeneralDescription(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
+- sf:getPropertyXMLDescriptions(com.intellij.xdebugger.breakpoints.XBreakpoint):java.util.List
+- sf:getShortText(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
+- sf:toggleLineBreakpoint(com.intellij.openapi.project.Project,com.intellij.xdebugger.XSourcePosition,com.intellij.openapi.editor.Editor,Z,Z,Z):org.jetbrains.concurrency.Promise
+- sf:toggleLineBreakpoint(com.intellij.openapi.project.Project,com.intellij.xdebugger.XSourcePosition,Z,com.intellij.openapi.editor.Editor,Z,Z,Z):org.jetbrains.concurrency.Promise
+f:com.intellij.xdebugger.impl.breakpoints.XBreakpointUtilKt
+- sf:getDisplayText(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
+- sf:getGeneralDescription(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
+- sf:getHighlightRange(com.intellij.xdebugger.breakpoints.XLineBreakpoint):com.intellij.openapi.util.TextRange
+- sf:getPropertyXMLDescriptions(com.intellij.xdebugger.breakpoints.XBreakpoint):java.util.List
+- sf:getShortText(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
+com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointListener
+- java.util.EventListener
+- sf:TOPIC:com.intellij.util.messages.Topic
+- a:dependencyCleared(com.intellij.xdebugger.breakpoints.XBreakpoint):V
+- a:dependencySet(com.intellij.xdebugger.breakpoints.XBreakpoint,com.intellij.xdebugger.breakpoints.XBreakpoint):V
+c:com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
+- com.intellij.xdebugger.XExpression
+- sf:EMPTY_CODE_FRAGMENT:com.intellij.xdebugger.XExpression
+- sf:EMPTY_EXPRESSION:com.intellij.xdebugger.XExpression
+- <init>(java.lang.String,com.intellij.lang.Language,java.lang.String):V
+- <init>(java.lang.String,com.intellij.lang.Language,java.lang.String,com.intellij.xdebugger.evaluation.EvaluationMode):V
+- s:changeLanguage(com.intellij.xdebugger.XExpression,com.intellij.lang.Language):com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
+- s:changeMode(com.intellij.xdebugger.XExpression,com.intellij.xdebugger.evaluation.EvaluationMode):com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
+- equals(java.lang.Object):Z
+- s:fromText(java.lang.String):com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
+- s:fromText(java.lang.String,com.intellij.xdebugger.evaluation.EvaluationMode):com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
+- getCustomInfo():java.lang.String
+- getExpression():java.lang.String
+- getLanguage():com.intellij.lang.Language
+- getMode():com.intellij.xdebugger.evaluation.EvaluationMode
+- hashCode():I
+c:com.intellij.xdebugger.impl.breakpoints.XExpressionState
+- myCustomInfo:java.lang.String
+- myDisabled:Z
+- myExpression:java.lang.String
+- myLanguage:java.lang.String
+- myMode:com.intellij.xdebugger.evaluation.EvaluationMode
+- myOldExpression:java.lang.String
+- <init>():V
+- <init>(com.intellij.xdebugger.XExpression):V
+- <init>(Z,com.intellij.xdebugger.XExpression):V
+- <init>(Z,java.lang.String,java.lang.String,java.lang.String,com.intellij.xdebugger.evaluation.EvaluationMode):V
+- toXExpression():com.intellij.xdebugger.XExpression
+a:com.intellij.xdebugger.impl.dfaassist.DfaAssistBase
+- com.intellij.openapi.Disposable
+- p:myMode:com.intellij.xdebugger.impl.dfaassist.DfaAssistBase$AssistMode
+- pf:myProject:com.intellij.openapi.project.Project
+- <init>(com.intellij.openapi.project.Project):V
+- p:cleanUp():V
+- p:displayInlays(com.intellij.xdebugger.impl.dfaassist.DfaResult):V
+- dispose():V
+- p:getInlayHintActions():java.util.List
+e:com.intellij.xdebugger.impl.dfaassist.DfaAssistBase$AssistMode
+- java.lang.Enum
+- sf:BOTH:com.intellij.xdebugger.impl.dfaassist.DfaAssistBase$AssistMode
+- sf:GRAY_OUT:com.intellij.xdebugger.impl.dfaassist.DfaAssistBase$AssistMode
+- sf:INLAYS:com.intellij.xdebugger.impl.dfaassist.DfaAssistBase$AssistMode
+- sf:NONE:com.intellij.xdebugger.impl.dfaassist.DfaAssistBase$AssistMode
+- displayGrayOut():Z
+- s:valueOf(java.lang.String):com.intellij.xdebugger.impl.dfaassist.DfaAssistBase$AssistMode
+- s:values():com.intellij.xdebugger.impl.dfaassist.DfaAssistBase$AssistMode[]
+c:com.intellij.xdebugger.impl.dfaassist.DfaResult
+- sf:EMPTY:com.intellij.xdebugger.impl.dfaassist.DfaResult
+- f:file:com.intellij.psi.PsiFile
+- f:hints:java.util.Map
+- f:unreachable:java.util.Collection
+- <init>(com.intellij.psi.PsiFile,java.util.Map,java.util.Collection):V
+c:com.intellij.xdebugger.impl.evaluate.CodeFragmentInputComponent
+- com.intellij.xdebugger.impl.evaluate.EvaluationInputComponent
+- <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.XExpression,java.lang.String,com.intellij.openapi.Disposable):V
+- addComponent(javax.swing.JPanel,javax.swing.JPanel):V
+- getInputEditor():com.intellij.xdebugger.impl.ui.XDebuggerEditorBase
+- getMainComponent():javax.swing.JPanel
+a:com.intellij.xdebugger.impl.evaluate.EvaluationInputComponent
+- p:<init>(java.lang.String):V
+- a:addComponent(javax.swing.JPanel,javax.swing.JPanel):V
+- a:getInputEditor():com.intellij.xdebugger.impl.ui.XDebuggerEditorBase
+- a:getMainComponent():javax.swing.JPanel
+- getTitle():java.lang.String
+c:com.intellij.xdebugger.impl.evaluate.ExpressionInputComponent
+- com.intellij.xdebugger.impl.evaluate.EvaluationInputComponent
+- <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,java.lang.String,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.XExpression,com.intellij.openapi.Disposable,Z):V
+- addComponent(javax.swing.JPanel,javax.swing.JPanel):V
+- getInputEditor():com.intellij.xdebugger.impl.ui.XDebuggerEditorBase
+- getMainComponent():javax.swing.JPanel
+c:com.intellij.xdebugger.impl.evaluate.ExpressionInputForm
+- b:$$$getRootComponent$$$():javax.swing.JComponent
+- <init>():V
+- addExpressionComponent(javax.swing.JComponent):V
+- addLanguageComponent(javax.swing.JComponent):V
+- getMainPanel():javax.swing.JPanel
+- setName(java.lang.String):V
+c:com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog
+- com.intellij.openapi.ui.DialogWrapper
+- sf:KEY:com.intellij.openapi.actionSystem.DataKey
+- <init>(com.intellij.xdebugger.XDebugSession,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.xdebugger.XExpression,com.intellij.xdebugger.XSourcePosition,Z):V
+- <init>(com.intellij.xdebugger.evaluation.XDebuggerEvaluator,com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.xdebugger.XExpression,com.intellij.xdebugger.XSourcePosition,Z):V
+- p:createCenterPanel():javax.swing.JComponent
+- p:createDefaultActions():V
+- p:createJButtonForAction(javax.swing.Action):javax.swing.JButton
+- p:dispose():V
+- doCancelAction():V
+- p:doOKAction():V
+- evaluationDone():V
+- s:getAddWatchKeystroke():javax.swing.KeyStroke
+- p:getDimensionServiceKey():java.lang.String
+- getExpression():com.intellij.xdebugger.XExpression
+- p:getHelpId():java.lang.String
+- getInitialSize():java.awt.Dimension
+- getPreferredFocusedComponent():javax.swing.JComponent
+- startEvaluation(com.intellij.xdebugger.evaluation.XDebuggerEvaluator$XEvaluationCallback):V
+c:com.intellij.xdebugger.impl.evaluate.XExpressionDialog
+- com.intellij.openapi.ui.DialogWrapper
+- <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,java.lang.String,java.lang.String,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.XExpression):V
+- p:createCenterPanel():javax.swing.JComponent
+- p:getDimensionServiceKey():java.lang.String
+- f:getExpression():com.intellij.xdebugger.XExpression
+- getPreferredFocusedComponent():javax.swing.JComponent
+c:com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator
+- com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeCreator
+- <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.impl.frame.XValueMarkers):V
+- createDescriptorByNode(java.lang.Object,com.intellij.concurrency.ResultConsumer):V
+- createTree(com.intellij.openapi.util.Pair):com.intellij.ui.treeStructure.Tree
+- getTitle(com.intellij.openapi.util.Pair):java.lang.String
+c:com.intellij.xdebugger.impl.evaluate.quick.XValueHint
+- com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
+- p:createHintComponent(javax.swing.Icon,com.intellij.ui.SimpleColoredText,com.intellij.xdebugger.frame.presentation.XValuePresentation,com.intellij.xdebugger.frame.XFullValueEvaluator):javax.swing.JComponent
+- p:evaluateAndShowHint():V
+- hideHint():V
+- p:onHintHidden():V
+a:com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
+- pf:myPoint:java.awt.Point
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType,com.intellij.openapi.util.TextRange):V
+- pf:appendEvaluatorLink(com.intellij.xdebugger.frame.XFullValueEvaluator,com.intellij.ui.SimpleColoredComponent):V
+- s:calculateOffset(com.intellij.openapi.editor.Editor,java.awt.Point):I
+- p:createExpandableHintComponent(javax.swing.Icon,com.intellij.ui.SimpleColoredText,java.lang.Runnable,com.intellij.xdebugger.frame.XFullValueEvaluator):javax.swing.JComponent
+- equals(java.lang.Object):Z
+- pa:evaluateAndShowHint():V
+- p:getCurrentRange():com.intellij.openapi.util.TextRange
+- pf:getEditor():com.intellij.openapi.editor.Editor
+- s:getHintType(com.intellij.openapi.editor.event.EditorMouseEvent):com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
+- f:getProject():com.intellij.openapi.project.Project
+- hashCode():I
+- pf:hideCurrentHint():V
+- hideHint():V
+- invokeHint():V
+- invokeHint(java.lang.Runnable):V
+- isInsideHint(com.intellij.openapi.editor.Editor,java.awt.Point):Z
+- p:isShowing():Z
+- p:onHintHidden():V
+- p:processHintHidden():V
+- p:showHint(javax.swing.JComponent):Z
+- p:showTooltipPopup(javax.swing.JComponent):V
+- p:showTreePopup(com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeCreator,java.lang.Object):V
+com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeCreator
+- a:createDescriptorByNode(java.lang.Object,com.intellij.concurrency.ResultConsumer):V
+- a:createTree(java.lang.Object):com.intellij.ui.treeStructure.Tree
+- a:getTitle(java.lang.Object):java.lang.String
+a:com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler
+- <init>():V
+- a:canShowHint(com.intellij.openapi.project.Project):Z
+- a:createValueHint(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType):com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
+- createValueHintAsync(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType):com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler$CancellableHint
+- a:getValueLookupDelay(com.intellij.openapi.project.Project):I
+- a:isEnabled(com.intellij.openapi.project.Project):Z
+- isEnabled(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):Z
+f:com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler$CancellableHint
+- java.lang.Record
+- <init>(org.jetbrains.concurrency.Promise,kotlinx.coroutines.Deferred):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- hintPromise():org.jetbrains.concurrency.Promise
+- infoDeferred():kotlinx.coroutines.Deferred
+- s:resolved(com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint):com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler$CancellableHint
+- tryCancel():V
+f:com.intellij.xdebugger.impl.frame.StackInfo
+- sf:Companion:com.intellij.xdebugger.impl.frame.StackInfo$Companion
+- f:component1():java.lang.String
+- f:component2():javax.swing.Icon
+- f:component3():com.intellij.xdebugger.frame.XExecutionStack$AdditionalDisplayInfo
+- f:component4():com.intellij.xdebugger.frame.XExecutionStack
+- equals(java.lang.Object):Z
+- f:getAdditionalDisplayText():com.intellij.xdebugger.frame.XExecutionStack$AdditionalDisplayInfo
+- f:getDisplayText():java.lang.String
+- f:getIcon():javax.swing.Icon
+- f:getStack():com.intellij.xdebugger.frame.XExecutionStack
+- hashCode():I
+f:com.intellij.xdebugger.impl.frame.StackInfo$Companion
+- f:error(java.lang.String):com.intellij.xdebugger.impl.frame.StackInfo
+- f:from(com.intellij.xdebugger.frame.XExecutionStack):com.intellij.xdebugger.impl.frame.StackInfo
+- f:getLOADING():com.intellij.xdebugger.impl.frame.StackInfo
+f:com.intellij.xdebugger.impl.frame.XDebuggerThreadsList
+- com.intellij.ui.components.JBList
+- com.intellij.openapi.actionSystem.UiDataProvider
+- sf:Companion:com.intellij.xdebugger.impl.frame.XDebuggerThreadsList$Companion
+- <init>(javax.swing.ListCellRenderer):V
+- f:clear():V
+- f:getElementCount():I
+- getModel():com.intellij.ui.CollectionListModel
+- f:getStackUnderMouse():com.intellij.xdebugger.impl.frame.StackInfo
+- locationToIndex(java.awt.Point):I
+- setModel(javax.swing.ListModel):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
+f:com.intellij.xdebugger.impl.frame.XDebuggerThreadsList$Companion
+- f:getTHREADS_LIST():com.intellij.openapi.actionSystem.DataKey
+c:com.intellij.xdebugger.impl.frame.XStandaloneVariablesView
+- com.intellij.xdebugger.impl.frame.XVariablesViewBase
+- <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.xdebugger.frame.XStackFrame):V
+- rebuildView():V
+a:com.intellij.xdebugger.impl.frame.XVariablesViewBase
+- p:<init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.xdebugger.impl.frame.XValueMarkers):V
+- p:buildTreeAndRestoreState(com.intellij.xdebugger.frame.XStackFrame):V
+- p:clear():V
+- ps:clearInlays(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree):V
+- pf:createNewRootNode(com.intellij.xdebugger.frame.XStackFrame):com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
+- dispose():V
+- getDefaultFocusedComponent():javax.swing.JComponent
+- getMainComponent():javax.swing.JComponent
+- getPanel():javax.swing.JComponent
+- f:getTree():com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
+- onReady():java.util.concurrent.CompletableFuture
+c:com.intellij.xdebugger.impl.frame.actions.XCopyWatchAction
+- com.intellij.xdebugger.impl.frame.actions.XWatchesTreeActionBase
+- <init>():V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- p:isEnabled(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.xdebugger.impl.ui.tree.XDebuggerTree):Z
+- p:perform(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.frame.XWatchesView):V
+c:com.intellij.xdebugger.impl.frame.actions.XMoveWatchDown
+- com.intellij.xdebugger.impl.frame.actions.XWatchesTreeActionBase
+- <init>():V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- p:isEnabled(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.xdebugger.impl.ui.tree.XDebuggerTree):Z
+- p:perform(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.frame.XWatchesView):V
+c:com.intellij.xdebugger.impl.frame.actions.XMoveWatchUp
+- com.intellij.xdebugger.impl.frame.actions.XWatchesTreeActionBase
+- <init>():V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- p:isEnabled(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.xdebugger.impl.ui.tree.XDebuggerTree):Z
+- p:perform(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.frame.XWatchesView):V
+a:com.intellij.xdebugger.impl.frame.actions.XWatchesTreeActionBase
+- com.intellij.openapi.actionSystem.AnAction
+- com.intellij.openapi.project.DumbAware
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- s:getSelectedNodes(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,java.lang.Class):java.util.List
+- p:isEnabled(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.xdebugger.impl.ui.tree.XDebuggerTree):Z
+- pa:perform(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.frame.XWatchesView):V
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+c:com.intellij.xdebugger.impl.inline.DebuggerInlayListener
+- com.intellij.openapi.editor.event.EditorMouseListener
+- com.intellij.openapi.editor.event.EditorMouseMotionListener
+- <init>(com.intellij.openapi.project.Project):V
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.xdebugger.impl.inline.DebuggerInlayListener
+- mouseClicked(com.intellij.openapi.editor.event.EditorMouseEvent):V
+- mouseMoved(com.intellij.openapi.editor.event.EditorMouseEvent):V
+- startListening():V
+com.intellij.xdebugger.impl.inline.InlineValuePopupProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:accepts(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):Z
+- showPopup(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,com.intellij.xdebugger.XDebugSession,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator,com.intellij.openapi.editor.Editor,java.awt.Point,java.lang.Runnable):V
+c:com.intellij.xdebugger.impl.inline.XDebuggerTreeInlayPopup
+- com.intellij.xdebugger.impl.evaluate.quick.common.XDebuggerTreePopup
+- p:getToolbarActions():com.intellij.openapi.actionSystem.DefaultActionGroup
+- s:showTreePopup(com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeCreator,java.lang.Object,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.XDebugSession,java.lang.Runnable):V
+f:com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo
+- sf:Companion:com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo$Companion
+- <init>():V
+- <init>(java.lang.String,java.lang.String):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:copy(java.lang.String,java.lang.String):com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo
+- bs:copy$default(com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo
+- equals(java.lang.Object):Z
+- f:getKey():java.lang.String
+- f:getMemberName():java.lang.String
+- f:getParentTag():java.lang.String
+- hashCode():I
+- f:setMemberName(java.lang.String):V
+- f:setParentTag(java.lang.String):V
+f:com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo$Companion
+- f:getKey(java.lang.String,java.lang.String):java.lang.String
+a:com.intellij.xdebugger.impl.runToolbar.RunToolbarXDebuggerAction
+- com.intellij.xdebugger.impl.actions.XDebuggerActionBase
+- com.intellij.execution.runToolbar.RTBarAction
+- <init>():V
+- checkMainSlotVisibility(com.intellij.execution.runToolbar.RunToolbarMainSlotState):Z
+- getRightSideType():com.intellij.execution.runToolbar.RTBarAction$Type
+- setShortcutSet(com.intellij.openapi.actionSystem.ShortcutSet):V
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+c:com.intellij.xdebugger.impl.settings.DebuggerConfigurable
+- com.intellij.openapi.options.SearchableConfigurable$Parent
+- <init>():V
+- apply():V
+- createComponent():javax.swing.JComponent
+- disposeUIResources():V
+- getConfigurables():com.intellij.openapi.options.Configurable[]
+- getDisplayName():java.lang.String
+- s:getDisplayNameText():java.lang.String
+- getHelpTopic():java.lang.String
+- getId():java.lang.String
+- hasOwnContent():Z
+- isModified():Z
+- reset():V
+c:com.intellij.xdebugger.impl.settings.XDebuggerDataViewSettings
+- com.intellij.xdebugger.settings.XDebuggerSettingsManager$DataViewSettings
+- <init>():V
+- getValueLookupDelay():I
+- isAutoExpressions():Z
+- isShowLibraryStackFrames():Z
+- isShowValuesInline():Z
+- isSortValues():Z
+- setAutoExpressions(Z):V
+- setShowLibraryStackFrames(Z):V
+- setShowValuesInline(Z):V
+- setSortValues(Z):V
+- setValueLookupDelay(I):V
+c:com.intellij.xdebugger.impl.settings.XDebuggerGeneralSettings
+- <init>():V
+- getEvaluationDialogMode():com.intellij.xdebugger.evaluation.EvaluationMode
+- isConfirmBreakpointRemoval():Z
+- isHideDebuggerOnProcessTermination():Z
+- isRunToCursorGestureEnabled():Z
+- isScrollToCenter():Z
+- isShowDebuggerOnBreakpoint():Z
+- isUnmuteOnStop():Z
+- setConfirmBreakpointRemoval(Z):V
+- setEvaluationDialogMode(com.intellij.xdebugger.evaluation.EvaluationMode):V
+- setHideDebuggerOnProcessTermination(Z):V
+- setRunToCursorGestureEnabled(Z):V
+- setScrollToCenter(Z):V
+- setShowDebuggerOnBreakpoint(Z):V
+- setUnmuteOnStop(Z):V
+f:com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
+- com.intellij.xdebugger.settings.XDebuggerSettingsManager
+- com.intellij.openapi.Disposable
+- com.intellij.openapi.components.PersistentStateComponent
+- <init>():V
+- dispose():V
+- findFirstSettings(java.util.function.Predicate):com.intellij.xdebugger.settings.XDebuggerSettings
+- forEachSettings(java.util.function.Consumer):V
+- getDataViewSettings():com.intellij.xdebugger.impl.settings.XDebuggerDataViewSettings
+- getGeneralSettings():com.intellij.xdebugger.impl.settings.XDebuggerGeneralSettings
+- s:getInstanceImpl():com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
+- getSettings(java.lang.Class):com.intellij.xdebugger.settings.XDebuggerSettings
+- s:getSettingsEP():com.intellij.openapi.extensions.ExtensionPointName
+- getState():com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl$SettingsState
+- loadState(com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl$SettingsState):V
+- noStateLoaded():V
+c:com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl$SettingsState
+- specificStates:java.util.List
+- <init>():V
+- getDataViewSettings():com.intellij.xdebugger.impl.settings.XDebuggerDataViewSettings
+- getGeneralSettings():com.intellij.xdebugger.impl.settings.XDebuggerGeneralSettings
+- setDataViewSettings(com.intellij.xdebugger.impl.settings.XDebuggerDataViewSettings):V
+- setGeneralSettings(com.intellij.xdebugger.impl.settings.XDebuggerGeneralSettings):V
+c:com.intellij.xdebugger.impl.ui.DebuggerColorsPage
+- com.intellij.openapi.options.colors.ColorSettingsPage
+- com.intellij.psi.codeStyle.DisplayPrioritySortable
+- <init>():V
+- getAdditionalHighlightingTagToDescriptorMap():java.util.Map
+- getAttributeDescriptors():com.intellij.openapi.options.colors.AttributesDescriptor[]
+- getColorDescriptors():com.intellij.openapi.options.colors.ColorDescriptor[]
+- getDemoText():java.lang.String
+- getDisplayName():java.lang.String
+- getHighlighter():com.intellij.openapi.fileTypes.SyntaxHighlighter
+- getIcon():javax.swing.Icon
+- getPriority():com.intellij.psi.codeStyle.DisplayPriority
+f:com.intellij.xdebugger.impl.ui.DebuggerCopyPastePreprocessor
+- com.intellij.codeInsight.editorActions.CopyPastePreProcessor
+- sf:REMOVE_NEWLINES_ON_PASTE:com.intellij.openapi.util.Key
+- <init>():V
+- preprocessOnCopy(com.intellij.psi.PsiFile,I[],I[],java.lang.String):java.lang.String
+- preprocessOnPaste(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,java.lang.String,com.intellij.openapi.editor.RawText):java.lang.String
+- requiresAllDocumentsToBeCommitted(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project):Z
+f:com.intellij.xdebugger.impl.ui.DebuggerUIUtil
+- sf:FULL_VALUE_POPUP_DIMENSION_KEY:java.lang.String
+- s:addToWatches(com.intellij.xdebugger.impl.frame.XWatchesView,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):V
+- s:createValuePopup(com.intellij.openapi.project.Project,javax.swing.JComponent,java.lang.Runnable):com.intellij.openapi.ui.popup.JBPopup
+- s:enableEditorOnCheck(javax.swing.JCheckBox,javax.swing.JComponent):V
+- s:focusEditorOnCheck(javax.swing.JCheckBox,javax.swing.JComponent):V
+- s:getActionShortcutText(java.lang.String):java.lang.String
+- s:getColorScheme():com.intellij.openapi.editor.colors.EditorColorsScheme
+- s:getColorScheme(javax.swing.JComponent):com.intellij.openapi.editor.colors.EditorColorsScheme
+- s:getNodeRawValue(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):java.lang.String
+- s:getPositionForPopup(com.intellij.openapi.editor.Editor,I):com.intellij.ui.awt.RelativePoint
+- s:getSelectionShortcutsAdText(java.lang.String[]):java.lang.String
+- s:getSession(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.xdebugger.XDebugSession
+- s:getSessionData(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.xdebugger.impl.ui.XDebugSessionData
+- s:getWatchesView(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.xdebugger.impl.frame.XWatchesView
+- s:invokeLater(java.lang.Runnable):V
+- s:isInDetachedTree(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- s:isObsolete(java.lang.Object):Z
+- s:registerActionOnComponent(java.lang.String,javax.swing.JComponent,com.intellij.openapi.Disposable):V
+- s:registerExtraHandleShortcuts(com.intellij.ui.popup.list.ListPopupImpl,com.intellij.openapi.util.Ref,java.lang.String[]):V
+- s:repaintCurrentEditor(com.intellij.openapi.project.Project):V
+- s:setActionEnabled(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
+- s:setTreeNodeValue(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,com.intellij.xdebugger.XExpression,com.intellij.util.Consumer):V
+- s:showBreakpointEditor(com.intellij.openapi.project.Project,javax.swing.JComponent,java.awt.Point,javax.swing.JComponent,java.lang.Runnable,java.lang.Object):com.intellij.openapi.ui.popup.Balloon
+- s:showPopupForEditorLine(com.intellij.openapi.ui.popup.JBPopup,com.intellij.openapi.editor.Editor,I):V
+- s:showValuePopup(com.intellij.xdebugger.frame.XFullValueEvaluator,java.awt.event.MouseEvent,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):V
+- s:showXBreakpointEditorBalloon(com.intellij.openapi.project.Project,java.awt.Point,javax.swing.JComponent,Z,com.intellij.xdebugger.breakpoints.XBreakpoint):V
+- s:showXBreakpointEditorBalloon(com.intellij.openapi.project.Project,java.awt.Point,javax.swing.JComponent,Z,Z,com.intellij.xdebugger.breakpoints.XBreakpoint):V
+c:com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter
+- sf:EXECUTION_POINT_HIGHLIGHTER_TOP_FRAME_KEY:com.intellij.openapi.util.Key
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.util.messages.MessageBusConnection):V
+- getCurrentFile():com.intellij.openapi.vfs.VirtualFile
+- hide():V
+- isFullLineHighlighter():Z
+- navigateTo():V
+- show(com.intellij.xdebugger.XSourcePosition,Z,com.intellij.openapi.editor.markup.GutterIconRenderer):V
+- show(com.intellij.xdebugger.XSourcePosition,Z,com.intellij.openapi.editor.markup.GutterIconRenderer,Z):V
+- update(Z):V
+- updateGutterIcon(com.intellij.openapi.editor.markup.GutterIconRenderer):V
+com.intellij.xdebugger.impl.ui.SessionTabComponentProvider
+- a:createBottomLocalsComponent():javax.swing.JComponent
+f:com.intellij.xdebugger.impl.ui.TextViewer
+- com.intellij.ui.EditorTextField
+- <init>(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project,Z,com.intellij.openapi.fileTypes.FileType,Z):V
+- <init>(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project,Z,Z):V
+- <init>(java.lang.String,com.intellij.openapi.project.Project):V
+- <init>(java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileTypes.FileType):V
+- <init>(java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileTypes.FileType,Z):V
+- <init>(java.lang.String,com.intellij.openapi.project.Project,Z):V
+- setText(java.lang.String):V
+f:com.intellij.xdebugger.impl.ui.XDebugSessionTabCustomizerKt
+- sf:allowFramesViewCustomization(com.intellij.xdebugger.XDebugProcess):Z
+- sf:forceShowNewDebuggerUi(com.intellij.xdebugger.XDebugProcess):Z
+- sf:getBottomLocalsComponentProvider(com.intellij.xdebugger.XDebugProcess):com.intellij.xdebugger.impl.ui.SessionTabComponentProvider
+f:com.intellij.xdebugger.impl.ui.XDebugSessionTabNewUIKt
+- sf:addDebugToolwindowActions(com.intellij.openapi.project.Project):V
+a:com.intellij.xdebugger.impl.ui.XDebuggerEditorBase
+- com.intellij.ui.Expandable
+- sf:XDEBUGGER_EDITOR_KEY:com.intellij.openapi.util.Key
+- p:<init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.xdebugger.evaluation.EvaluationMode,java.lang.String,com.intellij.xdebugger.XSourcePosition):V
+- p:addChooser(javax.swing.JComponent):javax.swing.JComponent
+- addCollapseButton(java.lang.Runnable):V
+- p:addExpand(javax.swing.JComponent,Z):javax.swing.JComponent
+- canGoBackward():Z
+- canGoForward():Z
+- collapse():V
+- s:copyCaretPosition(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Editor):V
+- p:createDocument(com.intellij.xdebugger.XExpression):com.intellij.openapi.editor.Document
+- p:decorate(javax.swing.JComponent,Z,Z):javax.swing.JComponent
+- pa:doSetText(com.intellij.xdebugger.XExpression):V
+- expand():V
+- s:foldNewLines(com.intellij.openapi.editor.ex.EditorEx):V
+- a:getComponent():javax.swing.JComponent
+- a:getEditor():com.intellij.openapi.editor.Editor
+- getEditorComponent():javax.swing.JComponent
+- getEditorsProvider():com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+- a:getExpression():com.intellij.xdebugger.XExpression
+- p:getFileType(com.intellij.xdebugger.XExpression):com.intellij.openapi.fileTypes.FileType
+- getLanguageChooser():javax.swing.JComponent
+- getMode():com.intellij.xdebugger.evaluation.EvaluationMode
+- a:getPreferredFocusedComponent():javax.swing.JComponent
+- f:getProject():com.intellij.openapi.project.Project
+- getRecentExpressions():java.util.List
+- goBackward():V
+- goForward():V
+- isExpanded():Z
+- isUseSoftWraps():Z
+- p:onHistoryChanged():V
+- p:prepareEditor(com.intellij.openapi.editor.ex.EditorEx):V
+- requestFocusInEditor():V
+- saveTextInHistory():V
+- a:selectAll():V
+- setContext(com.intellij.psi.PsiElement):V
+- setEnabled(Z):V
+- setExpandHandler(java.lang.Runnable):V
+- pf:setExpandable(com.intellij.openapi.editor.Editor):V
+- setExpression(com.intellij.xdebugger.XExpression):V
+- setSourcePosition(com.intellij.xdebugger.XSourcePosition):V
+- setUseSoftWraps(Z):V
+c:com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox
+- com.intellij.xdebugger.impl.ui.XDebuggerEditorBase
+- <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,java.lang.String,com.intellij.xdebugger.XSourcePosition,Z,Z):V
+- p:createComboBox(com.intellij.ui.CollectionComboBoxModel,I):com.intellij.openapi.ui.ComboBox
+- p:createDocument(com.intellij.xdebugger.XExpression):com.intellij.openapi.editor.Document
+- p:doSetText(com.intellij.xdebugger.XExpression):V
+- fixEditorNotReleasedFalsePositiveException(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
+- getComboBox():com.intellij.openapi.ui.ComboBox
+- getComponent():javax.swing.JComponent
+- getEditor():com.intellij.openapi.editor.Editor
+- getEditorComponent():javax.swing.JComponent
+- getExpression():com.intellij.xdebugger.XExpression
+- getPreferredFocusedComponent():javax.swing.JComponent
+- p:onHistoryChanged():V
+- p:prepareEditor(com.intellij.openapi.editor.ex.EditorEx):V
+- selectAll():V
+- setDocumentProcessor(java.util.function.Function):V
+- setEnabled(Z):V
+c:com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor
+- com.intellij.xdebugger.impl.ui.XDebuggerEditorBase
+- <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,java.lang.String,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.XExpression,Z,Z,Z):V
+- p:<init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,java.lang.String,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.XExpression,Z,Z,Z,com.intellij.psi.PsiElement):V
+- p:doSetText(com.intellij.xdebugger.XExpression):V
+- getComponent():javax.swing.JComponent
+- getEditor():com.intellij.openapi.editor.Editor
+- getEditorComponent():javax.swing.JComponent
+- getExpression():com.intellij.xdebugger.XExpression
+- getPreferredFocusedComponent():javax.swing.JComponent
+- selectAll():V
+- setEnabled(Z):V
+f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogCollectItemsUtilKt
+- sf:collectAttachProcessItemsGroupByProcessInfo(com.intellij.openapi.project.Project,com.intellij.xdebugger.attach.XAttachHost,java.util.List,kotlin.coroutines.Continuation):java.lang.Object
+a:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType
+- <init>(java.lang.String):V
+- f:getDisplayText():java.lang.String
+f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType$DOCKER
+- com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType
+- sf:INSTANCE:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType$DOCKER
+f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType$LOCAL
+- com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType
+- sf:INSTANCE:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType$LOCAL
+f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType$REMOTE
+- com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType
+- sf:INSTANCE:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType$REMOTE
+c:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem
+- sf:Companion:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem$Companion
+- p:<init>(com.intellij.execution.process.ProcessInfo,java.util.List,com.intellij.openapi.util.UserDataHolder):V
+- f:getCommandLineText():java.lang.String
+- f:getCommandLineTextAttributes():com.intellij.ui.SimpleTextAttributes
+- f:getDataHolder():com.intellij.openapi.util.UserDataHolder
+- f:getDebuggers():java.util.List
+- f:getExecutableText():java.lang.String
+- f:getExecutableTextAttributes():com.intellij.ui.SimpleTextAttributes
+- f:getGroups():java.util.Set
+- f:getGroupsWithItems():java.util.List
+- f:getIndexedString():java.lang.String
+- getMainDebugger(com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState):com.intellij.xdebugger.attach.XAttachDebugger
+- f:getProcessInfo():com.intellij.execution.process.ProcessInfo
+f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem$Companion
+- f:create(com.intellij.execution.process.ProcessInfo,java.util.Map,com.intellij.openapi.util.UserDataHolder):com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem
+f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState
+- sf:Companion:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState$Companion
+- <init>(com.intellij.openapi.Disposable,com.intellij.openapi.actionSystem.DataContext):V
+- f:getDataContext():com.intellij.openapi.actionSystem.DataContext
+- f:getDialogDisposable():com.intellij.openapi.Disposable
+f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState$Companion
+- f:getCOLUMN_MINIMUM_WIDTH():I
+- f:getDEFAULT_ROW_HEIGHT():I
+f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachItemsInfo
+- sf:Companion:com.intellij.xdebugger.impl.ui.attach.dialog.AttachItemsInfo$Companion
+- <init>(java.util.List,java.util.List,com.intellij.openapi.util.UserDataHolder):V
+- f:component1():java.util.List
+- f:component2():java.util.List
+- f:component3():com.intellij.openapi.util.UserDataHolder
+- f:copy(java.util.List,java.util.List,com.intellij.openapi.util.UserDataHolder):com.intellij.xdebugger.impl.ui.attach.dialog.AttachItemsInfo
+- bs:copy$default(com.intellij.xdebugger.impl.ui.attach.dialog.AttachItemsInfo,java.util.List,java.util.List,com.intellij.openapi.util.UserDataHolder,I,java.lang.Object):com.intellij.xdebugger.impl.ui.attach.dialog.AttachItemsInfo
+- equals(java.lang.Object):Z
+- f:getDataHolder():com.intellij.openapi.util.UserDataHolder
+- f:getProcessItems():java.util.List
+- f:getRecentItems():java.util.List
+- hashCode():I
+f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachItemsInfo$Companion
+- f:getEMPTY():com.intellij.xdebugger.impl.ui.attach.dialog.AttachItemsInfo
+a:com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessView
+- sf:Companion:com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessView$Companion
+- <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState,com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayout,java.util.List):V
+- pf:collectAndShowItems(com.intellij.xdebugger.attach.XAttachHost,kotlin.coroutines.Continuation):java.lang.Object
+- pa:doUpdateProcesses(kotlin.coroutines.Continuation):java.lang.Object
+- pf:getCenterPanel():javax.swing.JPanel
+- pf:getCoroutineScope():kotlinx.coroutines.CoroutineScope
+- f:getFocusedComponent():java.awt.Component
+- a:getHostType():com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType
+- f:getMainComponent():javax.swing.JPanel
+- f:getName():java.lang.String
+- pf:getState():com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState
+- pf:getUpdateScope():kotlinx.coroutines.CoroutineScope
+- a:getViewActions():java.util.List
+- pf:loadComponent(javax.swing.JComponent):com.intellij.openapi.Disposable
+- pf:setUpdateScope(kotlinx.coroutines.CoroutineScope):V
+- f:updateProcesses():V
+- pf:withUiContextAnyModality(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessView$Companion
+a:com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts
+- com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessView
+- sf:Companion:com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts$Companion
+- <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState,com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayout,java.util.List):V
+- p:doUpdateProcesses(kotlin.coroutines.Continuation):java.lang.Object
+- pa:getAddHostButtonAction():com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts$AddConnectionButtonAction
+- a:getHostActions(java.util.Set,kotlin.jvm.functions.Function1):java.util.List
+- p:getHostFromSet(java.util.Set):com.intellij.xdebugger.impl.ui.attach.dialog.AttachHostItem
+- a:getHosts(kotlin.coroutines.Continuation):java.lang.Object
+- pa:getHostsComboBoxAction():com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts$AttachHostsComboBoxAction
+- a:getSavedHost(java.util.Set):com.intellij.xdebugger.impl.ui.attach.dialog.AttachHostItem
+- getViewActions():java.util.List
+- p:handleMultipleHosts(java.util.Set,com.intellij.xdebugger.impl.ui.attach.dialog.AttachHostItem):com.intellij.xdebugger.impl.ui.attach.dialog.AttachHostItem
+- p:handleSingleHost(java.util.Set,com.intellij.xdebugger.impl.ui.attach.dialog.AttachHostItem,com.intellij.xdebugger.impl.ui.attach.dialog.AttachHostItem):com.intellij.xdebugger.impl.ui.attach.dialog.AttachHostItem
+- pf:hostsSettingsChanged():V
+- a:isAddingConnectionEnabled():Z
+- a:openSettings():V
+- a:openSettingsAndCreateTemplate():V
+- a:saveSelectedHost(com.intellij.xdebugger.impl.ui.attach.dialog.AttachHostItem):V
+- pf:updateHosts(kotlin.coroutines.Continuation):java.lang.Object
+pf:com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts$AddConnectionButtonAction
+- com.intellij.openapi.actionSystem.AnAction
+- com.intellij.openapi.actionSystem.ex.CustomComponentAction
+- com.intellij.openapi.project.DumbAware
+- java.awt.event.ActionListener
+- <init>(com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- actionPerformed(java.awt.event.ActionEvent):V
+- createCustomComponent(com.intellij.openapi.actionSystem.Presentation,java.lang.String):javax.swing.JComponent
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+- f:updateState(java.util.List):Z
+pf:com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts$AttachHostsComboBoxAction
+- com.intellij.openapi.actionSystem.ex.ComboBoxAction
+- com.intellij.openapi.project.DumbAware
+- <init>(com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts,Z):V
+- b:<init>(com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- f:getSelectedItem():com.intellij.xdebugger.impl.ui.attach.dialog.AttachHostItem
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+- f:updateState(java.util.List):Z
+f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts$Companion
+- f:getDEFAULT_ATTACH_HOST():com.intellij.openapi.actionSystem.DataKey
+pf:com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts$ManageConnectionsAction
+- com.intellij.openapi.actionSystem.AnAction
+- com.intellij.openapi.project.DumbAware
+- <init>(com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.xdebugger.impl.ui.attach.dialog.diagnostics.ProcessesFetchingProblemAction
+- <init>(java.lang.String,java.lang.String,kotlin.jvm.functions.Function4):V
+- f:getAction():kotlin.jvm.functions.Function4
+- f:getActionId():java.lang.String
+- f:getActionName():java.lang.String
+f:com.intellij.xdebugger.impl.ui.attach.dialog.diagnostics.ProcessesFetchingProblemException
+- com.intellij.execution.ExecutionException
+- <init>(javax.swing.Icon,java.lang.String,com.intellij.xdebugger.impl.ui.attach.dialog.diagnostics.ProcessesFetchingProblemAction):V
+- f:getAction():com.intellij.xdebugger.impl.ui.attach.dialog.diagnostics.ProcessesFetchingProblemAction
+- f:getDescriptionDisplayText():java.lang.String
+- f:getIcon():javax.swing.Icon
+f:com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDebuggerButtonPresentationProviderKt
+- sf:getActionPresentation(com.intellij.xdebugger.attach.XAttachDebugger):java.lang.String
+com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachHostSettingsProvider
+- sf:Companion:com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachHostSettingsProvider$Companion
+- addSettingsChangedListener(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,java.lang.Runnable):V
+- openAndCreateTemplate(com.intellij.openapi.project.Project):V
+- openHostsSettings(com.intellij.openapi.project.Project):V
+f:com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachHostSettingsProvider$Companion
+- f:getEP():com.intellij.openapi.extensions.ExtensionPointName
+- f:setEP(com.intellij.openapi.extensions.ExtensionPointName):V
+a:com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayout
+- <init>():V
+- f:getColumnClass(I):java.lang.Class
+- f:getColumnClass(java.lang.String):java.lang.Class
+- f:getColumnIndex(java.lang.String):I
+- f:getColumnKey(I):java.lang.String
+- f:getColumnName(I):java.lang.String
+- f:getColumnName(java.lang.String):java.lang.String
+- f:getColumnWidth(java.lang.String):I
+- f:getColumnsCount():I
+- f:getMinimumViewWidth():I
+- f:setColumnWidth(java.lang.String,I):V
+a:com.intellij.xdebugger.impl.ui.tree.TreeInplaceEditor
+- java.awt.event.AWTEventListener
+- <init>():V
+- p:beforeShow():V
+- p:getEditorBounds():java.awt.Rectangle
+- p:getHostComponent():javax.swing.JComponent
+- pa:getNodePath():javax.swing.tree.TreePath
+- pa:getTree():javax.swing.JTree
+a:com.intellij.xdebugger.impl.ui.tree.ValueMarkerPresentationDialogBase
+- com.intellij.openapi.ui.DialogWrapper
+- b:$$$getRootComponent$$$():javax.swing.JComponent
+- <init>(java.awt.Component,java.lang.String,java.util.Collection):V
+- p:createCenterPanel():javax.swing.JComponent
+- getConfiguredMarkup():com.intellij.xdebugger.impl.ui.tree.ValueMarkup
+- getPreferredFocusedComponent():javax.swing.JComponent
+c:com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
+- com.intellij.ide.dnd.aware.DnDAwareTree
+- com.intellij.openapi.Disposable
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
+- sf:SELECTED_NODES:com.intellij.openapi.actionSystem.DataKey
+- sf:XDEBUGGER_TREE_KEY:com.intellij.openapi.actionSystem.DataKey
+- <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.xdebugger.XSourcePosition,java.lang.String,com.intellij.xdebugger.impl.frame.XValueMarkers):V
+- addTreeListener(com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener):V
+- addTreeListener(com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener,com.intellij.openapi.Disposable):V
+- childrenLoaded(com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,java.util.List,Z):V
+- dispose():V
+- expandNodesOnLoad(com.intellij.openapi.util.Condition):V
+- getEditorsProvider():com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+- getProject():com.intellij.openapi.project.Project
+- getRoot():com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
+- getSourcePosition():com.intellij.xdebugger.XSourcePosition
+- s:getTree(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
+- s:getTree(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
+- getTreeModel():javax.swing.tree.DefaultTreeModel
+- getValueMarkers():com.intellij.xdebugger.impl.frame.XValueMarkers
+- p:installSpeedSearch():V
+- invokeLater(java.lang.Runnable):V
+- isDetached():Z
+- isUnderRemoteDebug():Z
+- markNodesObsolete():V
+- nodeLoaded(com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode,java.lang.String):V
+- removeTreeListener(com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener):V
+- selectNodeOnLoad(com.intellij.openapi.util.Condition,com.intellij.openapi.util.Condition):V
+- setRoot(com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,Z):V
+- setSourcePosition(com.intellij.xdebugger.XSourcePosition):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
+- updateEditor():V
+a:com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor
+- com.intellij.xdebugger.impl.ui.tree.TreeInplaceEditor
+- pf:myExpressionEditor:com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox
+- pf:myNode:com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
+- pf:myTree:com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
+- <init>(com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,java.lang.String):V
+- p:createInplaceEditorComponent():javax.swing.JComponent
+- doOKAction():V
+- p:doPopupOKAction():V
+- pf:getAfterIconX():I
+- getEditor():com.intellij.openapi.editor.Editor
+- getEditorComponent():javax.swing.JComponent
+- p:getExpression():com.intellij.xdebugger.XExpression
+- p:getNodePath():javax.swing.tree.TreePath
+- p:getPreferredFocusedComponent():javax.swing.JComponent
+- p:getProject():com.intellij.openapi.project.Project
+- p:getTree():com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
+- p:onHidden():V
+- p:onShown():V
+com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener
+- childrenLoaded(com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,java.util.List,Z):V
+- nodeLoaded(com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode,java.lang.String):V
+f:com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel
+- com.intellij.ide.dnd.DnDSource
+- <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.openapi.Disposable,com.intellij.xdebugger.XSourcePosition,java.lang.String,com.intellij.xdebugger.impl.frame.XValueMarkers):V
+- canStartDragging(com.intellij.ide.dnd.DnDAction,java.awt.Point):Z
+- createDraggedImage(com.intellij.ide.dnd.DnDAction,java.awt.Point,com.intellij.ide.dnd.DnDDragStartBean):com.intellij.openapi.util.Pair
+- getMainPanel():javax.swing.JPanel
+- getTree():com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
+- startDragging(com.intellij.ide.dnd.DnDAction,java.awt.Point):com.intellij.ide.dnd.DnDDragStartBean
+c:com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRenderer
+- com.intellij.ui.ColoredTreeCellRenderer
+- <init>(com.intellij.openapi.project.Project):V
+- append(java.lang.String,com.intellij.ui.SimpleTextAttributes,java.lang.Object):V
+- customizeCellRenderer(javax.swing.JTree,java.lang.Object,Z,Z,Z,I,Z):V
+- p:doPaint(java.awt.Graphics2D):V
+- getFragmentTagAt(I):java.lang.Object
+- getPreferredSize():java.awt.Dimension
+- getToolTipText(java.awt.event.MouseEvent):java.lang.String
+c:com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRestorer
+- com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener
+- javax.swing.event.TreeSelectionListener
+- sf:SELECTION_PATH_PROPERTY:java.lang.String
+- <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,java.awt.Rectangle):V
+- childrenLoaded(com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,java.util.List,Z):V
+- dispose():V
+- isFinished():Z
+- nodeLoaded(com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode,java.lang.String):V
+- onFinished():java.util.concurrent.CompletableFuture
+- valueChanged(javax.swing.event.TreeSelectionEvent):V
+f:com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState
+- restoreState(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree):com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRestorer
+- s:saveState(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree):com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState
+c:com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState$NodeInfo
+- <init>(java.lang.String,java.lang.String,Z):V
+- addChild(com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState$NodeInfo):V
+- getChild(com.intellij.xdebugger.XNamedTreeNode):com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState$NodeInfo
+- getValue():java.lang.String
+- isExpanded():Z
+- isSelected():Z
+a:com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeValueNodeInplaceEditor
+- com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor
+- pf:myValueNode:com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+- p:<init>(java.lang.String,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,java.lang.String):V
+- p:createInplaceEditorComponent():javax.swing.JComponent
+- p:getEditorBounds():java.awt.Rectangle
+a:com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation
+- com.intellij.xdebugger.frame.presentation.XValuePresentation
+- <init>():V
+- isModified():Z
+c:com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction
+- <init>():V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- p:isEnabled(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,com.intellij.openapi.actionSystem.AnActionEvent):Z
+- p:perform(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,java.lang.String,com.intellij.openapi.actionSystem.AnActionEvent):V
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+a:com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
+- com.intellij.openapi.actionSystem.AnAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- p:isEnabled(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,com.intellij.openapi.actionSystem.AnActionEvent):Z
+- pa:perform(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,java.lang.String,com.intellij.openapi.actionSystem.AnActionEvent):V
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+a:com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase
+- com.intellij.openapi.project.DumbAwareAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- p:addToCollector(java.util.List,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase$ValueCollector):V
+- p:createCollector(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase$ValueCollector
+- p:isEnabled(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):Z
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+c:com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase$ValueCollector
+- <init>(com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase,com.intellij.xdebugger.impl.ui.tree.XDebuggerTree):V
+- acquire():I
+- add(java.lang.String):V
+- add(java.lang.String,I):V
+- evaluationComplete(I,java.lang.String):V
+- finish():V
+- getTree():com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
+- handleInCollector(com.intellij.openapi.project.Project,java.lang.String,com.intellij.xdebugger.impl.ui.tree.XDebuggerTree):V
+c:com.intellij.xdebugger.impl.ui.tree.nodes.EvaluatingExpressionRootNode
+- com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
+- <init>(com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog,com.intellij.xdebugger.impl.ui.tree.XDebuggerTree):V
+- p:createLoadingMessageNode():com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode
+c:com.intellij.xdebugger.impl.ui.tree.nodes.EvaluatingExpressionRootNode$EvaluatingResultContainer
+- com.intellij.xdebugger.frame.XValueContainer
+- <init>(com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog):V
+- computeChildren(com.intellij.xdebugger.frame.XCompositeNode):V
+c:com.intellij.xdebugger.impl.ui.tree.nodes.HeadlessValueEvaluationCallback
+- com.intellij.xdebugger.frame.XFullValueEvaluator$XFullValueEvaluationCallback
+- <init>(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):V
+- getNode():com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+- isObsolete():Z
+c:com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode
+- com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
+- p:<init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,Z):V
+- appendToComponent(com.intellij.ui.ColoredTextContainer):V
+- clearChildren():V
+- s:createEllipsisNode(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,I,java.lang.Runnable):com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode
+- s:createEvaluatingMessage(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode):com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode
+- s:createInfoMessage(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,java.lang.String):com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode
+- s:createInfoMessage(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,java.lang.String,javax.swing.event.HyperlinkListener):com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode
+- s:createLoadingMessage(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode):com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode
+- s:createMessageNode(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,java.lang.String,javax.swing.Icon):com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode
+- s:createMessages(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,java.lang.String,com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink,javax.swing.Icon,com.intellij.ui.SimpleTextAttributes):java.util.List
+- getChildren():java.util.List
+- getLink():com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
+- getLoadedChildren():java.util.List
+- isEllipsis():Z
+f:com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode$HyperlinkListenerDelegator
+- com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
+- <init>(java.lang.String,java.lang.String,javax.swing.event.HyperlinkListener):V
+- onClick(java.awt.event.MouseEvent):V
+com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode
+- com.intellij.xdebugger.XNamedTreeNode
+- a:getPath():javax.swing.tree.TreePath
+- a:getRawValue():java.lang.String
+- a:isComputed():Z
+- a:markChanged():V
+c:com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl
+- com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+- com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode
+- <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode,com.intellij.xdebugger.XExpression,com.intellij.xdebugger.frame.XStackFrame):V
+- p:<init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,com.intellij.xdebugger.XExpression,com.intellij.xdebugger.frame.XNamedValue):V
+- <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,com.intellij.xdebugger.impl.XWatch,com.intellij.xdebugger.frame.XStackFrame,java.lang.String,com.intellij.xdebugger.frame.XValue):V
+- computePresentationIfNeeded():V
+- p:evaluated():V
+- getExpression():com.intellij.xdebugger.XExpression
+- getValueContainer():com.intellij.xdebugger.frame.XValue
+- getXWatch():com.intellij.xdebugger.impl.XWatch
+- ps:renderName(com.intellij.xdebugger.XExpression):java.lang.String
+- p:shouldUpdateInlineDebuggerData():Z
+c:com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode
+- com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
+- <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.frame.XWatchesView,com.intellij.xdebugger.XExpression[]):V
+- addNewWatch():V
+- addResultNode(com.intellij.xdebugger.frame.XStackFrame,com.intellij.xdebugger.XExpression):V
+- addWatchExpression(com.intellij.xdebugger.frame.XStackFrame,com.intellij.xdebugger.XExpression,I,Z):V
+- clearChildren():V
+- computeWatches():V
+- editWatch(com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl):V
+- getChildren():java.util.List
+- getLoadedChildren():java.util.List
+- getWatchChildren():java.util.List
+- getWatches():java.util.List
+- headerNodesCount():I
+- moveDown(com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode):V
+- moveUp(com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode):V
+- removeAllChildren():V
+- removeChildNode(com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode):I
+- removeChildren(java.util.Collection):V
+- removeResultNode():V
+a:com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
+- javax.swing.tree.TreeNode
+- pf:myParent:com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
+- pf:myText:com.intellij.ui.SimpleColoredText
+- pf:myTree:com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
+- p:<init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,Z):V
+- appendToComponent(com.intellij.ui.ColoredTextContainer):V
+- children():java.util.Enumeration
+- a:clearChildren():V
+- p:fireNodeChanged():V
+- p:fireNodeStructureChanged():V
+- p:fireNodeStructureChanged(javax.swing.tree.TreeNode):V
+- p:fireNodesInserted(java.util.Collection):V
+- p:fireNodesRemoved(I[],javax.swing.tree.TreeNode[]):V
+- getAllowsChildren():Z
+- getChildAt(I):javax.swing.tree.TreeNode
+- getChildCount():I
+- p:getChildNodes(I[]):javax.swing.tree.TreeNode[]
+- a:getChildren():java.util.List
+- getIcon():javax.swing.Icon
+- getIconTag():java.lang.Object
+- getIndex(javax.swing.tree.TreeNode):I
+- getLink():com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
+- a:getLoadedChildren():java.util.List
+- p:getNodesIndices(java.util.Collection):I[]
+- getParent():javax.swing.tree.TreeNode
+- getPath():javax.swing.tree.TreePath
+- getText():com.intellij.ui.SimpleColoredText
+- getTree():com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
+- invokeNodeUpdate(java.lang.Runnable):V
+- isLeaf():Z
+- p:setIcon(javax.swing.Icon):V
+- setLeaf(Z):V
+a:com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase
+- com.intellij.xdebugger.evaluation.XDebuggerEvaluator$XEvaluationCallback
+- <init>():V
+a:com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
+- com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
+- com.intellij.xdebugger.frame.XCompositeNode
+- javax.swing.tree.TreeNode
+- pf:myValueContainer:com.intellij.xdebugger.frame.XValueContainer
+- p:<init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,Z,com.intellij.xdebugger.frame.XValueContainer):V
+- addChildren(com.intellij.xdebugger.frame.XValueChildrenList,Z):V
+- addTemporaryEditorNode(javax.swing.Icon,java.lang.String):com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
+- clearChildren():V
+- p:createLoadingMessageNode():com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode
+- getChildren():java.util.List
+- getLoadedChildren():java.util.List
+- getValueContainer():com.intellij.xdebugger.frame.XValueContainer
+- isObsolete():Z
+- p:removeChildNode(java.util.List,com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode):I
+- removeTemporaryEditorNode(com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode):V
+- setAlreadySorted(Z):V
+- setErrorMessage(java.lang.String):V
+- setErrorMessage(java.lang.String,com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink):V
+- setInfoMessage(java.lang.String,javax.swing.event.HyperlinkListener):V
+- setMessage(java.lang.String,javax.swing.Icon,com.intellij.ui.SimpleTextAttributes,com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink):V
+- setObsolete():V
+- setTemporaryMessage(com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode):V
+- startComputingChildren():V
+- tooManyChildren(I):V
+- tooManyChildren(I,java.lang.Runnable):V
+c:com.intellij.xdebugger.impl.ui.tree.nodes.XValueGroupNodeImpl
+- com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
+- com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode
+- <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,com.intellij.xdebugger.frame.XValueGroup):V
+- getName():java.lang.String
+- getRawValue():java.lang.String
+- isComputed():Z
+- markChanged():V
+- onExpansion(Z):V
+c:com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+- com.intellij.xdebugger.frame.XCompositeNode
+- com.intellij.xdebugger.frame.XValueNode
+- com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode
+- com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
+- com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator$ConfigurableXValueNode
+- sf:COMPARATOR:java.util.Comparator
+- <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,java.lang.String,com.intellij.xdebugger.frame.XValue):V
+- addAdditionalHyperlink(com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink):V
+- appendToComponent(com.intellij.ui.ColoredTextContainer):V
+- applyPresentation(javax.swing.Icon,com.intellij.xdebugger.frame.presentation.XValuePresentation,Z):V
+- s:buildText(com.intellij.xdebugger.frame.presentation.XValuePresentation,com.intellij.ui.ColoredTextContainer):V
+- s:buildText(com.intellij.xdebugger.frame.presentation.XValuePresentation,com.intellij.ui.ColoredTextContainer,Z):V
+- f:calculateEvaluationExpression():org.jetbrains.concurrency.Promise
+- clearAdditionalHyperlinks():V
+- clearFullValueEvaluator():V
+- getFullValueEvaluator():com.intellij.xdebugger.frame.XFullValueEvaluator
+- getIconTag():java.lang.Object
+- getInlayIcon():javax.swing.Icon
+- getLink():com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
+- getName():java.lang.String
+- getRawValue():java.lang.String
+- getValuePresentation():com.intellij.xdebugger.frame.presentation.XValuePresentation
+- hasLinks():Z
+- isComputed():Z
+- markChanged():V
+- setFullValueEvaluator(com.intellij.xdebugger.frame.XFullValueEvaluator):V
+- setInlayIcon(javax.swing.Icon):V
+- setPresentation(javax.swing.Icon,com.intellij.xdebugger.frame.presentation.XValuePresentation,Z):V
+- setPresentation(javax.swing.Icon,java.lang.String,java.lang.String,Z):V
+- setValueModificationStarted():V
+- p:shouldUpdateInlineDebuggerData():Z
+f:com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator
+- <init>():V
+- s:setPresentation(javax.swing.Icon,com.intellij.xdebugger.frame.presentation.XValuePresentation,Z,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator$ConfigurableXValueNode):V
+- s:setPresentation(javax.swing.Icon,java.lang.String,java.lang.String,java.lang.String,Z,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator$ConfigurableXValueNode):V
+- s:setPresentation(javax.swing.Icon,java.lang.String,java.lang.String,java.util.function.Function,Z,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator$ConfigurableXValueNode):V
+- s:setPresentation(javax.swing.Icon,java.lang.String,java.lang.String,Z,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator$ConfigurableXValueNode):V
+com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator$ConfigurableXValueNode
+- a:applyPresentation(javax.swing.Icon,com.intellij.xdebugger.frame.presentation.XValuePresentation,Z):V
+a:com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator$ConfigurableXValueNodeImpl
+- com.intellij.xdebugger.frame.XValueNode
+- com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator$ConfigurableXValueNode
+- <init>():V
+- setFullValueEvaluator(com.intellij.xdebugger.frame.XFullValueEvaluator):V
+- setPresentation(javax.swing.Icon,com.intellij.xdebugger.frame.presentation.XValuePresentation,Z):V
+- setPresentation(javax.swing.Icon,java.lang.String,java.lang.String,Z):V
+f:com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil
+- <init>():V
+- s:appendSeparator(com.intellij.ui.ColoredTextContainer,java.lang.String):V
+- s:computeValueText(com.intellij.xdebugger.frame.presentation.XValuePresentation):java.lang.String
+- s:isValueTextExtractor(com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer):Z
+- s:renderValue(java.lang.String,com.intellij.ui.ColoredTextContainer,com.intellij.ui.SimpleTextAttributes,I,java.lang.String):V
+a:com.intellij.xdebugger.impl.ui.tree.nodes.XValueTextRendererBase
+- com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer
+- <init>():V
+- renderKeywordValue(java.lang.String):V
+- renderNumericValue(java.lang.String):V
+- pa:renderRawValue(java.lang.String,com.intellij.openapi.editor.colors.TextAttributesKey):V
+- renderStringValue(java.lang.String):V
+- f:renderValue(java.lang.String,com.intellij.openapi.editor.colors.TextAttributesKey):V
+c:com.intellij.xdebugger.impl.ui.tree.nodes.XValueTextRendererImpl
+- com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer
+- com.intellij.xdebugger.impl.ui.tree.nodes.XValueTextRendererBase
+- <init>(com.intellij.ui.ColoredTextContainer):V
+- renderComment(java.lang.String):V
+- renderError(java.lang.String):V
+- p:renderRawValue(java.lang.String,com.intellij.openapi.editor.colors.TextAttributesKey):V
+- renderSpecialSymbol(java.lang.String):V
+- renderStringValue(java.lang.String,java.lang.String,I):V
+- renderValue(java.lang.String):V
+c:com.intellij.xdebugger.memory.component.InstancesTracker
+- com.intellij.openapi.components.PersistentStateComponent
+- <init>():V
+- add(java.lang.String,com.intellij.xdebugger.memory.tracking.TrackingType):V
+- addTrackerListener(com.intellij.xdebugger.memory.event.InstancesTrackerListener):V
+- addTrackerListener(com.intellij.xdebugger.memory.event.InstancesTrackerListener,com.intellij.openapi.Disposable):V
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.xdebugger.memory.component.InstancesTracker
+- getState():com.intellij.xdebugger.memory.component.InstancesTracker$MyState
+- getTrackedClasses():java.util.Map
+- getTrackingType(java.lang.String):com.intellij.xdebugger.memory.tracking.TrackingType
+- isBackgroundTrackingEnabled():Z
+- isTracked(java.lang.String):Z
+- loadState(com.intellij.xdebugger.memory.component.InstancesTracker$MyState):V
+- remove(java.lang.String):V
+- removeTrackerListener(com.intellij.xdebugger.memory.event.InstancesTrackerListener):V
+- setBackgroundTackingEnabled(Z):V
+c:com.intellij.xdebugger.memory.component.MemoryViewManager
+- com.intellij.openapi.components.PersistentStateComponent
+- sf:MEMORY_VIEW_CONTENT:java.lang.String
+- <init>():V
+- addMemoryViewManagerListener(com.intellij.xdebugger.memory.event.MemoryViewManagerListener,com.intellij.openapi.Disposable):V
+- s:getInstance():com.intellij.xdebugger.memory.component.MemoryViewManager
+- getState():com.intellij.xdebugger.memory.component.MemoryViewManagerState
+- isAutoUpdateModeEnabled():Z
+- isNeedShowDiffOnly():Z
+- isNeedShowInstancesOnly():Z
+- isNeedShowTrackedOnly():Z
+- loadState(com.intellij.xdebugger.memory.component.MemoryViewManagerState):V
+- setAutoUpdate(Z):V
+- setShowDiffOnly(Z):V
+- setShowTrackedOnly(Z):V
+- setShowWithInstancesOnly(Z):V
+f:com.intellij.xdebugger.memory.component.MemoryViewManagerState
+- isAutoUpdateModeOn:Z
+- isShowTrackedOnly:Z
+- isShowWithDiffOnly:Z
+- isShowWithInstancesOnly:Z
+com.intellij.xdebugger.memory.event.InstancesTrackerListener
+- java.util.EventListener
+- backgroundTrackingValueChanged(Z):V
+- classChanged(java.lang.String,com.intellij.xdebugger.memory.tracking.TrackingType):V
+- classRemoved(java.lang.String):V
+com.intellij.xdebugger.memory.event.MemoryViewManagerListener
+- java.util.EventListener
+- a:stateChanged(com.intellij.xdebugger.memory.component.MemoryViewManagerState):V
+com.intellij.xdebugger.memory.tracking.TrackerForNewInstancesBase
+- a:getCount():I
+- a:isReady():Z
+e:com.intellij.xdebugger.memory.tracking.TrackingType
+- java.lang.Enum
+- sf:CREATION:com.intellij.xdebugger.memory.tracking.TrackingType
+- description():java.lang.String
+- s:valueOf(java.lang.String):com.intellij.xdebugger.memory.tracking.TrackingType
+- s:values():com.intellij.xdebugger.memory.tracking.TrackingType[]
+a:com.intellij.xdebugger.memory.ui.ClassesFilteredViewBase
+- com.intellij.util.ui.components.BorderLayoutPanel
+- com.intellij.openapi.Disposable
+- com.intellij.openapi.actionSystem.UiDataProvider
+- psf:DEFAULT_BATCH_SIZE:I
+- psf:DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT:D
+- psf:MAX_DELAY_MILLIS:D
+- p:myIsActive:Z
+- pf:myProject:com.intellij.openapi.project.Project
+- pf:mySingleAlarm:com.intellij.xdebugger.memory.utils.SingleAlarmWithMutableDelay
+- <init>(com.intellij.xdebugger.XDebugSession):V
+- p:createClassesTable(com.intellij.xdebugger.memory.component.MemoryViewManagerState):com.intellij.xdebugger.memory.ui.ClassesTable
+- p:doActivate():V
+- p:doPause():V
+- p:getAdditionalSessionListener():com.intellij.xdebugger.XDebugSessionListener
+- getDefaultFocusedComponent():javax.swing.JComponent
+- pa:getInstancesWindow(com.intellij.xdebugger.memory.ui.TypeInfo,com.intellij.xdebugger.XDebugSession):com.intellij.xdebugger.memory.ui.InstancesWindowBase
+- p:getStrategy(com.intellij.xdebugger.memory.ui.TypeInfo):com.intellij.xdebugger.memory.tracking.TrackerForNewInstancesBase
+- getTable():com.intellij.xdebugger.memory.ui.ClassesTable
+- p:handleClassSelection(com.intellij.xdebugger.memory.ui.TypeInfo):V
+- pa:scheduleUpdateClassesCommand(com.intellij.xdebugger.frame.XSuspendContext):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
+- p:updateClassesAndCounts(Z):V
+- p:viewUpdated():V
+c:com.intellij.xdebugger.memory.ui.ClassesTable
+- com.intellij.ui.table.JBTable
+- com.intellij.openapi.Disposable
+- com.intellij.openapi.actionSystem.UiDataProvider
+- sf:REF_COUNT_PROVIDER_KEY:com.intellij.openapi.actionSystem.DataKey
+- sf:SELECTED_CLASS_KEY:com.intellij.openapi.actionSystem.DataKey
+- <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.memory.ui.ClassesFilteredViewBase,Z,Z,Z):V
+- clean(java.lang.String):V
+- p:customizeColumns():V
+- dispose():V
+- getClassByName(java.lang.String):com.intellij.xdebugger.memory.ui.TypeInfo
+- p:getColumnDescriptors():com.intellij.xdebugger.memory.utils.AbstractTableColumnDescriptor[]
+- getSelectedClass():com.intellij.xdebugger.memory.ui.TypeInfo
+- p:getTableModel():com.intellij.xdebugger.memory.ui.ClassesTable$DiffViewTableModel
+- p:getTableSortingKeys():java.util.List
+- p:getTypeInfoAt(I):com.intellij.xdebugger.memory.ui.TypeInfo
+- isInClickableMode():Z
+- makeClickable(java.lang.Runnable):V
+- setBusy(Z):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
+- updateClassesOnly(java.util.List):V
+- updateContent(java.util.Map):V
+c:com.intellij.xdebugger.memory.ui.ClassesTable$DiffViewTableModel
+- javax.swing.table.AbstractTableModel
+- sf:CLASSNAME_COLUMN_INDEX:I
+- sf:DIFF_COLUMN_INDEX:I
+- getRowCount():I
+a:com.intellij.xdebugger.memory.ui.ClassesTable$MyTableCellRenderer
+- com.intellij.ui.ColoredTableCellRenderer
+- <init>():V
+- pa:addText(java.lang.Object,Z,I):V
+- p:customizeCellRenderer(javax.swing.JTable,java.lang.Object,Z,Z,I,I):V
+com.intellij.xdebugger.memory.ui.ClassesTable$ReferenceCountProvider
+- a:getDiffCount(com.intellij.xdebugger.memory.ui.TypeInfo):I
+- a:getNewInstancesCount(com.intellij.xdebugger.memory.ui.TypeInfo):I
+- a:getTotalCount(com.intellij.xdebugger.memory.ui.TypeInfo):I
+c:com.intellij.xdebugger.memory.ui.InstancesTree
+- com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
+- <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.xdebugger.impl.frame.XValueMarkers,java.lang.Runnable):V
+- addChildren(com.intellij.xdebugger.frame.XValueChildrenList,Z):V
+- rebuildTree(com.intellij.xdebugger.memory.ui.InstancesTree$RebuildPolicy):V
+e:com.intellij.xdebugger.memory.ui.InstancesTree$RebuildPolicy
+- java.lang.Enum
+- sf:ONLY_UPDATE_LABELS:com.intellij.xdebugger.memory.ui.InstancesTree$RebuildPolicy
+- sf:RELOAD_INSTANCES:com.intellij.xdebugger.memory.ui.InstancesTree$RebuildPolicy
+- s:valueOf(java.lang.String):com.intellij.xdebugger.memory.ui.InstancesTree$RebuildPolicy
+- s:values():com.intellij.xdebugger.memory.ui.InstancesTree$RebuildPolicy[]
+a:com.intellij.xdebugger.memory.ui.InstancesViewBase
+- com.intellij.ui.components.JBPanel
+- com.intellij.openapi.Disposable
+- <init>(java.awt.LayoutManager,com.intellij.xdebugger.XDebugSession,com.intellij.xdebugger.memory.utils.InstancesProvider):V
+- dispose():V
+- getInstancesProvider():com.intellij.xdebugger.memory.utils.InstancesProvider
+- pa:getInstancesTree():com.intellij.xdebugger.memory.ui.InstancesTree
+- p:getValueMarkers(com.intellij.xdebugger.XDebugSession):com.intellij.xdebugger.impl.frame.XValueMarkers
+a:com.intellij.xdebugger.memory.ui.InstancesWindowBase
+- com.intellij.openapi.ui.DialogWrapper
+- psf:DEFAULT_WINDOW_HEIGHT:I
+- psf:DEFAULT_WINDOW_WIDTH:I
+- pf:className:java.lang.String
+- <init>(com.intellij.xdebugger.XDebugSession,java.lang.String):V
+- p:addWarningMessage(java.lang.String):V
+- p:createActions():javax.swing.Action[]
+- p:getDimensionServiceKey():java.lang.String
+com.intellij.xdebugger.memory.ui.ReferenceInfo
+com.intellij.xdebugger.memory.ui.TypeInfo
+- a:canGetInstanceInfo():Z
+- a:getInstances(I):java.util.List
+- a:name():java.lang.String
+a:com.intellij.xdebugger.memory.utils.AbstractTableColumnDescriptor
+- p:<init>(java.lang.String,java.lang.Class):V
+- getColumnClass():java.lang.Class
+- getName():java.lang.String
+c:com.intellij.xdebugger.memory.utils.SingleAlarmWithMutableDelay
+- <init>(com.intellij.xdebugger.memory.utils.SingleAlarmWithMutableDelay$Task,com.intellij.openapi.Disposable):V
+- cancelAllRequests():V
+- cancelAndRequest(com.intellij.xdebugger.frame.XSuspendContext):V
+- cancelAndRequestImmediate(com.intellij.xdebugger.frame.XSuspendContext):V
+- setDelay(I):V
+com.intellij.xdebugger.memory.utils.SingleAlarmWithMutableDelay$Task
+- a:run(com.intellij.xdebugger.frame.XSuspendContext):V

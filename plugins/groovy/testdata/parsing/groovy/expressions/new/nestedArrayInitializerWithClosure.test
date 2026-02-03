@@ -1,0 +1,101 @@
+new int[][]{
+ {},
+ {x -> println x},
+ {y, z -> y + z},
+ {println "hello world!"},
+ {1, 2, 3}}
+-----
+Groovy script
+  NEW expression
+    PsiElement(new)('new')
+    PsiWhiteSpace(' ')
+    Built in type
+      PsiElement(int)('int')
+    Array declaration
+      PsiElement([)('[')
+      PsiElement(])(']')
+      PsiElement([)('[')
+      PsiElement(])(']')
+    Array initializer
+      PsiElement({)('{')
+      PsiWhiteSpace('\n ')
+      Array initializer
+        PsiElement({)('{')
+        PsiElement(})('}')
+      PsiElement(,)(',')
+      PsiElement(new line)('\n ')
+      Closable block
+        PsiElement({)('{')
+        Parameter list
+          Parameter
+            Modifiers
+              <empty list>
+            PsiElement(identifier)('x')
+        PsiWhiteSpace(' ')
+        PsiElement(->)('->')
+        PsiWhiteSpace(' ')
+        Call expression
+          Reference expression
+            PsiElement(identifier)('println')
+          PsiWhiteSpace(' ')
+          Command arguments
+            Reference expression
+              PsiElement(identifier)('x')
+        PsiElement(})('}')
+      PsiElement(,)(',')
+      PsiElement(new line)('\n ')
+      Closable block
+        PsiElement({)('{')
+        Parameter list
+          Parameter
+            Modifiers
+              <empty list>
+            PsiElement(identifier)('y')
+          PsiElement(,)(',')
+          PsiWhiteSpace(' ')
+          Parameter
+            Modifiers
+              <empty list>
+            PsiElement(identifier)('z')
+        PsiWhiteSpace(' ')
+        PsiElement(->)('->')
+        PsiWhiteSpace(' ')
+        Additive expression
+          Reference expression
+            PsiElement(identifier)('y')
+          PsiWhiteSpace(' ')
+          PsiElement(+)('+')
+          PsiWhiteSpace(' ')
+          Reference expression
+            PsiElement(identifier)('z')
+        PsiElement(})('}')
+      PsiElement(,)(',')
+      PsiElement(new line)('\n ')
+      Closable block
+        PsiElement({)('{')
+        Parameter list
+          <empty list>
+        Call expression
+          Reference expression
+            PsiElement(identifier)('println')
+          PsiWhiteSpace(' ')
+          Command arguments
+            Literal
+              PsiElement(double quoted string)('"hello world!"')
+        PsiElement(})('}')
+      PsiElement(,)(',')
+      PsiElement(new line)('\n ')
+      Array initializer
+        PsiElement({)('{')
+        Literal
+          PsiElement(Integer)('1')
+        PsiElement(,)(',')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(Integer)('2')
+        PsiElement(,)(',')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(Integer)('3')
+        PsiElement(})('}')
+      PsiElement(})('}')

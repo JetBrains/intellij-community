@@ -1,0 +1,13 @@
+{
+  "org": {
+    "intellij": {
+      "images": {
+        "icons": {
+          "expui": {
+            "chessboard.svg": "org/intellij/images/icons/ToggleTransparencyChessboard.svg"
+          }
+        }
+      }
+    }
+  }
+}

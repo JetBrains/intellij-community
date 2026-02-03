@@ -1,0 +1,254 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInspection.dataFlow;
+
+import com.intellij.codeInsight.daemon.impl.quickfix.UnwrapSwitchLabelFix;
+import com.intellij.codeInsight.options.JavaInspectionButtons;
+import com.intellij.codeInsight.options.JavaInspectionControls;
+import com.intellij.codeInspection.AddAssertNonNullFromTestFrameworksFix;
+import com.intellij.codeInspection.AddAssertNonNullFromTestFrameworksFix.Variant;
+import com.intellij.codeInspection.AddAssertStatementFix;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.RemoveAssignmentFix;
+import com.intellij.codeInspection.ReplaceComputeWithComputeIfPresentFix;
+import com.intellij.codeInspection.ReplaceTypeInCastFix;
+import com.intellij.codeInspection.ReplaceWithTernaryOperatorFix;
+import com.intellij.codeInspection.StreamFilterNotNullFix;
+import com.intellij.codeInspection.SurroundWithIfFix;
+import com.intellij.codeInspection.WrapWithMutableCollectionFix;
+import com.intellij.codeInspection.dataFlow.fix.BoxPrimitiveInTernaryFix;
+import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
+import com.intellij.codeInspection.dataFlow.fix.FindDfaProblemCauseFix;
+import com.intellij.codeInspection.dataFlow.fix.ReplaceWithBooleanEqualsFix;
+import com.intellij.codeInspection.dataFlow.fix.SurroundWithRequireNonNullFix;
+import com.intellij.codeInspection.nullable.NullableStuffInspection;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiCaseLabelElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.util.PsiPrecedenceUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.dataflow.CreateNullBranchFix;
+import com.siyeh.ig.fixes.IntroduceVariableFix;
+import com.siyeh.ig.psiutils.CodeBlockSurrounder;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.SideEffectChecker;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.java.JavaBundle.message;
+
+public final class DataFlowInspection extends DataFlowInspectionBase {
+  private static final Logger LOG = Logger.getInstance(DataFlowInspection.class);
+
+  @Override
+  protected LocalQuickFix createMutabilityViolationFix(PsiElement violation) {
+    return WrapWithMutableCollectionFix.createFix(violation);
+  }
+
+  @Override
+  protected @Nullable LocalQuickFix createExplainFix(PsiExpression anchor, TrackingRunner.DfaProblemType problemType) {
+    return new FindDfaProblemCauseFix(IGNORE_ASSERT_STATEMENTS, anchor, problemType);
+  }
+
+  @Override
+  protected @Nullable LocalQuickFix createUnwrapSwitchLabelFix() {
+    return new UnwrapSwitchLabelFix();
+  }
+
+  @Override
+  protected LocalQuickFix createIntroduceVariableFix() {
+    return new IntroduceVariableFix(true);
+  }
+
+  @Override
+  protected @Nullable LocalQuickFix createDeleteLabelFix(PsiCaseLabelElement label) {
+    return LocalQuickFix.from(new DeleteSwitchLabelFix(label, true));
+  }
+
+  private static boolean isVolatileFieldReference(PsiExpression qualifier) {
+    PsiElement target = qualifier instanceof PsiReferenceExpression ? ((PsiReferenceExpression)qualifier).resolve() : null;
+    return target instanceof PsiField && ((PsiField)target).hasModifierProperty(PsiModifier.VOLATILE);
+  }
+
+  @Override
+  protected @NotNull List<@NotNull LocalQuickFix> createMethodReferenceNPEFixes(PsiMethodReferenceExpression methodRef, boolean onTheFly) {
+    List<LocalQuickFix> fixes = new ArrayList<>();
+    ContainerUtil.addIfNotNull(fixes, StreamFilterNotNullFix.makeFix(methodRef));
+    if (onTheFly) {
+      fixes.add(new ReplaceWithTernaryOperatorFix.ReplaceMethodRefWithTernaryOperatorFix());
+    }
+    return fixes;
+  }
+
+  @Override
+  protected LocalQuickFix createRemoveAssignmentFix(PsiAssignmentExpression assignment) {
+    if (assignment == null || assignment.getRExpression() == null || !(assignment.getParent() instanceof PsiExpressionStatement)) {
+      return null;
+    }
+    return new RemoveAssignmentFix();
+  }
+
+  @Override
+  protected @NotNull List<@NotNull LocalQuickFix> createCastFixes(PsiTypeCastExpression castExpression,
+                                                                  PsiType realType,
+                                                                  boolean onTheFly,
+                                                                  boolean alwaysFails) {
+    List<LocalQuickFix> fixes = new ArrayList<>();
+    PsiExpression operand = castExpression.getOperand();
+    PsiTypeElement typeElement = castExpression.getCastType();
+    if (typeElement != null && operand != null) {
+      if (!alwaysFails && !SideEffectChecker.mayHaveSideEffects(operand) && CodeBlockSurrounder.canSurround(castExpression)) {
+        String suffix = " instanceof " + typeElement.getText();
+        fixes.add(new AddAssertStatementFix(ParenthesesUtils.getText(operand, PsiPrecedenceUtil.RELATIONAL_PRECEDENCE) + suffix));
+        if (SurroundWithIfFix.isAvailable(operand)) {
+          fixes.add(new SurroundWithIfFix(operand, suffix));
+        }
+      }
+      if (realType != null) {
+        PsiType operandType = operand.getType();
+        if (operandType != null) {
+          PsiType type = typeElement.getType();
+          PsiType[] types = {realType};
+          if (realType instanceof PsiIntersectionType) {
+            types = ((PsiIntersectionType)realType).getConjuncts();
+          }
+          for (PsiType psiType : types) {
+            if (!psiType.isAssignableFrom(operandType)) {
+              psiType = DfaPsiUtil.tryGenerify(operand, psiType);
+              fixes.add(new ReplaceTypeInCastFix(type, psiType));
+            }
+          }
+        }
+      }
+    }
+    return fixes;
+  }
+
+  @Override
+  protected @NotNull List<@NotNull LocalQuickFix> createNPEFixes(@Nullable PsiExpression qualifier,
+                                                                 PsiExpression expression,
+                                                                 boolean onTheFly,
+                                                                 boolean alwaysNull) {
+    qualifier = PsiUtil.deparenthesizeExpression(qualifier);
+
+    final List<LocalQuickFix> fixes = new SmartList<>();
+    if (qualifier == null || expression == null) return Collections.emptyList();
+
+    try {
+      ContainerUtil.addIfNotNull(fixes, StreamFilterNotNullFix.makeFix(qualifier));
+      ContainerUtil.addIfNotNull(fixes, ReplaceComputeWithComputeIfPresentFix.makeFix(qualifier));
+      if (isVolatileFieldReference(qualifier)) {
+        ContainerUtil.addIfNotNull(fixes, createIntroduceVariableFix());
+      }
+      else if (!alwaysNull && !SideEffectChecker.mayHaveSideEffects(qualifier)) {
+        String suffix = " != null";
+
+        Variant testFrameworkFixVariant = AddAssertNonNullFromTestFrameworksFix.isAvailable(expression);
+        if (testFrameworkFixVariant != null) {
+          fixes.add(new AddAssertNonNullFromTestFrameworksFix(qualifier, testFrameworkFixVariant));
+        }
+        else if (PsiUtil.isAvailable(JavaFeature.ASSERTIONS, qualifier) && CodeBlockSurrounder.canSurround(expression)) {
+          String replacement = ParenthesesUtils.getText(qualifier, ParenthesesUtils.EQUALITY_PRECEDENCE) + suffix;
+          fixes.add(new AddAssertStatementFix(replacement));
+        }
+
+        if (SurroundWithIfFix.isAvailable(qualifier)) {
+          fixes.add(new SurroundWithIfFix(qualifier, suffix));
+        }
+
+        if (onTheFly && ReplaceWithTernaryOperatorFix.isAvailable(qualifier, expression)) {
+          fixes.add(new ReplaceWithTernaryOperatorFix(qualifier));
+        }
+      }
+
+      if (!alwaysNull && PsiUtil.isAvailable(JavaFeature.OBJECTS_CLASS, qualifier)) {
+        fixes.add(new SurroundWithRequireNonNullFix(qualifier));
+      }
+
+      if (!ExpressionUtils.isNullLiteral(qualifier)) {
+        ContainerUtil.addIfNotNull(fixes, createExplainFix(qualifier, new TrackingRunner.NullableDfaProblemType()));
+      }
+
+      ContainerUtil.addIfNotNull(fixes, DfaOptionalSupport.registerReplaceOptionalOfWithOfNullableFix(qualifier));
+
+      addCreateNullBranchFix(qualifier, fixes);
+    }
+
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+    return fixes;
+  }
+
+  @Override
+  protected @NotNull List<@NotNull LocalQuickFix> createUnboxingNullableFixes(@NotNull PsiExpression qualifier,
+                                                                              PsiElement anchor,
+                                                                              boolean onTheFly) {
+    List<LocalQuickFix> result = new SmartList<>();
+    if (TypeConversionUtil.isBooleanType(qualifier.getType())) {
+      result.add(new ReplaceWithBooleanEqualsFix(qualifier));
+    }
+    ContainerUtil.addIfNotNull(result, BoxPrimitiveInTernaryFix.makeFix(ObjectUtils.tryCast(anchor, PsiExpression.class)));
+    addCreateNullBranchFix(qualifier, result);
+    return result;
+  }
+
+  private static void addCreateNullBranchFix(@NotNull PsiExpression qualifier, @NotNull List<? super @NotNull LocalQuickFix> fixes) {
+    if (!PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, qualifier)) return;
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(qualifier.getParent());
+    if (parent instanceof PsiSwitchBlock block && PsiUtil.skipParenthesizedExprDown(block.getExpression()) == qualifier) {
+      fixes.add(LocalQuickFix.from(new CreateNullBranchFix(block)));
+    }
+  }
+
+  @Override
+  protected LocalQuickFix createNavigateToNullParameterUsagesFix(PsiParameter parameter) {
+    return new NullableStuffInspection.NavigateToNullLiteralArguments(parameter);
+  }
+
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("SUGGEST_NULLABLE_ANNOTATIONS",
+               message("inspection.data.flow.nullable.quickfix.option")),
+      checkbox("TREAT_UNKNOWN_MEMBERS_AS_NULLABLE",
+               message("inspection.data.flow.treat.non.annotated.members.and.parameters.as.nullable")),
+      checkbox("REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER",
+               message("inspection.data.flow.report.not.null.required.parameter.with.null.literal.argument.usages")),
+      checkbox("REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL",
+               message("inspection.data.flow.report.nullable.methods.that.always.return.a.non.null.value")),
+      checkbox("IGNORE_ASSERT_STATEMENTS",
+               message("inspection.data.flow.ignore.assert.statements")),
+      checkbox("REPORT_UNSOUND_WARNINGS",
+               message("inspection.data.flow.report.problems.that.happen.only.on.some.code.paths")),
+      JavaInspectionControls.button(
+        JavaInspectionButtons.ButtonKind.NULLABILITY_ANNOTATIONS)
+    );
+  }
+}

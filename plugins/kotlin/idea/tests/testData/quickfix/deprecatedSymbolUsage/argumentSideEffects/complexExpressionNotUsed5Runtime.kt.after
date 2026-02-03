@@ -1,0 +1,21 @@
+// "Replace with 'newFun(p2)'" "true"
+// WITH_STDLIB
+
+@Deprecated("", ReplaceWith("newFun(p2)"))
+fun oldFun(p1: Int, p2: Int): Boolean {
+    return newFun(p2)
+}
+
+fun newFun(p: Int) = false
+
+fun foo(list: List<Int>) {
+    list.filter {
+        bar()
+        !newFun(it)
+    }
+}
+
+fun bar(): Int = 0
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

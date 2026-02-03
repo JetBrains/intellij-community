@@ -1,0 +1,10 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
+package foo.bar
+
+class Foo
+
+fun test1(foo: Foo<caret>) {}
+fun test2(foo: Foo<caret>) {}
+
+// ELEMENT: Foo

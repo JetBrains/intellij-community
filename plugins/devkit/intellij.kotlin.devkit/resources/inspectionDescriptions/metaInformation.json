@@ -1,0 +1,28 @@
+{
+  "inspections": [
+    {
+      "id": "KotlinObjectExtensionRegistration",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ForbiddenInSuspectContextMethod",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "CompanionObjectInExtension",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "KotlinObjectRegisteredAsExtension",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ObsoleteDispatchersEdt",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PublicTestExtensionFunction",
+      "codeQualityCategory": "Code Style"
+    }
+  ]
+}

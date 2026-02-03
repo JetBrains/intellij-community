@@ -1,0 +1,36 @@
+### auto-generated section `build fleet.codecache` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_codecache",
+  opt_in = [
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+    "kotlin.ExperimentalStdlibApi",
+  ],
+  x_consistent_data_class_copy_visibility = True,
+  x_context_parameters = True,
+  x_jvm_default = "all-compatibility",
+  x_lambdas = "class"
+)
+
+jvm_library(
+  name = "codecache",
+  module_name = "fleet.codecache",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  kotlinc_opts = ":custom_codecache",
+  deps = [
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlin-stdlib",
+    "//fleet/bundles",
+    "@lib//:jetbrains-annotations",
+    "//fleet/util/logging/api",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-collections-immutable",
+    "//fleet/ktor/client/core",
+    "//fleet/modules/api",
+  ]
+)
+### auto-generated section `build fleet.codecache` end

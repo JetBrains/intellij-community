@@ -1,0 +1,3 @@
+String s = "Hello,\n\r" +
+        "world\n" +
+        "!\n";

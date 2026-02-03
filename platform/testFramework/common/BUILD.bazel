@@ -1,0 +1,56 @@
+### auto-generated section `build intellij.platform.testFramework.common` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options", "resourcegroup")
+
+kt_javac_options(
+  name = "custom-javac-options",
+  x_ep_disable_all_checks = True,
+  warn = "off",
+  add_exports = ["java.desktop/sun.awt=ALL-UNNAMED"],
+  no_proc = True
+)
+
+resourcegroup(
+  name = "common_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "common",
+  module_name = "intellij.platform.testFramework.common",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":common_resources"],
+  javac_opts = ":custom-javac-options",
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/bootstrap/coroutine",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/jbr",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-impl",
+    "//platform/boot",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/platform-impl/bootstrap",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/ide-core-impl",
+    "//platform/analysis-impl",
+    "//platform/service-container",
+    "//platform/indexing-api:indexing",
+    "//platform/core-impl",
+    "//platform/projectModel-impl",
+    "//platform/lang-impl",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//platform/platform-impl:ide-impl",
+    "//platform/testFramework/core",
+    "//platform/diagnostic",
+    "//platform/diagnostic/telemetry",
+    "@lib//:jetbrains-annotations",
+    "//platform/platform-impl/bootstrap/kernel",
+    "//platform/build-scripts/downloader",
+  ]
+)
+### auto-generated section `build intellij.platform.testFramework.common` end

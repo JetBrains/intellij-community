@@ -1,0 +1,7 @@
+- name: dist.all/lib/intellij.libraries.miglayout.swing.jar
+  modules:
+  - name: intellij.libraries.miglayout.swing
+    libraries:
+      miglayout-swing:
+      - name: $MAVEN_REPOSITORY$/com/miglayout/miglayout-swing/11/miglayout-swing-11.jar
+      - name: $MAVEN_REPOSITORY$/com/miglayout/miglayout-core/11/miglayout-core-11.jar

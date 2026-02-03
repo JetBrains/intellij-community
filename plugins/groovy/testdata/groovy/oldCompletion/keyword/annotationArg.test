@@ -1,0 +1,8 @@
+class A {
+  @Delegated(deprecated = <caret>)
+  Del d
+}
+-----
+false
+null
+true

@@ -1,0 +1,5 @@
+-Camel2.java
+ -Camel2
+  doSomeArtHeader(): void
+  [doSomeHead(): void]
+  doSomethingWithMyHead(): void

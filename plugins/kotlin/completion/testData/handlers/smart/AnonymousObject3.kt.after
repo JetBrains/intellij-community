@@ -1,0 +1,9 @@
+var r : Runnable = object : Runnable {
+    override fun run() {
+        TODO("Not yet implemented")
+    }
+}
+
+//ELEMENT: object
+//TAIL_TEXT: " (java.lang)"
+// IGNORE_K2

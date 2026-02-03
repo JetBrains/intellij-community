@@ -1,0 +1,228 @@
+# TODO: missing from stub
+gevent.os.__all__
+gevent.socket.__all__
+gevent.ssl.__all__
+gevent.subprocess.__all__
+
+# Error: failed to find stubs
+# =============================
+# testing modules are not included in type stubs
+gevent.testing
+gevent.testing.*
+gevent.tests
+gevent.tests.*
+
+# these are only present for monkey patching and should not be used directly
+gevent.thread
+gevent.threading
+
+# deprecated module which should not be used anymore
+gevent.builtins
+gevent.contextvars
+gevent.core
+
+# part of internal API which is not needed for public type stubs
+gevent._ffi.callback
+
+# Error: is not present in stub
+# =============================
+# internal API stuff we dropped because it wasn't necessary
+gevent._config.Config.subclass
+gevent._ffi.CRITICAL
+gevent._ffi.DEBUG
+gevent._ffi.ERROR
+gevent._ffi.GEVENT_DEBUG_LEVEL
+gevent._ffi.TRACE
+gevent._ffi.loop.AbstractLoop.async
+gevent._fileobjectcommon.UniversalNewlineBytesWrapper
+gevent._waiter.Waiter.switch_args
+
+# loop local that wasn't deleted
+gevent.resolver.blocking.Resolver.method
+
+# isn't actually implemented for libuv, it just raises an exception
+gevent.libuv.watcher.watcher.feed
+
+# unnecessary python 2 compatibility stuff
+gevent._config.Config.trace_malloc
+gevent._imap.IMapUnordered.next
+gevent.pywsgi.Environ.iteritems
+
+# weird method that doesn't work with this being generic, so we removed it
+# it's not necessary for public API
+gevent.hub.Waiter.switch_args
+
+# these may be gevent extensions or methods for backwards compatibility
+# for now we're fine with pretending it's not there
+gevent.socket.SocketType.__enter__
+gevent.socket.SocketType.__exit__
+gevent.socket.SocketType.accept
+gevent.socket.SocketType.closed
+gevent.socket.SocketType.dup
+gevent.socket.SocketType.get_inheritable
+gevent.socket.SocketType.makefile
+gevent.socket.SocketType.sendfile
+gevent.socket.SocketType.set_inheritable
+
+# Pretends to re-export a type marked @disjoint_base in the stubs, but runtime
+# defines __slots__
+gevent.socket.SocketType$
+
+# zope.interface related attributes we can ignore
+gevent.[\w\.]+\.__implemented__
+gevent.[\w\.]+\.__providedBy__
+gevent.[\w\.]+\.__provides__
+
+# these shouldn't be in __all__ they end up there, due to how gevent imports
+# the globals from the stdlib ssl module, For ssl/subprocess we ignore all symbols
+# that start with an underscore (i.e. internal symbols)
+gevent\.ssl\._[A-Za-z0-9]\w*
+gevent.ssl.base64
+gevent.ssl.create_connection
+gevent.ssl.errno
+gevent.ssl.os
+gevent.ssl.warnings
+gevent\.subprocess\._[A-Za-z0-9]\w*
+
+# gevent implements its own Popen which doesn't completely match the original
+# API, for now we ignore this discrepancy
+gevent.subprocess.Popen.rawlink
+gevent.subprocess.Popen.__del__
+
+# Error: is not present at runtime
+# =============================
+# Due to the way gevent copies globals from other modules, there's a few symbols
+# that may not end up in the module, that would otherwise end up there with a
+# `from x import *`. None of these seem critical, so we ignore them. For socket
+# we ignore all constants that start with at least one segment of all uppercase
+# letters before the underscore
+gevent\.socket\.[A-Z0-9]+(_\w+)?
+gevent.ssl.PROTOCOL_SSLv2
+gevent.ssl.PROTOCOL_SSLv3
+
+# Error: differs from runtime type
+# ======================
+# these are None in the base class, but all settings are a subclass
+# so it makes sense to annotate this as not None
+gevent._config.Setting.default
+gevent._config.Setting.environment_key
+gevent._config.Setting.name
+gevent._config.Setting.value
+
+# it is set to None on the class but always initialized in __init__
+gevent.hub.Hub.thread_ident
+gevent.pywsgi.WSGIServer.error_log
+gevent.pywsgi.WSGIServer.log
+
+# Error: is inconsistent
+# ======================
+# minor config validation implementation difference that don't matter for
+# the actual subclasses, which are proper settings.
+gevent._config.SettingType.__new__
+gevent._config._PositiveValueMixin.validate
+
+# internal API implementation detail we don't care about
+gevent._ffi.watcher.AbstractWatcherType.__new__
+
+# we don't care about write/writeall allowing a named parameter
+gevent._fileobjectcommon.FlushingBufferedWriter.write
+gevent._fileobjectcommon.WriteIsWriteallMixin.write
+gevent._fileobjectcommon.WriteallMixin.writeall
+
+# these are different because of Cython, without Cython these don't have
+# any arguments, so it should be annotated that way
+gevent._ident.IdentRegistry.__init__
+gevent.event.AsyncResult.__init__
+gevent.event.Event.__init__
+
+# positional only arguments due to Cython?
+gevent._abstract_linkable.AbstractLinkable.rawlink
+gevent._abstract_linkable.AbstractLinkable.unlink
+
+# removed undocumented arguments for internal use
+gevent.Greenlet.link
+gevent.Greenlet.link_exception
+gevent.Greenlet.link_value
+gevent.greenlet.Greenlet.link
+gevent.greenlet.Greenlet.link_exception
+gevent.greenlet.Greenlet.link_value
+gevent._threading.Queue.qsize
+
+# removed deprecated argument
+gevent._hub_primitives.wait_readwrite
+gevent._hub_primitives.wait_write
+gevent.pywsgi.WSGIHandler.__init__
+
+# we have punted on socket, the gevent version of these functions sometimes use
+# named parameters, while the base implementation only allows positional arguments
+# we're fine with holding the geven implemenation to the same restrictions
+# additionally there's some functions with additional optional arguments, that
+# we are fine with ignoring for now as well
+gevent.socket.SocketType.bind
+gevent.socket.SocketType.connect
+gevent.socket.SocketType.connect_ex
+gevent.socket.SocketType.send
+gevent.socket.SocketType.sendall
+gevent.socket.SocketType.setblocking
+gevent.socket.SocketType.settimeout
+gevent.socket.SocketType.shutdown
+gevent.socket.cancel_wait
+gevent.socket.gethostbyaddr
+gevent.socket.gethostbyname
+gevent.socket.gethostbyname_ex
+gevent.socket.getnameinfo
+gevent.socket.socket.closed
+gevent.socket.wait_readwrite
+gevent.socket.wait_write
+gevent.socket.socket.__slots__
+
+# we have punted on ssl, the gevent version of these functions have an additional
+# argument for timeouts/blocking and there are some with different default values
+# for nbytes/length, for now we ignore that fact
+gevent.ssl.SSLSocket.__init__
+gevent.ssl.SSLSocket.do_handshake
+gevent.ssl.SSLSocket.read
+gevent.ssl.SSLSocket.send
+gevent.ssl.get_server_certificate
+
+# we have punted on subprocess, the gevent version has slightly different arguments
+# for now we ignore that fact, most of the ways to call Popen should be compatible
+gevent.subprocess.Popen.__init__
+
+# gevent overwrites with a named parameter for fd, but we're fine with only
+# supporting the API of the superclass
+gevent.threadpool.ThreadPoolExecutor.submit
+
+# Error: is not a type/function
+# =====================
+# zope.interface related errors, these shouldn't matter
+gevent._monitor.implementer
+gevent.events.implementer
+gevent.events.IEventLoopBlocked
+gevent.events.IGeventDidPatchAllEvent
+gevent.events.IGeventDidPatchBuiltinModulesEvent
+gevent.events.IGeventDidPatchEvent
+gevent.events.IGeventDidPatchModuleEvent
+gevent.events.IGeventPatchEvent
+gevent.events.IGeventWillPatchAllEvent
+gevent.events.IGeventWillPatchEvent
+gevent.events.IGeventWillPatchModuleEvent
+gevent.events.IMemoryUsageThresholdExceeded
+gevent.events.IMemoryUsageUnderThreshold
+gevent.events.IPeriodicMonitorThread
+gevent.events.IPeriodicMonitorThreadStartedEvent
+
+# Error: failed to import
+# ======================
+# internal use module for some complex protocols used across different modules
+# so there wasn't really a great place for them
+gevent._types
+
+# The first parameter is technically positional-or-keyword but there's no
+# useful way to use it as a keyword argument; we mark it positional-only.
+gevent.pool.GroupMappingMixin.imap
+gevent.pool.GroupMappingMixin.imap_unordered
+
+# Importing gevent.monkey.__main__ leads to issues in stubtest, since gevent will
+# try to monkeypatch stubtest
+gevent.monkey.__main__

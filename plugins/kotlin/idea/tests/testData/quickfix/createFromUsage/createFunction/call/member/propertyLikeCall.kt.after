@@ -1,0 +1,13 @@
+// "Create member function 'A.isIgnored'" "true"
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
+
+class A {
+    fun isIgnored(): Boolean {
+        <selection>TODO("Not yet implemented")<caret></selection>
+    }
+}
+
+fun main() {
+    if (A().isIgnored()) println("Ignored")
+}

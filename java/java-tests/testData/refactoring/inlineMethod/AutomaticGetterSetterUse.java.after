@@ -1,0 +1,17 @@
+class User {
+  private String name;
+
+  String name() {
+    return name;
+  }
+
+  void name(String name) {
+    this.name = name;
+  }
+
+}
+class Use {
+    void test(User user) {
+        user.name(user.name().substring(0, 100));
+    }
+}

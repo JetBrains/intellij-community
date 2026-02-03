@@ -1,0 +1,17 @@
+LineBreakpoint created at suspendFunStackTraceHidden.kt:13
+Run Java
+Connected to the target VM
+suspendFunStackTraceHidden.kt:13
+Thread stack trace:
+	CoroutinePreflightFrame invokeSuspend:!LINE_NUMBER!, SuspendFunStackTraceHiddenKt$main$1 (continuation)
+		($result, this)
+	KotlinStackFrame main:!LINE_NUMBER!, SuspendFunStackTraceHiddenKt (continuation)
+		()
+Coroutine Creation Stack Trace
+	CreationCoroutineStackFrame main:!LINE_NUMBER!, SuspendFunStackTraceHiddenKt (continuation)
+		($result, this)
+	CreationCoroutineStackFrame FRAME:main:-1, SuspendFunStackTraceHiddenKt (continuation)
+		($result, this)
+Disconnected from the target VM
+
+Process finished with exit code 0

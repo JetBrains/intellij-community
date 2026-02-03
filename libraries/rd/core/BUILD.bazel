@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.rd.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "core_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "core",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":core_resources"],
+  exports = ["@lib//:libraries-rd-core-rd-core"],
+  runtime_deps = ["@lib//:libraries-rd-core-rd-core"]
+)
+### auto-generated section `build intellij.libraries.rd.core` end

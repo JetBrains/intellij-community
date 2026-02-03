@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>A.java</file>
+    <line>3</line>
+    <problem_class>unused declaration</problem_class>
+    <description>Class has one instantiation, but the instantiation is not reachable from the entry points.</description>
+  </problem>
+  <problem>
+    <file>A.java</file>
+    <line>1</line>
+    <problem_class>unused declaration</problem_class>
+    <description>Class is not instantiated.</description>
+  </problem>
+  <problem>
+    <file>A.java</file>
+    <line>4</line>
+    <package>&lt;default&gt;</package>
+    <description>&lt;ul&gt;&lt;li&gt;Method owner class is never instantiated OR&lt;/li&gt;&lt;li&gt;All instantiations are not reachable from the entry points.&lt;/li&gt;&lt;/ul&gt;</description>
+  </problem>
+
+</problems>
+

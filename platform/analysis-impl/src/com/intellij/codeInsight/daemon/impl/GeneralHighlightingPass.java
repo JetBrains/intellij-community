@@ -1,0 +1,354 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.daemon.impl;
+
+import com.intellij.analysis.AnalysisBundle;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
+import com.intellij.codeInsight.problems.ProblemImpl;
+import com.intellij.lang.annotation.AnnotationSession;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesScheme;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.problems.Problem;
+import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiPredicate;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+
+@ApiStatus.Internal
+public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware
+  permits NasueousGeneralHighlightingPass {
+  static final Logger LOG = Logger.getInstance(GeneralHighlightingPass.class);
+  private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
+  static final Predicate<? super PsiFile> SHOULD_HIGHLIGHT_FILTER = file -> {
+    HighlightingLevelManager manager = HighlightingLevelManager.getInstance(file.getProject());
+    return manager != null && manager.shouldHighlight(file);
+  };
+  private static final Random RESTART_DAEMON_RANDOM = new Random();
+
+  private final boolean myUpdateAll;
+  private final @NotNull ProperTextRange myPriorityRange;
+
+  private final List<@NotNull HighlightInfo> myHighlights = Collections.synchronizedList(new ArrayList<>());
+
+  private volatile boolean myHasErrorElement;
+  private volatile boolean myHasErrorSeverity;
+  private final boolean myRunAnnotators;
+  private final HighlightInfoUpdater myHighlightInfoUpdater;
+  private final HighlightVisitorRunner myHighlightVisitorRunner;
+
+  GeneralHighlightingPass(@NotNull PsiFile psiFile,
+                          @NotNull Document document,
+                          int startOffset,
+                          int endOffset,
+                          boolean updateAll,
+                          @NotNull ProperTextRange priorityRange,
+                          @Nullable Editor editor,
+                          boolean runAnnotators,
+                          boolean runVisitors,
+                          boolean highlightErrorElements,
+                          @NotNull HighlightInfoUpdater highlightInfoUpdater) {
+    super(psiFile.getProject(), document, AnalysisBundle.message("pass.syntax"), psiFile, editor, TextRange.create(startOffset, endOffset), true, HighlightInfoProcessor.getEmpty());
+    myUpdateAll = updateAll;
+    myPriorityRange = priorityRange;
+    myRunAnnotators = runAnnotators;
+    myHighlightInfoUpdater = highlightInfoUpdater;
+
+    PsiUtilCore.ensureValid(psiFile);
+    boolean wholeFileHighlighting = isWholeFileHighlighting();
+    myHasErrorElement = !wholeFileHighlighting && Boolean.TRUE.equals(getFile().getUserData(HAS_ERROR_ELEMENT));
+
+    // initial guess to show correct progress in the traffic light icon
+    setProgressLimit(document.getTextLength()/2); // approx number of PSI elements = file length/2
+    EditorColorsScheme globalScheme = editor != null ? editor.getColorsScheme() : EditorColorsManager.getInstance().getGlobalScheme();
+    myHighlightVisitorRunner = new HighlightVisitorRunner(psiFile, globalScheme, runVisitors, highlightErrorElements);
+  }
+
+  boolean hasErrorElement() {
+    return myHasErrorElement;
+  }
+
+  private @NotNull PsiFile getFile() {
+    return myFile;
+  }
+
+  public static void assertHighlightingPassNotRunning() {
+    HighlightVisitorRunner.assertHighlightingPassNotRunning();
+  }
+
+  @Override
+  protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+
+    DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
+    myHighlightVisitorRunner.createHighlightVisitorsFor(filteredVisitors->{
+      boolean forceHighlightParents = forceHighlightParents();
+
+      Consumer<? super ManagedHighlighterRecycler> recyclerConsumer = invalidPsiRecycler -> {
+        List<Divider.DividedElements> dividedElements = new ArrayList<>();
+        List<Divider.DividedElements> notVisitableElements = new ArrayList<>();
+        Divider.divideInsideAndOutsideAllRoots(getFile(), myRestrictRange, myPriorityRange, psiFile -> true,
+          elements -> {
+            if (SHOULD_HIGHLIGHT_FILTER.test(elements.psiRoot())) {
+              dividedElements.add(elements);
+            }
+            else {
+              notVisitableElements.add(elements);
+            }
+            return false;
+          });
+        List<PsiElement> allInsideElements = ContainerUtil.concat(ContainerUtil.map(dividedElements,
+          dividedForRoot -> {
+            List<? extends PsiElement> inside = dividedForRoot.inside();
+            PsiElement lastInside = ContainerUtil.getLastItem(inside);
+            return lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment) ? inside
+              .subList(0, inside.size() - 1) : inside;
+          }));
+
+        List<PsiElement> allOutsideElements = ContainerUtil.concat(ContainerUtil.map(dividedElements,
+          dividedForRoot -> {
+            List<? extends PsiElement> outside = dividedForRoot.outside();
+            PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside());
+            return lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment) ? ContainerUtil.append(outside, lastInside) : outside;
+          }));
+        setProgressLimit(allInsideElements.size() + allOutsideElements.size());
+
+        // clear highlights generated by visitors called on psi elements no longer highlightable under the current highlighting level (e.g., when the file level was changed from "All Problems" to "None")
+        for (Divider.DividedElements notVisitable : notVisitableElements) {
+          for (PsiElement element : ContainerUtil.concat(notVisitable.inside(), notVisitable.outside())) {
+            for (HighlightVisitor visitor : filteredVisitors) {
+              myHighlightInfoUpdater.psiElementVisited(visitor.getClass(), element, List.of(), getDocument(), getFile(), myProject, getHighlightingSession(), invalidPsiRecycler);
+            }
+          }
+        }
+        if (myHighlightInfoUpdater instanceof HighlightInfoUpdaterImpl impl) {
+          List<? extends Class<? extends HighlightVisitor>> liveVisitorClasses = ContainerUtil.map(filteredVisitors, v -> v.getClass());
+          BiPredicate<? super Object, ? super PsiFile> keepToolIdPredicate = (toolId, __) -> !HighlightInfoUpdaterImpl.isHighlightVisitorToolId(toolId) || toolId instanceof Class && liveVisitorClasses.contains(toolId);
+          impl.removeHighlightsForObsoleteTools(getHighlightingSession(), List.of(), keepToolIdPredicate);
+        }
+        boolean success;
+        if (allInsideElements.isEmpty() && allOutsideElements.isEmpty()) {
+          success = true;
+        }
+        else {
+          success = collectHighlights(myRestrictRange, allInsideElements, allOutsideElements, filteredVisitors,
+                                      forceHighlightParents, (toolId, psiElement, newInfos) -> {
+              myHighlightInfoUpdater.psiElementVisited(toolId, psiElement, newInfos, getDocument(), getFile(), myProject, getHighlightingSession(), invalidPsiRecycler);
+              if (psiElement instanceof PsiErrorElement) {
+                myHasErrorElement = true;
+              }
+              if (!newInfos.isEmpty()) {
+                int size = newInfos.size(); // size == 1 most of the time
+                //noinspection ForLoopReplaceableByForEach
+                for (int i = 0; i < size; i++) {
+                  final HighlightInfo info = newInfos.get(i);
+                  myHighlights.add(info);
+                  if (info.getSeverity() == HighlightSeverity.ERROR) {
+                    myHasErrorSeverity = true;
+                  }
+                }
+              }
+            });
+        }
+        if (success) {
+          if (myUpdateAll) {
+            daemonCodeAnalyzer.getFileStatusMap().setErrorFoundFlag(getDocument(), getContext(), myHasErrorSeverity);
+            reportErrorsToWolf(myHasErrorSeverity);
+          }
+        }
+        else {
+          boolean writeActionPending = ApplicationManagerEx.getApplicationEx().isWriteActionPending();
+          cancelAndRestartDaemonLater(progress, myProject, "GHP.collectHighlights() == false (writeActionPending="+writeActionPending+")");
+        }
+      };
+      if (myHighlightInfoUpdater instanceof HighlightInfoUpdaterImpl impl) {
+        // Remove obsolete infos for invalid psi elements.
+        // Unfortunately, the majority of PSI implementations are very bad at increment reparsing, meaning the smallest document change
+        // leads (non-optimally) to many unrelated PSI elements being invalidated, and then the new PSI recreated in their place with identical structure.
+        // If we removed these invalid elements eagerly, it would cause flicker because the newly created elements preempt the just removed invalid ones.
+        // Hence, we defer the removal of invalid elements till the very end, in hope that these highlighters be reused by these new elements.
+        // this optimization, however, could lead to an increased latency
+        impl.runWithInvalidPsiRecycler(getHighlightingSession(), HighlightInfoUpdaterImpl.WhatTool.ANNOTATOR_OR_VISITOR, recyclerConsumer);
+      }
+      else {
+        ManagedHighlighterRecycler.runWithRecycler(getHighlightingSession(), recyclerConsumer);
+      }
+    });
+    if (LOG.isTraceEnabled()) {
+      List<HighlightInfo> errors = ContainerUtil.filter(myHighlights, h -> h.getSeverity() == HighlightSeverity.ERROR);
+      LOG.trace("GHP finished: progress=" + progress+ " myHasErrorElement=" + myHasErrorElement + "; highlights:" + myHighlights.size() + "; errors:" + errors.size() + ": " +
+                StringUtil.join(ContainerUtil.getFirstItems(errors, 20), "\n"));
+    }
+  }
+
+  private boolean isWholeFileHighlighting() {
+    return myUpdateAll && myRestrictRange.equalsToRange(0, getDocument().getTextLength());
+  }
+
+  @Override
+  protected void applyInformationWithProgress() {
+    ((HighlightingSessionImpl)getHighlightingSession()).applyFileLevelHighlightsRequests();
+    getFile().putUserData(HAS_ERROR_ELEMENT, myHasErrorElement);
+  }
+
+  @Override
+  public final @NotNull List<HighlightInfo> getInfos() {
+    return myHighlights;
+  }
+
+  private boolean collectHighlights(@NotNull TextRange restrictRange,
+                                    @NotNull List<? extends PsiElement> elements1,
+                                    @NotNull List<? extends PsiElement> elements2,
+                                    HighlightVisitor @NotNull [] visitors,
+                                    boolean forceHighlightParents,
+                                    @NotNull ResultSink resultSink) {
+    int chunkSize = Math.max(1, (elements1.size()+elements2.size()) / 100); // one percent precision is enough
+    ProgressManager.checkCanceled();
+    Runnable runnable = () -> myHighlightVisitorRunner.runVisitors(getFile(), elements1, elements2, visitors, forceHighlightParents, chunkSize,
+                                                                   myUpdateAll, () -> createInfoHolder(getFile()), resultSink);
+    AnnotationSession session = AnnotationSessionImpl.create(getFile());
+    setupAnnotationSession(session, myPriorityRange, restrictRange,
+                           ((HighlightingSessionImpl)getHighlightingSession()).getMinimumSeverity());
+    AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(session, false) : null;
+    if (annotatorRunner == null) {
+      runnable.run();
+      return true;
+    }
+    return annotatorRunner.runAnnotatorsAsync(getDocument(), elements1, elements2, runnable, resultSink);
+  }
+
+  @ApiStatus.Internal
+  public static final int POST_UPDATE_ALL = 5;
+  private static final AtomicInteger RESTART_REQUESTS = new AtomicInteger();
+
+  @TestOnly
+  public static boolean isRestartPending() {
+    return RESTART_REQUESTS.get() > 0;
+  }
+
+  private static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress, @NotNull Project project, @NotNull String reason) throws ProcessCanceledException {
+    RESTART_REQUESTS.incrementAndGet();
+    progress.cancel();
+    int delay = ApplicationManager.getApplication().isUnitTestMode() ? 0 : RESTART_DAEMON_RANDOM.nextInt(100);
+    EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
+      RESTART_REQUESTS.set(0);
+      if (!project.isDisposed()) {
+        DaemonCodeAnalyzerEx.getInstanceEx(project).restart(reason);
+      }
+    }, delay, TimeUnit.MILLISECONDS);
+    progress.checkCanceled();
+  }
+
+  private boolean forceHighlightParents() {
+    boolean forceHighlightParents = false;
+    for(HighlightRangeExtension extension: HighlightRangeExtension.EP_NAME.getExtensionList()) {
+      if (extension.isForceHighlightParents(getFile())) {
+        forceHighlightParents = true;
+        break;
+      }
+    }
+    return forceHighlightParents;
+  }
+
+
+  protected @NotNull HighlightInfoHolder createInfoHolder(@NotNull PsiFile psiFile) {
+    HighlightInfoFilter[] filters = HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensionList().toArray(HighlightInfoFilter.EMPTY_ARRAY);
+    EditorColorsScheme actualScheme = getColorsScheme() == null ? EditorColorsManager.getInstance().getGlobalScheme() : getColorsScheme();
+    HighlightInfoHolder holder = new HighlightInfoHolder(psiFile, filters) {
+      @Override
+      public @NotNull TextAttributesScheme getColorsScheme() {
+        return actualScheme;
+      }
+
+      @Override
+      public boolean add(@Nullable HighlightInfo info) {
+        boolean added;
+        synchronized (this) {
+          added = super.add(info);
+        }
+        if (info != null && added && info.getSeverity() == HighlightSeverity.ERROR) {
+          myHasErrorSeverity = true;
+        }
+        return added;
+      }
+    };
+    setupAnnotationSession(holder.getAnnotationSession(), myPriorityRange, myRestrictRange,
+                           ((HighlightingSessionImpl)getHighlightingSession()).getMinimumSeverity());
+    return holder;
+  }
+
+  @ApiStatus.Internal
+  public static void setupAnnotationSession(@NotNull AnnotationSession annotationSession,
+                                     @NotNull TextRange priorityRange,
+                                     @NotNull TextRange highlightRange,
+                                     @Nullable HighlightSeverity minimumSeverity) {
+    ((AnnotationSessionImpl)annotationSession).setMinimumSeverity(minimumSeverity);
+    ((AnnotationSessionImpl)annotationSession).setVR(priorityRange, highlightRange);
+  }
+
+  private void reportErrorsToWolf(boolean hasErrors) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    if (!getFile().getViewProvider().isPhysical()) return; // e.g. errors in evaluate expression
+    Project project = getFile().getProject();
+    if (!PsiManager.getInstance(project).isInProject(getFile())) return; // do not report problems in libraries
+    VirtualFile file = getFile().getVirtualFile();
+    if (file == null) return;
+
+    List<Problem> problems = convertToProblems(getInfos(), file, myHasErrorElement);
+    WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(project);
+
+    if (!hasErrors || isWholeFileHighlighting()) {
+      wolf.reportProblems(file, problems);
+    }
+    else {
+      wolf.weHaveGotProblems(file, problems);
+    }
+  }
+
+  private static @NotNull List<Problem> convertToProblems(@NotNull Collection<? extends @NotNull HighlightInfo> infos,
+                                                          @NotNull VirtualFile file,
+                                                          boolean hasErrorElement) {
+    List<Problem> problems = new SmartList<>();
+    for (HighlightInfo info : infos) {
+      if (info.getSeverity() == HighlightSeverity.ERROR) {
+        Problem problem = new ProblemImpl(file, info, hasErrorElement);
+        problems.add(problem);
+      }
+    }
+    return problems;
+  }
+
+  @Override
+  public String toString() {
+    return super.toString() + (myUpdateAll ? "" : "; updateAll=false")+ (myPriorityRange.equals(myRestrictRange) ? "" : "; priorityRange="+myPriorityRange);
+  }
+}

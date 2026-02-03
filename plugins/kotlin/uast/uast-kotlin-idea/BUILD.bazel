@@ -1,0 +1,49 @@
+### auto-generated section `build kotlin.uast.uast-kotlin-idea` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_uast-kotlin-idea",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
+
+jvm_library(
+  name = "uast-kotlin-idea",
+  module_name = "kotlin.uast.uast-kotlin-idea",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_uast-kotlin-idea",
+  deps = [
+    "@lib//:vavr",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/util",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/base/fe10/code-insight",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/uast/uast-kotlin-base",
+    "//plugins/kotlin/uast/uast-kotlin-idea-base",
+    "//platform/util-ex",
+    "//platform/core-impl",
+    "//platform/projectModel-api:projectModel",
+    "//uast/uast-common:uast",
+    "//plugins/kotlin/uast/uast-kotlin",
+    "//plugins/kotlin/idea",
+    "//plugins/kotlin/code-insight/api",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//platform/lang-impl",
+    "//uast/uast-common-ide:ide",
+  ]
+)
+### auto-generated section `build kotlin.uast.uast-kotlin-idea` end

@@ -1,0 +1,8 @@
+package b
+
+import a.C
+import a.MyProvider
+
+class Example : MyProvider {
+    val c: C by C()
+}

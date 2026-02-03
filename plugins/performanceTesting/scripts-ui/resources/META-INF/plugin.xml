@@ -1,0 +1,41 @@
+<idea-plugin>
+  <id>com.jetbrains.performanceScripts</id>
+  <name>Performance Scripts UI</name>
+  <vendor>JetBrains</vendor>
+
+  <description>
+    Provides UI to execute performance scripts written in IJPerf language.
+    Run scripts from Help | Diagnostic Tools | Execute Performance Script…
+  </description>
+
+  <resource-bundle>messages.PerformanceScriptsBundle</resource-bundle>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="com.jetbrains.performancePlugin"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="IntegrationPerformanceTest"
+              implementationClass="com.jetbrains.performanceScripts.lang.IJPerfFileType"
+              fieldName="INSTANCE" language="IntegrationPerformanceTest" extensions="ijperf"/>
+
+    <lang.parserDefinition language="IntegrationPerformanceTest"
+                           implementationClass="com.jetbrains.performanceScripts.lang.IJPerfParserDefinition"/>
+
+    <lang.syntaxHighlighterFactory language="IntegrationPerformanceTest"
+                                   implementationClass="com.jetbrains.performanceScripts.lang.IJPerfSyntaxHighlighterFactory"/>
+
+    <completion.contributor language="IntegrationPerformanceTest"
+                            implementationClass="com.jetbrains.performanceScripts.lang.completion.IJPerfCompletionContributor"/>
+
+    <annotator language="IntegrationPerformanceTest"
+               implementationClass="com.jetbrains.performanceScripts.lang.inspections.IJPerfStartStopProfileInspection"/>
+  </extensions>
+
+  <actions>
+    <action id="performancePlugin.ExecuteScriptAction" class="com.jetbrains.performanceScripts.ui.ExecuteScriptAction">
+      <add-to-group group-id="DiagnosticGroup" anchor="after" relative-to-action="CaptureMemorySnapShot"/>
+    </action>
+  </actions>
+</idea-plugin>

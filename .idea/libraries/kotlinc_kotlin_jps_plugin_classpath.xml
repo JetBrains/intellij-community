@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="kotlinc.kotlin-jps-plugin-classpath" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-plugin-classpath:2.3.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.3.0/kotlin-jps-plugin-classpath-2.3.0.jar">
+          <sha256sum>0679d0c95ea331aa08d08e41fda64eee098a08f0cc767bfc569f59e9a60a9ae2</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.3.0/kotlin-jps-plugin-classpath-2.3.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.3.0/kotlin-jps-plugin-classpath-2.3.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

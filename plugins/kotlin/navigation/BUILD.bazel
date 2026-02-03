@@ -1,0 +1,42 @@
+### auto-generated section `build intellij.kotlin.navigation` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_navigation",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+  ]
+)
+
+resourcegroup(
+  name = "navigation_resources",
+  srcs = glob(["resouces/**/*"]),
+  strip_prefix = "resouces"
+)
+
+jvm_library(
+  name = "navigation",
+  module_name = "intellij.kotlin.navigation",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":navigation_resources"],
+  kotlinc_opts = ":custom_navigation",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/core-api:core",
+    "//plugins/kotlin/base/indices",
+    "//platform/core-impl",
+    "//java/java-psi-api:psi",
+    "//platform/util",
+    "//platform/indexing-api:indexing",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "//platform/analysis-api:analysis",
+    "//plugins/kotlin/base/project-structure",
+  ]
+)
+### auto-generated section `build intellij.kotlin.navigation` end

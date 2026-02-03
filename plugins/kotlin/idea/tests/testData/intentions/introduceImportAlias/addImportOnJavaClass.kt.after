@@ -1,0 +1,7 @@
+// AFTER-WARNING: Variable 'r' is never used
+// WITH_STDLIB
+import java.lang.Runnable as Runnable1
+
+fun test() {
+    val r : Run<caret>nable1? = null
+}

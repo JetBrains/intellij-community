@@ -1,0 +1,66 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.plugins.groovy.actions;
+
+import com.intellij.codeInsight.actions.ReformatCodeProcessor;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyFileType;
+
+import java.util.Map;
+
+public final class GroovyTemplatesFactory {
+
+  static final @NonNls String NAME_TEMPLATE_PROPERTY = "NAME";
+  static final String LOW_CASE_NAME_TEMPLATE_PROPERTY = "lowCaseName";
+
+  public static PsiFile createFromTemplate(final @NotNull PsiDirectory directory,
+                                           final @NotNull String name,
+                                           @NotNull String fileName,
+                                           @NotNull String templateName,
+                                           boolean allowReformatting,
+                                           @NonNls String... parameters) throws IncorrectOperationException {
+    final FileTemplate template = FileTemplateManager.getInstance(directory.getProject()).getInternalTemplate(templateName);
+
+    Project project = directory.getProject();
+
+    Map<String, Object> properties = FileTemplateManager.getInstance(project).getDefaultContextMap();
+    JavaTemplateUtil.setPackageNameAttribute(properties, directory);
+    properties.put(NAME_TEMPLATE_PROPERTY, name);
+    properties.put(LOW_CASE_NAME_TEMPLATE_PROPERTY, StringUtil.decapitalize(name));
+    for (int i = 0; i < parameters.length; i += 2) {
+      properties.put(parameters[i], parameters[i + 1]);
+    }
+    String text;
+    try {
+      text = template.getText(properties);
+    }
+    catch (Exception e) {
+      String message = "Unable to load template for " + FileTemplateManager.getInstance(project).internalTemplateToSubject(templateName);
+      throw new RuntimeException(message, e);
+    }
+
+    return WriteAction.compute(() -> {
+      final PsiFileFactory factory = PsiFileFactory.getInstance(project);
+      PsiFile file = factory.createFileFromText(fileName, GroovyFileType.GROOVY_FILE_TYPE, text);
+
+      file = (PsiFile)directory.add(file);
+
+      if (file != null && allowReformatting && template.isReformatCode()) {
+        new ReformatCodeProcessor(project, file, null, false).run();
+      }
+
+      return file;
+    });
+  }
+}

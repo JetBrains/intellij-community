@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinx.serialization.cbor.jar
+  modules:
+  - name: intellij.libraries.kotlinx.serialization.cbor
+    libraries:
+      kotlinx-serialization-cbor:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-cbor-jvm/1/kotlinx-serialization-cbor-jvm-1.jar

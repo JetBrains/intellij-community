@@ -1,0 +1,81 @@
+### auto-generated section `build intellij.yaml` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "yaml_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "yaml",
+  module_name = "intellij.yaml",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":yaml_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/analysis-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util:util-ui",
+    "//platform/refactoring",
+    "//platform/core-ui",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/serialization/core",
+    "//platform/util/jdom",
+    "//libraries/fastutil",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//libraries/stream",
+    "//platform/util-ex",
+  ]
+)
+
+jvm_library(
+  name = "yaml_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":yaml"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/analysis-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util:util-ui",
+    "//platform/refactoring",
+    "//platform/core-ui",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/serialization/core",
+    "//platform/util/jdom",
+    "//libraries/fastutil",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//libraries/stream",
+    "//platform/util-ex",
+  ]
+)
+### auto-generated section `build intellij.yaml` end
+
+### auto-generated section `test intellij.yaml` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "yaml_test",
+  runtime_deps = [":yaml_test_lib"]
+)
+### auto-generated section `test intellij.yaml` end

@@ -1,0 +1,49 @@
+<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.core.script.shared">
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scriptDefinitionsSource"
+            interface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.kotlinScriptFilter"
+            interface="org.jetbrains.kotlin.idea.core.script.shared.KotlinScriptProcessingFilter"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scriptAfterRunCallbackProvider"
+            interface="org.jetbrains.kotlin.idea.core.script.shared.ScriptAfterRunCallbackProvider"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scripting.definitions.scriptDefinitionProvider"
+            interface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider"
+            area="IDEA_PROJECT"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scriptDiagnosticFixProvider"
+            interface="org.jetbrains.kotlin.idea.core.script.shared.ScriptDiagnosticFixProvider"
+            dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey
+            key="kotlin.scripting.index.dependencies.sources"
+            description="Index script dependencies sources eagerly (not deferred)"
+            defaultValue="false"
+            restartRequired="false"/>
+
+    <fileType name="script-definition-marker" fieldName="INSTANCE"
+              implementationClass="org.jetbrains.kotlin.idea.core.script.shared.definition.ScriptDefinitionMarkerFileType"/>
+    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.core.script.shared.ScriptingSettingsFUSCollector"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <scriptDefinitionsSource
+            id="BridgeScriptDefinitionsContributor"
+            implementation="org.jetbrains.kotlin.idea.core.script.shared.definition.BridgeScriptDefinitionsContributor"/>
+  </extensions>
+</idea-plugin>

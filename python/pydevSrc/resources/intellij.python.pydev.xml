@@ -1,0 +1,7 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.python.psi"/>
+    <module name="intellij.python.syntax.core"/>
+    <module name="intellij.libraries.xml.rpc"/>
+  </dependencies>
+</idea-plugin>

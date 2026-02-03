@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.jgoodies.forms` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "forms_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "forms",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":forms_resources"],
+  exports = ["@lib//:libraries-jgoodies-forms-jgoodies-forms"],
+  runtime_deps = ["@lib//:libraries-jgoodies-forms-jgoodies-forms"]
+)
+### auto-generated section `build intellij.libraries.jgoodies.forms` end

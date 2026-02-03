@@ -1,0 +1,37 @@
+### auto-generated section `build intellij.grid.core.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "core-impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "core-impl",
+  module_name = "intellij.grid.core.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":core-impl_resources"],
+  deps = [
+    "//grid/types",
+    "//grid/csv:csv-core-impl",
+    "//grid/api:grid",
+    "//platform/util",
+    "//platform/util/coroutines",
+    "//platform/util/jdom",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/util/concurrency",
+    "@lib//:kotlin-stdlib",
+    "//platform/ide-core",
+    "//platform/ide-core-impl",
+    "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/analysis-api:analysis",
+    "//platform/statistics",
+    "//libraries/fastutil",
+  ]
+)
+### auto-generated section `build intellij.grid.core.impl` end

@@ -1,0 +1,21 @@
+// IGNORE_K1
+// "Initialize with constructor parameter" "true"
+class User {
+    constructor(userName: String) {
+        this.userName = userName
+    }
+
+    constructor(blah: String, userName: String): this(userName)
+    constructor(blah: String, n: Int, default: Int = 2, userName: String) {
+        this.userName = userName
+    }
+
+    constructor(d: Double, userName: String): this("", 1, userName = userName)
+    constructor(n: Int, userName: String) {
+        this.userName = userName
+    }
+
+    val userN<caret>ame: String
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory$InitializeWithConstructorParameter
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.InitializePropertyQuickFixFactories$InitializeWithConstructorParameterFix

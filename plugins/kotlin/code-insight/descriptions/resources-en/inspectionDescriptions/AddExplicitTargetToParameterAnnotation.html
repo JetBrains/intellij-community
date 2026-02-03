@@ -1,0 +1,45 @@
+<html>
+<body>
+Reports value parameter annotation usages without an explicit target for which the default target might be unexpected and undesirable.
+<p>
+    The value parameter annotations without an explicit target are applied only to the parameter itself until Kotlin 2.1.20.
+    For annotations applicable to both parameters and fields or properties, this behavior might
+    be unintended when the annotation is used on a <code>val</code> or <code>var</code> constructor parameter.
+</p>
+<p>
+Example:
+</p>
+<pre><code>
+class Example(
+    @Param val foo: String,
+    @ParamField val bar: String, // the field is not annotated, only the parameter is
+    @ParamProperty val baz: String, // the property is not annotated, only the parameter is
+    @ParamProperty boo: String,
+)
+
+@Target(AnnotationTarget.VALUE_PARAMETER)
+annotation class Param
+@Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.FIELD)
+annotation class ParamField
+@Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.PROPERTY)
+annotation class ParamProperty
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+class Example(
+    @Param val foo: String,
+    @field:ParamField val bar: String,
+    @property:ParamProperty val baz: String,
+    @ParamProperty boo: String,
+)
+
+@Target(AnnotationTarget.VALUE_PARAMETER)
+annotation class Param
+@Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.FIELD)
+annotation class ParamField
+@Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.PROPERTY)
+annotation class ParamProperty
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

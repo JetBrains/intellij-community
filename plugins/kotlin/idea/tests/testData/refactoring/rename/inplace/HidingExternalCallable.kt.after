@@ -1,0 +1,7 @@
+// NEW_NAME: emptyList
+// RENAME: member
+class A {
+    val p = kotlin.collections.emptyList<String>()
+
+    fun <K> <caret>emptyList() {}
+}

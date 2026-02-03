@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.platform.managed.cache` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "managed.cache_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "managed.cache",
+  module_name = "intellij.platform.managed.cache",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":managed.cache_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/kernel/shared:kernel",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/project/shared:project",
+  ]
+)
+### auto-generated section `build intellij.platform.managed.cache` end

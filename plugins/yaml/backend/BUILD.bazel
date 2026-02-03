@@ -1,0 +1,113 @@
+### auto-generated section `build intellij.yaml.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "backend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+resourcegroup(
+  name = "backend_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.yaml.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-api:ide",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/core-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/structure-view-impl:structureView-impl",
+    "//spellchecker",
+    "//platform/platform-impl:ide-impl",
+    "//json/backend",
+    "//platform/indexing-impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "//libraries/stream",
+    "//platform/ide-core-impl",
+    "//libraries/fastutil",
+    "//platform/refactoring",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/statistics",
+    "//plugins/yaml",
+    "//platform/searchEverywhere/shared:searchEverywhere",
+    "//platform/searchEverywhere/backend",
+  ],
+  runtime_deps = ["//platform/backend"]
+)
+
+jvm_library(
+  name = "backend_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":backend_test_resources"],
+  associates = [":backend"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-api:ide",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/core-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
+    "//platform/platform-impl:ide-impl",
+    "//json/backend",
+    "//json/backend/tests:tests_test_lib",
+    "//platform/indexing-impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "//libraries/stream",
+    "//platform/ide-core-impl",
+    "//libraries/fastutil",
+    "//platform/refactoring",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//plugins/IntelliLang:langInjection",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//RegExpSupport:regexp",
+    "//RegExpSupport:regexp_test_lib",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//plugins/yaml",
+    "//plugins/yaml:yaml_test_lib",
+    "//platform/searchEverywhere/shared:searchEverywhere",
+    "//platform/searchEverywhere/backend",
+    "//plugins/IntelliLang/backend",
+    "@lib//:jet_check",
+  ]
+)
+### auto-generated section `build intellij.yaml.backend` end
+
+### auto-generated section `test intellij.yaml.backend` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "backend_test",
+  runtime_deps = [":backend_test_lib"]
+)
+### auto-generated section `test intellij.yaml.backend` end

@@ -1,0 +1,116 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.vcs.core"/>
+    <module name="intellij.platform.vcs.shared"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint name="changesGroupingPolicy" beanClass="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactoryEPBean"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory"/>
+    </extensionPoint>
+
+    <extensionPoint name="vcs.changes.changesViewNodeAction"
+                    interface="com.intellij.openapi.vcs.changes.ChangesViewNodeAction"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+    <extensionPoint name="vcs.changes.changesTreeNodeFactory"
+                    interface="com.intellij.platform.vcs.impl.shared.changes.ChangesTreeNodeFactory"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.changes.changesViewModifier"
+                    interface="com.intellij.openapi.vcs.changes.ChangesViewModifier"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.entityTypes implementation="com.intellij.platform.vcs.impl.shared.rhizome.ShelfDiffEntityTypeProvider"/>
+    <platform.entityTypes implementation="com.intellij.platform.vcs.impl.shared.rhizome.GroupingItemTypeProvider"/>
+    <platform.entityTypes implementation="com.intellij.platform.vcs.impl.shared.rhizome.ShelfNodesEntityTypeProvider"/>
+    <platform.entityTypes implementation="com.intellij.platform.vcs.impl.shared.rhizome.VcsEntityTypeProvider"/>
+    <registryKey key="vcs.shelves.rhizome.enabled" defaultValue="false" restartRequired="true"
+                 description="New vcs shelves split to frontend and backend using Rhizome and rpc"/>
+
+    <projectCustomDataSynchronizer implementation="com.intellij.platform.vcs.impl.shared.ProjectBasePathSynchronizer"/>
+
+    <registryKey key="vcs.rd.local.changes.forced.mode"
+                 defaultValue=""
+                 restartRequired="true"
+                 description="Overrides default value ('true' in RemDev mode, 'false' otherwise) for enabling RemDev-native view for local changes.
+                 Note that in RemDev mode this setting should be set for both client and backend."/>
+
+    <projectService serviceInterface="com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings"
+                    serviceImplementation="com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettingsImpl"/>
+
+    <projectService serviceImplementation="com.intellij.openapi.vcs.IssueNavigationConfiguration"/>
+    <projectSettings service="com.intellij.openapi.vcs.IssueNavigationConfiguration"/>
+    <rdct.remoteSettingProvider implementation="com.intellij.platform.vcs.impl.shared.VcsRemoteSettingsInfoProvider"/>
+
+    <remote.customDataContextSerializer
+      implementation="com.intellij.platform.vcs.impl.shared.actions.ChangesViewSelectionDataContextSerializer"/>
+
+    <changesGroupingPolicy key="directory" id="directory" weight="10"
+                           implementationClass="com.intellij.openapi.vcs.changes.ui.DirectoryChangesGroupingPolicy$Factory"/>
+
+    <vcs.changes.changesViewModifier implementation="com.intellij.platform.vcs.impl.shared.commit.EditedCommitChangesViewModifier"/>
+  </extensions>
+
+  <actions>
+    <!-- TODO IJPL-173924 Temporary way to register ChangesViewPopupMenu in shared code -->
+    <group id="ChangesViewPopupMenuShared"/>
+
+    <group id="ChangesView.GroupBy" icon="AllIcons.Actions.GroupBy" popup="true"
+           class="com.intellij.openapi.vcs.changes.actions.SelectChangesGroupingActionGroup">
+      <separator key="group.ChangesView.GroupBy.text"/>
+      <action id="ChangesView.GroupBy.Directory"
+              class="com.intellij.openapi.vcs.changes.actions.SetDirectoryChangesGroupingAction"/>
+      <add-to-group group-id="Vcs.KeymapGroup"/>
+    </group>
+
+    <group id="CommitView.GearActions">
+      <group id="CommitView.ShowOnDoubleClick" popup="true" searchable="false">
+        <action id="CommitView.ShowOnDoubleClick.EditorPreview"
+                class="com.intellij.openapi.vcs.changes.actions.ShowOnDoubleClickToggleAction$EditorPreview">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+        <action id="CommitView.ShowOnDoubleClick.Source"
+                class="com.intellij.openapi.vcs.changes.actions.ShowOnDoubleClickToggleAction$Source">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+      </group>
+
+      <add-to-group group-id="VcsGeneral.KeymapGroup"/>
+    </group>
+
+    <group id="LocalChangesView.GearActions">
+      <group id="LocalChangesView.ShowOnDoubleClick" popup="true" searchable="false" class="com.intellij.ide.actions.NonEmptyActionGroup">
+        <reference ref="CommitView.ShowOnDoubleClick.EditorPreview"/>
+        <reference ref="CommitView.ShowOnDoubleClick.Source"/>
+      </group>
+
+      <add-to-group group-id="VcsGeneral.KeymapGroup"/>
+    </group>
+  </actions>
+
+  <actions resource-bundle="messages.VcsBundle">
+    <group id="ChangesViewToolbar.Shared">
+      <group id="ChangesView.ViewOptions" icon="AllIcons.Actions.Show" popup="true">
+        <reference ref="ChangesView.GroupBy"/>
+        <separator key="action.vcs.log.show.separator"/>
+        <action id="ChangesView.ShowIgnored"
+                class="com.intellij.platform.vcs.impl.shared.changes.ToggleShowIgnoredAction"
+                icon="AllIcons.Actions.ToggleVisibility"/>
+      </group>
+      <separator/>
+      <group id="ChangesViewToolbar.Shared.Other"/>
+      <separator/>
+      <action id="ChangesView.SelectFile"
+              class="com.intellij.openapi.vcs.changes.actions.SelectInChangesViewAction"
+              icon="AllIcons.General.Locate"/>
+      <reference ref="ExpandAll"/>
+      <reference ref="CollapseAll"/>
+    </group>
+  </actions>
+</idea-plugin>

@@ -1,0 +1,10 @@
+class A {
+    val input: String = when {
+        true -> {
+            "some string"
+        }
+        else -> {
+            "some other string"
+        }
+    }
+}

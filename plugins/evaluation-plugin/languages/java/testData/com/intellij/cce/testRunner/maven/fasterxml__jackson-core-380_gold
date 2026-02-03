@@ -1,0 +1,5 @@
+compilationSuccessful: true
+projectIsResolvable: true
+passed: 0
+failed: 1
+	com.fasterxml.jackson.core.filter.BasicParserFilteringTest

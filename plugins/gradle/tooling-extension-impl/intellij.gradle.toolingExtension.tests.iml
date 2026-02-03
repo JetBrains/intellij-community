@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="kotlin-language" name="Kotlin">
+      <configuration version="5" platform="JVM 1.8" allPlatforms="JVM [1.8]" useProjectSettings="false">
+        <compilerSettings>
+          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
+        </compilerSettings>
+        <compilerArguments>
+          <stringArguments>
+            <stringArg name="jvmTarget" arg="1.8" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
+          </stringArguments>
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/testResources">
+      <sourceFolder url="file://$MODULE_DIR$/testResources" type="java-test-resource" />
+    </content>
+    <content url="file://$MODULE_DIR$/testSources">
+      <sourceFolder url="file://$MODULE_DIR$/testSources" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
+    <orderEntry type="module-library" scope="TEST">
+      <library name="io.github.classgraph:classgraph:4.8.87" type="repository">
+        <properties maven-id="io.github.classgraph:classgraph:4.8.87">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.87/classgraph-4.8.87.jar">
+              <sha256sum>91d2a2b6048c5cfe19f3982ee84eb5c19cab1d741a45ae1b4360c068331f89e6</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.87/classgraph-4.8.87.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.87/classgraph-4.8.87-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library name="org.jeasy:easy-random-core:4.2.0" type="repository">
+        <properties maven-id="org.jeasy:easy-random-core:4.2.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jeasy/easy-random-core/4.2.0/easy-random-core-4.2.0.jar">
+              <sha256sum>e37f9fd2680da69e6e4e0fef6472b53240a935a18804e957ef60ef20f36281de</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.1/objenesis-3.1.jar">
+              <sha256sum>cdb3d038c188de6f46ffd5cd930be2d5e5dba59c53b26437995d534e3db2fb80</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="io.github.classgraph:classgraph" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jeasy/easy-random-core/4.2.0/easy-random-core-4.2.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.1/objenesis-3.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jeasy/easy-random-core/4.2.0/easy-random-core-4.2.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.1/objenesis-3.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.ion" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.boot" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.guava" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.trove" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.lang3" scope="TEST" />
+  </component>
+</module>

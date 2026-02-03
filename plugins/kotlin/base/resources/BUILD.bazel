@@ -1,0 +1,48 @@
+### auto-generated section `build intellij.kotlin.base.resources` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_kotlin-base-resources",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+  ],
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "kotlin-base-resources_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+resourcegroup(
+  name = "kotlin-base-resources_resources_1",
+  srcs = glob(["resources-en/**/*"]),
+  strip_prefix = "resources-en"
+)
+
+jvm_library(
+  name = "kotlin-base-resources",
+  module_name = "intellij.kotlin.base.resources",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [
+    ":kotlin-base-resources_resources",
+    ":kotlin-base-resources_resources_1",
+  ],
+  kotlinc_opts = ":custom_kotlin-base-resources",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/core-api:core",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//platform/util",
+    "//platform/util-ex",
+    "//platform/util:util-ui",
+    "//platform/core-ui",
+    "//java/java-frontback-psi-api:frontback-psi",
+  ]
+)
+### auto-generated section `build intellij.kotlin.base.resources` end

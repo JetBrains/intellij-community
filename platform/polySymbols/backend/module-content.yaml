@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.polySymbols.backend.jar
+  modules:
+  - name: intellij.platform.polySymbols.backend

@@ -1,0 +1,10 @@
+- name: dist.all/lib/intellij.libraries.lucene.common.jar
+  projectLibraries:
+  - name: lucene-analysis-common
+    files:
+    - name: $MAVEN_REPOSITORY$/org/apache/lucene/lucene-analysis-common/10/lucene-analysis-common-10.jar
+  - name: lucene-core
+    files:
+    - name: $MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/10/lucene-core-10.jar
+  modules:
+  - name: intellij.libraries.lucene.common

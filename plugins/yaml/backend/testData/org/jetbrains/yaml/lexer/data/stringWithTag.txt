@@ -1,0 +1,6 @@
+scalar key ('foo')
+: (':')
+whitespace (' ')
+tag ('!')
+whitespace (' ')
+scalar dstring ('"tratata"')

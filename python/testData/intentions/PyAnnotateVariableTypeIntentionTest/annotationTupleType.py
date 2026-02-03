@@ -1,0 +1,1 @@
+v<caret>ar = (1, 'foo', None)

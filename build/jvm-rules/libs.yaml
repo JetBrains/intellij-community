@@ -1,0 +1,144 @@
+- url: https://cache-redirector.jetbrains.com/repo1.maven.org/maven2
+  libs:
+    # protobuf
+    - id: com.google.protobuf:protobuf-java
+      version: 4.30.2
+    # kotlin JPS plugin
+    - id: org.jetbrains.kotlin:kotlin-build-tools-api
+      version: 2.2.0-RC
+    - id: org.jetbrains.kotlin:kotlin-util-klib
+      version: 2.2.0-RC
+    - id: org.jetbrains.kotlin:kotlin-util-klib-metadata
+      version: 2.2.0-RC
+    # kotlin compiler
+    - id: org.jetbrains.kotlin:kotlin-build-tools-impl
+      version: 2.2.0-RC
+    #- id: org.jetbrains.kotlin:kotlin-compiler
+    #  version: 2.2.0-RC-RC
+    #  runtimeDeps:
+    #    - "@lib//:jetbrains-annotations"
+    #    - "@lib//:kotlinx-coroutines-core"
+    - id: org.jetbrains.kotlin:kotlin-metadata-jvm
+      version: 2.2.0-RC
+    - id: org.jetbrains.kotlin:kotlin-jps-plugin
+      version: 2.2.0-RC
+    # kotlin compiler plugins
+    - id: org.jetbrains.kotlin:kotlin-serialization-compiler-plugin
+      version: 2.2.0-RC
+    - id: org.jetbrains.kotlin:kotlin-compose-compiler-plugin
+      version: 2.2.0-RC
+    # other libs
+    - id: com.dynatrace.hash4j:hash4j
+      version: 0.22.0
+    - id: com.fasterxml.jackson.core:jackson-core
+      version: 2.17.0
+    - id: com.fasterxml.jackson.core:jackson-annotations
+      version: 2.17.2
+    - id: com.fasterxml.jackson.core:jackson-databind
+      version: 2.17.2
+      runtimeDeps:
+        - ":jackson-annotations"
+    - id: com.github.ben-manes.caffeine:caffeine
+      version: 3.2.0
+    - id: com.google.flatbuffers:flatbuffers-java
+      version: 25.2.10
+    - id: com.h2database:h2-mvstore
+      version: 2.3.232
+    - id: com.thoughtworks.qdox:qdox
+      version: 2.2.0
+    - id: org.apache.arrow:arrow-format
+      version: 18.2.0
+    - id: org.apache.arrow:arrow-vector
+      version: 18.2.0
+      runtimeDeps:
+        - ":flatbuffers-java"
+        - ":arrow-format"
+    - id: org.apache.arrow:arrow-memory-core
+      version: 18.2.0
+    - id: org.apache.arrow:arrow-memory-netty
+      version: 18.2.0
+      runtimeDeps:
+        - ":arrow-memory-netty-buffer-patch"
+    - id: org.apache.arrow:arrow-memory-netty-buffer-patch
+      version: 18.2.0
+    - id: org.assertj:assertj-core
+      version: 3.27.3
+    - id: org.jetbrains:annotations
+      version: 26.0.2
+    - id: org.jetbrains.kotlin:kotlin-stdlib
+      version: 2.2.0-RC
+    - id: org.jetbrains.kotlin:kotlin-reflect
+      version: 2.2.0-RC
+    - id: org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm
+      version: 0.3.8
+    - id: org.slf4j:slf4j-api
+      version: 2.0.17
+    - id: org.slf4j:log4j-over-slf4j
+      version: 1.7.36
+    # OpenTelemetry
+    - id: io.opentelemetry:opentelemetry-api
+      version: 1.49.0
+      runtimeDeps:
+        - ":opentelemetry-sdk"
+        - ":opentelemetry-sdk-common"
+        - ":opentelemetry-context"
+        - ":opentelemetry-sdk-trace"
+        - ":opentelemetry-sdk-metrics"
+        - ":opentelemetry-sdk-logs"
+        - ":opentelemetry-sdk-extension-autoconfigure-spi"
+    - id: io.opentelemetry:opentelemetry-sdk
+      version: 1.49.0
+    - id: io.opentelemetry:opentelemetry-sdk-common
+      version: 1.49.0
+    - id: io.opentelemetry:opentelemetry-context
+      version: 1.49.0
+    - id: io.opentelemetry:opentelemetry-sdk-trace
+      version: 1.49.0
+    #  not used, but required by OT
+    - id: io.opentelemetry:opentelemetry-sdk-metrics
+      version: 1.49.0
+    #  not used, but required by OT
+    - id: io.opentelemetry:opentelemetry-sdk-logs
+      version: 1.49.0
+    - id: io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi
+      version: 1.49.0
+    - id: io.opentelemetry.semconv:opentelemetry-semconv
+      version: 1.32.0
+      # OpenTelemetry Exporters
+    - id: io.opentelemetry:opentelemetry-exporter-logging-otlp
+      version: 1.49.0
+    - id: io.opentelemetry:opentelemetry-exporter-common
+      version: 1.49.0
+    - id: io.opentelemetry:opentelemetry-exporter-otlp-common
+      version: 1.49.0
+    - id: io.opentelemetry:opentelemetry-exporter-otlp
+      runtimeDeps:
+        - ":opentelemetry-exporter-sender-jdk"
+        - ":opentelemetry-exporter-common"
+        - ":opentelemetry-exporter-otlp-common"
+        - ":opentelemetry-sdk-extension-autoconfigure-spi"
+      version: 1.49.0
+    - id: io.opentelemetry:opentelemetry-exporter-sender-jdk
+      version: 1.49.0
+- url: https://dl.google.com/android/maven2
+  libs:
+    - id: androidx.collection:collection-jvm
+      version: 1.5.0
+- url: https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies
+  libs:
+    - id: com.intellij.platform:kotlinx-coroutines-core-jvm
+      version: 1.10.1-intellij-4
+    - id: org.jetbrains.intellij.deps:asm-all
+      version: 9.6.1
+    - id: org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil
+      version: 8.5.15-jb1
+# https://github.com/netty/netty/pull/15131
+- url: https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies
+  libs:
+    # Netty
+    - id: io.netty:netty-common
+      version: 4.2.2.Final-20250508.062804-10
+    - id: io.netty:netty-buffer
+      version: 4.2.2.Final-20250508.062804-10
+      runtimeDeps:
+        - ":netty-common"

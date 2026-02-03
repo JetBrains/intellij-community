@@ -1,0 +1,72 @@
+### auto-generated section `build intellij.devkit.jps` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "jps_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jps",
+  module_name = "intellij.devkit.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":jps_resources"],
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "//jps/model-api:model",
+    "//jps/model-serialization",
+    "//jps/jps-builders:build",
+    "//java/compiler/instrumentation-util",
+    "//libraries/asm",
+    "//platform/util/jdom",
+    "@community//build:build-javac-rt",
+    "//platform/util",
+    "@lib//:jetbrains-annotations",
+  ]
+)
+### auto-generated section `build intellij.devkit.jps` end
+
+### auto-generated section `build intellij.devkit.jps.tests` start
+jvm_library(
+  name = "jps-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/devkit/jps-plugin:jps",
+    "//jps/model-impl",
+  ]
+)
+
+jvm_library(
+  name = "jps-tests_test_lib",
+  module_name = "intellij.devkit.jps.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  deps = [
+    "//plugins/devkit/jps-plugin:jps",
+    "//platform/core-api:core",
+    "//jps/model-api:model",
+    "//jps/model-impl",
+    "//jps/jps-builders:build-tests_test_lib",
+    "//java/testFramework",
+    "//jps/model-serialization:model-serialization-tests_test_lib",
+    "//jps/jps-builders:build",
+    "//libraries/asm",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/compiler/instrumentation-util",
+  ],
+  runtime_deps = [":jps-tests"]
+)
+### auto-generated section `build intellij.devkit.jps.tests` end
+
+### auto-generated section `test intellij.devkit.jps.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "jps-tests_test",
+  runtime_deps = [":jps-tests_test_lib"]
+)
+### auto-generated section `test intellij.devkit.jps.tests` end

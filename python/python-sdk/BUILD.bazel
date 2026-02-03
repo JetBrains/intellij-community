@@ -1,0 +1,110 @@
+### auto-generated section `build intellij.python.sdk` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "sdk_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+resourcegroup(
+  name = "sdk_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "sdk",
+  module_name = "intellij.python.sdk",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":sdk_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/gson",
+    "//libraries/guava",
+    "//libraries/stream",
+    "//platform/analysis-api:analysis",
+    "//platform/core-impl",
+    "//platform/analysis-impl",
+    "//platform/core-api:core",
+    "//jps/model-api:model",
+    "//jps/model-serialization",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/platform-util-io:ide-util-io",
+    "//python/openapi:community",
+    "//python/python-psi-api:psi",
+    "//platform/projectModel-impl",
+    "//platform/util/jdom",
+    "//platform/ide-core",
+    "//platform/execution",
+    "//platform/remote-core",
+    "@lib//:jna",
+    "//libraries/caffeine",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//platform/progress/shared:ide-progress",
+    "//platform/eel-provider",
+    "//python/impl.helperLocator:community-helpersLocator",
+    "//python/common",
+    "//platform/workspace/jps",
+    "//platform/workspace/storage",
+  ],
+  runtime_deps = ["//platform/backend"]
+)
+
+jvm_library(
+  name = "sdk_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  resources = [":sdk_test_resources"],
+  associates = [":sdk"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/gson",
+    "//libraries/guava",
+    "//libraries/stream",
+    "//platform/analysis-api:analysis",
+    "//platform/core-impl",
+    "//platform/analysis-impl",
+    "//platform/core-api:core",
+    "//jps/model-api:model",
+    "//jps/model-serialization",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/platform-util-io:ide-util-io",
+    "//python/openapi:community",
+    "//python/openapi:community_test_lib",
+    "//python/python-psi-api:psi",
+    "//platform/projectModel-impl",
+    "//platform/util/jdom",
+    "//platform/ide-core",
+    "//platform/execution",
+    "//platform/remote-core",
+    "@lib//:jna",
+    "@lib//:junit4",
+    "//libraries/caffeine",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//platform/progress/shared:ide-progress",
+    "@lib//:junit5",
+    "//platform/eel-provider",
+    "//python/impl.helperLocator:community-helpersLocator",
+    "//python/common",
+    "//platform/workspace/jps",
+    "//platform/workspace/storage",
+  ]
+)
+### auto-generated section `build intellij.python.sdk` end
+
+### auto-generated section `test intellij.python.sdk` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "sdk_test",
+  runtime_deps = [":sdk_test_lib"]
+)
+### auto-generated section `test intellij.python.sdk` end

@@ -1,0 +1,3 @@
+List<java.lang.String>\nparameter 0 of foo
+Mist\nPsiLocalVariable:z
+Mist\nPsiTypeCastExpression:(Mist) y

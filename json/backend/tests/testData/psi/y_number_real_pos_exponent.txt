@@ -1,0 +1,6 @@
+JsonFile: y_number_real_pos_exponent.json
+  JsonArray
+    PsiElement([)('[')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1e+2')
+    PsiElement(])(']')

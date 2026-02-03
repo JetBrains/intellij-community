@@ -1,0 +1,373 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package git4idea.log
+
+import com.intellij.idea.IgnoreJUnit3
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.Executor.append
+import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.openapi.vcs.Executor.child
+import com.intellij.openapi.vcs.Executor.mkdir
+import com.intellij.openapi.vcs.Executor.touch
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.CollectConsumer
+import com.intellij.util.Consumer
+import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogObjectsFactory
+import com.intellij.vcs.log.data.VcsLogStorage
+import com.intellij.vcs.log.data.index.IndexDataGetter
+import com.intellij.vcs.log.data.index.IndexedDetails
+import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
+import com.intellij.vcs.log.data.index.index
+import com.intellij.vcs.log.data.index.setUpIndex
+import com.intellij.vcs.log.impl.HashImpl
+import com.intellij.vcs.log.util.VcsUserUtil
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import com.intellij.vcsUtil.VcsUtil
+import git4idea.cherrypick.GitCherryPicker
+import git4idea.test.GitSingleRepoTest
+import git4idea.test.USER_EMAIL
+import git4idea.test.USER_NAME
+import git4idea.test.addCommit
+import git4idea.test.appendAndCommit
+import git4idea.test.last
+import git4idea.test.makeCommit
+import git4idea.test.modify
+import git4idea.test.mv
+import git4idea.test.setupDefaultUsername
+import git4idea.test.setupUsername
+import git4idea.test.tac
+import junit.framework.TestCase
+
+abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
+  private val defaultUser = VcsUserUtil.createUser(USER_NAME, USER_EMAIL)
+
+  private lateinit var disposable: Disposable
+  private lateinit var index: VcsLogPersistentIndex
+  private val dataGetter: IndexDataGetter
+    get() = index.dataGetter
+  private val storage: VcsLogStorage
+    get() = dataGetter.logStorage
+
+  override fun setUp() {
+    super.setUp()
+
+    disposable = Disposer.newDisposable()
+    Disposer.register(testRootDisposable, disposable)
+
+    index = setUpIndex(myProject, repo.root, logProvider, useSqlite, disposable)
+  }
+
+  override fun tearDown() {
+    try {
+      Disposer.dispose(disposable)
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
+  }
+
+  fun `test indexed`() {
+    val file = "file.txt"
+    tac(file)
+    for (i in 0 until 5) {
+      repo.appendAndCommit(file, "new content ${i}\n")
+    }
+
+    val commits = indexAll()
+    assertTrue(index.isIndexed(repo.root))
+    for (commit in commits) {
+      assertTrue(index.isIndexed(commit))
+    }
+  }
+
+  fun `test forward index`() {
+    val commitHash = tac("file.txt")
+
+    indexAll()
+
+    val collector = CollectConsumer<VcsCommitMetadata>()
+    logProvider.readMetadata(repo.root, listOf(commitHash), collector)
+    val expectedMetadata = collector.result.first()
+    val actualMetadata = IndexedDetails(dataGetter, storage, getCommitIndex(commitHash), 0L)
+
+    TestCase.assertEquals(expectedMetadata.presentation(), actualMetadata.presentation())
+  }
+
+  @IgnoreJUnit3
+  fun `test forward index with batch api`() {
+    val file = "file.txt"
+    tac(file)
+    for (i in 0 until 5) {
+      repo.appendAndCommit(file, "new content ${i}\n")
+    }
+
+    val commits = indexAll()
+
+    val collector = CollectConsumer<VcsCommitMetadata>()
+    logProvider.readMetadata(repo.root, commits.map { getCommitHash(it) }, collector)
+    val expectedPresentation = collector.result.joinToString("\n\n") { it.presentation() }
+
+    val actualMetadata = IndexedDetails.createMetadata(commits.toSet(), dataGetter, storage,
+                                                       project.getService(VcsLogObjectsFactory::class.java))
+    val actualPresentation = commits.map { actualMetadata[it] }.joinToString("\n\n") { it?.presentation() ?: "NOT LOADED" }
+
+
+    TestCase.assertEquals(expectedPresentation, actualPresentation)
+  }
+
+  fun `test text filter`() {
+    val file = "file.txt"
+    touch(file, "content")
+    repo.addCommit("some message")
+
+    append(file, "more content")
+    val keyword = "keyword"
+    val expected = setOf(getCommitIndex(repo.addCommit("message with $keyword")))
+
+    append(file, "even more content")
+    repo.addCommit("some other message")
+
+    indexAll()
+
+    val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromPattern(keyword)))
+
+    assertEquals(expected, actual)
+  }
+
+  fun `test regexp text filter`() {
+    val expected = mutableSetOf<Int>()
+    val pattern = "[A-Z]+\\-\\d+"
+
+    val file = "file.txt"
+    touch(file, "content")
+    repo.addCommit("some message")
+
+    append(file, "more content")
+    expected.add(getCommitIndex(repo.addCommit("message with ABC-18")))
+
+    append(file, "and some more content")
+    expected.add(getCommitIndex(repo.addCommit("message with CDE-239")))
+
+    append(file, "even more content")
+    repo.addCommit("some other message")
+
+    append(file, "and even more content")
+    expected.add(getCommitIndex(repo.addCommit("message with XYZ-42")))
+
+    indexAll()
+
+    val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromPattern(pattern, isRegexpAllowed = true)))
+
+    assertEquals(expected, actual)
+  }
+
+  private fun `test text filter with multiple patterns`(keyword1: String, keyword2: String) {
+    val expected = mutableSetOf<Int>()
+
+    val file = "file.txt"
+    touch(file, "content")
+    repo.addCommit("some message without any keywords")
+
+    append(file, "more content")
+    expected.add(getCommitIndex(repo.addCommit("message with $keyword1")))
+
+    append(file, "some more content")
+    expected.add(getCommitIndex(repo.addCommit("message with $keyword2")))
+
+    append(file, "even more content")
+    repo.addCommit("some other message")
+
+    indexAll()
+
+    val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromPatternsList(listOf(keyword1, keyword2))))
+
+    assertEquals(expected.sorted(), actual.sorted())
+  }
+
+  fun `test text filter with multiple patterns`() {
+    `test text filter with multiple patterns`("keyword1", "keyword2")
+  }
+
+  fun `test text filter with short and long patterns`() {
+    `test text filter with multiple patterns`("k1", "keyword2")
+  }
+
+  fun `test text filter with short patterns`() {
+    `test text filter with multiple patterns`("k1", "k2")
+  }
+
+  fun `test author filter`() {
+    val file = "file.txt"
+    touch(file, "content")
+    repo.addCommit("some message")
+
+    val author = VcsUserUtil.createUser("Name", "name@server.com")
+    val expected = setOf(getCommitIndex(makeCommit(author, file)))
+
+    append(file, "even more content")
+    repo.addCommit("some other message")
+
+    indexAll()
+
+    val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromUser(author, setOf(author, defaultUser))))
+
+    assertEquals(expected, actual)
+  }
+
+  fun `test author filter with different committer`() {
+    val author = VcsUserUtil.createUser("Name", "name@server.com")
+    val expected = mutableSetOf<Int>()
+    var hashToPick = ""
+    build {
+      master {
+        0("a.txt")
+        1("b.txt")
+        expected.addAll(indexAll())
+      }
+      feature(1) {
+        setupUsername(project, author.name, author.email)
+        2("c.txt")
+        3("d.txt")
+        hashToPick = repo.last()
+        setupDefaultUsername(project)
+      }
+      master {
+        //cherry-pick with default user
+        GitCherryPicker(project).cherryPick(readDetails(hashToPick))
+      }
+    }
+
+    indexAll()
+
+    val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromUser(defaultUser, setOf(author, defaultUser))))
+
+    TestCase.assertEquals(expected, actual)
+  }
+
+  fun `test text and author filter`() {
+    val author = VcsUserUtil.createUser("Name", "name@server.com")
+    val keyword = "keyword"
+    val expected = mutableSetOf<Int>()
+
+    val file = "file.txt"
+    touch(file, "content")
+    repo.addCommit("some message")
+
+    setupUsername(project, author.name, author.email)
+
+    append(file, "content 2")
+    expected.add(getCommitIndex(repo.addCommit("some message with $keyword")))
+
+    append(file, "content 3")
+    repo.addCommit("some other message")
+
+    setupDefaultUsername(project)
+
+    append(file, "even more content")
+    repo.addCommit("some other message with $keyword")
+
+    indexAll()
+
+    val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromUser(author, setOf(author, defaultUser)),
+                                          VcsLogFilterObject.fromPattern(keyword)))
+
+    TestCase.assertEquals(expected, actual)
+  }
+
+  fun `test file history`() {
+    val expectedHistory = mutableSetOf<Int>()
+
+    val oldFile = "oldFile.txt"
+    expectedHistory.add(getCommitIndex(tac(oldFile)))
+
+    tac("somethingUnrelated.txt")
+
+    val newFile = "newFile.txt"
+    repo.mv(oldFile, newFile)
+    expectedHistory.add(getCommitIndex(repo.addCommit("rename")))
+
+    tac("somethingEvenMoreUnrelated.txt")
+
+    expectedHistory.add(getCommitIndex(modify(newFile)))
+
+    indexAll()
+
+    val newHistory = dataGetter.filter(listOf(createPathFilter(newFile)))
+    val oldHistory = dataGetter.filter(listOf(createPathFilter(oldFile)))
+
+    assertEquals(expectedHistory, newHistory)
+    assertEquals(expectedHistory, oldHistory)
+  }
+
+  fun `test directory history`() {
+    val dir = "dir"
+    mkdir(dir)
+
+    val expectedHistory = mutableSetOf<Int>()
+
+    cd(dir)
+    val file1 = "file1.txt"
+    expectedHistory.add(getCommitIndex(tac(file1)))
+    expectedHistory.add(getCommitIndex(tac("file2.txt")))
+
+    cd(repo.root)
+    tac("somethingUnrelated.txt")
+
+    cd(dir)
+    expectedHistory.add(getCommitIndex(modify(file1)))
+
+    cd(repo.root)
+    tac("somethingEvenMoreUnrelated.txt")
+
+    cd(dir)
+    mv(file1, "file3.txt")
+    expectedHistory.add(getCommitIndex(repo.addCommit("rename")))
+
+    cd(repo.root)
+    tac("somethingAbsolutelyUnrelated.txt")
+
+    indexAll()
+
+    val actualHistory = dataGetter.filter(listOf(createPathFilter(dir)))
+    assertEquals(expectedHistory, actualHistory)
+  }
+
+  private fun createPathFilter(relativePath: String) = VcsLogFilterObject.fromPaths(setOf(VcsUtil.getFilePath(child(relativePath))))
+
+  private fun getCommitIndex(hash: String): Int {
+    return storage.getCommitIndex(HashImpl.build(hash), repo.root)
+  }
+
+  private fun getCommitHash(commit: Int): String {
+    return storage.getCommitId(commit)!!.hash.asString()
+  }
+
+  private fun indexAll(): Set<Int> {
+    val commits = readCommits(repo.root)
+    index.index(repo.root, commits)
+    return commits
+  }
+
+  private fun readCommits(root: VirtualFile): Set<Int> {
+    val result = mutableSetOf<Int>()
+    logProvider.readAllHashes(root, Consumer { commit ->
+      result.add(storage.getCommitIndex(commit.id, root))
+    })
+    return result
+  }
+
+  private fun VcsCommitMetadata.presentation(): String {
+    return "${id.asString()} (${root.name})\n" +
+           "${parents.joinToString(", ") { it.asString() }}\n" +
+           "${VcsUserUtil.toExactString(author)} (${VcsUserUtil.toExactString(committer)})\n" +
+           "$authorTime ($commitTime)\n" +
+           "$subject\n$fullMessage"
+  }
+}
+
+class GitLogPhmIndexTest : GitLogIndexTest(useSqlite = false)
+class GitLogSqliteIndexTest : GitLogIndexTest(useSqlite = true)

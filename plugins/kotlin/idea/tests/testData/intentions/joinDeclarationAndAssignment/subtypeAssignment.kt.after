@@ -1,0 +1,4 @@
+// WITH_STDLIB
+class Temp1 {
+    private val listField: MutableList<Int> = ArrayList()
+}

@@ -1,0 +1,4 @@
+<project default="A">
+  <pathconvert property="prop"/>
+  <target name="A"/>
+</project>

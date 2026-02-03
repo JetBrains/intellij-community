@@ -1,0 +1,3 @@
+JsonFile: Simple4.json
+  JsonBooleanLiteral
+    PsiElement(true)('true')

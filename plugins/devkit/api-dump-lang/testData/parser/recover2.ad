@@ -1,0 +1,5 @@
+c:com.intellij.execution.ExecutionException
+- java.lang.Exception foo
+Fa:com.intellij.execution.ExecutionExceptionWithAttachments
+- com.intellij.execution.ExecutionException
+---

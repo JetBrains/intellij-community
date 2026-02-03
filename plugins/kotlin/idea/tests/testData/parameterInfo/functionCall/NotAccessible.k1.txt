@@ -1,0 +1,1 @@
+Text: (<no parameters>), Disabled: true, Strikeout: false, Green: false

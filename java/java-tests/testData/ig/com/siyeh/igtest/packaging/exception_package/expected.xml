@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <entry_point TYPE="package" FQNAME="com.jetbrains.exceptions" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Exception package</problem_class>
+    <description>Package 'com.jetbrains.exceptions' contains only exception classes</description>
+  </problem>
+</problems>

@@ -1,0 +1,44 @@
+### auto-generated section `build intellij.platform.searchEverywhere.frontend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "frontend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "frontend",
+  module_name = "intellij.platform.searchEverywhere.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":frontend_resources"],
+  deps = [
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//platform/searchEverywhere/shared:searchEverywhere",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/core-api:core",
+    "//platform/util/coroutines",
+    "//platform/project/shared:project",
+    "//platform/kernel/shared:kernel",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/ide-core",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-ui",
+    "//platform/lang-api:lang",
+    "//platform/core-impl",
+    "//platform/platform-impl/rpc",
+    "//platform/lang-impl",
+    "//platform/usageView",
+    "//platform/refactoring",
+    "//platform/scopes",
+    "//platform/observable",
+    "//platform/usageView-impl",
+    "//platform/analysis-api:analysis",
+  ],
+  exports = ["//platform/searchEverywhere/shared:searchEverywhere"]
+)
+### auto-generated section `build intellij.platform.searchEverywhere.frontend` end

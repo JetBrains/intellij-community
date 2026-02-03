@@ -1,0 +1,10 @@
+{
+
+  "a": {
+    "a": {
+      "a": <warning descr="Incompatible types.
+ Required: object. Actual: integer.">5</warning>
+    }
+  }
+} 
+  

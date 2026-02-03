@@ -1,0 +1,12 @@
+class A{
+  def foo(){
+    return a i<caret> b
+  }
+}
+-----
+in
+instanceof
+switch
+synchronized
+this
+while

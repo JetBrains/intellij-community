@@ -1,0 +1,83 @@
+*:com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
+- a:autoToggle(Z):Z
+*f:com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
+- <init>(java.util.List):V
+- f:getChunks():java.util.List
+*f:com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfoChunk
+- <init>(java.lang.String):V
+- <init>(java.lang.String,com.intellij.ui.SimpleTextAttributes,java.awt.event.ActionListener):V
+- <init>(java.lang.String,Z):V
+- <init>(java.lang.String,Z,com.intellij.ui.SimpleTextAttributes,java.awt.event.ActionListener):V
+- f:getAttrs():com.intellij.ui.SimpleTextAttributes
+- f:getListener():java.awt.event.ActionListener
+- f:getOnNewLine():Z
+- f:getText():java.lang.String
+*:com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
+- a:getHeaderActions():java.util.List
+- a:getResultFlow():kotlinx.coroutines.flow.StateFlow
+- getSearchFieldActions():java.util.List
+*:com.intellij.platform.searchEverywhere.frontend.SeTab
+- com.intellij.openapi.Disposable
+- a:canBeShownInFindResults(kotlin.coroutines.Continuation):java.lang.Object
+- essentialProviderIds(kotlin.coroutines.Continuation):java.lang.Object
+- getEmptyResultInfo(com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
+- a:getFilterEditor(kotlin.coroutines.Continuation):java.lang.Object
+- a:getId():java.lang.String
+- a:getItems(com.intellij.platform.searchEverywhere.SeParams):kotlinx.coroutines.flow.Flow
+- a:getName():java.lang.String
+- a:getPreviewInfo(com.intellij.platform.searchEverywhere.SeItemData,kotlin.coroutines.Continuation):java.lang.Object
+- a:getPriority():I
+- getUpdatedPresentation(com.intellij.platform.searchEverywhere.SeItemData,kotlin.coroutines.Continuation):java.lang.Object
+- a:isCommandsSupported(kotlin.coroutines.Continuation):java.lang.Object
+- a:isExtendedInfoEnabled(kotlin.coroutines.Continuation):java.lang.Object
+- isIndexingDependent():Z
+- a:isPreviewEnabled(kotlin.coroutines.Continuation):java.lang.Object
+- a:itemSelected(com.intellij.platform.searchEverywhere.SeItemData,I,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- openInFindToolWindow(com.intellij.platform.searchEverywhere.SeSession,com.intellij.platform.searchEverywhere.SeParams,com.intellij.openapi.actionSystem.AnActionEvent,kotlin.coroutines.Continuation):java.lang.Object
+- a:performExtendedAction(com.intellij.platform.searchEverywhere.SeItemData,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.searchEverywhere.frontend.SeTabFactory
+- *sf:Companion:com.intellij.platform.searchEverywhere.frontend.SeTabFactory$Companion
+- a:getId():java.lang.String
+- getTab(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.project.Project,com.intellij.platform.searchEverywhere.SeSession,com.intellij.openapi.actionSystem.AnActionEvent,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.searchEverywhere.frontend.SeTabFactory$Companion
+*f:com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
+- com.intellij.openapi.Disposable
+- *sf:Companion:com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate$Companion
+- <init>(com.intellij.openapi.project.Project,com.intellij.platform.searchEverywhere.SeSession,java.lang.String,java.util.List,com.intellij.openapi.actionSystem.AnActionEvent,kotlinx.coroutines.CoroutineScope):V
+- f:canBeShownInFindResults(kotlin.coroutines.Continuation):java.lang.Object
+- dispose():V
+- f:essentialProviderIds(kotlin.coroutines.Continuation):java.lang.Object
+- f:getItems(com.intellij.platform.searchEverywhere.SeParams,java.util.List):kotlinx.coroutines.flow.Flow
+- bs:getItems$default(com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate,com.intellij.platform.searchEverywhere.SeParams,java.util.List,I,java.lang.Object):kotlinx.coroutines.flow.Flow
+- f:getPreviewInfo(com.intellij.platform.searchEverywhere.SeItemData,Z,kotlin.coroutines.Continuation):java.lang.Object
+- f:getProject():com.intellij.openapi.project.Project
+- f:getProvidersIdToName(kotlin.coroutines.Continuation):java.lang.Object
+- f:getProvidersIds():java.util.List
+- f:getScope():kotlinx.coroutines.CoroutineScope
+- f:getSearchScopesInfos(kotlin.coroutines.Continuation):java.lang.Object
+- f:getTypeVisibilityStates(I,kotlin.coroutines.Continuation):java.lang.Object
+- bs:getTypeVisibilityStates$default(com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate,I,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- f:getUpdatedPresentation(com.intellij.platform.searchEverywhere.SeItemData,kotlin.coroutines.Continuation):java.lang.Object
+- f:isCommandsSupported(kotlin.coroutines.Continuation):java.lang.Object
+- f:isExtendedInfoEnabled(kotlin.coroutines.Continuation):java.lang.Object
+- f:isPreviewEnabled(kotlin.coroutines.Continuation):java.lang.Object
+- f:itemSelected(com.intellij.platform.searchEverywhere.SeItemData,I,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- f:openInFindToolWindow(com.intellij.platform.searchEverywhere.SeSession,com.intellij.platform.searchEverywhere.SeParams,com.intellij.openapi.actionSystem.AnActionEvent,Z,java.util.List,kotlin.coroutines.Continuation):java.lang.Object
+- bs:openInFindToolWindow$default(com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate,com.intellij.platform.searchEverywhere.SeSession,com.intellij.platform.searchEverywhere.SeParams,com.intellij.openapi.actionSystem.AnActionEvent,Z,java.util.List,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- f:performExtendedAction(com.intellij.platform.searchEverywhere.SeItemData,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate$Companion
+- f:shouldShowLegacyContributorInSeparateTab(com.intellij.openapi.project.Project,com.intellij.platform.searchEverywhere.SeProviderId,com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.platform.searchEverywhere.SeSession,kotlin.coroutines.Continuation):java.lang.Object
+*a:com.intellij.platform.searchEverywhere.frontend.tabs.SeDefaultTabBase
+- com.intellij.platform.searchEverywhere.frontend.SeTab
+- <init>(com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate):V
+- canBeShownInFindResults(kotlin.coroutines.Continuation):java.lang.Object
+- dispose():V
+- pf:getDelegate():com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
+- getItems(com.intellij.platform.searchEverywhere.SeParams):kotlinx.coroutines.flow.Flow
+- getPreviewInfo(com.intellij.platform.searchEverywhere.SeItemData,kotlin.coroutines.Continuation):java.lang.Object
+- isCommandsSupported(kotlin.coroutines.Continuation):java.lang.Object
+- isExtendedInfoEnabled(kotlin.coroutines.Continuation):java.lang.Object
+- isPreviewEnabled(kotlin.coroutines.Continuation):java.lang.Object
+- itemSelected(com.intellij.platform.searchEverywhere.SeItemData,I,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- openInFindToolWindow(com.intellij.platform.searchEverywhere.SeSession,com.intellij.platform.searchEverywhere.SeParams,com.intellij.openapi.actionSystem.AnActionEvent,kotlin.coroutines.Continuation):java.lang.Object
+- performExtendedAction(com.intellij.platform.searchEverywhere.SeItemData,kotlin.coroutines.Continuation):java.lang.Object

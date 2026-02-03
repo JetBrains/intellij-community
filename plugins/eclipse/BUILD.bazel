@@ -1,0 +1,107 @@
+### auto-generated section `build intellij.eclipse` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "eclipse_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "eclipse",
+  module_name = "intellij.eclipse",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":eclipse_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
+    "//jps/model-serialization",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/jdom",
+    "//java/openapi:java",
+    "//platform/platform-impl:ide-impl",
+    "//platform/diff-api:diff",
+    "//java/compiler/openapi:java-compiler",
+    "//platform/ide-core-impl",
+    "//java/idea-ui:ui",
+    "//java/java-impl:impl",
+    "//plugins/eclipse/jps-plugin:jps",
+    "//plugins/eclipse/common-eclipse-util:common",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/core-ui",
+    "//platform/workspace/jps",
+    "//platform/workspace/storage",
+    "//platform/statistics",
+    "//libraries/kotlin/reflect",
+    "//platform/backend/workspace",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
+)
+
+jvm_library(
+  name = "eclipse_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
+  associates = [":eclipse"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
+    "//jps/model-serialization",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/jdom",
+    "//java/openapi:java",
+    "//platform/platform-impl:ide-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:junit4",
+    "//java/testFramework",
+    "//platform/diff-api:diff",
+    "//java/compiler/openapi:java-compiler",
+    "//platform/ide-core-impl",
+    "//java/idea-ui:ui",
+    "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
+    "//plugins/eclipse/jps-plugin:jps",
+    "//plugins/eclipse/common-eclipse-util:common",
+    "//platform/testFramework/extensions:testExtensions",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/core-ui",
+    "//platform/workspace/jps",
+    "//platform/workspace/storage",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "@lib//:junit5",
+    "//libraries/kotlin/reflect",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/backend/workspace",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
+)
+### auto-generated section `build intellij.eclipse` end
+
+### auto-generated section `test intellij.eclipse` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "eclipse_test",
+  runtime_deps = [":eclipse_test_lib"]
+)
+### auto-generated section `test intellij.eclipse` end

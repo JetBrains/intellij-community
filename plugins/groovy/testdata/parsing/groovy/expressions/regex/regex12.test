@@ -1,0 +1,9 @@
+    /abc/
+-----
+Groovy script
+  PsiWhiteSpace('    ')
+  Literal
+    GroovyASTPsiElementImpl(SLASHY_LITERAL)
+      PsiElement(regex begin)('/')
+      PsiElement(regex content)('abc')
+      PsiElement(regex end)('/')

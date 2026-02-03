@@ -1,0 +1,3 @@
+version = "5.10.*"
+upstream_repository = "https://github.com/ultrajson/ultrajson"
+obsolete_since = "5.11.0" # Released on 2025-08-20

@@ -1,0 +1,5 @@
+fun foo(a: Int, string: (Int) -> String = { a -> "ab$a:${a + 1}cd" }): String {
+    val x = "_${string(a)}__"
+    val y = "_a$a:${a + 1}cd__"
+    return "${string(a)}ef"
+}

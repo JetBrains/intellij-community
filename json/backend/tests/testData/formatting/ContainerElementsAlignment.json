@@ -1,0 +1,12 @@
+{
+  "array": [
+    1,
+       {},
+        "eggs",
+null
+  ],
+  "object": {
+       "foo": [1, 2],
+"bar": true
+  }
+}

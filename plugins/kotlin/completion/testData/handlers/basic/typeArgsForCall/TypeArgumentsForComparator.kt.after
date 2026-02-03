@@ -1,0 +1,8 @@
+fun foo(): List<String> {
+    return listOf<String>().sortedWith(
+        compareBy<String> { it.length }.reversed()
+    )
+}
+
+// ELEMENT: reversed
+// IGNORE_K1

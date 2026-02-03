@@ -1,0 +1,11 @@
+// WITH_STDLIB
+// WITH_DEFAULT_VALUE: false
+fun a() {
+    b(2.foo { it + this + 2 + 1 })
+}
+
+fun Int.foo(f: Int.(Int) -> Int) = this
+
+fun b(i: Int) = i + 1
+
+// IGNORE_K1

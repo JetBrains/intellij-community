@@ -1,0 +1,124 @@
+### auto-generated section `build intellij.java.coverage` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "coverage_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "coverage",
+  module_name = "intellij.java.coverage",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":coverage_resources"],
+  deps = [
+    "@lib//:java-coverage-_ja_co_co",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//plugins/coverage-common:coverage",
+    "//java/execution/openapi:java-execution",
+    "//java/openapi:java",
+    "//java/execution/impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/testRunner",
+    "//plugins/testng_rt:testng-rt",
+    "//plugins/junit_rt:junit-rt",
+    "//platform/ide-core-impl",
+    "//java/compiler/openapi:java-compiler",
+    "//plugins/coverage/coverage_rt:java-coverage-rt",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/lang-impl",
+    "//java/java-impl:impl",
+    "//platform/platform-impl/concurrency",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "@lib//:jetbrains-annotations",
+    "@lib//:java-coverage-coverage-report",
+    "//platform/util/jdom",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
+    "//libraries/fastutil",
+    "//platform/execution",
+  ],
+  exports = [
+    "//plugins/coverage-common:coverage",
+    "//java/execution/openapi:java-execution",
+    "//java/openapi:java",
+  ]
+)
+
+jvm_library(
+  name = "coverage_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":coverage"],
+  deps = [
+    "@lib//:java-coverage-_ja_co_co",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core",
+    "//plugins/coverage-common:coverage",
+    "//plugins/coverage-common:coverage_test_lib",
+    "//java/execution/openapi:java-execution",
+    "//java/openapi:java",
+    "//java/execution/impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/testRunner",
+    "//platform/testRunner:testRunner_test_lib",
+    "//plugins/testng_rt:testng-rt",
+    "//plugins/junit_rt:junit-rt",
+    "//platform/ide-core-impl",
+    "//java/compiler/openapi:java-compiler",
+    "//plugins/coverage/coverage_rt:java-coverage-rt",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/lang-impl",
+    "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
+    "//platform/platform-impl/concurrency",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/testFramework",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "@lib//:jetbrains-annotations",
+    "@lib//:java-coverage-coverage-report",
+    "//platform/util/jdom",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
+    "//libraries/fastutil",
+    "//java/java-runtime:rt",
+    "//platform/execution",
+  ],
+  exports = [
+    "//plugins/coverage-common:coverage",
+    "//plugins/coverage-common:coverage_test_lib",
+    "//java/execution/openapi:java-execution",
+    "//java/openapi:java",
+  ]
+)
+### auto-generated section `build intellij.java.coverage` end
+
+### auto-generated section `test intellij.java.coverage` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "coverage_test",
+  runtime_deps = [":coverage_test_lib"]
+)
+### auto-generated section `test intellij.java.coverage` end

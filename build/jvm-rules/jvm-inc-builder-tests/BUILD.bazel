@@ -1,0 +1,85 @@
+load("//:jvm-args.bzl", "get_jvm_flags")
+load("@bazel_skylib//rules:common_settings.bzl", "string_list_flag")
+load("@rules_java//java:defs.bzl", "java_test")
+load("@rules_jvm//:jvm.bzl", "jvm_import")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+ADD_OPENS_JVM_FLAGS = [
+    # Core
+    "--add-opens=java.base/java.lang=ALL-UNNAMED",
+    "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+    "--add-opens=java.base/java.util=ALL-UNNAMED",
+    "--add-opens=java.base/java.io=ALL-UNNAMED",
+    "--add-opens=java.base/java.nio=ALL-UNNAMED",
+
+    # NIO filesystem (needed on Windows)
+    "--add-opens=java.base/sun.nio.fs=ALL-UNNAMED",
+    "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+]
+
+java_test(
+  name = "jvm-inc-builder-tests",
+
+  jvm_flags = [
+    # Uncomment for debugging
+    #"-agentlib:jdwp=transport=dt_socket,server=n,address=127.0.0.1:5008,suspend=y",
+
+    # Whether to perform final 'bazel clean --expunge' on test suite completion
+    # When run from bazel, all test temp/work files are expected to be handled by the calling environment
+    "-Djvm-inc-builder.test.cleanup=false",
+
+    "-Djvm-inc-builder.bazel.executable=$(rlocationpath @test_bazel_tool//:bazel)",
+    "-Djvm-inc-builder.module.bazel.txt=$(rlocationpath :testData/MODULE.bazel.txt)",
+    "-Djvm-inc-builder.rules.jvm.zip=$(rlocationpath //:rules_jvm_zip)",
+  ] + ADD_OPENS_JVM_FLAGS,
+  timeout = "long",
+  test_class = "com.intellij.tools.build.bazel.AllTests",
+  runtime_deps = [
+    ":jvm-inc-builder-test-lib",
+  ],
+  data = glob(["testData/**/*"]) +
+   [
+     "//:rules_jvm_zip",
+     "@test_bazel_tool//:bazel",
+  ],
+)
+
+jvm_import(
+    name = "kotlin-stdlib_import",
+    jar = "@kotlin-stdlib_http//file",
+)
+
+jvm_import(
+    name = "kotlin-stdlib-jdk7_import",
+    jar = "@kotlin-stdlib-jdk7_http//file",
+)
+
+jvm_import(
+    name = "kotlin-stdlib-jdk8_import",
+    jar = "@kotlin-stdlib-jdk8_http//file",
+)
+
+
+kt_jvm_library(
+    name = "jvm-inc-builder-test-lib",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@bazel_tools//tools/java/runfiles",
+        "//:annotations_import",
+        "//:asm-all_import",
+        "//:junit4",
+        "//dependency-graph",
+        "//jps-builders-6:build-javac-rt",
+        "//jvm-inc-builder:jvm-inc-builder-lib",
+    ],
+)
+
+### skip generation section `build intellij.tools.build.bazel.jvmIncBuilderTests`

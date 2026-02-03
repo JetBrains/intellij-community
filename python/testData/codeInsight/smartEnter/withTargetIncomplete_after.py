@@ -1,0 +1,1 @@
+with open('file.txt') as <caret>:

@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.smRunner.vcs.jar
+  modules:
+  - name: intellij.platform.smRunner.vcs

@@ -1,0 +1,35 @@
+NavigationItem:
+    name: arrayOfNulls
+ItemPresentation:
+    presentableText: arrayOfNulls(Array<T>, Int)
+    locationString: (in kotlin.collections.ArraysKt)
+    icon: RowIcon(icons=[Function, Local])
+TargetElement: internal fun <T> arrayOfNulls(reference: kotlin.Array<T>, size: kotlin.Int): kotlin.Array<T> { /* compiled code */ }
+QualifiedName: kotlin.collections.ArraysKt.arrayOfNulls
+
+NavigationItem:
+    name: arrayOfNulls
+ItemPresentation:
+    presentableText: arrayOfNulls(Array<T>, Int)
+    locationString: (kotlin.collections)
+    icon: RowIcon(icons=[Function, Local])
+TargetElement: internal fun <T> arrayOfNulls(reference: kotlin.Array<T>, size: kotlin.Int): kotlin.Array<T> { /* compiled code */ }
+QualifiedName: (kotlin.collections).arrayOfNulls
+
+NavigationItem:
+    name: arrayOfNulls
+ItemPresentation:
+    presentableText: arrayOfNulls(Int)
+    locationString: (in kotlin.kotlin)
+    icon: RowIcon(icons=[Function, Public])
+TargetElement: public fun <reified T> arrayOfNulls(size: kotlin.Int): kotlin.Array<T?> { /* compiled code */ }
+QualifiedName: kotlin.kotlin.arrayOfNulls
+
+NavigationItem:
+    name: arrayOfNulls
+ItemPresentation:
+    presentableText: arrayOfNulls(Int)
+    locationString: (kotlin)
+    icon: RowIcon(icons=[Function, Public])
+TargetElement: public fun <reified T> arrayOfNulls(size: kotlin.Int): kotlin.Array<T?> { /* compiled code */ }
+QualifiedName: (kotlin).arrayOfNulls

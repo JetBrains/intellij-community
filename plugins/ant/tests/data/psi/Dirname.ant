@@ -1,0 +1,4 @@
+<project default="A">
+  <dirname property="prop" file="${ant.file}"/>
+  <target name="A"/>
+</project>

@@ -1,0 +1,11 @@
+LineBreakpoint created at coroutinesHierarchy3.kt:19
+Run Java
+Connected to the target VM
+coroutinesHierarchy3.kt:19
+==== Hierarchy of coroutines =====
+root
+	childAsync1
+		childAsync2
+Disconnected from the target VM
+
+Process finished with exit code 0

@@ -1,0 +1,75 @@
+<!-- todo: register this as a content module (IJPL-210868); currently it's included via 'xi:include' tag -->
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.feedback.idleFeedbackSurvey" interface="com.intellij.platform.feedback.FeedbackSurvey"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.feedback.csat.feedbackExtraDataProvider"
+                    interface="com.intellij.platform.feedback.csat.CsatFeedbackExtraDataProvider" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.platform.ide.impl.feedback.PlatformFeedbackDialogs"
+                        serviceImplementation="com.intellij.platform.feedback.impl.PlatformFeedbackDialogsImpl"
+                        overrides="true"/>
+
+    <applicationService serviceImplementation="com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService"/>
+    <applicationService serviceImplementation="com.intellij.platform.feedback.eap.EAPFeedbackUrlProvider" open="true"/>
+
+    <notificationGroup displayType="BALLOON" id="Feedback In IDE" bundle="messages.CommonFeedbackMessagesBundle"
+                       key="notification.group.feedback"/>
+
+    <notificationGroup displayType="STICKY_BALLOON" id="STICKY:Feedback In IDE" bundle="messages.CommonFeedbackMessagesBundle"
+                       key="notification.group.feedback.sticky"/>
+
+    <typedHandler implementation="com.intellij.platform.feedback.impl.track.EditorInputEventTracker"/>
+    <editorFactoryMouseListener implementation="com.intellij.platform.feedback.impl.track.EditorInputEventTracker"/>
+    <editorFactoryMouseMotionListener implementation="com.intellij.platform.feedback.impl.track.EditorInputEventTracker"/>
+
+    <registryKey key="platform.feedback" defaultValue="true" description="Enable to collect user feedback"/>
+    <registryKey key="platform.feedback.time.to.show.notification" defaultValue="600"
+                 description="Explicitly sets the number of seconds until the feedback notification is displayed."/>
+    <registryKey key="platform.feedback.ignore.common.conditions.for.all.surveys" defaultValue="false"
+                 description="Allows to ignore all isSuitableToShow conditions and test pure conditions of the concrete survey"/>
+
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.platform.feedback.impl.statistics.FeedbackSurveyIdValidationRule"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.platform.feedback.impl.statistics.DontShowAgainValueCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.platform.feedback.impl.statistics.FeedbackSurveysStateCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.platform.feedback.impl.statistics.FeedbackSendActionCountCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector"/>
+
+    <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.demo.DemoInIdeFeedbackSurvey"/>
+    <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.demo.DemoExternalFeedbackSurvey"/>
+
+    <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.csat.CsatFeedbackSurvey"/>
+    <backgroundPostStartupActivity implementation="com.intellij.platform.feedback.csat.CsatNewUserTracker"/>
+
+    <registryKey key="csat.survey.enabled" defaultValue="true" description="Enables periodic CSAT survey"/>
+    <registryKey key="csat.survey.today" defaultValue="" description="ISO Formatted today date such as 2011-12-03"/>
+    <registryKey key="csat.survey.user.created.date" defaultValue="" description="ISO Formatted date when user created such as 2011-12-03"/>
+    <registryKey key="csat.survey.show.probability" defaultValue="" description="Override probability of survey, double value from 0 to 1"/>
+  </extensions>
+
+  <actions>
+    <group id="FeedbackDialogGroup" internal="true">
+      <separator/>
+      <action id="com.intellij.platform.feedback.demo.action.ShowDemoFeedbackDialogAction"
+              class="com.intellij.platform.feedback.demo.ShowDemoFeedbackDialogAction" internal="true"/>
+      <action id="com.intellij.platform.feedback.demo.action.ShowDemoFeedbackDialogWithEmailAction"
+              class="com.intellij.platform.feedback.demo.ShowDemoFeedbackDialogWithEmailAction" internal="true"/>
+      <action id="com.intellij.platform.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
+              class="com.intellij.platform.feedback.localization.ShowLocalizationFeedbackDialog"
+              internal="true"/>
+      <add-to-group group-id="Internal.UI" anchor="last"/>
+    </group>
+
+    <action class="com.intellij.platform.feedback.demo.ShowExternalDemoFeedbackWithStatsAction" internal="true"/>
+    <action class="com.intellij.platform.feedback.demo.ShowInIdeDemoFeedbackWithStatsAction" internal="true"/>
+    <action class="com.intellij.platform.feedback.csat.CsatFeedbackAction" internal="true"
+            text="Show CSAT Feedback Dialog"/>
+    <action class="com.intellij.platform.feedback.csat.CsatFeedbackNextDayAction" internal="true"
+            text="Show Next Date for CSAT Feedback Dialog"/>
+  </actions>
+</idea-plugin>

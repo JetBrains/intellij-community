@@ -1,0 +1,61 @@
+### auto-generated section `build intellij.python.venv` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "venv_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+resourcegroup(
+  name = "venv_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "venv",
+  module_name = "intellij.python.venv",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":venv_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//python/openapi:community",
+    "//python/python-exec-service:community-execService",
+    "//libraries/kotlinx/coroutines/core",
+    "//python/python-sdk:sdk",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//python/python-exec-service/execService.python",
+    "//platform/eel-provider",
+    "//python/common",
+  ]
+)
+
+jvm_library(
+  name = "venv_test_lib",
+  module_name = "intellij.python.venv",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":venv_test_resources"],
+  runtime_deps = [
+    ":venv",
+    "//python/openapi:community_test_lib",
+    "//python/python-exec-service:community-execService_test_lib",
+    "//python/python-sdk:sdk_test_lib",
+    "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+    "//platform/testFramework/common",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "@lib//:junit5",
+    "//platform/ide-core-impl",
+    "//platform/execution",
+    "//platform/lang-impl",
+    "//platform/lang-core",
+    "//python/testFramework",
+  ]
+)
+### auto-generated section `build intellij.python.venv` end

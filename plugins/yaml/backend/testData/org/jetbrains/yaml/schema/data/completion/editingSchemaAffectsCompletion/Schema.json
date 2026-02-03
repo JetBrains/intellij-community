@@ -1,0 +1,10 @@
+{
+  "properties": {
+    "jsx": {
+      "oneOf": [
+        {"enum": [ "preserve", "react" ]},
+        {"enum": [ "react-native" ]}
+      ]
+    }
+  }
+}

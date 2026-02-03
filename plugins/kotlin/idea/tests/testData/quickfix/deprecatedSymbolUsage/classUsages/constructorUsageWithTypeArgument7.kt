@@ -1,0 +1,17 @@
+// "Replace with 'New'" "true"
+// WITH_STDLIB
+// ERROR: Not enough information to infer type variable T
+// K2_AFTER_ERROR: Cannot infer type for type parameter 'T'. Specify it explicitly.
+
+abstract class Main<T>
+
+@Deprecated("", ReplaceWith("New"))
+class Old<T, F> : Main<T>()
+
+class New<T> : Main<T>()
+
+fun test() {
+    val main = <caret>Old<Int, String>()
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

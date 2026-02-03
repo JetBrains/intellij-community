@@ -1,0 +1,1170 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.template.impl;
+
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.template.*;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.dnd.*;
+import com.intellij.ide.dnd.aware.DnDAwareTree;
+import com.intellij.lang.LangBundle;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.CompoundScheme;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.*;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
+import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.util.*;
+import java.util.List;
+import java.util.Queue;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import static com.intellij.codeInsight.template.impl.TemplateContext.getDifference;
+import static com.intellij.codeInsight.template.impl.TemplateContext.getDifferenceType;
+import static com.intellij.codeInsight.template.impl.TemplateGroup.PATH_SEPARATOR;
+
+public class TemplateListPanel extends JPanel implements Disposable {
+  private static final String NO_SELECTION = "NoSelection";
+  private static final String TEMPLATE_SETTINGS = "TemplateSettings";
+  private static final TemplateImpl MOCK_TEMPLATE = new TemplateImpl("mockTemplate-xxx", "mockTemplateGroup-yyy");
+  public static final String ABBREVIATION = "<abbreviation>";
+  public static final Comparator<TemplateImpl> TEMPLATE_COMPARATOR = new Comparator<>() {
+    @Override
+    public int compare(TemplateImpl o1, TemplateImpl o2) {
+      int compareKey = compareCaseInsensitively(o1.getKey(), o2.getKey());
+      return compareKey != 0 ? compareKey : compareCaseInsensitively(o1.getGroupName(), o2.getGroupName());
+    }
+
+    private static int compareCaseInsensitively(String s1, String s2) {
+      int result = s1.compareToIgnoreCase(s2);
+      return result != 0 ? result : s1.compareTo(s2);
+    }
+  };
+
+  static {
+    MOCK_TEMPLATE.setString("");
+  }
+
+  private CheckboxTree myTree;
+  private final List<TemplateGroup> myTemplateGroups = new ArrayList<>();
+  private final Map<String, TemplateGroup> myTemplateGroupsFullName = new HashMap<>();
+  private final TemplateExpandShortcutPanel myExpandByDefaultPanel = new TemplateExpandShortcutPanel(CodeInsightBundle.message("templates.dialog.shortcut.chooser.label"));
+
+  private CheckedTreeNode myTreeRoot = new CheckedTreeNode(null);
+
+  private final Alarm myAlarm = new Alarm();
+  private boolean myUpdateNeeded = false;
+
+  private static final Logger LOG = Logger.getInstance(TemplateListPanel.class);
+
+  private final Map<TemplateImpl, Map<TemplateOptionalProcessor, Boolean>> myTemplateOptions = new IdentityHashMap<>();
+  private final Map<TemplateImpl, TemplateContext> myTemplateContext = new IdentityHashMap<>();
+  private final JPanel myDetailsPanel = new JPanel(new CardLayout());
+  private LiveTemplateSettingsEditor myCurrentTemplateEditor;
+  private final JLabel myEmptyCardLabel = new JLabel();
+
+  private final CompoundScheme.MutatorHelper<TemplateGroup, TemplateImpl> mutatorHelper = new CompoundScheme.MutatorHelper<>();
+
+  public TemplateListPanel() {
+    super(new BorderLayout());
+
+    myDetailsPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+
+    myEmptyCardLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    myDetailsPanel.add(myEmptyCardLabel, NO_SELECTION);
+
+    createTemplateEditor(MOCK_TEMPLATE, "Tab", MOCK_TEMPLATE.createOptions(), MOCK_TEMPLATE.createContext());
+
+    add(myExpandByDefaultPanel.getPanel(), BorderLayout.NORTH);
+
+    Splitter splitter = new Splitter(true, 0.9f);
+    splitter.setFirstComponent(createTable());
+    splitter.setSecondComponent(myDetailsPanel);
+    add(splitter, BorderLayout.CENTER);
+  }
+
+  @Override
+  public void dispose() {
+    myCurrentTemplateEditor.dispose();
+    myAlarm.cancelAllRequests();
+  }
+
+  public void reset() {
+    myTemplateOptions.clear();
+    myTemplateContext.clear();
+
+    TemplateSettings templateSettings = TemplateSettings.getInstance();
+    List<TemplateGroup> groups = getSortedGroups(templateSettings);
+
+    initTemplates(groups, templateSettings.getLastSelectedTemplateGroup(), templateSettings.getLastSelectedTemplateKey());
+    myExpandByDefaultPanel.setSelectedChar(templateSettings.getDefaultShortcutChar());
+    UiNotifyConnector.doWhenFirstShown(this, () -> updateTemplateDetails(false, false));
+
+    myUpdateNeeded = true;
+  }
+
+  private static @NotNull List<TemplateGroup> getSortedGroups(TemplateSettings templateSettings) {
+    List<TemplateGroup> groups = new ArrayList<>(templateSettings.getTemplateGroups());
+
+    TemplateGroupOrderProvider orderProvider = ApplicationManager.getApplication().getService(TemplateGroupOrderProvider.class);
+    groups.sort(orderProvider::compare);
+    return groups;
+  }
+
+  public void apply() throws ConfigurationException {
+    List<TemplateGroup> templateGroups = getTemplateGroups();
+    for (TemplateGroup templateGroup : templateGroups) {
+      Set<String> names = new HashSet<>();
+
+      List<TemplateImpl> templates = templateGroup.getElements();
+      for (TemplateImpl template : templates) {
+        String key = template.getKey();
+        if (StringUtil.isEmptyOrSpaces(key)) {
+          throw new ConfigurationException(
+            LangBundle.message("dialog.message.live.template.with.empty.abbreviation", templateGroup.getName()));
+        }
+
+        if (StringUtil.isEmptyOrSpaces(template.getString())) {
+          throw new ConfigurationException(LangBundle.message("dialog.message.live.template.with.empty.text", key, templateGroup.getName()));
+        }
+
+        if (!names.add(key)) {
+          throw new ConfigurationException(
+            LangBundle.message("dialog.message.duplicate.live.templates.in.group", key, templateGroup.getName()));
+        }
+      }
+    }
+
+    for (TemplateGroup templateGroup : templateGroups) {
+      for (TemplateImpl template : templateGroup.getElements()) {
+        template.applyContext(getTemplateContext(template));
+        template.applyOptions(getTemplateOptions(template));
+      }
+    }
+    TemplateSettings templateSettings = TemplateSettings.getInstance();
+    templateSettings.setTemplates(mutatorHelper.apply(templateGroups, (original, copied) -> {
+      if (original.isModified()) {
+        return;
+      }
+
+      List<TemplateImpl> originalElements = original.getElements();
+      List<TemplateImpl> copiedElements = copied.getElements();
+      if (!originalElements.equals(copiedElements)) {
+        original.setModified(true);
+      }
+      else {
+        LiveTemplateContextsSnapshot allContexts = LiveTemplateContextService.getInstance().getSnapshot();
+
+        // TemplateImpl.equals doesn't compare context and  I (develar) don't want to risk and change this behavior, so, we compare it explicitly
+        for (int i = 0; i < originalElements.size(); i++) {
+          if (getDifference(allContexts, originalElements.get(i).getTemplateContext(), copiedElements.get(i).getTemplateContext()) != null) {
+            original.setModified(true);
+            break;
+          }
+        }
+      }
+
+    }));
+    templateSettings.setDefaultShortcutChar(myExpandByDefaultPanel.getSelectedChar());
+  }
+
+  private final boolean isTest = ApplicationManager.getApplication().isUnitTestMode();
+  public boolean isModified() {
+    TemplateSettings templateSettings = TemplateSettings.getInstance();
+    if (templateSettings.getDefaultShortcutChar() != myExpandByDefaultPanel.getSelectedChar()) {
+      if (isTest) {
+        //noinspection UseOfSystemOutOrSystemErr
+        System.err.println("LiveTemplatesConfig: templateSettings.getDefaultShortcutChar()="+templateSettings.getDefaultShortcutChar()
+                           + "; myExpandByDefaultComponent.getSelectedChar()="+ myExpandByDefaultPanel.getSelectedChar());
+      }
+      return true;
+    }
+
+    List<TemplateGroup> originalGroups = getSortedGroups(templateSettings);
+    List<TemplateGroup> newGroups = getTemplateGroups();
+
+    if (!ContainerUtil.map2Set(ContainerUtil.filter(originalGroups, group -> !group.getElements().isEmpty()), TemplateGroup::getName)
+      .equals(ContainerUtil.map2Set(ContainerUtil.filter(newGroups, group -> !group.getElements().isEmpty()), TemplateGroup::getName))) {
+      return true;
+    }
+
+    List<TemplateImpl> originalGroup = collectTemplates(originalGroups);
+    List<TemplateImpl> newGroup = collectTemplates(newGroups);
+
+    String msg = checkAreEqual(originalGroup, newGroup);
+    if (msg == null) return false;
+
+    if (isTest) {
+      //noinspection UseOfSystemOutOrSystemErr
+      System.err.println("LiveTemplatesConfig: " + msg);
+    }
+    return true;
+  }
+
+  public void editTemplate(TemplateImpl template) {
+    selectTemplate(template.getGroupName(), template.getKey());
+    updateTemplateDetails(true, false);
+  }
+
+  public @Nullable JComponent getPreferredFocusedComponent() {
+    if (getTemplate(getSingleSelectedIndex()) != null) {
+      return myCurrentTemplateEditor.getKeyField();
+    }
+    return null;
+  }
+
+  private static List<TemplateImpl> collectTemplates(@NotNull List<? extends TemplateGroup> groups) {
+    List<TemplateImpl> result = new ArrayList<>();
+    for (TemplateGroup group : groups) {
+      result.addAll(group.getElements());
+    }
+    result.sort((o1, o2) -> {
+      final int groupsEqual = o1.getGroupName().compareToIgnoreCase(o2.getGroupName());
+      if (groupsEqual != 0) {
+        return groupsEqual;
+      }
+      return o1.getKey().compareToIgnoreCase(o2.getKey());
+    });
+    return result;
+  }
+
+  private String checkAreEqual(@NotNull List<? extends TemplateImpl> originalGroup, @NotNull List<? extends TemplateImpl> newGroup) {
+    if (originalGroup.size() != newGroup.size()) return "different sizes";
+
+    LiveTemplateContextsSnapshot allContexts = LiveTemplateContextService.getInstance().getSnapshot();
+
+    for (int i = 0; i < newGroup.size(); i++) {
+      TemplateImpl t1 = newGroup.get(i);
+      TemplateImpl t2 = originalGroup.get(i);
+      if (templatesDiffer(allContexts, t1, t2)) {
+        if (isTest) {
+          return "Templates differ: new=" + t1 + "; original=" + t2 +
+                 "; equals=" + t1.equals(t2) +
+                 "; vars=" + t1.getVariables().equals(t2.getVariables()) +
+                 "; options=" + areOptionsEqual(t1, t2) +
+                 "; diff=" + getDifferenceType(allContexts, getTemplateContext(t1), t2.getTemplateContext()) +
+                 "\ncontext1=" + getTemplateContext(t1) +
+                 "\ncontext2=" + getTemplateContext(t2);
+        }
+        return "templates differ";
+      }
+    }
+    return null;
+  }
+
+  private boolean areOptionsEqual(@NotNull TemplateImpl newTemplate, @NotNull TemplateImpl originalTemplate) {
+    Map<TemplateOptionalProcessor, Boolean> templateOptions = getTemplateOptions(newTemplate);
+    for (TemplateOptionalProcessor processor : templateOptions.keySet()) {
+      if (processor.isEnabled(originalTemplate) != templateOptions.get(processor).booleanValue()) return false;
+    }
+    return true;
+  }
+
+  private TemplateContext getTemplateContext(final TemplateImpl newTemplate) {
+    return myTemplateContext.get(newTemplate);
+  }
+
+  private Map<TemplateOptionalProcessor, Boolean> getTemplateOptions(@NotNull TemplateImpl newTemplate) {
+    return myTemplateOptions.get(newTemplate);
+  }
+
+  private List<TemplateGroup> getTemplateGroups() {
+    return myTemplateGroups;
+  }
+
+  private void createTemplateEditor(final TemplateImpl template,
+                                    String shortcut,
+                                    Map<TemplateOptionalProcessor, Boolean> options,
+                                    TemplateContext context) {
+    myCurrentTemplateEditor = new LiveTemplateSettingsEditor(template, shortcut, options, context, () -> {
+      DefaultMutableTreeNode node = getNode(getSingleSelectedIndex());
+      if (node != null) {
+        ((DefaultTreeModel)myTree.getModel()).nodeChanged(node);
+        TemplateSettings.getInstance().setLastSelectedTemplate(template.getGroupName(), template.getKey());
+      }
+    });
+    for (Component component : myDetailsPanel.getComponents()) {
+      if (component instanceof LiveTemplateSettingsEditor) {
+        myDetailsPanel.remove(component);
+      }
+    }
+
+    myDetailsPanel.add(myCurrentTemplateEditor, TEMPLATE_SETTINGS);
+  }
+
+  private @Nullable TemplateImpl getTemplate(int row) {
+    JTree tree = myTree;
+    TreePath path = tree.getPathForRow(row);
+    if (path != null) {
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      if (node.getUserObject() instanceof TemplateImpl) {
+        return (TemplateImpl)node.getUserObject();
+      }
+    }
+
+    return null;
+  }
+
+  private @Nullable TemplateGroup getGroup(int row) {
+    TreePath path = myTree.getPathForRow(row);
+    if (path != null) {
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      if (node.getUserObject() instanceof TemplateGroup) {
+        return (TemplateGroup)node.getUserObject();
+      }
+    }
+
+    return null;
+  }
+
+  private void moveTemplates(Map<TemplateImpl, DefaultMutableTreeNode> map, @NotNull String newGroupName) {
+    List<TreePath> toSelect = new ArrayList<>();
+    for (TemplateImpl template : map.keySet()) {
+      DefaultMutableTreeNode oldTemplateNode = map.get(template);
+
+      TemplateGroup oldGroup = getTemplateGroupFromTree(template.getGroupName());
+      if (oldGroup != null) {
+        oldGroup.removeElement(template);
+      }
+
+      template.setGroupName(newGroupName);
+
+      removeNodeFromParent(oldTemplateNode);
+
+      toSelect.add(new TreePath(registerTemplate(template).getPath()));
+    }
+    TreeUtil.selectPaths(myTree, toSelect);
+  }
+
+  private @Nullable DefaultMutableTreeNode getNode(final int row) {
+    JTree tree = myTree;
+    TreePath path = tree.getPathForRow(row);
+    if (path != null) {
+      return (DefaultMutableTreeNode)path.getLastPathComponent();
+    }
+
+    return null;
+
+  }
+
+
+  private @Nullable TemplateGroup getTemplateGroupFromTree(@NonNls String name) {
+    return myTemplateGroupsFullName.get(name);
+  }
+
+  private @Nullable TemplateGroup getTemplateGroup(final String groupName) {
+    for (TemplateGroup group : myTemplateGroups) {
+      if (group.getName().equals(groupName)) return group;
+    }
+
+    return null;
+  }
+
+  private void addTemplate() {
+    String defaultGroup = TemplateSettings.USER_GROUP_NAME;
+    final DefaultMutableTreeNode node = getNode(getSingleSelectedIndex());
+    if (node != null) {
+      if (node.getUserObject() instanceof TemplateImpl) {
+        defaultGroup = ((TemplateImpl) node.getUserObject()).getGroupName();
+      }
+      else if (node.getUserObject() instanceof TemplateGroup) {
+        defaultGroup = ((TemplateGroup) node.getUserObject()).getName();
+      }
+    }
+
+    addTemplate(new TemplateImpl(ABBREVIATION, "", defaultGroup));
+  }
+
+  public void addTemplate(TemplateImpl template) {
+    myTemplateOptions.put(template, template.createOptions());
+    myTemplateContext.put(template, template.createContext());
+
+    registerTemplate(template);
+    updateTemplateDetails(true, false);
+  }
+
+  private void copyRow() {
+    int selected = getSingleSelectedIndex();
+    if (selected < 0) return;
+
+    TemplateImpl orTemplate = getTemplate(selected);
+    LOG.assertTrue(orTemplate != null);
+    TemplateImpl template = orTemplate.copy();
+    template.setKey(ABBREVIATION);
+    myTemplateOptions.put(template, new HashMap<>(getTemplateOptions(orTemplate)));
+    myTemplateContext.put(template, getTemplateContext(orTemplate).createCopy());
+    registerTemplate(template);
+
+    updateTemplateDetails(true, false);
+  }
+
+  private int getSingleSelectedIndex() {
+    int[] rows = myTree.getSelectionRows();
+    return rows != null && rows.length == 1 ? rows[0] : -1;
+  }
+
+  void removeRows() {
+    TreePath[] paths = myTree.getSelectionPaths();
+    if (paths == null) return;
+
+    TreeNode toSelect = null;
+    for (TreePath path : paths) {
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      Object o = node.getUserObject();
+      if (o instanceof TemplateGroup) {
+        Queue<DefaultMutableTreeNode> queue = new ArrayDeque<>();
+        queue.add(node);
+        while (!queue.isEmpty()) {
+          DefaultMutableTreeNode currentNode = queue.poll();
+          if (currentNode.getUserObject() instanceof TemplateGroup currentGroup) {
+            myTemplateGroups.remove(currentGroup);
+            myTemplateGroupsFullName.remove(currentGroup.getName());
+            removeNodeFromParent(currentNode);
+            for (Iterator<TreeNode> it = currentNode.children().asIterator(); it.hasNext(); ) {
+              TreeNode child = it.next();
+              if (child instanceof DefaultMutableTreeNode childMutableTreeNode &&
+                  childMutableTreeNode.getUserObject() instanceof TemplateGroup) {
+                queue.add(childMutableTreeNode);
+              }
+            }
+          }
+        }
+      } else if (o instanceof TemplateImpl template) {
+        TemplateGroup templateGroup = getTemplateGroup(template.getGroupName());
+        if (templateGroup != null) {
+          templateGroup.removeElement(template);
+          toSelect = ((DefaultMutableTreeNode)node.getParent()).getChildAfter(node);
+          removeNodeFromParent(node);
+        }
+      }
+    }
+
+    if (toSelect instanceof DefaultMutableTreeNode) {
+      setSelectedNode((DefaultMutableTreeNode)toSelect);
+    }
+  }
+
+  private JPanel createTable() {
+    myTreeRoot = new CheckedTreeNode(null);
+
+    myTree = new LiveTemplateTree(new CheckboxTree.CheckboxTreeCellRenderer() {
+      @Override
+      public void customizeRenderer(final JTree tree,
+                                    Object value,
+                                    final boolean selected,
+                                    final boolean expanded,
+                                    final boolean leaf,
+                                    final int row,
+                                    final boolean hasFocus) {
+        if (!(value instanceof DefaultMutableTreeNode)) return;
+        value = ((DefaultMutableTreeNode)value).getUserObject();
+
+        if (value instanceof TemplateImpl template) {
+          TemplateImpl defaultTemplate = TemplateSettings.getInstance().getDefaultTemplate(template);
+          LiveTemplateContextsSnapshot allContexts = LiveTemplateContextService.getInstance().getSnapshot();
+          Color fgColor = defaultTemplate == null || templatesDiffer(allContexts, template, defaultTemplate) ? JBColor.BLUE : null;
+          getTextRenderer().append(template.getKey(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fgColor));
+          String description = template.getDescription();
+          if (StringUtil.isNotEmpty(description)) {
+            getTextRenderer().append(" (" + description + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+          }
+        }
+        else if (value instanceof TemplateGroup group) {
+          String[] path = group.getPath();
+          getTextRenderer().append(path[path.length - 1], SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+
+          String allHints = TemplateGroupHintProvider.EP_NAME.getExtensionList()
+            .stream()
+            .map(provider -> provider.getHint(group))
+            .filter(it -> it != null)
+            .sorted()
+            .collect(Collectors.joining("; "));
+
+          if (!allHints.isEmpty()) {
+            getTextRenderer().append(" " + allHints, SimpleTextAttributes.GRAY_ATTRIBUTES);
+          }
+        }
+      }
+    }, myTreeRoot, this);
+    myTree.setRootVisible(false);
+    myTree.setShowsRootHandles(true);
+    myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
+
+    myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener(){
+      @Override
+      public void valueChanged(final @NotNull TreeSelectionEvent e) {
+        TemplateSettings templateSettings = TemplateSettings.getInstance();
+        TemplateImpl template = getTemplate(getSingleSelectedIndex());
+        if (template != null) {
+          templateSettings.setLastSelectedTemplate(template.getGroupName(), template.getKey());
+        } else {
+          templateSettings.setLastSelectedTemplate(null, null);
+          showEmptyCard();
+        }
+        if (myUpdateNeeded) {
+          myAlarm.cancelAllRequests();
+          myAlarm.addRequest(() -> updateTemplateDetails(false, false), 100);
+        }
+      }
+    });
+
+    myTree.registerKeyboardAction(new ActionListener() {
+      @Override
+      public void actionPerformed(@Nullable ActionEvent event) {
+        myCurrentTemplateEditor.focusKey();
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
+
+    installPopup();
+
+
+    DnDSupport.createBuilder(myTree)
+      .setBeanProvider(dnDActionInfo -> {
+        Point point = dnDActionInfo.getPoint();
+        if (myTree.getPathForLocation(point.x, point.y) == null) return null;
+
+        Map<TemplateImpl, DefaultMutableTreeNode> templates = getSelectedTemplates();
+
+        return !templates.isEmpty() ? new DnDDragStartBean(templates) : null;
+      }).
+      setDisposableParent(this)
+      .setTargetChecker(new DnDTargetChecker() {
+        @Override
+        public boolean update(DnDEvent event) {
+          @SuppressWarnings("unchecked") Set<String> oldGroupNames = getAllGroups((Map<TemplateImpl, DefaultMutableTreeNode>)event.getAttachedObject());
+          TemplateGroup group = getDropGroup(event);
+          boolean differentGroup = group != null && !oldGroupNames.contains(group.getName());
+          event.setDropPossible(differentGroup, "");
+          return true;
+        }
+      })
+      .setDropHandler(new DnDDropHandler() {
+        @Override
+        public void drop(DnDEvent event) {
+          //noinspection unchecked
+          moveTemplates((Map<TemplateImpl, DefaultMutableTreeNode>)event.getAttachedObject(),
+                        Objects.requireNonNull(getDropGroup(event)).getName());
+        }
+      })
+      .setImageProvider(dnDActionInfo -> {
+        Point point = dnDActionInfo.getPoint();
+        TreePath path = myTree.getPathForLocation(point.x, point.y);
+        return path == null ? null : new DnDImage(DnDAwareTree.getDragImage(myTree, path, point).first);
+      })
+      .install();
+
+    if (!myTemplateGroups.isEmpty()) {
+      myTree.setSelectionInterval(0, 0);
+    }
+
+    return initToolbar().createPanel();
+
+  }
+
+  private void showEmptyCard() {
+    int[] rows = myTree.getSelectionRows();
+    boolean multiSelection = rows != null && rows.length > 1;
+    myEmptyCardLabel.setText(multiSelection
+                             ? CodeInsightBundle.message("templates.list.multiple.live.templates.are.selected")
+                             : CodeInsightBundle.message("templates.list.no.live.templates.are.selected"));
+    ((CardLayout) myDetailsPanel.getLayout()).show(myDetailsPanel, NO_SELECTION);
+  }
+
+  private boolean templatesDiffer(@NotNull LiveTemplateContextsSnapshot allContexts, @NotNull TemplateImpl template, @NotNull TemplateImpl defaultTemplate) {
+    template.parseSegments();
+    defaultTemplate.parseSegments();
+    return !template.equals(defaultTemplate) ||
+           !template.getVariables().equals(defaultTemplate.getVariables()) ||
+           !areOptionsEqual(template, defaultTemplate) ||
+           getDifference(allContexts, getTemplateContext(template), defaultTemplate.getTemplateContext()) != null;
+  }
+
+  private ToolbarDecorator initToolbar() {
+    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree)
+      .setAddAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          addTemplateOrGroup(button);
+        }
+      })
+      .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
+      .setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton anActionButton) {
+          removeRows();
+        }
+      })
+      .disableDownAction()
+      .disableUpAction()
+      .addExtraAction(new DumbAwareAction(CodeInsightBundle.messagePointer("action.AnActionButton.Template.list.text.duplicate"), AllIcons.Actions.Copy) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          copyRow();
+        }
+
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(getTemplate(getSingleSelectedIndex()) != null);
+        }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
+      })
+      .addExtraAction(new DumbAwareAction(CodeInsightBundle.messagePointer("action.AnActionButton.text.restore.deleted.defaults"), AllIcons.Actions.Rollback) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          TemplateSettings.getInstance().reset();
+          reset();
+        }
+
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(!TemplateSettings.getInstance().getDeletedTemplates().isEmpty());
+        }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
+      });
+    return decorator;
+  }
+
+  private void addTemplateOrGroup(AnActionButton button) {
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new DumbAwareAction(IdeBundle.messagePointer("action.Anonymous.text.live.template")) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        addTemplate();
+      }
+    });
+    group.add(new DumbAwareAction(IdeBundle.messagePointer("action.Anonymous.text.template.group")) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        String newName = null;
+        if (Registry.is("live.templates.separated.group", false)) {
+          newName = Messages
+            .showInputDialog(myTree, CodeInsightBundle.message("label.enter.the.new.group.name"),
+                             CodeInsightBundle.message("dialog.title.create.new.group"), null, "", new TemplateGroupInputValidator(null),
+                             null,
+                             CodeInsightBundle.message("dialog.message.separate.new.group"));
+        }
+        else {
+          newName = Messages
+            .showInputDialog(myTree, CodeInsightBundle.message("label.enter.the.new.group.name"),
+                             CodeInsightBundle.message("dialog.title.create.new.group"), null, "", new TemplateGroupInputValidator(null),
+                             null, null);
+        }
+
+        if (newName != null) {
+          TemplateGroup newGroup = new TemplateGroup(newName);
+          setSelectedNode(insertNewGroup(myTreeRoot, newGroup));
+        }
+      }
+    });
+    DataContext context = DataManager.getInstance().getDataContext(button.getContextComponent());
+    ListPopup popup = JBPopupFactory.getInstance()
+      .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, true, null);
+    popup.show(button.getPreferredPopupPoint());
+  }
+
+  private @Nullable TemplateGroup getDropGroup(DnDEvent event) {
+    Point point = event.getPointOn(myTree);
+    return getGroup(myTree.getRowForLocation(point.x, point.y));
+  }
+
+  private void installPopup() {
+    final DumbAwareAction rename = new DumbAwareAction(IdeBundle.messagePointer("action.Anonymous.text.rename")) {
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        final TemplateGroup templateGroup = getSingleSelectedGroup();
+        boolean enabled = templateGroup != null;
+        if (enabled) {
+          DefaultMutableTreeNode group = findGroup(myTreeRoot, templateGroup.getPath());
+          if (group != null) {
+            for (Iterator<TreeNode> it = group.children().asIterator(); it.hasNext(); ) {
+              TreeNode child = it.next();
+              if (child instanceof DefaultMutableTreeNode childMutableTreeNode &&
+                  childMutableTreeNode.getUserObject() instanceof TemplateGroup) {
+                enabled = false;
+                break;
+              }
+            }
+          }
+        }
+        e.getPresentation().setEnabledAndVisible(enabled);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        renameGroup();
+      }
+    };
+    rename.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_RENAME).getShortcutSet(), myTree);
+    class MoveGroup extends DefaultActionGroup implements DumbAware {
+
+      MoveGroup() {
+        super(CodeInsightBundle.message("action.text.move"), true);
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        final Map<TemplateImpl, DefaultMutableTreeNode> templates = getSelectedTemplates();
+        boolean enabled = !templates.isEmpty();
+        e.getPresentation().setEnabledAndVisible(enabled);
+
+        if (enabled) {
+          Set<String> oldGroups = getAllGroups(templates);
+
+          removeAll();
+          for (TemplateGroup group : getTemplateGroups()) {
+            final String newGroupName = group.getName();
+            if (!oldGroups.contains(newGroupName)) {
+              add(new DumbAwareAction(newGroupName) {
+                @Override
+                public void actionPerformed(@NotNull AnActionEvent e) {
+                  moveTemplates(templates, newGroupName);
+                }
+              });
+            }
+          }
+          addSeparator();
+          add(new DumbAwareAction(IdeBundle.messagePointer("action.Anonymous.text.new.group")) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
+              String newName = Messages.showInputDialog(myTree, CodeInsightBundle.message("label.enter.the.new.group.name"),
+                                                        CodeInsightBundle.message("dialog.title.move.to.a.new.group"), null, "", new TemplateGroupInputValidator(null));
+              if (newName != null) {
+                moveTemplates(templates, newName);
+              }
+            }
+          });
+        }
+      }
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+    }
+    final DefaultActionGroup move = new MoveGroup();
+
+    final DumbAwareAction changeContext = new DumbAwareAction(IdeBundle.messagePointer("action.Anonymous.text.change.context")) {
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        boolean enabled = !getSelectedTemplates().isEmpty();
+        e.getPresentation().setEnabled(enabled);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        Map<TemplateImpl, DefaultMutableTreeNode> templates = getSelectedTemplates();
+        TemplateContext context = new TemplateContext();
+        Pair<JPanel, CheckboxTree> pair = LiveTemplateSettingsEditor.createPopupContextPanel(EmptyRunnable.INSTANCE, context);
+        DialogBuilder builder = new DialogBuilder(TemplateListPanel.this);
+        builder.setCenterPanel(pair.first);
+        builder.setPreferredFocusComponent(pair.second);
+        builder.setTitle(CodeInsightBundle.message("dialog.title.change.context.type.for.selected.templates"));
+        int result = builder.show();
+        if (result == DialogWrapper.OK_EXIT_CODE) {
+          for (TemplateImpl template : templates.keySet()) {
+            myTemplateContext.put(template, context);
+          }
+        }
+        updateTemplateDetails(false, true);
+        myTree.repaint();
+      }
+    };
+    final DumbAwareAction revert =
+      new DumbAwareAction(CodeInsightBundle.messagePointer("action.DumbAware.TemplateListPanel.text.restore.defaults"),
+                          CodeInsightBundle.messagePointer("action.DumbAware.TemplateListPanel.description.restore.default.setting"),
+                          (Icon)null) {
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        boolean enabled = false;
+
+        LiveTemplateContextsSnapshot allContexts = LiveTemplateContextService.getInstance().getSnapshot();
+
+        Map<TemplateImpl, DefaultMutableTreeNode> templates = getSelectedTemplates();
+        for (TemplateImpl template : templates.keySet()) {
+          TemplateImpl defaultTemplate = TemplateSettings.getInstance().getDefaultTemplate(template);
+          if (defaultTemplate != null && templatesDiffer(allContexts, template, defaultTemplate)) {
+            enabled = true;
+          }
+        }
+        e.getPresentation().setEnabledAndVisible(enabled);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        Map<TemplateImpl, DefaultMutableTreeNode> templates = getSelectedTemplates();
+        for (TemplateImpl template : templates.keySet()) {
+          TemplateImpl defaultTemplate = TemplateSettings.getInstance().getDefaultTemplate(template);
+          if (defaultTemplate != null) {
+            myTemplateOptions.put(template, defaultTemplate.createOptions());
+            myTemplateContext.put(template, defaultTemplate.createContext());
+            template.resetFrom(defaultTemplate);
+          }
+        }
+        updateTemplateDetails(false, true);
+        myTree.repaint();
+      }
+    };
+    DefaultActionGroup group = new DefaultActionGroup(
+      rename, move, changeContext, revert,
+      ActionManager.getInstance().getAction(IdeActions.GROUP_BASIC_EDITOR_POPUP));
+    PopupHandler.installPopupMenu(myTree, group, "TemplateTreePopup");
+  }
+
+  private @Nullable TemplateGroup getSingleSelectedGroup() {
+    return getGroup(getSingleSelectedIndex());
+  }
+
+  @Nullable
+  TemplateGroup getSingleContextGroup() {
+    int index = getSingleSelectedIndex();
+    DefaultMutableTreeNode node = getNode(index);
+    if (node != null && node.getUserObject() instanceof TemplateImpl) {
+      node = (DefaultMutableTreeNode)node.getParent();
+    }
+    return node == null ? null : ObjectUtils.tryCast(node.getUserObject(), TemplateGroup.class);
+  }
+
+  private static Set<String> getAllGroups(Map<TemplateImpl, DefaultMutableTreeNode> templates) {
+    Set<String> oldGroups = new HashSet<>();
+    for (TemplateImpl template : templates.keySet()) {
+      oldGroups.add(template.getGroupName());
+    }
+    return oldGroups;
+  }
+
+  Map<TemplateImpl, DefaultMutableTreeNode> getSelectedTemplates() {
+    TreePath[] paths = myTree.getSelectionPaths();
+    if (paths == null) {
+      return Collections.emptyMap();
+    }
+    Map<TemplateImpl, DefaultMutableTreeNode> templates = new LinkedHashMap<>();
+    for (TreePath path : paths) {
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      Object o = node.getUserObject();
+      if (!(o instanceof TemplateImpl)) {
+        return Collections.emptyMap();
+      }
+      templates.put((TemplateImpl)o, node);
+    }
+    return templates;
+  }
+
+  private void renameGroup() {
+    final TemplateGroup templateGroup = getSingleSelectedGroup();
+    if (templateGroup == null) return;
+
+    String[] path = templateGroup.getPath();
+    final String oldName = path[path.length - 1];
+    String newName = Messages.showInputDialog(myTree, CodeInsightBundle.message("label.enter.the.new.group.name"),
+                                              CodeInsightBundle.message("dialog.title.rename"), null, oldName,
+                                              new TemplateGroupInputValidator(oldName));
+
+    if (newName != null && !newName.equals(oldName)) {
+      path[path.length - 1] = newName;
+      templateGroup.setName(String.join(PATH_SEPARATOR, path));
+      ((DefaultTreeModel)myTree.getModel()).nodeChanged(getNode(getSingleSelectedIndex()));
+    }
+  }
+
+  private void updateTemplateDetails(boolean focusKey, boolean forceReload) {
+    int selected = getSingleSelectedIndex();
+    CardLayout layout = (CardLayout)myDetailsPanel.getLayout();
+    if (selected < 0 || getTemplate(selected) == null) {
+      showEmptyCard();
+    }
+    else {
+      TemplateImpl newTemplate = getTemplate(selected);
+      if (myCurrentTemplateEditor == null || forceReload || myCurrentTemplateEditor.getTemplate() != newTemplate) {
+        if (myCurrentTemplateEditor != null) {
+          myCurrentTemplateEditor.dispose();
+        }
+        createTemplateEditor(newTemplate, myExpandByDefaultPanel.getSelectedString(), getTemplateOptions(newTemplate),
+                             getTemplateContext(newTemplate));
+        myCurrentTemplateEditor.resetUi();
+        if (focusKey) {
+          myCurrentTemplateEditor.focusKey();
+        }
+      }
+      layout.show(myDetailsPanel, TEMPLATE_SETTINGS);
+    }
+  }
+
+  private CheckedTreeNode registerTemplate(TemplateImpl template) {
+    TemplateGroup newGroup = getTemplateGroup(template.getGroupName());
+    if (newGroup == null) {
+      newGroup = new TemplateGroup(template.getGroupName());
+      insertNewGroup(myTreeRoot, newGroup);
+    }
+    newGroup.addElement(template);
+
+    CheckedTreeNode node = new CheckedTreeNode(template);
+    node.setChecked(!template.isDeactivated());
+    DefaultMutableTreeNode child = findGroup(myTreeRoot, newGroup.getPath());
+    if (child != null) {
+      int index = getIndexToInsert(child, template);
+      child.insert(node, index);
+      ((DefaultTreeModel)myTree.getModel()).nodesWereInserted(child, new int[]{index});
+      setSelectedNode(node);
+    }
+    return node;
+  }
+
+  private static @Nullable DefaultMutableTreeNode findGroup(@NotNull DefaultMutableTreeNode parent,
+                                                            @NotNull String groupName) {
+    if (!parent.children().hasMoreElements()) return null;
+    for (DefaultMutableTreeNode child = (DefaultMutableTreeNode)parent.getFirstChild();
+         child != null;
+         child = (DefaultMutableTreeNode)parent.getChildAfter(child)) {
+      if (child.getUserObject() instanceof TemplateGroup templateGroup &&
+          templateGroup.getName().equals(groupName)) {
+        return child;
+      }
+    }
+    return null;
+  }
+
+  private static @Nullable DefaultMutableTreeNode findGroup(@NotNull DefaultMutableTreeNode parent,
+                                                            String @NotNull [] path) {
+    DefaultMutableTreeNode currentParent = parent;
+    String currentPath = "";
+    for (int i = 0; i < path.length; i++) {
+      String next = path[i];
+      if (i == 0) {
+        currentPath = next;
+      }
+      else {
+        currentPath = currentPath + PATH_SEPARATOR + next;
+      }
+      currentParent = findGroup(currentParent, currentPath);
+      if (currentParent == null) return null;
+    }
+    return currentParent;
+  }
+
+  private DefaultMutableTreeNode insertNewGroup(@NotNull DefaultMutableTreeNode parent,
+                                                @NotNull final TemplateGroup newGroup) {
+    myTemplateGroups.add(newGroup);
+    myTemplateGroupsFullName.put(newGroup.getName(), newGroup);
+    DefaultMutableTreeNode currentParent = parent;
+    String[] path = newGroup.getPath();
+    String fullName = "";
+    for (int i = 0; i < path.length; i++) {
+      String currentGroupName = path[i];
+      if (i == 0) {
+        fullName = currentGroupName;
+      }
+      else {
+        fullName = fullName + PATH_SEPARATOR + currentGroupName;
+      }
+      DefaultMutableTreeNode group = findGroup(currentParent, fullName);
+      if (group != null) {
+        currentParent = group;
+        continue;
+      }
+      TemplateGroup nextGroup;
+      if (i + 1 == path.length) {
+        nextGroup = newGroup;
+      }
+      else {
+        nextGroup = new TemplateGroup(fullName);
+        nextGroup.setModified(false);
+      }
+      myTemplateGroupsFullName.put(nextGroup.getName(), newGroup);
+      int index = getIndexToInsert(currentParent, nextGroup);
+      CheckedTreeNode groupNode = new CheckedTreeNode(nextGroup);
+      currentParent.insert(groupNode, index);
+      ((DefaultTreeModel)myTree.getModel()).nodesWereInserted(currentParent, new int[]{index});
+      currentParent = groupNode;
+    }
+    return currentParent;
+  }
+
+  private static int getIndexToInsert(DefaultMutableTreeNode parent, TemplateGroup t) {
+    TemplateGroupOrderProvider order = ApplicationManager.getApplication().getService(TemplateGroupOrderProvider.class);
+    return getIndexToInsert(parent, o1 -> {
+      if (o1 instanceof TemplateGroup t1) {
+        return order.compare(t1, t) > 0;
+      }
+      else {
+        return true;
+      }
+    });
+  }
+  private static int getIndexToInsert(DefaultMutableTreeNode parent, TemplateImpl o) {
+    String key = o.getKey();
+    return getIndexToInsert(parent, o1 -> {
+      String key1 = o1 instanceof TemplateImpl ? ((TemplateImpl)o1).getKey() : ((TemplateGroup)o1).getName();
+      return key1.compareToIgnoreCase(key) > 0;
+    });
+  }
+
+  private static int getIndexToInsert(DefaultMutableTreeNode parent, Predicate<Object> predicate) {
+    if (parent.getChildCount() == 0) return 0;
+
+    int res = 0;
+    for (DefaultMutableTreeNode child = (DefaultMutableTreeNode)parent.getFirstChild();
+         child != null;
+         child = (DefaultMutableTreeNode)parent.getChildAfter(child)) {
+      Object o1 = child.getUserObject();
+      if (predicate.test(o1)) {
+        return res;
+      }
+      res++;
+    }
+    return res;
+  }
+
+  private void setSelectedNode(DefaultMutableTreeNode node) {
+    TreeUtil.selectPath(myTree, new TreePath(node.getPath()));
+  }
+
+  private void removeNodeFromParent(DefaultMutableTreeNode node) {
+    TreeNode parent = node.getParent();
+    int idx = parent.getIndex(node);
+    node.removeFromParent();
+
+    ((DefaultTreeModel)myTree.getModel()).nodesWereRemoved(parent, new int[]{idx}, new TreeNode[]{node});
+  }
+
+  private void initTemplates(List<? extends TemplateGroup> groups, String lastSelectedGroup, String lastSelectedKey) {
+    myTreeRoot.removeAllChildren();
+    myTemplateGroups.clear();
+    myTemplateGroupsFullName.clear();
+    mutatorHelper.clear();
+    for (TemplateGroup group : groups) {
+      TemplateGroup copy = mutatorHelper.copy(group);
+      DefaultMutableTreeNode node = insertNewGroup(myTreeRoot, copy);
+      if (node instanceof CheckedTreeNode treeNode) {
+        addTemplateNodes(copy, treeNode);
+      }
+    }
+    fireStructureChange();
+
+    selectTemplate(lastSelectedGroup, lastSelectedKey);
+  }
+
+  void selectNode(@NotNull String searchQuery) {
+    Objects.requireNonNull(SpeedSearchSupply.getSupply(myTree, true)).findAndSelectElement(searchQuery);
+  }
+
+  private void selectTemplate(final @Nullable String groupName, final @Nullable String templateKey) {
+    TreeUtil.traverseDepth(myTreeRoot, node -> {
+      Object o = ((DefaultMutableTreeNode)node).getUserObject();
+      if (templateKey == null && o instanceof TemplateGroup && Objects.equals(groupName, ((TemplateGroup)o).getName()) ||
+          o instanceof TemplateImpl &&
+          Objects.equals(templateKey, ((TemplateImpl)o).getKey()) &&
+          Objects.equals(groupName, ((TemplateImpl)o).getGroupName())) {
+        setSelectedNode((DefaultMutableTreeNode)node);
+        return false;
+      }
+
+      return true;
+    });
+  }
+
+  private void fireStructureChange() {
+    ((DefaultTreeModel)myTree.getModel()).nodeStructureChanged(myTreeRoot);
+  }
+
+  private void addTemplateNodes(TemplateGroup group, CheckedTreeNode groupNode) {
+    List<TemplateImpl> templates = new ArrayList<>(group.getElements());
+    templates.sort(TEMPLATE_COMPARATOR);
+    for (final TemplateImpl template : templates) {
+      myTemplateOptions.put(template, template.createOptions());
+      myTemplateContext.put(template, template.createContext());
+
+      if (TemplateFilter.globalAccept(template)) {
+        CheckedTreeNode node = new CheckedTreeNode(template);
+        node.setChecked(!template.isDeactivated());
+        groupNode.add(node);
+      }
+    }
+  }
+
+  private class TemplateGroupInputValidator implements InputValidator {
+    private final String myOldName;
+
+    TemplateGroupInputValidator(String oldName) {
+      myOldName = oldName;
+    }
+
+    @Override
+    public boolean checkInput(String inputString) {
+      return StringUtil.isNotEmpty(inputString) &&
+             (getTemplateGroup(inputString) == null || inputString.equals(myOldName)) &&
+             noEmptyGroups(inputString);
+    }
+
+    private static boolean noEmptyGroups(@Nullable String inputString) {
+      if (!Registry.is("live.templates.separated.group", false)) return true;
+      if (inputString == null) return false;
+      for (String part : inputString.split(PATH_SEPARATOR, -1)) {
+        if (StringUtil.isEmpty(part)) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    @Override
+    public boolean canClose(String inputString) {
+      return checkInput(inputString);
+    }
+  }
+}

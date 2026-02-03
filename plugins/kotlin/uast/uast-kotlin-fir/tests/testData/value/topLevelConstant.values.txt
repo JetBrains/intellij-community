@@ -1,0 +1,8 @@
+UFile (package = ) [public final class TopLevelConstantKt {...]
+    UClass (name = TopLevelConstantKt) [public final class TopLevelConstantKt {...}]
+        UField (name = FINE_LOCATION) [@org.jetbrains.annotations.NotNull public static final var FINE_LOCATION: java.lang.String = "android.permission.ACCESS_FINE_LOCATION"]
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UPolyadicExpression (operator = +) ["android.permission.ACCESS_FINE_LOCATION"] = "android.permission.ACCESS_FINE_LOCATION"
+                ULiteralExpression (value = "android.permission.ACCESS_FINE_LOCATION") ["android.permission.ACCESS_FINE_LOCATION"] = "android.permission.ACCESS_FINE_LOCATION"
+    UClass (name = DeprecatedForSdk) [public abstract annotation DeprecatedForSdk {...}]
+        UAnnotationMethod (name = message) [public abstract fun message() : java.lang.String = UastEmptyExpression]

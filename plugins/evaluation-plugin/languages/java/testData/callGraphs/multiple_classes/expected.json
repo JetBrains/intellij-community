@@ -1,0 +1,34 @@
+{
+  "nodes": [
+    {
+      "address": {
+        "project_root_file_path": "MultiClass.java",
+        "text_range": [
+          28,
+          95
+        ]
+      },
+      "project_name": "dumpGraph",
+      "id": "0",
+      "qualified_name": "ClassOne#methodOne"
+    },
+    {
+      "address": {
+        "project_root_file_path": "MultiClass.java",
+        "text_range": [
+          127,
+          154
+        ]
+      },
+      "project_name": "dumpGraph",
+      "id": "1",
+      "qualified_name": "ClassTwo#methodTwo"
+    }
+  ],
+  "edges": [
+    {
+      "caller_id": "0",
+      "callee_id": "1"
+    }
+  ]
+}

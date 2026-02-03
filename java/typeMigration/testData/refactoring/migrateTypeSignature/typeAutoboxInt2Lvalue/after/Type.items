@@ -1,0 +1,15 @@
+Types:
+PsiParameter:p : java.lang.Integer
+PsiReferenceExpression:p : java.lang.Integer
+PsiReferenceExpression:p : java.lang.Integer
+PsiReferenceExpression:p : java.lang.Integer
+PsiReferenceExpression:p : java.lang.Integer
+
+Conversions:
+myField -> $
+myFieldSuper1 -> $
+myFieldSuper2 -> $
+myFieldSuper3 -> $
+
+New expression type changes:
+Fails:

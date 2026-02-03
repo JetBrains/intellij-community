@@ -1,0 +1,33 @@
+### auto-generated section `build fleet.bundles` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_bundles",
+  opt_in = [
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+    "kotlin.ExperimentalStdlibApi",
+  ],
+  x_consistent_data_class_copy_visibility = True,
+  x_context_parameters = True,
+  x_jvm_default = "all-compatibility",
+  x_lambdas = "class"
+)
+
+jvm_library(
+  name = "bundles",
+  module_name = "fleet.bundles",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  kotlinc_opts = ":custom_bundles",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-coroutines-core",
+    "//fleet/util/core",
+    "//fleet/modules/api",
+    "//fleet/bifurcan",
+  ]
+)
+### auto-generated section `build fleet.bundles` end

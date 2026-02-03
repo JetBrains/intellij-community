@@ -1,0 +1,35 @@
+### auto-generated section `build intellij.vcs.git.frontend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "frontend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "frontend",
+  module_name = "intellij.vcs.git.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":frontend_resources"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//plugins/git4idea/shared",
+    "@lib//:kotlin-stdlib",
+    "//platform/platform-impl:ide-impl",
+    "//platform/kernel/shared:kernel",
+    "//platform/project/shared:project",
+    "//platform/core-ui",
+    "//platform/platform-impl/rpc",
+    "//platform/util/coroutines",
+    "//platform/analysis-api:analysis",
+    "//platform/dvcs-impl/shared",
+    "//platform/vcs-impl/shared",
+    "//fleet/kernel",
+    "//platform/searchEverywhere/frontend",
+    "//platform/scopes",
+  ]
+)
+### auto-generated section `build intellij.vcs.git.frontend` end

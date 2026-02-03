@@ -1,0 +1,23 @@
+### auto-generated section `build intellij.platform.monolith.main` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "monolith-main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/main/intellij.platform.frontend.main:frontend-main",
+    "//platform/main/intellij.platform.backend.main:backend-main",
+    "//platform/monolith",
+    "//platform/navbar/monolith",
+  ]
+)
+
+jvm_library(
+  name = "monolith-main_test_lib",
+  module_name = "intellij.platform.monolith.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":monolith-main"]
+)
+### auto-generated section `build intellij.platform.monolith.main` end

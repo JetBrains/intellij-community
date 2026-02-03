@@ -1,0 +1,99 @@
+### auto-generated section `build kotlin.compiler-reference-index.tests` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_tests",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlin/reflect",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/compiler-reference-index",
+    "//plugins/kotlin/frontend-independent",
+    "//jps/jps-builders:build",
+    "//platform/core-api:core",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/analysis-impl",
+    "//platform/core-impl",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-impl:psi-impl",
+    "//java/compiler/impl",
+    "//java/java-indexing-impl:indexing-impl",
+  ]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "kotlin.compiler-reference-index.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_tests",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlin/reflect",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//libraries/gson",
+    "@lib//:junit4",
+    "//java/java-indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//plugins/kotlin/plugin/k1",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/compiler-reference-index",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/idea/tests:tests_test_lib",
+    "//jps/jps-builders:build",
+    "//platform/core-api:core",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/analysis-impl",
+    "//platform/core-impl",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-impl:psi-impl",
+    "//java/compiler/impl",
+    "//java/java-indexing-impl:indexing-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/testFramework",
+    "//java/java-tests:tests_test_lib",
+    "//plugins/kotlin/idea",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//platform/util",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build kotlin.compiler-reference-index.tests` end
+
+### auto-generated section `test kotlin.compiler-reference-index.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test kotlin.compiler-reference-index.tests` end

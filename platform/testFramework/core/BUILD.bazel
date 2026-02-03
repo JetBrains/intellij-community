@@ -1,0 +1,40 @@
+### auto-generated section `build intellij.platform.testFramework.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
+
+resourcegroup(
+  name = "core_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_provided_library(
+  name = "libraries_junit4_provided",
+  lib = "//libraries/junit4"
+)
+
+jvm_library(
+  name = "core",
+  module_name = "intellij.platform.testFramework.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":core_resources"],
+  deps = [
+    "//platform/util",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/boot",
+    "//platform/testFramework/bootstrap:tools-testsBootstrap",
+    "@lib//:opentest4j",
+    "@lib//:junit5-provided",
+    "//java/java-runtime:rt",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/http-client",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/testFramework/teamCity",
+    ":libraries_junit4_provided",
+  ]
+)
+### auto-generated section `build intellij.platform.testFramework.core` end

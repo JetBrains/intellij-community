@@ -1,0 +1,8 @@
+{
+  "test": {
+    "url": "git://foo.bar",
+    "element": {
+      "foo": "bar"
+    }
+  }
+}

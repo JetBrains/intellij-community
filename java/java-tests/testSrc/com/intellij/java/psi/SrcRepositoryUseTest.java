@@ -1,0 +1,831 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.psi;
+
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.projectRoots.impl.ProjectRootUtil;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportStatement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.text.BlockSupport;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.JavaPsiTestCase;
+import com.intellij.testFramework.PsiTestUtil;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
+@HeavyPlatformTestCase.WrapInCommand
+public class SrcRepositoryUseTest extends JavaPsiTestCase {
+  private static final Logger LOG = Logger.getInstance(SrcRepositoryUseTest.class);
+  private static final Key<String> TEST_KEY = Key.create("TEST");
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    IdeaTestUtil.setProjectLanguageLevel(myProject, LanguageLevel.JDK_1_5);
+    String root = PathManagerEx.getTestDataPath() + "/psi/repositoryUse/src";
+    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
+    createTestProjectStructure( root);
+  }
+
+  public void testGetClasses(){
+    setupLoadingFilter();
+
+    PsiDirectory root = ProjectRootUtil.getAllContentRoots(myProject) [0];
+    VirtualFile child = root.getVirtualFile().findChild("MyClass1.java");
+    assertNotNull(child);
+    PsiJavaFile file = (PsiJavaFile)myPsiManager.findFile(child);
+    PsiClass[] classes = file.getClasses();
+    assertEquals(2, classes.length);
+    assertEquals(file, classes[0].getParent());
+
+    teardownLoadingFilter();
+  }
+
+  public void testGetClassName(){
+    setupLoadingFilter();
+
+    PsiDirectory root = ProjectRootUtil.getAllContentRoots(myProject) [0];
+    VirtualFile child = root.getVirtualFile().findChild("MyClass1.java");
+    assertNotNull(child);
+    PsiJavaFile file = (PsiJavaFile)myPsiManager.findFile(child);
+    PsiClass[] classes = file.getClasses();
+    assertEquals(2, classes.length);
+
+    assertEquals("MyClass1", classes[0].getName());
+    assertEquals("Class2", classes[1].getName());
+
+    teardownLoadingFilter();
+  }
+
+  public void testClassParameter() {
+    setupLoadingFilter();
+    PsiClass psiClass = myJavaFacade.findClass("Class2", GlobalSearchScope.allScope(myProject));
+    assertNotNull(psiClass);
+
+    PsiTypeParameterList parameterList = psiClass.getTypeParameterList();
+    assertNotNull(parameterList);
+    PsiTypeParameter[] params = parameterList.getTypeParameters();
+    assertEquals(2, params.length);
+
+    assertEquals("A", params[0].getName());
+    assertEquals("B", params[1].getName());
+
+    assertEquals("java.lang.String", params[0].getSupers()[0].getQualifiedName());
+    assertEquals(CommonClassNames.JAVA_LANG_OBJECT, params[1].getSupers()[0].getQualifiedName());
+
+    teardownLoadingFilter();
+  }
+
+  public void testGetClassQName(){
+    setupLoadingFilter();
+
+    PsiDirectory root = ProjectRootUtil.getAllContentRoots(myProject) [0];
+    VirtualFile child = root.getVirtualFile().findChild("pack").findChild("MyClass2.java");
+    assertNotNull(child);
+    PsiJavaFile file = (PsiJavaFile)myPsiManager.findFile(child);
+    PsiClass[] classes = file.getClasses();
+    assertEquals(1, classes.length);
+
+    assertEquals("pack.MyClass2", classes[0].getQualifiedName());
+
+    teardownLoadingFilter();
+  }
+
+  public void testGetFields(){
+    setupLoadingFilter();
+
+    PsiDirectory root = ProjectRootUtil.getAllContentRoots(myProject) [0];
+    VirtualFile child = root.getVirtualFile().findChild("pack").findChild("MyClass2.java");
+    assertNotNull(child);
+    PsiJavaFile file = (PsiJavaFile)myPsiManager.findFile(child);
+    PsiClass[] classes = file.getClasses();
+    assertEquals(1, classes.length);
+
+    PsiClass aClass = classes[0];
+    PsiField[] fields = aClass.getFields();
+    assertEquals(3, fields.length);
+    assertEquals(aClass, fields[0].getParent());
+
+    teardownLoadingFilter();
+  }
+
+  public void testGetMethods(){
+    setupLoadingFilter();
+
+    PsiDirectory root = ProjectRootUtil.getAllContentRoots(myProject) [0];
+    VirtualFile child = root.getVirtualFile().findChild("pack").findChild("MyClass2.java");
+    assertNotNull(child);
+    PsiJavaFile file = (PsiJavaFile)myPsiManager.findFile(child);
+    PsiClass[] classes = file.getClasses();
+    assertEquals(1, classes.length);
+
+    PsiClass aClass = classes[0];
+    PsiMethod[] methods = aClass.getMethods();
+    assertEquals(3, methods.length);
+    assertEquals(aClass, methods[0].getParent());
+
+    teardownLoadingFilter();
+  }
+
+  public void testGetInnerClasses(){
+    setupLoadingFilter();
+
+    PsiDirectory root = ProjectRootUtil.getAllContentRoots(myProject) [0];
+    VirtualFile child = root.getVirtualFile().findChild("pack").findChild("MyClass2.java");
+    assertNotNull(child);
+    PsiJavaFile file = (PsiJavaFile)myPsiManager.findFile(child);
+    PsiClass[] classes = file.getClasses();
+    assertEquals(1, classes.length);
+
+    PsiClass aClass = classes[0];
+    PsiClass[] inners = aClass.getInnerClasses();
+    assertEquals(1, inners.length);
+    assertEquals(aClass, inners[0].getParent());
+
+    teardownLoadingFilter();
+  }
+  public void testResolveSuperClass(){
+    setupLoadingFilter();
+
+    PsiDirectory root = ProjectRootUtil.getAllContentRoots(myProject) [0];
+    VirtualFile child = root.getVirtualFile().findChild("pack").findChild("MyClass2.java");
+    assertNotNull(child);
+    PsiJavaFile file = (PsiJavaFile)myPsiManager.findFile(child);
+    PsiClass[] classes = file.getClasses();
+    assertEquals(1, classes.length);
+
+    PsiClass aClass = classes[0];
+    PsiClass[] superTypes = aClass.getSupers();
+    LOG.assertTrue(superTypes.length == 2);
+    LOG.assertTrue(superTypes[0].getQualifiedName().equals(CommonClassNames.JAVA_LANG_STRING));
+    LOG.assertTrue(superTypes[1].getQualifiedName().equals(CommonClassNames.JAVA_LANG_RUNNABLE));
+
+    teardownLoadingFilter();
+  }
+
+  public void testGetContainingFile(){
+    setupLoadingFilter();
+
+    PsiDirectory root = ProjectRootUtil.getAllContentRoots(myProject) [0];
+    VirtualFile child = root.getVirtualFile().findChild("pack").findChild("MyClass2.java");
+    assertNotNull(child);
+    PsiJavaFile file = (PsiJavaFile)myPsiManager.findFile(child);
+    PsiClass[] classes = file.getClasses();
+    assertEquals(1, classes.length);
+
+    assertEquals(file, classes[0].getContainingFile());
+
+    teardownLoadingFilter();
+  }
+
+  public void testFindClass(){
+    setupLoadingFilter();
+
+    PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
+    assertNotNull(aClass);
+
+    teardownLoadingFilter();
+  }
+
+  public void testGetFieldName(){
+    setupLoadingFilter();
+
+    PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
+    assertEquals("field1", aClass.getFields()[0].getName());
+
+    teardownLoadingFilter();
+  }
+
+  public void testGetMethodName(){
+    setupLoadingFilter();
+
+    PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
+    assertEquals("method1", aClass.getMethods()[0].getName());
+
+    teardownLoadingFilter();
+  }
+
+  public void testModifierList() {
+    setupLoadingFilter();
+
+    PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
+
+    PsiModifierList modifierList = aClass.getModifierList();
+    assertTrue(modifierList.hasModifierProperty(PsiModifier.PUBLIC));
+    assertFalse(modifierList.hasModifierProperty(PsiModifier.STATIC));
+    assertEquals(modifierList.getParent(), aClass);
+
+    PsiField field = aClass.getFields()[0];
+    modifierList = field.getModifierList();
+    assertTrue(modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL));
+    assertEquals(modifierList.getParent(), field);
+
+    PsiMethod method = aClass.getMethods()[0];
+    modifierList = method.getModifierList();
+    assertTrue(modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL));
+    assertEquals(modifierList.getParent(), method);
+
+    teardownLoadingFilter();
+  }
+
+  public void testIsInterface(){
+    setupLoadingFilter();
+
+    PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
+    assertFalse(aClass.isInterface());
+
+    PsiClass anInterface = myJavaFacade.findClass("pack.MyInterface1", GlobalSearchScope.allScope(myProject));
+    assertTrue(anInterface.isInterface());
+
+    teardownLoadingFilter();
+  }
+
+  public void testFindFieldByName(){
+    setupLoadingFilter();
+
+    PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
+    PsiField field = aClass.findFieldByName("field1", false);
+    assertNotNull(field);
+
+    teardownLoadingFilter();
+  }
+
+  public void testIsDeprecated(){
+    setupLoadingFilter();
+
+    PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
+    assertFalse(aClass.isDeprecated());
+
+    PsiField field = aClass.findFieldByName("field1", false);
+    assertTrue(field.isDeprecated());
+
+    teardownLoadingFilter();
+  }
+
+  public void testPackageName(){
+    setupLoadingFilter();
+
+    PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
+    String packageName = ((PsiJavaFile)aClass.getContainingFile()).getPackageName();
+    assertEquals("pack", packageName);
+
+    teardownLoadingFilter();
+  }
+
+  public void testFieldType() {
+    setupLoadingFilter();
+
+    PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
+
+    PsiField field1 = aClass.getFields()[0];
+    PsiType type1 = field1.getType();
+
+    PsiField field2 = aClass.getFields()[1];
+    PsiType type2 = field2.getType();
+
+    PsiField field3 = aClass.getFields()[2];
+    PsiType type3 = field3.getType();
+
+    assertEquals("int", type1.getPresentableText());
+    assertEquals("Object[]", type2.getPresentableText());
+    assertEquals("Object[]", type3.getPresentableText());
+
+    assertTrue(type1.equalsToText("int"));
+    assertTrue(type2.equalsToText("java.lang.Object[]"));
+    assertTrue(type3.equalsToText("java.lang.Object[]"));
+
+    assertFalse(type1 instanceof PsiArrayType);
+    assertTrue(type1 instanceof PsiPrimitiveType);
+    assertFalse(type3 instanceof PsiPrimitiveType);
+    assertTrue(type3 instanceof PsiArrayType);
+
+    teardownLoadingFilter();
+  }
+
+  public void testHasInitializer() {
+    setupLoadingFilter();
+
+    PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
+
+    assertTrue(aClass.getFields()[0].hasInitializer());
+    assertFalse(aClass.getFields()[1].hasInitializer());
+    assertFalse(aClass.getFields()[2].hasInitializer());
+
+    teardownLoadingFilter();
+  }
+
+  public void testMethodType() {
+    setupLoadingFilter();
+
+    PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
+
+    PsiMethod method1 = aClass.getMethods()[0];
+    PsiType type1 = method1.getReturnType();
+
+    assertTrue(type1.equalsToText("void"));
+    assertFalse(type1 instanceof PsiArrayType);
+    assertTrue(type1 instanceof PsiPrimitiveType);
+
+    PsiMethod method3 = aClass.getMethods()[2];
+    assertNull(method3.getReturnType());
+
+    teardownLoadingFilter();
+  }
+
+  public void testIsConstructor() {
+    setupLoadingFilter();
+
+    PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
+    PsiMethod method1 = aClass.getMethods()[0];
+    assertFalse(method1.isConstructor());
+
+    teardownLoadingFilter();
+  }
+
+  public void testComponentType() {
+    setupLoadingFilter();
+
+    PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
+
+    PsiField field = aClass.getFields()[2];
+    PsiType type = field.getType();
+    LOG.assertTrue(type instanceof PsiArrayType);
+    PsiType componentType = ((PsiArrayType) type).getComponentType();
+
+    assertTrue(componentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT));
+    assertFalse(componentType instanceof PsiPrimitiveType);
+    assertFalse(componentType instanceof PsiArrayType);
+
+    teardownLoadingFilter();
+  }
+
+  public void testTypeReference() {
+    setupLoadingFilter();
+
+    PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
+
+    PsiField field1 = aClass.getFields()[0];
+    PsiType type1 = field1.getType();
+    assertNull(PsiUtil.resolveClassInType(type1));
+
+    PsiField field2 = aClass.getFields()[1];
+    PsiType type2 = ((PsiArrayType) field2.getType()).getComponentType();
+    assertEquals("Object", type2.getPresentableText());
+
+    PsiField field3 = aClass.getFields()[2];
+    PsiType type3 = ((PsiArrayType) field3.getType()).getComponentType();
+    assertTrue(type3.equalsToText(CommonClassNames.JAVA_LANG_OBJECT));
+
+    teardownLoadingFilter();
+  }
+
+  public void testImportList(){
+    setupLoadingFilter();
+
+    PsiDirectory root = ProjectRootUtil.getAllContentRoots(myProject) [0];
+    VirtualFile child = root.getVirtualFile().findChild("MyClass1.java");
+    assertNotNull(child);
+    PsiJavaFile file = (PsiJavaFile)myPsiManager.findFile(child);
+    PsiImportList list = file.getImportList();
+    assertEquals(file, list.getParent());
+
+    PsiImportStatement[] imports = list.getImportStatements();
+    assertEquals(3, imports.length);
+    assertFalse(imports[0].isOnDemand());
+    assertTrue(imports[1].isOnDemand());
+    imports[2].isOnDemand();
+
+    String ref1 = imports[0].getQualifiedName();
+    String ref2 = imports[1].getQualifiedName();
+    String ref3 = imports[2].getQualifiedName();
+
+    assertEquals("a.b", ref1);
+    assertEquals("c", ref2);
+    assertNull(ref3);
+
+    teardownLoadingFilter();
+  }
+
+  public void testResolveTypeReference() {
+    setupLoadingFilter();
+
+    PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
+
+    PsiType type1 = aClass.getFields()[1].getType();
+    PsiElement target1 = PsiUtil.resolveClassInType(type1);
+    assertNotNull(target1);
+    PsiClass objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(myProject));
+    assertEquals(objectClass, target1);
+
+    PsiType type2 = aClass.getFields()[1].getType();
+    PsiElement target2 = PsiUtil.resolveClassInType(type2);
+    assertNotNull(target2);
+    assertEquals(objectClass, target2);
+
+    teardownLoadingFilter();
+  }
+
+  public void testExtendsList() {
+    setupLoadingFilter();
+
+    PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
+
+    PsiReferenceList list = aClass.getExtendsList();
+
+    PsiClassType[] refs = list.getReferencedTypes();
+    assertEquals(1, refs.length);
+    assertEquals("String", refs[0].getPresentableText());
+
+    teardownLoadingFilter();
+  }
+
+  public void testImplementsList() {
+    setupLoadingFilter();
+
+    PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
+
+    PsiReferenceList list = aClass.getImplementsList();
+
+    PsiClassType[] refs = list.getReferencedTypes();
+    assertEquals(1, refs.length);
+    assertEquals("Runnable", refs[0].getPresentableText());
+
+    teardownLoadingFilter();
+  }
+
+  public void testThrowsList() {
+    setupLoadingFilter();
+
+    PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
+
+    PsiReferenceList list = aClass.getMethods()[0].getThrowsList();
+
+    PsiClassType[] refs = list.getReferencedTypes();
+    assertEquals(2, refs.length);
+    assertEquals("Exception", refs[0].getPresentableText());
+    assertEquals("java.io.IOException", refs[1].getCanonicalText());
+
+    teardownLoadingFilter();
+  }
+
+  public void testParameters() {
+    setupLoadingFilter();
+
+    PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
+    assertNotNull(aClass);
+    PsiMethod[] methods = aClass.getMethods();
+    PsiParameterList list = methods[0].getParameterList();
+
+    PsiParameter[] parameters = list.getParameters();
+    assertEquals(5, parameters.length);
+
+    assertEquals("p1", parameters[0].getName());
+    assertEquals("p2", parameters[1].getName());
+    assertEquals("p3", parameters[2].getName());
+    assertEquals("p4", parameters[3].getName());
+    assertEquals("p5", parameters[4].getName());
+
+    PsiType type1 = parameters[0].getType();
+    assertEquals("int[]", type1.getPresentableText());
+    assertFalse(type1 instanceof PsiPrimitiveType);
+    assertTrue(type1 instanceof PsiArrayType);
+    assertNull(PsiUtil.resolveClassInType(type1));
+
+    PsiType type2 = parameters[1].getType();
+    assertEquals("Object", type2.getPresentableText());
+    assertFalse(type2 instanceof PsiArrayType);
+    assertFalse(type2 instanceof PsiPrimitiveType);
+    PsiClass target2 = PsiUtil.resolveClassInType(type2);
+    assertNotNull(target2);
+    PsiClass objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(myProject));
+    assertEquals(objectClass, target2);
+
+    checkPackAAA(parameters[2].getType());
+    checkPackAAA(parameters[3].getType());
+    checkPackAAA(parameters[4].getType());
+
+    teardownLoadingFilter();
+
+    parameters[0].getModifierList();
+  }
+
+  private static void checkPackAAA(PsiType type) {
+    assertEquals("AAA", type.getPresentableText());
+    assertFalse(type instanceof PsiArrayType);
+    assertFalse(type instanceof PsiPrimitiveType);
+    PsiClass target3 = PsiUtil.resolveClassInType(type);
+    assertNull(target3);
+    assertEquals("pack.AAA", type.getCanonicalText());
+  }
+
+  public void testAnonymousClass() {
+    setupLoadingFilter();
+
+    PsiClass cloneableClass = myJavaFacade.findClass("java.lang.Cloneable", GlobalSearchScope.allScope(myProject));
+    PsiClass[] inheritors = ClassInheritorsSearch.search(cloneableClass, GlobalSearchScope.projectScope(myProject), true).toArray(PsiClass.EMPTY_ARRAY);
+    assertEquals(2, inheritors.length);
+    assertTrue(inheritors[0] instanceof PsiAnonymousClass || inheritors[1] instanceof PsiAnonymousClass);
+    PsiAnonymousClass anonClass = (PsiAnonymousClass)(inheritors[0] instanceof PsiAnonymousClass ? inheritors[0] : inheritors[1]);
+
+    PsiClassType baseClassRef = anonClass.getBaseClassType();
+    assertEquals("Cloneable", baseClassRef.getPresentableText());
+    assertEquals(cloneableClass, baseClassRef.resolve());
+    assertEquals("java.lang.Cloneable", baseClassRef.getCanonicalText());
+
+    teardownLoadingFilter();
+
+    assertTrue(anonClass.getParent() instanceof PsiNewExpression);
+  }
+
+  private void teardownLoadingFilter() {
+    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, getTestRootDisposable());
+  }
+
+  private void setupLoadingFilter() {
+    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, getTestRootDisposable());
+  }
+
+  public void testAnonymousClass2() {
+    setupLoadingFilter();
+
+    PsiClass throwable = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_THROWABLE, GlobalSearchScope.allScope(myProject));
+    PsiClass[] inheritors = ClassInheritorsSearch.search(throwable, GlobalSearchScope.projectScope(myProject), true).toArray(PsiClass.EMPTY_ARRAY);
+    assertEquals(1, inheritors.length);
+    assertTrue(inheritors[0] instanceof PsiAnonymousClass);
+    PsiAnonymousClass anonClass = (PsiAnonymousClass)inheritors[0];
+
+    PsiClassType baseClassRef = anonClass.getBaseClassType();
+    assertEquals("Throwable", baseClassRef.getPresentableText());
+    assertEquals(throwable, baseClassRef.resolve());
+    assertEquals(CommonClassNames.JAVA_LANG_THROWABLE, baseClassRef.getCanonicalText());
+
+    teardownLoadingFilter();
+
+    assertTrue(anonClass.getParent() instanceof PsiNewExpression);
+  }
+
+  public void testLocalClass() {
+    setupLoadingFilter();
+
+    PsiClass cloneableClass = myJavaFacade.findClass("java.lang.Cloneable", GlobalSearchScope.allScope(myProject));
+    PsiClass[] inheritors = ClassInheritorsSearch.search(cloneableClass, GlobalSearchScope.projectScope(myProject), true).toArray(PsiClass.EMPTY_ARRAY);
+    assertEquals(2, inheritors.length);
+    assertTrue(inheritors[0] instanceof PsiAnonymousClass || inheritors[1] instanceof PsiAnonymousClass);
+    PsiClass localClass = inheritors[0] instanceof PsiAnonymousClass ? inheritors[1] : inheritors[0];
+
+    teardownLoadingFilter();
+
+    assertTrue(localClass.getParent() instanceof PsiDeclarationStatement);
+  }
+
+  public void testClassNameModification() {
+    PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
+    assertNotNull(aClass);
+
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      aClass.getNameIdentifier().replace(myJavaFacade.getElementFactory().createIdentifier("NewName"));
+    });
+
+    assertEquals("pack.NewName", aClass.getQualifiedName());
+  }
+
+  public void testModification1() {
+    PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
+    assertNotNull(aClass);
+
+    PsiField field = aClass.getFields()[0];
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      aClass.getNameIdentifier().replace(myJavaFacade.getElementFactory().createIdentifier("NewName"));
+    });
+
+    assertTrue(field.isValid());
+  }
+
+  public void testModification2() {
+    PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
+    ApplicationManager.getApplication().runWriteAction(() -> PsiUtil.setModifierProperty(aClass, PsiModifier.FINAL, true));
+
+
+    PsiClass aClass2 = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
+    assertEquals(aClass, aClass2);
+  }
+
+  public void testModification3() {
+    PsiClass aClass = myJavaFacade.findClass("pack.MyInterface1", GlobalSearchScope.allScope(myProject));
+    TextRange classRange = aClass.getTextRange();
+    String text = aClass.getText();
+
+    BlockSupport blockSupport = myProject.getService(BlockSupport.class);
+    PsiFile psiFile = aClass.getContainingFile();
+    ApplicationManager.getApplication().runWriteAction(() -> blockSupport.reparseRange(psiFile, classRange.getStartOffset(), classRange.getEndOffset(), ""));
+
+    LOG.assertTrue(!aClass.isValid());
+    ApplicationManager.getApplication().runWriteAction(() -> blockSupport.reparseRange(psiFile, classRange.getStartOffset(), classRange.getStartOffset(), text));
+
+
+    aClass = myJavaFacade.findClass("pack.MyInterface1", GlobalSearchScope.allScope(myProject));
+    PsiElement[] children = aClass.getChildren();
+    for (PsiElement child : children) {
+      if (child instanceof PsiModifierList) {
+        PsiElement parent = child.getParent();
+        assertEquals(aClass, parent);
+        PsiModifierList modifierList = aClass.getModifierList();
+        assertEquals(modifierList, child);
+      }
+    }
+
+    PsiJavaFile file = (PsiJavaFile)aClass.getContainingFile();
+    PsiImportList importList = file.getImportList();
+    children = importList.getChildren();
+    int index = 0;
+    for (PsiElement child : children) {
+      if (child instanceof PsiImportStatement) {
+        PsiElement parent = child.getParent();
+        assertEquals(importList, parent);
+        PsiImportStatement statement = importList.getImportStatements()[index++];
+        assertEquals(statement, child);
+      }
+    }
+  }
+
+  public void testRenamePackage() {
+    renamePackage("pack", "renamedPack");
+
+    PsiClass psiClass = myJavaFacade.findClass("renamedPack.MyInterface1", GlobalSearchScope.allScope(myProject));
+    assertNotNull(psiClass);
+  }
+
+  public void testReplaceRootWithSubRoot1() {
+    PsiClass aClass = myJavaFacade.findClass("pack.MyInterface1", GlobalSearchScope.allScope(myProject));
+    PsiFile psiFile = aClass.getContainingFile();
+    assertNotNull(aClass);
+
+    VirtualFile newSourceRoot = psiFile.getVirtualFile().getParent();
+    replaceSourceRoot(newSourceRoot);
+
+    assertEquals("MyInterface1", aClass.getName());
+  }
+
+  public void testReplaceRootWithSubRoot2() {
+    PsiClass aClass = myJavaFacade.findClass("pack.MyInterface1", GlobalSearchScope.allScope(myProject));
+    assertNotNull(aClass);
+
+    VirtualFile newSourceRoot = aClass.getContainingFile().getVirtualFile().getParent();
+    replaceSourceRoot(newSourceRoot);
+
+    assertEquals("MyInterface1", aClass.getName());
+  }
+
+  private void replaceSourceRoot(VirtualFile newSourceRoot) {
+    ApplicationManager.getApplication().runWriteAction(
+      () -> {
+        ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
+        ContentEntry[] content = rootModel.getContentEntries();
+        boolean contentToChangeFound = false;
+        for (ContentEntry contentEntry : content) {
+          SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
+          for (SourceFolder sourceFolder : sourceFolders) {
+            contentEntry.removeSourceFolder(sourceFolder);
+          }
+          VirtualFile contentRoot = contentEntry.getFile();
+          if (contentRoot != null && VfsUtilCore.isAncestor(contentRoot, newSourceRoot, false)) {
+            contentEntry.addSourceFolder(newSourceRoot, false);
+            contentToChangeFound = true;
+          }
+        }
+        assertTrue(contentToChangeFound);
+        rootModel.commit();
+      }
+    );
+  }
+
+  public void testParentIdAssert() {
+    PsiClass jPanelClass = myJavaFacade.findClass("javax.swing.JPanel", GlobalSearchScope.allScope(myProject));
+    PsiClass[] inheritors = ClassInheritorsSearch.search(jPanelClass, GlobalSearchScope.projectScope(myProject), true).toArray(PsiClass.EMPTY_ARRAY);
+    assertEquals(2, inheritors.length);
+    assertTrue(inheritors[0] instanceof PsiAnonymousClass || inheritors[1] instanceof PsiAnonymousClass);
+    PsiClass nonAnonClass = inheritors[0] instanceof PsiAnonymousClass ? inheritors[1] : inheritors[0];
+
+    PsiMethod[] methods = nonAnonClass.getMethods();
+    assertEquals(1, methods.length);
+    PsiTypeElement newType = myJavaFacade.getElementFactory().createTypeElement(PsiTypes.floatType());
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      methods[0].getReturnTypeElement().replace(newType);
+    });
+  }
+
+  public void testParentIdAssertOnExternalChange() throws Exception {
+    PsiDirectory root = ProjectRootUtil.getAllContentRoots(myProject) [0];
+    VirtualFile vFile = root.getVirtualFile().findChild("MyClass1.java");
+
+    PsiJavaFile psiFile = (PsiJavaFile) myPsiManager.findFile(vFile);
+    psiFile.getClasses();
+
+    rewriteFileExternally(vFile, """
+      import a . b;
+      import c.*;
+      import
+
+      class MyClass1{
+        {
+          class Local{
+            public void foo(){
+              new Runnable(){
+                public void run(){
+                  new Throwable(){
+                  };
+                };
+              }
+            }
+          };
+        }
+      }
+
+      class Class2{
+      }
+      """);
+
+    PsiClass myClass = myJavaFacade.findClass("MyClass1", GlobalSearchScope.allScope(myProject));
+    assertNotNull(myClass);
+  }
+
+  public void testCopyableUserDataChild() {
+    PsiClass aClass = myJavaFacade.findClass("pack.MyInterface1", GlobalSearchScope.allScope(myProject));
+    assertNotNull(aClass);
+    PsiFile containingFile = aClass.getContainingFile();
+    CompositeElement element = ((PsiFileImpl)containingFile).calcTreeElement();
+    aClass.putCopyableUserData(TEST_KEY, "TEST");
+    PsiJavaFile fileCopy = (PsiJavaFile)containingFile.copy();
+    PsiClass[] classesCopy = fileCopy.getClasses();
+    assertEquals(1, classesCopy.length);
+    assertNotNull(element);
+    assertEquals("TEST", classesCopy[0].getCopyableUserData(TEST_KEY));
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private static void rewriteFileExternally(VirtualFile vFile, String text) throws IOException {
+    FileUtil.writeToFile(new File(vFile.getPath()), text.getBytes(StandardCharsets.UTF_8));
+    vFile.refresh(false, false);
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private void renamePackage(String packageName, String newPackageName) {
+    PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage(packageName);
+    assertNotNull("Package " + packageName + " not found", aPackage);
+
+    //PsiDirectory dir = aPackage.getDirectories()[0];
+    //to rename dir with classes move is used
+    new RenameProcessor(myProject, aPackage, newPackageName, true, true).run();
+    FileDocumentManager.getInstance().saveAllDocuments();
+  }
+}

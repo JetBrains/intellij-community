@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.regexp.jar
+  modules:
+  - name: intellij.regexp

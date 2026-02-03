@@ -1,0 +1,14 @@
+package a.b.c
+
+import org.*
+
+class A  {
+  def vo<caret> foo() {
+    switch (k){
+
+    }
+  }
+}
+-----
+void
+volatile

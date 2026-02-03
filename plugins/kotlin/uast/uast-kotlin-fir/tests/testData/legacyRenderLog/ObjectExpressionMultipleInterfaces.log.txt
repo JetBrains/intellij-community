@@ -1,0 +1,16 @@
+UFile (package = )
+    UClass (name = I1)
+    UClass (name = I2)
+    UClass (name = AClass)
+        UMethod (name = AClass)
+    UClass (name = A)
+        UField (name = field)
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+            UObjectLiteralExpression
+                UClass (name = null)
+                    UMethod (name = )
+                        UBlockExpression
+                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))
+                                UIdentifier (Identifier (AClass))
+                                USimpleNameReferenceExpression (identifier = AClass, resolvesTo = PsiClass: AClass)
+        UMethod (name = A)

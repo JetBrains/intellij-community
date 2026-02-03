@@ -1,0 +1,37 @@
+<idea-plugin package="com.intellij.byteCodeViewer" allow-bundled-update="true">
+  <name>Bytecode Viewer</name>
+  <id>ByteCodeViewer</id>
+  <category>JVM Tools</category>
+  <description>
+    <![CDATA[
+      Shows the bytecode of a compiled Java class file in the ASM format.
+      <br>
+      To view the bytecode, select a <code>.java</code> or <code>.class</code> file and open <b>View | Show Bytecode</b>.
+      <br>
+      If you select a <code>.java</code> file, make sure that you've compiled it before triggering "Show Bytecode" action.
+     ]]>
+  </description>
+  <vendor>JetBrains</vendor>
+
+  <dependencies>
+    <module name="intellij.java.backend"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint name="classSearcher" interface="com.intellij.byteCodeViewer.ClassSearcher" dynamic="true"/>
+    <extensionPoint name="classFileFinder" interface="com.intellij.byteCodeViewer.BytecodeViewerClassFileFinder" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup id="Bytecode Viewer Errors" displayType="BALLOON" key="notification.group.error.report"/>
+  </extensions>
+
+  <actions>
+    <group id="ByeCodeViewerGroup">
+      <action id="BytecodeViewer" class="com.intellij.byteCodeViewer.ShowBytecodeAction"/>
+      <add-to-group group-id="QuickActions" anchor="after" relative-to-action="QuickJavaDoc"/>
+    </group>
+  </actions>
+
+  <resource-bundle>messages.BytecodeViewerBundle</resource-bundle>
+</idea-plugin>

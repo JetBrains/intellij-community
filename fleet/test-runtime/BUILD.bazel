@@ -1,0 +1,27 @@
+### auto-generated section `build fleet.test.runtime` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "test-runtime",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"]),
+  exports = [
+    "@lib//:junit5",
+    "@lib//:junit5Params",
+    "@lib//:junit5Jupiter",
+    "@lib//:junit5Launcher",
+    "@lib//:hamcrest",
+    "@lib//:kotlin-test-junit5",
+    "@lib//:kotlin-test",
+  ],
+  runtime_deps = [
+    "@lib//:junit5",
+    "@lib//:junit5Params",
+    "@lib//:junit5Jupiter",
+    "@lib//:junit5Launcher",
+    "@lib//:hamcrest",
+    "@lib//:kotlin-test-junit5",
+    "@lib//:kotlin-test",
+  ]
+)
+### auto-generated section `build fleet.test.runtime` end

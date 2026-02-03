@@ -1,0 +1,8 @@
+// "Configure arguments for the feature: multi dollar interpolation" "false"
+// LANGUAGE_VERSION: 2.2
+// APPLY_QUICKFIX: false
+// DISABLE_K2_ERRORS
+
+fun test() {
+    $$""
+}

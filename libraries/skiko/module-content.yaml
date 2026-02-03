@@ -1,0 +1,8 @@
+- name: dist.all/lib/intellij.libraries.skiko.jar
+  modules:
+  - name: intellij.libraries.skiko
+    libraries:
+      jetbrains.skiko.awt.compose:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt/0/skiko-awt-0.jar
+      jetbrains.skiko.awt.runtime.all:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt-runtime-all/0/skiko-awt-runtime-all-0.jar

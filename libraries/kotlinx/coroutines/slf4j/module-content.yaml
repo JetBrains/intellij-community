@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinx.coroutines.slf4j.jar
+  modules:
+  - name: intellij.libraries.kotlinx.coroutines.slf4j
+  library: kotlinx-coroutines-slf4j
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-slf4j/1/kotlinx-coroutines-slf4j-1.jar

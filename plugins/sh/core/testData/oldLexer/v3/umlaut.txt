@@ -1,0 +1,3 @@
+word ('echo')
+WHITE_SPACE (' ')
+word ('ä')

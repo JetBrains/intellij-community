@@ -1,0 +1,15 @@
+PsiJavaFile:UnclosedBracket.java
+  PsiJavaToken:LBRACE('{')
+  PsiWhiteSpace(' ')
+  PsiField:field
+    PsiModifierList:
+      <empty list>
+    PsiTypeElement:int
+      PsiKeyword:int('int')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:field('field')
+    PsiJavaToken:LBRACKET('[')
+    PsiErrorElement:']' expected
+      <empty list>
+  PsiWhiteSpace(' ')
+  PsiJavaToken:RBRACE('}')

@@ -1,0 +1,9 @@
+def foo, bar
+foo =
+   bar =
+       2
+-----
+def foo, bar
+foo =
+bar =
+    2

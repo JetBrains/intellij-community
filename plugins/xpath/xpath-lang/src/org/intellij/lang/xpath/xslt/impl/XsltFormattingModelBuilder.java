@@ -1,0 +1,109 @@
+/*
+ * Copyright 2006 Sascha Weinreuter
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.intellij.lang.xpath.xslt.impl;
+
+import com.intellij.formatting.Alignment;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.CustomFormattingModelBuilder;
+import com.intellij.formatting.DelegatingFormattingModel;
+import com.intellij.formatting.FormattingContext;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Wrap;
+import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.lang.xml.XmlFormattingModelBuilder;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.xml.XmlBlock;
+import com.intellij.psi.formatter.xml.XmlPolicy;
+import com.intellij.psi.xml.XmlTag;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+final class XsltFormattingModelBuilder implements CustomFormattingModelBuilder {
+  private final FormattingModelBuilder myBuilder;
+
+  XsltFormattingModelBuilder() {
+    myBuilder = new XmlFormattingModelBuilder();
+  }
+
+  @Override
+  public boolean isEngagedToFormat(PsiElement context) {
+    final PsiFile file = context.getContainingFile();
+    if (file == null) {
+      return false;
+    } else if (file.getFileType() == XmlFileType.INSTANCE
+            && file.getLanguage() == XMLLanguage.INSTANCE) {
+
+      return XsltSupport.isXsltFile(file);
+    }
+    return false;
+  }
+
+  @Override
+  public @Nullable TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
+    return myBuilder.getRangeAffectingIndent(file, offset, elementAtOffset);
+  }
+
+  @Override
+  public @NotNull FormattingModel createModel(@NotNull FormattingContext formattingContext) {
+    FormattingModel baseModel = myBuilder.createModel(formattingContext);
+    return new DelegatingFormattingModel(baseModel, getDelegatingBlock(formattingContext.getCodeStyleSettings(), baseModel));
+  }
+
+  static Block getDelegatingBlock(final CodeStyleSettings settings, FormattingModel baseModel) {
+    final Block block = baseModel.getRootBlock();
+    if (block instanceof XmlBlock xmlBlock) {
+
+      final XmlPolicy xmlPolicy = new XmlPolicy(settings, baseModel.getDocumentModel()) {
+        @Override
+        public boolean keepWhiteSpacesInsideTag(XmlTag xmlTag) {
+          return super.keepWhiteSpacesInsideTag(xmlTag) || isXslTextTag(xmlTag);
+        }
+
+        @Override
+        public boolean isTextElement(XmlTag tag) {
+          return super.isTextElement(tag) || isXslTextTag(tag) || isXslValueOfTag(tag);
+        }
+      };
+
+      final ASTNode node = xmlBlock.getNode();
+      final Wrap wrap = xmlBlock.getWrap();
+      final Alignment alignment = xmlBlock.getAlignment();
+      final Indent indent = xmlBlock.getIndent();
+      final TextRange textRange = xmlBlock.getTextRange();
+
+      return new XmlBlock(node, wrap, alignment, xmlPolicy, indent, textRange);
+    } else {
+      return block;
+    }
+  }
+
+  private static boolean isXslTextTag(XmlTag xmlTag) {
+    return "text".equals(xmlTag.getLocalName()) && XsltSupport.XSLT_NS.equals(xmlTag.getNamespace());
+  }
+
+  private static boolean isXslValueOfTag(XmlTag xmlTag) {
+    return "value-of".equals(xmlTag.getLocalName()) && XsltSupport.XSLT_NS.equals(xmlTag.getNamespace());
+  }
+
+}

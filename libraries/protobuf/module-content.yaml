@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.protobuf.jar
+  modules:
+  - name: intellij.libraries.protobuf
+  library: protobuf
+  files:
+  - name: $MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java/3/protobuf-java-3.jar

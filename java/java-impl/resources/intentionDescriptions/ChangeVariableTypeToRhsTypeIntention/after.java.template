@@ -1,0 +1,3 @@
+public class X {
+  private ArrayList<String> ss = new ArrayList<>();
+}

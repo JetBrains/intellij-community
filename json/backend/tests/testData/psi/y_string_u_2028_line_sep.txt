@@ -1,0 +1,6 @@
+JsonFile: y_string_u_2028_line_sep.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('" "')
+    PsiElement(])(']')

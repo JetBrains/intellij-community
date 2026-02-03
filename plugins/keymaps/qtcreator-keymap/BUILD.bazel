@@ -1,0 +1,16 @@
+### auto-generated section `build intellij.keymap.qtcreator` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "keymap-qtcreator_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "keymap-qtcreator",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":keymap-qtcreator_resources"]
+)
+### auto-generated section `build intellij.keymap.qtcreator` end

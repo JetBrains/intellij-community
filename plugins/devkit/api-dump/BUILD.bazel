@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.devkit.apiDump` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "api-dump_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "api-dump",
+  module_name = "intellij.devkit.apiDump",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":api-dump_resources"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/workspace/jps",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "//platform/ide-core",
+    "//platform/analysis-api:analysis",
+    "//platform/util",
+    "//platform/workspace/storage",
+    "//platform/projectModel-impl",
+  ]
+)
+### auto-generated section `build intellij.devkit.apiDump` end

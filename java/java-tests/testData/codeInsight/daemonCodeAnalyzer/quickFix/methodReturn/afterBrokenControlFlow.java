@@ -1,0 +1,16 @@
+// "Make 'getDrawerAppsList()' return 'java.util.ArrayList<ResolveInfo>' or ancestor" "true-preview"
+import java.util.*;
+class Test {
+  
+    public static ArrayList<ResolveInfo> getDrawerAppsList(ArrayList<ResolveInfo> appsList) {
+        for (ResolveInfo appInfo : appsList) {
+            if () {
+
+                appsList.remove(appInfo);
+            }
+        }
+
+        return  appsList;
+
+    }
+}

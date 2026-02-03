@@ -1,0 +1,247 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.projectView.impl;
+
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.projectView.impl.ProjectViewFileNestingService.NestingRule;
+import com.intellij.lang.LangBundle;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.table.TableView;
+import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.ElementProducer;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.ui.UI;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
+
+public final class FileNestingInProjectViewDialog extends DialogWrapper {
+  private static final Comparator<NestingRule> RULE_COMPARATOR =
+    Comparator.comparing(o -> o.getParentFileSuffix() + " " + o.getChildFileSuffix());
+
+  private final JBCheckBox myUseNestingRulesCheckBox;
+  private final JPanel myRulesPanel;
+  private final TableView<CombinedNestingRule> myTable;
+
+  private final Action myOkAction = new OkAction() {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      myTable.stopEditing();
+      super.actionPerformed(e);
+    }
+  };
+
+  public FileNestingInProjectViewDialog(final @NotNull Project project) {
+    super(project);
+    setTitle(IdeBundle.message("file.nesting.dialog.title"));
+
+    myUseNestingRulesCheckBox = new JBCheckBox(IdeBundle.message("file.nesting.feature.enabled.checkbox"));
+    myUseNestingRulesCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        UIUtil.setEnabled(myRulesPanel, myUseNestingRulesCheckBox.isSelected(), true);
+      }
+    });
+
+    myTable = createTable();
+    myRulesPanel = createRulesPanel(myTable);
+
+    init();
+  }
+
+  @Override
+  protected String getHelpId() {
+    return "project.view.file.nesting.dialog";
+  }
+
+  @Override
+  protected JComponent createCenterPanel() {
+    final JPanel mainPanel = new JPanel(new BorderLayout(0, JBUIScale.scale(16)));
+    mainPanel.setBorder(JBUI.Borders.emptyTop(8)); // Resulting indent will be 16 = 8 (default) + 8 (set here)
+    mainPanel.add(myUseNestingRulesCheckBox, BorderLayout.NORTH);
+    mainPanel.add(myRulesPanel, BorderLayout.CENTER);
+    return mainPanel;
+  }
+
+  private static JPanel createRulesPanel(final @NotNull TableView<CombinedNestingRule> table) {
+    final ToolbarDecorator toolbarDecorator =
+      ToolbarDecorator.createDecorator(table,
+                                       new ElementProducer<>() {
+                                         @Override
+                                         public boolean canCreateElement() {
+                                           return true;
+                                         }
+
+                                         @Override
+                                         public CombinedNestingRule createElement() {
+                                           return new CombinedNestingRule("", "");
+                                         }
+                                       })
+                      .disableUpDownActions();
+    return UI.PanelFactory.panel(toolbarDecorator.createPanel())
+                          .withLabel(IdeBundle.message("file.nesting.table.title")).moveLabelOnTop()
+                          .resizeY(true)
+                          .createPanel();
+  }
+
+  private static TableView<CombinedNestingRule> createTable() {
+    String childColumn = LangBundle.message("child.file.suffix.column.name");
+    String parentColumn = LangBundle.message("parent.file.suffix.column.name");
+    final ListTableModel<CombinedNestingRule> model = new ListTableModel<>(
+      new ColumnInfo<CombinedNestingRule, String>(parentColumn) {
+        @Override
+        public int getWidth(JTable table) {
+          return JBUIScale.scale(125);
+        }
+
+        @Override
+        public boolean isCellEditable(CombinedNestingRule rule) {
+          return true;
+        }
+
+        @Override
+        public String valueOf(CombinedNestingRule rule) {
+          return rule.parentSuffix;
+        }
+
+        @Override
+        public void setValue(CombinedNestingRule rule, String value) {
+          rule.parentSuffix = value.trim();
+        }
+      },
+      new ColumnInfo<CombinedNestingRule, String>(childColumn) {
+        @Override
+        public boolean isCellEditable(CombinedNestingRule rule) {
+          return true;
+        }
+
+        @Override
+        public String valueOf(CombinedNestingRule rule) {
+          return rule.childSuffixes;
+        }
+
+        @Override
+        public void setValue(CombinedNestingRule rule, String value) {
+          rule.childSuffixes = value;
+        }
+      }
+    );
+
+    final TableView<CombinedNestingRule> table = new TableView<>(model);
+    table.setRowHeight(new JTextField().getPreferredSize().height + table.getRowMargin());
+    return table;
+  }
+
+  @Override
+  protected Action @NotNull [] createLeftSideActions() {
+    return new Action[]{new DialogWrapperAction(IdeBundle.message("file.nesting.reset.to.default.button")) {
+      @Override
+      protected void doAction(ActionEvent e) {
+        resetTable(ProjectViewFileNestingService.loadDefaultNestingRules());
+      }
+    }};
+  }
+
+  @Override
+  protected @NotNull Action getOKAction() {
+    return myOkAction;
+  }
+
+  @Override
+  protected @Nullable ValidationInfo doValidate() {
+    if (!myUseNestingRulesCheckBox.isSelected()) return null;
+
+    List<CombinedNestingRule> items = myTable.getListTableModel().getItems();
+    for (int i = 0; i < items.size(); i++) {
+      final CombinedNestingRule rule = items.get(i);
+      final int row = i + 1;
+      if (rule.parentSuffix.isEmpty()) {
+        return new ValidationInfo(LangBundle.message("dialog.message.parent.file.suffix.must.be.empty.see.row", row), null);
+      }
+      if (rule.childSuffixes.isEmpty()) {
+        return new ValidationInfo(LangBundle.message("dialog.message.child.file.suffix.must.be.empty.see.row", row), null);
+      }
+
+      for (String childSuffix : StringUtil.split(rule.childSuffixes, ";")) {
+        if (rule.parentSuffix.equals(childSuffix.trim())) {
+          return new ValidationInfo(
+            LangBundle.message("dialog.message.parent.child.file.suffixes.must.be.equal.see.row", rule.parentSuffix, row), null);
+        }
+      }
+    }
+
+    return null;
+  }
+
+  public void reset(boolean useFileNestingRules) {
+    myUseNestingRulesCheckBox.setSelected(useFileNestingRules);
+    UIUtil.setEnabled(myRulesPanel, myUseNestingRulesCheckBox.isSelected(), true);
+
+    resetTable(ProjectViewFileNestingService.getInstance().getRules());
+  }
+
+  private void resetTable(final @NotNull List<? extends NestingRule> rules) {
+    final SortedMap<String, CombinedNestingRule> result = new TreeMap<>();
+    for (NestingRule rule : ContainerUtil.sorted(rules, RULE_COMPARATOR)) {
+      final CombinedNestingRule r = result.get(rule.getParentFileSuffix());
+      if (r == null) {
+        result.put(rule.getParentFileSuffix(), new CombinedNestingRule(rule.getParentFileSuffix(), rule.getChildFileSuffix()));
+      }
+      else {
+        //noinspection StringConcatenationInLoop
+        r.childSuffixes += "; " + rule.getChildFileSuffix();
+      }
+    }
+    myTable.getListTableModel().setItems(new ArrayList<>(result.values()));
+  }
+
+  public void apply(final @NotNull Consumer<? super Boolean> useNestingRulesOptionConsumer) {
+    useNestingRulesOptionConsumer.consume(myUseNestingRulesCheckBox.isSelected());
+
+    if (myUseNestingRulesCheckBox.isSelected()) {
+      final SortedSet<NestingRule> result = new TreeSet<>(RULE_COMPARATOR);
+      for (CombinedNestingRule rule : myTable.getListTableModel().getItems()) {
+        for (String childSuffix : StringUtil.split(rule.childSuffixes, ";")) {
+          if (!StringUtil.isEmptyOrSpaces(childSuffix)) {
+            result.add(new NestingRule(rule.parentSuffix, childSuffix.trim()));
+          }
+        }
+      }
+      ProjectViewFileNestingService.getInstance().setRules(new ArrayList<>(result));
+    }
+  }
+
+  private static final class CombinedNestingRule {
+    @NotNull String parentSuffix;
+    @NotNull String childSuffixes; // semicolon-separated, space symbols around each suffix are ignored
+
+    private CombinedNestingRule(@NotNull String parentSuffix, @NotNull String childSuffixes) {
+      this.parentSuffix = parentSuffix;
+      this.childSuffixes = childSuffixes;
+    }
+  }
+}

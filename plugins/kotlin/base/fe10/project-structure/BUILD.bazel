@@ -1,0 +1,38 @@
+### auto-generated section `build kotlin.base.fe10.project-structure` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_project-structure",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ],
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "project-structure_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "project-structure",
+  module_name = "kotlin.base.fe10.project-structure",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":project-structure_resources"],
+  kotlinc_opts = ":custom_project-structure",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/workspace/storage",
+    "//platform/backend/workspace",
+    "//plugins/kotlin/base/project-structure",
+    "//platform/util",
+    "//platform/projectModel-api:projectModel",
+  ]
+)
+### auto-generated section `build kotlin.base.fe10.project-structure` end

@@ -1,0 +1,2 @@
+Text: (name: String,
+<highlight>action: (Int, String) -> Unit</highlight>), Disabled: false, Strikeout: false, Green: true

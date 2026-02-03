@@ -1,0 +1,18 @@
+// "Convert to primary constructor" "true"
+class InitAndParams(x: Int, z: Int) {
+
+    val y: Int = x
+
+    val w: Int
+
+    fun foo(arg: Int) = arg
+
+    val v: Int
+
+    init {
+        w = foo(y)
+        this.v = w + z
+    }
+}
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertSecondaryConstructorToPrimaryInspection$createQuickFix$1

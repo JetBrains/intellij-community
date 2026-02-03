@@ -1,0 +1,11 @@
+interface Run {
+}
+class B {
+}
+interface C {
+}
+class A extends C, Run implements B {
+}
+-----
+class A extends B implements C, Run {
+}

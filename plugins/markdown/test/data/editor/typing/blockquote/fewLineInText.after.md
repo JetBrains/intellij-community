@@ -1,0 +1,3 @@
+> text 
+> <caret>goes
+> other

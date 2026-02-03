@@ -1,0 +1,63 @@
+### auto-generated section `build kotlin.j2k.shared` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_shared",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+  ],
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "shared_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "shared",
+  module_name = "kotlin.j2k.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":shared_resources"],
+  kotlinc_opts = ":custom_shared",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//java/java-impl:impl",
+    "//java/java-indexing-api:indexing",
+    "//java/java-psi-api:psi",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/project-structure",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/util",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/code-insight/utils",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/preferences",
+    "//plugins/kotlin/base/statistics",
+    "//platform/lang-api:lang",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/core-ui",
+  ]
+)
+### auto-generated section `build kotlin.j2k.shared` end

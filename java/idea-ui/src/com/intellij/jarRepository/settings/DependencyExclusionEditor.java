@@ -1,0 +1,161 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.jarRepository.settings;
+
+import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.ui.CheckboxTree;
+import com.intellij.ui.CheckboxTreeBase;
+import com.intellij.ui.CheckboxTreeListener;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.ui.NamedColorUtil;
+import com.intellij.util.ui.tree.TreeUtil;
+import org.eclipse.aether.artifact.Artifact;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.aether.ArtifactDependencyNode;
+
+import javax.swing.JPanel;
+import javax.swing.JTree;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
+class DependencyExclusionEditor {
+  private static final SimpleTextAttributes STRIKEOUT_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, null);
+  private static final SimpleTextAttributes STRIKEOUT_GRAYED_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT,
+                                                                                                   NamedColorUtil.getInactiveTextColor());
+  private final CheckboxTree myDependenciesTree;
+  private final CheckedTreeNode myRootNode;
+  private final JPanel myMainPanel;
+
+  DependencyExclusionEditor(ArtifactDependencyNode root, JPanel parentComponent) {
+    myMainPanel = parentComponent;
+    myRootNode = createDependencyTreeNode(root);
+    CheckboxTreeBase.CheckPolicy policy = new CheckboxTreeBase.CheckPolicy(false, true, true, false);
+    myDependenciesTree = new CheckboxTree(new CheckboxTree.CheckboxTreeCellRenderer() {
+      {
+        myIgnoreInheritance = true;
+      }
+
+      @Override
+      public void customizeRenderer(JTree tree,
+                                    Object value,
+                                    boolean selected,
+                                    boolean expanded,
+                                    boolean leaf,
+                                    int row,
+                                    boolean hasFocus) {
+        if (!(value instanceof CheckedTreeNode)) return;
+
+        Object userObject = ((CheckedTreeNode)value).getUserObject();
+        if (!(userObject instanceof ArtifactDependencyNode node)) return;
+
+        Artifact artifact = node.getArtifact();
+        boolean rejected = node.isRejected();
+        final @NlsSafe String groupArtifactFragment = artifact.getGroupId() + ":" + artifact.getArtifactId();
+        getTextRenderer().append(groupArtifactFragment, !rejected ? SimpleTextAttributes.REGULAR_ATTRIBUTES : STRIKEOUT_ATTRIBUTES, true);
+        final @NlsSafe String versionFragment = ":" + artifact.getVersion();
+        getTextRenderer().append(versionFragment, !rejected ? SimpleTextAttributes.GRAYED_ATTRIBUTES : STRIKEOUT_GRAYED_ATTRIBUTES, true);
+        setToolTipText(rejected ? JavaUiBundle.message("tooltip.text.dependency.was.rejected") : null);
+      }
+    }, myRootNode, policy) {
+      @Override
+      protected void installSpeedSearch() {
+        TreeSpeedSearch.installOn(this, false, treePath -> {
+          Object node = treePath.getLastPathComponent();
+          if (!(node instanceof CheckedTreeNode)) return "";
+          Object data = ((CheckedTreeNode)node).getUserObject();
+          if (!(data instanceof ArtifactDependencyNode)) return "";
+          Artifact artifact = ((ArtifactDependencyNode)data).getArtifact();
+          return artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getVersion();
+        });
+      }
+    };
+    myDependenciesTree.setRootVisible(false);
+    myDependenciesTree.addCheckboxTreeListener(new CheckboxTreeListener() {
+      private boolean myProcessingNodes;
+
+      @Override
+      public void nodeStateChanged(@NotNull CheckedTreeNode node) {
+        if (myProcessingNodes) return;
+
+        myProcessingNodes = true;
+        try {
+          if (!node.isChecked()) {
+            String groupAndArtifact = getGroupAndArtifactId(node);
+            /*
+              exclusion works by groupId and artifactId, so if there are other nodes with same groupId and artifactId, we need to uncheck
+              them to avoid confusion
+            */
+            TreeUtil.treeNodeTraverser(myRootNode).filter(CheckedTreeNode.class).forEach((treeNode) -> {
+              if (getGroupAndArtifactId(treeNode).equals(groupAndArtifact)) {
+                myDependenciesTree.setNodeState(treeNode, false);
+              }
+            });
+          }
+        }
+        finally {
+          myProcessingNodes = false;
+        }
+      }
+    });
+  }
+
+  public @Nullable Set<String> selectExcludedDependencies(List<String> excludedDependencies) {
+    uncheckExcludedNodes(myRootNode, new HashSet<>(excludedDependencies), false);
+    TreeUtil.expandAll(myDependenciesTree);
+    DialogBuilder dialogBuilder =
+      new DialogBuilder(myMainPanel)
+        .title(JavaUiBundle.message("dialog.title.include.transitive.dependencies"))
+        .centerPanel(new JBScrollPane(myDependenciesTree));
+    dialogBuilder.setPreferredFocusComponent(myDependenciesTree);
+
+    if (dialogBuilder.showAndGet()) {
+      return collectUncheckedNodes(myRootNode, new LinkedHashSet<>());
+    }
+    return null;
+  }
+
+  private static void uncheckExcludedNodes(CheckedTreeNode node, Set<String> excluded, boolean parentIsExcluded) {
+    boolean isExcluded = parentIsExcluded || excluded.contains(getGroupAndArtifactId(node));
+    node.setChecked(!isExcluded);
+    Enumeration children = node.children();
+    while (children.hasMoreElements()) {
+      Object child = children.nextElement();
+      uncheckExcludedNodes((CheckedTreeNode)child, excluded, isExcluded);
+    }
+  }
+
+  private static Set<String> collectUncheckedNodes(CheckedTreeNode node, Set<String> result) {
+    if (node.isChecked()) {
+      Enumeration children = node.children();
+      while (children.hasMoreElements()) {
+        Object child = children.nextElement();
+        collectUncheckedNodes((CheckedTreeNode)child, result);
+      }
+    }
+    else {
+      result.add(getGroupAndArtifactId(node));
+    }
+    return result;
+  }
+
+  private static @NotNull String getGroupAndArtifactId(CheckedTreeNode node) {
+    Artifact artifact = ((ArtifactDependencyNode)node.getUserObject()).getArtifact();
+    return artifact.getGroupId() + ":" + artifact.getArtifactId();
+  }
+
+  private static @NotNull CheckedTreeNode createDependencyTreeNode(ArtifactDependencyNode node) {
+    CheckedTreeNode treeNode = new CheckedTreeNode(node);
+    for (ArtifactDependencyNode dependency : node.getDependencies()) {
+      treeNode.add(createDependencyTreeNode(dependency));
+    }
+    return treeNode;
+  }
+}

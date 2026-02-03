@@ -1,0 +1,50 @@
+<html>
+<body>
+Reports suspicious cases of <code>kotlin.jvm.javaClass</code> extension used as a callable reference.
+<p>
+    Using <code>::javaClass</code> syntax does not result in a <code>Class&lt;T&gt;</code> instance,
+    as someone might expect.
+    <br>
+    Instead, it creates a property reference of type <code>KProperty0&lt;Class&lt;T&gt;&gt;</code>,
+    which is almost never correct and can lead to unexpected behavior and hard-to-detect bugs.
+</p>
+<p>
+    Provides a fix to use a direct <code>.javaClass</code> call or <code>::class.java</code> syntax instead.
+</p>
+<p><b>Example 1: Expression receiver</b></p>
+
+<p>When <code>::javaClass</code> is used on an expression, the quick-fix replaces it with a regular <code>.javaClass</code> call:</p>
+
+<pre><code>
+  fun test(a: String) {
+      val classRef = a::javaClass  // KProperty0&lt;Class&lt;String&gt;&gt;
+      println(classRef)            // Prints "property javaClass", not "class java.lang.String"
+  }
+</code></pre>
+
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun test(a: String) {
+      val classRef = a.javaClass  // Class&lt;String&gt;
+      println(classRef)           // Prints "java.lang.String"
+  }
+</code></pre>
+
+<p><b>Example 2: Type receiver</b></p>
+
+<p>When <code>::javaClass</code> is used on a type, the quick-fix replaces it with <code>::class.java</code>:</p>
+<pre><code>
+  fun test() {
+      val classRef = String::javaClass  // KProperty1&lt;String, Class&lt;String&gt;&gt;
+      println(classRef)                 // Prints "property javaClass", not "class java.lang.String"
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun test() {
+      val classRef = String::class.java  // Class&lt;Any&gt;
+      println(classRef)                  // Prints "class java.lang.String"
+  }
+</code></pre>
+</body>
+</html>

@@ -1,0 +1,51 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+//file:noinspection GrPackage
+
+import org.gradle.api.services.BuildService
+import org.gradle.api.services.BuildServiceParameters
+
+@SuppressWarnings('GroovyAssignabilityCheck')
+interface Properties {
+  public static final File outputFile = new File(OUTPUT_PATH)
+}
+
+abstract class OutputPathCollectorService implements BuildService<Params>, AutoCloseable {
+
+  interface Params extends BuildServiceParameters {
+    Property<File> getOutputFile()
+  }
+
+  Set<Task> tasks = new HashSet<Task>()
+
+  void registerTask(Task t) {
+    tasks.add(t)
+  }
+
+  @Override
+  void close() throws Exception {
+    def outputFile = getParameters().outputFile.get()
+    tasks.each { Task task ->
+      def state = task.state
+      def work = state.didWork
+      def fromCache = state.skipped && state.skipMessage == 'FROM-CACHE'
+      def hasOutput = task.outputs.hasOutput
+      if ((work || fromCache) && hasOutput) {
+        task.outputs.files.files.each { outputFile.append(it.path + '\n') }
+      }
+    }
+  }
+}
+
+Provider<OutputPathCollectorService> provider =
+  gradle.sharedServices.registerIfAbsent("outputPathCollectorService", OutputPathCollectorService) {
+    it.parameters.outputFile.set(Properties.outputFile)
+  }
+
+gradle.taskGraph.whenReady { TaskExecutionGraph tg ->
+  tg.allTasks.each { Task t ->
+    t.onlyIf {
+      provider.get().registerTask(t)
+      return true
+    }
+  }
+}

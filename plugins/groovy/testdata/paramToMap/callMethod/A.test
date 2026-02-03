@@ -1,0 +1,3 @@
+def clos = { Map attrs -> println(attrs.i) }
+clos(i: 1)
+clos.call(i: 1)

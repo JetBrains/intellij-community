@@ -1,0 +1,70 @@
+### auto-generated section `build intellij.gradle.native.tooling` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_tooling",
+  jvm_target = "8",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+  ]
+)
+
+resourcegroup(
+  name = "tooling_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "tooling",
+  module_name = "intellij.gradle.native.tooling",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":tooling_resources"],
+  kotlinc_opts = ":custom_tooling",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//plugins/gradle/tooling-extension-api:toolingExtension",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+    "@lib//:gradle",
+    "//platform/object-serializer:objectSerializer-annotations",
+    "//libraries/commons/lang3",
+  ]
+)
+### auto-generated section `build intellij.gradle.native.tooling` end
+
+### auto-generated section `build intellij.gradle.native.tooling.tests` start
+jvm_library(
+  name = "gradle-native-tooling-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "gradle-native-tooling-tests_test_lib",
+  module_name = "intellij.gradle.native.tooling.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:junit4",
+    "//plugins/gradle/native/tooling",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+    "//platform/object-serializer",
+    "//platform/object-serializer:object-serializer_test_lib",
+    "//plugins/gradle/tooling-extension-api:toolingExtension",
+  ],
+  runtime_deps = [":gradle-native-tooling-tests"]
+)
+### auto-generated section `build intellij.gradle.native.tooling.tests` end
+
+### auto-generated section `test intellij.gradle.native.tooling.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "gradle-native-tooling-tests_test",
+  runtime_deps = [":gradle-native-tooling-tests_test_lib"]
+)
+### auto-generated section `test intellij.gradle.native.tooling.tests` end

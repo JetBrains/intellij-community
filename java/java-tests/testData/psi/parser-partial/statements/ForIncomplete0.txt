@@ -1,0 +1,5 @@
+PsiJavaFile:ForIncomplete0.java
+  PsiForStatement
+    PsiKeyword:for('for')
+    PsiErrorElement:'(' expected
+      <empty list>

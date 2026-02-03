@@ -1,0 +1,3 @@
+@interface ff{
+    <caret>
+}

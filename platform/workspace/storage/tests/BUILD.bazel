@@ -1,0 +1,66 @@
+### auto-generated section `build intellij.platform.workspace.storage.tests` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_tests",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi",
+    "com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi",
+  ]
+)
+
+resourcegroup(
+  name = "tests_test_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/analysis-api:analysis",
+    "@lib//:kotlin-test",
+    "//libraries/kryo5",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+  ]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":tests_test_resources"],
+  kotlinc_opts = ":custom_tests",
+  associates = ["//platform/workspace/storage"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/workspace/storage/testEntities:testEntities_test_lib",
+    "//libraries/guava",
+    "//libraries/kotlin/reflect",
+    "//libraries/fastutil",
+    "//platform/analysis-api:analysis",
+    "@lib//:kotlin-test",
+    "//libraries/kryo5",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "@lib//:jet_check",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build intellij.platform.workspace.storage.tests` end
+
+### auto-generated section `test intellij.platform.workspace.storage.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test intellij.platform.workspace.storage.tests` end

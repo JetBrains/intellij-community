@@ -1,0 +1,4 @@
+psutil._psosx
+psutil._pswindows
+psutil._psutil_osx
+psutil._psutil_windows

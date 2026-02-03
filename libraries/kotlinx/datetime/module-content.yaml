@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinx.datetime.jar
+  modules:
+  - name: intellij.libraries.kotlinx.datetime
+  library: kotlinx-datetime-jvm
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-datetime-jvm/0/kotlinx-datetime-jvm-0.jar

@@ -1,0 +1,1 @@
+public enum Foooooo { private Fooo<caret> }

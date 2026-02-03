@@ -1,0 +1,26 @@
+<component name="libraryTable">
+  <library name="kodein-di-jvm" type="repository">
+    <properties maven-id="org.kodein.di:kodein-di-jvm:7.26.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/kodein/di/kodein-di-jvm/7.26.1/kodein-di-jvm-7.26.1.jar">
+          <sha256sum>01c5a3fc5c63d196d5949442bde1b014519c07ca7b9fa2d4ee38827ed6a6c98e</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/kodein/type/kaverit-jvm/2.10.0/kaverit-jvm-2.10.0.jar">
+          <sha256sum>01f3fdf938081f2702d62bd5d78a42651e37643e2fb47e2d5e52ff5772912a11</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/kodein/di/kodein-di-jvm/7.26.1/kodein-di-jvm-7.26.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/kodein/type/kaverit-jvm/2.10.0/kaverit-jvm-2.10.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/kodein/di/kodein-di-jvm/7.26.1/kodein-di-jvm-7.26.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/kodein/type/kaverit-jvm/2.10.0/kaverit-jvm-2.10.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

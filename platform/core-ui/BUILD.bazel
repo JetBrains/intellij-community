@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.platform.core.ui` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "core-ui_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "core-ui",
+  module_name = "intellij.platform.core.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":core-ui_resources"],
+  deps = [
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/util:util-ui",
+    "@lib//:kotlin-stdlib",
+    "//libraries/hash4j",
+  ]
+)
+### auto-generated section `build intellij.platform.core.ui` end

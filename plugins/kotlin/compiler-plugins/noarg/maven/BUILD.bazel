@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.kotlin.compilerPlugins.noarg.maven` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "maven_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "maven",
+  module_name = "intellij.kotlin.compilerPlugins.noarg.maven",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":maven_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-noarg-compiler-plugin",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/jps",
+    "//plugins/kotlin/maven",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/maven",
+    "//plugins/maven",
+  ]
+)
+### auto-generated section `build intellij.kotlin.compilerPlugins.noarg.maven` end

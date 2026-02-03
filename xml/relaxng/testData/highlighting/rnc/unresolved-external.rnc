@@ -1,0 +1,2 @@
+
+foo = external "<error>doesntexist.rnc</error>"

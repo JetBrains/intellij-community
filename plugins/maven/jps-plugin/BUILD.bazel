@@ -1,0 +1,60 @@
+### auto-generated section `build intellij.maven.jps` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "jps_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jps",
+  module_name = "intellij.maven.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":jps_resources"],
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "//jps/model-api:model",
+    "//jps/model-impl",
+    "//platform/util",
+    "//jps/jps-builders:build",
+    "//jps/model-serialization",
+    "//libraries/plexus-utils",
+    "//platform/util/jdom",
+    "//libraries/hash4j",
+  ]
+)
+
+jvm_library(
+  name = "jps_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  associates = [":jps"],
+  deps = [
+    "//jps/model-api:model",
+    "//jps/model-impl",
+    "//platform/util",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//jps/jps-builders:build",
+    "//jps/model-serialization",
+    "//libraries/plexus-utils",
+    "//jps/model-serialization:model-serialization-tests_test_lib",
+    "//platform/util/jdom",
+    "//jps/jps-builders:build-tests_test_lib",
+    "//libraries/hash4j",
+    "@lib//:junit5",
+  ]
+)
+### auto-generated section `build intellij.maven.jps` end
+
+### auto-generated section `test intellij.maven.jps` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "jps_test",
+  runtime_deps = [":jps_test_lib"]
+)
+### auto-generated section `test intellij.maven.jps` end

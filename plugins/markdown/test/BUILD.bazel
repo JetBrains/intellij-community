@@ -1,0 +1,113 @@
+### auto-generated section `build intellij.markdown.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "tests_test_resources",
+  srcs = glob(["data/**/*"]),
+  strip_prefix = "data"
+)
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/markdown/core:markdown",
+    "//plugins/markdown/fenceInjection",
+    "//plugins/markdown/frontmatter",
+    "//plugins/markdown/frontmatter/toml",
+    "//platform/core-impl",
+    "//plugins/markdown/frontmatter/yaml",
+    "//platform/editor-ui-ex:editor-ex",
+    "//plugins/markdown/images",
+    "//plugins/markdown/model",
+    "//plugins/markdown/spellchecker",
+    "//plugins/markdown/xml",
+    "//platform/usageView",
+    "//spellchecker",
+    "//plugins/yaml",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/built-in-server-api:builtInServer",
+    "//platform/core-ui",
+    "//xml/xml-parser:parser",
+    "//platform/lang-impl",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//libraries/jsoup",
+    "//libraries/jcef",
+    "//platform/util-ex",
+    "//libraries/markdown",
+    "//plugins/toml",
+    "//plugins/toml/core",
+    "//plugins/yaml/backend",
+  ]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "intellij.markdown.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":tests_test_resources"],
+  deps = [
+    "//plugins/markdown/core:markdown",
+    "//plugins/markdown/core/backend",
+    "//plugins/markdown/fenceInjection",
+    "//plugins/markdown/frontmatter",
+    "//plugins/markdown/frontmatter/toml",
+    "//platform/core-impl",
+    "//plugins/markdown/frontmatter/yaml",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/editor-ui-ex:editor-ex",
+    "//plugins/markdown/images",
+    "//plugins/markdown/model",
+    "//plugins/markdown/spellchecker",
+    "//plugins/markdown/xml",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//platform/usageView",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
+    "//xml/xml-psi-api:psi",
+    "//plugins/yaml",
+    "//plugins/yaml:yaml_test_lib",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/built-in-server-api:builtInServer",
+    "//platform/core-ui",
+    "//xml/xml-parser:parser",
+    "//platform/lang-impl",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//xml/tests:tests_test_lib",
+    "//xml/langInjection",
+    "//platform/platform-tests:tests_test_lib",
+    "//libraries/jsoup",
+    "//libraries/jcef",
+    "@lib//:assert_j",
+    "//platform/util-ex",
+    "//libraries/markdown",
+    "//plugins/toml",
+    "//plugins/toml/core",
+    "//plugins/yaml/backend",
+    "//plugins/yaml/backend:backend_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//xml/testFramework",
+    "//platform/lang-api:lang",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build intellij.markdown.tests` end
+
+### auto-generated section `test intellij.markdown.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test intellij.markdown.tests` end

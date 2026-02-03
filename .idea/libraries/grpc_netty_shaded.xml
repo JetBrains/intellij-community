@@ -1,0 +1,31 @@
+<component name="libraryTable">
+  <library name="grpc-netty-shaded" type="repository">
+    <properties maven-id="io.grpc:grpc-netty-shaded:1.73.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.73.0/grpc-netty-shaded-1.73.0.jar">
+          <sha256sum>8328289ba6b73445e982a1cadf8e651ea65354e288c825a43e7c77f16da8a056</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-util/1.73.0/grpc-util-1.73.0.jar">
+          <sha256sum>b7df6cbcc30b7a3219f06483a9a9d320a431beda8a1ace5b16d879f84112373f</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="io.grpc:grpc-api" />
+        <dependency maven-id="io.grpc:grpc-core" />
+        <dependency maven-id="org.codehaus.mojo:animal-sniffer-annotations" />
+        <dependency maven-id="com.google.guava:guava" />
+        <dependency maven-id="com.google.errorprone:error_prone_annotations" />
+        <dependency maven-id="io.perfmark:perfmark-api" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.73.0/grpc-netty-shaded-1.73.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-util/1.73.0/grpc-util-1.73.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.73.0/grpc-netty-shaded-1.73.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-util/1.73.0/grpc-util-1.73.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

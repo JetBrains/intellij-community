@@ -1,0 +1,13 @@
+// FIR_IDENTICAL
+// HIGHLIGHT_WARNINGS
+// WITH_COROUTINES
+package test
+
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+
+fun CoroutineScope.test() {
+    launch(coroutineContext.minusKey(Job)) {}
+}
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutineContextWithJobInspection

@@ -1,0 +1,3 @@
+default namespace = "http://www.w3.org/1999/xhtml"
+include "html5-svg-mathml.rnc"
+include "html5/html5full-rdfa.rnc"

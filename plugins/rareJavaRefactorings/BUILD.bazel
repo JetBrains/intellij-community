@@ -1,0 +1,75 @@
+### auto-generated section `build intellij.java.rareRefactorings` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "java-rareRefactorings_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "java-rareRefactorings",
+  module_name = "intellij.java.rareRefactorings",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":java-rareRefactorings_resources"],
+  deps = [
+    "//java/java-impl:impl",
+    "//java/java-indexing-api:indexing",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//java/openapi:java",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/usageView",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//libraries/stream",
+    "//libraries/fastutil",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
+)
+
+jvm_library(
+  name = "java-rareRefactorings_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [":java-rareRefactorings"],
+  deps = [
+    "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
+    "//java/java-indexing-api:indexing",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//java/testFramework",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//java/openapi:java",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/usageView",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//libraries/stream",
+    "//libraries/fastutil",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
+)
+### auto-generated section `build intellij.java.rareRefactorings` end
+
+### auto-generated section `test intellij.java.rareRefactorings` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "java-rareRefactorings_test",
+  runtime_deps = [":java-rareRefactorings_test_lib"]
+)
+### auto-generated section `test intellij.java.rareRefactorings` end

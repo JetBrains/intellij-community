@@ -1,0 +1,47 @@
+### auto-generated section `build intellij.java.impl.inspections` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "impl-inspections_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "impl-inspections",
+  module_name = "intellij.java.impl.inspections",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":impl-inspections_resources"],
+  deps = [
+    "//java/openapi:java",
+    "//java/java-analysis-impl:analysis-impl",
+    "//libraries/stream",
+    "//java/java-impl:impl",
+    "//java/java-indexing-api:indexing",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//libraries/fastutil",
+    "//platform/ide-core-impl",
+    "//java/compiler/openapi:java-compiler",
+    "//libraries/asm",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/util/jdom",
+    "//platform/usageView",
+    "//platform/backend/workspace",
+    "//platform/core-ui",
+    "//platform/util/text-matching",
+    "//java/codeserver/highlighting",
+    "//java/codeserver/core",
+    "//platform/workspace/storage",
+    "//java/java-syntax:syntax",
+  ]
+)
+### auto-generated section `build intellij.java.impl.inspections` end

@@ -1,0 +1,21 @@
+package bugs
+
+class GroovyReformatBUG {
+    def test() {
+        call( //comment
+'''
+hi
+''')
+    }
+}
+-----
+package bugs
+
+class GroovyReformatBUG {
+  def test() {
+    call( //comment
+        '''
+hi
+''')
+  }
+}

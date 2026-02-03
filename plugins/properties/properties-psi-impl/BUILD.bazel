@@ -1,0 +1,47 @@
+### auto-generated section `build intellij.properties.backend.psi` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "backend-psi_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend-psi",
+  module_name = "intellij.properties.backend.psi",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend-psi_resources"],
+  deps = [
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/properties/properties-psi-api:psi",
+    "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/analysis-api:analysis",
+    "//xml/xml-psi-api:psi",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/refactoring",
+    "//platform/platform-impl:ide-impl",
+    "//platform/indexing-impl",
+    "//platform/ide-core-impl",
+    "//platform/analysis-impl",
+    "//platform/lang-impl",
+    "//platform/util/nanoxml",
+    "//libraries/fastutil",
+    "//platform/core-ui",
+    "//platform/util/jdom",
+    "//plugins/properties/properties-common:properties",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/lang-api:lang",
+  ],
+  exports = [
+    "//plugins/properties/properties-psi-api:psi",
+    "//plugins/properties/properties-common:properties",
+  ],
+  runtime_deps = ["//platform/backend"]
+)
+### auto-generated section `build intellij.properties.backend.psi` end

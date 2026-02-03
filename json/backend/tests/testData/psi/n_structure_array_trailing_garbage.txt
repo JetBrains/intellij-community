@@ -1,0 +1,8 @@
+JsonFile: n_structure_array_trailing_garbage.json
+  JsonArray
+    PsiElement([)('[')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1')
+    PsiElement(])(']')
+  JsonReferenceExpression
+    PsiElement(IDENTIFIER)('x')

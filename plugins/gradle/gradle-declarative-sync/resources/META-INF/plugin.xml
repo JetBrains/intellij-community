@@ -1,0 +1,25 @@
+<idea-plugin implementation-detail="true">
+  <name>Gradle Declarative Sync</name>
+  <id>com.intellij.gradle.declarativeSync</id>
+  <category>Build Tools</category>
+  <description>
+    <![CDATA[
+    Plugin provides static project model creation for Declarative Gradle projects
+    ]]>
+  </description>
+  <vendor>JetBrains</vendor>
+
+  <depends>com.intellij.java</depends>
+  <depends>com.intellij.gradle</depends>
+  <depends>org.jetbrains.idea.gradle.dsl</depends>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <syncContributor implementation="com.intellij.gradle.declarativeSync.GradleDeclarativeSyncContributor"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="gradle.declarative.preimport.only" defaultValue="false" description="Show only the declarative Gradle pre-import stage"/>
+    <registryKey key="gradle.declarative.preimport.add.transitive.library.dependencies" defaultValue="false" description="Tries to add transitive library dependencies to the project model"/>
+  </extensions>
+
+</idea-plugin>

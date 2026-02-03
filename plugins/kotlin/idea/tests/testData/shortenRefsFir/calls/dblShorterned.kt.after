@@ -1,0 +1,10 @@
+class X {
+    fun oldFun(p: Any) {
+    }
+
+    fun newFun(p: Any){}
+}
+
+fun X.foo() {
+    oldFun(toString())
+}

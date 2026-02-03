@@ -1,0 +1,315 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <module value="com.intellij.modules.kotlin.k2"/>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.java-capable"/>
+  </dependencies>
+
+  <xi:include href="/META-INF/analysis-api/analysis-api-fir.xml"/> <!-- comes from the Kotlin compiler -->
+
+  <xi:include href="navigation.xml"/>
+  <xi:include href="refactorings.xml"/>
+  <xi:include href="indices.xml"/>
+  <xi:include href="file-types.xml"/>
+  <xi:include href="language.xml"/>
+  <xi:include href="formatter.xml"/>
+  <xi:include href="jps.xml"/>
+  <xi:include href="caches.xml"/>
+  <xi:include href="kotlin-core.xml"/>
+  <xi:include href="searching-base.xml"/>
+  <xi:include href="statistics.xml"/>
+  <xi:include href="kotlin.highlighting.shared.xml"/>
+  <xi:include href="light-classes.xml"/>
+  <xi:include href="parcelize.k2.xml"/>
+  <xi:include href="jvm-debugger.xml"/>
+  <xi:include href="jvm-debugger-k2.xml"/>
+  <xi:include href="dep-spellchecker.xml"/>
+  <xi:include href="scripting-v1.xml"/>
+  <xi:include href="native.xml"/>
+  <xi:include href="native-k2.xml"/>
+  <xi:include href="facets-base.xml"/>
+  <xi:include href="jvm.xml"/>
+  <xi:include href="searching-k2.xml"/>
+  <xi:include href="intellij.kotlin.base.codeInsight.minimal.xml"/>
+
+  <xi:include href="extensions.xml"/>
+
+  <xi:include href="ultimate-plugin.k2.xml">
+    <xi:fallback/>
+  </xi:include>
+
+  <xi:include href="command-completion-k2.xml">
+    <xi:fallback/>
+  </xi:include>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <bundledFirCompilerPluginProvider
+            implementation="org.jetbrains.kotlin.idea.fir.extensions.MainByRegistrarContentBundledFirCompilerPluginProvider"
+            order="first"/>
+
+    <bundledFirCompilerPluginProvider
+            implementation="org.jetbrains.kotlin.idea.fir.extensions.FromKotlinDistForIdeByNameFallbackBundledFirCompilerPluginProvider"
+            order="last"/>
+
+    <firCompilerPluginConfigurationProvider
+            implementation="org.jetbrains.kotlin.idea.fir.extensions.DefaultParcelizeFirCompilerPluginConfigurationForIdeProvider" 
+            order="last"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.uast">
+    <uastLanguagePlugin implementation="org.jetbrains.uast.kotlin.FirKotlinUastLanguagePlugin"/>
+    <analysis.uastAnalysisPlugin implementation="org.jetbrains.uast.kotlin.FirKotlinUastAnalysisPlugin"/>
+    <generate.uastCodeGenerationPlugin implementation="org.jetbrains.uast.kotlin.IdeaFirKotlinUastCodeGenerationPlugin"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <resolveScopeEnlarger implementation="org.jetbrains.kotlin.idea.base.analysis.builtins.KotlinBuiltInsResolveScopeEnlarger" />
+
+    <applicationActivity implementation="org.jetbrains.kotlin.idea.base.plugin.K2UnsupportedPluginsNotificationActivity"/>
+    <notificationGroup id="Plugins Incompatible With Kotlin Plugin in K2 Mode" displayType="BALLOON" bundle="messages.KotlinBasePluginBundle" key="plugins.incompatible.with.k2.title"/>
+
+    <lang.parserDefinition language="kotlin" implementationClass="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IDEKotlinK2KotlinParserDefinition"/>
+
+    <projectService serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider"
+                    serviceImplementation="org.jetbrains.kotlin.idea.fir.extensions.KtCompilerPluginsProviderIdeImpl"/>
+    <compilableFileTypesProvider implementation="org.jetbrains.kotlin.idea.jvm.shared.compiler.KotlinCompilableFileTypesProvider" />
+    <!-- fir-specific -->
+    <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider"
+                        serviceImplementation="org.jetbrains.kotlin.idea.fir.plugin.K2KotlinPluginModeProvider"/>
+    <applicationService serviceInterface="org.jetbrains.kotlin.idea.codeInsight.overrideImplement.OverrideImplementFacility"
+                        serviceImplementation="org.jetbrains.kotlin.idea.core.overrideImplement.OverrideImplementFacilityImpl"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService"
+            serviceImplementation="org.jetbrains.kotlin.idea.fir.FirLibrarySourceScopeService"/>
+
+    <applicationService serviceInterface="org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService"
+                        serviceImplementation="org.jetbrains.uast.kotlin.internal.FirIdeaKotlinUastResolveProviderService"/>
+    <applicationService serviceInterface="org.jetbrains.uast.kotlin.FirKotlinUastResolveProviderService"
+                    serviceImplementation="org.jetbrains.uast.kotlin.internal.FirIdeaKotlinUastResolveProviderService"/>
+    <applicationService serviceInterface="org.jetbrains.uast.kotlin.internal.FirKotlinUastLibraryPsiProviderService"
+                        serviceImplementation="org.jetbrains.uast.kotlin.internal.FirKotlinUastLibraryPsiProviderService$Default"/>
+
+    <registryKey key="kotlin.fir.uast.force.uinjectionhost"
+                 description="Whether to convert `KtStringTemplateExpression` to `KotlinStringTemplateUPolyadicExpression` in all cases"
+                 defaultValue="true"
+                 restartRequired="false"/>
+
+    <registryKey key="kotlin.k2.only.bundled.compiler.plugins.enabled"
+                 description="Allow only bundled K2 compiler plugins to be used"
+                 defaultValue="true"
+                 restartRequired="false"/>
+
+    <registryKey key="kotlin.k2.show.fir.statusbar.icon"
+                 description="Show K2 mode tree icon in the status bar"
+                 defaultValue="false"
+                 restartRequired="false"/>
+
+    <!-- shared completion -->
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.completion.implCommon.LookupCancelService"/>
+    <!-- k2 completion -->
+    <lookup.charFilter implementation="org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionCharFilter"/>
+    <completion.contributor language="kotlin"
+                            id="KotlinCompletionContributor"
+                            order="first"
+                            implementationClass="org.jetbrains.kotlin.idea.completion.KotlinFirCompletionContributor"/>
+
+    <completion.contributor language="kotlin"
+                            order="last, before default"
+                            implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.KotlinChainCompletionContributor"/>
+
+    <registryKey key="kotlin.k2.chain.completion.enabled"
+                 description="Allow chained completion items in Kotlin"
+                 defaultValue="true"
+                 restartRequired="true"/>
+
+    <registryKey key="kotlin.k2.dot.add.enabled"
+                 description="Allow adding '.' to completion lookup"
+                 defaultValue="true"
+                 restartRequired="false"/>
+
+    <registryKey key="kotlin.k2.smart.completion.enabled"
+                 description="Enable smart completion for Kotlin in K2 mode"
+                 defaultValue="true"
+                 restartRequired="true"/>
+
+    <registryKey key="kotlin.k2.parallel.completion.enabled"
+                 description="Allow Kotlin contributors to run in parallel"
+                 defaultValue="true"
+                 restartRequired="false"/>
+
+    <registryKey key="kotlin.k2.complete.top.level.packages"
+                 description="Allows completion of top level packages"
+                 defaultValue="true"
+                 restartRequired="false"/>
+
+    <weigher key="proximity" implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinxLibrariesWeigher"
+             id="kotlin.preferKotlinx"
+             order="after sameModule, before knownElement"/>
+
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.completion.FirCompletionDummyIdentifierProviderService"
+                        serviceInterface="org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService"/>
+
+    <!-- -->
+    <codeInsight.typeInfo language="kotlin"
+                          implementationClass="org.jetbrains.kotlin.idea.codeInsight.KotlinHighLevelExpressionTypeProvider"/>
+
+    <codeInsight.implementMethod language="kotlin" implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementMembersHandler"/>
+    <codeInsight.overrideMethod language="kotlin" implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.KtOverrideMembersHandler"/>
+
+    <codeInsight.parameterInfo language="kotlin"
+                               implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelFunctionParameterInfoHandler"/>
+    <codeInsight.parameterInfo language="kotlin"
+                               implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelLambdaParameterInfoHandler"/>
+    <codeInsight.parameterInfo language="kotlin"
+                               implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelArrayAccessParameterInfoHandler"/>
+    <codeInsight.parameterInfo language="kotlin"
+                               implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelClassTypeArgumentInfoHandler"/>
+    <codeInsight.parameterInfo language="kotlin"
+                               implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelFunctionTypeArgumentInfoHandler"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.resolveScopeEnlarger"
+                    interface="org.jetbrains.kotlin.idea.base.projectStructure.KotlinResolveScopeEnlarger"/>
+  </extensionPoints>
+
+
+  <extensions defaultExtensionNs="com.intellij">
+    <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.JSLibraryType"/>
+    <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.WasmJsLibraryType"/>
+    <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.WasmWasiLibraryType"/>
+  </extensions>
+
+
+  <extensions defaultExtensionNs="com.intellij">
+    <iconProvider implementation="org.jetbrains.kotlin.idea.FirKotlinIconProvider"/>
+
+    <projectService serviceInterface="org.jetbrains.kotlin.load.kotlin.MetadataFinderFactory"
+                    serviceImplementation="org.jetbrains.kotlin.idea.vfilefinder.IdeVirtualFileFinderFactory"/>
+    <projectService serviceInterface="org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory"
+                    serviceImplementation="org.jetbrains.kotlin.idea.vfilefinder.IdeVirtualFileFinderFactory"/>
+
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.PluginStartupActivity"/>
+    <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.update.KotlinPluginUpdateCheckerStartActivity"/>
+
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService"/>
+
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.KotlinLibraryToSourceAnalysisStateComponent"/>
+
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.util.FirPluginOracleService"
+                    serviceImplementation="org.jetbrains.kotlin.idea.util.FirPluginOracleServiceFirImpl"/>
+
+    <!--suppress LightServiceMigrationXML -->
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService"/>
+
+    <lang.importOptimizer language="kotlin" implementationClass="org.jetbrains.kotlin.idea.imports.KotlinFirImportOptimizer"/>
+
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressionChecker"
+            serviceImplementation="org.jetbrains.kotlin.idea.inspections.suppress.KotlinK2SuppressionChecker"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <buildProcess.parametersProvider implementation="org.jetbrains.kotlin.idea.jvm.shared.compiler.configuration.KotlinBuildProcessParametersProvider"/>
+
+    <configurationType implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationType"/>
+    <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer"/>
+  </extensions>
+
+  <content namespace="jetbrains">
+    <module name="intellij.kotlin.base.analysis.platform"/>
+    <module name="intellij.kotlin.base.externalSystem"/>
+    <module name="intellij.kotlin.analysis.platform"/>
+    <module name="intellij.kotlin.codeInsight.base"/>
+    <module name="intellij.kotlin.projectStructure"/>
+    <module name="intellij.kotlin.scripting"/>
+
+    <module name="intellij.kotlin.copyright"/>
+    <module name="intellij.kotlin.coverage"/>
+    <module name="intellij.kotlin.i18n"/>
+    <module name="intellij.kotlin.git"/>
+    <module name="intellij.kotlin.grazie"/>
+    <module name="intellij.kotlin.gradle.tooling"/>
+    <module name="intellij.kotlin.maven"/>
+    <module name="intellij.kotlin.completion.ml"/>
+    <module name="intellij.kotlin.runConfigurations.junit"/>
+    <module name="intellij.kotlin.runConfigurations.testng"/>
+    <module name="intellij.kotlin.runConfigurations.jvm"/>
+
+    <module name="intellij.kotlin.gradle.gradle"/>
+    <module name="intellij.kotlin.gradle.codeInsight.common"/>
+    <module name="intellij.kotlin.gradle.codeInsight.groovy"/>
+    <module name="intellij.kotlin.gradle.codeInsight.toml"/>
+    <module name="intellij.kotlin.gradle.codeInsight.toml.k2"/>
+    <module name="kotlin.gradle.gradle-java"/>
+    <module name="intellij.kotlin.gradle.java"/>
+    <module name="kotlin.gradle.scripting.shared"/>
+    <module name="intellij.kotlin.gradle.scripting"/>
+
+    <module name="intellij.kotlin.onboarding"/>
+    <module name="intellij.kotlin.onboarding.gradle"/>
+    <module name="intellij.kotlin.onboarding.maven"/>
+
+    <module name="intellij.kotlin.projectWizard.idea"/>
+    <module name="intellij.kotlin.projectWizard.gradle"/>
+    <module name="intellij.kotlin.projectWizard.maven"/>
+    <module name="intellij.kotlin.projectWizard.compose"/>
+
+    <module name="intellij.kotlin.featuresTrainer"/>
+
+    <module name="intellij.kotlin.jvm.decompiler"/>
+
+    <module name="kotlin.jvm.shared"/>
+    <module name="intellij.kotlin.jvm"/>
+
+    <module name="intellij.kotlin.base.scripting"/>
+    <module name="intellij.kotlin.base.scripting.shared"/>
+
+    <module name="kotlin.code-insight.intentions.shared"/>
+    <module name="kotlin.code-insight.inspections.shared"/>
+    <module name="kotlin.code-insight.live-templates.shared"/>
+    <module name="intellij.kotlin.codeInsight.fixes"/>
+    <module name="intellij.kotlin.codeInsight.intentions"/>
+    <module name="intellij.kotlin.codeInsight.inspections"/>
+    <module name="intellij.kotlin.codeInsight"/>
+    <module name="intellij.kotlin.codeInsight.liveTemplates"/>
+    <module name="intellij.kotlin.codeInsight.postfixTemplates"/>
+    <module name="intellij.kotlin.codeInsight.structuralSearch"/>
+
+    <module name="intellij.kotlin.jvm.debugger.evaluation"/>
+
+    <module name="intellij.kotlin.searching"/>
+    <module name="intellij.kotlin.refactorings"/>
+    <module name="intellij.kotlin.refactorings.move"/>
+    <module name="intellij.kotlin.refactorings.rename"/>
+
+    <module name="intellij.kotlin.navigation"/>
+    <module name="intellij.kotlin.codeInsight.lineMarkers"/>
+
+    <module name="intellij.kotlin.highlighting"/>
+
+    <module name="intellij.kotlin.compilerReferenceIndex"/>
+
+    <module name="intellij.kotlin.compilerPlugins.assignment.fixes"/>
+    <module name="intellij.kotlin.compilerPlugins.scripting"/>
+    <module name="intellij.kotlin.compilerPlugins.support.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.allopen.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.noarg.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.samWithReceiver.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.kapt"/>
+    <module name="intellij.kotlin.compilerPlugins.serialization"/>
+    <module name="intellij.kotlin.compilerPlugins.serialization.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.dataframe.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.lombok.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.assignment.maven"/>
+
+    <module name="intellij.kotlin.injection"/>
+    <module name="kotlin.base.injection"/>
+
+    <module name="intellij.kotlin.j2k"/>
+    <module name="intellij.kotlin.internal"/>
+
+    <module name="intellij.kotlin.performanceExtendedPlugin"/>
+  </content>
+</idea-plugin>

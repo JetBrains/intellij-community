@@ -1,0 +1,67 @@
+
+<!--
+     File isocyr2.ent produced by the XSL script entities.xsl
+     from input data in unicode.xml.
+
+     Please report any errors to David Carlisle
+     via the public W3C list www-math@w3.org.
+
+     The numeric character values assigned to each entity
+     (should) match the Unicode assignments in Unicode 4.0.
+
+     Entity names in this file are derived from files carrying the
+     following notice:
+
+     (C) International Organization for Standardization 1986
+     Permission to copy in any form is granted for use with
+     conforming SGML systems and applications as defined in
+     ISO 8879, provided this notice is included in all copies.
+
+-->
+
+
+<!-- 
+     Version: $Id: isocyr2.ent,v 1.2 2003/12/08 15:14:43 davidc Exp $
+
+       Public identifier: ISO 8879:1986//ENTITIES Non-Russian Cyrillic//EN//XML
+       System identifier: http://www.w3.org/2003/entities/iso8879/isocyr2.ent
+
+     The public identifier should always be used verbatim.
+     The system identifier may be changed to suit local requirements.
+
+     Typical invocation:
+
+       <!ENTITY % isocyr2 PUBLIC
+         "ISO 8879:1986//ENTITIES Non-Russian Cyrillic//EN//XML"
+         "http://www.w3.org/2003/entities/iso8879/isocyr2.ent"
+       >
+       %isocyr2;
+
+-->
+
+<!ENTITY DJcy             "&#x00402;" ><!--CYRILLIC CAPITAL LETTER DJE -->
+<!ENTITY djcy             "&#x00452;" ><!--CYRILLIC SMALL LETTER DJE -->
+<!ENTITY DScy             "&#x00405;" ><!--CYRILLIC CAPITAL LETTER DZE -->
+<!ENTITY dscy             "&#x00455;" ><!--CYRILLIC SMALL LETTER DZE -->
+<!ENTITY DZcy             "&#x0040F;" ><!--CYRILLIC CAPITAL LETTER DZHE -->
+<!ENTITY dzcy             "&#x0045F;" ><!--CYRILLIC SMALL LETTER DZHE -->
+<!ENTITY GJcy             "&#x00403;" ><!--CYRILLIC CAPITAL LETTER GJE -->
+<!ENTITY gjcy             "&#x00453;" ><!--CYRILLIC SMALL LETTER GJE -->
+<!ENTITY Iukcy            "&#x00406;" ><!--CYRILLIC CAPITAL LETTER BYELORUSSIAN-UKRAINIAN I -->
+<!ENTITY iukcy            "&#x00456;" ><!--CYRILLIC SMALL LETTER BYELORUSSIAN-UKRAINIAN I -->
+<!ENTITY Jsercy           "&#x00408;" ><!--CYRILLIC CAPITAL LETTER JE -->
+<!ENTITY jsercy           "&#x00458;" ><!--CYRILLIC SMALL LETTER JE -->
+<!ENTITY Jukcy            "&#x00404;" ><!--CYRILLIC CAPITAL LETTER UKRAINIAN IE -->
+<!ENTITY jukcy            "&#x00454;" ><!--CYRILLIC SMALL LETTER UKRAINIAN IE -->
+<!ENTITY KJcy             "&#x0040C;" ><!--CYRILLIC CAPITAL LETTER KJE -->
+<!ENTITY kjcy             "&#x0045C;" ><!--CYRILLIC SMALL LETTER KJE -->
+<!ENTITY LJcy             "&#x00409;" ><!--CYRILLIC CAPITAL LETTER LJE -->
+<!ENTITY ljcy             "&#x00459;" ><!--CYRILLIC SMALL LETTER LJE -->
+<!ENTITY NJcy             "&#x0040A;" ><!--CYRILLIC CAPITAL LETTER NJE -->
+<!ENTITY njcy             "&#x0045A;" ><!--CYRILLIC SMALL LETTER NJE -->
+<!ENTITY TSHcy            "&#x0040B;" ><!--CYRILLIC CAPITAL LETTER TSHE -->
+<!ENTITY tshcy            "&#x0045B;" ><!--CYRILLIC SMALL LETTER TSHE -->
+<!ENTITY Ubrcy            "&#x0040E;" ><!--CYRILLIC CAPITAL LETTER SHORT U -->
+<!ENTITY ubrcy            "&#x0045E;" ><!--CYRILLIC SMALL LETTER SHORT U -->
+<!ENTITY YIcy             "&#x00407;" ><!--CYRILLIC CAPITAL LETTER YI -->
+<!ENTITY yicy             "&#x00457;" ><!--CYRILLIC SMALL LETTER YI -->

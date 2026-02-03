@@ -1,0 +1,42 @@
+### auto-generated section `build intellij.kotlin.injection` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_kotlin-injection",
+  opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"],
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "kotlin-injection_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-injection",
+  module_name = "intellij.kotlin.injection",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-injection_resources"],
+  kotlinc_opts = ":custom_kotlin-injection",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "//plugins/kotlin/injection/base:kotlin-base-injection",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/fir",
+    "//platform/core-impl",
+    "//platform/lang-impl",
+    "//platform/core-api:core",
+    "//platform/indexing-api:indexing",
+    "//plugins/IntelliLang:langInjection",
+    "//java/java-psi-api:psi",
+    "//plugins/kotlin/base/code-insight",
+  ]
+)
+### auto-generated section `build intellij.kotlin.injection` end

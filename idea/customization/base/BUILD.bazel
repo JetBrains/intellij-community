@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.idea.customization.base` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "base_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "base",
+  module_name = "intellij.idea.customization.base",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":base_resources"],
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-util-io:ide-util-io",
+  ]
+)
+### auto-generated section `build intellij.idea.customization.base` end

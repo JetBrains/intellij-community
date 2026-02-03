@@ -1,0 +1,52 @@
+<component name="libraryTable">
+  <library name="testcontainers" type="repository">
+    <properties maven-id="org.testcontainers:testcontainers:1.20.3">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/testcontainers/testcontainers/1.20.3/testcontainers-1.20.3.jar">
+          <sha256sum>e1d89a13d93337e1b14000d6c7c3e8e047fe244db63231134e52fbc1c0ffc5f7</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/rnorth/duct-tape/duct-tape/1.0.8/duct-tape-1.0.8.jar">
+          <sha256sum>31cef12ddec979d1f86d7cf708c41a17da523d05c685fd6642e9d0b2addb7240</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-api/3.4.0/docker-java-api-3.4.0.jar">
+          <sha256sum>ad8e9f748380985e0b702bfb2356749a0966afa28a7d637aa3211217ae6a6f2e</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-transport-zerodep/3.4.0/docker-java-transport-zerodep-3.4.0.jar">
+          <sha256sum>aac3ba9ed78c73961d13d7b7dac51ba51fe9089629efd4f77ffa4e6e8c6e4048</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-transport/3.4.0/docker-java-transport-3.4.0.jar">
+          <sha256sum>a1a8ce872dbf92423a948443b88b9417283ead5d56cb5ed77803353658b97b34</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="junit:junit" />
+        <dependency maven-id="org.slf4j:slf4j-api" />
+        <dependency maven-id="org.apache.commons:commons-compress" />
+        <dependency maven-id="org.jetbrains:annotations" />
+        <dependency maven-id="com.fasterxml.jackson.core:jackson-annotations" />
+        <dependency maven-id="net.java.dev.jna:jna" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/testcontainers/testcontainers/1.20.3/testcontainers-1.20.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/rnorth/duct-tape/duct-tape/1.0.8/duct-tape-1.0.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-api/3.4.0/docker-java-api-3.4.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-transport-zerodep/3.4.0/docker-java-transport-zerodep-3.4.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-transport/3.4.0/docker-java-transport-3.4.0.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/testcontainers/testcontainers/1.20.3/testcontainers-1.20.3-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/rnorth/duct-tape/duct-tape/1.0.8/duct-tape-1.0.8-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-api/3.4.0/docker-java-api-3.4.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-transport-zerodep/3.4.0/docker-java-transport-zerodep-3.4.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-transport/3.4.0/docker-java-transport-3.4.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/testcontainers/testcontainers/1.20.3/testcontainers-1.20.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/rnorth/duct-tape/duct-tape/1.0.8/duct-tape-1.0.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-api/3.4.0/docker-java-api-3.4.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-transport-zerodep/3.4.0/docker-java-transport-zerodep-3.4.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-transport/3.4.0/docker-java-transport-3.4.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

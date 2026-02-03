@@ -1,0 +1,2 @@
+[{*.kt, *.kts}]
+insert_final_newline=<spot>false</spot>

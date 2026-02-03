@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.imgscalr` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "imgscalr_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "imgscalr",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":imgscalr_resources"],
+  exports = ["@lib//:libraries-imgscalr-imgscalr"],
+  runtime_deps = ["@lib//:libraries-imgscalr-imgscalr"]
+)
+### auto-generated section `build intellij.libraries.imgscalr` end

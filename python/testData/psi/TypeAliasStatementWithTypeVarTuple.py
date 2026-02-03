@@ -1,0 +1,1 @@
+type MyTypeWithTypeVarTuple[*Ts] = Tuple[*Ts]

@@ -1,0 +1,63 @@
+### auto-generated section `build intellij.json.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "backend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.json.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/lang-api:lang",
+    "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-api:ide",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-core",
+    "//platform/lang-impl",
+    "//platform/markdown-utils",
+    "//platform/projectModel-api:projectModel",
+    "//platform/structure-view-impl:structureView-impl",
+    "//spellchecker",
+    "//libraries/guava",
+    "//platform/analysis-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/ide-core-impl",
+    "//libraries/gson",
+    "//platform/indexing-impl",
+    "//platform/refactoring",
+    "//platform/statistics",
+    "//libraries/fastutil",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "@lib//:kotlin-stdlib",
+    "//platform/platform-util-io:ide-util-io",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/dataformat-yaml:libraries-jackson-dataformat-yaml",
+    "//libraries/markdown",
+    "//libraries/caffeine",
+    "//libraries/stream",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//json",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//json/syntax",
+    "//platform/syntax/syntax-psi:psi",
+    "//platform/syntax/syntax-util:util",
+    "//platform/execution",
+  ],
+  exports = ["//json"],
+  runtime_deps = ["//platform/backend"]
+)
+### auto-generated section `build intellij.json.backend` end

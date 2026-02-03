@@ -1,0 +1,12 @@
+// "Implement methods" "true-preview"
+import java.util.Optional;
+
+interface I<T> {
+    Optional<T> foo();
+}
+class Impl implements I<String> {
+    @Override
+    public Optional<String> foo() {
+        return Optional.empty();
+    }
+}

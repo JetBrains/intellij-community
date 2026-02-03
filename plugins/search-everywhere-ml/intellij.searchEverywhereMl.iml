@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module-library" exported="">
+      <library name="ai.grazie.emb" type="repository">
+        <properties maven-id="ai.grazie.model:model-emb-jvm:0.8.106">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-emb-jvm/0.8.106/model-emb-jvm-0.8.106.jar">
+              <sha256sum>5543bb985dd6c18a4b2b3ccfb614fc9614ec7043c204cf21d2bf5fa93c25cd35</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0.8.106/model-text-jvm-0.8.106.jar">
+              <sha256sum>a0d5b1b818cc5a6e0a917fdeae062ea93b3e2c7c49024e64ca23e8d18172862a</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0.8.106/model-common-jvm-0.8.106.jar">
+              <sha256sum>d81957cdfb1a432c4b3f13c5cdb92091344bc4c5cbe8490ca59792db8fd695d0</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.8.106/utils-common-jvm-0.8.106.jar">
+              <sha256sum>b48b28dac51cd06bf617f0c35da8e3d3621dad259e7d058960e81c6cb4939c0f</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-multiplatform-jvm/0.8.106/utils-multiplatform-jvm-0.8.106.jar">
+              <sha256sum>bd280d1be432872ab552484dc5f7b6b2a96c1ffe6ceda4f1c55b39d64fefdd80</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
+            <dependency maven-id="org.slf4j:slf4j-api" />
+            <dependency maven-id="it.unimi.dsi:fastutil-core" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-datetime-jvm" />
+            <dependency maven-id="ai.grazie.model:swagger-annotations-jvm" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-emb-jvm/0.8.106/model-emb-jvm-0.8.106.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0.8.106/model-text-jvm-0.8.106.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0.8.106/model-common-jvm-0.8.106.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.8.106/utils-common-jvm-0.8.106.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-multiplatform-jvm/0.8.106/utils-multiplatform-jvm-0.8.106.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-emb-jvm/0.8.106/model-emb-jvm-0.8.106-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0.8.106/model-text-jvm-0.8.106-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0.8.106/model-common-jvm-0.8.106-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.8.106/utils-common-jvm-0.8.106-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-multiplatform-jvm/0.8.106/utils-multiplatform-jvm-0.8.106-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ai.grazie.model.swagger.annotations.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.model:swagger-annotations-jvm:0.8.106">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0.8.106/swagger-annotations-jvm-0.8.106.jar">
+              <sha256sum>1690bb907a8a60b2b2ca20f921603a5ec161b4e2c5ff7b71740c8e11745c28b2</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0.8.106/swagger-annotations-jvm-0.8.106.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0.8.106/swagger-annotations-jvm-0.8.106-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
+    <orderEntry type="library" scope="TEST" name="io.mockk.jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+  </component>
+</module>

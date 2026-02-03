@@ -1,0 +1,12 @@
+// COMPILER_ARGUMENTS: -Xplugin=$KOTLIN_BUNDLED$/lib/kotlin-dataframe-compiler-plugin-experimental.jar
+// FILE: main.kts
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHTER_ATTRIBUTES_KEY
+
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_KEYWORD'")!>import<!> org.jetbrains.kotlinx.dataframe.*
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_KEYWORD'")!>import<!> org.jetbrains.kotlinx.dataframe.api.*
+
+fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>local<!>(<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>df<!>: <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_TRAIT'")!>DataFrame<!><*>) {
+    val <!HIGHLIGHTING("descr='[PROPERTY_SCHEMA]  column: Int'; highlightingTextAttributesKey='INFORMATION_ATTRIBUTES'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>df1<!> = <!HIGHLIGHTING("descr='[PROPERTY_ACCESS_SCHEMA]  <empty compile time schema>'; highlightingTextAttributesKey='INFORMATION_ATTRIBUTES'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>df<!>.<!HIGHLIGHTING("descr='[FUNCTION_CALL_SCHEMA]  column: Int'; highlightingTextAttributesKey='INFORMATION_ATTRIBUTES'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_EXTENSION_FUNCTION_CALL'")!>add<!>("column") { 41.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_CALL'")!>inc<!>() + "1".<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_EXTENSION_FUNCTION_CALL'")!>toInt<!>() }
+    <!HIGHLIGHTING("descr='[PROPERTY_ACCESS_SCHEMA]  column: Int'; highlightingTextAttributesKey='INFORMATION_ATTRIBUTES'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>df1<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_EXTENSION_PROPERTY'")!>column<!>
+}

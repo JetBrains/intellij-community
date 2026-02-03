@@ -1,0 +1,192 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.util.newProjectWizard;
+
+import com.intellij.framework.FrameworkTypeEx;
+import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
+import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
+import com.intellij.framework.library.FrameworkLibraryVersion;
+import com.intellij.framework.library.FrameworkLibraryVersionFilter;
+import com.intellij.framework.library.FrameworkSupportWithLibrary;
+import com.intellij.ide.util.frameworkSupport.FrameworkRole;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
+import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
+import com.intellij.ide.util.frameworkSupport.OldCustomLibraryDescription;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.roots.ModifiableModelsProvider;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
+import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.GuiUtils;
+import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import java.util.List;
+
+public class OldFrameworkSupportProviderWrapper extends FrameworkSupportInModuleProvider {
+  private final FrameworkSupportProvider myProvider;
+  private final OldFrameworkSupportProviderWrapper.FrameworkSupportProviderBasedType myType;
+
+  public OldFrameworkSupportProviderWrapper(FrameworkSupportProvider provider) {
+    myProvider = provider;
+    myType = new FrameworkSupportProviderBasedType(myProvider, this);
+  }
+
+  public FrameworkSupportProvider getProvider() {
+    return myProvider;
+  }
+
+  @Override
+  public @NotNull FrameworkTypeEx getFrameworkType() {
+    return myType;
+  }
+
+  @Override
+  public @NotNull FrameworkSupportInModuleConfigurable createConfigurable(@NotNull FrameworkSupportModel model) {
+    final FrameworkSupportConfigurable configurable = myProvider.createConfigurable(model);
+    return new FrameworkSupportConfigurableWrapper(configurable);
+  }
+
+  @Override
+  public boolean isEnabledForModuleType(@NotNull ModuleType<?> moduleType) {
+    return myProvider.isEnabledForModuleType(moduleType);
+  }
+
+  @Override
+  public boolean isEnabledForModuleBuilder(@NotNull ModuleBuilder builder) {
+    return myProvider.isEnabledForModuleBuilder(builder);
+  }
+
+  @Override
+  public boolean isSupportAlreadyAdded(@NotNull Module module, @NotNull FacetsProvider facetsProvider) {
+    return myProvider.isSupportAlreadyAdded(module, facetsProvider);
+  }
+
+  @Override
+  public FrameworkRole[] getRoles() {
+    return myProvider.getRoles();
+  }
+
+  public static final class FrameworkSupportProviderBasedType extends FrameworkTypeEx {
+    private final FrameworkSupportProvider myOldProvider;
+    private final OldFrameworkSupportProviderWrapper myNewProvider;
+
+    private FrameworkSupportProviderBasedType(FrameworkSupportProvider oldProvider,
+                                              OldFrameworkSupportProviderWrapper newProvider) {
+      super(oldProvider.getId());
+      myOldProvider = oldProvider;
+      myNewProvider = newProvider;
+    }
+
+    @Override
+    public @NotNull FrameworkSupportInModuleProvider createProvider() {
+      return myNewProvider;
+    }
+
+    @Override
+    public @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getPresentableName() {
+      return GuiUtils.getTextWithoutMnemonicEscaping(myOldProvider.getTitle());
+    }
+
+    @Override
+    public String getUnderlyingFrameworkTypeId() {
+      return myOldProvider.getUnderlyingFrameworkId();
+    }
+
+    @Override
+    public @NotNull Icon getIcon() {
+      final Icon icon = myOldProvider.getIcon();
+      return icon != null ? icon : EmptyIcon.ICON_16;
+    }
+
+    public FrameworkSupportProvider getProvider() {
+      return myOldProvider;
+    }
+  }
+
+  public static class FrameworkSupportConfigurableWrapper extends FrameworkSupportInModuleConfigurable {
+    private final FrameworkSupportConfigurable myConfigurable;
+    private final FrameworkLibraryVersionFilter myVersionFilter;
+
+    public FrameworkSupportConfigurableWrapper(FrameworkSupportConfigurable configurable) {
+      Disposer.register(this, configurable);
+      myConfigurable = configurable;
+      myVersionFilter = getVersionFilter(configurable);
+    }
+
+    private FrameworkLibraryVersionFilter getVersionFilter(FrameworkSupportConfigurable configurable) {
+      if (configurable instanceof FrameworkSupportWithLibrary) {
+        final FrameworkLibraryVersionFilter filter = configurable.getVersionFilter();
+        if (filter != null) {
+          return filter;
+        }
+      }
+      return new FrameworkLibraryVersionFilter() {
+        @Override
+        public boolean isAccepted(@NotNull FrameworkLibraryVersion version) {
+          final FrameworkVersion selectedVersion = myConfigurable.getSelectedVersion();
+          return selectedVersion == null || version.getVersionString().equals(selectedVersion.getVersionName());
+        }
+
+        @Override
+        public String toString() {
+          return "FrameworkSupportLibraryVersionFilter(selectedVersion=" + myConfigurable.getSelectedVersion() + ")";
+        }
+      };
+    }
+
+    public FrameworkSupportConfigurable getConfigurable() {
+      return myConfigurable;
+    }
+
+    @Override
+    public void onFrameworkSelectionChanged(boolean selected) {
+      myConfigurable.onFrameworkSelectionChanged(selected);
+    }
+
+    @Override
+    public boolean isVisible() {
+      return myConfigurable.isVisible();
+    }
+
+    @Override
+    public JComponent createComponent() {
+      return myConfigurable.getComponent();
+    }
+
+    @Override
+    public boolean isOnlyLibraryAdded() {
+      return myConfigurable instanceof FrameworkSupportWithLibrary && ((FrameworkSupportWithLibrary)myConfigurable).isLibraryOnly();
+    }
+
+    @Override
+    public CustomLibraryDescription createLibraryDescription() {
+      if (myConfigurable instanceof FrameworkSupportWithLibrary) {
+        return ((FrameworkSupportWithLibrary)myConfigurable).createLibraryDescription();
+      }
+
+      List<? extends FrameworkVersion> versions = myConfigurable.getVersions();
+      if (versions.isEmpty()) return null;
+      return OldCustomLibraryDescription.createByVersions(versions);
+    }
+
+    @Override
+    public @NotNull FrameworkLibraryVersionFilter getLibraryVersionFilter() {
+      return myVersionFilter;
+    }
+
+    @Override
+    public void addSupport(@NotNull Module module,
+                           @NotNull ModifiableRootModel rootModel,
+                           @NotNull ModifiableModelsProvider modifiableModelsProvider) {
+      myConfigurable.addSupport(module, rootModel, null);
+    }
+  }
+}

@@ -1,0 +1,4 @@
+def foo():
+    # prints hello
+    print("new")
+    print("Hello")

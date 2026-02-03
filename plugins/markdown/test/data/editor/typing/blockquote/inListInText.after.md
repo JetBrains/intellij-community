@@ -1,0 +1,3 @@
+* > item 
+  > <caret>other
+  > item

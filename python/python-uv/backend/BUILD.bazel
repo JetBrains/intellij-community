@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.python.community.impl.uv.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "backend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.python.community.impl.uv.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//python/python-uv/common",
+    "@lib//:jetbrains-annotations",
+    "//platform/util",
+    "//python/python-pyproject:pyproject",
+    "//platform/core-api:core",
+    "//python/openapi:community",
+    "//python/common",
+  ]
+)
+### auto-generated section `build intellij.python.community.impl.uv.backend` end

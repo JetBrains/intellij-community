@@ -1,0 +1,43 @@
+### auto-generated section `build intellij.kotlin.base.analysis.utils` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_kotlin-base-analysis-utils",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+  ],
+  x_context_parameters = True
+)
+
+jvm_library(
+  name = "kotlin-base-analysis-utils",
+  module_name = "intellij.kotlin.base.analysis.utils",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-base-analysis-utils",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//java/java-indexing-api:indexing",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//platform/core-api:core",
+    "//platform/ide-core-impl",
+    "//platform/core-impl",
+    "//java/java-psi-api:psi",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/base/indices",
+    "//platform/indexing-api:indexing",
+    "//platform/util",
+    "//java/java-indexing-impl:indexing-impl",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/formatter",
+    "//platform/code-style-api:codeStyle",
+  ]
+)
+### auto-generated section `build intellij.kotlin.base.analysis.utils` end

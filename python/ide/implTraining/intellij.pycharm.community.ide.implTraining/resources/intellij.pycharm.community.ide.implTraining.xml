@@ -1,0 +1,13 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="training"/>
+    <module name="intellij.python.featuresTrainer"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <startPagePromoter id="PyOnboardingTourPromoter"
+                       implementation="com.intellij.pycharm.community.ide.implTraining.PyOnboardingTourPromoter"/>
+    <applicationService serviceInterface="com.intellij.openapi.ui.DialogBackgroundImageProvider"
+                        serviceImplementation="com.intellij.pycharm.community.ide.implTraining.PyCharmDialogBackgroundImageProvider"
+                        overrides="true"/>
+  </extensions>
+</idea-plugin>

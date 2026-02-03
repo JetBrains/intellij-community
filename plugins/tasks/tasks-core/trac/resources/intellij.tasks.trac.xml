@@ -1,0 +1,8 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.libraries.xml.rpc"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <tasks.repositoryType implementation="com.intellij.tasks.trac.TracRepositoryType"/>
+  </extensions>
+</idea-plugin>

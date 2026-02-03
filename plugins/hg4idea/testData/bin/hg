@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+#
+# mercurial - scalable distributed SCM
+#
+# Copyright 2005-2007 Olivia Mackall <olivia@selenic.com>
+#
+# This software may be used and distributed according to the terms of the
+# GNU General Public License version 2 or any later version.
+
+import os
+import sys
+
+libdir = '@LIBDIR@'
+
+if libdir != '@' 'LIBDIR' '@':
+    if not os.path.isabs(libdir):
+        libdir = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), libdir
+        )
+        libdir = os.path.abspath(libdir)
+    sys.path.insert(0, libdir)
+
+# Make `pip install --user ...` packages available to the official Windows
+# build.  Most py2 packaging installs directly into the system python
+# environment, so no changes are necessary for other platforms.  The Windows
+# py2 package uses py2exe, which lacks a `site` module.  Hardcode it according
+# to the documentation.
+if getattr(sys, 'frozen', None) == 'console_exe':
+    vi = sys.version_info
+    appdata = os.environ.get('APPDATA')
+    if appdata:
+        sys.path.append(
+            os.path.join(
+                appdata,
+                'Python',
+                'Python%d%d' % (vi[0], vi[1]),
+                'site-packages',
+            )
+        )
+
+try:
+    from hgdemandimport import tracing
+except ImportError:
+    sys.stderr.write(
+        "abort: couldn't find mercurial libraries in [%s]\n"
+        % ' '.join(sys.path)
+    )
+    sys.stderr.write("(check your install and PYTHONPATH)\n")
+    sys.exit(-1)
+
+with tracing.log('hg script'):
+    # enable importing on demand to reduce startup time
+    import hgdemandimport
+
+    hgdemandimport.enable()
+
+    from mercurial import dispatch
+
+    dispatch.run()

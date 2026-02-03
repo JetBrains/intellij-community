@@ -1,0 +1,39 @@
+### auto-generated section `build intellij.kotlin.runConfigurations.testng` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "testng_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "testng",
+  module_name = "intellij.kotlin.runConfigurations.testng",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":testng_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/core-api:core",
+    "//platform/execution-impl",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/facet",
+    "//platform/smRunner",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/run-configurations/jvm",
+    "//platform/util/jdom",
+    "//platform/core-impl",
+    "//platform/lang-api:lang",
+    "//java/java-psi-api:psi",
+    "//java/execution/impl",
+    "//plugins/testng",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/base/plugin",
+    "//platform/execution",
+  ]
+)
+### auto-generated section `build intellij.kotlin.runConfigurations.testng` end

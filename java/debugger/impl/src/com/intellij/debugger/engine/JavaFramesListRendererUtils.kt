@@ -1,0 +1,53 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.debugger.engine
+
+import com.intellij.debugger.JavaDebuggerBundle
+import com.intellij.debugger.impl.PrioritizedTask
+import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.xdebugger.frame.XStackFrameUiPresentationContainer
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.future.asDeferred
+
+internal fun computeUiPresentation(
+  descriptor: StackFrameDescriptorImpl?,
+  selectedDescriptor: StackFrameDescriptorImpl?,
+): Flow<XStackFrameUiPresentationContainer> = channelFlow {
+  send(XStackFrameUiPresentationContainer().apply {
+    append(JavaDebuggerBundle.message("frame.panel.computing.frame"), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES)
+  })
+  val container = XStackFrameUiPresentationContainer()
+
+  if (descriptor != null) {
+    val context = (descriptor.debugProcess as DebugProcessImpl).debuggerContext.suspendContext ?: return@channelFlow
+    try {
+      withDebugContext(context, PrioritizedTask.Priority.HIGH) {
+        descriptor.updateRepresentationNoNotify(null) {}
+      }
+    }
+    catch (e: Exception) {
+      throw e
+    }
+    JavaFramesListRenderer.customizePresentation(descriptor, container, selectedDescriptor, false)
+    send(container)
+  }
+
+  if (descriptor == null || selectedDescriptor == null) {
+    return@channelFlow
+  }
+  val method = descriptor.method
+  if (method != selectedDescriptor.method) {
+    return@channelFlow
+  }
+
+  descriptor.exactRecursiveIndex.asDeferred().await()?.let { index ->
+    if (index > 0) {
+      send(container.copy().apply {
+        append(" [$index]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+      })
+    }
+  }
+}.buffer(Channel.CONFLATED)

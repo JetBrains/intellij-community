@@ -1,0 +1,20 @@
+// "Make 'Derived' private" "true"
+// PRIORITY: HIGH
+// ACTION: Add full qualifier
+// ACTION: Implement interface
+// ACTION: Introduce import alias
+// ACTION: Make 'Derived' internal
+// ACTION: Make 'Derived' private
+// ACTION: Make 'Outer' public
+
+import Outer.Base
+
+internal class Outer {
+    interface Base
+}
+
+class Container {
+    interface Derived : <caret>Base
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToPrivateFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeVisibilityFixFactories$ChangeToPrivateModCommandAction

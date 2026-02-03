@@ -1,0 +1,42 @@
+### auto-generated section `build intellij.platform.ide.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "ide-core_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ide-core",
+  module_name = "intellij.platform.ide.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ide-core_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/util/concurrency",
+    "//jps/model-api:model",
+    "//platform/util:util-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util-ex",
+    "//platform/util/jdom",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/diagnostic",
+    "//platform/util",
+    "//platform/settings",
+    "//platform/util/coroutines",
+    "//platform/workspace/storage",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//platform/kernel/shared:kernel",
+  ]
+)
+### auto-generated section `build intellij.platform.ide.core` end

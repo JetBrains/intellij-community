@@ -1,0 +1,1 @@
+val test = $$"""<selection>$</selection>foo"""

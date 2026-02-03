@@ -1,0 +1,29 @@
+def boo() {
+aaaaa
+if <caret>(true){
+    boo
+} else {
+    baa
+}
+bbbbb
+}
+-----
+def boo() {
+    if <caret>(true){
+        boo
+    } else {
+        baa
+    }
+    aaaaa
+bbbbb
+}
+-----
+def boo() {
+    aaaaa
+    if <caret>(true){
+        boo
+    } else {
+        baa
+    }
+    bbbbb
+}

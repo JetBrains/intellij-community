@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="kotlin-language" name="Kotlin">
+      <configuration version="5" platform="JVM 11" allPlatforms="JVM [11]" useProjectSettings="false">
+        <compilerSettings>
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
+        </compilerSettings>
+        <compilerArguments>
+          <stringArguments>
+            <stringArg name="jvmTarget" arg="11" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
+          </stringArguments>
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_11" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/gen" isTestSource="false" generated="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.compiler" />
+    <orderEntry type="module" module-name="intellij.java.compiler.instrumentationUtil" />
+    <orderEntry type="module" module-name="intellij.java.compiler.instrumentationUtil.java8" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" />
+    <orderEntry type="module" module-name="intellij.libraries.asm" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.platform.util.nanoxml" />
+    <orderEntry type="module" module-name="intellij.libraries.jgoodies.forms" />
+    <orderEntry type="module" module-name="intellij.libraries.protobuf" />
+    <orderEntry type="module" module-name="intellij.java.rt" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
+    <orderEntry type="module" module-name="intellij.libraries.javax.annotation" />
+    <orderEntry type="module-library">
+      <library name="qdox-java-parser" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.thoughtworks.qdox:qdox:2.2.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2.2.0/qdox-2.2.0.jar">
+              <sha256sum>c260c3230b2340af97d54bf01f7f67ebc57c901922736c881bb11cb981302be2</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2.2.0/qdox-2.2.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2.2.0/qdox-2.2.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.gson" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
+    <orderEntry type="library" name="jps-javac-extension" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" />
+    <orderEntry type="module" module-name="intellij.platform.tracing.rt" />
+    <orderEntry type="module" module-name="intellij.platform.util.zip" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build.dependencyGraph" />
+    <orderEntry type="module" module-name="intellij.libraries.caffeine" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.hash4j" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.mvstore" />
+    <orderEntry type="module" module-name="intellij.libraries.http.client" />
+    <orderEntry type="module" module-name="intellij.libraries.maven.resolver.provider" />
+    <orderEntry type="library" scope="PROVIDED" name="netty-jps" level="project" />
+    <orderEntry type="library" name="kotlin-metadata" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
+    <orderEntry type="module" module-name="intellij.platform.eel" />
+  </component>
+</module>

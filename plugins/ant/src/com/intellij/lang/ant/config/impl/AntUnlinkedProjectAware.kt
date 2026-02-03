@@ -1,0 +1,75 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.lang.ant.config.impl
+
+import com.intellij.ide.highlighter.XmlFileType
+import com.intellij.lang.ant.config.AntBuildFile
+import com.intellij.lang.ant.config.AntConfigurationBase
+import com.intellij.lang.ant.config.AntConfigurationListener
+import com.intellij.lang.ant.config.actions.ActivateAntToolWindowAction
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.externalSystem.autolink.ExternalSystemProjectLinkListener
+import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.getPresentablePath
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.util.PathUtil
+
+class AntUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
+  override val systemId = SYSTEM_ID
+
+  override fun buildFileExtensions(): Array<String> = arrayOf(XmlFileType.DEFAULT_EXTENSION)
+
+  override fun isBuildFile(project: Project, buildFile: VirtualFile): Boolean = buildFile.name in KNOWN_ANT_FILES
+
+  override fun isLinkedProject(project: Project, externalProjectPath: String): Boolean {
+    val antConfiguration = AntConfigurationBase.getInstance(project)
+    return antConfiguration.buildFiles.asSequence()
+      .mapNotNull { it.virtualFile?.path }
+      .any { FileUtil.pathsEqual(PathUtil.getParentPath(it), externalProjectPath) }
+  }
+
+  @Deprecated("use async method instead", level = DeprecationLevel.ERROR)
+  override fun linkAndLoadProject(project: Project, externalProjectPath: String) {
+    val localFileSystem = LocalFileSystem.getInstance()
+    val externalProjectDir = localFileSystem.findFileByPath(externalProjectPath)
+    if (externalProjectDir == null) {
+      val shortPath = getPresentablePath(externalProjectPath)
+      throw IllegalArgumentException(ExternalSystemBundle.message("error.project.does.not.exist", systemId.readableName, shortPath))
+    }
+    val antConfiguration = AntConfigurationBase.getInstance(project)
+    val antBuildFiles = externalProjectDir.children.filter { isBuildFile(project, it) }
+    antBuildFiles.forEach { antConfiguration.addBuildFile(it) }
+    if (antBuildFiles.isNotEmpty()) {
+      val window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.ANT_BUILD)
+                   ?: ActivateAntToolWindowAction.Manager.createToolWindow(project)
+      window.activate(null)
+    }
+  }
+
+  override suspend fun unlinkProject(project: Project, externalProjectPath: String) {
+    // This method must be implemented as it is a part of an API.
+    // If was mandatory from the very beginning, this assertion sat in a parent.
+    TODO("Not yet implemented")
+  }
+
+  override fun subscribe(project: Project, listener: ExternalSystemProjectLinkListener, parentDisposable: Disposable) {
+    val antConfiguration = AntConfigurationBase.getInstance(project)
+    antConfiguration.addAntConfigurationListener(object : AntConfigurationListener {
+      override fun buildFileAdded(buildFile: AntBuildFile) {
+        val virtualFile = buildFile.virtualFile ?: return
+        listener.onProjectLinked(PathUtil.getParentPath(virtualFile.path))
+      }
+
+      override fun buildFileRemoved(buildFile: AntBuildFile) {
+        // `buildFileRemoved` has false positive unlink events when ant configuration is reloading from `ant.xml`
+        //val virtualFile = buildFile.virtualFile ?: return
+        //listener.onProjectUnlinked(PathUtil.getParentPath(virtualFile.path))
+      }
+    })
+  }
+}

@@ -1,0 +1,3 @@
+JsonFile: n_structure_single_star.json
+  JsonReferenceExpression
+    PsiElement(IDENTIFIER)('*')

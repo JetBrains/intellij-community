@@ -1,0 +1,66 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="fileBasedIndex" interface="com.intellij.util.indexing.FileBasedIndexExtension" dynamic="true"/>
+    <extensionPoint name="dumbServiceInitializationCondition" interface="com.intellij.openapi.project.DumbServiceInitializationCondition" dynamic="true"/>
+    <extensionPoint name="fileBasedIndexInfrastructureExtension" interface="com.intellij.util.indexing.FileBasedIndexInfrastructureExtension" dynamic="true"/>
+    <extensionPoint name="projectIndexingActivityHistoryListener"
+                    interface="com.intellij.util.indexing.diagnostic.ProjectIndexingActivityHistoryListener" dynamic="true"/>
+    <extensionPoint name="indexedRootsProvider" interface="com.intellij.util.indexing.IndexableSetContributor" dynamic="true"/>
+    <extensionPoint name="indexableFilesContributor" interface="com.intellij.util.indexing.roots.IndexableFilesContributor" dynamic="true"/>
+    <extensionPoint name="stubIndex" interface="com.intellij.psi.stubs.StubIndexExtension" dynamic="true"/>
+    <extensionPoint name="definitionsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
+    <extensionPoint name="referencesSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
+
+    <extensionPoint name="fileBasedIndexLayout"
+                    beanClass="com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean"
+                    dynamic="true">
+      <with attribute="providerClass" implements="com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider"/>
+    </extensionPoint>
+
+    <extensionPoint name="indexingFlavor" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.util.indexing.flavor.FileIndexingFlavorProvider"/>
+    </extensionPoint>
+    <extensionPoint name="findModelExtension" interface="com.intellij.find.FindModelExtension" dynamic="true"/>
+    <extensionPoint name="codeUsageScopeOptimizer" interface="com.intellij.psi.search.ScopeOptimizer" dynamic="true"/>
+    <extensionPoint name="binaryFileSourceProvider" interface="com.intellij.platform.indexing.BinaryFileSourceProvider" dynamic="true"/>
+
+    <extensionPoint name="trigramIndexFilterExcludeExtension" interface="com.intellij.util.indexing.IndexFilterExcludingExtension" dynamic="true"/>
+
+    <extensionPoint name="stubElementRegistryExtension"
+                    interface="com.intellij.psi.stubs.StubRegistryExtension"
+                    dynamic="true"/>
+
+    <extensionPoint name="languageStubDefinition" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.psi.stubs.LanguageStubDefinition"/>
+    </extensionPoint>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileBasedIndex implementation="com.intellij.psi.stubs.StubUpdatingIndex"/>
+
+    <fileBasedIndexLayout id="default"
+                          priority="0"
+                          presentableNameKey="ide.indexes.default-storage.presentable.name"
+                          bundleName="messages.IndexingBundle"
+                          providerClass="com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProvider"
+                          version="0"/>
+
+    <!-- FileBasedIndex.USE_IN_MEMORY_INDEX=true to enable -->
+    <fileBasedIndexLayout id="in-memory"
+                          priority="-1"
+                          presentableNameKey="ide.indexes.in-memory-storage.presentable.name"
+                          bundleName="messages.IndexingBundle"
+                          providerClass="com.intellij.util.indexing.memory.InMemoryStorageLayoutProvider"
+                          version="0"/>
+    <!-- fake storage, saves nothing, for benchmarks/testing/debugging -->
+    <fileBasedIndexLayout id="fake-storage"
+                          priority="-1"
+                          presentableNameKey="ide.indexes.fake-storage.presentable.name"
+                          bundleName="messages.IndexingBundle"
+                          providerClass="com.intellij.util.indexing.storage.fake.FakeStorageLayoutProvider"
+                          version="0"/>
+
+    <requiredForSmartModeStartupActivity implementation="com.intellij.util.indexing.FileBasedIndexInfrastructureExtensionStartup"/>
+  </extensions>
+
+</idea-plugin>

@@ -1,0 +1,68 @@
+### auto-generated section `build intellij.java.terminal` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "terminal_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "terminal",
+  module_name = "intellij.java.terminal",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":terminal_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib-provided",
+    "//plugins/terminal",
+    "//plugins/terminal/completion",
+    "//java/execution/impl",
+    "//java/java-impl:impl",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
+    "//platform/lang-impl",
+    "//platform/util:util-ui",
+  ]
+)
+### auto-generated section `build intellij.java.terminal` end
+
+### auto-generated section `build intellij.java.terminal.tests` start
+jvm_library(
+  name = "terminal-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["@lib//:kotlin-stdlib"]
+)
+
+jvm_library(
+  name = "terminal-tests_test_lib",
+  module_name = "intellij.java.terminal.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//java/testFramework",
+    "//java/java-terminal:terminal",
+    "//platform/core-api:core",
+    "//platform/platform-tests:tests_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/execution/impl",
+    "//plugins/terminal/completion",
+    "//plugins/terminal/completion:completion_test_lib",
+    "//plugins/terminal",
+  ],
+  runtime_deps = [":terminal-tests"]
+)
+### auto-generated section `build intellij.java.terminal.tests` end
+
+### auto-generated section `test intellij.java.terminal.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "terminal-tests_test",
+  runtime_deps = [":terminal-tests_test_lib"]
+)
+### auto-generated section `test intellij.java.terminal.tests` end

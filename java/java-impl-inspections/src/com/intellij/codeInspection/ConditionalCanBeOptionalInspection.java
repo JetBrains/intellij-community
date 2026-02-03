@@ -1,0 +1,198 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInspection;
+
+import com.intellij.codeInsight.ExpressionUtil;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.codeInspection.util.LambdaGenerationUtil;
+import com.intellij.codeInspection.util.OptionalRefactoringUtil;
+import com.intellij.codeInspection.util.OptionalUtil;
+import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+
+import static com.intellij.util.ObjectUtils.tryCast;
+
+public final class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalInspectionTool {
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
+  }
+
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    return new JavaElementVisitor() {
+      @Override
+      public void visitConditionalExpression(@NotNull PsiConditionalExpression ternary) {
+        TernaryNullCheck ternaryNullCheck = TernaryNullCheck.from(ternary);
+        if (ternaryNullCheck == null) return;
+        PsiVariable variable = ternaryNullCheck.myVariable;
+        PsiExpression nullBranch = ternaryNullCheck.myNullBranch;
+        PsiExpression notNullBranch = ternaryNullCheck.myNotNullBranch;
+        if (!ExpressionUtils.isSafelyRecomputableExpression(nullBranch) && !LambdaGenerationUtil.canBeUncheckedLambda(nullBranch, variable::equals)) {
+          return;
+        }
+        List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable, notNullBranch);
+        if (references.isEmpty() ||
+            variable instanceof PsiField &&
+            !ContainerUtil.exists(references, ExpressionUtil::isEffectivelyUnqualified)) {
+          return;
+        }
+        if (!LambdaGenerationUtil.canBeUncheckedLambda(notNullBranch, variable::equals)) {
+          return;
+        }
+        if (!areTypesCompatible(nullBranch, notNullBranch)) return;
+        boolean mayChangeSemantics =
+          !ExpressionUtils.isNullLiteral(nullBranch) && NullabilityUtil.getExpressionNullability(notNullBranch, true) != Nullability.NOT_NULL;
+        if (!isOnTheFly && mayChangeSemantics) return;
+        holder.registerProblem(ternary.getCondition(),
+                               JavaBundle.message("inspection.message.can.be.replaced.with.optional.of.nullable"),
+                               mayChangeSemantics ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                               new ReplaceConditionWithOptionalFix(mayChangeSemantics));
+      }
+
+      private static boolean areTypesCompatible(PsiExpression nullBranch, PsiExpression notNullBranch) {
+        PsiType notNullType = ((PsiExpression)notNullBranch.copy()).getType();
+        PsiType nullType = ((PsiExpression)nullBranch.copy()).getType();
+        if (nullType == null || notNullType == null) return false;
+        if (nullType.isAssignableFrom(notNullType)) return true;
+        if (nullType.equals(PsiTypes.nullType())) return true;
+        if (OptionalUtil.isOptionalEmptyCall(nullBranch) && TypeUtils.isOptional(notNullType)) return true;
+        return false;
+      }
+    };
+  }
+
+  private static class ReplaceConditionWithOptionalFix extends PsiUpdateModCommandQuickFix {
+    private final boolean myChangesSemantics;
+
+    ReplaceConditionWithOptionalFix(boolean changesSemantics) {
+      myChangesSemantics = changesSemantics;
+    }
+
+    @Override
+    public @Nls @NotNull String getName() {
+      return getFamilyName() + (myChangesSemantics ? JavaBundle.message("quickfix.text.suffix.may.change.semantics") : "");
+    }
+
+    @Override
+    public @Nls @NotNull String getFamilyName() {
+      return JavaBundle.message("quickfix.family.replace.with.optional.of.nullable.chain");
+    }
+
+    @Override
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiConditionalExpression ternary = PsiTreeUtil.getNonStrictParentOfType(element, PsiConditionalExpression.class);
+      TernaryNullCheck ternaryNullCheck = TernaryNullCheck.from(ternary);
+      if (ternaryNullCheck == null) return;
+      PsiVariable variable = ternaryNullCheck.myVariable;
+      String name = variable.getName();
+      if (name == null) return;
+      String inLambdaName =
+        new VariableNameGenerator(ternary, VariableKind.PARAMETER).byName(name).byType(variable.getType()).generate(true);
+      PsiExpression nullBranch = ternaryNullCheck.myNullBranch;
+      PsiExpression notNullBranch = ternaryNullCheck.myNotNullBranch;
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      CommentTracker ct = new CommentTracker();
+      for (PsiReferenceExpression reference : VariableAccessUtils.getVariableReferences(variable, nullBranch)) {
+        if (ExpressionUtil.isEffectivelyUnqualified(reference)) {
+          PsiElement result = ct.replace(reference, "null");
+          if (nullBranch == reference) {
+            nullBranch = (PsiExpression)result;
+          }
+        }
+      }
+      String origExpression = null;
+      for (PsiReferenceExpression reference : VariableAccessUtils.getVariableReferences(variable, notNullBranch)) {
+        PsiExpression qualifier = reference.getQualifierExpression();
+        if (qualifier != null) {
+          if (!ExpressionUtil.isEffectivelyUnqualified(reference)) continue;
+          if (origExpression == null) {
+            origExpression = ct.text(reference);
+          }
+          ct.delete(qualifier);
+        }
+        ExpressionUtils.bindReferenceTo(reference, inLambdaName);
+      }
+      PsiLambdaExpression trueLambda =
+        (PsiLambdaExpression)factory.createExpressionFromText("(" + variable.getType().getCanonicalText() + " " +
+                                                              inLambdaName + ")->" + ct.text(notNullBranch), ternary);
+      PsiParameter lambdaParameter = Objects.requireNonNull(trueLambda.getParameterList().getParameter(0));
+      PsiExpression trueBody = Objects.requireNonNull((PsiExpression)trueLambda.getBody());
+      String ofNullableText = CommonClassNames.JAVA_UTIL_OPTIONAL + ".ofNullable(" + (origExpression == null ? name : origExpression) + ")";
+      String replacement = OptionalRefactoringUtil.generateOptionalUnwrap(ofNullableText,
+                                                                          lambdaParameter, trueBody, ct.markUnchanged(nullBranch), ternary.getType(),
+                                                                          !ExpressionUtils.isSafelyRecomputableExpression(nullBranch));
+      PsiElement result = ct.replaceAndRestoreComments(ternary, replacement);
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
+      LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
+    }
+  }
+
+  private static final class TernaryNullCheck {
+    final PsiVariable myVariable;
+    final PsiExpression myNullBranch;
+    final PsiExpression myNotNullBranch;
+
+    private TernaryNullCheck(PsiVariable variable, PsiExpression nullBranch, PsiExpression notNullBranch) {
+      myVariable = variable;
+      myNullBranch = nullBranch;
+      myNotNullBranch = notNullBranch;
+    }
+
+    @Contract("null -> null")
+    public static @Nullable TernaryNullCheck from(@Nullable PsiConditionalExpression ternary) {
+      if (ternary == null) return null;
+      PsiExpression condition = ternary.getCondition();
+      boolean isNull = true;
+      PsiReferenceExpression ref = ExpressionUtils.getReferenceExpressionFromNullComparison(condition, true);
+      if (ref == null) {
+        isNull = false;
+        ref = ExpressionUtils.getReferenceExpressionFromNullComparison(condition, false);
+      }
+      if (ref == null) return null;
+      PsiVariable variable = tryCast(ref.resolve(), PsiVariable.class);
+      if (variable == null || (variable instanceof PsiField && !ExpressionUtil.isEffectivelyUnqualified(ref))) return null;
+      PsiExpression nullBranch = isNull ? ternary.getThenExpression() : ternary.getElseExpression();
+      PsiExpression notNullBranch = isNull ? ternary.getElseExpression() : ternary.getThenExpression();
+      if (nullBranch == null || notNullBranch == null) {
+        return null;
+      }
+      return new TernaryNullCheck(variable, nullBranch, notNullBranch);
+    }
+  }
+}

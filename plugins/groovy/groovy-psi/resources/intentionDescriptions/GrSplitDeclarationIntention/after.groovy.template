@@ -1,0 +1,4 @@
+if (something()) {
+  <spot>def a
+  a = 5</spot>
+}

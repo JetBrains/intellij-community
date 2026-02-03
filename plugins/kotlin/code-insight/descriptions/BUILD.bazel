@@ -1,0 +1,17 @@
+### auto-generated section `build intellij.kotlin.codeInsight.descriptions` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "descriptions_resources",
+  srcs = glob(["resources-en/**/*"]),
+  strip_prefix = "resources-en"
+)
+
+jvm_library(
+  name = "descriptions",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":descriptions_resources"],
+  runtime_deps = ["//plugins/kotlin/base/frontend-agnostic"]
+)
+### auto-generated section `build intellij.kotlin.codeInsight.descriptions` end

@@ -1,0 +1,124 @@
+### auto-generated section `build intellij.platform.execution.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "execution-impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "execution-impl",
+  module_name = "intellij.platform.execution.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":execution-impl_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/core-impl",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-api:ide",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//jps/model-serialization",
+    "//platform/lang-api:lang",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/remote-core",
+    "//platform/statistics",
+    "//platform/platform-impl:ide-impl",
+    "//platform/macro",
+    "//libraries/miglayout-swing",
+    "//libraries/guava",
+    "//platform/refactoring",
+    "//platform/ide-core-impl",
+    "//platform/ide-core/plugins",
+    "//libraries/stream",
+    "//platform/util/concurrency",
+    "//platform/observable",
+    "//platform/util-ex",
+    "//platform/projectModel-impl",
+    "//libraries/fastutil",
+    "//platform/core-ui",
+    "//platform/platform-util-io-impl:ide-util-io-impl",
+    "//libraries/jediterm-core",
+    "//libraries/jediterm-ui",
+    "//libraries/pty4j",
+    "//platform/execution",
+    "//platform/wsl-impl",
+    "//platform/util/jdom",
+    "//platform/workspace/storage",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:jna",
+    "//libraries/hash4j",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//platform/diagnostic",
+    "//platform/ijent",
+    "//platform/ijent/impl",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//libraries/rd/core",
+    "//platform/rd-platform-community:rd-community",
+    "//platform/util/coroutines",
+    "//platform/eel-provider",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//platform/kernel/shared:kernel",
+    "//platform/project/shared:project",
+    "//platform/platform-impl/rpc",
+    "//platform/remote-topics/shared:rpc-topics",
+  ]
+)
+### auto-generated section `build intellij.platform.execution.impl` end
+
+### auto-generated section `build intellij.platform.execution.tests` start
+jvm_library(
+  name = "execution-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/forms_rt:java-guiForms-rt",
+    "//libraries/pty4j",
+  ]
+)
+
+jvm_library(
+  name = "execution-tests_test_lib",
+  module_name = "intellij.platform.execution.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/platform-util-io:ide-util-io",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/execution-impl",
+    "//platform/execution",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "@lib//:assert_j",
+    "//platform/core-ui",
+    "//libraries/jediterm-core",
+    "//libraries/jediterm-ui",
+    "//platform/eel",
+    "//platform/eel-provider",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//libraries/pty4j",
+  ],
+  runtime_deps = [":execution-tests"]
+)
+### auto-generated section `build intellij.platform.execution.tests` end
+
+### auto-generated section `test intellij.platform.execution.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "execution-tests_test",
+  runtime_deps = [":execution-tests_test_lib"]
+)
+### auto-generated section `test intellij.platform.execution.tests` end

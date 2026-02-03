@@ -1,0 +1,1 @@
+class A implements Foo<caret> {}

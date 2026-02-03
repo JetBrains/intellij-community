@@ -1,0 +1,115 @@
+PyFile:ExtendedSlices.py
+  PyExpressionStatement
+    PySubscriptionExpression
+      PyReferenceExpression: d
+        PsiElement(Py:IDENTIFIER)('d')
+      PsiElement(Py:LBRACKET)('[')
+      PySliceItem
+        PsiElement(Py:COLON)(':')
+        PsiElement(Py:COLON)(':')
+      PsiElement(Py:RBRACKET)(']')
+  PsiWhiteSpace('\n')
+  PyExpressionStatement
+    PySubscriptionExpression
+      PyReferenceExpression: d
+        PsiElement(Py:IDENTIFIER)('d')
+      PsiElement(Py:LBRACKET)('[')
+      PySliceItem
+        PyNumericLiteralExpression
+          PsiElement(Py:INTEGER_LITERAL)('1')
+        PsiElement(Py:COLON)(':')
+        PsiElement(Py:COLON)(':')
+        PyNumericLiteralExpression
+          PsiElement(Py:INTEGER_LITERAL)('2')
+      PsiElement(Py:RBRACKET)(']')
+  PsiWhiteSpace('\n')
+  PyExpressionStatement
+    PySubscriptionExpression
+      PyReferenceExpression: d
+        PsiElement(Py:IDENTIFIER)('d')
+      PsiElement(Py:LBRACKET)('[')
+      PySliceItem
+        PyNumericLiteralExpression
+          PsiElement(Py:INTEGER_LITERAL)('1')
+        PsiElement(Py:COLON)(':')
+        PyNumericLiteralExpression
+          PsiElement(Py:INTEGER_LITERAL)('2')
+        PsiElement(Py:COLON)(':')
+      PsiElement(Py:RBRACKET)(']')
+  PsiWhiteSpace('\n')
+  PyExpressionStatement
+    PySubscriptionExpression
+      PyReferenceExpression: d
+        PsiElement(Py:IDENTIFIER)('d')
+      PsiElement(Py:LBRACKET)('[')
+      PySliceItem
+        PyNumericLiteralExpression
+          PsiElement(Py:INTEGER_LITERAL)('0')
+        PsiElement(Py:COLON)(':')
+      PsiElement(Py:RBRACKET)(']')
+  PsiWhiteSpace('\n')
+  PyAssignmentStatement
+    PySubscriptionExpression
+      PyReferenceExpression: d
+        PsiElement(Py:IDENTIFIER)('d')
+      PsiElement(Py:LBRACKET)('[')
+      PyTupleExpression
+        PySliceItem
+          PyNumericLiteralExpression
+            PsiElement(Py:INTEGER_LITERAL)('1')
+          PsiElement(Py:COLON)(':')
+          PyNumericLiteralExpression
+            PsiElement(Py:INTEGER_LITERAL)('2')
+          PsiElement(Py:COLON)(':')
+          PyNumericLiteralExpression
+            PsiElement(Py:INTEGER_LITERAL)('3')
+        PsiElement(Py:COMMA)(',')
+        PsiWhiteSpace(' ')
+        PySliceItem
+          PyNumericLiteralExpression
+            PsiElement(Py:INTEGER_LITERAL)('1')
+          PsiElement(Py:COLON)(':')
+          PyNumericLiteralExpression
+            PsiElement(Py:INTEGER_LITERAL)('2')
+          PsiElement(Py:COLON)(':')
+          PyNumericLiteralExpression
+            PsiElement(Py:INTEGER_LITERAL)('3')
+      PsiElement(Py:RBRACKET)(']')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyNumericLiteralExpression
+      PsiElement(Py:INTEGER_LITERAL)('1')
+  PsiWhiteSpace('\n')
+  PyExpressionStatement
+    PySubscriptionExpression
+      PyReferenceExpression: d
+        PsiElement(Py:IDENTIFIER)('d')
+      PsiElement(Py:LBRACKET)('[')
+      PyTupleExpression
+        PySliceItem
+          PsiElement(Py:COLON)(':')
+          PyNumericLiteralExpression
+            PsiElement(Py:INTEGER_LITERAL)('42')
+        PsiElement(Py:COMMA)(',')
+        PsiWhiteSpace(' ')
+        PyEllipsisLiteralExpression
+          PsiElement(Py:DOT)('.')
+          PsiElement(Py:DOT)('.')
+          PsiElement(Py:DOT)('.')
+        PsiElement(Py:COMMA)(',')
+        PsiWhiteSpace(' ')
+        PySliceItem
+          PsiElement(Py:COLON)(':')
+          PyNumericLiteralExpression
+            PsiElement(Py:INTEGER_LITERAL)('24')
+          PsiElement(Py:COLON)(':')
+        PsiElement(Py:COMMA)(',')
+        PsiWhiteSpace(' ')
+        PyNumericLiteralExpression
+          PsiElement(Py:INTEGER_LITERAL)('24')
+        PsiElement(Py:COMMA)(',')
+        PsiWhiteSpace(' ')
+        PyNumericLiteralExpression
+          PsiElement(Py:INTEGER_LITERAL)('100')
+      PsiElement(Py:RBRACKET)(']')

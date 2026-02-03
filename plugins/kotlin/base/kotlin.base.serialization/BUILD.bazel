@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.kotlin.base.serialization` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_kotlin.base.serialization",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+  ],
+  x_context_parameters = True
+)
+
+jvm_library(
+  name = "kotlin.base.serialization",
+  module_name = "intellij.kotlin.base.serialization",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin.base.serialization",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:jetbrains-annotations",
+  ]
+)
+### auto-generated section `build intellij.kotlin.base.serialization` end

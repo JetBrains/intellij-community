@@ -1,0 +1,35 @@
+### auto-generated section `build intellij.platform.util.immutableKeyValueStore.benchmark` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "benchmark",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "benchmark_test_lib",
+  module_name = "intellij.platform.util.immutableKeyValueStore.benchmark",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:jmh-core",
+    "@lib//:jmh-generator-annprocess",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/zip",
+    "//platform/util/rt-java8",
+    "@community//build:zip",
+    "//libraries/hash4j",
+  ],
+  runtime_deps = [":benchmark"]
+)
+### auto-generated section `build intellij.platform.util.immutableKeyValueStore.benchmark` end
+
+### auto-generated section `test intellij.platform.util.immutableKeyValueStore.benchmark` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "benchmark_test",
+  runtime_deps = [":benchmark_test_lib"]
+)
+### auto-generated section `test intellij.platform.util.immutableKeyValueStore.benchmark` end

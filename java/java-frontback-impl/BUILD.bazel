@@ -1,0 +1,49 @@
+### auto-generated section `build intellij.java.frontback.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "frontback-impl_resources",
+  srcs = glob(["resource/**/*"]),
+  strip_prefix = "resource"
+)
+
+jvm_library(
+  name = "frontback-impl",
+  module_name = "intellij.java.frontback.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":frontback-impl_resources"],
+  deps = [
+    "//java/java-frontback-psi-api:frontback-psi",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/ide-core-impl",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/analysis-impl",
+    "//platform/core-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//xml/xml-parser:parser",
+    "//platform/core-api:core",
+    "//platform/util/jdom",
+    "//platform/syntax/syntax-psi:psi",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/statistics",
+    "//platform/threadDumpParser",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//libraries/kotlinx/serialization/core",
+    "//platform/execution",
+    "//platform/lang-api:lang",
+  ],
+  exports = [
+    "//java/java-frontback-psi-api:frontback-psi",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//platform/core-impl",
+    "//xml/xml-parser:parser",
+  ]
+)
+### auto-generated section `build intellij.java.frontback.impl` end

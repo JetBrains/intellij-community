@@ -1,0 +1,82 @@
+package pkg;
+
+public class TestLoopMerging {
+   public float a;
+   public float b;
+
+   public float test() {
+      while(this.a - this.b < -180.0F) {
+         this.b -= 360.0F;
+      }
+
+      while(this.a - this.b >= 180.0F) {
+         this.b += 360.0F;
+      }
+
+      return this.a;
+   }
+
+   public float test2() {
+      for(this.a = 0.0F; this.a < 10.0F; ++this.a) {
+         System.out.println(this.a);
+      }
+
+      for(this.a = 0.0F; this.a < 10.0F; ++this.a) {
+         System.out.println(this.a);
+      }
+
+      return this.a;
+   }
+
+   public float test3() {
+      int[] as = new int[0];
+
+      for(int f : as) {
+         ++f;
+      }
+
+      while(this.a - this.b < -180.0F) {
+         this.b -= 360.0F;
+      }
+
+      while(this.a - this.b >= 180.0F) {
+         this.b += 360.0F;
+      }
+
+      for(this.a = 0.0F; this.a < 10.0F; ++this.a) {
+         System.out.println(this.a);
+      }
+
+      return this.a;
+   }
+
+   public float test4() {
+      int[] as = new int[0];
+
+      for(int f : as) {
+         ++f;
+
+         while(this.a - this.b < -180.0F) {
+            this.b -= 360.0F;
+         }
+
+         while(this.a - this.b >= 180.0F) {
+            this.b += 360.0F;
+         }
+
+         for(this.a = 0.0F; this.a < 10.0F; ++this.a) {
+            System.out.println(this.a);
+
+            while(this.a - this.b < -180.0F) {
+               this.b -= 360.0F;
+            }
+
+            while(this.a - this.b >= 180.0F) {
+               this.b += 360.0F;
+            }
+         }
+      }
+
+      return this.a;
+   }
+}

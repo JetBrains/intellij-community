@@ -1,0 +1,225 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util;
+
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * Is intended to hold utility methods to use during {@link Document} processing.
+ */
+public final class DocumentUtil {
+  private DocumentUtil() {
+  }
+
+  /**
+   * Ensures that given task is executed when given document is at the given 'in bulk' mode.
+   * 
+   * @param document       target document
+   * @param executeInBulk  {@code true} to force given document to be in bulk mode when given task is executed;
+   *                       {@code false} to force given document to be <b>not</b> in bulk mode when given task is executed
+   * @param task           task to execute
+   */
+  public static void executeInBulk(@NotNull Document document, final boolean executeInBulk, @NotNull Runnable task) {
+    if (executeInBulk == document.isInBulkUpdate()) {
+      task.run();
+      return;
+    }
+
+    //noinspection deprecation
+    document.setInBulkUpdate(executeInBulk);
+    try {
+      task.run();
+    }
+    finally {
+      //noinspection deprecation
+      document.setInBulkUpdate(!executeInBulk);
+    }
+  }
+
+  public static void executeInBulk(@NotNull Document document, @NotNull Runnable task) {
+    executeInBulk(document, true, task);
+  }
+
+  public static void writeInRunUndoTransparentAction(final @NotNull Runnable runnable) {
+    CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(runnable));
+  }
+
+  /**
+   * Calculates offset of the first non-whitespace character of the {@code line}
+   * In case of empty line it returns line start's offset.
+   *
+   * @see #getLineStartIndentedOffset(Document, int)
+   */
+  public static int getFirstNonSpaceCharOffset(@NotNull Document document, int line) {
+    int startOffset = document.getLineStartOffset(line);
+    int endOffset = document.getLineEndOffset(line);
+    return getFirstNonSpaceCharOffset(document, startOffset, endOffset);
+  }
+
+  public static int getFirstNonSpaceCharOffset(@NotNull Document document, int startOffset, int endOffset) {
+    CharSequence text = document.getImmutableCharSequence();
+    for (int i = startOffset; i < endOffset; i++) {
+      char c = text.charAt(i);
+      if (c != ' ' && c != '\t') {
+        return i;
+      }
+    }
+    return startOffset;
+  }
+
+  public static boolean isValidOffset(int offset, @NotNull Document document) {
+    return offset >= 0 && offset <= document.getTextLength();
+  }
+
+  public static boolean isValidLine(int line, @NotNull Document document) {
+    if (line < 0) return false;
+    int lineCount = document.getLineCount();
+    return lineCount == 0 ? line == 0 : line < lineCount;
+  }
+
+  public static int getLineStartOffset(int offset, @NotNull Document document) {
+    if (offset < 0 || offset > document.getTextLength()) {
+      return offset;
+    }
+    int lineNumber = document.getLineNumber(offset);
+    return document.getLineStartOffset(lineNumber);
+  }
+
+  public static int getLineEndOffset(int offset, @NotNull Document document) {
+    if (offset < 0 || offset > document.getTextLength()) {
+      return offset;
+    }
+    int lineNumber = document.getLineNumber(offset);
+    return document.getLineEndOffset(lineNumber);
+  }
+
+  public static @NotNull TextRange getLineTextRange(@NotNull Document document, int line) {
+    return TextRange.create(document.getLineStartOffset(line), document.getLineEndOffset(line));
+  }
+
+  public static boolean isAtLineStart(int offset, @NotNull Document document) {
+    return offset >= 0 && offset <= document.getTextLength() && offset == document.getLineStartOffset(document.getLineNumber(offset));
+  }
+
+  public static boolean isAtLineEnd(int offset, @NotNull Document document) {
+    return offset >= 0 && offset <= document.getTextLength() && offset == document.getLineEndOffset(document.getLineNumber(offset));
+  }
+
+  public static int alignToCodePointBoundary(@NotNull Document document, int offset) {
+    return isInsideSurrogatePair(document, offset) ? offset - 1 : offset;
+  }
+
+  public static boolean isSurrogatePair(@NotNull Document document, int offset) {
+    CharSequence text = document.getImmutableCharSequence();
+    return offset >= 0 &&
+           offset + 1 < text.length() &&
+           Character.isHighSurrogate(text.charAt(offset)) &&
+           Character.isLowSurrogate(text.charAt(offset + 1));
+  }
+
+  public static boolean isInsideSurrogatePair(@NotNull Document document, int offset) {
+    return isSurrogatePair(document, offset - 1);
+  }
+
+  /**
+   * Equivalent to {@code (offset - 1)} except that the result never ends up in the middle of a surrogate pair.
+   * Make sure to <b>check that the returned offset is not negative</b> because this method
+   * doesn't perform the range check for you (passing an invalid offset is fine though).
+   */
+  public static int getPreviousCodePointOffset(@NotNull Document document, int offset) {
+    return offset - (isSurrogatePair(document, offset - 2) ? 2 : 1);
+  }
+
+  /**
+   * Equivalent to {@code (offset + 1)} except that the result never ends up in the middle of a surrogate pair.
+   * Make sure to <b>check that the returned offset is not beyond the document text length</b> because this method
+   * doesn't perform the range check for you (passing an invalid offset is fine though).
+   */
+  public static int getNextCodePointOffset(@NotNull Document document, int offset) {
+    return offset + (isSurrogatePair(document, offset) ? 2 : 1);
+  }
+
+  /**
+   * Tells whether given offset lies between surrogate pair characters or between characters of Windows-style line break (\r\n).
+   */
+  public static boolean isInsideCharacterPair(@NotNull Document document, int offset) {
+    if (offset <= 0 || offset >= document.getTextLength()) return false;
+    CharSequence text = document.getImmutableCharSequence();
+    char prev = text.charAt(offset - 1);
+    return prev == '\r' ? text.charAt(offset) == '\n' : Character.isHighSurrogate(prev) && Character.isLowSurrogate(text.charAt(offset));
+  }
+
+  public static boolean isLineEmpty(@NotNull Document document, final int line) {
+    final CharSequence chars = document.getCharsSequence();
+    int start = document.getLineStartOffset(line);
+    int end = Math.min(document.getLineEndOffset(line), document.getTextLength() - 1);
+    for (int i = start; i <= end; i++) {
+      if (!Character.isWhitespace(chars.charAt(i))) return false;
+    }
+    return true;
+  }
+
+  private static int getIndentLengthAtLineStart(@NotNull Document document, int lineOffset) {
+    CharSequence content = document.getImmutableCharSequence();
+    int result = 0;
+    while (lineOffset + result < content.length()) {
+      char ch = content.charAt(lineOffset + result);
+      if (!Character.isWhitespace(ch) || ch == '\n' || ch == '\r') {
+        break;
+      }
+      result++;
+    }
+    return result;
+  }
+
+  /**
+   * Calculates size of indent of the line containing {@code offset}
+   * @return Number of whitespace characters at the beginning of the line
+   */
+  public static int getIndentLength(@NotNull Document document, int offset) {
+    return getIndentLengthAtLineStart(document, getLineStartOffset(offset, document));
+  }
+
+  /**
+   * Calculates indent of the line containing {@code offset}
+   * @return Whitespaces at the beginning of the line
+   */
+  public static CharSequence getIndent(@NotNull Document document, int offset) {
+    int lineOffset = getLineStartOffset(offset, document);
+    return document.getCharsSequence().subSequence(lineOffset, lineOffset + getIndentLengthAtLineStart(document, lineOffset));
+  }
+
+  /**
+   * Calculates offset of the first non-whitespace character of the {@code line}
+   * In case of empty line it returns line end's offset.
+   *
+   * @see #getFirstNonSpaceCharOffset(Document, int)
+   */
+  public static int getLineStartIndentedOffset(@NotNull Document document, int line) {
+    int lineStartOffset = document.getLineStartOffset(line);
+    return lineStartOffset + getIndentLengthAtLineStart(document, lineStartOffset);
+  }
+
+  public static int calculateOffset(@NotNull Document document, int line, int column, int tabSize) {
+    int offset;
+    if (0 <= line && line < document.getLineCount()) {
+      final int lineStart = document.getLineStartOffset(line);
+      final int lineEnd = document.getLineEndOffset(line);
+      final CharSequence docText = document.getCharsSequence();
+
+      offset = lineStart;
+      int col = 0;
+      while (offset < lineEnd && col < column) {
+        col += docText.charAt(offset) == '\t' ? tabSize : 1;
+        offset++;
+      }
+    }
+    else {
+      offset = document.getTextLength();
+    }
+    return offset;
+  }
+}

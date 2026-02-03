@@ -1,0 +1,5 @@
+object ConsumerCommonMain {
+    init {
+        ProducerCommonMain
+    }
+}

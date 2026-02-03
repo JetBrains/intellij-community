@@ -1,0 +1,21 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.rpc"/>
+    <module name="fleet.rpc.server"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.platform.rpc.backend.remoteApiProvider"
+                    interface="com.intellij.platform.rpc.backend.RemoteApiProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.rpc.backend.documentSync"
+                    interface="com.intellij.platform.rpc.backend.impl.DocumentSync"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.platform.rpc.RemoteApiProviderService"
+                        serviceImplementation="com.intellij.platform.rpc.backend.impl.RemoteApiRegistry"/>
+  </extensions>
+</idea-plugin>

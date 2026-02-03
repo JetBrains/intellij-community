@@ -1,0 +1,21 @@
+load("@bazel_skylib//rules:common_settings.bzl", "string_list_flag")
+load("@rules_jvm//:jvm-args.bzl", "get_jvm_flags")
+
+string_list_flag(
+    name = "jvm-inc-builder-test_jvm_flags",
+    build_setting_default = get_jvm_flags([
+
+        # Ensure changes are always processed incrementally
+        "-Djvm-inc-builder.rebuild.changes.percent=100",
+
+        # Enable build process logging
+        "-Djvm-inc-builder.log.build.process=true",
+
+        # Library graphs cache size in tests enough for one test
+        "-Djvm-inc-builder.library.graph.cache.size=10",
+
+        # Uncomment to enable Debug configuration that attaches to the listening debugger
+        #"-agentlib:jdwp=transport=dt_socket,server=n,address=127.0.0.1:5008,suspend=y",
+    ]),
+    visibility = ["//visibility:public"],
+)

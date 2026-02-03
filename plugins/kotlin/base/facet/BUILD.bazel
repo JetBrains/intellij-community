@@ -1,0 +1,46 @@
+### auto-generated section `build intellij.kotlin.base.facet` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "facet_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "facet",
+  module_name = "intellij.kotlin.base.facet",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":facet_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
+    "//jps/model-serialization",
+    "//platform/workspace/storage",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//platform/execution",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/project-model",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/util/jdom",
+    "//platform/core-impl",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//libraries/gson",
+  ]
+)
+### auto-generated section `build intellij.kotlin.base.facet` end

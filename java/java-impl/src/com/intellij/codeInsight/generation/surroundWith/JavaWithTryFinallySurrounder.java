@@ -1,0 +1,58 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.generation.surroundWith;
+
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+public class JavaWithTryFinallySurrounder extends JavaStatementsModCommandSurrounder {
+  @SuppressWarnings("DialogTitleCapitalization")
+  @Override
+  public String getTemplateDescription() {
+    return CodeInsightBundle.message("surround.with.try.finally.template");
+  }
+
+  @Override
+  protected void surroundStatements(@NotNull ActionContext context,
+                                    @NotNull PsiElement container,
+                                    @NotNull PsiElement @NotNull [] statements,
+                                    @NotNull ModPsiUpdater updater) {
+    Project project = context.project();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+
+    statements = SurroundWithUtil.moveDeclarationsOut(container, statements, false);
+    if (statements.length == 0) return;
+
+    @NonNls String text = "try{\n}finally{\nst;\n}";
+    PsiTryStatement tryStatement = (PsiTryStatement)factory.createStatementFromText(text, null);
+    tryStatement = (PsiTryStatement)codeStyleManager.reformat(tryStatement);
+
+    tryStatement = (PsiTryStatement)addAfter(tryStatement, container, statements);
+
+    PsiCodeBlock tryBlock = tryStatement.getTryBlock();
+    if (tryBlock == null) return;
+    SurroundWithUtil.indentCommentIfNecessary(tryBlock, statements);
+    addRangeWithinContainer(tryBlock, container, statements, true);
+    container.deleteChildRange(statements[0], statements[statements.length - 1]);
+
+    PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
+    if (finallyBlock == null) return;
+    finallyBlock = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(finallyBlock);
+    if (finallyBlock == null) return;
+    TextRange range = finallyBlock.getStatements()[0].getTextRange();
+    finallyBlock.getContainingFile().getFileDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+    updater.select(TextRange.from(range.getStartOffset(), 0));
+  }
+}

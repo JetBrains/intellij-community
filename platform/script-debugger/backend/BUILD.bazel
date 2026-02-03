@@ -1,0 +1,33 @@
+### auto-generated section `build intellij.platform.scriptDebugger.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "backend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.platform.scriptDebugger.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/script-debugger/protocol/protocol-reader-runtime",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//libraries/netty/codec-http:libraries-netty-codec-http",
+    "//libraries/fastutil",
+    "//libraries/netty/buffer",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/concurrency",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//platform/ide-core-impl",
+    "//libraries/gson",
+    "//platform/util-ex",
+  ]
+)
+### auto-generated section `build intellij.platform.scriptDebugger.backend` end

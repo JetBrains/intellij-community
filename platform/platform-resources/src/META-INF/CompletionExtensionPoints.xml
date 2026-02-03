@@ -1,0 +1,90 @@
+<idea-plugin>
+  <extensionPoints>
+
+    <extensionPoint name="completion.confidence" beanClass="com.intellij.codeInsight.completion.CompletionConfidenceEP" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionConfidence"/>
+    </extensionPoint>
+
+    <extensionPoint name="completion.ml.contextFeatures" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.ml.ContextFeatureProvider"/>
+    </extensionPoint>
+
+    <extensionPoint name="completion.ml.model" interface="com.intellij.internal.ml.completion.RankingModelProvider" dynamic="true"/>
+
+    <extensionPoint name="completion.ml.elementFeatures" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.ml.ElementFeatureProvider"/>
+    </extensionPoint>
+
+    <extensionPoint name="completion.plainTextSymbol" beanClass="com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributorEP" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributor"/>
+    </extensionPoint>
+
+    <extensionPoint name="completion.preselectionBehaviourProvider" interface="com.intellij.codeInsight.completion.CompletionPreselectionBehaviourProvider" dynamic="true"/>
+
+    <extensionPoint name="lookup.charFilter" interface="com.intellij.codeInsight.lookup.CharFilter" dynamic="true"/>
+    <extensionPoint name="lookup.customizer" interface="com.intellij.codeInsight.lookup.impl.LookupCustomizer" dynamic="true"/>
+    <extensionPoint name="lookup.displayStrategy" interface="com.intellij.codeInsight.lookup.impl.LookupDisplayStrategy" dynamic="true"/>
+    <extensionPoint name="lookup.actionProvider" interface="com.intellij.codeInsight.lookup.LookupActionProvider" dynamic="true"/>
+    <extensionPoint name="lookup.vetoPolicy" interface="com.intellij.codeInsight.lookup.impl.LookupImplVetoPolicy" dynamic="true"/>
+    <extensionPoint name="lookup.bottomPanelProvider" interface="com.intellij.codeInsight.lookup.LookupBottomPanelProvider" dynamic="true"/>
+
+    <extensionPoint name="lookup.usageDetails" interface="com.intellij.codeInsight.lookup.impl.LookupUsageDescriptor" dynamic="true"/>
+
+    <extensionPoint name="lookup.may.have.custom.preview.provider" interface="com.intellij.codeInsight.lookup.LookupMayHaveCustomPreviewProvider" dynamic="true"/>
+
+    <extensionPoint name="createDirectoryCompletionContributor" interface="com.intellij.ide.actions.CreateDirectoryCompletionContributor" dynamic="true"/>
+
+    <extensionPoint name="codeInsight.wordCompletionFilter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.WordCompletionElementFilter"/>
+    </extensionPoint>
+
+    <extensionPoint name="templateParameterTraversalPolicy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.TemplateParameterTraversalPolicy"/>
+    </extensionPoint>
+
+    <extensionPoint name="internal.ml.featureProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.ml.MLFeatureProvider"/>
+    </extensionPoint>
+
+    <extensionPoint dynamic="true" name="codeCompletionConfigurable" beanClass="com.intellij.application.options.CodeCompletionConfigurableEP">
+      <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable" />
+    </extensionPoint>
+    <extensionPoint dynamic="true" name="inlineCompletionConfigurable" beanClass="com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurableEP">
+      <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable" />
+    </extensionPoint>
+    <extensionPoint dynamic="true" name="mlCodeCompletionConfigurable" beanClass="com.intellij.application.options.MLCodeCompletionConfigurableEP">
+      <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable" />
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.mlCompletionFeaturesCollector" dynamic="true" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.inline.completion.features.InlineCompletionFeaturesCollector"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.modcompletion.completionItemProvider" 
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.modcompletion.ModCompletionItemProvider"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.codeInsight.completion.command.factory"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.command.CommandCompletionFactory"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.completion.command.provider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.command.CommandProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.completion.intention.skipper"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.command.commands.IntentionCommandSkipper"/>
+    </extensionPoint>
+    <extensionPoint name="codeInsight.completion.error.intention" interface="com.intellij.codeInsight.completion.command.commands.ErrorFixCommandProvider" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.codeInsight.completion.intention.offset.provider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider"/>
+    </extensionPoint>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="false" description="ModCompletion contributors (see com.intellij.modcompletion.CompletionItemProvider)"
+                 key="ide.completion.modcommand"/>
+  </extensions>
+</idea-plugin>

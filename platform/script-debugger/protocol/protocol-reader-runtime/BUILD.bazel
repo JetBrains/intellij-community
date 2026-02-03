@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.platform.scriptDebugger.protocolReaderRuntime` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "protocol-reader-runtime_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "protocol-reader-runtime",
+  module_name = "intellij.platform.scriptDebugger.protocolReaderRuntime",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":protocol-reader-runtime_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/gson",
+    "//platform/util",
+    "//platform/platform-impl:ide-impl",
+    "//libraries/netty/codec-http:libraries-netty-codec-http",
+    "//libraries/fastutil",
+    "//libraries/netty/buffer",
+  ],
+  runtime_deps = ["//platform/backend"]
+)
+### auto-generated section `build intellij.platform.scriptDebugger.protocolReaderRuntime` end

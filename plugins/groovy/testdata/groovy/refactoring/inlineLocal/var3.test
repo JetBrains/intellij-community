@@ -1,0 +1,4 @@
+def sum = 2 + 2
+def mul = 3 * <selection>sum</selection>
+-----
+def mul = 3 * (2 + 2)<caret>

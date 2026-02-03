@@ -1,0 +1,13 @@
+public static void main(String[] args) {
+    for (String s : args) {
+    }
+    <selection><caret>println("a")
+    println("b")</selection>
+}
+-----
+public static void main(String[] args) {
+    for (String s : args) {
+        <selection><caret>println("a")
+        println("b")</selection>
+    }
+}

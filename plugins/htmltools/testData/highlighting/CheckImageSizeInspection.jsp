@@ -1,0 +1,1 @@
+ <img src="CheckImageSizeInspection.gif" alt="my image" width=<warning>"10"</warning> height= ${a}/>

@@ -1,0 +1,6 @@
+public class X {
+  int field;
+  public X() {
+    field = 0;
+  }
+}

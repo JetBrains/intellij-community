@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "definitions": {
+    "SOE.schema": {
+      "$ref": "#",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      },
+      "not": {
+        "$ref": "#/definitions/add"
+      },
+      "additionalProperties": false
+    },
+    "add": {
+      "$ref": "#/definitions/SOE.schema"
+    }
+  },
+  "type": "object",
+  "anyOf": [
+    {
+      "$ref": "#/",
+      "properties": {
+        "testProp": {
+          "$ref": "#/definitions/SOE.schema"
+
+        }
+      }
+    }
+  ],
+  "additionalProperties": false,
+
+  "not": {"$ref": "#"}
+}

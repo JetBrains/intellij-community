@@ -1,0 +1,26 @@
+// FILE: first.before.kt
+// "Import class 'Some'" "true"
+// ERROR: Unresolved reference: Some
+
+package test
+
+fun test(some: <caret>Some) {}
+
+
+// FILE: second.kt
+package some
+
+class Outer {
+    inner class Some
+}
+
+
+// FILE: first.after.kt
+// "Import class 'Some'" "true"
+// ERROR: Unresolved reference: Some
+
+package test
+
+import some.Outer
+
+fun test(some: <caret>Outer.Some) {}

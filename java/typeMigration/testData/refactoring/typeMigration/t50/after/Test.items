@@ -1,0 +1,9 @@
+Types:
+PsiField:c : java.util.Set<JButton>
+PsiField:c1 : java.util.Set<? extends JButton>
+PsiReferenceExpression:c : java.util.Set<JButton>
+
+Conversions:
+
+New expression type changes:
+Fails:

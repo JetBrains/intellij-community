@@ -1,0 +1,16 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
+import dependency.Annotation
+
+interface I {
+    @Annotation
+    fun foo(p: Int)
+}
+
+class A : I {
+    override fun foo(p: Int) {
+        <caret><selection>TODO("Not yet implemented")</selection>
+    }
+}
+
+// ELEMENT_TEXT: "override fun foo(p: Int) {...}"

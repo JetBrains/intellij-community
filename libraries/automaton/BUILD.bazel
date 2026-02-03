@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.automaton` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "automaton_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "automaton",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":automaton_resources"],
+  exports = ["@lib//:libraries-automaton-automaton"],
+  runtime_deps = ["@lib//:libraries-automaton-automaton"]
+)
+### auto-generated section `build intellij.libraries.automaton` end

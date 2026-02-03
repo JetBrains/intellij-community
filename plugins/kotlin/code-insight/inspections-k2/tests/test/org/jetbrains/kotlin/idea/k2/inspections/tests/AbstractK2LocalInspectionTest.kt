@@ -1,0 +1,82 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.idea.k2.inspections.tests
+
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.psi.PsiFile
+import com.intellij.testFramework.common.runAll
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.k2FileName
+import org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolutionService
+import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
+import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
+import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
+import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.test.util.invalidateCaches
+import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.div
+import kotlin.io.path.exists
+
+abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
+
+    override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+    }
+
+    override val inspectionFileName: String = ".k2Inspection"
+
+    override val skipErrorsBeforeCheckDirectives: List<String>
+        get() = super.skipErrorsBeforeCheckDirectives + K2DirectiveBasedActionUtils.DISABLE_K2_ERRORS_DIRECTIVE
+
+    override val skipErrorsAfterCheckDirectives: List<String>
+        get() = super.skipErrorsAfterCheckDirectives + K2DirectiveBasedActionUtils.DISABLE_K2_ERRORS_DIRECTIVE
+
+    override fun checkForErrorsBefore(mainFile: File, ktFile: KtFile, fileText: String) {
+        K2DirectiveBasedActionUtils.checkForErrorsBefore(mainFile, ktFile, fileText)
+    }
+
+    override fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
+        K2DirectiveBasedActionUtils.checkForErrorsAfter(mainFile, ktFile, fileText)
+    }
+
+    override fun fileName(): String = k2FileName(super.fileName(), testDataDirectory)
+
+    override fun tearDown() {
+        runAll(
+            { project.invalidateCaches() },
+            { super.tearDown() }
+        )
+    }
+
+    override fun getAfterTestDataAbsolutePath(mainFileName: String): Path {
+        val k2Extension = IgnoreTests.FileExtension.K2
+        val k2FileName = mainFileName.removeSuffix(".kt").removeSuffix(".$k2Extension") + ".$k2Extension.kt.after"
+        val k2FilePath = testDataDirectory.toPath() / k2FileName
+        if (k2FilePath.exists()) return k2FilePath
+
+        return super.getAfterTestDataAbsolutePath(mainFileName)
+    }
+
+    override fun doTest(path: String) {
+        val mainFile = File(dataFilePath(fileName()))
+
+        val extraFileNames = findExtraFilesForTest(mainFile)
+
+        myFixture.configureByFiles(*(arrayOf(mainFile.name) + extraFileNames))
+
+        processKotlinScriptIfNeeded(myFixture.file)
+
+        super.doTest(path)
+    }
+
+    private fun processKotlinScriptIfNeeded(file: PsiFile) {
+        if (file !is KtFile || !file.isScript()) return
+
+        runWithModalProgressBlocking(project, "AbstractK2LocalInspectionTest") {
+            KotlinScriptResolutionService.getInstance(project).process(file.alwaysVirtualFile)
+        }
+    }
+}

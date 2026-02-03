@@ -1,0 +1,89 @@
+### auto-generated section `build intellij.platform.structuralSearch` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "structuralSearch_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "structuralSearch",
+  module_name = "intellij.platform.structuralSearch",
+  visibility = ["//visibility:public"],
+  srcs = glob(["source/**/*.kt", "source/**/*.java", "source/**/*.form"], allow_empty = True),
+  resources = [":structuralSearch_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lvcs-api:lvcs",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/util/jdom",
+    "//xml/impl",
+    "@lib//:org-codehaus-groovy-groovy",
+    "//platform/platform-api:ide",
+    "//platform/usageView",
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//xml/xml-parser:parser",
+    "//RegExpSupport:regexp",
+    "//platform/refactoring",
+    "//platform/duplicates-analysis",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//xml/xml-psi-api:psi",
+    "//libraries/fastutil",
+    "//platform/core-impl",
+  ]
+)
+### auto-generated section `build intellij.platform.structuralSearch` end
+
+### auto-generated section `build intellij.platform.structuralSearch.tests` start
+jvm_library(
+  name = "structuralSearch-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/structuralsearch:structuralSearch",
+    "//xml/impl",
+  ]
+)
+
+jvm_library(
+  name = "structuralSearch-tests_test_lib",
+  module_name = "intellij.platform.structuralSearch.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSource/**/*.kt", "testSource/**/*.java", "testSource/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/structuralsearch:structuralSearch",
+    "//xml/impl",
+    "//platform/util/jdom",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/testRunner",
+    "//platform/testRunner:testRunner_test_lib",
+  ],
+  runtime_deps = [":structuralSearch-tests"]
+)
+### auto-generated section `build intellij.platform.structuralSearch.tests` end
+
+### auto-generated section `test intellij.platform.structuralSearch.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "structuralSearch-tests_test",
+  runtime_deps = [":structuralSearch-tests_test_lib"]
+)
+### auto-generated section `test intellij.platform.structuralSearch.tests` end

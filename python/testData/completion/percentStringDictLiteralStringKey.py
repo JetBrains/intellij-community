@@ -1,0 +1,1 @@
+"format: %(fooo)s" % {"fo<caret>"}

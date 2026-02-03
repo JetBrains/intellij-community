@@ -1,0 +1,33 @@
+### auto-generated section `build intellij.platform.editor.ex` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "editor-ex_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "editor-ex",
+  module_name = "intellij.platform.editor.ex",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":editor-ex_resources"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/util",
+    "//platform/core-impl",
+    "//platform/indexing-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//platform/util:util-ui",
+    "//libraries/fastutil",
+    "//platform/core-ui",
+    "//platform/util/jdom",
+    "//platform/statistics",
+    "//libraries/jbr",
+  ]
+)
+### auto-generated section `build intellij.platform.editor.ex` end

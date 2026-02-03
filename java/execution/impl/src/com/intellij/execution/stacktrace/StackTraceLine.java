@@ -1,0 +1,148 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.execution.stacktrace;
+
+import com.intellij.execution.Location;
+import com.intellij.execution.PsiLocation;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NonNls;
+
+public class StackTraceLine {
+  private final Project myProject;
+  private final String myLine;
+  protected static final @NonNls String AT_STR = "at";
+  protected static final String AT__STR = AT_STR + " ";
+  protected static final @NonNls String INIT_MESSAGE = "<init>";
+
+  public StackTraceLine(Project project, final String line) {
+    myProject = project;
+    myLine = line;
+  }
+
+  public String getClassName() {
+    int index = myLine.indexOf(AT_STR);
+    if (index < 0) return null;
+    index += AT__STR.length();
+    final int lastDot = getLastDot();
+    if (lastDot < 0) return null;
+    if (lastDot <= index) return null;
+    return myLine.substring(index, lastDot);
+  }
+
+  private int getLastDot() {
+    return myLine.lastIndexOf('.', getOpenBracket());
+  }
+
+  private int getOpenBracket() {
+    return myLine.indexOf('(');
+  }
+
+  private int getCloseBracket() {
+    return myLine.indexOf(')');
+  }
+
+  public int getLineNumber() throws NumberFormatException {
+    final int close = getCloseBracket();
+    final int lineNumberStart = myLine.lastIndexOf(':') + 1;
+    if (lineNumberStart < 1 || lineNumberStart >= close) throw new NumberFormatException(myLine);
+    return Integer.parseInt(myLine.substring(lineNumberStart, close)) - 1;
+  }
+
+  public OpenFileDescriptor getOpenFileDescriptor(final VirtualFile file) {
+    final int lineNumber;
+    try {
+      lineNumber = getLineNumber();
+    } catch(NumberFormatException e) {
+      return new OpenFileDescriptor(myProject, file);
+    }
+    return new OpenFileDescriptor(myProject, file, lineNumber, 0);
+  }
+
+  public OpenFileDescriptor getOpenFileDescriptor(final Project project) {
+    final Location<PsiMethod> location = getMethodLocation(project);
+    if (location == null) return null;
+    return getOpenFileDescriptor(location.getPsiElement().getContainingFile().getVirtualFile());
+  }
+
+  public String getMethodName() {
+    final int lastDot = getLastDot();
+    if (lastDot == -1) return null;
+    return myLine.substring(getLastDot() + 1, getOpenBracket());
+  }
+
+  public Location<PsiMethod> getMethodLocation(final Project project) {
+    String className = getClassName();
+    final String methodName = getMethodName();
+    if (className == null || methodName == null) return null;
+    final int lineNumber;
+    try {
+      lineNumber = getLineNumber();
+    } catch(NumberFormatException e) {
+      return null;
+    }
+    final int dollarIndex = className.indexOf('$');
+    if (dollarIndex != -1) className = className.substring(0, dollarIndex);
+    PsiClass psiClass = findClass(project, className, lineNumber);
+    PsiElement navElement = psiClass == null ? null : psiClass.getNavigationElement();
+    if (psiClass == null || navElement instanceof PsiCompiledElement) return null;
+
+    if (navElement instanceof PsiClass) {
+      final PsiMethod psiMethod = getMethodAtLine((PsiClass)navElement, methodName, lineNumber);
+      if (psiMethod != null) {
+        return new MethodLineLocation(project, psiMethod, PsiLocation.fromPsiElement((PsiClass)navElement), lineNumber);
+      }
+    }
+    return null;
+  }
+
+  private static PsiClass findClass(final Project project, final String className, final int lineNumber) {
+    if (project == null) return null;
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    PsiClass psiClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(className, GlobalSearchScope.allScope(project));
+    PsiElement navElement = psiClass == null ? null : psiClass.getNavigationElement();
+    if (psiClass == null || navElement instanceof PsiCompiledElement) return null;
+
+    final PsiFile psiFile = navElement.getContainingFile();
+    return PsiTreeUtil.getParentOfType(psiFile.findElementAt(offsetOfLine(psiFile, lineNumber)), PsiClass.class, false);
+  }
+
+  private static PsiMethod getMethodAtLine(final PsiClass psiClass, final String methodName, final int lineNumber) {
+    final PsiMethod[] methods;
+    if (INIT_MESSAGE.equals(methodName)) methods = psiClass.getConstructors();
+    else methods = psiClass.findMethodsByName(methodName, true);
+    if (methods.length == 0) return null;
+    final PsiFile psiFile = methods[0].getContainingFile();
+    final int offset = offsetOfLine(psiFile, lineNumber);
+    for (final PsiMethod method : methods) {
+      if (method.getTextRange().contains(offset)) return method;
+    }
+    //if (!methods.hasNext() || location == null) return null;
+    //return location.getPsiElement();
+
+    //if ("<init>".equals(methodName)) methods = psiClass.getConstructors();
+    //else methods = psiClass.findMethodsByName(methodName, true);
+    //if (methods.length == 0) return null;
+    //for (int i = 0; i < methods.length; i++) {
+    //  PsiMethod method = methods[i];
+    //  if (method.getTextRange().contains(offset)) return method;
+    //}
+    return null;
+  }
+
+  private static int offsetOfLine(final PsiFile psiFile, final int lineNumber) {
+    final LineTokenizer lineTokenizer = new LineTokenizer(psiFile.getViewProvider().getContents());
+    for (int i = 0; i < lineNumber; i++) lineTokenizer.advance();
+    return lineTokenizer.getOffset();
+  }
+}

@@ -1,0 +1,54 @@
+### auto-generated section `build intellij.kotlin.scripting` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_scripting",
+  opt_in = [
+    "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+    "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+  ]
+)
+
+resourcegroup(
+  name = "scripting_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "scripting",
+  module_name = "intellij.kotlin.scripting",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":scripting_resources"],
+  kotlinc_opts = ":custom_scripting",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/workspace/storage",
+    "//platform/backend/workspace",
+    "//platform/core-api:core",
+    "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform",
+    "//plugins/kotlin/base/project-structure",
+    "//platform/projectModel-impl",
+    "@lib//:kotlinc-analysis-api",
+    "//platform/workspace/jps",
+    "//java/java-impl:impl",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/platforms",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinc-kotlin-script-runtime",
+    "@lib//:kotlinc-kotlin-scripting-common",
+    "@lib//:kotlinc-kotlin-scripting-jvm",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "//plugins/kotlin/base/fir/project-structure",
+    "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
+    "//plugins/kotlin/base/scripting/scripting.shared",
+  ]
+)
+### auto-generated section `build intellij.kotlin.scripting` end

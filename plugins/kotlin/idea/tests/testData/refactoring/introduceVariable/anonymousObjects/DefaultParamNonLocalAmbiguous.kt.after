@@ -1,0 +1,6 @@
+// IGNORE_K1
+interface A
+interface B
+
+val a: B = object : A, B {}
+fun foo(b: B = a) {}

@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.libraries.ai.grazie.spell.gec.engine.local` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "ai.grazie.spell.gec.engine.local_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ai.grazie.spell.gec.engine.local",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":ai.grazie.spell.gec.engine.local_resources"],
+  exports = [
+    "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-gec-engine-local",
+    "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-hunspell-en",
+    "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-nlp-detect",
+    "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-model-swagger-annotations-jvm",
+  ],
+  runtime_deps = [
+    "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-gec-engine-local",
+    "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-hunspell-en",
+    "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-nlp-detect",
+    "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-model-swagger-annotations-jvm",
+    "//libraries/lucene.common",
+  ]
+)
+### auto-generated section `build intellij.libraries.ai.grazie.spell.gec.engine.local` end

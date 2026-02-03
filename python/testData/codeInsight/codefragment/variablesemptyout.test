@@ -1,0 +1,8 @@
+<begin>
+aaa = 12
+<end>
+aaa = 12
+aaa
+<result>
+In:
+Out:

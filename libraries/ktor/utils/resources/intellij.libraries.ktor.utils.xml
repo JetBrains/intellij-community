@@ -1,0 +1,7 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.ktor.io"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

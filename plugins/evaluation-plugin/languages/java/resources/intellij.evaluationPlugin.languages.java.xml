@@ -1,0 +1,29 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.java.backend"/>
+    <plugin id="com.intellij.gradle"/>
+    <plugin id="org.jetbrains.idea.maven"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij.cce">
+    <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaRenameVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaCompletionVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaMultiLineEvaluationVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaTextCompletionEvaluationVisitor"/>
+    <setupSdkStep implementation="com.intellij.cce.java.evaluation.SetupJDKStep"/>
+    <lineCompletionVisitorFactory implementation="com.intellij.cce.java.visitor.JavaLineCompletionVisitorFactory"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaTestGenerationVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaDocGenerationVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaCodeGenerationVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaChatCodeGenerationVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaCompletionContextEvaluationVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaFunctionCallingVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaSelfIdentificationVisitor"/>
+    <apiCallExtractor implementation="com.intellij.cce.java.chat.JavaApiCallExtractorProvider"/>
+    <exposedApiExtractor implementation="com.intellij.cce.java.evaluable.JavaExposedApiExtractor"/>
+    <callGraphBuilder implementation="com.intellij.cce.java.callGraphs.JavaCallGraphBuilder"/>
+    <testRunner implementation="com.intellij.cce.java.test.JavaTestRunner"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaSandboxFeatureVisitor"/>
+    <projectSyncInvoker implementation="com.intellij.cce.java.project.JavaProjectSyncInvoker"/>
+  </extensions>
+</idea-plugin>

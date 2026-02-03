@@ -1,0 +1,39 @@
+# see platform/build-scripts/.../LinuxDistributionBuilder.kt
+
+name: $NAME$
+version: '$VERSION$'
+summary: |-
+  $SUMMARY$
+description: |-
+  $DESCRIPTION$
+grade: $GRADE$
+confinement: classic
+base: core22
+compression: lzo
+architectures:
+  - build-on: [amd64, arm64]
+    build-for: amd64
+  - build-on: [amd64, arm64]
+    build-for: arm64
+
+apps:
+  $NAME$:
+    command: $LAUNCHER$
+
+parts:
+  common:
+    plugin: dump
+    source: dist.all
+    build-attributes: [no-patchelf]
+  bins:
+    plugin: dump
+    source: dist.unix
+    build-attributes: [no-patchelf]
+  product-json:
+    plugin: dump
+    source: dist.product-json
+    build-attributes: [no-patchelf]
+  jre:
+    plugin: dump
+    source: jre
+    build-attributes: [no-patchelf]

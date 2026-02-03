@@ -1,0 +1,2 @@
+<simple-attribute xmlns="urn:test:simple.rng" x="abc" <error>y</error>="abc">
+</simple-attribute>

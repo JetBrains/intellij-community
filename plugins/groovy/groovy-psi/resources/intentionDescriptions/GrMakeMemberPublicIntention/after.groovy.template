@@ -1,0 +1,3 @@
+class Foo {
+  <spot>public</spot> def foo() {}
+}

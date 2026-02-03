@@ -1,0 +1,3 @@
+Integer foo(a) {
+  a
+}

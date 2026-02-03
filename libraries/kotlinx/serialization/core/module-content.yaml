@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinx.serialization.core.jar
+  modules:
+  - name: intellij.libraries.kotlinx.serialization.core
+  library: kotlinx-serialization-core
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1/kotlinx-serialization-core-jvm-1.jar

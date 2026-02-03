@@ -1,0 +1,8 @@
+def foo(s) {
+    a(a,<caret>
+}
+-----
+def foo(s) {
+    a(a,)
+    <caret>
+}

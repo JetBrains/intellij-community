@@ -1,0 +1,23 @@
+def boo() {
+    aaaaa
+    cccc
+    try {
+        do1()
+    } catch<caret> (E e){
+        do 2
+    } finally {
+        sdf
+    }
+}
+-----
+def boo() {
+    aaaaa
+    try {
+        do1()
+    } catch<caret> (E e){
+        do 2
+    } finally {
+        sdf
+    }
+    cccc
+}

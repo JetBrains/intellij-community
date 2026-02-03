@@ -1,0 +1,278 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.eclipse.config;
+
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.StateStorageChooserEx;
+import com.intellij.openapi.components.StateStorageOperation;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtilRt;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.eclipse.EclipseModuleManager;
+import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
+
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+
+@State(name = "EclipseModuleManager")
+public final class EclipseModuleManagerImpl implements EclipseModuleManager, PersistentStateComponent<Element>, StateStorageChooserEx {
+  static final @NonNls String VALUE_ATTR = "value";
+  static final @NonNls String VARELEMENT = "varelement";
+  static final @NonNls String VAR_ATTRIBUTE = "var";
+  static final @NonNls String CONELEMENT = "conelement";
+  static final @NonNls String FORCED_JDK = "forced_jdk";
+  static final @NonNls String SRC_DESCRIPTION = "src_description";
+  static final @NonNls String EXPECTED_POSITION = "expected_position";
+  static final @NonNls String SRC_FOLDER = "src_folder";
+  private CachedXmlDocumentSet myDocumentSet;
+  private final Map<String, String> myEclipseVariablePaths = new LinkedHashMap<>();
+  private final Set<String> myEclipseUrls = new LinkedHashSet<>();
+  private final Set<String> myUnknownCons = new LinkedHashSet<>();
+  private boolean myForceConfigureJDK;
+  static final @NonNls String SRC_PREFIX = "src:";
+  static final @NonNls String SRC_LINK_PREFIX = "linksrc:";
+  static final @NonNls String LINK_PREFIX = "link:";
+  static final @NonNls String PREFIX_ATTR = "kind";
+  private final Module myModule;
+  static final @NonNls String LIBELEMENT = "libelement";
+  private int myExpectedModuleSourcePlace;
+  private final Map<String, Integer> mySrcPlace = new LinkedHashMap<>();
+  private String myInvalidJdk;
+
+  private final Set<String> myKnownCons = new LinkedHashSet<>();
+
+  public EclipseModuleManagerImpl(Module module) {
+    myModule = module;
+  }
+
+  public static EclipseModuleManagerImpl getInstance(Module module) {
+    return module.getService(EclipseModuleManagerImpl.class);
+  }
+
+  public static boolean isEclipseStorage(@NotNull Module module) {
+    return JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID.equals(ClassPathStorageUtil.getStorageType(module));
+  }
+
+  @Override
+  public void setInvalidJdk(String invalidJdk) {
+    myInvalidJdk = invalidJdk;
+  }
+
+  @Override
+  public String getInvalidJdk() {
+    return myInvalidJdk;
+  }
+
+  @Override
+  public void registerCon(String name) {
+    myKnownCons.add(name);
+  }
+
+  @Override
+  public String[] getUsedCons() {
+    return ArrayUtilRt.toStringArray(myKnownCons);
+  }
+
+  public @Nullable CachedXmlDocumentSet getDocumentSet() {
+    return myDocumentSet;
+  }
+
+  public void setDocumentSet(@Nullable CachedXmlDocumentSet documentSet) {
+    myDocumentSet = documentSet;
+  }
+
+  @Override
+  public void registerEclipseVariablePath(String path, String var) {
+    myEclipseVariablePaths.put(path, var);
+  }
+
+  @Override
+  public void registerEclipseSrcVariablePath(String path, String var) {
+    myEclipseVariablePaths.put(SRC_PREFIX + path, var);
+  }
+
+  @Override
+  public void registerEclipseLinkedSrcVarPath(String path, String var) {
+    myEclipseVariablePaths.put(SRC_LINK_PREFIX + path, var);
+  }
+
+  @Override
+  public String getEclipseLinkedSrcVariablePath(String path) {
+    return myEclipseVariablePaths.get(SRC_LINK_PREFIX + path);
+  }
+
+  @Override
+  public void registerEclipseLinkedVarPath(String path, String var) {
+    myEclipseVariablePaths.put(LINK_PREFIX + path, var);
+  }
+
+   @Override
+   public String getEclipseLinkedVarPath(String path) {
+    return myEclipseVariablePaths.get(LINK_PREFIX + path);
+  }
+
+  @Override
+  public String getEclipseVariablePath(String path) {
+    return myEclipseVariablePaths.get(path);
+  }
+
+  @Override
+  public String getEclipseSrcVariablePath(String path) {
+    return myEclipseVariablePaths.get(SRC_PREFIX + path);
+  }
+
+  @Override
+  public void registerUnknownCons(String con) {
+    myUnknownCons.add(con);
+  }
+
+  @Override
+  public @NotNull Set<String> getUnknownCons() {
+    return myUnknownCons;
+  }
+
+  @Override
+  public boolean isForceConfigureJDK() {
+    return myForceConfigureJDK;
+  }
+
+  @Override
+  public void setForceConfigureJDK() {
+    myForceConfigureJDK = true;
+    myExpectedModuleSourcePlace++;
+  }
+
+  @Override
+  public void registerEclipseLibUrl(String url) {
+    myEclipseUrls.add(url);
+  }
+
+  @Override
+  public boolean isEclipseLibUrl(String url) {
+    return myEclipseUrls.contains(url);
+  }
+
+  @Override
+  public @NotNull Resolution getResolution(@NotNull Storage storage, @NotNull StateStorageOperation operation) {
+    if (operation == StateStorageOperation.READ) {
+      return Resolution.DO;
+    }
+
+    if (isEclipseStorage(myModule) || (myEclipseUrls.isEmpty() && myEclipseVariablePaths.isEmpty() && !myForceConfigureJDK && myUnknownCons.isEmpty())) {
+      return Resolution.CLEAR;
+    }
+    else {
+      return Resolution.DO;
+    }
+  }
+
+  @Override
+  public Element getState() {
+    Element root = new Element("EclipseModuleSettings");
+
+    for (String eclipseUrl : myEclipseUrls) {
+      root.addContent(new Element(LIBELEMENT).setAttribute(VALUE_ATTR, eclipseUrl));
+    }
+
+    for (String var : myEclipseVariablePaths.keySet()) {
+      Element varElement = new Element(VARELEMENT);
+      if (var.startsWith(SRC_PREFIX)) {
+        varElement.setAttribute(VAR_ATTRIBUTE, StringUtil.trimStart(var, SRC_PREFIX));
+        varElement.setAttribute(PREFIX_ATTR, SRC_PREFIX);
+      }
+      else if (var.startsWith(SRC_LINK_PREFIX)) {
+        varElement.setAttribute(VAR_ATTRIBUTE, StringUtil.trimStart(var, SRC_LINK_PREFIX));
+        varElement.setAttribute(PREFIX_ATTR, SRC_LINK_PREFIX);
+      }
+      else if (var.startsWith(LINK_PREFIX)) {
+        varElement.setAttribute(VAR_ATTRIBUTE, StringUtil.trimStart(var, LINK_PREFIX));
+        varElement.setAttribute(PREFIX_ATTR, LINK_PREFIX);
+      }
+      else {
+        varElement.setAttribute(VAR_ATTRIBUTE, var);
+      }
+      varElement.setAttribute(VALUE_ATTR, myEclipseVariablePaths.get(var));
+      root.addContent(varElement);
+    }
+
+    for (String unknownCon : myUnknownCons) {
+      root.addContent(new Element(CONELEMENT).setAttribute(VALUE_ATTR, unknownCon));
+    }
+
+    if (myForceConfigureJDK) {
+      root.setAttribute(FORCED_JDK, String.valueOf(true));
+    }
+
+    Element srcDescriptionElement = new Element(SRC_DESCRIPTION);
+    srcDescriptionElement.setAttribute(EXPECTED_POSITION, String.valueOf(myExpectedModuleSourcePlace));
+    for (String srcUrl : mySrcPlace.keySet()) {
+      Element srcFolder = new Element(SRC_FOLDER);
+      srcFolder.setAttribute(VALUE_ATTR, srcUrl);
+      srcFolder.setAttribute(EXPECTED_POSITION, mySrcPlace.get(srcUrl).toString());
+      srcDescriptionElement.addContent(srcFolder);
+    }
+    root.addContent(srcDescriptionElement);
+
+    return root;
+  }
+
+  @Override
+  public void loadState(@NotNull Element state) {
+    myEclipseUrls.clear();
+    myEclipseVariablePaths.clear();
+    myUnknownCons.clear();
+    mySrcPlace.clear();
+    myKnownCons.clear();
+
+    for (Element o : state.getChildren(LIBELEMENT)) {
+      myEclipseUrls.add(o.getAttributeValue(VALUE_ATTR));
+    }
+
+    for (Element o : state.getChildren(VARELEMENT)) {
+      myEclipseVariablePaths.put(o.getAttributeValue(VAR_ATTRIBUTE), o.getAttributeValue(PREFIX_ATTR, "") + o.getAttributeValue(VALUE_ATTR));
+    }
+
+    for (Element o : state.getChildren(CONELEMENT)) {
+      myUnknownCons.add(o.getAttributeValue(VALUE_ATTR));
+    }
+
+    myForceConfigureJDK = Boolean.parseBoolean(state.getAttributeValue(FORCED_JDK, "false"));
+
+    Element srcDescriptionElement = state.getChild(SRC_DESCRIPTION);
+    if (srcDescriptionElement != null) {
+      myExpectedModuleSourcePlace = Integer.parseInt(srcDescriptionElement.getAttributeValue(EXPECTED_POSITION));
+      for (Element o : srcDescriptionElement.getChildren(SRC_FOLDER)) {
+        mySrcPlace.put(o.getAttributeValue(VALUE_ATTR), Integer.parseInt(o.getAttributeValue(EXPECTED_POSITION)));
+      }
+    }
+  }
+
+  @Override
+  public void setExpectedModuleSourcePlace(int expectedModuleSourcePlace) {
+    myExpectedModuleSourcePlace = expectedModuleSourcePlace;
+  }
+
+  @Override
+  public boolean isExpectedModuleSourcePlace(int expectedPlace) {
+    return myExpectedModuleSourcePlace == expectedPlace;
+  }
+
+  @Override
+  public void registerSrcPlace(String srcUrl, int placeIdx) {
+    mySrcPlace.put(srcUrl, placeIdx);
+  }
+
+  @Override
+  public int getSrcPlace(String srcUtl) {
+    Integer v = mySrcPlace.get(srcUtl);
+    return v == null ? -1 : v;
+  }
+}

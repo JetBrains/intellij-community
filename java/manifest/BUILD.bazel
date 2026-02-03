@@ -1,0 +1,70 @@
+### auto-generated section `build intellij.java.manifest` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "manifest_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "manifest",
+  module_name = "intellij.java.manifest",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":manifest_resources"],
+  deps = [
+    "//platform/code-style-api:codeStyle",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/platform-impl:ide-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-api:ide",
+    "//platform/lang-api:lang",
+    "//platform/core-impl",
+    "//java/java-psi-api:psi",
+    "//java/java-impl:impl",
+    "//spellchecker",
+    "//platform/core-ui",
+  ]
+)
+
+jvm_library(
+  name = "manifest_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [":manifest"],
+  deps = [
+    "//platform/code-style-api:codeStyle",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/platform-impl:ide-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-api:ide",
+    "//platform/lang-api:lang",
+    "//platform/core-impl",
+    "//java/java-psi-api:psi",
+    "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/testFramework",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//platform/core-ui",
+  ]
+)
+### auto-generated section `build intellij.java.manifest` end
+
+### auto-generated section `test intellij.java.manifest` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "manifest_test",
+  runtime_deps = [":manifest_test_lib"]
+)
+### auto-generated section `test intellij.java.manifest` end

@@ -1,0 +1,7 @@
+<!DOCTYPE a [
+<!ELEMENT a (#PCDATA)>
+<!ENTITY nbsp2 SYSTEM "14.xml<caret>" >  
+]>
+<a>
+  &nbsp2;
+</a>

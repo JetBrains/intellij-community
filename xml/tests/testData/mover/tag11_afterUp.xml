@@ -1,0 +1,6 @@
+<aaa>
+  <test />
+    <test2 <caret>/>
+    <!--test comment-->
+  <test />
+</aaa>

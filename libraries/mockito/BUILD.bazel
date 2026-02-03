@@ -1,0 +1,14 @@
+### auto-generated section `build intellij.libraries.mockito` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "mockito",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:mockito"],
+  runtime_deps = [
+    "@lib//:mockito",
+    "@lib//:byte-buddy",
+  ]
+)
+### auto-generated section `build intellij.libraries.mockito` end

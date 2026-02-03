@@ -1,0 +1,13 @@
+// FIR_IDENTICAL
+package foo
+
+class Impl : Bar() {
+    override fun f(): Any {
+        <selection><caret>return super.f()</selection>
+    }
+}
+
+// MEMBER: "f(): Any"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

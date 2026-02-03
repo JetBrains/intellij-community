@@ -1,0 +1,6674 @@
+{
+  "name": "AsciiDoc",
+  "scopeName": "text.asciidoc",
+  "fileTypes": [
+    "ad",
+    "asc",
+    "adoc",
+    "asciidoc",
+    "adoc.txt"
+  ],
+  "limitLineLength": false,
+  "maxTokensPerLine": 100,
+  "patterns": [
+    {
+      "include": "#comment"
+    },
+    {
+      "include": "#callout-list-item"
+    },
+    {
+      "include": "#titles"
+    },
+    {
+      "include": "#attribute-entry"
+    },
+    {
+      "include": "#blocks"
+    },
+    {
+      "include": "#block-title"
+    },
+    {
+      "include": "#tables"
+    },
+    {
+      "include": "#horizontal-rule"
+    },
+    {
+      "include": "#list"
+    },
+    {
+      "include": "#inlines"
+    },
+    {
+      "include": "#block-attribute"
+    },
+    {
+      "include": "#line-break"
+    }
+  ],
+  "repository": {
+    "blocks": {
+      "patterns": [
+        {
+          "include": "#front-matter-block"
+        },
+        {
+          "include": "#comment-paragraph"
+        },
+        {
+          "include": "#admonition-paragraph"
+        },
+        {
+          "include": "#quote-paragraph"
+        },
+        {
+          "include": "#listing-paragraph"
+        },
+        {
+          "include": "#source-paragraphs"
+        },
+        {
+          "include": "#passthrough-paragraph"
+        },
+        {
+          "include": "#example-paragraph"
+        },
+        {
+          "include": "#sidebar-paragraph"
+        },
+        {
+          "include": "#literal-paragraph"
+        },
+        {
+          "include": "#open-block"
+        }
+      ]
+    },
+    "source-paragraphs": {
+      "patterns": [
+        {
+          "include": "#source-asciidoctor"
+        },
+        {
+          "include": "#source-markdown"
+        }
+      ]
+    },
+    "tables": {
+      "patterns": [
+        {
+          "include": "#table-psv"
+        },
+        {
+          "include": "#table-nested"
+        },
+        {
+          "include": "#table-csv"
+        },
+        {
+          "include": "#table-dsv"
+        }
+      ]
+    },
+    "tables-includes": {
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#callout-list-item"
+        },
+        {
+          "include": "#attribute-entry"
+        },
+        {
+          "include": "#block-title"
+        },
+        {
+          "include": "#explicit-paragraph"
+        },
+        {
+          "include": "#section"
+        },
+        {
+          "include": "#blocks"
+        },
+        {
+          "include": "#list"
+        },
+        {
+          "include": "#inlines"
+        },
+        {
+          "include": "#line-break"
+        }
+      ]
+    },
+    "inlines": {
+      "patterns": [
+        {
+          "include": "#typographic-quotes"
+        },
+        {
+          "include": "#strong"
+        },
+        {
+          "include": "#monospace"
+        },
+        {
+          "include": "#emphasis"
+        },
+        {
+          "include": "#superscript"
+        },
+        {
+          "include": "#subscript"
+        },
+        {
+          "include": "#mark"
+        },
+        {
+          "include": "#general-block-macro"
+        },
+        {
+          "include": "#anchor-macro"
+        },
+        {
+          "include": "#footnote-macro"
+        },
+        {
+          "include": "#image-macro"
+        },
+        {
+          "include": "#kbd-macro"
+        },
+        {
+          "include": "#link-macro"
+        },
+        {
+          "include": "#stem-macro"
+        },
+        {
+          "include": "#menu-macro"
+        },
+        {
+          "include": "#passthrough-macro"
+        },
+        {
+          "include": "#xref-macro"
+        },
+        {
+          "include": "#attribute-reference"
+        },
+        {
+          "include": "#characters"
+        },
+        {
+          "include": "#bibtex-macro"
+        },
+        {
+          "include": "#bibliography-anchor"
+        }
+      ]
+    },
+    "attribute-entry": {
+      "patterns": [
+        {
+          "name": "meta.definition.attribute-entry.asciidoc",
+          "begin": "^(:)(!?\\w.*?)(:)(\\p{Blank}+.+\\p{Blank}(?:\\+|\\\\))$",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.separator.attribute-entry.asciidoc"
+            },
+            "2": {
+              "name": "support.constant.attribute-name.asciidoc"
+            },
+            "3": {
+              "name": "punctuation.separator.attribute-entry.asciidoc"
+            },
+            "4": {
+              "name": "string.unquoted.attribute-value.asciidoc",
+              "patterns": [
+                {
+                  "include": "#inlines"
+                },
+                {
+                  "include": "#hard-break-backslash"
+                },
+                {
+                  "include": "#line-break"
+                },
+                {
+                  "include": "#line-break-backslash"
+                }
+              ]
+            }
+          },
+          "contentName": "string.unquoted.attribute-value.asciidoc",
+          "patterns": [
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#hard-break-backslash"
+            },
+            {
+              "include": "#line-break"
+            },
+            {
+              "include": "#line-break-backslash"
+            }
+          ],
+          "end": "^\\p{Blank}+.+$(?<!\\+|\\\\)|^\\p{Blank}*$",
+          "endCaptures": {
+            "0": {
+              "name": "string.unquoted.attribute-value.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "meta.definition.attribute-entry.asciidoc",
+          "match": "^(:)(!?\\w.*?)(:)(\\p{Blank}+(.*))?$",
+          "captures": {
+            "1": {
+              "name": "punctuation.separator.asciidoc"
+            },
+            "2": {
+              "name": "support.constant.attribute-name.asciidoc"
+            },
+            "3": {
+              "name": "punctuation.separator.asciidoc"
+            },
+            "4": {
+              "name": "string.unquoted.attribute-value.asciidoc",
+              "patterns": [
+                {
+                  "include": "#inlines"
+                },
+                {
+                  "include": "#line-break"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "block-attribute": {
+      "patterns": [
+        {
+          "match": "^\\[(|\\p{Blank}*[\\p{Word}\\{,.#\"'%].*)\\]$",
+          "name": "markup.heading.block-attribute.asciidoc",
+          "captures": {
+            "0": {
+              "patterns": [
+                {
+                  "include": "#block-attribute-inner"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "block-attribute-inner": {
+      "patterns": [
+        {
+          "comment": "separators",
+          "name": "punctuation.separator.asciidoc",
+          "match": "([,.#%])"
+        },
+        {
+          "comment": "blockname",
+          "match": "(?<=\\[)([^\\[\\],.#%=]+)",
+          "captures": {
+            "0": {
+              "name": "markup.meta.attribute-list.asciidoc",
+              "patterns": [
+                {
+                  "include": "#keywords"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "comment": "attributes",
+          "name": "markup.meta.attribute-list.asciidoc",
+          "match": "(?<=\\{|,|.|#|\"|'|%)([^\\],.#%]+)",
+          "captures": {
+            "0": {
+              "patterns": [
+                {
+                  "include": "#attribute-reference"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "block-callout": {
+      "patterns": [
+        {
+          "name": "callout.source.code.asciidoc",
+          "match": "(?:(?:\\/\\/|#|--|;;) ?)?( )?(?<!\\\\)(<)!?(--|)(\\d+)\\3(>)(?=(?: ?<!?\\3\\d+\\3>)*$)",
+          "captures": {
+            "2": {
+              "name": "constant.other.symbol.asciidoc"
+            },
+            "4": {
+              "name": "constant.numeric.asciidoc"
+            },
+            "5": {
+              "name": "constant.other.symbol.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "block-title": {
+      "patterns": [
+        {
+          "begin": "^\\.([^\\p{Blank}.].*)",
+          "captures": {
+            "1": {
+              "name": "markup.heading.blocktitle.asciidoc"
+            }
+          },
+          "end": "$"
+        }
+      ]
+    },
+    "callout-list-item": {
+      "patterns": [
+        {
+          "name": "callout.asciidoc",
+          "match": "^(<)(\\d+)(>)\\p{Blank}+(.*)$",
+          "captures": {
+            "1": {
+              "name": "constant.other.symbol.asciidoc"
+            },
+            "2": {
+              "name": "constant.numeric.asciidoc"
+            },
+            "3": {
+              "name": "constant.other.symbol.asciidoc"
+            },
+            "4": {
+              "patterns": [
+                {
+                  "include": "#inlines"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "comment": {
+      "patterns": [
+        {
+          "name": "comment.block.asciidoc",
+          "begin": "^(/{4,})$",
+          "patterns": [
+            {
+              "include": "#inlines"
+            }
+          ],
+          "end": "^\\1$"
+        },
+        {
+          "name": "comment.inline.asciidoc",
+          "match": "^/{2}([^/].*)?$"
+        }
+      ]
+    },
+    "hard-break-backslash": {
+      "patterns": [
+        {
+          "match": "(?<=\\S)\\p{Blank}+(\\+ \\\\)$",
+          "captures": {
+            "1": {
+              "name": "constant.other.symbol.hard-break.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "horizontal-rule": {
+      "patterns": [
+        {
+          "name": "constant.other.symbol.horizontal-rule.asciidoc",
+          "match": "^(?:'|<){3,}$|^ {0,3}([-\\*'])( *)\\1\\2\\1$"
+        }
+      ]
+    },
+    "include-directive": {
+      "patterns": [
+        {
+          "match": "^(include)(::)([^\\[]+)(\\[)(.*?)(\\])$",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.asciidoc"
+            },
+            "2": {
+              "name": "punctuation.separator.asciidoc"
+            },
+            "3": {
+              "name": "markup.link.asciidoc",
+              "patterns": [
+                {
+                  "include": "#attribute-reference"
+                }
+              ]
+            },
+            "4": {
+              "name": "punctuation.separator.asciidoc"
+            },
+            "5": {
+              "name": "string.unquoted.asciidoc",
+              "patterns": [
+                {
+                  "include": "#attribute-reference"
+                }
+              ]
+            },
+            "6": {
+              "name": "punctuation.separator.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "comment": "Admonition",
+          "name": "entity.name.function.asciidoc",
+          "match": "(NOTE|TIP|IMPORTANT|WARNING|CAUTION)"
+        },
+        {
+          "comment": "Paragraph or verbatim",
+          "name": "entity.name.function.asciidoc",
+          "match": "(comment|example|literal|listing|normal|pass|quote|sidebar|source|verse|abstract|partintro)"
+        },
+        {
+          "comment": "Diagram",
+          "name": "entity.name.function.asciidoc",
+          "match": "(actdiag|blockdiag|ditaa|graphviz|meme|mermaid|nwdiag|packetdiag|pikchr|plantuml|rackdiag|seqdiag|shaape|wavedrom)"
+        },
+        {
+          "comment": "Others",
+          "name": "entity.name.function.asciidoc",
+          "match": "(sect[1-4]|preface|colophon|dedication|glossary|bibliography|synopsis|appendix|index|normal|partintro|music|latex|stem)"
+        }
+      ]
+    },
+    "line-break-backslash": {
+      "patterns": [
+        {
+          "match": "(?<=\\S)\\p{Blank}+(\\\\)$",
+          "captures": {
+            "1": {
+              "name": "variable.line-break.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "line-break": {
+      "patterns": [
+        {
+          "match": "(?<=\\S)\\p{Blank}+(\\+)$",
+          "captures": {
+            "1": {
+              "name": "variable.line-break.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "list": {
+      "patterns": [
+        {
+          "match": "^\\s*(-)\\p{Blank}(\\[[\\p{Blank}\\*x]\\])(?=\\p{Blank})",
+          "name": "markup.todo.asciidoc",
+          "captures": {
+            "1": {
+              "name": "markup.list.bullet.asciidoc"
+            },
+            "2": {
+              "name": "markup.todo.box.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.list.asciidoc",
+          "match": "^\\p{Blank}*(-|\\*{1,5}|\\u2022{1,5})(?=\\p{Blank})",
+          "captures": {
+            "1": {
+              "name": "markup.list.bullet.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.list.asciidoc",
+          "match": "^\\p{Blank}*(\\.{1,5}|\\d+\\.|[a-zA-Z]\\.|[IVXivx]+\\))(?=\\p{Blank})",
+          "captures": {
+            "1": {
+              "name": "markup.list.bullet.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.heading.list.asciidoc",
+          "match": "^\\p{Blank}*(.*?\\S)(:{2,4}|;;)($|\\p{Blank}+)",
+          "captures": {
+            "1": {
+              "patterns": [
+                {
+                  "include": "#link-macro"
+                },
+                {
+                  "include": "#attribute-reference"
+                }
+              ]
+            },
+            "2": {
+              "name": "markup.list.bullet.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "titles": {
+      "patterns": [
+        {
+          "name": "markup.heading.heading-5.asciidoc",
+          "begin": "^((?:=|#){6})([\\p{Blank}]+)(?=\\S+)",
+          "end": "$",
+          "beginCaptures": {
+            "1": {
+              "name": "markup.heading.marker.asciidoc"
+            },
+            "2": {
+              "name": "markup.heading.space.asciidoc"
+            }
+          },
+          "patterns": [
+            {
+              "include": "$self"
+            }
+          ]
+        },
+        {
+          "name": "markup.heading.heading-4.asciidoc",
+          "begin": "^((?:=|#){5})([\\p{Blank}]+)(?=\\S+)",
+          "end": "$",
+          "beginCaptures": {
+            "1": {
+              "name": "markup.heading.marker.asciidoc"
+            },
+            "2": {
+              "name": "markup.heading.space.asciidoc"
+            }
+          },
+          "patterns": [
+            {
+              "include": "$self"
+            }
+          ]
+        },
+        {
+          "name": "markup.heading.heading-3.asciidoc",
+          "begin": "^((?:=|#){4})([\\p{Blank}]+)(?=\\S+)",
+          "end": "$",
+          "beginCaptures": {
+            "1": {
+              "name": "markup.heading.marker.asciidoc"
+            },
+            "2": {
+              "name": "markup.heading.space.asciidoc"
+            }
+          },
+          "patterns": [
+            {
+              "include": "$self"
+            }
+          ]
+        },
+        {
+          "name": "markup.heading.heading-2.asciidoc",
+          "begin": "^((?:=|#){3})([\\p{Blank}]+)(?=\\S+)",
+          "end": "$",
+          "beginCaptures": {
+            "1": {
+              "name": "markup.heading.marker.asciidoc"
+            },
+            "2": {
+              "name": "markup.heading.space.asciidoc"
+            }
+          },
+          "patterns": [
+            {
+              "include": "$self"
+            }
+          ]
+        },
+        {
+          "name": "markup.heading.heading-1.asciidoc",
+          "begin": "^((?:=|#){2})([\\p{Blank}]+)(?=\\S+)",
+          "end": "$",
+          "beginCaptures": {
+            "1": {
+              "name": "markup.heading.marker.asciidoc"
+            },
+            "2": {
+              "name": "markup.heading.space.asciidoc"
+            }
+          },
+          "patterns": [
+            {
+              "include": "$self"
+            }
+          ]
+        },
+        {
+          "name": "markup.heading.heading-0.asciidoc",
+          "begin": "^((?:=|#){1})([\\p{Blank}]+)(?=\\S+)",
+          "end": "$",
+          "beginCaptures": {
+            "1": {
+              "name": "markup.heading.marker.asciidoc"
+            },
+            "2": {
+              "name": "markup.heading.space.asciidoc"
+            }
+          },
+          "patterns": [
+            {
+              "include": "$self"
+            }
+          ]
+        }
+      ]
+    },
+    "anchor-macro": {
+      "patterns": [
+        {
+          "name": "markup.other.anchor.asciidoc",
+          "match": "(?<!\\\\)(?:(\\[{2})([\\p{Alpha}:_][\\p{Word}:.-]*)(?:,\\p{Blank}*(\\S.*?))?(\\]{2}))",
+          "captures": {
+            "1": {
+              "name": "support.constant.asciidoc"
+            },
+            "2": {
+              "name": "markup.blockid.asciidoc"
+            },
+            "3": {
+              "name": "string.unquoted.asciidoc"
+            },
+            "4": {
+              "name": "support.constant.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.other.anchor.asciidoc",
+          "match": "(?<!\\\\)(anchor):(\\S+)\\[(.*?[^\\\\])?\\]",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.asciidoc"
+            },
+            "2": {
+              "name": "markup.blockid.asciidoc"
+            },
+            "3": {
+              "name": "string.unquoted.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "attribute-reference": {
+      "patterns": [
+        {
+          "name": "markup.substitution.attribute-reference.asciidoc",
+          "match": "(?<!\\\\)(\\{)(set|counter2?)(:)([\\p{Alnum}\\-_!]+)((:)(.*?))?(?<!\\\\)(\\})",
+          "captures": {
+            "2": {
+              "name": "entity.name.function.asciidoc"
+            },
+            "3": {
+              "name": "punctuation.separator.asciidoc"
+            },
+            "4": {
+              "name": "support.constant.attribute-name.asciidoc"
+            },
+            "6": {
+              "name": "punctuation.separator.asciidoc"
+            },
+            "7": {
+              "name": "string.unquoted.attribute-value.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.substitution.attribute-reference.asciidoc",
+          "match": "(?<!\\\\)(\\{)(\\w+(?:[\\-]\\w+)*)(?<!\\\\)(\\})"
+        }
+      ]
+    },
+    "bibliography-anchor": {
+      "patterns": [
+        {
+          "name": "bibliography-anchor.asciidoc",
+          "match": "(?<!\\\\)(\\[{3})([\\p{Word}:][\\p{Word}:.-]*?)(\\]{3})",
+          "captures": {
+            "1": {
+              "name": "support.constant.asciidoc"
+            },
+            "2": {
+              "name": "markup.biblioref.asciidoc"
+            },
+            "3": {
+              "name": "support.constant.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "characters": {
+      "patterns": [
+        {
+          "name": "markup.character-reference.asciidoc",
+          "match": "(?<!\\\\)(&)(\\S+?)(;)",
+          "captures": {
+            "1": {
+              "name": "constant.character.asciidoc"
+            },
+            "3": {
+              "name": "constant.character.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "emphasis": {
+      "patterns": [
+        {
+          "name": "markup.emphasis.unconstrained.asciidoc",
+          "match": "(?<!\\\\\\\\)(\\[(?:[^\\]]+?)\\])?((__)((?!_).+?)(__))",
+          "captures": {
+            "1": {
+              "name": "markup.meta.attribute-list.asciidoc"
+            },
+            "2": {
+              "name": "markup.italic.asciidoc"
+            },
+            "3": {
+              "name": "punctuation.definition.asciidoc"
+            },
+            "5": {
+              "name": "punctuation.definition.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.emphasis.constrained.asciidoc",
+          "match": "(?!_{4,}\\s*$)(?<=^|[^\\p{Word};:])(\\[(?:[^\\]]+?)\\])?((_)(\\S|\\S.*?\\S)(_))(?!\\p{Word})",
+          "captures": {
+            "1": {
+              "name": "markup.meta.attribute-list.asciidoc"
+            },
+            "2": {
+              "name": "markup.italic.asciidoc"
+            },
+            "3": {
+              "name": "punctuation.definition.asciidoc"
+            },
+            "5": {
+              "name": "punctuation.definition.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "footnote-macro": {
+      "patterns": [
+        {
+          "name": "markup.other.footnote.asciidoc",
+          "begin": "(?<!\\\\)footnote(?:(ref):|:([\\w-]+)?)\\[(?:|(.*?[^\\\\]))\\]",
+          "beginCaptures": {
+            "1": {
+              "name": "entity.name.function.asciidoc"
+            },
+            "2": {
+              "name": "support.constant.attribute-name.asciidoc"
+            }
+          },
+          "contentName": "string.unquoted.asciidoc",
+          "patterns": [
+            {
+              "include": "#inlines"
+            }
+          ],
+          "end": "\\]|^$"
+        }
+      ]
+    },
+    "general-block-macro": {
+      "patterns": [
+        {
+          "name": "markup.macro.block.general.asciidoc",
+          "match": "^(\\p{Word}+)(::)(\\S*?)(\\[)((?:\\\\\\]|[^\\]])*?)(\\])$",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.asciidoc"
+            },
+            "2": {
+              "name": "punctuation.separator.asciidoc"
+            },
+            "3": {
+              "name": "markup.link.asciidoc",
+              "patterns": [
+                {
+                  "include": "#attribute-reference"
+                }
+              ]
+            },
+            "4": {
+              "name": "punctuation.separator.asciidoc"
+            },
+            "5": {
+              "name": "string.unquoted.asciidoc",
+              "patterns": [
+                {
+                  "include": "#attribute-reference"
+                }
+              ]
+            },
+            "6": {
+              "name": "punctuation.separator.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "image-macro": {
+      "patterns": [
+        {
+          "name": "markup.macro.image.asciidoc",
+          "match": "(?<!\\\\)(image|icon):([^:\\[][^\\[]*)\\[((?:\\\\\\]|[^\\]])*?)\\]",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.asciidoc"
+            },
+            "2": {
+              "name": "markup.link.asciidoc"
+            },
+            "3": {
+              "name": "string.unquoted.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "kbd-macro": {
+      "patterns": [
+        {
+          "name": "markup.macro.kbd.asciidoc",
+          "match": "(?<!\\\\)(kbd|btn):(\\[)((?:\\\\\\]|[^\\]])+?)(\\])",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.asciidoc"
+            },
+            "3": {
+              "name": "string.unquoted.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "link-macro": {
+      "patterns": [
+        {
+          "name": "markup.other.url.asciidoc",
+          "match": "(?:^|<|[\\s>\\(\\)\\[\\];])((?<!\\\\)(?:https?|file|ftp|irc)://[^\\s\\[\\]<]*[^\\s.,\\[\\]<\\)])(?:\\[((?:\\\\\\]|[^\\]])*?)\\])?",
+          "captures": {
+            "1": {
+              "name": "markup.link.asciidoc",
+              "patterns": [
+                {
+                  "include": "#attribute-reference"
+                }
+              ]
+            },
+            "2": {
+              "name": "string.unquoted.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.other.url.asciidoc",
+          "match": "(?:^|<|[\\p{Blank}>\\(\\)\\[\\];])((?<!\\\\)\\{uri-\\w+(?:[\\-]\\w+)*(?<!\\\\)\\})(?:\\[((?:\\\\\\]|[^\\]])*?)\\])",
+          "captures": {
+            "1": {
+              "name": "markup.substitution.attribute-reference.asciidoc"
+            },
+            "2": {
+              "name": "string.unquoted.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.other.url.asciidoc",
+          "match": "(?<!\\\\)(link|mailto):([^\\s\\[]+)(?:\\[((?:\\\\\\]|[^\\]])*?)\\])",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.asciidoc"
+            },
+            "2": {
+              "name": "markup.link.asciidoc",
+              "patterns": [
+                {
+                  "include": "#attribute-reference"
+                }
+              ]
+            },
+            "3": {
+              "name": "string.unquoted.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.link.email.asciidoc",
+          "match": "\\p{Word}[\\p{Word}.%+-]*(@)\\p{Alnum}[\\p{Alnum}.-]*(\\.)\\p{Alpha}{2,4}\\b"
+        }
+      ]
+    },
+    "mark": {
+      "patterns": [
+        {
+          "name": "markup.mark.unconstrained.asciidoc",
+          "match": "(?<!\\\\\\\\)(\\[[^\\]]+?\\])((##)(.+?)(##))",
+          "captures": {
+            "1": {
+              "name": "markup.meta.attribute-list.asciidoc"
+            },
+            "2": {
+              "name": "markup.mark.asciidoc"
+            },
+            "3": {
+              "name": "punctuation.definition.asciidoc"
+            },
+            "5": {
+              "name": "punctuation.definition.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.mark.unconstrained.asciidoc",
+          "match": "(?<!\\\\\\\\)((##)(.+?)(##))",
+          "captures": {
+            "1": {
+              "name": "markup.highlight.asciidoc"
+            },
+            "2": {
+              "name": "punctuation.definition.asciidoc"
+            },
+            "4": {
+              "name": "punctuation.definition.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.mark.constrained.asciidoc",
+          "match": "(?<![\\\\;:\\p{Word}#])(\\[[^\\]]+?\\])((#)(\\S|\\S.*?\\S)(#)(?!\\p{Word}))",
+          "captures": {
+            "1": {
+              "name": "markup.meta.attribute-list.asciidoc"
+            },
+            "2": {
+              "name": "markup.mark.asciidoc"
+            },
+            "3": {
+              "name": "punctuation.definition.asciidoc"
+            },
+            "5": {
+              "name": "punctuation.definition.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.mark.constrained.asciidoc",
+          "match": "(?<![\\\\;:\\p{Word}#])(\\[[^\\]]+?\\])?((#)(\\S|\\S.*?\\S)(#)(?!\\p{Word}))",
+          "captures": {
+            "1": {
+              "name": "markup.meta.attribute-list.asciidoc"
+            },
+            "2": {
+              "name": "markup.highlight.asciidoc"
+            },
+            "3": {
+              "name": "punctuation.definition.asciidoc"
+            },
+            "5": {
+              "name": "punctuation.definition.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "menu-macro": {
+      "patterns": [
+        {
+          "name": "markup.other.menu.asciidoc",
+          "match": "(?<!\\\\)(menu):(\\p{Word}|\\p{Word}.*?\\S)\\[\\p{Blank}*(.+?)?\\]",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.asciidoc"
+            },
+            "2": {
+              "name": "markup.link.asciidoc"
+            },
+            "3": {
+              "name": "string.unquoted.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "monospace": {
+      "patterns": [
+        {
+          "name": "markup.monospace.unconstrained.asciidoc",
+          "match": "(?<!\\\\)(\\[.+?\\])?((``)(.+?)(``))",
+          "captures": {
+            "1": {
+              "name": "markup.meta.attribute-list.asciidoc"
+            },
+            "2": {
+              "name": "markup.raw.monospace.asciidoc"
+            },
+            "3": {
+              "name": "punctuation.definition.asciidoc"
+            },
+            "5": {
+              "name": "punctuation.definition.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.monospace.constrained.asciidoc",
+          "match": "(?<![\\\\;:\\p{Word}\"'`])(\\[.+?\\])?((`)(\\S|\\S.*?\\S)(`))(?![\\p{Word}\"'`])",
+          "captures": {
+            "1": {
+              "name": "markup.meta.attribute-list.asciidoc"
+            },
+            "2": {
+              "name": "markup.raw.monospace.asciidoc"
+            },
+            "3": {
+              "name": "punctuation.definition.asciidoc"
+            },
+            "5": {
+              "name": "punctuation.definition.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "passthrough-macro": {
+      "patterns": [
+        {
+          "name": "markup.macro.inline.passthrough.asciidoc",
+          "match": "(?:(?<!\\\\)(\\[([^\\]]+?)\\]))?(?:\\\\{0,2})(?<delim>\\+{2,3}|\\${2})(.*?)(\\k<delim>)",
+          "captures": {
+            "1": {
+              "name": "markup.meta.attribute-list.asciidoc"
+            },
+            "3": {
+              "name": "support.constant.asciidoc"
+            },
+            "4": {
+              "name": "string.unquoted.asciidoc",
+              "patterns": [
+                {
+                  "include": "text.html.basic"
+                }
+              ]
+            },
+            "5": {
+              "name": "support.constant.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.macro.inline.passthrough.asciidoc",
+          "begin": "(?<!\\\\)(pass:)([a-z,]*)(\\[)",
+          "beginCaptures": {
+            "1": {
+              "name": "entity.name.function.asciidoc"
+            },
+            "2": {
+              "name": "markup.meta.attribute-list.asciidoc"
+            }
+          },
+          "contentName": "string.unquoted.asciidoc",
+          "patterns": [
+            {
+              "include": "text.html.basic"
+            }
+          ],
+          "end": "\\]|^$"
+        }
+      ]
+    },
+    "stem-macro": {
+      "patterns": [
+        {
+          "name": "markup.macro.inline.stem.asciidoc",
+          "begin": "(?<!\\\\)(stem|(?:latex|ascii)math):([a-z,]*)(\\[)",
+          "beginCaptures": {
+            "1": {
+              "name": "entity.name.function.asciidoc"
+            },
+            "2": {
+              "name": "markup.meta.attribute-list.asciidoc"
+            }
+          },
+          "contentName": "string.unquoted.asciidoc",
+          "end": "\\]|^$"
+        }
+      ]
+    },
+    "bibtex-macro": {
+      "patterns": [
+        {
+          "name": "markup.macro.inline.bibtex.asciidoc",
+          "begin": "(?<!\\\\)(citenp:)([a-z,]*)(\\[)",
+          "beginCaptures": {
+            "1": {
+              "name": "entity.name.function.asciidoc"
+            },
+            "2": {
+              "name": "markup.meta.attribute-list.asciidoc"
+            }
+          },
+          "contentName": "string.unquoted.asciidoc",
+          "end": "\\]|^$"
+        }
+      ]
+    },
+    "strong": {
+      "patterns": [
+        {
+          "name": "markup.strong.unconstrained.asciidoc",
+          "match": "(?<!\\\\\\\\)(\\[.+?\\])?((\\*\\*)(.+?)(\\*\\*))",
+          "captures": {
+            "1": {
+              "name": "markup.meta.attribute-list.asciidoc"
+            },
+            "2": {
+              "name": "markup.bold.asciidoc"
+            },
+            "3": {
+              "name": "punctuation.definition.asciidoc"
+            },
+            "5": {
+              "name": "punctuation.definition.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.strong.constrained.asciidoc",
+          "match": "(?<![\\\\;:\\p{Word}\\*])(\\[.+?\\])?((\\*)(\\S|\\S.*?\\S)(\\*)(?!\\p{Word}))",
+          "captures": {
+            "1": {
+              "name": "markup.meta.attribute-list.asciidoc"
+            },
+            "2": {
+              "name": "markup.bold.asciidoc"
+            },
+            "3": {
+              "name": "punctuation.definition.asciidoc"
+            },
+            "5": {
+              "name": "punctuation.definition.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "subscript": {
+      "patterns": [
+        {
+          "name": "markup.subscript.asciidoc",
+          "match": "(?<!\\\\)(\\[.+?\\])?((~)(\\S+?)(~))",
+          "captures": {
+            "1": {
+              "name": "markup.meta.sub.attribute-list.asciidoc"
+            },
+            "2": {
+              "name": "markup.sub.subscript.asciidoc"
+            },
+            "3": {
+              "name": "punctuation.definition.asciidoc"
+            },
+            "5": {
+              "name": "punctuation.definition.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "superscript": {
+      "patterns": [
+        {
+          "name": "markup.superscript.asciidoc",
+          "match": "(?<!\\\\)(\\[.+?\\])?((\\^)(\\S+?)(\\^))",
+          "captures": {
+            "1": {
+              "name": "markup.meta.super.attribute-list.asciidoc"
+            },
+            "2": {
+              "name": "markup.super.superscript.asciidoc"
+            },
+            "3": {
+              "name": "punctuation.definition.asciidoc"
+            },
+            "5": {
+              "name": "punctuation.definition.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "typographic-quotes": {
+      "patterns": [
+        {
+          "name": "markup.italic.quote.typographic-quotes.asciidoc",
+          "comment": "double-quoted",
+          "match": "(?:^|(?<!\\p{Word}|;|:))(\\[([^\\]]+?)\\])?(\"`)(\\S|\\S.*?\\S)(`\")(?!\\p{Word})",
+          "captures": {
+            "1": {
+              "name": "markup.meta.attribute-list.asciidoc"
+            },
+            "3": {
+              "name": "punctuation.definition.asciidoc"
+            },
+            "5": {
+              "name": "punctuation.definition.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.italic.quote.typographic-quotes.asciidoc",
+          "comment": "single-quoted",
+          "match": "(?:^|(?<!\\p{Word}|;|:))(\\[([^\\]]+?)\\])?('`)(\\S|\\S.*?\\S)(`')(?!\\p{Word})",
+          "captures": {
+            "1": {
+              "name": "markup.meta.attribute-list.asciidoc"
+            },
+            "3": {
+              "name": "punctuation.definition.asciidoc"
+            },
+            "5": {
+              "name": "punctuation.definition.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "xref-macro": {
+      "patterns": [
+        {
+          "name": "markup.reference.xref.asciidoc",
+          "match": "(?<!\\\\)(?:(<<)([\\p{Word}\":./]+,)?(.*?)(>>))",
+          "captures": {
+            "1": {
+              "name": "constant.asciidoc"
+            },
+            "2": {
+              "name": "markup.meta.attribute-list.asciidoc"
+            },
+            "3": {
+              "name": "string.unquoted.asciidoc"
+            },
+            "4": {
+              "name": "constant.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.reference.xref.asciidoc",
+          "begin": "(?<!\\\\)(xref:)([\\p{Word}\":.\\/].*?)(\\[)",
+          "beginCaptures": {
+            "1": {
+              "name": "entity.name.function.asciidoc"
+            },
+            "2": {
+              "name": "markup.meta.attribute-list.asciidoc"
+            }
+          },
+          "contentName": "string.unquoted.asciidoc",
+          "end": "\\]|^$"
+        }
+      ]
+    },
+    "admonition-paragraph": {
+      "patterns": [
+        {
+          "name": "markup.admonition.asciidoc",
+          "begin": "(?=(?>(?:^\\[(NOTE|TIP|IMPORTANT|WARNING|CAUTION)((?:,|#|\\.|%)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(NOTE|TIP|IMPORTANT|WARNING|CAUTION)((?:,|#|\\.|%)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "example block",
+              "begin": "^(={4,})\\s*$",
+              "patterns": [
+                {
+                  "include": "#inlines"
+                },
+                {
+                  "include": "#list"
+                }
+              ],
+              "end": "(?<=\\1)"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "patterns": [
+                {
+                  "include": "#inlines"
+                },
+                {
+                  "include": "#list"
+                }
+              ],
+              "end": "(?<=\\1)"
+            }
+          ],
+          "end": "((?<=--|====)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.admonition.asciidoc",
+          "begin": "^(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\\:\\p{Blank}+",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.asciidoc"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#inlines"
+            }
+          ],
+          "end": "^\\p{Blank}*$"
+        }
+      ]
+    },
+    "comment-paragraph": {
+      "patterns": [
+        {
+          "name": "comment.block.asciidoc",
+          "begin": "(?=(?>(?:^\\[(comment)((?:,|#|\\.|%)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(comment)((?:,|#|\\.|%)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "patterns": [
+                {
+                  "include": "#inlines"
+                },
+                {
+                  "include": "#list"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "include": "#inlines"
+            }
+          ],
+          "end": "((?<=--)$|^\\p{Blank}*$)"
+        }
+      ]
+    },
+    "example-paragraph": {
+      "patterns": [
+        {
+          "name": "markup.block.example.asciidoc",
+          "begin": "(?=(?>(?:^\\[(example)((?:,|#|\\.|%)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(example)((?:,|#|\\.|%)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "example block",
+              "begin": "^(={4,})$",
+              "patterns": [
+                {
+                  "include": "$self"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})$",
+              "patterns": [
+                {
+                  "include": "$self"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "include": "#inlines"
+            }
+          ],
+          "end": "((?<=--|====)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.block.example.asciidoc",
+          "begin": "^(={4,})$",
+          "patterns": [
+            {
+              "include": "$self"
+            }
+          ],
+          "end": "^(\\1)$"
+        }
+      ]
+    },
+    "front-matter-block": {
+      "patterns": [
+        {
+          "name": "markup.block.front-matter.asciidoc",
+          "begin": "\\A(-{3}$)",
+          "patterns": [
+            {
+              "include": "source.yaml"
+            }
+          ],
+          "end": "^(\\1)$"
+        }
+      ]
+    },
+    "listing-paragraph": {
+      "patterns": [
+        {
+          "name": "markup.block.listing.asciidoc",
+          "begin": "(?=(?>(?:^\\[(listing)((?:,|#|\\.|%)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(listing)((?:,|#|\\.|%)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "end": "^(\\1)$"
+            },
+            {
+              "include": "#inlines"
+            }
+          ],
+          "end": "((?<=--)$|^\\p{Blank}*$)"
+        }
+      ]
+    },
+    "literal-paragraph": {
+      "patterns": [
+        {
+          "name": "markup.block.literal.asciidoc",
+          "begin": "(?=(?>(?:^\\[(literal)((?:,|#|\\.|%)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(literal)((?:,|#|\\.|%)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4,})$",
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "end": "^(\\1)$"
+            },
+            {
+              "include": "#inlines"
+            }
+          ],
+          "end": "((?<=--|\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.block.literal.asciidoc",
+          "begin": "^(\\.{4,})$",
+          "end": "^(\\1)$"
+        }
+      ]
+    },
+    "open-block": {
+      "patterns": [
+        {
+          "name": "markup.block.open.asciidoc",
+          "begin": "^(-{2})$",
+          "beginCaptures": {
+            "1": {
+              "name": "constant.other.symbol.asciidoc"
+            }
+          },
+          "patterns": [
+            {
+              "include": "$self"
+            }
+          ],
+          "end": "^(\\1)$",
+          "endCaptures": {
+            "1": {
+              "name": "constant.other.symbol.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "passthrough-paragraph": {
+      "patterns": [
+        {
+          "name": "markup.block.passthrough.asciidoc",
+          "begin": "(?=(?>(?:^\\[(pass)((?:,|#|\\.|%)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(pass)((?:,|#|\\.|%)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "passthrough block",
+              "begin": "^(\\+{4,})\\s*$",
+              "patterns": [
+                {
+                  "include": "text.html.basic"
+                }
+              ],
+              "end": "(?<=\\1)"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "patterns": [
+                {
+                  "include": "text.html.basic"
+                }
+              ],
+              "end": "(?<=\\1)"
+            }
+          ],
+          "end": "((?<=--|\\+\\+)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.block.passthrough.asciidoc",
+          "begin": "(^\\+{4,}$)",
+          "patterns": [
+            {
+              "include": "text.html.basic"
+            }
+          ],
+          "end": "\\1"
+        }
+      ]
+    },
+    "quote-paragraph": {
+      "patterns": [
+        {
+          "name": "markup.italic.quotes.asciidoc",
+          "begin": "(?=(?>(?:^\\[(quote|verse)((?:,|#|\\.|%)([^,\\]]+))*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(quote|verse)((?:,|#|\\.|%)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "comment": "quotes block",
+              "begin": "^([_]{4,})\\s*$",
+              "patterns": [
+                {
+                  "include": "#inlines"
+                },
+                {
+                  "include": "#list"
+                }
+              ],
+              "end": "(?<=\\1)"
+            },
+            {
+              "comment": "air quotes",
+              "begin": "^(\"{2})\\s*$",
+              "patterns": [
+                {
+                  "include": "#inlines"
+                },
+                {
+                  "include": "#list"
+                }
+              ],
+              "end": "(?<=\\1)"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "patterns": [
+                {
+                  "include": "#inlines"
+                },
+                {
+                  "include": "#list"
+                }
+              ],
+              "end": "(?<=\\1)$"
+            }
+          ],
+          "end": "((?<=____|\"\"|--)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.italic.quotes.asciidoc",
+          "begin": "^(\"\")$",
+          "patterns": [
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#list"
+            }
+          ],
+          "end": "^\\1$"
+        },
+        {
+          "name": "markup.italic.quotes.asciidoc",
+          "begin": "^\\p{Blank}*(>) ",
+          "patterns": [
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#list"
+            }
+          ],
+          "end": "^\\p{Blank}*?$"
+        }
+      ]
+    },
+    "sidebar-paragraph": {
+      "patterns": [
+        {
+          "name": "markup.block.sidebar.asciidoc",
+          "begin": "(?=(?>(?:^\\[(sidebar)((?:,|#|\\.|%)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(sidebar)((?:,|#|\\.|%)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "sidebar block",
+              "begin": "^(\\*{4,})$",
+              "patterns": [
+                {
+                  "include": "$self"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})$",
+              "patterns": [
+                {
+                  "include": "$self"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "include": "#inlines"
+            }
+          ],
+          "end": "((?<=--|\\*\\*\\*\\*)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.block.sidebar.asciidoc",
+          "begin": "^(\\*{4,})$",
+          "patterns": [
+            {
+              "include": "$self"
+            }
+          ],
+          "end": "^(\\1)$"
+        }
+      ]
+    },
+    "table-csv": {
+      "patterns": [
+        {
+          "name": "markup.table.csv.asciidoc",
+          "begin": "^(,===)$",
+          "beginCaptures": {
+            "0": {
+              "name": "markup.table.delimiter.asciidoc"
+            }
+          },
+          "contentName": "string.unquoted.asciidoc",
+          "patterns": [
+            {
+              "include": "text.csv"
+            },
+            {
+              "comment": "cell separator",
+              "match": ",",
+              "captures": {
+                "0": {
+                  "name": "markup.table.cell.delimiter.asciidoc"
+                }
+              }
+            },
+            {
+              "include": "#general-block-macro"
+            }
+          ],
+          "end": "^(\\1)$",
+          "endCaptures": {
+            "0": {
+              "name": "markup.table.delimiter.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "table-dsv": {
+      "patterns": [
+        {
+          "name": "markup.table.dsv.asciidoc",
+          "begin": "^(:===)$",
+          "beginCaptures": {
+            "0": {
+              "name": "markup.table.delimiter.asciidoc"
+            }
+          },
+          "contentName": "string.unquoted.asciidoc",
+          "patterns": [
+            {
+              "comment": "cell separator",
+              "match": ":",
+              "captures": {
+                "0": {
+                  "name": "markup.table.cell.delimiter.asciidoc"
+                }
+              }
+            },
+            {
+              "include": "#general-block-macro"
+            }
+          ],
+          "end": "^(\\1)$",
+          "endCaptures": {
+            "0": {
+              "name": "markup.table.delimiter.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "table-nested": {
+      "patterns": [
+        {
+          "name": "markup.table.nested.asciidoc",
+          "begin": "^(!===)$",
+          "beginCaptures": {
+            "0": {
+              "name": "markup.table.delimiter.asciidoc"
+            }
+          },
+          "contentName": "markup.table.content.asciidoc",
+          "patterns": [
+            {
+              "comment": "cell separator and attributes",
+              "match": "(^|[^\\p{Blank}\\\\]*)(?<!\\\\)(!)",
+              "captures": {
+                "1": {
+                  "name": "markup.meta.attribute-list.asciidoc"
+                },
+                "2": {
+                  "name": "markup.table.cell.delimiter.asciidoc"
+                }
+              }
+            },
+            {
+              "include": "#tables-includes"
+            }
+          ],
+          "end": "^(\\1)$",
+          "endCaptures": {
+            "0": {
+              "name": "markup.table.delimiter.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "table-psv": {
+      "patterns": [
+        {
+          "name": "markup.table.asciidoc",
+          "begin": "^(\\|===)$",
+          "beginCaptures": {
+            "0": {
+              "name": "markup.table.delimiter.asciidoc"
+            }
+          },
+          "contentName": "markup.table.content.asciidoc",
+          "patterns": [
+            {
+              "comment": "cell separator and attributes",
+              "match": "(^|[^\\p{Blank}\\\\]*)(?<!\\\\)(\\|)",
+              "captures": {
+                "1": {
+                  "name": "markup.meta.attribute-list.asciidoc"
+                },
+                "2": {
+                  "name": "markup.table.cell.delimiter.asciidoc"
+                }
+              }
+            },
+            {
+              "include": "#tables-includes"
+            }
+          ],
+          "end": "^(\\1)$",
+          "endCaptures": {
+            "0": {
+              "name": "markup.table.delimiter.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "source-asciidoctor": {
+      "patterns": [
+        {
+          "name": "markup.code.c.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(c))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(c))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.c",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.c"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.c",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.c"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.c",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.c"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.clojure.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(clojure))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(clojure))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.clojure",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.clojure"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.clojure",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.clojure"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.clojure",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.clojure"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.coffee.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(coffee-?(script)?))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(coffee-?(script)?))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.coffee",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.coffee"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.coffee",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.coffee"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.coffee",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.coffee"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.cpp.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(c(pp|\\+\\+)))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(c(pp|\\+\\+)))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.cpp",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.cpp"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.cpp",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.cpp"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.cpp",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.cpp"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.css.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(css))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(css))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.css",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.css"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.css",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.css"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.css",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.css"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.cs.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(cs(harp)?))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(cs(harp)?))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.cs",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.cs"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.cs",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.cs"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.cs",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.cs"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.diff.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(diff|patch|rej))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(diff|patch|rej))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.diff",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.diff"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.diff",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.diff"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.diff",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.diff"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.dockerfile.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(docker(file)?))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(docker(file)?))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.dockerfile",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.dockerfile"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.dockerfile",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.dockerfile"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.dockerfile",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.dockerfile"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.elixir.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(elixir))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(elixir))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.elixir",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.elixir"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.elixir",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.elixir"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.elixir",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.elixir"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.elm.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(elm))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(elm))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.elm",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.elm"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.elm",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.elm"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.elm",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.elm"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.erlang.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(erlang))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(erlang))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.erlang",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.erlang"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.erlang",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.erlang"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.erlang",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.erlang"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.go.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(go(lang)?))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(go(lang)?))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.go",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.go"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.go",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.go"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.go",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.go"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.groovy.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(groovy))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(groovy))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.groovy",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.groovy"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.groovy",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.groovy"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.groovy",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.groovy"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.haskell.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(haskell))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(haskell))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.haskell",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.haskell"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.haskell",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.haskell"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.haskell",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.haskell"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.html.basic.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(html))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(html))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "text.embedded.html.basic",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "text.html.basic"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "text.embedded.html.basic",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "text.html.basic"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "text.embedded.html.basic",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "text.html.basic"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.java.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(java))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(java))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.java",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.java"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.java",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.java"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.java",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.java"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.js.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(javascript|js))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(javascript|js))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.js",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.js"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.js",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.js"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.js",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.js"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.json.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(json))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(json))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.json",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.json"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.json",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.json"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.json",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.json"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.js.jsx.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(jsx))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(jsx))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.js.jsx",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.js.jsx"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.js.jsx",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.js.jsx"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.js.jsx",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.js.jsx"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.julia.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(julia))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(julia))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.julia",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.julia"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.julia",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.julia"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.julia",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.julia"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.kotlin.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(kotlin|kts?))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(kotlin|kts?))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.kotlin",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.kotlin"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.kotlin",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.kotlin"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.kotlin",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.kotlin"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.css.less.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(less))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(less))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.css.less",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.css.less"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.css.less",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.css.less"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.css.less",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.css.less"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.makefile.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(make(file)?))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(make(file)?))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.makefile",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.makefile"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.makefile",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.makefile"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.makefile",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.makefile"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.gfm.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(markdown|mdown|md))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(markdown|mdown|md))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.gfm",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.gfm"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.gfm",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.gfm"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.gfm",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.gfm"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.html.mustache.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(mustache))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(mustache))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "text.embedded.html.mustache",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "text.html.mustache"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "text.embedded.html.mustache",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "text.html.mustache"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "text.embedded.html.mustache",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "text.html.mustache"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.objc.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(objc|objective-c))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(objc|objective-c))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.objc",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.objc"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.objc",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.objc"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.objc",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.objc"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.ocaml.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(ocaml))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(ocaml))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.ocaml",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.ocaml"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.ocaml",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.ocaml"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.ocaml",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.ocaml"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.perl.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(perl))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(perl))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.perl",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.perl"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.perl",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.perl"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.perl",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.perl"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.perl6.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(perl6))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(perl6))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.perl6",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.perl6"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.perl6",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.perl6"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.perl6",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.perl6"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.html.php.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(php))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(php))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "text.embedded.html.php",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "text.html.php"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "text.embedded.html.php",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "text.html.php"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "text.embedded.html.php",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "text.html.php"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.asciidoc.properties.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(properties))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(properties))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.asciidoc.properties",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.asciidoc.properties"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.asciidoc.properties",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.asciidoc.properties"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.asciidoc.properties",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.asciidoc.properties"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.python.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(py(thon)?))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(py(thon)?))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.python",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.python"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.python",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.python"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.python",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.python"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.r.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(r))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(r))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.r",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.r"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.r",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.r"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.r",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.r"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.ruby.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(ruby|rb))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(ruby|rb))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.ruby",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.ruby"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.ruby",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.ruby"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.ruby",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.ruby"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.rust.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(rust|rs))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(rust|rs))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.rust",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.rust"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.rust",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.rust"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.rust",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.rust"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.sass.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(sass))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(sass))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.sass",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.sass"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.sass",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.sass"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.sass",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.sass"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.scala.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(scala))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(scala))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.scala",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.scala"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.scala",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.scala"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.scala",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.scala"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.css.scss.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(scss))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(scss))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.css.scss",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.css.scss"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.css.scss",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.css.scss"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.css.scss",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.css.scss"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.shell.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(sh|bash|shell))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(sh|bash|shell))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.shell",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.shell"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.shell",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.shell"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.shell",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.shell"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.sql.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(sql))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(sql))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.sql",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.sql"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.sql",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.sql"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.sql",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.sql"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.swift.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(swift))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(swift))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.swift",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.swift"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.swift",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.swift"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.swift",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.swift"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.toml.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(toml))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(toml))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.toml",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.toml"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.toml",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.toml"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.toml",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.toml"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.ts.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(typescript|ts))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(typescript|ts))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.ts",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.ts"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.ts",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.ts"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.ts",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.ts"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.xml.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(xml))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(xml))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "text.embedded.xml",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "text.xml"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "text.embedded.xml",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "text.xml"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "text.embedded.xml",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "text.xml"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.code.yaml.asciidoc",
+          "begin": "(?=(?>(?:^\\[(source)(?:,|#)\\p{Blank}*(?i:(ya?ml))((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)(?:,|#)\\p{Blank}*(?i:(ya?ml))((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "begin": "^(-{4,})\\s*$",
+              "contentName": "source.embedded.yaml",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.yaml"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "begin": "^(-{2})\\s*$",
+              "contentName": "source.embedded.yaml",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.yaml"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "begin": "^(\\.{4})\\s*$",
+              "contentName": "source.embedded.yaml",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                },
+                {
+                  "include": "source.yaml"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "begin": "(?=(?>(?:^\\[(source)((?:,|#)[^\\]]+)*\\]$)))",
+          "patterns": [
+            {
+              "match": "^\\[(source)((?:,|#)([^,\\]]+))*\\]$",
+              "captures": {
+                "0": {
+                  "name": "markup.heading.asciidoc",
+                  "patterns": [
+                    {
+                      "include": "#block-attribute-inner"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "include": "#inlines"
+            },
+            {
+              "include": "#block-title"
+            },
+            {
+              "comment": "listing block",
+              "name": "markup.raw.asciidoc",
+              "begin": "^(-{4,})\\s*$",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "open block",
+              "name": "markup.raw.asciidoc",
+              "begin": "^(-{2})\\s*$",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                }
+              ],
+              "end": "^(\\1)$"
+            },
+            {
+              "comment": "literal block",
+              "name": "markup.raw.asciidoc",
+              "begin": "^(\\.{4})\\s*$",
+              "patterns": [
+                {
+                  "include": "#block-callout"
+                },
+                {
+                  "include": "#include-directive"
+                }
+              ],
+              "end": "^(\\1)$"
+            }
+          ],
+          "end": "((?<=--|\\.\\.\\.\\.)$|^\\p{Blank}*$)"
+        },
+        {
+          "name": "markup.raw.asciidoc",
+          "begin": "^(-{4,})\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "#include-directive"
+            }
+          ],
+          "end": "^(\\1)$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        }
+      ]
+    },
+    "source-markdown": {
+      "patterns": [
+        {
+          "name": "markup.code.c.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(c))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.c",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.c"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.clojure.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(clojure))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.clojure",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.clojure"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.coffee.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(coffee-?(script)?))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.coffee",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.coffee"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.cpp.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(c(pp|\\+\\+)))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.cpp",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.cpp"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.css.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(css))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.css",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.css"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.cs.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(cs(harp)?))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.cs",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.cs"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.diff.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(diff|patch|rej))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.diff",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.diff"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.dockerfile.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(docker(file)?))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.dockerfile",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.dockerfile"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.elixir.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(elixir))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.elixir",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.elixir"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.elm.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(elm))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.elm",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.elm"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.erlang.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(erlang))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.erlang",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.erlang"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.go.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(go(lang)?))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.go",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.go"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.groovy.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(groovy))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.groovy",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.groovy"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.haskell.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(haskell))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.haskell",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.haskell"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.html.basic.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(html))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "text.embedded.html.basic",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "text.html.basic"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.java.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(java))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.java",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.java"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.js.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(javascript|js))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.js",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.js"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.json.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(json))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.json",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.json"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.js.jsx.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(jsx))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.js.jsx",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.js.jsx"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.julia.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(julia))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.julia",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.julia"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.kotlin.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(kotlin|kts?))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.kotlin",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.kotlin"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.css.less.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(less))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.css.less",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.css.less"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.makefile.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(make(file)?))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.makefile",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.makefile"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.gfm.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(markdown|mdown|md))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.gfm",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.gfm"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.html.mustache.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(mustache))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "text.embedded.html.mustache",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "text.html.mustache"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.objc.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(objc|objective-c))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.objc",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.objc"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.ocaml.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(ocaml))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.ocaml",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.ocaml"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.perl.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(perl))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.perl",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.perl"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.perl6.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(perl6))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.perl6",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.perl6"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.html.php.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(php))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "text.embedded.html.php",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "text.html.php"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.asciidoc.properties.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(properties))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.asciidoc.properties",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.asciidoc.properties"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.python.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(py(thon)?))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.python",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.python"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.r.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(r))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.r",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.r"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.ruby.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(ruby|rb))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.ruby",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.ruby"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.rust.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(rust|rs))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.rust",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.rust"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.sass.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(sass))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.sass",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.sass"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.scala.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(scala))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.scala",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.scala"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.css.scss.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(scss))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.css.scss",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.css.scss"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.shell.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(sh|bash|shell))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.shell",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.shell"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.sql.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(sql))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.sql",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.sql"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.swift.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(swift))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.swift",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.swift"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.toml.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(toml))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.toml",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.toml"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.ts.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(typescript|ts))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.ts",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.ts"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.xml.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(xml))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "text.embedded.xml",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "text.xml"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.code.yaml.asciidoc",
+          "begin": "^\\s*(`{3,})\\s*(?i:(ya?ml))\\s*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "contentName": "source.embedded.yaml",
+          "patterns": [
+            {
+              "include": "#block-callout"
+            },
+            {
+              "include": "source.yaml"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        },
+        {
+          "name": "markup.raw.asciidoc",
+          "begin": "^\\s*(`{3,}).*$",
+          "beginCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#block-callout"
+            }
+          ],
+          "end": "^\\s*\\1\\s*$",
+          "endCaptures": {
+            "0": {
+              "name": "support.asciidoc"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

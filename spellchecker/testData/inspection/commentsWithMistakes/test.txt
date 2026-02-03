@@ -1,0 +1,18 @@
+simple <TYPO descr="Typo: In word 'ttest'">ttest</TYPO> file (just plain text)
+русский (например) без словаря не проверять!!!
+data && !changed; else
+data && !<TYPO descr="Typo: In word 'changsed'">changsed</TYPO>; else
+
+Don't highlight cryptic jvm keys
+-Dsbt.log.noformat=true
+-Dsbt.version=${runOptions.sbtVersion}
+-Dsbt.global.base=${runOptions.sbtGlobalBase}
+-Dsbt.boot.directory=${runOptions.sbtBootDir}
+-Dsbt.ivy.home=${runOptions.sbtIvyHome}
+-Divy.home=${runOptions.sbtIvyHome}
+-Dsbt.coursier.home=${runOptions.sbtCoursierHome}
+-Dtyppoo
+-Xtestt
+-Jhellow
+-Xjacoco
+mvn site -Pcobertura -Pjacoco -J-Djava.awt.headless=true -J-Xmx1024m

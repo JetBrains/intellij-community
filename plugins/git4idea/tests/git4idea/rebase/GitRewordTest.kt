@@ -1,0 +1,206 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package git4idea.rebase
+
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.vcs.log.util.VcsLogUtil
+import git4idea.config.GitVersionSpecialty
+import git4idea.rebase.log.GitCommitEditingOperationResult.Complete
+import git4idea.rebase.log.GitCommitEditingOperationResult.Complete.UndoPossibility.Possible
+import git4idea.test.GitSingleRepoTest
+import git4idea.test.assertCommitted
+import git4idea.test.assertLastMessage
+import git4idea.test.assertLatestHistory
+import git4idea.test.assertMessage
+import git4idea.test.assertStagedChanges
+import git4idea.test.findGitLogProvider
+import git4idea.test.message
+import org.junit.Assume.assumeTrue
+
+class GitRewordTest : GitSingleRepoTest() {
+
+  fun `test reword latest commit`() {
+    val commit = file("a").create("initial").addCommit("Wrong message").details()
+
+    refresh()
+    updateChangeListManager()
+
+    val newMessage = "Correct message"
+    GitRewordOperation(repo, commit, newMessage).execute()
+
+    assertLastMessage(newMessage, "Message reworded incorrectly")
+  }
+
+  fun `test reword initial commit via rebase`() {
+    val initialHash = git("log --pretty=%H").trim()
+    file("a").create("initial").addCommit("Wrong message")
+
+    val initialCommit = VcsLogUtil.getDetails(findGitLogProvider(repo.project), repo.root, listOf(initialHash)).first()
+
+    refresh()
+    updateChangeListManager()
+
+    val newMessage = "Correct message"
+    GitRewordOperation(repo, initialCommit, newMessage).execute()
+
+    assertMessage(newMessage, repo.message("HEAD^"), "Message reworded incorrectly")
+  }
+
+  fun `test reword initial commit via amend`() {
+    val initialHash = git("log --pretty=%H").trim()
+    val initialCommit = VcsLogUtil.getDetails(findGitLogProvider(repo.project), repo.root, listOf(initialHash)).first()
+
+    refresh()
+    updateChangeListManager()
+
+    val newMessage = "Correct message"
+    GitRewordOperation(repo, initialCommit, newMessage).execute()
+
+    assertLastMessage(newMessage, "Message reworded incorrectly")
+  }
+
+  fun `test reword via amend doesn't touch the local changes`() {
+    val commit = file("a").create("initial").addCommit("Wrong message").details()
+    file("b").create("b").add()
+
+    refresh()
+    updateChangeListManager()
+
+    val newMessage = "Correct message"
+    GitRewordOperation(repo, commit, newMessage).execute()
+
+    assertLastMessage(newMessage, "Message reworded incorrectly")
+    repo.assertStagedChanges {
+      added("b")
+    }
+    repo.assertCommitted {
+      added("a")
+    }
+  }
+
+  fun `test reword previous commit`() {
+    val file = file("a").create("initial")
+    val commit = file.addCommit("Wrong message").details()
+    file.append("b").addCommit("Second message")
+
+    refresh()
+    updateChangeListManager()
+
+    val newMessage = "Correct message"
+    GitRewordOperation(repo, commit, newMessage).execute()
+
+    assertMessage(newMessage, repo.message("HEAD^"), "Message reworded incorrectly")
+  }
+
+  fun `test undo reword`() {
+    val commit = file("a").create("initial").addCommit("Wrong message").details()
+
+    refresh()
+    updateChangeListManager()
+
+    val operation = GitRewordOperation(repo, commit, "Correct message")
+    val result = operation.execute() as Complete
+
+    assertTrue(result.checkUndoPossibility() is Possible)
+    result.undo()
+
+    assertLastMessage("Wrong message", "Message reworded incorrectly")
+  }
+
+  fun `test undo is not possible if HEAD moved`() {
+    val commit = file("a").create("initial").addCommit("Wrong message").details()
+
+    refresh()
+    updateChangeListManager()
+
+    val operation = GitRewordOperation(repo, commit, "Correct message")
+    val result = operation.execute() as Complete
+
+    file("b").create().addCommit("New commit")
+
+    val undoPossibility = result.checkUndoPossibility()
+    assertTrue(undoPossibility is Complete.UndoPossibility.Impossible.HeadMoved)
+
+    repo.assertLatestHistory(
+      "New commit",
+      "Correct message"
+    )
+  }
+
+  fun `test undo is not possible if commit was pushed`() {
+    git("remote add origin http://example.git")
+    val file = file("a").create("initial")
+    file.append("First commit\n").addCommit("First commit")
+    val commit = file.append("To reword\n").addCommit("Wrong message").details()
+    file.append("Third commit").addCommit("Third commit")
+
+    refresh()
+    updateChangeListManager()
+
+    val operation = GitRewordOperation(repo, commit, "Correct message")
+    val result = operation.execute() as Complete
+
+    git("update-ref refs/remotes/origin/master HEAD")
+
+    val undoPossibility = result.checkUndoPossibility()
+    assertTrue(undoPossibility is Complete.UndoPossibility.Impossible.PushedToProtectedBranch && undoPossibility.branch == "origin/master")
+
+    repo.assertLatestHistory(
+      "Third commit",
+      "Correct message",
+      "First commit"
+    )
+  }
+
+  // IDEA-175002
+  fun `test reword with trailing spaces`() {
+    val commit = file("a").create("initial").addCommit("Wrong message").details()
+
+    refresh()
+    updateChangeListManager()
+
+    val newMessage = "Subject with trailing spaces  \n\nBody \nwith \nspaces."
+    GitRewordOperation(repo, commit, newMessage).execute()
+
+    assertLastMessage(newMessage)
+  }
+
+  // IDEA-175443
+  fun `test reword with hash symbol`() {
+    assumeTrue("Not testing: not possible to fix in Git prior to 1.8.2: ${vcs.version}",
+               GitVersionSpecialty.KNOWS_CORE_COMMENT_CHAR.existsIn(vcs.version)) // IDEA-182044
+
+    val commit = file("a").create("initial").addCommit("Wrong message").details()
+
+    refresh()
+    updateChangeListManager()
+
+    val newMessage = """
+      Subject
+
+      #body starting with a hash
+      """.trimIndent()
+    GitRewordOperation(repo, commit, newMessage).execute()
+
+    val actualMessage = git("log HEAD --no-walk --pretty=%B")
+    assertTrue("Message reworded incorrectly. Expected:\n[$newMessage] Actual:\n[$actualMessage]",
+               StringUtil.equalsIgnoreWhitespaces(newMessage, actualMessage))
+  }
+
+
+  // IDEA-254399
+  fun `test reword via rebase with spaces at the beginning`() {
+    val commit = file("a").create("initial").addCommit("  \t    Wrong message").details()
+    file("b").create().addCommit("One more commit")
+
+    refresh()
+    updateChangeListManager()
+
+    val newMessage = "Correct message"
+    GitRewordOperation(repo, commit, newMessage).execute()
+
+    repo.assertLatestHistory(
+      "One more commit",
+      newMessage
+    )
+  }
+}

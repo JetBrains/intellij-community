@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.platform.extensions` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "extensions",
+  module_name = "intellij.platform.extensions",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "//platform/util/jdom",
+    "//platform/util",
+    "//libraries/fastutil",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/xmlDom",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/diagnostic",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "@lib//:jetbrains-annotations",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+  ],
+  exports = ["//libraries/kotlinx/coroutines/core"]
+)
+### auto-generated section `build intellij.platform.extensions` end

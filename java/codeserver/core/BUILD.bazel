@@ -1,0 +1,34 @@
+### auto-generated section `build intellij.java.codeserver.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "core_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "core",
+  module_name = "intellij.java.codeserver.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":core_resources"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//libraries/stream",
+    "//platform/core-api:core",
+    "//jps/model-api:model",
+    "//platform/util",
+    "//platform/projectModel-api:projectModel",
+    "//platform/indexing-api:indexing",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//java/java-frontback-psi-api:frontback-psi",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/workspace/storage",
+    "//java/java-indexing-api:indexing",
+  ],
+  runtime_deps = ["//platform/backend"]
+)
+### auto-generated section `build intellij.java.codeserver.core` end

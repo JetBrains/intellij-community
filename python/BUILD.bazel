@@ -1,0 +1,665 @@
+### auto-generated section `build intellij.pycharm.community` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "pycharm-community_resources",
+  srcs = glob(["ide-common/resources/**/*"]),
+  strip_prefix = "ide-common/resources"
+)
+
+resourcegroup(
+  name = "pycharm-community_resources_1",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "pycharm-community",
+  module_name = "intellij.pycharm.community",
+  visibility = ["//visibility:public"],
+  srcs = glob(["ide-common/src/**/*.kt", "ide-common/src/**/*.java", "ide-common/src/**/*.form"], allow_empty = True),
+  resources = [
+    ":pycharm-community_resources",
+    ":pycharm-community_resources_1",
+  ],
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//libraries/guava",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+  ]
+)
+### auto-generated section `build intellij.pycharm.community` end
+
+### auto-generated section `build intellij.pycharm.community.customization` start
+resourcegroup(
+  name = "pycharm-community-customization_resources",
+  srcs = glob(["ide/resources/**/*"]),
+  strip_prefix = "ide/resources"
+)
+
+jvm_library(
+  name = "pycharm-community-customization",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":pycharm-community-customization_resources"],
+  runtime_deps = [
+    "//python/ide/impl",
+    "@lib//:tips-pycharm-community",
+    "//python/ide/impl/intellij.pycharm.community.ide.impl.promotion:pycharm-community-ide-impl-promotion",
+    "//python/ide/implTraining/intellij.pycharm.community.ide.implTraining:pycharm-community-ide-implTraining",
+    "//python/ide/customization.shared",
+  ]
+)
+### auto-generated section `build intellij.pycharm.community.customization` end
+
+### auto-generated section `build intellij.pycharm.community.main` start
+jvm_library(
+  name = "pycharm-community-main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/main/intellij.platform.monolith.main:monolith-main",
+    "//platform/bootstrap",
+    "//plugins/hg4idea:vcs-hg",
+    "//plugins/svn4idea:vcs-svn",
+    "//plugins/git4idea:vcs-git",
+    "//plugins/git4idea/shared",
+    "//plugins/git4idea/frontend",
+    "//plugins/git-features-trainer:vcs-git-featuresTrainer",
+    "//xml/relaxng",
+    "//plugins/github/github-core:vcs-github",
+    "//plugins/terminal",
+    "//plugins/terminal/frontend",
+    "//plugins/terminal/backend",
+    "//python:pycharm-community",
+    "//python:pycharm-community-customization",
+    "//python/pluginCore:community-plugin",
+    "//python:python-community-plugin-modules",
+    "//platform/starter",
+    "//plugins/tasks/tasks-core/jira",
+    "//plugins/settings-repository",
+    "//plugins/properties:properties-backend",
+    "//plugins/markdown/core:markdown",
+    "//plugins/markdown/plugin:plugin-main",
+    "//plugins/configuration-script",
+    "//plugins/completion-ml-ranking",
+    "//plugins/stats-collector",
+    "//plugins/sh/plugin:plugin-main",
+    "//plugins/terminal/sh",
+    "//xml/langInjection",
+    "//plugins/textmate/plugin",
+    "//plugins/completion-ml-ranking-models",
+    "//plugins/emojipicker",
+    "//plugins/grazie",
+    "//platform/lvcs-impl",
+    "//plugins/search-everywhere-ml",
+    "//notebooks/visualization",
+    "//plugins/color-schemes/monokai-color-scheme:color-scheme-monokai",
+    "//plugins/color-schemes/twilight-color-scheme:color-scheme-twilight",
+    "//plugins/color-schemes/warm-neon-color-scheme:color-scheme-warmNeon",
+    "//plugins/color-schemes/github-color-scheme:color-scheme-github",
+    "//plugins/dev:dev-noJava-plugin-main",
+    "//plugins/evaluation-plugin",
+    "//plugins/evaluation-plugin/languages/python",
+    "//platform/new-ui-onboarding",
+    "//python/intellij.python.ml.features:ml-features",
+  ]
+)
+
+jvm_library(
+  name = "pycharm-community-main_test_lib",
+  module_name = "intellij.pycharm.community.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":pycharm-community-main"]
+)
+### auto-generated section `build intellij.pycharm.community.main` end
+
+### auto-generated section `build intellij.python.commonTests` start
+jvm_library(
+  name = "python-commonTests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//platform/util"]
+)
+
+jvm_library(
+  name = "python-commonTests_test_lib",
+  module_name = "intellij.python.commonTests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["python-common-tests/**/*.kt", "python-common-tests/**/*.java", "python-common-tests/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:junit4",
+    "//python/python-psi-api:psi",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//python/python-psi-impl:psi-impl",
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/util",
+    "//platform/projectModel-api:projectModel",
+    "//libraries/guava",
+    "//libraries/stream",
+    "//platform/analysis-impl",
+    "//platform/code-style-api:codeStyle",
+    "//platform/editor-ui-api:editor-ui",
+    "//python/openapi:community",
+    "//python/openapi:community_test_lib",
+    "//python/impl.helperLocator:community-helpersLocator",
+    "//python/python-sdk:sdk",
+    "//python/python-sdk:sdk_test_lib",
+    "//platform/testFramework/core",
+  ],
+  runtime_deps = [":python-commonTests"]
+)
+### auto-generated section `build intellij.python.commonTests` end
+
+### auto-generated section `test intellij.python.commonTests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "python-commonTests_test",
+  runtime_deps = [":python-commonTests_test_lib"]
+)
+### auto-generated section `test intellij.python.commonTests` end
+
+### auto-generated section `build intellij.python.community.impl` start
+resourcegroup(
+  name = "python-community-impl_resources",
+  srcs = glob(["pluginResources/**/*"]),
+  strip_prefix = "pluginResources"
+)
+
+resourcegroup(
+  name = "python-community-impl_resources_1",
+  srcs = glob(["compatibilityResources/**/*"]),
+  strip_prefix = "compatibilityResources"
+)
+
+resourcegroup(
+  name = "python-community-impl_test_resources",
+  srcs = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
+jvm_library(
+  name = "python-community-impl",
+  module_name = "intellij.python.community.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [
+    ":python-community-impl_resources",
+    ":python-community-impl_resources_1",
+  ],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/credential-store",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
+    "//platform/foldings",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/lang-api:lang",
+    "//platform/macro",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/remote-core",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/usageView-impl",
+    "//platform/workspace/storage",
+    "//python/openapi:community",
+    "//platform/ide-core-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//libraries/guava",
+    "//platform/indexing-impl",
+    "//python:python-pydev",
+    "//platform/observable",
+    "//platform/xdebugger-api:debugger",
+    "//RegExpSupport:regexp",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/usageView",
+    "//platform/testRunner",
+    "//platform/core-impl",
+    "//platform/smRunner",
+    "//spellchecker",
+    "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/platform-impl/internal",
+    "//xml/xml-psi-impl:psi-impl",
+    "//libraries/kotlin/reflect",
+    "//libraries/gson",
+    "//platform/vcs-api:vcs",
+    "//libraries/xstream",
+    "@lib//:libthrift",
+    "@lib//:slf4j-api",
+    "@lib//:slf4j-jdk14",
+    "//libraries/netty/codec-http:libraries-netty-codec-http",
+    "//libraries/jsoup",
+    "//libraries/javax/annotation",
+    "@lib//ant/lib:ant-provided",
+    "//python/python-psi-impl:psi-impl",
+    "//python/python-sdk:sdk",
+    "//python/python-sdk-ui:sdk-ui",
+    "//libraries/stream",
+    "//platform/statistics",
+    "@lib//:python-community-impl-ml-completion-prev-exprs-models",
+    "//platform/util",
+    "//libraries/netty/buffer",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//libraries/fastutil",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/jcef",
+    "@lib//:jna",
+    "//plugins/toml",
+    "//plugins/toml/core",
+    "@lib//:jsr305",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "//libraries/caffeine",
+    "//platform/util/jdom",
+    "//platform/extensions",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/jackson/dataformat-yaml:libraries-jackson-dataformat-yaml",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//python/python-core-impl:community-core-impl",
+    "//platform/core-api:core",
+    "//python/python-psi-api:psi",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "@lib//:python-community-impl-completion-ranking-python-with-full-line",
+    "//platform/backend/observation",
+    "//platform/ml-api:ml",
+    "//platform/util/coroutines",
+    "//python/python-syntax:syntax",
+    "//platform/ui.jcef",
+    "//libraries/io",
+    "//platform/util/progress",
+    "//platform/feedback",
+    "//libraries/kotlinx/datetime",
+    "//platform/platform-impl/remote",
+    "//platform/platform-impl/ui",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//python/pipenv",
+    "//python/installer",
+    "//platform/eel",
+    "//platform/eel-provider",
+    "//python/python-venv:venv",
+    "//python/python-exec-service:community-execService",
+    "//python/services/system-python",
+    "//python/services/internal-impl:python-community-services-internal-impl",
+    "@lib//:io-github-z4kn4fein-semver-jvm-provided",
+    "//python/python-pyproject:pyproject",
+    "//python/python-hatch:hatch",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/external-system-api:externalSystem",
+    "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+    "//libraries/http-client",
+    "//libraries/commons/lang3",
+    "//python/impl.helperLocator:community-helpersLocator",
+    "//python/python-exec-service/execService.python",
+    "//python/interpreters",
+    "//python/python-sdk-configurator/common",
+    "//python/python-poetry/common",
+    "//python/python-uv/common",
+    "//python/common",
+    "//python/python-process-output:processOutput",
+    "//platform/xdebugger-impl/shared",
+    "//platform/xdebugger-impl/rpc",
+    "//platform/xdebugger-impl/ui",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
+  ],
+  exports = [
+    "//python/openapi:community",
+    "//platform/ide-core-impl",
+    "//RegExpSupport:regexp",
+    "//platform/testRunner",
+    "//python/python-psi-impl:psi-impl",
+  ],
+  runtime_deps = [
+    "//python:python-helpers",
+    "//commandInterface",
+  ]
+)
+
+jvm_library(
+  name = "python-community-impl_test_lib",
+  module_name = "intellij.python.community.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":python-community-impl_test_resources"],
+  exports = [
+    "//python/openapi:community",
+    "//python/openapi:community_test_lib",
+    "//platform/ide-core-impl",
+    "//RegExpSupport:regexp",
+    "//RegExpSupport:regexp_test_lib",
+    "//platform/testRunner",
+    "//platform/testRunner:testRunner_test_lib",
+    "//python/python-psi-impl:psi-impl",
+  ],
+  runtime_deps = [
+    ":python-community-impl",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//python/openapi:community_test_lib",
+    "//RegExpSupport:regexp_test_lib",
+    "//platform/testRunner:testRunner_test_lib",
+    "//platform/smRunner:smRunner_test_lib",
+    "//spellchecker:spellchecker_test_lib",
+    "//platform/xdebugger-impl:debugger-impl_test_lib",
+    "//python/python-sdk:sdk_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/backend/observation:observation_test_lib",
+    "//python/python-exec-service:community-execService_test_lib",
+    "//python/services/system-python:system-python_test_lib",
+    "//python/services/internal-impl:python-community-services-internal-impl_test_lib",
+    "//python/python-pyproject:pyproject_test_lib",
+  ]
+)
+### auto-generated section `build intellij.python.community.impl` end
+
+### auto-generated section `build intellij.python.community.plugin.main` start
+jvm_library(
+  name = "python-community-plugin-main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//:main",
+    "//java/openapi:java",
+    "//java/idea-ui:ui",
+    "//python/pluginCore:community-plugin",
+    "//python/pluginJava:community-plugin-java",
+    "//python/pluginMinor:community-plugin-minor",
+    "//python:python-community-plugin-modules",
+  ]
+)
+
+jvm_library(
+  name = "python-community-plugin-main_test_lib",
+  module_name = "intellij.python.community.plugin.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":python-community-plugin-main"]
+)
+### auto-generated section `build intellij.python.community.plugin.main` end
+
+### auto-generated section `build intellij.python.community.plugin.modules` start
+jvm_library(
+  name = "python-community-plugin-modules",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//python/IntelliLang-python:langInjection",
+    "//python/python-copyright:copyright",
+    "//python/python-terminal:terminal",
+    "//plugins/restructuredtext",
+    "//python/python-grazie:grazie",
+    "//python/python-markdown:markdown",
+  ]
+)
+### auto-generated section `build intellij.python.community.plugin.modules` end
+
+### auto-generated section `build intellij.python.community.tests` start
+resourcegroup(
+  name = "python-community-tests_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "python-community-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/testFramework",
+    "//libraries/guava",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/util/progress",
+    "//platform/observable",
+    "//platform/usageView",
+    "//python/python-psi-impl:psi-impl",
+    "//python/pluginCore/impl",
+    "//python:pycharm-community",
+    "//xml/langInjection",
+    "//python/IntelliLang-python:langInjection",
+    "//python/python-markdown:markdown",
+    "//notebooks/visualization",
+    "//python/python-features-trainer:featuresTrainer",
+    "//jupyter:notebooks-jupyter-core",
+    "//python/python-grazie:grazie",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//python/python-test-env/common",
+    "//python/services/shared",
+  ]
+)
+
+jvm_library(
+  name = "python-community-tests_test_lib",
+  module_name = "intellij.python.community.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":python-community-tests_test_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
+    "//platform/foldings",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/remote-core",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/workspace/storage",
+    "//python/python-psi-api:psi",
+    "//python:python-community-impl",
+    "//python:python-community-impl_test_lib",
+    "//platform/xdebugger-api:debugger",
+    "//libraries/guava",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-impl:debugger-impl_test_lib",
+    "//python:python-pydev",
+    "//platform/smRunner",
+    "//platform/smRunner:smRunner_test_lib",
+    "//platform/util/progress",
+    "//platform/observable",
+    "//platform/usageView",
+    "@lib//:assert_j",
+    "//libraries/mockito",
+    "//java/testFramework",
+    "@lib//:easymock",
+    "@lib//:objenesis",
+    "//platform/lang-impl:lang-tests_test_lib",
+    "//platform/platform-impl/internal",
+    "//platform/testFramework/extensions:testExtensions",
+    "@lib//:hamcrest",
+    "//platform/platform-tests:tests_test_lib",
+    "//plugins/copyright",
+    "//plugins/copyright:copyright_test_lib",
+    "//python/python-copyright:copyright",
+    "//python/testFramework",
+    "//platform/xdebugger-testFramework:debugger-testFramework",
+    "//python/python-psi-impl:psi-impl",
+    "//python:python-commonTests_test_lib",
+    "//plugins/restructuredtext",
+    "//plugins/restructuredtext:restructuredtext_test_lib",
+    "//python/python-restructuredtext:restructuredtext-python",
+    "//libraries/stream",
+    "//platform/core-ui",
+    "//plugins/stats-collector",
+    "//plugins/grazie/src/test:grazie-tests_test_lib",
+    "//python/python-grazie:grazie",
+    "//platform/util/jdom",
+    "//platform/ml-api:ml",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/test",
+    "//python/python-core-impl:community-core-impl",
+    "//python/python-sdk:sdk",
+    "//python/python-sdk:sdk_test_lib",
+    "//libraries/gson",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//commandInterface",
+    "//python/pluginCore:community-plugin",
+    "@lib//:junit5",
+    "@lib//:junit5Jupiter",
+    "@lib//:junit5Params",
+    "//platform/platform-impl/remote",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//libraries/kotlin/reflect",
+    "//platform/todo",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/external-system-impl:externalSystem-tests_test_lib",
+    "//platform/backend/observation",
+    "//platform/backend/observation:observation_test_lib",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//python/impl.helperLocator:community-helpersLocator",
+    "//python/python-pyproject:pyproject",
+    "//python/python-pyproject:pyproject_test_lib",
+    "//python/python-syntax:syntax",
+    "//python/python-exec-service:community-execService",
+    "//python/python-exec-service:community-execService_test_lib",
+    "//platform/execution",
+    "@lib//:jet_check",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//python/python-test-env/common",
+    "//python/python-test-env/common:common_test_lib",
+    "//python/python-test-env/junit4:junit4_test_lib",
+    "//python/python-test-env/junit5:junit5_test_lib",
+    "//platform/testFramework/junit5/eel",
+    "//platform/testFramework/junit5/eel:eel_test_lib",
+    "//platform/eel-provider",
+    "//python/python-exec-service/execService.python",
+    "//python/services/internal-impl:python-community-services-internal-impl",
+    "//python/services/internal-impl:python-community-services-internal-impl_test_lib",
+    "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+    "//python/services/shared",
+    "//python/services/shared:shared_test_lib",
+    "//python/python-venv:venv",
+    "//python/python-venv:venv_test_lib",
+    "//python/services/system-python",
+    "//python/services/system-python:system-python_test_lib",
+    "//python/interpreters",
+  ],
+  runtime_deps = [":python-community-tests"]
+)
+### auto-generated section `build intellij.python.community.tests` end
+
+### auto-generated section `test intellij.python.community.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "python-community-tests_test",
+  runtime_deps = [":python-community-tests_test_lib"]
+)
+### auto-generated section `test intellij.python.community.tests` end
+
+### auto-generated section `build intellij.python.helpers` start
+resourcegroup(
+  name = "python-helpers_resources",
+  srcs = glob(["helpers/**/*"]),
+  strip_prefix = "helpers"
+)
+
+jvm_library(
+  name = "python-helpers",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":python-helpers_resources"]
+)
+### auto-generated section `build intellij.python.helpers` end
+
+### auto-generated section `build intellij.python.helpers.tests` start
+resourcegroup(
+  name = "python-helpers-tests_test_resources",
+  srcs = glob(["helpersTestResources/**/*"]),
+  strip_prefix = "helpersTestResources"
+)
+
+resourcegroup(
+  name = "python-helpers-tests_test_resources_1",
+  srcs = glob(["helpersTests/**/*"]),
+  strip_prefix = "helpersTests"
+)
+
+jvm_library(
+  name = "python-helpers-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "python-helpers-tests_test_lib",
+  module_name = "intellij.python.helpers.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [
+    ":python-helpers-tests_test_resources",
+    ":python-helpers-tests_test_resources_1",
+  ],
+  runtime_deps = [
+    ":python-helpers-tests",
+    "//python:python-helpers",
+    "@lib//ant/lib:ant",
+    "@lib//:kotlin-stdlib",
+  ]
+)
+### auto-generated section `build intellij.python.helpers.tests` end
+
+### auto-generated section `build intellij.python.pydev` start
+resourcegroup(
+  name = "python-pydev_resources",
+  srcs = glob(["pydevSrc/resources/**/*"]),
+  strip_prefix = "pydevSrc/resources"
+)
+
+jvm_library(
+  name = "python-pydev",
+  module_name = "intellij.python.pydev",
+  visibility = ["//visibility:public"],
+  srcs = glob(["pydevSrc/src/**/*.kt", "pydevSrc/src/**/*.java", "pydevSrc/src/**/*.form"], allow_empty = True),
+  resources = [":python-pydev_resources"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/xdebugger-api:debugger",
+    "//libraries/xml-rpc",
+    "//libraries/guava",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/util",
+    "@lib//:kotlin-stdlib",
+    "//libraries/xstream",
+    "//platform/util:util-ui",
+    "//python/python-psi-api:psi",
+    "//platform/util/concurrency",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//python/python-syntax-core:syntax-core",
+    "//platform/core-ui",
+    "//platform/ide-core-impl",
+    "//platform/core-impl",
+    "//platform/ide-core",
+  ]
+)
+### auto-generated section `build intellij.python.pydev` end

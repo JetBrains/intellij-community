@@ -1,0 +1,3 @@
+<?import javafx.scene.layout.GridPane?>
+<GridPane xmlns:fx="http://javafx.com/fxml" stylesh<caret>eets="style1.css,style2.css,style3.css">
+</GridPane>

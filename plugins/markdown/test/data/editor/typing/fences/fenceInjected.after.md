@@ -1,0 +1,5 @@
+```xml
+<html>
+    <caret>
+</html>
+```

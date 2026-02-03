@@ -1,0 +1,9 @@
+// CHOSEN_OPTION: PROPERTY_DELEGATE_FIELD|Add use-site target 'delegate'
+// WITH_STDLIB
+
+annotation class A
+
+class Property {
+    @delegate:A
+    val foo: String by lazy { "" }
+}

@@ -1,0 +1,48 @@
+### auto-generated section `build kotlin.compiler-plugins.compiler-plugin-support.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//plugins/kotlin/base/facet",
+  ]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "kotlin.compiler-plugins.compiler-plugin-support.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//java/testFramework",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/facet/tests:tests_test_lib",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build kotlin.compiler-plugins.compiler-plugin-support.tests` end
+
+### auto-generated section `test kotlin.compiler-plugins.compiler-plugin-support.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test kotlin.compiler-plugins.compiler-plugin-support.tests` end

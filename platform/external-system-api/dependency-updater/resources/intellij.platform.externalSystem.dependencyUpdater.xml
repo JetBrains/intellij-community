@@ -1,0 +1,16 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij"/>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.externalSystem.dependencyModifier" dynamic="true" interface="com.intellij.externalSystem.ExternalDependencyModificator" area="IDEA_PROJECT"/>
+  </extensionPoints>
+</idea-plugin>

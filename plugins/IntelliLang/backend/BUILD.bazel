@@ -1,0 +1,88 @@
+### auto-generated section `build intellij.platform.langInjection.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
+
+resourcegroup(
+  name = "backend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_provided_library(
+  name = "platform_backend_provided",
+  lib = "//platform/backend"
+)
+
+jvm_provided_library(
+  name = "platform_core_provided",
+  lib = "//platform/core-api:core"
+)
+
+jvm_provided_library(
+  name = "platform_util_provided",
+  lib = "//platform/util"
+)
+
+jvm_provided_library(
+  name = "platform_analysis-impl_provided",
+  lib = "//platform/analysis-impl"
+)
+
+jvm_provided_library(
+  name = "platform_analysis_provided",
+  lib = "//platform/analysis-api:analysis"
+)
+
+jvm_provided_library(
+  name = "plugins_langInjection_provided",
+  lib = "//plugins/IntelliLang:langInjection"
+)
+
+jvm_provided_library(
+  name = "platform_util-ui_provided",
+  lib = "//platform/util:util-ui"
+)
+
+jvm_provided_library(
+  name = "platform_projectModel_provided",
+  lib = "//platform/projectModel-api:projectModel"
+)
+
+jvm_provided_library(
+  name = "platform_ide_provided",
+  lib = "//platform/platform-api:ide"
+)
+
+jvm_provided_library(
+  name = "platform_editor-ui_provided",
+  lib = "//platform/editor-ui-api:editor-ui"
+)
+
+jvm_provided_library(
+  name = "platform_core-ui_provided",
+  lib = "//platform/core-ui"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.platform.langInjection.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend_resources"],
+  deps = [
+    "@lib//:jetbrains-annotations-provided",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-impl",
+    ":platform_backend_provided",
+    ":platform_core_provided",
+    ":platform_util_provided",
+    ":platform_analysis-impl_provided",
+    ":platform_analysis_provided",
+    ":plugins_langInjection_provided",
+    ":platform_util-ui_provided",
+    ":platform_projectModel_provided",
+    ":platform_ide_provided",
+    ":platform_editor-ui_provided",
+    ":platform_core-ui_provided",
+  ]
+)
+### auto-generated section `build intellij.platform.langInjection.backend` end

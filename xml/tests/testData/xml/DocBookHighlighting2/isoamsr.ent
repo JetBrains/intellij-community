@@ -1,0 +1,125 @@
+
+<!--
+     File isoamsr.ent produced by the XSL script entities.xsl
+     from input data in unicode.xml.
+
+     Please report any errors to David Carlisle
+     via the public W3C list www-math@w3.org.
+
+     The numeric character values assigned to each entity
+     (should) match the Unicode assignments in Unicode 4.0.
+
+     Entity names in this file are derived from files carrying the
+     following notice:
+
+     (C) International Organization for Standardization 1986
+     Permission to copy in any form is granted for use with
+     conforming SGML systems and applications as defined in
+     ISO 8879, provided this notice is included in all copies.
+
+-->
+
+
+<!-- 
+     Version: $Id: isoamsr.ent,v 1.2 2003/12/08 15:14:43 davidc Exp $
+
+       Public identifier: ISO 8879:1986//ENTITIES Added Math Symbols: Relations//EN//XML
+       System identifier: http://www.w3.org/2003/entities/iso8879/isoamsr.ent
+
+     The public identifier should always be used verbatim.
+     The system identifier may be changed to suit local requirements.
+
+     Typical invocation:
+
+       <!ENTITY % isoamsr PUBLIC
+         "ISO 8879:1986//ENTITIES Added Math Symbols: Relations//EN//XML"
+         "http://www.w3.org/2003/entities/iso8879/isoamsr.ent"
+       >
+       %isoamsr;
+
+-->
+
+<!ENTITY ape              "&#x0224A;" ><!--ALMOST EQUAL OR EQUAL TO -->
+<!ENTITY asymp            "&#x02248;" ><!--ALMOST EQUAL TO -->
+<!ENTITY bcong            "&#x0224C;" ><!--ALL EQUAL TO -->
+<!ENTITY bepsi            "&#x003F6;" ><!--GREEK REVERSED LUNATE EPSILON SYMBOL -->
+<!ENTITY bowtie           "&#x022C8;" ><!--BOWTIE -->
+<!ENTITY bsim             "&#x0223D;" ><!--REVERSED TILDE -->
+<!ENTITY bsime            "&#x022CD;" ><!--REVERSED TILDE EQUALS -->
+<!ENTITY bump             "&#x0224E;" ><!--GEOMETRICALLY EQUIVALENT TO -->
+<!ENTITY bumpe            "&#x0224F;" ><!--DIFFERENCE BETWEEN -->
+<!ENTITY cire             "&#x02257;" ><!--RING EQUAL TO -->
+<!ENTITY colone           "&#x02254;" ><!--COLON EQUALS -->
+<!ENTITY cuepr            "&#x022DE;" ><!--EQUAL TO OR PRECEDES -->
+<!ENTITY cuesc            "&#x022DF;" ><!--EQUAL TO OR SUCCEEDS -->
+<!ENTITY cupre            "&#x0227C;" ><!--PRECEDES OR EQUAL TO -->
+<!ENTITY dashv            "&#x022A3;" ><!--LEFT TACK -->
+<!ENTITY ecir             "&#x02256;" ><!--RING IN EQUAL TO -->
+<!ENTITY ecolon           "&#x02255;" ><!--EQUALS COLON -->
+<!ENTITY eDot             "&#x02251;" ><!--GEOMETRICALLY EQUAL TO -->
+<!ENTITY efDot            "&#x02252;" ><!--APPROXIMATELY EQUAL TO OR THE IMAGE OF -->
+<!ENTITY egs              "&#x02A96;" ><!--SLANTED EQUAL TO OR GREATER-THAN -->
+<!ENTITY els              "&#x02A95;" ><!--SLANTED EQUAL TO OR LESS-THAN -->
+<!ENTITY erDot            "&#x02253;" ><!--IMAGE OF OR APPROXIMATELY EQUAL TO -->
+<!ENTITY esdot            "&#x02250;" ><!--APPROACHES THE LIMIT -->
+<!ENTITY fork             "&#x022D4;" ><!--PITCHFORK -->
+<!ENTITY frown            "&#x02322;" ><!--FROWN -->
+<!ENTITY gap              "&#x02A86;" ><!--GREATER-THAN OR APPROXIMATE -->
+<!ENTITY gE               "&#x02267;" ><!--GREATER-THAN OVER EQUAL TO -->
+<!ENTITY gEl              "&#x02A8C;" ><!--GREATER-THAN ABOVE DOUBLE-LINE EQUAL ABOVE LESS-THAN -->
+<!ENTITY gel              "&#x022DB;" ><!--GREATER-THAN EQUAL TO OR LESS-THAN -->
+<!ENTITY ges              "&#x02A7E;" ><!--GREATER-THAN OR SLANTED EQUAL TO -->
+<!ENTITY Gg               "&#x022D9;" ><!--VERY MUCH GREATER-THAN -->
+<!ENTITY gl               "&#x02277;" ><!--GREATER-THAN OR LESS-THAN -->
+<!ENTITY gsdot            "&#x022D7;" ><!--GREATER-THAN WITH DOT -->
+<!ENTITY gsim             "&#x02273;" ><!--GREATER-THAN OR EQUIVALENT TO -->
+<!ENTITY Gt               "&#x0226B;" ><!--MUCH GREATER-THAN -->
+<!ENTITY lap              "&#x02A85;" ><!--LESS-THAN OR APPROXIMATE -->
+<!ENTITY ldot             "&#x022D6;" ><!--LESS-THAN WITH DOT -->
+<!ENTITY lE               "&#x02266;" ><!--LESS-THAN OVER EQUAL TO -->
+<!ENTITY lEg              "&#x02A8B;" ><!--LESS-THAN ABOVE DOUBLE-LINE EQUAL ABOVE GREATER-THAN -->
+<!ENTITY leg              "&#x022DA;" ><!--LESS-THAN EQUAL TO OR GREATER-THAN -->
+<!ENTITY les              "&#x02A7D;" ><!--LESS-THAN OR SLANTED EQUAL TO -->
+<!ENTITY lg               "&#x02276;" ><!--LESS-THAN OR GREATER-THAN -->
+<!ENTITY Ll               "&#x022D8;" ><!--VERY MUCH LESS-THAN -->
+<!ENTITY lsim             "&#x02272;" ><!--LESS-THAN OR EQUIVALENT TO -->
+<!ENTITY Lt               "&#x0226A;" ><!--MUCH LESS-THAN -->
+<!ENTITY ltrie            "&#x022B4;" ><!--NORMAL SUBGROUP OF OR EQUAL TO -->
+<!ENTITY mid              "&#x02223;" ><!--DIVIDES -->
+<!ENTITY models           "&#x022A7;" ><!--MODELS -->
+<!ENTITY pr               "&#x0227A;" ><!--PRECEDES -->
+<!ENTITY prap             "&#x02AB7;" ><!--PRECEDES ABOVE ALMOST EQUAL TO -->
+<!ENTITY pre              "&#x02AAF;" ><!--PRECEDES ABOVE SINGLE-LINE EQUALS SIGN -->
+<!ENTITY prsim            "&#x0227E;" ><!--PRECEDES OR EQUIVALENT TO -->
+<!ENTITY rtrie            "&#x022B5;" ><!--CONTAINS AS NORMAL SUBGROUP OR EQUAL TO -->
+<!ENTITY samalg           "&#x02210;" ><!--N-ARY COPRODUCT -->
+<!ENTITY sc               "&#x0227B;" ><!--SUCCEEDS -->
+<!ENTITY scap             "&#x02AB8;" ><!--SUCCEEDS ABOVE ALMOST EQUAL TO -->
+<!ENTITY sccue            "&#x0227D;" ><!--SUCCEEDS OR EQUAL TO -->
+<!ENTITY sce              "&#x02AB0;" ><!--SUCCEEDS ABOVE SINGLE-LINE EQUALS SIGN -->
+<!ENTITY scsim            "&#x0227F;" ><!--SUCCEEDS OR EQUIVALENT TO -->
+<!ENTITY sfrown           "&#x02322;" ><!--FROWN -->
+<!ENTITY smid             "&#x02223;" ><!--DIVIDES -->
+<!ENTITY smile            "&#x02323;" ><!--SMILE -->
+<!ENTITY spar             "&#x02225;" ><!--PARALLEL TO -->
+<!ENTITY sqsub            "&#x0228F;" ><!--SQUARE IMAGE OF -->
+<!ENTITY sqsube           "&#x02291;" ><!--SQUARE IMAGE OF OR EQUAL TO -->
+<!ENTITY sqsup            "&#x02290;" ><!--SQUARE ORIGINAL OF -->
+<!ENTITY sqsupe           "&#x02292;" ><!--SQUARE ORIGINAL OF OR EQUAL TO -->
+<!ENTITY ssmile           "&#x02323;" ><!--SMILE -->
+<!ENTITY Sub              "&#x022D0;" ><!--DOUBLE SUBSET -->
+<!ENTITY subE             "&#x02AC5;" ><!--SUBSET OF ABOVE EQUALS SIGN -->
+<!ENTITY Sup              "&#x022D1;" ><!--DOUBLE SUPERSET -->
+<!ENTITY supE             "&#x02AC6;" ><!--SUPERSET OF ABOVE EQUALS SIGN -->
+<!ENTITY thkap            "&#x02248;" ><!--ALMOST EQUAL TO -->
+<!ENTITY thksim           "&#x0223C;" ><!--TILDE OPERATOR -->
+<!ENTITY trie             "&#x0225C;" ><!--DELTA EQUAL TO -->
+<!ENTITY twixt            "&#x0226C;" ><!--BETWEEN -->
+<!ENTITY Vdash            "&#x022A9;" ><!--FORCES -->
+<!ENTITY vDash            "&#x022A8;" ><!--TRUE -->
+<!ENTITY vdash            "&#x022A2;" ><!--RIGHT TACK -->
+<!ENTITY veebar           "&#x022BB;" ><!--XOR -->
+<!ENTITY vltri            "&#x022B2;" ><!--NORMAL SUBGROUP OF -->
+<!ENTITY vprop            "&#x0221D;" ><!--PROPORTIONAL TO -->
+<!ENTITY vrtri            "&#x022B3;" ><!--CONTAINS AS NORMAL SUBGROUP -->
+<!ENTITY Vvdash           "&#x022AA;" ><!--TRIPLE VERTICAL BAR RIGHT TURNSTILE -->

@@ -1,0 +1,7 @@
+{
+  "type": "JAVA_METHOD",
+  "classId": "testing/JavaClient.D",
+  "methodSignature": "void first()",
+  "newName": "second",
+  "enabledInK2": true
+}

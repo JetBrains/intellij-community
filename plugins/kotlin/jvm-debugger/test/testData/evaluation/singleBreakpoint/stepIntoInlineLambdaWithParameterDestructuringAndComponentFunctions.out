@@ -1,0 +1,27 @@
+LineBreakpoint created at stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:18
+Run Java
+Connected to the target VM
+stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:18
+stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:22
+stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:24
+destructurableClasses.kt:7
+stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:24
+destructurableClasses.kt:8
+stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:25
+stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:24
+destructurableClasses.kt:9
+stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:25
+stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:24
+destructurableClasses.kt:10
+stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:26
+stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:28
+stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:29
+destructurableClasses.kt:7
+stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:29
+destructurableClasses.kt:8
+KotlinStackFrame (destructurableClasses.kt:8)
+    JavaValue[this] this: B@uniqueID = destructurableClasses.B@hashCode
+        DummyMessageValueNode = Class has no properties
+Disconnected from the target VM
+
+Process finished with exit code 0

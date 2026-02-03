@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.gson.jar
+  modules:
+  - name: intellij.libraries.gson
+  library: gson
+  files:
+  - name: $MAVEN_REPOSITORY$/com/google/code/gson/gson/2/gson-2.jar

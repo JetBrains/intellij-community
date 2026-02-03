@@ -1,0 +1,9 @@
+public class Foo {
+  public void doSomething() {
+  }
+}
+<spot>public class FooTest extends TestCase {
+  public void testDoSomething() {
+
+  }
+}</spot>

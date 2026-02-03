@@ -1,0 +1,4 @@
+<project default="A">
+  <java resultproperty="prop"/>
+  <target name="A"/>
+</project>

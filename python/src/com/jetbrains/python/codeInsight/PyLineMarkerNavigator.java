@@ -1,0 +1,77 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.codeInsight;
+
+import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
+import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.codeInsight.navigation.PsiTargetNavigator;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts.PopupTitle;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.psi.NavigatablePsiElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.Query;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
+
+@ApiStatus.Internal
+public abstract class PyLineMarkerNavigator<T extends PsiElement> implements GutterIconNavigationHandler<T> {
+
+  private static final Key<NavigatablePsiElement[]> MARKERS = new Key<>("PyLineMarkerNavigatorMarkers");
+
+  @Override
+  public void navigate(final MouseEvent e, final T elt) {
+    final List<NavigatablePsiElement> navElements = new ArrayList<>();
+    final Query<? extends PsiElement> elementQuery = search(elt, TypeEvalContext.userInitiated(elt.getProject(), elt.getContainingFile()));
+    if (elementQuery == null) {
+      return;
+    }
+    elementQuery.forEach(psiElement -> {
+      if (psiElement instanceof NavigatablePsiElement) {
+        navElements.add((NavigatablePsiElement)psiElement);
+      }
+      return true;
+    });
+    /*
+     * For test purposes, we should be able to access list of methods to check em.
+     * {@link PsiElementListNavigator} simply opens then (hence it is swing-based) and can't be used in tests.
+     * So, in unit tests we save data in element and data could be obtained with {@link #getNavigationTargets(UserDataHolder)}
+     */
+    final NavigatablePsiElement[] methods = navElements.toArray(NavigatablePsiElement.EMPTY_NAVIGATABLE_ELEMENT_ARRAY);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      elt.putUserData(MARKERS, methods);
+    }
+    else {
+      if (methods.length == 1) {
+        methods[0].navigate(true);
+      } else {
+        var project = elt.getProject();
+        JBPopup popup = new PsiTargetNavigator<>(methods).createPopup(project, getTitle(elt));
+        NavigationUtil.hidePopupIfDumbModeStarts(popup, project);
+        popup.show(new RelativePoint(e));
+      }
+    }
+  }
+
+  /**
+   * @see #navigate(MouseEvent, PsiElement)
+   * @see #MARKERS
+   */
+  @TestOnly
+  public static NavigatablePsiElement @Nullable [] getNavigationTargets(final @NotNull UserDataHolder holder) {
+    return holder.getUserData(MARKERS);
+  }
+
+  protected abstract @PopupTitle String getTitle(T elt);
+
+  protected abstract @Nullable Query<? extends PsiElement> search(T elt, @NotNull TypeEvalContext context);
+}

@@ -1,0 +1,82 @@
+### auto-generated section `build intellij.devkit.themes` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "themes_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "themes",
+  module_name = "intellij.devkit.themes",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":themes_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//json/backend",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//libraries/guava",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//spellchecker",
+    "//platform/ide-core-impl",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+    "//java/java-impl:impl",
+    "//plugins/devkit/devkit-core:core",
+    "//xml/xml-psi-api:psi",
+    "//xml/dom-openapi:dom",
+    "//platform/core-ui",
+    "//platform/lang-api:lang",
+  ]
+)
+
+jvm_library(
+  name = "themes_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [":themes"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//json/backend",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//libraries/guava",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//platform/ide-core-impl",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+    "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
+    "//plugins/devkit/devkit-core:core",
+    "//xml/xml-psi-api:psi",
+    "//xml/dom-openapi:dom",
+    "//java/testFramework",
+    "//platform/core-ui",
+    "//platform/lang-api:lang",
+  ]
+)
+### auto-generated section `build intellij.devkit.themes` end
+
+### auto-generated section `test intellij.devkit.themes` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "themes_test",
+  runtime_deps = [":themes_test_lib"]
+)
+### auto-generated section `test intellij.devkit.themes` end

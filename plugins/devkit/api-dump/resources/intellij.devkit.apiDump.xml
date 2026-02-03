@@ -1,0 +1,14 @@
+<idea-plugin visibility="internal" package="com.intellij.devkit.apiDump">
+
+  <dependencies>
+    <module name="intellij.java.backend"/>
+  </dependencies>
+
+  <resource-bundle>messages.ApiDumpBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileIconProvider implementation="com.intellij.devkit.apiDump.ApiDumpFileIconProvider"/>
+    <generatedSourcesFilter implementation="com.intellij.devkit.apiDump.ApiDumpGeneratedSourcesFilter"/>
+  </extensions>
+
+</idea-plugin>

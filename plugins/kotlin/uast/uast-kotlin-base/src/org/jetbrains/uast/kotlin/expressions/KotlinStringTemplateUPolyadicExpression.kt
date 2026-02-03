@@ -1,0 +1,70 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+package org.jetbrains.uast.kotlin
+
+import com.intellij.psi.PsiLanguageInjectionHost
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.uast.DEFAULT_EXPRESSION_TYPES_LIST
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UPolyadicExpression
+import org.jetbrains.uast.UastBinaryOperator
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.expressions.UInjectionHost
+import org.jetbrains.uast.getOrBuild
+
+@ApiStatus.Internal
+class KotlinStringTemplateUPolyadicExpression(
+    override val sourcePsi: KtStringTemplateExpression,
+    givenParent: UElement?
+) : KotlinAbstractUExpression(givenParent),
+    UPolyadicExpression,
+    KotlinUElementWithType,
+    KotlinEvaluatableUElement,
+    UInjectionHost {
+
+    private val operandsPart = UastLazyPart<List<UExpression>>()
+
+    override val operands: List<UExpression>
+        get() = operandsPart.getOrBuild {
+            sourcePsi.entries.map {
+                baseResolveProviderService.baseKotlinConverter.convertStringTemplateEntry(
+                    it,
+                    this,
+                    DEFAULT_EXPRESSION_TYPES_LIST
+                )!!
+            }.takeIf { it.isNotEmpty() } ?: listOf(KotlinStringULiteralExpression(sourcePsi, this, ""))
+        }
+
+    override val operator: UastBinaryOperator.ArithmeticOperator = UastBinaryOperator.PLUS
+
+    override val psiLanguageInjectionHost: PsiLanguageInjectionHost get() = sourcePsi
+    override val isString: Boolean get() = true
+
+    override fun asRenderString(): String = if (operands.isEmpty()) "\"\"" else super<UPolyadicExpression>.asRenderString()
+    override fun asLogString(): String = if (operands.isEmpty()) "UPolyadicExpression (value = \"\")" else super.asLogString()
+
+    override fun getStringRoomExpression(): UExpression {
+        val uParent = this.uastParent as? UExpression ?: return this
+        val dotQualifiedExpression = uParent.sourcePsi as? KtDotQualifiedExpression
+        if (dotQualifiedExpression != null) {
+            val callExpression = dotQualifiedExpression.selectorExpression as? KtCallExpression ?: return this
+            if (KotlinUFunctionCallExpression.methodNameCanBeOneOf(callExpression, TRIM_METHOD_NAMES)) {
+                val resolvedFunctionName = baseResolveProviderService.resolvedFunctionName(callExpression)
+                if (resolvedFunctionName in TRIM_METHOD_NAMES)
+                    return uParent
+            }
+        }
+
+        if (uParent is UPolyadicExpression && uParent.operator == UastBinaryOperator.PLUS)
+            return uParent
+
+        return super.getStringRoomExpression()
+    }
+}
+
+
+private val TRIM_METHOD_NAMES: List<String> = listOf("trimIndent", "trimMargin")

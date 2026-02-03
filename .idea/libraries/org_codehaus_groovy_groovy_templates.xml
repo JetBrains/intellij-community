@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="org.codehaus.groovy:groovy-templates" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.codehaus.groovy:groovy-templates:3.0.25">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/3.0.25/groovy-templates-3.0.25.jar">
+          <sha256sum>fd0e111cae80bd6285677759b72cb67e7da68ee779a90e51bee12a7011c28436</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/3.0.25/groovy-templates-3.0.25.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/3.0.25/groovy-templates-3.0.25-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

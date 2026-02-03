@@ -1,0 +1,20 @@
+<component name="libraryTable">
+  <library name="lucene-suggest" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-suggest:10.3.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-suggest/10.3.0/lucene-suggest-10.3.0.jar">
+          <sha256sum>4b53bf7160e8cdf2ae6bf1a27018bb4fbfdb1841fbdad988c5ff71c7920f4a84</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-suggest/10.3.0/lucene-suggest-10.3.0.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-suggest/10.3.0/lucene-suggest-10.3.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-suggest/10.3.0/lucene-suggest-10.3.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -1,0 +1,147 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.structuralsearch.impl.matcher;
+
+import com.intellij.dupLocator.iterators.NodeIterator;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.XmlElementVisitor;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.*;
+import com.intellij.structuralsearch.MatchUtil;
+import com.intellij.structuralsearch.XmlMatchUtil;
+import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
+import com.intellij.structuralsearch.impl.matcher.iterators.ListNodeIterator;
+import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
+import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+@Internal
+public class XmlMatchingVisitor extends XmlElementVisitor {
+  private final GlobalMatchingVisitor myMatchingVisitor;
+
+  public XmlMatchingVisitor(@NotNull GlobalMatchingVisitor matchingVisitor) {
+    myMatchingVisitor = matchingVisitor;
+  }
+
+  @Override public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
+    final XmlAttribute another = (XmlAttribute)myMatchingVisitor.getElement();
+    myMatchingVisitor.getMatchContext().pushResult();
+    final XmlElement name = attribute.getNameElement();
+    final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(name);
+    try {
+      if (!myMatchingVisitor.setResult(isTypedVar || myMatchingVisitor.matchText(name, another.getNameElement()))) return;
+      final XmlAttributeValue valueElement = attribute.getValueElement();
+      myMatchingVisitor.setResult(valueElement == null || myMatchingVisitor.matchOptionally(valueElement, another.getValueElement()));
+    } finally {
+      myMatchingVisitor.scopeMatch(name, isTypedVar, another);
+    }
+  }
+
+  @Override public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
+    final XmlAttributeValue another = (XmlAttributeValue)myMatchingVisitor.getElement();
+    final PsiElement pattern = XmlMatchUtil.getElementToMatch(value);
+    final PsiElement match = XmlMatchUtil.getElementToMatch(another);
+    if (!(pattern instanceof XmlToken)) {
+      myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(pattern, match));
+    }
+    else {
+      final String text = value.getValue();
+
+      if (myMatchingVisitor.getMatchContext().getPattern().isTypedVar(text)) {
+        final SubstitutionHandler handler = (SubstitutionHandler)myMatchingVisitor.getMatchContext().getPattern().getHandler(text);
+        final String text2 = another.getText();
+        final int offset = StringUtil.isQuotedString(text2) ? 1 : 0;
+        myMatchingVisitor.setResult(handler.handle(another, offset, text2.length() - offset, myMatchingVisitor.getMatchContext()));
+      } else {
+        myMatchingVisitor.setResult(myMatchingVisitor.matchText(text, another.getValue()));
+      }
+    }
+  }
+
+  @Override public void visitXmlTag(@NotNull XmlTag tag) {
+    final XmlTag another = myMatchingVisitor.getElement(XmlTag.class);
+    if (another == null) return;
+    final CompiledPattern pattern = myMatchingVisitor.getMatchContext().getPattern();
+    final XmlToken name = getTagNameToken(tag);
+    final boolean isTypedVar = pattern.isTypedVar(name);
+
+    if (!myMatchingVisitor.setResult((isTypedVar || myMatchingVisitor.matchText(tag.getName(), another.getName())) &&
+                                     myMatchingVisitor.matchInAnyOrder(tag.getAttributes(), another.getAttributes()))) return;
+
+    final XmlTagChild[] children1 = tag.getValue().getChildren();
+    if (children1.length != 0) {
+      if (children1.length == 1 && pattern.isTypedVar(children1[0])) {
+        final NodeIterator patternNodes = SsrFilteringNodeIterator.create(tag.getValue().getChildren());
+        if (patternNodes.current() != null) {
+          final NodeIterator matchNodes = SsrFilteringNodeIterator.create(another.getValue().getChildren());
+          if (!myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(patternNodes, matchNodes))) return;
+        }
+      }
+      else if (children1.length != 1 || !XmlMatchUtil.isWhiteSpace(children1[0])) {
+        final ListNodeIterator patternNodes = new ListNodeIterator(XmlMatchUtil.getElementsToMatch(children1));
+        final XmlTagChild[] children2 = another.getValue().getChildren();
+        final ListNodeIterator matchNodes = new ListNodeIterator(XmlMatchUtil.getElementsToMatch(children2));
+        if (!myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(patternNodes, matchNodes))) return;
+      }
+    }
+    if (isTypedVar) {
+      final SubstitutionHandler handler = (SubstitutionHandler)pattern.getHandler(name);
+      myMatchingVisitor.setResult(handler.handle(getTagNameToken(another), myMatchingVisitor.getMatchContext()));
+    }
+  }
+
+  @Override
+  public void visitXmlText(@NotNull XmlText text) {
+    myMatchingVisitor.setResult(myMatchingVisitor.getMatchContext().getPattern().isTypedVar(text)
+                                ? myMatchingVisitor.handleTypedElement(text, myMatchingVisitor.getElement())
+                                : myMatchingVisitor.matchSequentially(text.getFirstChild(), myMatchingVisitor.getElement().getFirstChild()));
+  }
+
+  @Override public void visitXmlToken(@NotNull XmlToken token) {
+    if (token.getTokenType() == XmlTokenType.XML_DATA_CHARACTERS) {
+      final String text = token.getText();
+
+      myMatchingVisitor.setResult(myMatchingVisitor.getMatchContext().getPattern().isTypedVar(text)
+                                  ? myMatchingVisitor.handleTypedElement(token, myMatchingVisitor.getElement())
+                                  : myMatchingVisitor.matchText(text, myMatchingVisitor.getElement().getText()));
+    }
+  }
+
+  @Override
+  public void visitXmlComment(@NotNull XmlComment comment) {
+    super.visitXmlComment(comment);
+    final PsiElement element = myMatchingVisitor.getElement();
+    if (!(element instanceof XmlComment other)) return;
+    final XmlToken text = XmlUtil.getTokenOfType(comment, XmlTokenType.XML_COMMENT_CHARACTERS);
+    assert text != null;
+    final CompiledPattern pattern = myMatchingVisitor.getMatchContext().getPattern();
+    final boolean typedVar = pattern.isTypedVar(text);
+    if (typedVar) {
+      final SubstitutionHandler handler = (SubstitutionHandler)pattern.getHandler(text);
+      myMatchingVisitor.setResult(handler.handle(XmlUtil.getTokenOfType(other, XmlTokenType.XML_COMMENT_CHARACTERS),
+                                                 myMatchingVisitor.getMatchContext()));
+    }
+    else {
+      myMatchingVisitor.setResult(myMatchingVisitor.matchText(MatchUtil.normalize(text.getText()),
+                                                              MatchUtil.normalize(other.getCommentText())));
+    }
+  }
+
+  private static @Nullable XmlToken getTagNameToken(XmlTag tag) {
+    PsiElement child = tag.getFirstChild();
+    while (child != null) {
+      if (child instanceof XmlToken token) {
+        IElementType tokenType = token.getTokenType();
+        if (tokenType == XmlTokenType.XML_NAME || tokenType == XmlTokenType.XML_TAG_NAME) {
+          // regular xml parser uses XML_NAME, but xml nested in js (JSX) uses XML_TAG_NAME
+          return token;
+        }
+      }
+      child = child.getNextSibling();
+    }
+
+    return null;
+  }
+}

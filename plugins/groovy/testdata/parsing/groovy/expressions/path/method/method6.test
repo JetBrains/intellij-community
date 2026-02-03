@@ -1,0 +1,16 @@
+foo(
+,
+)
+-----
+Groovy script
+  Method call
+    Reference expression
+      PsiElement(identifier)('foo')
+    Arguments
+      PsiElement(()('(')
+      PsiElement(new line)('\n')
+      PsiErrorElement:<expression> expected, got ','
+        <empty list>
+      PsiElement(,)(',')
+      PsiElement(new line)('\n')
+      PsiElement())(')')

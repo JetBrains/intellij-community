@@ -1,0 +1,31 @@
+- name: lib/assertj-swing.jar
+  library: assertj-swing
+  files:
+  - name: $MAVEN_REPOSITORY$/org/assertj/assertj-swing/3/assertj-swing-3.jar
+  reason: <- intellij.performanceTesting.remoteDriver
+- name: lib/assertj.jar
+  library: assertJ
+  files:
+  - name: $MAVEN_REPOSITORY$/org/assertj/assertj-core/4/assertj-core-4.jar
+  reason: <- intellij.performanceTesting.remoteDriver
+- name: lib/github.oshi.core.jar
+  library: github.oshi.core
+  files:
+  - name: $MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6/oshi-core-6.jar
+  reason: <- intellij.performanceTesting
+- name: lib/modules/intellij.performanceTesting.frontend.jar
+  contentModules:
+  - name: intellij.performanceTesting.frontend
+- name: lib/modules/intellij.performanceTesting.vcs.jar
+  contentModules:
+  - name: intellij.performanceTesting.vcs
+- name: lib/performanceTesting.jar
+  modules:
+  - name: intellij.performanceTesting
+  contentModules:
+  - name: intellij.performanceTesting.remoteDriver
+  - name: intellij.performanceTesting.remoteDriver.compose
+  - name: intellij.tools.ide.starter.bus
+  - name: intellij.driver.model
+  - name: intellij.driver.impl
+  - name: intellij.driver.client

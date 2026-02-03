@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>43</line>
+    <problem_class>Method parameter always has the same value</problem_class>
+    <description>Value of parameter 'bar' is always 'null'</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>51</line>
+    <problem_class>Method parameter always has the same value</problem_class>
+    <description>Value of parameter 'bar' is always '0'</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>58</line>
+    <problem_class>Method parameter always has the same value</problem_class>
+    <description>Value of parameter 'cs' is always 'String.class, Long.class'</description>
+  </problem>
+</problems>

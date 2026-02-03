@@ -1,0 +1,42 @@
+### auto-generated section `build kotlin.highlighting.shared` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "kotlin-highlighting-shared_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-highlighting-shared",
+  module_name = "kotlin.highlighting.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-highlighting-shared_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/refactoring",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/project-structure",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-api:ide",
+    "//java/java-analysis-impl:analysis-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/psi",
+    "//libraries/markdown",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
+    "//plugins/kotlin/code-insight/utils",
+    "@lib//:kotlinc-analysis-api",
+  ],
+  exports = ["//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal"]
+)
+### auto-generated section `build kotlin.highlighting.shared` end

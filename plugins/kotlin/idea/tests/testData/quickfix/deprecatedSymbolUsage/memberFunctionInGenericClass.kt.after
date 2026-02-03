@@ -1,0 +1,15 @@
+// "Replace with 'newFun(t)'" "true"
+
+interface X<T> {
+    @Deprecated("", ReplaceWith("newFun(t)"))
+    fun oldFun(t: T)
+
+    fun newFun(t: T)
+}
+
+fun foo(x: X<String>) {
+    x.<caret>newFun("a")
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

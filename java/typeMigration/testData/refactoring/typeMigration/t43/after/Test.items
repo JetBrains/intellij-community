@@ -1,0 +1,8 @@
+Types:
+PsiField:o : java.lang.Long
+
+Conversions:
+l -> $
+
+New expression type changes:
+Fails:

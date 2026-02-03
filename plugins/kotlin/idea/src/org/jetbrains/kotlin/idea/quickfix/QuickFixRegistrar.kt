@@ -1,0 +1,1160 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.quickfix
+
+import com.intellij.codeInsight.intention.IntentionAction
+import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
+import org.jetbrains.kotlin.diagnostics.DiagnosticFactoryForDeprecation
+import org.jetbrains.kotlin.diagnostics.Errors.ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED
+import org.jetbrains.kotlin.diagnostics.Errors.ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED_WARNING
+import org.jetbrains.kotlin.diagnostics.Errors.ABSTRACT_FUNCTION_IN_NON_ABSTRACT_CLASS
+import org.jetbrains.kotlin.diagnostics.Errors.ABSTRACT_FUNCTION_WITH_BODY
+import org.jetbrains.kotlin.diagnostics.Errors.ABSTRACT_MEMBER_NOT_IMPLEMENTED
+import org.jetbrains.kotlin.diagnostics.Errors.ABSTRACT_PROPERTY_IN_NON_ABSTRACT_CLASS
+import org.jetbrains.kotlin.diagnostics.Errors.ABSTRACT_PROPERTY_IN_PRIMARY_CONSTRUCTOR_PARAMETERS
+import org.jetbrains.kotlin.diagnostics.Errors.ABSTRACT_PROPERTY_WITH_GETTER
+import org.jetbrains.kotlin.diagnostics.Errors.ABSTRACT_PROPERTY_WITH_INITIALIZER
+import org.jetbrains.kotlin.diagnostics.Errors.ABSTRACT_PROPERTY_WITH_SETTER
+import org.jetbrains.kotlin.diagnostics.Errors.ABSTRACT_SUPER_CALL
+import org.jetbrains.kotlin.diagnostics.Errors.ABSTRACT_SUPER_CALL_WARNING
+import org.jetbrains.kotlin.diagnostics.Errors.ACTUAL_ANNOTATIONS_NOT_MATCH_EXPECT
+import org.jetbrains.kotlin.diagnostics.Errors.ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS
+import org.jetbrains.kotlin.diagnostics.Errors.ACTUAL_MISSING
+import org.jetbrains.kotlin.diagnostics.Errors.ACTUAL_WITHOUT_EXPECT
+import org.jetbrains.kotlin.diagnostics.Errors.AMBIGUOUS_ANONYMOUS_TYPE_INFERRED
+import org.jetbrains.kotlin.diagnostics.Errors.AMBIGUOUS_SUPER
+import org.jetbrains.kotlin.diagnostics.Errors.ANNOTATIONS_ON_BLOCK_LEVEL_EXPRESSION_ON_THE_SAME_LINE
+import org.jetbrains.kotlin.diagnostics.Errors.ANNOTATION_ON_SUPERCLASS
+import org.jetbrains.kotlin.diagnostics.Errors.ANNOTATION_USED_AS_ANNOTATION_ARGUMENT
+import org.jetbrains.kotlin.diagnostics.Errors.ANONYMOUS_FUNCTION_WITH_NAME
+import org.jetbrains.kotlin.diagnostics.Errors.APPROXIMATED_LOCAL_TYPE_WILL_BECOME_NULLABLE
+import org.jetbrains.kotlin.diagnostics.Errors.ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_ANNOTATION
+import org.jetbrains.kotlin.diagnostics.Errors.ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION
+import org.jetbrains.kotlin.diagnostics.Errors.ASSIGNMENT_TYPE_MISMATCH
+import org.jetbrains.kotlin.diagnostics.Errors.ASSIGN_OPERATOR_AMBIGUITY
+import org.jetbrains.kotlin.diagnostics.Errors.BREAK_OR_CONTINUE_IN_WHEN
+import org.jetbrains.kotlin.diagnostics.Errors.CANNOT_CHANGE_ACCESS_PRIVILEGE
+import org.jetbrains.kotlin.diagnostics.Errors.CANNOT_CHECK_FOR_ERASED
+import org.jetbrains.kotlin.diagnostics.Errors.CANNOT_WEAKEN_ACCESS_PRIVILEGE
+import org.jetbrains.kotlin.diagnostics.Errors.CAPTURED_MEMBER_VAL_INITIALIZATION
+import org.jetbrains.kotlin.diagnostics.Errors.CAPTURED_VAL_INITIALIZATION
+import org.jetbrains.kotlin.diagnostics.Errors.CAST_NEVER_SUCCEEDS
+import org.jetbrains.kotlin.diagnostics.Errors.COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT
+import org.jetbrains.kotlin.diagnostics.Errors.COMPARE_TO_TYPE_MISMATCH
+import org.jetbrains.kotlin.diagnostics.Errors.COMPATIBILITY_WARNING
+import org.jetbrains.kotlin.diagnostics.Errors.COMPONENT_FUNCTION_MISSING
+import org.jetbrains.kotlin.diagnostics.Errors.COMPONENT_FUNCTION_RETURN_TYPE_MISMATCH
+import org.jetbrains.kotlin.diagnostics.Errors.CONFLICTING_IMPORT
+import org.jetbrains.kotlin.diagnostics.Errors.CONFLICTING_OVERLOADS
+import org.jetbrains.kotlin.diagnostics.Errors.CONFLICTING_PROJECTION
+import org.jetbrains.kotlin.diagnostics.Errors.CONFUSING_BRANCH_CONDITION
+import org.jetbrains.kotlin.diagnostics.Errors.CONSTANT_EXPECTED_TYPE_MISMATCH
+import org.jetbrains.kotlin.diagnostics.Errors.CONSTRUCTOR_IN_OBJECT
+import org.jetbrains.kotlin.diagnostics.Errors.CONST_VAL_NOT_TOP_LEVEL_OR_OBJECT
+import org.jetbrains.kotlin.diagnostics.Errors.DATA_CLASS_NOT_PROPERTY_PARAMETER
+import org.jetbrains.kotlin.diagnostics.Errors.DECLARATION_CANT_BE_INLINED
+import org.jetbrains.kotlin.diagnostics.Errors.DEFAULT_VALUE_NOT_ALLOWED_IN_OVERRIDE
+import org.jetbrains.kotlin.diagnostics.Errors.DELEGATED_MEMBER_HIDES_SUPERTYPE_OVERRIDE
+import org.jetbrains.kotlin.diagnostics.Errors.DELEGATE_SPECIAL_FUNCTION_MISSING
+import org.jetbrains.kotlin.diagnostics.Errors.DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE
+import org.jetbrains.kotlin.diagnostics.Errors.DEPRECATED_ACCESS_BY_SHORT_NAME
+import org.jetbrains.kotlin.diagnostics.Errors.DEPRECATED_TYPE_PARAMETER_SYNTAX
+import org.jetbrains.kotlin.diagnostics.Errors.DEPRECATION
+import org.jetbrains.kotlin.diagnostics.Errors.DEPRECATION_ERROR
+import org.jetbrains.kotlin.diagnostics.Errors.ELSE_MISPLACED_IN_WHEN
+import org.jetbrains.kotlin.diagnostics.Errors.EQUALITY_NOT_APPLICABLE
+import org.jetbrains.kotlin.diagnostics.Errors.EXPECTED_PARAMETERS_NUMBER_MISMATCH
+import org.jetbrains.kotlin.diagnostics.Errors.EXPECTED_PARAMETER_TYPE_MISMATCH
+import org.jetbrains.kotlin.diagnostics.Errors.EXPECTED_TYPE_MISMATCH
+import org.jetbrains.kotlin.diagnostics.Errors.EXPLICIT_DELEGATION_CALL_REQUIRED
+import org.jetbrains.kotlin.diagnostics.Errors.EXPOSED_FROM_PRIVATE_IN_FILE
+import org.jetbrains.kotlin.diagnostics.Errors.EXPOSED_FUNCTION_RETURN_TYPE
+import org.jetbrains.kotlin.diagnostics.Errors.EXPOSED_PARAMETER_TYPE
+import org.jetbrains.kotlin.diagnostics.Errors.EXPOSED_PROPERTY_TYPE
+import org.jetbrains.kotlin.diagnostics.Errors.EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR
+import org.jetbrains.kotlin.diagnostics.Errors.EXPOSED_RECEIVER_TYPE
+import org.jetbrains.kotlin.diagnostics.Errors.EXPOSED_SUPER_CLASS
+import org.jetbrains.kotlin.diagnostics.Errors.EXPOSED_SUPER_INTERFACE
+import org.jetbrains.kotlin.diagnostics.Errors.EXPOSED_TYPE_PARAMETER_BOUND
+import org.jetbrains.kotlin.diagnostics.Errors.EXPRESSION_EXPECTED_PACKAGE_FOUND
+import org.jetbrains.kotlin.diagnostics.Errors.EXTENSION_PROPERTY_WITH_BACKING_FIELD
+import org.jetbrains.kotlin.diagnostics.Errors.FINAL_SUPERTYPE
+import org.jetbrains.kotlin.diagnostics.Errors.FINAL_UPPER_BOUND
+import org.jetbrains.kotlin.diagnostics.Errors.FUNCTION_CALL_EXPECTED
+import org.jetbrains.kotlin.diagnostics.Errors.FUNCTION_EXPECTED
+import org.jetbrains.kotlin.diagnostics.Errors.FUN_INTERFACE_WRONG_COUNT_OF_ABSTRACT_MEMBERS
+import org.jetbrains.kotlin.diagnostics.Errors.GETTER_VISIBILITY_DIFFERS_FROM_PROPERTY_VISIBILITY
+import org.jetbrains.kotlin.diagnostics.Errors.HAS_NEXT_FUNCTION_NONE_APPLICABLE
+import org.jetbrains.kotlin.diagnostics.Errors.HAS_NEXT_FUNCTION_TYPE_MISMATCH
+import org.jetbrains.kotlin.diagnostics.Errors.HAS_NEXT_MISSING
+import org.jetbrains.kotlin.diagnostics.Errors.ILLEGAL_ESCAPE
+import org.jetbrains.kotlin.diagnostics.Errors.ILLEGAL_INLINE_PARAMETER_MODIFIER
+import org.jetbrains.kotlin.diagnostics.Errors.ILLEGAL_SUSPEND_FUNCTION_CALL
+import org.jetbrains.kotlin.diagnostics.Errors.IMPLICIT_NOTHING_RETURN_TYPE
+import org.jetbrains.kotlin.diagnostics.Errors.INACCESSIBLE_OUTER_CLASS_EXPRESSION
+import org.jetbrains.kotlin.diagnostics.Errors.INAPPLICABLE_LATEINIT_MODIFIER
+import org.jetbrains.kotlin.diagnostics.Errors.INAPPLICABLE_TARGET_ON_PROPERTY
+import org.jetbrains.kotlin.diagnostics.Errors.INAPPLICABLE_TARGET_ON_PROPERTY_WARNING
+import org.jetbrains.kotlin.diagnostics.Errors.INCOMPATIBLE_MODIFIERS
+import org.jetbrains.kotlin.diagnostics.Errors.INCOMPATIBLE_TYPES
+import org.jetbrains.kotlin.diagnostics.Errors.INFERRED_INTO_DECLARED_UPPER_BOUNDS
+import org.jetbrains.kotlin.diagnostics.Errors.INFIX_MODIFIER_REQUIRED
+import org.jetbrains.kotlin.diagnostics.Errors.INLINE_CLASS_DEPRECATED
+import org.jetbrains.kotlin.diagnostics.Errors.INLINE_SUSPEND_FUNCTION_TYPE_UNSUPPORTED
+import org.jetbrains.kotlin.diagnostics.Errors.INTEGER_OPERATOR_RESOLVE_WILL_CHANGE
+import org.jetbrains.kotlin.diagnostics.Errors.INVALID_IF_AS_EXPRESSION
+import org.jetbrains.kotlin.diagnostics.Errors.INVALID_IF_AS_EXPRESSION_WARNING
+import org.jetbrains.kotlin.diagnostics.Errors.INVALID_TYPE_OF_ANNOTATION_MEMBER
+import org.jetbrains.kotlin.diagnostics.Errors.INVISIBLE_MEMBER
+import org.jetbrains.kotlin.diagnostics.Errors.INVISIBLE_REFERENCE
+import org.jetbrains.kotlin.diagnostics.Errors.INVISIBLE_SETTER
+import org.jetbrains.kotlin.diagnostics.Errors.IS_ENUM_ENTRY
+import org.jetbrains.kotlin.diagnostics.Errors.ITERATOR_MISSING
+import org.jetbrains.kotlin.diagnostics.Errors.ITERATOR_ON_NULLABLE
+import org.jetbrains.kotlin.diagnostics.Errors.LOCAL_VARIABLE_WITH_TYPE_PARAMETERS
+import org.jetbrains.kotlin.diagnostics.Errors.LOCAL_VARIABLE_WITH_TYPE_PARAMETERS_WARNING
+import org.jetbrains.kotlin.diagnostics.Errors.MANY_CLASSES_IN_SUPERTYPE_LIST
+import org.jetbrains.kotlin.diagnostics.Errors.MANY_IMPL_MEMBER_NOT_IMPLEMENTED
+import org.jetbrains.kotlin.diagnostics.Errors.MANY_INTERFACES_MEMBER_NOT_IMPLEMENTED
+import org.jetbrains.kotlin.diagnostics.Errors.MANY_INTERFACES_MEMBER_NOT_IMPLEMENTED_WARNING
+import org.jetbrains.kotlin.diagnostics.Errors.MISPLACED_TYPE_PARAMETER_CONSTRAINTS
+import org.jetbrains.kotlin.diagnostics.Errors.MISSING_CONSTRUCTOR_BRACKETS
+import org.jetbrains.kotlin.diagnostics.Errors.MISSING_CONSTRUCTOR_KEYWORD
+import org.jetbrains.kotlin.diagnostics.Errors.MISSING_VAL_ON_ANNOTATION_PARAMETER
+import org.jetbrains.kotlin.diagnostics.Errors.MIXING_NAMED_AND_POSITIONED_ARGUMENTS
+import org.jetbrains.kotlin.diagnostics.Errors.MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND
+import org.jetbrains.kotlin.diagnostics.Errors.MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND_FUN
+import org.jetbrains.kotlin.diagnostics.Errors.MUST_BE_INITIALIZED
+import org.jetbrains.kotlin.diagnostics.Errors.MUST_BE_INITIALIZED_OR_BE_ABSTRACT
+import org.jetbrains.kotlin.diagnostics.Errors.MUST_BE_INITIALIZED_OR_BE_ABSTRACT_WARNING
+import org.jetbrains.kotlin.diagnostics.Errors.MUST_BE_INITIALIZED_OR_BE_FINAL
+import org.jetbrains.kotlin.diagnostics.Errors.MUST_BE_INITIALIZED_OR_BE_FINAL_WARNING
+import org.jetbrains.kotlin.diagnostics.Errors.MUST_BE_INITIALIZED_OR_FINAL_OR_ABSTRACT
+import org.jetbrains.kotlin.diagnostics.Errors.MUST_BE_INITIALIZED_OR_FINAL_OR_ABSTRACT_WARNING
+import org.jetbrains.kotlin.diagnostics.Errors.MUST_BE_INITIALIZED_WARNING
+import org.jetbrains.kotlin.diagnostics.Errors.NAMED_PARAMETER_NOT_FOUND
+import org.jetbrains.kotlin.diagnostics.Errors.NESTED_CLASS_NOT_ALLOWED
+import org.jetbrains.kotlin.diagnostics.Errors.NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER
+import org.jetbrains.kotlin.diagnostics.Errors.NEXT_MISSING
+import org.jetbrains.kotlin.diagnostics.Errors.NEXT_NONE_APPLICABLE
+import org.jetbrains.kotlin.diagnostics.Errors.NONE_APPLICABLE
+import org.jetbrains.kotlin.diagnostics.Errors.NON_ABSTRACT_FUNCTION_WITH_NO_BODY
+import org.jetbrains.kotlin.diagnostics.Errors.NON_CONST_VAL_USED_IN_CONSTANT_EXPRESSION
+import org.jetbrains.kotlin.diagnostics.Errors.NON_EXHAUSTIVE_WHEN
+import org.jetbrains.kotlin.diagnostics.Errors.NON_EXHAUSTIVE_WHEN_ON_SEALED_CLASS
+import org.jetbrains.kotlin.diagnostics.Errors.NON_EXHAUSTIVE_WHEN_STATEMENT
+import org.jetbrains.kotlin.diagnostics.Errors.NON_FINAL_MEMBER_IN_FINAL_CLASS
+import org.jetbrains.kotlin.diagnostics.Errors.NON_FINAL_MEMBER_IN_OBJECT
+import org.jetbrains.kotlin.diagnostics.Errors.NON_LOCAL_RETURN_NOT_ALLOWED
+import org.jetbrains.kotlin.diagnostics.Errors.NON_MEMBER_FUNCTION_NO_BODY
+import org.jetbrains.kotlin.diagnostics.Errors.NON_PRIVATE_CONSTRUCTOR_IN_ENUM
+import org.jetbrains.kotlin.diagnostics.Errors.NON_PRIVATE_CONSTRUCTOR_IN_SEALED
+import org.jetbrains.kotlin.diagnostics.Errors.NON_PRIVATE_OR_PROTECTED_CONSTRUCTOR_IN_SEALED
+import org.jetbrains.kotlin.diagnostics.Errors.NON_PUBLIC_CALL_FROM_PUBLIC_INLINE
+import org.jetbrains.kotlin.diagnostics.Errors.NON_VARARG_SPREAD
+import org.jetbrains.kotlin.diagnostics.Errors.NOTHING_TO_INLINE
+import org.jetbrains.kotlin.diagnostics.Errors.NOTHING_TO_OVERRIDE
+import org.jetbrains.kotlin.diagnostics.Errors.NOT_AN_ANNOTATION_CLASS
+import org.jetbrains.kotlin.diagnostics.Errors.NOT_A_FUNCTION_LABEL
+import org.jetbrains.kotlin.diagnostics.Errors.NOT_A_FUNCTION_LABEL_WARNING
+import org.jetbrains.kotlin.diagnostics.Errors.NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS
+import org.jetbrains.kotlin.diagnostics.Errors.NO_ACTUAL_FOR_EXPECT
+import org.jetbrains.kotlin.diagnostics.Errors.NO_COMPANION_OBJECT
+import org.jetbrains.kotlin.diagnostics.Errors.NO_CONSTRUCTOR
+import org.jetbrains.kotlin.diagnostics.Errors.NO_CONSTRUCTOR_WARNING
+import org.jetbrains.kotlin.diagnostics.Errors.NO_ELSE_IN_WHEN
+import org.jetbrains.kotlin.diagnostics.Errors.NO_ELSE_IN_WHEN_WARNING
+import org.jetbrains.kotlin.diagnostics.Errors.NO_EXPLICIT_RETURN_TYPE_IN_API_MODE
+import org.jetbrains.kotlin.diagnostics.Errors.NO_EXPLICIT_RETURN_TYPE_IN_API_MODE_WARNING
+import org.jetbrains.kotlin.diagnostics.Errors.NO_EXPLICIT_VISIBILITY_IN_API_MODE
+import org.jetbrains.kotlin.diagnostics.Errors.NO_EXPLICIT_VISIBILITY_IN_API_MODE_WARNING
+import org.jetbrains.kotlin.diagnostics.Errors.NO_GET_METHOD
+import org.jetbrains.kotlin.diagnostics.Errors.NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY
+import org.jetbrains.kotlin.diagnostics.Errors.NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY_MIGRATION
+import org.jetbrains.kotlin.diagnostics.Errors.NO_SET_METHOD
+import org.jetbrains.kotlin.diagnostics.Errors.NO_TYPE_ARGUMENTS_ON_RHS
+import org.jetbrains.kotlin.diagnostics.Errors.NO_VALUE_FOR_PARAMETER
+import org.jetbrains.kotlin.diagnostics.Errors.NULLABLE_SUPERTYPE
+import org.jetbrains.kotlin.diagnostics.Errors.NULL_FOR_NONNULL_TYPE
+import org.jetbrains.kotlin.diagnostics.Errors.OPERATOR_MODIFIER_REQUIRED
+import org.jetbrains.kotlin.diagnostics.Errors.OPT_IN_IS_NOT_ENABLED
+import org.jetbrains.kotlin.diagnostics.Errors.OPT_IN_MARKER_ON_OVERRIDE
+import org.jetbrains.kotlin.diagnostics.Errors.OPT_IN_MARKER_ON_OVERRIDE_WARNING
+import org.jetbrains.kotlin.diagnostics.Errors.OPT_IN_MARKER_ON_WRONG_TARGET
+import org.jetbrains.kotlin.diagnostics.Errors.OPT_IN_MARKER_WITH_WRONG_RETENTION
+import org.jetbrains.kotlin.diagnostics.Errors.OPT_IN_MARKER_WITH_WRONG_TARGET
+import org.jetbrains.kotlin.diagnostics.Errors.OPT_IN_OVERRIDE
+import org.jetbrains.kotlin.diagnostics.Errors.OPT_IN_OVERRIDE_ERROR
+import org.jetbrains.kotlin.diagnostics.Errors.OPT_IN_TO_INHERITANCE
+import org.jetbrains.kotlin.diagnostics.Errors.OPT_IN_TO_INHERITANCE_ERROR
+import org.jetbrains.kotlin.diagnostics.Errors.OPT_IN_USAGE
+import org.jetbrains.kotlin.diagnostics.Errors.OPT_IN_USAGE_ERROR
+import org.jetbrains.kotlin.diagnostics.Errors.OPT_IN_WITHOUT_ARGUMENTS
+import org.jetbrains.kotlin.diagnostics.Errors.OVERRIDE_DEPRECATION
+import org.jetbrains.kotlin.diagnostics.Errors.OVERRIDING_FINAL_MEMBER
+import org.jetbrains.kotlin.diagnostics.Errors.PARAMETER_NAME_CHANGED_ON_OVERRIDE
+import org.jetbrains.kotlin.diagnostics.Errors.PLATFORM_CLASS_MAPPED_TO_KOTLIN
+import org.jetbrains.kotlin.diagnostics.Errors.PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED
+import org.jetbrains.kotlin.diagnostics.Errors.PRIVATE_SETTER_FOR_ABSTRACT_PROPERTY
+import org.jetbrains.kotlin.diagnostics.Errors.PRIVATE_SETTER_FOR_OPEN_PROPERTY
+import org.jetbrains.kotlin.diagnostics.Errors.PROGRESSIONS_CHANGING_RESOLVE
+import org.jetbrains.kotlin.diagnostics.Errors.PROJECTION_IN_IMMEDIATE_ARGUMENT_TO_SUPERTYPE
+import org.jetbrains.kotlin.diagnostics.Errors.PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT
+import org.jetbrains.kotlin.diagnostics.Errors.PROPERTY_INITIALIZER_IN_INTERFACE
+import org.jetbrains.kotlin.diagnostics.Errors.PROPERTY_TYPE_MISMATCH_ON_OVERRIDE
+import org.jetbrains.kotlin.diagnostics.Errors.PROPERTY_WITH_NO_TYPE_NO_INITIALIZER
+import org.jetbrains.kotlin.diagnostics.Errors.PROTECTED_CALL_FROM_PUBLIC_INLINE
+import org.jetbrains.kotlin.diagnostics.Errors.REDUNDANT_ELSE_IN_WHEN
+import org.jetbrains.kotlin.diagnostics.Errors.REDUNDANT_INLINE_SUSPEND_FUNCTION_TYPE
+import org.jetbrains.kotlin.diagnostics.Errors.REDUNDANT_LABEL_WARNING
+import org.jetbrains.kotlin.diagnostics.Errors.REDUNDANT_MODIFIER
+import org.jetbrains.kotlin.diagnostics.Errors.REDUNDANT_MODIFIER_FOR_TARGET
+import org.jetbrains.kotlin.diagnostics.Errors.REDUNDANT_MODIFIER_IN_GETTER
+import org.jetbrains.kotlin.diagnostics.Errors.REDUNDANT_NULLABLE
+import org.jetbrains.kotlin.diagnostics.Errors.REDUNDANT_OPEN_IN_INTERFACE
+import org.jetbrains.kotlin.diagnostics.Errors.REDUNDANT_PROJECTION
+import org.jetbrains.kotlin.diagnostics.Errors.REDUNDANT_SPREAD_OPERATOR_IN_NAMED_FORM_IN_ANNOTATION
+import org.jetbrains.kotlin.diagnostics.Errors.REDUNDANT_SPREAD_OPERATOR_IN_NAMED_FORM_IN_FUNCTION
+import org.jetbrains.kotlin.diagnostics.Errors.REIFIED_TYPE_PARAMETER_NO_INLINE
+import org.jetbrains.kotlin.diagnostics.Errors.REPEATED_ANNOTATION
+import org.jetbrains.kotlin.diagnostics.Errors.REPEATED_ANNOTATION_WARNING
+import org.jetbrains.kotlin.diagnostics.Errors.REPEATED_MODIFIER
+import org.jetbrains.kotlin.diagnostics.Errors.RESOLUTION_TO_CLASSIFIER
+import org.jetbrains.kotlin.diagnostics.Errors.RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION
+import org.jetbrains.kotlin.diagnostics.Errors.RETURN_IN_FUNCTION_WITH_EXPRESSION_BODY
+import org.jetbrains.kotlin.diagnostics.Errors.RETURN_NOT_ALLOWED
+import org.jetbrains.kotlin.diagnostics.Errors.RETURN_TYPE_MISMATCH
+import org.jetbrains.kotlin.diagnostics.Errors.RETURN_TYPE_MISMATCH_ON_OVERRIDE
+import org.jetbrains.kotlin.diagnostics.Errors.SAFE_CALL_WILL_CHANGE_NULLABILITY
+import org.jetbrains.kotlin.diagnostics.Errors.SEALED_INHERITOR_IN_DIFFERENT_MODULE
+import org.jetbrains.kotlin.diagnostics.Errors.SEALED_INHERITOR_IN_DIFFERENT_PACKAGE
+import org.jetbrains.kotlin.diagnostics.Errors.SENSELESS_COMPARISON
+import org.jetbrains.kotlin.diagnostics.Errors.SENSELESS_NULL_IN_WHEN
+import org.jetbrains.kotlin.diagnostics.Errors.SETTER_VISIBILITY_INCONSISTENT_WITH_PROPERTY_VISIBILITY
+import org.jetbrains.kotlin.diagnostics.Errors.SIGNED_CONSTANT_CONVERTED_TO_UNSIGNED
+import org.jetbrains.kotlin.diagnostics.Errors.SMARTCAST_IMPOSSIBLE
+import org.jetbrains.kotlin.diagnostics.Errors.SUPERTYPE_IS_EXTENSION_FUNCTION_TYPE
+import org.jetbrains.kotlin.diagnostics.Errors.SUPERTYPE_NOT_INITIALIZED
+import org.jetbrains.kotlin.diagnostics.Errors.SUPER_CALL_FROM_PUBLIC_INLINE
+import org.jetbrains.kotlin.diagnostics.Errors.TOO_MANY_ARGUMENTS
+import org.jetbrains.kotlin.diagnostics.Errors.TOO_MANY_CHARACTERS_IN_CHARACTER_LITERAL
+import org.jetbrains.kotlin.diagnostics.Errors.TOPLEVEL_TYPEALIASES_ONLY
+import org.jetbrains.kotlin.diagnostics.Errors.TYPEALIAS_EXPANSION_DEPRECATION
+import org.jetbrains.kotlin.diagnostics.Errors.TYPEALIAS_EXPANSION_DEPRECATION_ERROR
+import org.jetbrains.kotlin.diagnostics.Errors.TYPE_ARGUMENTS_REDUNDANT_IN_SUPER_QUALIFIER
+import org.jetbrains.kotlin.diagnostics.Errors.TYPE_CANT_BE_USED_FOR_CONST_VAL
+import org.jetbrains.kotlin.diagnostics.Errors.TYPE_INFERENCE_CANDIDATE_WITH_SAM_AND_VARARG
+import org.jetbrains.kotlin.diagnostics.Errors.TYPE_INFERENCE_EXPECTED_TYPE_MISMATCH
+import org.jetbrains.kotlin.diagnostics.Errors.TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER
+import org.jetbrains.kotlin.diagnostics.Errors.TYPE_INFERENCE_UPPER_BOUND_VIOLATED
+import org.jetbrains.kotlin.diagnostics.Errors.TYPE_MISMATCH
+import org.jetbrains.kotlin.diagnostics.Errors.TYPE_MISMATCH_ERRORS
+import org.jetbrains.kotlin.diagnostics.Errors.TYPE_MISMATCH_WARNING
+import org.jetbrains.kotlin.diagnostics.Errors.TYPE_PARAMETER_AS_REIFIED
+import org.jetbrains.kotlin.diagnostics.Errors.TYPE_VARIANCE_CONFLICT
+import org.jetbrains.kotlin.diagnostics.Errors.UNCHECKED_CAST
+import org.jetbrains.kotlin.diagnostics.Errors.UNDERSCORE_IS_RESERVED
+import org.jetbrains.kotlin.diagnostics.Errors.UNEXPECTED_TRAILING_LAMBDA_ON_A_NEW_LINE
+import org.jetbrains.kotlin.diagnostics.Errors.UNINITIALIZED_PARAMETER
+import org.jetbrains.kotlin.diagnostics.Errors.UNINITIALIZED_PARAMETER_WARNING
+import org.jetbrains.kotlin.diagnostics.Errors.UNNECESSARY_LATEINIT
+import org.jetbrains.kotlin.diagnostics.Errors.UNNECESSARY_NOT_NULL_ASSERTION
+import org.jetbrains.kotlin.diagnostics.Errors.UNNECESSARY_SAFE_CALL
+import org.jetbrains.kotlin.diagnostics.Errors.UNRESOLVED_REFERENCE
+import org.jetbrains.kotlin.diagnostics.Errors.UNRESOLVED_REFERENCE_WRONG_RECEIVER
+import org.jetbrains.kotlin.diagnostics.Errors.UNSAFE_CALL
+import org.jetbrains.kotlin.diagnostics.Errors.UNSAFE_IMPLICIT_INVOKE_CALL
+import org.jetbrains.kotlin.diagnostics.Errors.UNSAFE_INFIX_CALL
+import org.jetbrains.kotlin.diagnostics.Errors.UNSAFE_OPERATOR_CALL
+import org.jetbrains.kotlin.diagnostics.Errors.UNSUPPORTED
+import org.jetbrains.kotlin.diagnostics.Errors.UNSUPPORTED_WARNING
+import org.jetbrains.kotlin.diagnostics.Errors.UNUSED_ANONYMOUS_PARAMETER
+import org.jetbrains.kotlin.diagnostics.Errors.UNUSED_DESTRUCTURED_PARAMETER_ENTRY
+import org.jetbrains.kotlin.diagnostics.Errors.UNUSED_EXPRESSION
+import org.jetbrains.kotlin.diagnostics.Errors.UNUSED_LAMBDA_EXPRESSION
+import org.jetbrains.kotlin.diagnostics.Errors.UNUSED_PARAMETER
+import org.jetbrains.kotlin.diagnostics.Errors.UNUSED_VALUE
+import org.jetbrains.kotlin.diagnostics.Errors.UNUSED_VARIABLE
+import org.jetbrains.kotlin.diagnostics.Errors.UPPER_BOUND_VIOLATED
+import org.jetbrains.kotlin.diagnostics.Errors.USAGE_IS_NOT_INLINABLE
+import org.jetbrains.kotlin.diagnostics.Errors.USAGE_IS_NOT_INLINABLE_WARNING
+import org.jetbrains.kotlin.diagnostics.Errors.USELESS_CAST
+import org.jetbrains.kotlin.diagnostics.Errors.USELESS_ELVIS
+import org.jetbrains.kotlin.diagnostics.Errors.USELESS_ELVIS_RIGHT_IS_NULL
+import org.jetbrains.kotlin.diagnostics.Errors.USELESS_IS_CHECK
+import org.jetbrains.kotlin.diagnostics.Errors.USELESS_NULLABLE_CHECK
+import org.jetbrains.kotlin.diagnostics.Errors.VALUE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER
+import org.jetbrains.kotlin.diagnostics.Errors.VALUE_PARAMETER_WITH_NO_TYPE_ANNOTATION
+import org.jetbrains.kotlin.diagnostics.Errors.VAL_OR_VAR_ON_CATCH_PARAMETER
+import org.jetbrains.kotlin.diagnostics.Errors.VAL_OR_VAR_ON_FUN_PARAMETER
+import org.jetbrains.kotlin.diagnostics.Errors.VAL_OR_VAR_ON_LOOP_PARAMETER
+import org.jetbrains.kotlin.diagnostics.Errors.VAL_OR_VAR_ON_SECONDARY_CONSTRUCTOR_PARAMETER
+import org.jetbrains.kotlin.diagnostics.Errors.VAL_REASSIGNMENT
+import org.jetbrains.kotlin.diagnostics.Errors.VAL_WITH_SETTER
+import org.jetbrains.kotlin.diagnostics.Errors.VARIABLE_WITH_REDUNDANT_INITIALIZER
+import org.jetbrains.kotlin.diagnostics.Errors.VARIANCE_ON_TYPE_PARAMETER_NOT_ALLOWED
+import org.jetbrains.kotlin.diagnostics.Errors.VAR_ANNOTATION_PARAMETER
+import org.jetbrains.kotlin.diagnostics.Errors.VAR_OVERRIDDEN_BY_VAL
+import org.jetbrains.kotlin.diagnostics.Errors.VAR_TYPE_MISMATCH_ON_OVERRIDE
+import org.jetbrains.kotlin.diagnostics.Errors.VIRTUAL_MEMBER_HIDDEN
+import org.jetbrains.kotlin.diagnostics.Errors.VOLATILE_ON_VALUE
+import org.jetbrains.kotlin.diagnostics.Errors.WRONG_ANNOTATION_TARGET
+import org.jetbrains.kotlin.diagnostics.Errors.WRONG_ANNOTATION_TARGET_WITH_USE_SITE_TARGET
+import org.jetbrains.kotlin.diagnostics.Errors.WRONG_EXTENSION_FUNCTION_TYPE
+import org.jetbrains.kotlin.diagnostics.Errors.WRONG_EXTENSION_FUNCTION_TYPE_WARNING
+import org.jetbrains.kotlin.diagnostics.Errors.WRONG_GETTER_RETURN_TYPE
+import org.jetbrains.kotlin.diagnostics.Errors.WRONG_LONG_SUFFIX
+import org.jetbrains.kotlin.diagnostics.Errors.WRONG_MODIFIER_CONTAINING_DECLARATION
+import org.jetbrains.kotlin.diagnostics.Errors.WRONG_MODIFIER_TARGET
+import org.jetbrains.kotlin.diagnostics.Errors.WRONG_NUMBER_OF_TYPE_ARGUMENTS
+import org.jetbrains.kotlin.diagnostics.Errors.WRONG_SETTER_PARAMETER_TYPE
+import org.jetbrains.kotlin.diagnostics.Errors.YIELD_IS_RESERVED
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixFactory
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableMutabilityFix
+import org.jetbrains.kotlin.idea.core.overrideImplement.ImplementAsConstructorParameter
+import org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler
+import org.jetbrains.kotlin.idea.inspections.AddInfixModifierFixFactory
+import org.jetbrains.kotlin.idea.inspections.AddOperatorModifierFixFactory
+import org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix
+import org.jetbrains.kotlin.idea.intentions.AddAccessorsIntention
+import org.jetbrains.kotlin.idea.intentions.AddValVarToConstructorParameterAction
+import org.jetbrains.kotlin.idea.intentions.ConvertFunctionTypeReceiverToParameterIntention
+import org.jetbrains.kotlin.idea.intentions.ConvertPropertyInitializerToGetterIntention
+import org.jetbrains.kotlin.idea.intentions.InsertExplicitTypeArgumentsIntention
+import org.jetbrains.kotlin.idea.intentions.MoveMemberToCompanionObjectIntention
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateBinaryOperationActionFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromCallActionFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateComponentFunctionActionFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateConstructorFromDelegationCallActionFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateConstructorFromSuperTypeCallActionFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateDataClassPropertyFromDestructuringActionFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateFunctionFromCallableReferenceActionFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateGetFunctionActionFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateHasNextFunctionActionFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateInvokeFunctionActionFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateIteratorFunctionActionFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateNextFunctionActionFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreatePropertyDelegateAccessorsActionFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateSetFunctionActionFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateUnaryOperationActionFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClassFromCallWithConstructorCalleeActionFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClassFromConstructorCallActionFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClassFromReferenceExpressionActionFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClassFromTypeReferenceActionFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createTypeParameter.CreateTypeParameterByUnresolvedRefActionFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createTypeParameter.CreateTypeParameterUnmatchedTypeArgumentActionFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateLocalVariableActionFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateParameterByNamedArgumentActionFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateParameterByRefActionFactory
+import org.jetbrains.kotlin.idea.quickfix.expectactual.ActualAnnotationsNotMatchExpectFixFactory
+import org.jetbrains.kotlin.idea.quickfix.expectactual.AddActualFix
+import org.jetbrains.kotlin.idea.quickfix.expectactual.CreateExpectedFix
+import org.jetbrains.kotlin.idea.quickfix.expectactual.CreateMissedActualsFix
+import org.jetbrains.kotlin.idea.quickfix.migration.MigrateExperimentalToRequiresOptInFix
+import org.jetbrains.kotlin.idea.quickfix.migration.MigrateExternalExtensionFix
+import org.jetbrains.kotlin.idea.quickfix.migration.MigrateTypeParameterListFixFactory
+import org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+import org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageInWholeProjectFix
+import org.jetbrains.kotlin.idea.quickfix.replaceWith.ReplaceProtectedToPublishedApiCallFixFactory
+import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs.EXTENSION_FUNCTION_IN_EXTERNAL_DECLARATION
+import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs.WRONG_EXTERNAL_DECLARATION
+import org.jetbrains.kotlin.lexer.KtTokens.ABSTRACT_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.ACTUAL_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.DATA_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.FINAL_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.INNER_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.LATEINIT_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.OPEN_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.OVERRIDE_KEYWORD
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.ACCIDENTAL_OVERRIDE
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.CONFLICTING_JVM_DECLARATIONS
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.DEPRECATED_JAVA_ANNOTATION
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.ENUM_DECLARING_CLASS_DEPRECATED
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.INAPPLICABLE_JVM_FIELD
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.JAVA_CLASS_ON_COMPANION
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.JAVA_MODULE_DOES_NOT_DEPEND_ON_MODULE
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.JAVA_TYPE_MISMATCH
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.NON_DATA_CLASS_JVM_RECORD
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.NULLABLE_TYPE_PARAMETER_AGAINST_NOT_NULL_TYPE_PARAMETER
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.OVERLOADS_ABSTRACT
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.OVERLOADS_ANNOTATION_CLASS_CONSTRUCTOR
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.OVERLOADS_INTERFACE
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.OVERLOADS_LOCAL
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.OVERLOADS_PRIVATE
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.OVERLOADS_WITHOUT_DEFAULT_ARGUMENTS
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.POSITIONED_VALUE_ARGUMENT_FOR_JAVA_ANNOTATION
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.SUBCLASS_CANT_CALL_COMPANION_PROTECTED_NON_STATIC
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.UPPER_BOUND_VIOLATED_BASED_ON_JAVA_ANNOTATIONS
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.VALUE_CLASS_WITHOUT_JVM_INLINE_ANNOTATION
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.WRONG_NULLABILITY_FOR_JAVA_OVERRIDE
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.WRONG_TYPE_PARAMETER_NULLABILITY_FOR_JAVA_OVERRIDE
+import org.jetbrains.kotlin.resolve.konan.diagnostics.ErrorsNative.INCOMPATIBLE_THROWS_OVERRIDE
+import org.jetbrains.kotlin.resolve.konan.diagnostics.ErrorsNative.MISSING_EXCEPTION_IN_THROWS_ON_SUSPEND
+import org.jetbrains.kotlin.resolve.konan.diagnostics.ErrorsNative.THROWS_LIST_EMPTY
+
+private class QuickFixRegistrar : QuickFixContributor {
+    override fun registerQuickFixes(quickFixes: QuickFixes) {
+        fun DiagnosticFactory<*>.registerFactory(vararg factory: QuickFixFactory) {
+            quickFixes.register(this, *factory)
+        }
+
+        fun DiagnosticFactoryForDeprecation<*, *, *>.registerFactory(vararg factory: QuickFixFactory) {
+            quickFixes.register(this.errorFactory, *factory)
+            quickFixes.register(this.warningFactory, *factory)
+        }
+
+        fun DiagnosticFactory<*>.registerActions(vararg action: IntentionAction) {
+            quickFixes.register(this, *action)
+        }
+
+        val addAbstractModifierFactory = AddModifierFixMpp.createFactory(ABSTRACT_KEYWORD)
+
+        ABSTRACT_PROPERTY_IN_PRIMARY_CONSTRUCTOR_PARAMETERS.registerFactory(RemoveModifierFixBase.removeAbstractModifier)
+
+        ABSTRACT_PROPERTY_WITH_INITIALIZER.registerFactory(RemoveModifierFixBase.removeAbstractModifier, RemovePartsFromPropertyFix)
+        ABSTRACT_PROPERTY_WITH_GETTER.registerFactory(RemoveModifierFixBase.removeAbstractModifier, RemovePartsFromPropertyFix)
+        ABSTRACT_PROPERTY_WITH_SETTER.registerFactory(RemoveModifierFixBase.removeAbstractModifier, RemovePartsFromPropertyFix)
+
+        PROPERTY_INITIALIZER_IN_INTERFACE.registerFactory(RemovePartsFromPropertyFix, ConvertPropertyInitializerToGetterIntention.Factory)
+
+        MUST_BE_INITIALIZED_OR_BE_ABSTRACT.registerFactory(addAbstractModifierFactory)
+        MUST_BE_INITIALIZED_OR_BE_ABSTRACT_WARNING.registerFactory(addAbstractModifierFactory)
+        MUST_BE_INITIALIZED_OR_FINAL_OR_ABSTRACT.registerFactory(addAbstractModifierFactory)
+        MUST_BE_INITIALIZED_OR_FINAL_OR_ABSTRACT_WARNING.registerFactory(addAbstractModifierFactory)
+        ABSTRACT_MEMBER_NOT_IMPLEMENTED.registerFactory(addAbstractModifierFactory)
+        ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED.registerFactory(addAbstractModifierFactory)
+        ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED_WARNING.registerFactory(addAbstractModifierFactory)
+
+        MUST_BE_INITIALIZED.registerFactory(InitializePropertyQuickFixFactory)
+        MUST_BE_INITIALIZED_WARNING.registerFactory(InitializePropertyQuickFixFactory)
+        MUST_BE_INITIALIZED_OR_BE_FINAL.registerFactory(InitializePropertyQuickFixFactory)
+        MUST_BE_INITIALIZED_OR_BE_FINAL_WARNING.registerFactory(InitializePropertyQuickFixFactory)
+        MUST_BE_INITIALIZED_OR_BE_ABSTRACT.registerFactory(InitializePropertyQuickFixFactory)
+        MUST_BE_INITIALIZED_OR_BE_ABSTRACT_WARNING.registerFactory(InitializePropertyQuickFixFactory)
+        MUST_BE_INITIALIZED_OR_FINAL_OR_ABSTRACT.registerFactory(InitializePropertyQuickFixFactory)
+        MUST_BE_INITIALIZED_OR_FINAL_OR_ABSTRACT_WARNING.registerFactory(InitializePropertyQuickFixFactory)
+
+        val addFinalToProperty = AddModifierFixMpp.createFactory(FINAL_KEYWORD, KtProperty::class.java)
+        MUST_BE_INITIALIZED_OR_BE_FINAL.registerFactory(addFinalToProperty)
+        MUST_BE_INITIALIZED_OR_BE_FINAL_WARNING.registerFactory(addFinalToProperty)
+        MUST_BE_INITIALIZED_OR_FINAL_OR_ABSTRACT.registerFactory(addFinalToProperty)
+        MUST_BE_INITIALIZED_OR_FINAL_OR_ABSTRACT_WARNING.registerFactory(addFinalToProperty)
+
+        val addAbstractToClassFactory = AddModifierFixMpp.createFactory(ABSTRACT_KEYWORD, KtClassOrObject::class.java)
+        ABSTRACT_PROPERTY_IN_NON_ABSTRACT_CLASS.registerFactory(RemoveModifierFixBase.removeAbstractModifier, addAbstractToClassFactory)
+
+        ABSTRACT_FUNCTION_IN_NON_ABSTRACT_CLASS.registerFactory(RemoveModifierFixBase.removeAbstractModifier, addAbstractToClassFactory)
+
+        ABSTRACT_FUNCTION_WITH_BODY.registerFactory(RemoveModifierFixBase.removeAbstractModifier, RemoveFunctionBodyFixFactory)
+
+        NON_ABSTRACT_FUNCTION_WITH_NO_BODY.registerFactory(addAbstractModifierFactory, AddFunctionBodyFix)
+
+        NON_VARARG_SPREAD.registerFactory(RemovePsiElementSimpleFix.RemoveSpreadFactory)
+
+        MIXING_NAMED_AND_POSITIONED_ARGUMENTS.registerFactory(AddNameToArgumentFix)
+
+        NON_MEMBER_FUNCTION_NO_BODY.registerFactory(AddFunctionBodyFix)
+
+        NOTHING_TO_OVERRIDE.registerFactory(
+            RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(OVERRIDE_KEYWORD),
+            ChangeMemberFunctionSignatureFix,
+            AddFunctionToSupertypeFix,
+            AddPropertyToSupertypeFix
+        )
+        VIRTUAL_MEMBER_HIDDEN.registerFactory(AddModifierFix.createFactory(OVERRIDE_KEYWORD))
+
+        USELESS_CAST.registerFactory(RemoveUselessCastFix)
+
+        USELESS_IS_CHECK.registerFactory(RemoveUselessIsCheckFixFactory, RemoveUselessIsCheckFixForWhenFactory)
+
+        WRONG_SETTER_PARAMETER_TYPE.registerFactory(ChangeAccessorTypeFixFactory)
+        WRONG_GETTER_RETURN_TYPE.registerFactory(ChangeAccessorTypeFixFactory)
+
+        USELESS_ELVIS.registerFactory(RemoveUselessElvisFix)
+        USELESS_ELVIS_RIGHT_IS_NULL.registerFactory(RemoveUselessElvisFix)
+
+        REDUNDANT_MODIFIER.registerFactory(RemoveModifierFixBase.removeRedundantModifier)
+        REDUNDANT_OPEN_IN_INTERFACE.registerFactory(RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(OPEN_KEYWORD, true))
+        REDUNDANT_INLINE_SUSPEND_FUNCTION_TYPE.registerFactory(RemoveModifierFixBase.createRemoveSuspendFactory())
+        UNNECESSARY_LATEINIT.registerFactory(RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(LATEINIT_KEYWORD))
+
+        REDUNDANT_PROJECTION.registerFactory(RemoveModifierFixBase.createRemoveProjectionFactory(true))
+        INCOMPATIBLE_MODIFIERS.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
+        VARIANCE_ON_TYPE_PARAMETER_NOT_ALLOWED.registerFactory(RemoveModifierFixBase.createRemoveVarianceFactory())
+
+        NON_FINAL_MEMBER_IN_FINAL_CLASS.registerFactory(
+            AddModifierFixMpp.createFactory(OPEN_KEYWORD, KtClass::class.java),
+            RemoveModifierFixBase.removeOpenModifier
+        )
+        NON_FINAL_MEMBER_IN_OBJECT.registerFactory(RemoveModifierFixBase.removeOpenModifier)
+
+        GETTER_VISIBILITY_DIFFERS_FROM_PROPERTY_VISIBILITY.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
+        SETTER_VISIBILITY_INCONSISTENT_WITH_PROPERTY_VISIBILITY.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
+        PRIVATE_SETTER_FOR_ABSTRACT_PROPERTY.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
+        PRIVATE_SETTER_FOR_OPEN_PROPERTY.registerFactory(addFinalToProperty, RemoveModifierFixBase.removeNonRedundantModifier)
+        REDUNDANT_MODIFIER_IN_GETTER.registerFactory(RemoveModifierFixBase.removeRedundantModifier)
+        WRONG_MODIFIER_TARGET.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier, ChangeVariableMutabilityFix.CONST_VAL_FACTORY)
+        REDUNDANT_MODIFIER_FOR_TARGET.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
+        WRONG_MODIFIER_CONTAINING_DECLARATION.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
+        REPEATED_MODIFIER.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
+        NON_PRIVATE_CONSTRUCTOR_IN_ENUM.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
+        NON_PRIVATE_CONSTRUCTOR_IN_SEALED.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
+        NON_PRIVATE_OR_PROTECTED_CONSTRUCTOR_IN_SEALED.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
+        TYPE_CANT_BE_USED_FOR_CONST_VAL.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
+
+        NO_EXPLICIT_VISIBILITY_IN_API_MODE.registerFactory(ChangeVisibilityFix.SetExplicitVisibilityFactory)
+        NO_EXPLICIT_VISIBILITY_IN_API_MODE_WARNING.registerFactory(ChangeVisibilityFix.SetExplicitVisibilityFactory)
+        NO_EXPLICIT_RETURN_TYPE_IN_API_MODE.registerActions(SpecifyTypeExplicitlyFix())
+        NO_EXPLICIT_RETURN_TYPE_IN_API_MODE_WARNING.registerActions(SpecifyTypeExplicitlyFix())
+
+        INVISIBLE_REFERENCE.registerFactory(ImportFix)
+        INVISIBLE_MEMBER.registerFactory(ImportFix)
+        UNRESOLVED_REFERENCE.registerFactory(ImportFix)
+
+        UNRESOLVED_REFERENCE.registerFactory(ImportConstructorReferenceFix)
+        DEPRECATED_ACCESS_BY_SHORT_NAME.registerFactory(AddExplicitImportForDeprecatedVisibilityFix.Factory)
+        TYPE_INFERENCE_CANDIDATE_WITH_SAM_AND_VARARG.registerFactory(AddSpreadOperatorForArrayAsVarargAfterSamFixFactory)
+
+        TOO_MANY_ARGUMENTS.registerFactory(ImportForMismatchingArgumentsFixFactoryWithUnresolvedReferenceQuickFix)
+        NO_VALUE_FOR_PARAMETER.registerFactory(ImportForMismatchingArgumentsFix)
+        TYPE_MISMATCH.registerFactory(ImportForMismatchingArgumentsFix)
+        TYPE_MISMATCH_WARNING.registerFactory(ImportForMismatchingArgumentsFix)
+        CONSTANT_EXPECTED_TYPE_MISMATCH.registerFactory(ImportForMismatchingArgumentsFix)
+        NAMED_PARAMETER_NOT_FOUND.registerFactory(ImportForMismatchingArgumentsFix)
+        NONE_APPLICABLE.registerFactory(ImportForMismatchingArgumentsFix)
+        WRONG_NUMBER_OF_TYPE_ARGUMENTS.registerFactory(ImportForMismatchingArgumentsFix)
+        NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER.registerFactory(ImportForMismatchingArgumentsFix)
+        TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER.registerFactory(ImportForMismatchingArgumentsFix)
+
+        INAPPLICABLE_TARGET_ON_PROPERTY.registerFactory(
+            RemoveAnnotationFix.UseSiteGetDoesntHaveAnyEffect,
+            RemoveUseSiteTargetFix.UseSiteGetDoesntHaveAnyEffect
+        )
+        INAPPLICABLE_TARGET_ON_PROPERTY_WARNING.registerFactory(
+            RemoveAnnotationFix.UseSiteGetDoesntHaveAnyEffect,
+            RemoveUseSiteTargetFix.UseSiteGetDoesntHaveAnyEffect
+        )
+
+        INFERRED_INTO_DECLARED_UPPER_BOUNDS.registerFactory(InsertExplicitTypeArgumentsIntention)
+
+        UNRESOLVED_REFERENCE_WRONG_RECEIVER.registerFactory(ImportFix)
+
+        FUNCTION_EXPECTED.registerFactory(InvokeImportFix)
+
+        ITERATOR_MISSING.registerFactory(IteratorImportFix)
+
+        DELEGATE_SPECIAL_FUNCTION_MISSING.registerFactory(DelegateAccessorsImportFix)
+        DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE.registerFactory(DelegateAccessorsImportFix)
+        COMPONENT_FUNCTION_MISSING.registerFactory(ComponentsImportFix, AddDataModifierFix)
+
+        NO_GET_METHOD.registerFactory(ArrayAccessorImportFix)
+        NO_SET_METHOD.registerFactory(ArrayAccessorImportFix)
+
+        CONFLICTING_IMPORT.registerFactory(RemovePsiElementSimpleFix.RemoveImportFactory)
+
+        SUPERTYPE_NOT_INITIALIZED.registerFactory(SuperClassNotInitialized)
+        FUNCTION_CALL_EXPECTED.registerFactory(ChangeToFunctionInvocationFixFactory)
+        FUNCTION_EXPECTED.registerFactory(ChangeToPropertyAccessFix)
+
+        CANNOT_CHANGE_ACCESS_PRIVILEGE.registerFactory(UseInheritedVisibilityFixFactory)
+        CANNOT_WEAKEN_ACCESS_PRIVILEGE.registerFactory(UseInheritedVisibilityFixFactory)
+
+        INVISIBLE_REFERENCE.registerFactory(MakeVisibleFactory)
+        INVISIBLE_MEMBER.registerFactory(MakeVisibleFactory)
+        INVISIBLE_SETTER.registerFactory(MakeVisibleFactory)
+
+        UNSUPPORTED_WARNING.registerFactory(ConvertCollectionLiteralToIntArrayOfFixFactory)
+        UNSUPPORTED.registerFactory(ConvertCollectionLiteralToIntArrayOfFixFactory)
+
+        MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND_FUN.registerFactory(WrapWithParenthesesFixFactory)
+        MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND.registerFactory(WrapWithParenthesesFixFactory)
+
+        for (exposed in listOf(
+            EXPOSED_FUNCTION_RETURN_TYPE, EXPOSED_PARAMETER_TYPE, EXPOSED_PROPERTY_TYPE,
+            EXPOSED_RECEIVER_TYPE, EXPOSED_SUPER_CLASS, EXPOSED_SUPER_INTERFACE, EXPOSED_TYPE_PARAMETER_BOUND, EXPOSED_FROM_PRIVATE_IN_FILE
+        )) {
+            exposed.registerFactory(ChangeVisibilityOnExposureFactory)
+        }
+
+        EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR.registerFactory(ChangeVisibilityOnExposureFactory)
+
+        REDUNDANT_NULLABLE.registerFactory(RemoveNullableFix.removeForRedundant)
+        NULLABLE_SUPERTYPE.registerFactory(RemoveNullableFix.removeForSuperType)
+        USELESS_NULLABLE_CHECK.registerFactory(RemoveNullableFix.removeForUseless)
+
+
+        val implementMembersHandler = ImplementMembersHandler()
+        val implementMembersAsParametersHandler = ImplementAsConstructorParameter()
+        ABSTRACT_MEMBER_NOT_IMPLEMENTED.registerActions(implementMembersHandler, implementMembersAsParametersHandler)
+        ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED.registerActions(implementMembersHandler, implementMembersAsParametersHandler)
+        ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED_WARNING.registerActions(implementMembersHandler, implementMembersAsParametersHandler)
+        MANY_INTERFACES_MEMBER_NOT_IMPLEMENTED.registerActions(implementMembersHandler, implementMembersAsParametersHandler)
+        MANY_INTERFACES_MEMBER_NOT_IMPLEMENTED_WARNING.registerActions(implementMembersHandler, implementMembersAsParametersHandler)
+        MANY_IMPL_MEMBER_NOT_IMPLEMENTED.registerActions(implementMembersHandler)
+
+        VAL_WITH_SETTER.registerFactory(ChangeVariableMutabilityFix.VAL_WITH_SETTER_FACTORY)
+        VAL_REASSIGNMENT.registerFactory(
+            ReassignmentActionFactory(VAL_REASSIGNMENT), LiftAssignmentOutOfTryFix, AssignToPropertyFixFactory
+        )
+        CAPTURED_VAL_INITIALIZATION.registerFactory(ReassignmentActionFactory(CAPTURED_VAL_INITIALIZATION))
+        CAPTURED_MEMBER_VAL_INITIALIZATION.registerFactory(ReassignmentActionFactory(CAPTURED_MEMBER_VAL_INITIALIZATION))
+        VAR_OVERRIDDEN_BY_VAL.registerFactory(ChangeVariableMutabilityFix.VAR_OVERRIDDEN_BY_VAL_FACTORY)
+        VAR_ANNOTATION_PARAMETER.registerFactory(ChangeVariableMutabilityFix.VAR_ANNOTATION_PARAMETER_FACTORY)
+
+        VAL_OR_VAR_ON_FUN_PARAMETER.registerFactory(RemoveValVarFromParameterFix)
+        VAL_OR_VAR_ON_LOOP_PARAMETER.registerFactory(RemoveValVarFromParameterFix)
+        VAL_OR_VAR_ON_CATCH_PARAMETER.registerFactory(RemoveValVarFromParameterFix)
+        VAL_OR_VAR_ON_SECONDARY_CONSTRUCTOR_PARAMETER.registerFactory(RemoveValVarFromParameterFix)
+
+        UNUSED_VARIABLE.registerFactory(RemovePsiElementSimpleFix.RemoveVariableFactory)
+        UNUSED_VARIABLE.registerFactory(RenameToUnderscoreFix.Factory)
+
+        NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY.registerFactory(AddReturnExpressionFixFactory)
+        NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY.registerFactory(AddReturnToLastExpressionInFunctionFixFactory)
+        UNUSED_EXPRESSION.registerFactory(AddReturnToUnusedLastExpressionInFunctionFixFactory)
+
+        UNUSED_DESTRUCTURED_PARAMETER_ENTRY.registerFactory(RenameToUnderscoreFix.Factory)
+
+        SENSELESS_COMPARISON.registerFactory(SimplifyComparisonFixFactory)
+
+        UNNECESSARY_SAFE_CALL.registerFactory(Fe10ReplaceWithDotCallFixFactory)
+        UNSAFE_CALL.registerFactory(ReplaceWithSafeCallFixFactory)
+        SAFE_CALL_WILL_CHANGE_NULLABILITY.registerFactory(Fe10ReplaceWithDotCallFixFactory)
+        RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(ReplaceWithSafeCallFixFactory)
+        NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(ReplaceWithSafeCallFixFactory)
+
+        UNSAFE_CALL.registerFactory(SurroundWithNullCheckFix)
+        UNSAFE_IMPLICIT_INVOKE_CALL.registerFactory(SurroundWithNullCheckFix)
+        UNSAFE_INFIX_CALL.registerFactory(SurroundWithNullCheckFix)
+        UNSAFE_OPERATOR_CALL.registerFactory(SurroundWithNullCheckFix)
+        ITERATOR_ON_NULLABLE.registerFactory(SurroundWithNullCheckFix.IteratorOnNullableFactory)
+        TYPE_MISMATCH.registerFactory(SurroundWithNullCheckFix.TypeMismatchFactory)
+        TYPE_MISMATCH_WARNING.registerFactory(SurroundWithNullCheckFix.TypeMismatchFactory)
+        RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(SurroundWithNullCheckFix)
+        NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(SurroundWithNullCheckFix.TypeMismatchFactory)
+
+        UNSAFE_CALL.registerFactory(WrapWithSafeLetCallFix.UnsafeFactory)
+        UNSAFE_IMPLICIT_INVOKE_CALL.registerFactory(WrapWithSafeLetCallFix.UnsafeFactory)
+        UNSAFE_INFIX_CALL.registerFactory(WrapWithSafeLetCallFix.UnsafeFactory)
+        UNSAFE_OPERATOR_CALL.registerFactory(WrapWithSafeLetCallFix.UnsafeFactory)
+        TYPE_MISMATCH.registerFactory(WrapWithSafeLetCallFix.TypeMismatchFactory)
+        TYPE_MISMATCH_WARNING.registerFactory(WrapWithSafeLetCallFix.TypeMismatchFactory)
+        RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(WrapWithSafeLetCallFix.UnsafeFactory)
+        NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(WrapWithSafeLetCallFix.TypeMismatchFactory)
+
+        UNSAFE_CALL.registerFactory(UnsafeCallExclExclFixFactory)
+        UNSAFE_INFIX_CALL.registerFactory(UnsafeCallExclExclFixFactory)
+        UNSAFE_OPERATOR_CALL.registerFactory(UnsafeCallExclExclFixFactory)
+        UNNECESSARY_NOT_NULL_ASSERTION.registerFactory(RemoveExclExclCallFix)
+        UNSAFE_INFIX_CALL.registerFactory(ReplaceInfixOrOperatorCallFixFactory)
+        UNSAFE_OPERATOR_CALL.registerFactory(ReplaceInfixOrOperatorCallFixFactory)
+        UNSAFE_CALL.registerFactory(ReplaceInfixOrOperatorCallFixFactory) // [] only
+        UNSAFE_IMPLICIT_INVOKE_CALL.registerFactory(ReplaceInfixOrOperatorCallFixFactory)
+        UNSAFE_CALL.registerFactory(ReplaceWithSafeCallForScopeFunctionFixFactory)
+        RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(UnsafeCallExclExclFixFactory)
+        RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(ReplaceInfixOrOperatorCallFixFactory)
+        RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(ReplaceWithSafeCallForScopeFunctionFixFactory)
+
+        APPROXIMATED_LOCAL_TYPE_WILL_BECOME_NULLABLE.registerActions(SpecifyTypeExplicitlyFix(convertToNullable = true))
+        AMBIGUOUS_ANONYMOUS_TYPE_INFERRED.registerActions(SpecifyTypeExplicitlyFix())
+        PROPERTY_WITH_NO_TYPE_NO_INITIALIZER.registerActions(SpecifyTypeExplicitlyFix())
+        MUST_BE_INITIALIZED.registerActions(SpecifyTypeExplicitlyFix())
+
+        ELSE_MISPLACED_IN_WHEN.registerFactory(MoveWhenElseBranchFixFactory)
+        REDUNDANT_ELSE_IN_WHEN.registerFactory(RemoveWhenBranchFix)
+        SENSELESS_NULL_IN_WHEN.registerFactory(RemoveWhenBranchFix, RemoveWhenConditionFixFactory)
+        BREAK_OR_CONTINUE_IN_WHEN.registerFactory(AddLoopLabelFixFactory)
+        NO_ELSE_IN_WHEN.registerFactory(AddWhenElseBranchFix, AddWhenRemainingBranchesFix)
+        NO_ELSE_IN_WHEN_WARNING.registerFactory(AddWhenElseBranchFix, AddWhenRemainingBranchesFix)
+        NON_EXHAUSTIVE_WHEN.registerFactory(AddWhenElseBranchFix, AddWhenRemainingBranchesFix)
+        NON_EXHAUSTIVE_WHEN_ON_SEALED_CLASS.registerFactory(AddWhenElseBranchFix, AddWhenRemainingBranchesFix)
+        NON_EXHAUSTIVE_WHEN_STATEMENT.registerFactory(AddWhenElseBranchFix, AddWhenRemainingBranchesFix)
+
+        INVALID_IF_AS_EXPRESSION.registerFactory(AddIfElseBranchFix)
+        INVALID_IF_AS_EXPRESSION_WARNING.registerFactory(AddIfElseBranchFix)
+
+        INTEGER_OPERATOR_RESOLVE_WILL_CHANGE.registerFactory(AddConversionCallFix)
+
+        NO_TYPE_ARGUMENTS_ON_RHS.registerFactory(AddStarProjectionsFixFactory)
+
+        TYPE_ARGUMENTS_REDUNDANT_IN_SUPER_QUALIFIER.registerFactory(RemovePsiElementSimpleFix.RemoveTypeArgumentsFactory)
+
+        LOCAL_VARIABLE_WITH_TYPE_PARAMETERS.registerFactory(RemovePsiElementSimpleFix.RemoveTypeParametersFactory)
+        LOCAL_VARIABLE_WITH_TYPE_PARAMETERS_WARNING.registerFactory(RemovePsiElementSimpleFix.RemoveTypeParametersFactory)
+
+        UNCHECKED_CAST.registerFactory(ChangeToStarProjectionFixFactory)
+        CANNOT_CHECK_FOR_ERASED.registerFactory(ChangeToStarProjectionFixFactory)
+
+        CANNOT_CHECK_FOR_ERASED.registerFactory(ConvertToIsArrayOfCallFixFactory)
+
+        UNINITIALIZED_PARAMETER.registerFactory(ReorderParametersFix)
+        UNINITIALIZED_PARAMETER_WARNING.registerFactory(ReorderParametersFix)
+
+        INACCESSIBLE_OUTER_CLASS_EXPRESSION.registerFactory(AddModifierFix.createFactory(INNER_KEYWORD, KtClass::class.java))
+
+        FINAL_SUPERTYPE.registerFactory(MakeClassOpenFactory)
+        FINAL_UPPER_BOUND.registerFactory(MakeClassOpenFactory)
+
+        OVERRIDING_FINAL_MEMBER.registerFactory(MakeOverriddenMemberOpenFix)
+
+        PARAMETER_NAME_CHANGED_ON_OVERRIDE.registerFactory(RenameParameterToMatchOverriddenMethodFixFactory)
+
+        NESTED_CLASS_NOT_ALLOWED.registerFactory(AddModifierFix.createFactory(INNER_KEYWORD))
+
+        CONFLICTING_PROJECTION.registerFactory(RemoveModifierFixBase.createRemoveProjectionFactory(false))
+        PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT.registerFactory(RemoveModifierFixBase.createRemoveProjectionFactory(false))
+        PROJECTION_IN_IMMEDIATE_ARGUMENT_TO_SUPERTYPE.registerFactory(RemoveModifierFixBase.createRemoveProjectionFactory(false))
+
+        NOT_AN_ANNOTATION_CLASS.registerFactory(MakeClassAnAnnotationClassFixFactory)
+
+        val changeVariableTypeFix = ChangeVariableTypeFix.PropertyOrReturnTypeMismatchOnOverrideFactory
+        RETURN_TYPE_MISMATCH_ON_OVERRIDE.registerFactory(changeVariableTypeFix)
+        PROPERTY_TYPE_MISMATCH_ON_OVERRIDE.registerFactory(changeVariableTypeFix)
+        VAR_TYPE_MISMATCH_ON_OVERRIDE.registerFactory(changeVariableTypeFix)
+        COMPONENT_FUNCTION_RETURN_TYPE_MISMATCH.registerFactory(ChangeVariableTypeFix.ComponentFunctionReturnTypeMismatchFactory)
+        TYPE_MISMATCH.registerFactory(ChangeVariableTypeFix.VariableInitializedWithNullFactory)
+        TYPE_MISMATCH_WARNING.registerFactory(ChangeVariableTypeFix.VariableInitializedWithNullFactory)
+
+        val changeFunctionReturnTypeFix = ChangeCallableReturnTypeFix.ChangingReturnTypeToUnitFactory
+        RETURN_TYPE_MISMATCH.registerFactory(changeFunctionReturnTypeFix)
+        NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY.registerFactory(changeFunctionReturnTypeFix)
+        NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY_MIGRATION.registerFactory(changeFunctionReturnTypeFix)
+        RETURN_TYPE_MISMATCH_ON_OVERRIDE.registerFactory(ChangeCallableReturnTypeFix.ReturnTypeMismatchOnOverrideFactory)
+        COMPONENT_FUNCTION_RETURN_TYPE_MISMATCH.registerFactory(ChangeCallableReturnTypeFix.ComponentFunctionReturnTypeMismatchFactory)
+        HAS_NEXT_FUNCTION_TYPE_MISMATCH.registerFactory(ChangeCallableReturnTypeFix.HasNextFunctionTypeMismatchFactory)
+        COMPARE_TO_TYPE_MISMATCH.registerFactory(ChangeCallableReturnTypeFix.CompareToTypeMismatchFactory)
+        IMPLICIT_NOTHING_RETURN_TYPE.registerFactory(ChangeCallableReturnTypeFix.ChangingReturnTypeToNothingFactory)
+
+        RETURN_TYPE_MISMATCH_ON_OVERRIDE.registerFactory(ChangeSuperTypeListEntryTypeArgumentFix)
+        PROPERTY_TYPE_MISMATCH_ON_OVERRIDE.registerFactory(ChangeSuperTypeListEntryTypeArgumentFix)
+
+        EXTENSION_FUNCTION_IN_EXTERNAL_DECLARATION.registerFactory(ConvertFunctionTypeReceiverToParameterIntention.Factory)
+        TOO_MANY_ARGUMENTS.registerFactory(ChangeFunctionSignatureFix)
+        NO_VALUE_FOR_PARAMETER.registerFactory(ChangeFunctionSignatureFix)
+
+        TYPE_MISMATCH.registerFactory(AddFunctionParametersFix)
+        TYPE_MISMATCH_WARNING.registerFactory(AddFunctionParametersFix)
+        CONSTANT_EXPECTED_TYPE_MISMATCH.registerFactory(AddFunctionParametersFix)
+        NULL_FOR_NONNULL_TYPE.registerFactory(AddFunctionParametersFix)
+
+        UNUSED_PARAMETER.registerFactory(RemoveUnusedFunctionParameterFix)
+        UNUSED_ANONYMOUS_PARAMETER.registerFactory(RenameToUnderscoreFix.Factory)
+        UNUSED_ANONYMOUS_PARAMETER.registerFactory(RemoveSingleLambdaParameterFix)
+        EXPECTED_PARAMETERS_NUMBER_MISMATCH.registerFactory(ChangeFunctionLiteralSignatureFix)
+
+        EXPECTED_PARAMETER_TYPE_MISMATCH.registerFactory(ChangeTypeFix)
+
+        EXTENSION_PROPERTY_WITH_BACKING_FIELD.registerFactory(ConvertExtensionPropertyInitializerToGetterFix)
+
+        EXPECTED_TYPE_MISMATCH.registerFactory(ChangeFunctionLiteralReturnTypeFix)
+        ASSIGNMENT_TYPE_MISMATCH.registerFactory(ChangeFunctionLiteralReturnTypeFix)
+
+        UNRESOLVED_REFERENCE.registerFactory(CreateUnaryOperationActionFactory)
+        UNRESOLVED_REFERENCE_WRONG_RECEIVER.registerFactory(CreateUnaryOperationActionFactory)
+        NO_VALUE_FOR_PARAMETER.registerFactory(CreateUnaryOperationActionFactory)
+
+        UNRESOLVED_REFERENCE_WRONG_RECEIVER.registerFactory(CreateBinaryOperationActionFactory)
+        UNRESOLVED_REFERENCE.registerFactory(CreateBinaryOperationActionFactory)
+        NONE_APPLICABLE.registerFactory(CreateBinaryOperationActionFactory)
+        NO_VALUE_FOR_PARAMETER.registerFactory(CreateBinaryOperationActionFactory)
+        TOO_MANY_ARGUMENTS.registerFactory(CreateBinaryOperationActionFactory)
+        TYPE_MISMATCH_ERRORS.forEach { it.registerFactory(CreateBinaryOperationActionFactory) }
+        TYPE_MISMATCH_WARNING.registerFactory(CreateBinaryOperationActionFactory)
+
+        UNRESOLVED_REFERENCE_WRONG_RECEIVER.registerFactory(*CreateCallableFromCallActionFactory.INSTANCES)
+        UNRESOLVED_REFERENCE.registerFactory(*CreateCallableFromCallActionFactory.INSTANCES)
+        UNRESOLVED_REFERENCE.registerFactory(CreateFunctionFromCallableReferenceActionFactory)
+        NO_VALUE_FOR_PARAMETER.registerFactory(*CreateCallableFromCallActionFactory.INSTANCES)
+        TOO_MANY_ARGUMENTS.registerFactory(*CreateCallableFromCallActionFactory.INSTANCES)
+        EXPRESSION_EXPECTED_PACKAGE_FOUND.registerFactory(*CreateCallableFromCallActionFactory.INSTANCES)
+        NONE_APPLICABLE.registerFactory(*CreateCallableFromCallActionFactory.INSTANCES)
+        TYPE_MISMATCH.registerFactory(*CreateCallableFromCallActionFactory.FUNCTIONS)
+        TYPE_MISMATCH_WARNING.registerFactory(*CreateCallableFromCallActionFactory.FUNCTIONS)
+
+        NO_VALUE_FOR_PARAMETER.registerFactory(CreateConstructorFromDelegationCallActionFactory)
+        TOO_MANY_ARGUMENTS.registerFactory(CreateConstructorFromDelegationCallActionFactory)
+
+        NO_VALUE_FOR_PARAMETER.registerFactory(CreateConstructorFromSuperTypeCallActionFactory)
+        TOO_MANY_ARGUMENTS.registerFactory(CreateConstructorFromSuperTypeCallActionFactory)
+        NONE_APPLICABLE.registerFactory(CreateConstructorFromSuperTypeCallActionFactory)
+
+        UNRESOLVED_REFERENCE_WRONG_RECEIVER.registerFactory(CreateClassFromConstructorCallActionFactory)
+        UNRESOLVED_REFERENCE.registerFactory(CreateClassFromConstructorCallActionFactory)
+        EXPRESSION_EXPECTED_PACKAGE_FOUND.registerFactory(CreateClassFromConstructorCallActionFactory)
+
+        UNRESOLVED_REFERENCE.registerFactory(CreateLocalVariableActionFactory)
+        EXPRESSION_EXPECTED_PACKAGE_FOUND.registerFactory(CreateLocalVariableActionFactory)
+
+        UNRESOLVED_REFERENCE.registerFactory(CreateParameterByRefActionFactory)
+        UNRESOLVED_REFERENCE_WRONG_RECEIVER.registerFactory(CreateParameterByRefActionFactory)
+        EXPRESSION_EXPECTED_PACKAGE_FOUND.registerFactory(CreateParameterByRefActionFactory)
+
+        NAMED_PARAMETER_NOT_FOUND.registerFactory(CreateParameterByNamedArgumentActionFactory)
+
+        FUNCTION_EXPECTED.registerFactory(CreateInvokeFunctionActionFactory)
+
+        val factoryForTypeMismatchError = QuickFixFactoryForTypeMismatchError()
+        TYPE_MISMATCH.registerFactory(factoryForTypeMismatchError)
+        TYPE_MISMATCH_WARNING.registerFactory(factoryForTypeMismatchError)
+        NULL_FOR_NONNULL_TYPE.registerFactory(factoryForTypeMismatchError)
+        CONSTANT_EXPECTED_TYPE_MISMATCH.registerFactory(factoryForTypeMismatchError)
+        TYPE_INFERENCE_EXPECTED_TYPE_MISMATCH.registerFactory(factoryForTypeMismatchError)
+        SIGNED_CONSTANT_CONVERTED_TO_UNSIGNED.registerFactory(factoryForTypeMismatchError)
+        NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(factoryForTypeMismatchError)
+        INCOMPATIBLE_TYPES.registerFactory(factoryForTypeMismatchError)
+
+        EQUALITY_NOT_APPLICABLE.registerFactory(EqualityNotApplicableFactory)
+
+        SMARTCAST_IMPOSSIBLE.registerFactory(SmartCastImpossibleExclExclFixFactory)
+        SMARTCAST_IMPOSSIBLE.registerFactory(CastExpressionFix.SmartCastImpossibleFactory)
+        SMARTCAST_IMPOSSIBLE.registerFactory(SmartCastImpossibleInIfThenFactory)
+
+        PLATFORM_CLASS_MAPPED_TO_KOTLIN.registerFactory(MapPlatformClassToKotlinFix)
+
+        MANY_CLASSES_IN_SUPERTYPE_LIST.registerFactory(RemoveSupertypeFixFactory)
+
+        NO_GET_METHOD.registerFactory(CreateGetFunctionActionFactory)
+        TYPE_MISMATCH_ERRORS.forEach { it.registerFactory(CreateGetFunctionActionFactory) }
+        TYPE_MISMATCH_WARNING.registerFactory(CreateGetFunctionActionFactory)
+        NO_SET_METHOD.registerFactory(CreateSetFunctionActionFactory)
+        TYPE_MISMATCH_ERRORS.forEach { it.registerFactory(CreateSetFunctionActionFactory) }
+        TYPE_MISMATCH_WARNING.registerFactory(CreateSetFunctionActionFactory)
+        HAS_NEXT_MISSING.registerFactory(CreateHasNextFunctionActionFactory)
+        HAS_NEXT_FUNCTION_NONE_APPLICABLE.registerFactory(CreateHasNextFunctionActionFactory)
+        NEXT_MISSING.registerFactory(CreateNextFunctionActionFactory)
+        NEXT_NONE_APPLICABLE.registerFactory(CreateNextFunctionActionFactory)
+        ITERATOR_MISSING.registerFactory(CreateIteratorFunctionActionFactory)
+        ITERATOR_ON_NULLABLE.registerFactory(MissingIteratorExclExclFixFactory)
+        COMPONENT_FUNCTION_MISSING.registerFactory(
+            CreateComponentFunctionActionFactory,
+            CreateDataClassPropertyFromDestructuringActionFactory
+        )
+
+        DELEGATE_SPECIAL_FUNCTION_MISSING.registerFactory(DelegatedPropertyValFactory)
+        DELEGATE_SPECIAL_FUNCTION_MISSING.registerFactory(CreatePropertyDelegateAccessorsActionFactory)
+        DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE.registerFactory(CreatePropertyDelegateAccessorsActionFactory)
+
+        UNRESOLVED_REFERENCE.registerFactory(
+            CreateClassFromTypeReferenceActionFactory,
+            CreateClassFromReferenceExpressionActionFactory,
+            CreateClassFromCallWithConstructorCalleeActionFactory
+        )
+
+        PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED.registerFactory(InsertDelegationCallQuickfix.InsertThisDelegationCallFactory)
+
+        EXPLICIT_DELEGATION_CALL_REQUIRED.registerFactory(InsertDelegationCallQuickfix.InsertThisDelegationCallFactory)
+        EXPLICIT_DELEGATION_CALL_REQUIRED.registerFactory(InsertDelegationCallQuickfix.InsertSuperDelegationCallFactory)
+
+        MISSING_CONSTRUCTOR_KEYWORD.registerFactory(MissingConstructorKeywordFixFactory)
+
+        MISSING_CONSTRUCTOR_BRACKETS.registerFactory(MissingConstructorBracketsFixFactory)
+
+        ANONYMOUS_FUNCTION_WITH_NAME.registerFactory(RemoveNameFromFunctionExpressionFixFactory)
+
+        UNRESOLVED_REFERENCE.registerFactory(ReplaceObsoleteLabelSyntaxFix)
+
+        DEPRECATION.registerFactory(
+            DeprecatedSymbolUsageFix,
+            DeprecatedSymbolUsageInWholeProjectFix,
+            MigrateExternalExtensionFix,
+            MigrateExperimentalToRequiresOptInFix
+        )
+        DEPRECATION_ERROR.registerFactory(
+            DeprecatedSymbolUsageFix,
+            DeprecatedSymbolUsageInWholeProjectFix,
+            MigrateExternalExtensionFix,
+            MigrateExperimentalToRequiresOptInFix
+        )
+        TYPEALIAS_EXPANSION_DEPRECATION.registerFactory(
+            DeprecatedSymbolUsageFix,
+            DeprecatedSymbolUsageInWholeProjectFix,
+            MigrateExternalExtensionFix
+        )
+        TYPEALIAS_EXPANSION_DEPRECATION_ERROR.registerFactory(
+            DeprecatedSymbolUsageFix,
+            DeprecatedSymbolUsageInWholeProjectFix,
+            MigrateExternalExtensionFix
+        )
+        PROTECTED_CALL_FROM_PUBLIC_INLINE.registerFactory(ReplaceProtectedToPublishedApiCallFixFactory)
+
+        POSITIONED_VALUE_ARGUMENT_FOR_JAVA_ANNOTATION.registerFactory(ReplaceJavaAnnotationPositionedArgumentsFix)
+
+        JAVA_TYPE_MISMATCH.registerFactory(CastExpressionFix.GenericVarianceConversion)
+
+        UPPER_BOUND_VIOLATED.registerFactory(AddGenericUpperBoundFixFactory)
+        TYPE_INFERENCE_UPPER_BOUND_VIOLATED.registerFactory(AddGenericUpperBoundFixFactory)
+        UPPER_BOUND_VIOLATED_BASED_ON_JAVA_ANNOTATIONS.registerFactory(AddGenericUpperBoundFixFactory)
+
+        TYPE_MISMATCH.registerFactory(ConvertClassToKClassFixFactory)
+
+        NON_CONST_VAL_USED_IN_CONSTANT_EXPRESSION.registerFactory(ConstFixFactory)
+
+        OPERATOR_MODIFIER_REQUIRED.registerFactory(AddOperatorModifierFixFactory)
+        OPERATOR_MODIFIER_REQUIRED.registerFactory(ImportForMissingOperatorFactory)
+
+        INFIX_MODIFIER_REQUIRED.registerFactory(AddInfixModifierFixFactory)
+
+        UNDERSCORE_IS_RESERVED.registerFactory(RenameUnderscoreFixFactory)
+
+        DEPRECATED_TYPE_PARAMETER_SYNTAX.registerFactory(MigrateTypeParameterListFixFactory)
+        DEPRECATED_JAVA_ANNOTATION.registerFactory(DeprecatedJavaAnnotationFix)
+
+        UNRESOLVED_REFERENCE.registerFactory(KotlinAddOrderEntryActionFactory)
+
+        UNRESOLVED_REFERENCE.registerFactory(RenameUnresolvedReferenceActionFactory)
+        EXPRESSION_EXPECTED_PACKAGE_FOUND.registerFactory(RenameUnresolvedReferenceActionFactory)
+
+        MISPLACED_TYPE_PARAMETER_CONSTRAINTS.registerFactory(MoveTypeParameterConstraintFixFactory)
+
+        COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT.registerFactory(CommaInWhenConditionWithoutArgumentFixFactory)
+
+        DATA_CLASS_NOT_PROPERTY_PARAMETER.registerFactory(AddValVarToConstructorParameterAction.DataClassConstructorNotPropertyQuickFixFactory)
+        MISSING_VAL_ON_ANNOTATION_PARAMETER.registerFactory(AddValVarToConstructorParameterAction.AnnotationClassConstructorNotValPropertyQuickFixFactory)
+        VALUE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER.registerFactory(AddValVarToConstructorParameterAction.ValueClassConstructorNotValPropertyQuickFixFactory)
+
+        VALUE_CLASS_WITHOUT_JVM_INLINE_ANNOTATION.registerFactory(AddJvmInlineAnnotationFixFactory)
+
+        NON_LOCAL_RETURN_NOT_ALLOWED.registerFactory(AddInlineModifierFix.CrossInlineFactory)
+        USAGE_IS_NOT_INLINABLE.registerFactory(AddInlineModifierFix.NoInlineFactory)
+        USAGE_IS_NOT_INLINABLE_WARNING.registerFactory(AddInlineModifierFix.NoInlineFactory)
+
+        UNRESOLVED_REFERENCE.registerFactory(MakeConstructorParameterPropertyFixFactory)
+        DELEGATED_MEMBER_HIDES_SUPERTYPE_OVERRIDE.registerFactory(SpecifyOverrideExplicitlyFix)
+
+        SUPERTYPE_IS_EXTENSION_FUNCTION_TYPE.registerFactory(ConvertExtensionToFunctionTypeFixFactory)
+
+        UNUSED_LAMBDA_EXPRESSION.registerFactory(AddRunToLambdaFix)
+
+        WRONG_LONG_SUFFIX.registerFactory(WrongLongSuffixFixFactory)
+
+        REIFIED_TYPE_PARAMETER_NO_INLINE.registerFactory(AddInlineToFunctionWithReifiedFixFactory)
+
+        VALUE_PARAMETER_WITH_NO_TYPE_ANNOTATION.registerFactory(AddTypeAnnotationToValueParameterFix)
+
+        UNRESOLVED_REFERENCE.registerFactory(CreateTypeParameterByUnresolvedRefActionFactory)
+        WRONG_NUMBER_OF_TYPE_ARGUMENTS.registerFactory(CreateTypeParameterUnmatchedTypeArgumentActionFactory)
+
+        FINAL_UPPER_BOUND.registerFactory(InlineTypeParameterFixFactory)
+        FINAL_UPPER_BOUND.registerFactory(RemoveFinalUpperBoundFixFactory)
+
+        TYPE_PARAMETER_AS_REIFIED.registerFactory(AddReifiedToTypeParameterOfFunctionFixFactory)
+
+        CANNOT_CHECK_FOR_ERASED.registerFactory(MakeTypeParameterReifiedAndFunctionInlineFixFactory)
+
+        TOO_MANY_CHARACTERS_IN_CHARACTER_LITERAL.registerFactory(TooLongCharLiteralToStringFixFactory)
+        ILLEGAL_ESCAPE.registerFactory(TooLongCharLiteralToStringFixFactory)
+
+        UNUSED_VALUE.registerFactory(RemoveUnusedValueFix)
+
+        ANNOTATIONS_ON_BLOCK_LEVEL_EXPRESSION_ON_THE_SAME_LINE.registerFactory(AddNewLineAfterAnnotationsFix)
+
+        INAPPLICABLE_LATEINIT_MODIFIER.registerFactory(ChangeVariableMutabilityFix.LATEINIT_VAL_FACTORY)
+        INAPPLICABLE_LATEINIT_MODIFIER.registerFactory(RemoveNullableFix.removeForLateInitProperty)
+        INAPPLICABLE_LATEINIT_MODIFIER.registerFactory(RemovePartsFromPropertyFix.LateInitFactory)
+        INAPPLICABLE_LATEINIT_MODIFIER.registerFactory(RemoveModifierFixBase.createRemoveLateinitFactory())
+        INAPPLICABLE_LATEINIT_MODIFIER.registerFactory(ConvertLateinitPropertyToNotNullDelegateFixFactory)
+
+        VARIABLE_WITH_REDUNDANT_INITIALIZER.registerFactory(RemoveRedundantInitializerFix)
+
+        OVERLOADS_ABSTRACT.registerFactory(RemoveAnnotationFix.JvmOverloads)
+        OVERLOADS_INTERFACE.registerFactory(RemoveAnnotationFix.JvmOverloads)
+        OVERLOADS_PRIVATE.registerFactory(RemoveAnnotationFix.JvmOverloads)
+        OVERLOADS_LOCAL.registerFactory(RemoveAnnotationFix.JvmOverloads)
+        OVERLOADS_WITHOUT_DEFAULT_ARGUMENTS.registerFactory(RemoveAnnotationFix.JvmOverloads)
+        OVERLOADS_ANNOTATION_CLASS_CONSTRUCTOR.registerFactory(RemoveAnnotationFix.JvmOverloads)
+
+        ACTUAL_WITHOUT_EXPECT.registerFactory(RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(ACTUAL_KEYWORD))
+        ACTUAL_WITHOUT_EXPECT.registerFactory(CreateExpectedFix)
+        NO_ACTUAL_FOR_EXPECT.registerFactory(CreateMissedActualsFix)
+        NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS.registerFactory(AddActualFix)
+
+        ACTUAL_MISSING.registerFactory(AddModifierFix.createFactory(ACTUAL_KEYWORD))
+
+        ACTUAL_ANNOTATIONS_NOT_MATCH_EXPECT.registerFactory(ActualAnnotationsNotMatchExpectFixFactory)
+
+        CAST_NEVER_SUCCEEDS.registerFactory(ReplacePrimitiveCastWithNumberConversionFixFactory)
+
+        WRONG_EXTERNAL_DECLARATION.registerFactory(MigrateExternalExtensionFix)
+
+        ILLEGAL_SUSPEND_FUNCTION_CALL.registerFactory(AddSuspendModifierFix)
+        INLINE_SUSPEND_FUNCTION_TYPE_UNSUPPORTED.registerFactory(AddInlineModifierFix.NoInlineSuspendFactory)
+        INLINE_SUSPEND_FUNCTION_TYPE_UNSUPPORTED.registerFactory(AddInlineModifierFix.CrossInlineSuspendFactory)
+
+        UNRESOLVED_REFERENCE.registerFactory(AddSuspendModifierFix.UnresolvedReferenceFactory)
+        UNRESOLVED_REFERENCE_WRONG_RECEIVER.registerFactory(AddSuspendModifierFix.UnresolvedReferenceFactory)
+
+        UNRESOLVED_REFERENCE.registerFactory(CreateLabelFixFactory)
+        YIELD_IS_RESERVED.registerFactory(UnsupportedYieldFix)
+        INVALID_TYPE_OF_ANNOTATION_MEMBER.registerFactory(TypeOfAnnotationMemberFixFactory)
+
+        ILLEGAL_INLINE_PARAMETER_MODIFIER.registerFactory(AddInlineToFunctionFix)
+
+        INAPPLICABLE_JVM_FIELD.registerFactory(ReplaceJvmFieldWithConstFixFactory, RemoveAnnotationFix.JvmField)
+
+        CONFLICTING_OVERLOADS.registerFactory(ChangeSuspendInHierarchyFix)
+
+        MUST_BE_INITIALIZED_OR_BE_ABSTRACT.registerFactory(AddLateinitFactory)
+
+        RETURN_NOT_ALLOWED.registerFactory(ChangeToLabeledReturnFixFactory)
+        TYPE_MISMATCH.registerFactory(ChangeToLabeledReturnFixFactory)
+        TYPE_MISMATCH_WARNING.registerFactory(ChangeToLabeledReturnFixFactory)
+        CONSTANT_EXPECTED_TYPE_MISMATCH.registerFactory(ChangeToLabeledReturnFixFactory)
+        NULL_FOR_NONNULL_TYPE.registerFactory(ChangeToLabeledReturnFixFactory)
+
+        WRONG_ANNOTATION_TARGET.registerFactory(AddAnnotationTargetFix, AddAnnotationUseSiteTargetFix)
+        WRONG_ANNOTATION_TARGET_WITH_USE_SITE_TARGET.registerFactory(MoveReceiverAnnotationFixFactory, AddAnnotationTargetFix)
+
+        NO_CONSTRUCTOR.registerFactory(RemoveNoConstructorFixFactory)
+        NO_CONSTRUCTOR.registerFactory(AddDefaultConstructorFixFactory)
+        NO_CONSTRUCTOR_WARNING.registerFactory(RemoveNoConstructorFixFactory)
+
+        ANNOTATION_USED_AS_ANNOTATION_ARGUMENT.registerFactory(RemoveAtFromAnnotationArgumentFactory)
+
+        ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_ANNOTATION.registerFactory(ReplaceWithArrayCallInAnnotationFix)
+        ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION.registerFactory(SurroundWithArrayOfWithSpreadOperatorInFunctionFix)
+
+        REDUNDANT_SPREAD_OPERATOR_IN_NAMED_FORM_IN_ANNOTATION.registerFactory(ReplaceWithArrayCallInAnnotationFix)
+        REDUNDANT_SPREAD_OPERATOR_IN_NAMED_FORM_IN_FUNCTION.registerFactory(RemoveRedundantSpreadOperatorFix)
+
+        JAVA_MODULE_DOES_NOT_DEPEND_ON_MODULE.registerFactory(KotlinAddRequiredModuleFix)
+
+        OPT_IN_USAGE.registerFactory(OptInFixesFactory)
+        OPT_IN_USAGE.registerFactory(OptInFileLevelFixesFactory)
+        OPT_IN_USAGE_ERROR.registerFactory(OptInFixesFactory)
+        OPT_IN_USAGE_ERROR.registerFactory(OptInFileLevelFixesFactory)
+        OPT_IN_TO_INHERITANCE.registerFactory(OptInFixesFactory)
+        OPT_IN_TO_INHERITANCE.registerFactory(OptInFileLevelFixesFactory)
+        OPT_IN_TO_INHERITANCE_ERROR.registerFactory(OptInFixesFactory)
+        OPT_IN_TO_INHERITANCE_ERROR.registerFactory(OptInFileLevelFixesFactory)
+        OPT_IN_OVERRIDE.registerFactory(OptInFixesFactory)
+        OPT_IN_OVERRIDE.registerFactory(OptInFileLevelFixesFactory)
+        OPT_IN_OVERRIDE_ERROR.registerFactory(OptInFixesFactory)
+        OPT_IN_OVERRIDE_ERROR.registerFactory(OptInFileLevelFixesFactory)
+        OPT_IN_IS_NOT_ENABLED.registerFactory(MakeModuleOptInFix)
+        OPT_IN_MARKER_ON_WRONG_TARGET.registerFactory(OptInAnnotationWrongTargetFixesFactory)
+        OPT_IN_MARKER_ON_WRONG_TARGET.registerFactory(RemoveAnnotationFix)
+        OPT_IN_MARKER_WITH_WRONG_TARGET.registerFactory(RemoveWrongOptInAnnotationTargetFix)
+        OPT_IN_MARKER_WITH_WRONG_RETENTION.registerFactory(RemoveAnnotationFix.RemoveForbiddenOptInRetention)
+        OPT_IN_MARKER_ON_OVERRIDE.registerFactory(RemoveAnnotationFix)
+        OPT_IN_MARKER_ON_OVERRIDE_WARNING.registerFactory(RemoveAnnotationFix)
+        OPT_IN_WITHOUT_ARGUMENTS.registerFactory(RemoveAnnotationFix)
+
+        TYPE_VARIANCE_CONFLICT.registerFactory(RemoveTypeVarianceFixFactory, AddUnsafeVarianceAnnotationFixFactory)
+
+        CONST_VAL_NOT_TOP_LEVEL_OR_OBJECT.registerFactory(
+            MoveMemberToCompanionObjectIntention.Factory,
+            RemoveModifierFixBase.removeNonRedundantModifier
+        )
+
+        NO_COMPANION_OBJECT.registerFactory(AddIsToWhenConditionFixFactory)
+
+        DEFAULT_VALUE_NOT_ALLOWED_IN_OVERRIDE.registerFactory(RemoveDefaultParameterValueFixFactory)
+        ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS.registerFactory(RemoveDefaultParameterValueFixFactory)
+
+        RESOLUTION_TO_CLASSIFIER.registerFactory(ConvertToAnonymousObjectFix, AddFunModifierFix)
+
+        NOTHING_TO_INLINE.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
+
+        DECLARATION_CANT_BE_INLINED.registerFactory(DeclarationCantBeInlinedFactory)
+
+        ASSIGN_OPERATOR_AMBIGUITY.registerFactory(AssignOperatorAmbiguityFactory)
+
+        TYPE_MISMATCH.registerFactory(SurroundWithLambdaForTypeMismatchFixFactory)
+        TYPE_MISMATCH_WARNING.registerFactory(SurroundWithLambdaForTypeMismatchFixFactory)
+        CONSTANT_EXPECTED_TYPE_MISMATCH.registerFactory(SurroundWithLambdaForTypeMismatchFixFactory)
+
+        NO_SET_METHOD.registerFactory(ChangeToMutableCollectionFix)
+
+        MUST_BE_INITIALIZED_OR_BE_ABSTRACT.registerFactory(AddAccessorsIntention)
+        MUST_BE_INITIALIZED.registerFactory(AddAccessorsIntention)
+
+        RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION.registerFactory(RestrictedRetentionForExpressionAnnotationFactory)
+
+        NO_VALUE_FOR_PARAMETER.registerFactory(AddConstructorParameterFromSuperTypeCallFixFactory)
+        NO_VALUE_FOR_PARAMETER.registerFactory(SpecifyRemainingArgumentsByNameFixFactory)
+        NONE_APPLICABLE.registerFactory(SpecifyRemainingArgumentsByNameFixFactory)
+
+        UNEXPECTED_TRAILING_LAMBDA_ON_A_NEW_LINE.registerFactory(AddSemicolonBeforeLambdaExpressionFactory)
+
+        CONSTRUCTOR_IN_OBJECT.registerFactory(ChangeObjectToClassFixFactory)
+
+        REDUNDANT_LABEL_WARNING.registerFactory(RemoveRedundantLabelFix)
+        NOT_A_FUNCTION_LABEL.registerFactory(RemoveReturnLabelFixFactory)
+        NOT_A_FUNCTION_LABEL_WARNING.registerFactory(RemoveReturnLabelFixFactory)
+
+        ANNOTATION_ON_SUPERCLASS.registerFactory(RemoveAnnotationFix)
+
+        REPEATED_ANNOTATION.registerFactory(RemoveAnnotationFix)
+        REPEATED_ANNOTATION_WARNING.registerFactory(RemoveAnnotationFix)
+
+        ACCIDENTAL_OVERRIDE.registerFactory(MakePrivateAndOverrideMemberFix.AccidentalOverrideFactory)
+
+        MUST_BE_INITIALIZED.registerFactory(ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
+
+        TOO_MANY_ARGUMENTS.registerFactory(RemoveArgumentFixFactory)
+
+        AMBIGUOUS_SUPER.registerFactory(SpecifySuperTypeFix)
+
+        FUN_INTERFACE_WRONG_COUNT_OF_ABSTRACT_MEMBERS.registerFactory(RemoveModifierFixBase.createRemoveFunFromInterfaceFactory())
+
+        TOPLEVEL_TYPEALIASES_ONLY.registerFactory(MoveTypeAliasToTopLevelFixFactory)
+
+        CONFLICTING_JVM_DECLARATIONS.registerFactory(AddJvmNameAnnotationFix)
+
+        MISSING_EXCEPTION_IN_THROWS_ON_SUSPEND.registerFactory(AddExceptionToThrowsFix)
+        THROWS_LIST_EMPTY.registerFactory(RemoveAnnotationFix)
+        INCOMPATIBLE_THROWS_OVERRIDE.registerFactory(RemoveAnnotationFix)
+
+        COMPATIBILITY_WARNING.registerFactory(UseFullyQualifiedCallFix)
+
+        INLINE_CLASS_DEPRECATED.registerFactory(InlineClassDeprecatedFixFactory)
+
+        SUBCLASS_CANT_CALL_COMPANION_PROTECTED_NON_STATIC.registerFactory(AddJvmStaticAnnotationFixFactory)
+
+        SEALED_INHERITOR_IN_DIFFERENT_PACKAGE.registerFactory(MoveToSealedMatchingPackageFix)
+        SEALED_INHERITOR_IN_DIFFERENT_MODULE.registerFactory(MoveToSealedMatchingPackageFix)
+
+        JAVA_CLASS_ON_COMPANION.registerFactory(JavaClassOnCompanionFixes)
+
+        ILLEGAL_ESCAPE.registerFactory(ConvertIllegalEscapeToUnicodeEscapeFixFactory)
+
+        MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND.registerFactory(AddEmptyArgumentListFixFactory)
+
+        NON_PUBLIC_CALL_FROM_PUBLIC_INLINE.registerFactory(CallFromPublicInlineFactory)
+        PROTECTED_CALL_FROM_PUBLIC_INLINE.registerFactory(CallFromPublicInlineFactory)
+        SUPER_CALL_FROM_PUBLIC_INLINE.registerFactory(CallFromPublicInlineFactory)
+
+        IS_ENUM_ENTRY.registerFactory(IsEnumEntryFactory)
+
+        OVERRIDE_DEPRECATION.registerFactory(CopyDeprecatedAnnotationFixFactory)
+
+        NULLABLE_TYPE_PARAMETER_AGAINST_NOT_NULL_TYPE_PARAMETER.registerFactory(MakeUpperBoundNonNullableFix)
+        WRONG_TYPE_PARAMETER_NULLABILITY_FOR_JAVA_OVERRIDE.registerFactory(MakeUpperBoundNonNullableFix)
+        WRONG_NULLABILITY_FOR_JAVA_OVERRIDE.registerFactory(MakeUpperBoundNonNullableFix)
+        TYPE_MISMATCH.registerFactory(MakeUpperBoundNonNullableFix)
+        TYPE_MISMATCH_WARNING.registerFactory(MakeUpperBoundNonNullableFix)
+        NOTHING_TO_OVERRIDE.registerFactory(MakeUpperBoundNonNullableFix)
+
+        WRONG_NULLABILITY_FOR_JAVA_OVERRIDE.registerFactory(ChangeMemberFunctionSignatureFix)
+        CONFUSING_BRANCH_CONDITION.registerFactory(ConfusingExpressionInWhenBranchFix)
+        PROGRESSIONS_CHANGING_RESOLVE.registerFactory(OverloadResolutionChangeFix)
+
+        ENUM_DECLARING_CLASS_DEPRECATED.registerFactory(DeclaringJavaClassMigrationFix)
+
+        ABSTRACT_SUPER_CALL.registerFactory(AbstractSuperCallFix)
+        ABSTRACT_SUPER_CALL_WARNING.registerFactory(AbstractSuperCallFix)
+
+        WRONG_EXTENSION_FUNCTION_TYPE.registerFactory(RemoveAnnotationFix.ExtensionFunctionType)
+        WRONG_EXTENSION_FUNCTION_TYPE_WARNING.registerFactory(RemoveAnnotationFix.ExtensionFunctionType)
+
+        NON_DATA_CLASS_JVM_RECORD.registerFactory(AddModifierFix.createFactory(DATA_KEYWORD))
+
+        RETURN_IN_FUNCTION_WITH_EXPRESSION_BODY.registerFactory(ConvertToBlockBodyFixFactory)
+
+        VOLATILE_ON_VALUE.registerFactory(ChangeVariableMutabilityFix.VOLATILE_ON_VALUE_FACTORY)
+    }
+}

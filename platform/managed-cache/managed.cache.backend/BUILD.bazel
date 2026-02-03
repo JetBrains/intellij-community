@@ -1,0 +1,31 @@
+### auto-generated section `build intellij.platform.managed.cache.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "managed.cache.backend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "managed.cache.backend",
+  module_name = "intellij.platform.managed.cache.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":managed.cache.backend_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/kernel/backend",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/project/shared:project",
+    "//platform/util",
+    "//platform/platform-impl:ide-impl",
+    "//platform/managed-cache/managed.cache",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+  ]
+)
+### auto-generated section `build intellij.platform.managed.cache.backend` end

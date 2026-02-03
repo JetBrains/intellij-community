@@ -1,0 +1,37 @@
+### auto-generated section `build intellij.kotlin.coverage` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "coverage_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "coverage",
+  module_name = "intellij.kotlin.coverage",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":coverage_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/run-configurations/jvm",
+    "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
+    "//platform/core-impl",
+    "//platform/execution-impl",
+    "//java/execution/impl",
+    "//plugins/coverage",
+    "//platform/execution",
+  ]
+)
+### auto-generated section `build intellij.kotlin.coverage` end

@@ -1,0 +1,8 @@
+// "Change type arguments to <*>" "true"
+fun test(a: Any) = when (a) {
+    is <caret>Array<String> -> 1
+    else -> 2
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToStarProjectionFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToStarProjectionFix

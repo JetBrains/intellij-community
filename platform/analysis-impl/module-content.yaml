@@ -1,0 +1,5 @@
+- name: dist.all/lib/intellij.platform.analysis.impl.jar
+  modules:
+  - name: intellij.platform.analysis.impl
+  - name: intellij.platform.indexing.impl
+  - name: intellij.platform.util.io.storages

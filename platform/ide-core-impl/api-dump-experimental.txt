@@ -1,0 +1,40 @@
+f:com.intellij.ide.impl.OpenProjectTask
+- *f:getProjectRootDir():java.nio.file.Path
+*:com.intellij.openapi.actionSystem.DependentTransientComponent
+- a:getPermanentComponent():java.awt.Component
+c:com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+- com.intellij.openapi.components.PersistentStateComponent
+- *:getCaretEasing():com.intellij.openapi.editor.EditorSettings$CaretEasing
+- *:isAnimatedCaret():Z
+- *:setAnimatedCaret(Z):V
+- *:setCaretEasing(com.intellij.openapi.editor.EditorSettings$CaretEasing):V
+f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OptionSet
+- *:CARET_EASING:com.intellij.openapi.editor.EditorSettings$CaretEasing
+- *:IS_ANIMATED_CARET:Z
+f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$PropNames
+- *sf:PROP_CARET_EASING:java.lang.String
+- *sf:PROP_IS_ANIMATED_CARET:java.lang.String
+com.intellij.openapi.fileEditor.impl.EditorTabColorProvider
+- com.intellij.openapi.project.PossiblyDumbAware
+- *:getEditorTabForegroundColor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.editor.colors.ColorKey
+f:com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil
+- *f:getCustomEditorTabTitleAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
+- *f:getEditorTabTitleAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
+com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
+- com.intellij.openapi.project.DumbAware
+- *:getEditorTabTitleAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
+a:com.intellij.openapi.project.ex.ProjectManagerEx
+- com.intellij.openapi.project.ProjectManager
+- *sf:IS_PER_PROJECT_INSTANCE_ENABLED:Z
+- *sf:IS_PER_PROJECT_INSTANCE_READY:Z
+- *sf:PER_PROJECT_SUFFIX:java.lang.String
+f:com.intellij.openapi.project.ex.ProjectManagerEx$Companion
+- *f:isChildProcessPath(java.nio.file.Path):Z
+com.intellij.openapi.project.ex.ProjectNameProvider
+- *:getNameFile(com.intellij.openapi.project.Project):java.nio.file.Path
+*:com.intellij.util.ui.UiReadExecutor
+- *sf:Companion:com.intellij.util.ui.UiReadExecutor$Companion
+- s:conflatedUiReadExecutor(java.awt.Component,com.intellij.openapi.Disposable,java.lang.String):com.intellij.util.ui.UiReadExecutor
+- a:executeWithReadAccess(java.lang.Runnable):V
+*f:com.intellij.util.ui.UiReadExecutor$Companion
+- f:conflatedUiReadExecutor(java.awt.Component,com.intellij.openapi.Disposable,java.lang.String):com.intellij.util.ui.UiReadExecutor

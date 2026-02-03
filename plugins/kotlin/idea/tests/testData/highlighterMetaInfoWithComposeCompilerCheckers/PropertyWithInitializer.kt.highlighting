@@ -1,0 +1,7 @@
+// COMPILER_ARGUMENTS: -Xplugin=$TEST_DIR$/compose_fake_plugin.jar
+// FILE: main.kt
+// ALLOW_ERRORS
+import androidx.compose.runtime.Composable
+
+val <!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_PROPERTY_BACKING_FIELD] Composable properties are not able to have backing fields'")!>bar<!>: Int = 123
+    @Composable get() = field

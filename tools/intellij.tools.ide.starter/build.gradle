@@ -1,0 +1,95 @@
+apply plugin: 'java'
+apply plugin: 'kotlin'
+
+group = "com.jetbrains.intellij.tools"
+
+buildscript {
+  ext.kotlin_version = '2.2.0-RC'
+  ext.jackson_version = '2.16.0'
+  ext.otel_version = '1.37.0'
+
+  repositories {
+    maven { url = "https://cache-redirector.jetbrains.com/maven-central" }
+    maven { url = "https://cache-redirector.jetbrains.com/intellij-dependencies" }
+  }
+
+  dependencies {
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+  }
+}
+
+repositories {
+  maven { url = "https://cache-redirector.jetbrains.com/maven-central" }
+  maven { url = "https://cache-redirector.jetbrains.com/intellij-dependencies" }
+
+  maven { url = "https://www.jetbrains.com/intellij-repository/releases" }
+  maven { url = "https://www.jetbrains.com/intellij-repository/snapshots" }
+  maven { url = "https://www.jetbrains.com/intellij-repository/nightly" }
+}
+
+sourceSets {
+  main.kotlin.srcDirs += 'src'
+  main.resources {
+    srcDirs "resources"
+    includes = ["**/*.*"]
+  }
+  test.kotlin.srcDirs += 'testSrc'
+  test.resources {
+    srcDirs "testResources"
+    includes = ["**/*.*"]
+  }
+}
+
+dependencies {
+  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0"
+  implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+  implementation "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
+  implementation "org.apache.httpcomponents:httpmime:4.5.14"
+  implementation "org.jetbrains.intellij.deps:gradle-api:8.5"
+  implementation "org.kodein.di:kodein-di-jvm:7.20.2"
+  implementation "org.rauschig:jarchivelib:1.2.0"
+  implementation "com.jetbrains.qodana:qodana-sarif:0.2.113"
+  implementation 'com.github.stephenc.monte:monte-screen-recorder:0.7.7.0'
+  implementation "io.opentelemetry:opentelemetry-api:$otel_version"
+  implementation "io.opentelemetry:opentelemetry-sdk:$otel_version"
+
+  implementation 'io.qameta.allure:allure-java-commons:2.25.0'
+  api("com.jetbrains.intellij.tools:ide-starter-bus:LATEST-TRUNK-SNAPSHOT")
+  // TODO: change versions to LATEST-EAP-SNAPSHOT or remove completely in next EAP
+
+  implementation("com.jetbrains.intellij.tools:ide-util-common:LATEST-TRUNK-SNAPSHOT")
+  implementation("com.jetbrains.intellij.tools:ide-performance-testing-commands:LATEST-TRUNK-SNAPSHOT")
+  implementation('com.jetbrains.intellij.platform:ide-impl:LATEST-TRUNK-SNAPSHOT')
+  implementation('com.jetbrains.intellij.platform:eel:LATEST-TRUNK-SNAPSHOT')
+  implementation('com.jetbrains.intellij.platform:lang-impl:LATEST-TRUNK-SNAPSHOT')
+  implementation('com.jetbrains.intellij.platform:core:LATEST-TRUNK-SNAPSHOT')
+  implementation('com.jetbrains.intellij.platform:runtime-repository:LATEST-TRUNK-SNAPSHOT')
+  implementation('com.github.oshi:oshi-core:6.9.2')
+}
+
+configurations {
+  implementation.exclude(group: 'io.ktor')
+  implementation.exclude(group: 'com.jetbrains.infra')
+  implementation.exclude(group: 'com.jetbrains.intellij.remoteDev')
+  implementation.exclude(group: 'ai.grazie.model')
+  implementation.exclude(group: 'ai.grazie.nlp')
+  implementation.exclude(group: 'ai.grazie.spell')
+  implementation.exclude(group: 'ai.grazie.utils')
+}
+
+kotlin {
+  jvmToolchain(21)
+  compileKotlin {
+    kotlinOptions {
+      freeCompilerArgs += "-opt-in=kotlin.time.ExperimentalTime"
+    }
+  }
+}
+
+tasks.test {
+  useJUnitPlatform()
+
+  testLogging {
+    events "passed", "skipped", "failed", "standardOut", "standardError"
+  }
+}

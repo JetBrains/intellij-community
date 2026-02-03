@@ -1,0 +1,44 @@
+### auto-generated section `build intellij.platform.jewel.samples.showcase` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_showcase",
+  opt_in = [
+    "androidx.compose.ui.ExperimentalComposeUiApi",
+    "androidx.compose.foundation.ExperimentalFoundationApi",
+    "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+    "org.jetbrains.jewel.foundation.InternalJewelApi",
+  ],
+  plugin_options = ["plugin:androidx.compose.compiler.plugins.kotlin:generateFunctionKeyMetaAnnotations=true"],
+  x_context_parameters = True,
+  x_explicit_api_mode = "strict"
+)
+
+resourcegroup(
+  name = "showcase_resources",
+  srcs = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "showcase",
+  module_name = "intellij.platform.jewel.samples.showcase",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
+  resources = [":showcase_resources"],
+  kotlinc_opts = ":custom_showcase",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:jetbrains-annotations",
+    "//platform/jewel/ui",
+    "//platform/jewel/foundation",
+    "//libraries/compose-runtime-desktop",
+    "//platform/jewel/markdown/core",
+    "//libraries/compose-foundation-desktop",
+    "//libraries/skiko",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
+### auto-generated section `build intellij.platform.jewel.samples.showcase` end

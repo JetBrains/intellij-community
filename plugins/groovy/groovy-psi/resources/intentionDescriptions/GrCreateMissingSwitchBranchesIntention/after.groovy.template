@@ -1,0 +1,11 @@
+int f(Color a) {
+  <spot>switch(a)
+  {
+    case Blue:
+      break;
+    case Green:
+      break;
+    case Red:
+      break;
+  }</spot>
+}

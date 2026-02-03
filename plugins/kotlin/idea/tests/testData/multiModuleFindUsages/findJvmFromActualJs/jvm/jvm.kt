@@ -1,0 +1,3 @@
+actual interface OnlyInCommonInterface001
+
+interface ChildInterface : OnlyInCommonInterface001

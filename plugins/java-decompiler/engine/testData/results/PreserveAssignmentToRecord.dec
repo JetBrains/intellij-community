@@ -1,0 +1,58 @@
+package org.example;
+
+public record PreserveAssignmentToRecord(int x, int y) {
+   public PreserveAssignmentToRecord(int x, int y) {
+      this.x = 52122221;// 5
+      this.y = 52122223;// 6
+   }// 7
+
+   public int x() {
+      return this.x;
+   }
+
+   public int y() {
+      return this.y;// 3
+   }
+}
+
+class 'org/example/PreserveAssignmentToRecord' {
+   method '<init> (II)V' {
+      4      4
+      5      4
+      6      4
+      7      4
+      8      4
+      9      4
+      a      5
+      b      5
+      c      5
+      d      5
+      e      5
+      f      5
+      10      6
+   }
+
+   method 'x ()I' {
+      0      9
+      1      9
+      2      9
+      3      9
+      4      9
+   }
+
+   method 'y ()I' {
+      0      13
+      1      13
+      2      13
+      3      13
+      4      13
+   }
+}
+
+Lines mapping:
+3 <-> 14
+5 <-> 5
+6 <-> 6
+7 <-> 7
+Not mapped:
+4

@@ -1,0 +1,2 @@
+version = "0.33.*"
+upstream_repository = "https://github.com/python-xlib/python-xlib"

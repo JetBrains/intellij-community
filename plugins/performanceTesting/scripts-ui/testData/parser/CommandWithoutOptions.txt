@@ -1,0 +1,10 @@
+IntegrationPerformanceTestScriptFile
+  IJPerfStatementImpl(STATEMENT)
+    IJPerfCommandLineImpl(COMMAND_LINE)
+      IJPerfCommandNameImpl(COMMAND_NAME)
+        PsiElement(PerformanceTestTokenType.COMMAND)('%startProfile')
+  PsiWhiteSpace('\n')
+  IJPerfStatementImpl(STATEMENT)
+    IJPerfCommandLineImpl(COMMAND_LINE)
+      IJPerfCommandNameImpl(COMMAND_NAME)
+        PsiElement(PerformanceTestTokenType.COMMAND)('%reloadFiles')

@@ -1,0 +1,4 @@
+(("string in<caret> parentheses"))
+-----
+(("string in" +
+    "<caret> parentheses"))

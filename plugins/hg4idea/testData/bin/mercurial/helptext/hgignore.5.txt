@@ -1,0 +1,34 @@
+==========
+ hgignore
+==========
+
+---------------------------------
+syntax for Mercurial ignore files
+---------------------------------
+
+:Author:         Vadim Gelfer <vadim.gelfer@gmail.com>
+:Organization:   Mercurial
+:Manual section: 5
+:Manual group:   Mercurial Manual
+
+.. include:: hgignore.5.gendoc.txt
+
+Author
+======
+Vadim Gelfer <vadim.gelfer@gmail.com>
+
+Mercurial was written by Olivia Mackall <olivia@selenic.com>.
+
+See Also
+========
+|hg(1)|_, |hgrc(5)|_
+
+Copying
+=======
+This manual page is copyright 2006 Vadim Gelfer.
+Mercurial is copyright 2005-2024 Olivia Mackall.
+Free use of this software is granted under the terms of the GNU General
+Public License version 2 or any later version.
+
+.. include:: common.txt
+

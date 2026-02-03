@@ -1,0 +1,98 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.devkit.core"/>
+    <module name="intellij.platform.compose"/>
+    <module name="intellij.platform.jewel.samples.showcase"/>
+    <module name="intellij.platform.compose.markdown"/>
+    <module name="intellij.platform.jewel.markdown.extensions.images"/>
+    <module name="intellij.java.backend"/>
+    <plugin id="com.intellij.gradle"/>
+    <plugin id="org.jetbrains.kotlin"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.skiko"/>
+    <!-- endregion -->
+  </dependencies>
+
+  <resource-bundle>messages.DevkitComposeBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileEditorProvider implementation="com.intellij.devkit.compose.sandbox.ComposeSandboxFileEditorProvider"/>
+    <postStartupActivity implementation="com.intellij.devkit.compose.sandbox.ComposeSandboxStartupActivity"/>
+    <fileIconProvider implementation="com.intellij.devkit.compose.sandbox.ComposeSandboxFileIconProvider"/>
+    <applicationConfigurable
+      parentId="tools"
+      provider="com.intellij.devkit.compose.showcase.SettingsPageOnComposeProvider"
+      id="com.intellij.devkit.compose.showcase.SettingsPageOnCompose"
+      key="configurable.name.settings.page.on.compose"/>
+
+    <registryKey key="devkit.compose.example.settings.page" defaultValue="false"
+                 description="Enable example Settings page implemented with Compose UI"/>
+
+    <editorNotificationProvider implementation="com.intellij.devkit.compose.hotreload.DevkitHotReloadSuggester"/>
+    <lang.documentationProvider language="kotlin" implementationClass="com.intellij.devkit.compose.hotreload.DevkitHotReloadTips"/>
+    <editorFactoryListener implementation="com.intellij.devkit.compose.hotreload.ToggleComposeSandboxTipsEditorListener"/>
+
+    <registryKey key="devkit.compose.desktop.preview" defaultValue="true"
+                 restartRequired="true" description="Enables Compose UI previews tool window"/>
+    <library.toolWindow id="ComposeUIPreview" anchor="right"
+                        factoryClass="com.intellij.devkit.compose.preview.ComposePreviewToolWindowFactory"
+                        icon="com.intellij.devkit.compose.icons.DevkitComposeIcons.ComposeToolWindow"
+                        librarySearchClass="com.intellij.devkit.compose.preview.ComposePreviewSearcher"/>
+    <implicitUsageProvider implementation="com.intellij.devkit.compose.preview.ComposePreviewImplicitUsageProvider"/>
+
+    <registryKey key="devkit.compose.hot.reload.agent.version" defaultValue="" description="'Compose Hot Reload' agent version override"/>
+    <runConfigurationExtension implementation="com.intellij.devkit.compose.hotreload.DevkitHotReloadCommandLinePatcher"/>
+    <executor implementation="com.intellij.devkit.compose.hotreload.DevkitHotReloadExecutor"/>
+    <programRunner implementation="com.intellij.devkit.compose.hotreload.DevkitHotReloadRunner"/>
+    <programRunner implementation="com.intellij.devkit.compose.hotreload.DevkitGradleHotReloadRunner"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <executionHelperExtension implementation="com.intellij.devkit.compose.hotreload.DevkitGradleExecutionHelper"/>
+  </extensions>
+
+  <actions>
+    <group id="ComposeToolsGroup" searchable="false">
+      <action id="JewelToolwindow" class="com.intellij.devkit.compose.demo.dialog.JewelToolwindowAction"
+              icon="com.intellij.devkit.compose.icons.DevkitComposeIcons.JewelToolWindow"/>
+      <action id="JewelComponentShowcaseDialog" class="com.intellij.devkit.compose.demo.dialog.ComponentShowcaseDialogAction"
+              icon="com.intellij.devkit.core.icons.DevkitCoreIcons.Items"/>
+      <action id="JewelWizardDialog" class="com.intellij.devkit.compose.demo.dialog.JewelWizardDialogAction"/>
+      <action id="ComposeSandbox" class="com.intellij.devkit.compose.sandbox.ComposeSandboxAction" icon="AllIcons.FileTypes.UiForm"/>
+
+      <action id="AddComposeToIJModule"
+              class="com.intellij.devkit.compose.AddComposeToIJModuleAction"
+              icon="com.intellij.devkit.compose.icons.DevkitComposeIcons.ComposeToolWindow"/>
+
+      <action id="ComposePerformanceDemo" class="com.intellij.devkit.compose.showcase.ComposePerformanceDemoAction"
+              internal="true"/> <!-- only needed for the JetBrains team -->
+      <separator/>
+
+      <add-to-group group-id="ToolsMenu" relative-to-action="Dev.PsiViewerActions" anchor="after"/>
+    </group>
+
+    <!-- Legacy actions, only available from Search Everywhere -->
+    <action id="ComposeShowcase" class="com.intellij.devkit.compose.showcase.ComposeShowcaseAction"/>
+    <action id="JewelActionSystemTest" class="com.intellij.devkit.compose.demo.ActionSystemTestAction"/>
+
+    <action id="JewelCustomPopupRenderer"
+            class="com.intellij.devkit.compose.JewelCustomPopupRendererAction"
+            internal="true"/>
+    <action id="ComposeVerboseStackTrace"
+            class="com.intellij.devkit.compose.ComposeVerboseStackTraceAction"
+            internal="true"/>
+
+    <group id="ComposePreviewActions.Title" searchable="false">
+      <action id="ComposePreviewRefresh"
+              class="com.intellij.devkit.compose.preview.ComposePreviewRefreshAction"
+              icon="AllIcons.General.Refresh">
+        <override-text place="GoToAction"/>
+      </action>
+      <action id="ComposePreviewRefreshAuto"
+              class="com.intellij.devkit.compose.preview.ComposePreviewRefreshAutoAction"
+              icon="AllIcons.General.RefreshAuto">
+        <override-text place="GoToAction"/>
+      </action>
+    </group>
+  </actions>
+</idea-plugin>

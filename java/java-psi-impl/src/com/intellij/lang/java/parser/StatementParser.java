@@ -1,0 +1,883 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.lang.java.parser;
+
+import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
+import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.WhitespacesBinders;
+import com.intellij.openapi.util.Pair;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.impl.source.OldParserWhiteSpaceAndCommentSetHolder;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ILazyParseableElementType;
+import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+
+import static com.intellij.lang.PsiBuilderUtil.advance;
+import static com.intellij.lang.PsiBuilderUtil.drop;
+import static com.intellij.lang.PsiBuilderUtil.expect;
+import static com.intellij.lang.PsiBuilderUtil.parseBlockLazy;
+import static com.intellij.lang.java.parser.JavaParserUtil.done;
+import static com.intellij.lang.java.parser.JavaParserUtil.error;
+import static com.intellij.lang.java.parser.JavaParserUtil.expectOrError;
+import static com.intellij.lang.java.parser.JavaParserUtil.exprType;
+import static com.intellij.lang.java.parser.JavaParserUtil.getLanguageLevel;
+import static com.intellij.lang.java.parser.JavaParserUtil.isParseStatementCodeBlocksDeep;
+import static com.intellij.lang.java.parser.JavaParserUtil.semicolon;
+import static com.intellij.psi.impl.source.tree.ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET;
+import static com.intellij.psi.impl.source.tree.JavaElementType.ASSERT_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.BLOCK_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.BREAK_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.CASE_LABEL_ELEMENT_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.CATCH_SECTION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.CODE_BLOCK;
+import static com.intellij.psi.impl.source.tree.JavaElementType.CONTINUE_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.DECLARATION_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.DEFAULT_CASE_LABEL_ELEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.DO_WHILE_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.EMPTY_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.EXPRESSION_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.EXPRESSION_LIST_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.EXPRESSION_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.FOREACH_PATTERN_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.FOREACH_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.FOR_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.IF_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.LABELED_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.PARAMETER;
+import static com.intellij.psi.impl.source.tree.JavaElementType.REFERENCE_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.RETURN_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.SWITCH_LABELED_RULE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.SWITCH_LABEL_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.SWITCH_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.SYNCHRONIZED_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.THROW_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.TRY_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.WHILE_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.YIELD_STATEMENT;
+
+/**
+ * @deprecated Use the new Java syntax library instead.
+ * See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
+public class StatementParser {
+
+  private static final TokenSet YIELD_STMT_INDICATOR_TOKENS = TokenSet.create(
+    JavaTokenType.PLUS, JavaTokenType.MINUS, JavaTokenType.EXCL, JavaTokenType.TILDE,
+    JavaTokenType.SUPER_KEYWORD, JavaTokenType.THIS_KEYWORD,
+
+    JavaTokenType.TRUE_KEYWORD, JavaTokenType.FALSE_KEYWORD, JavaTokenType.NULL_KEYWORD,
+
+    JavaTokenType.STRING_LITERAL, JavaTokenType.INTEGER_LITERAL, JavaTokenType.DOUBLE_LITERAL,
+    JavaTokenType.FLOAT_LITERAL, JavaTokenType.LONG_LITERAL, JavaTokenType.CHARACTER_LITERAL,
+    JavaTokenType.TEXT_BLOCK_LITERAL,
+
+    JavaTokenType.IDENTIFIER, JavaTokenType.SWITCH_KEYWORD, JavaTokenType.NEW_KEYWORD,
+
+    JavaTokenType.LPARENTH,
+
+    // recovery
+    JavaTokenType.RBRACE, JavaTokenType.SEMICOLON, JavaTokenType.CASE_KEYWORD
+  );
+  private static final TokenSet TRY_CLOSERS_SET = TokenSet.create(JavaTokenType.CATCH_KEYWORD, JavaTokenType.FINALLY_KEYWORD);
+  private final JavaParser myParser;
+  private final OldParserWhiteSpaceAndCommentSetHolder myWhiteSpaceAndCommentSetHolder = OldParserWhiteSpaceAndCommentSetHolder.INSTANCE;
+
+  public StatementParser(@NotNull JavaParser javaParser) {
+    this.myParser = javaParser;
+  }
+
+  public @Nullable PsiBuilder.Marker parseCodeBlock(@NotNull PsiBuilder builder) {
+    return parseCodeBlock(builder, false);
+  }
+
+  public @Nullable PsiBuilder.Marker parseCodeBlock(@NotNull PsiBuilder builder, boolean isStatement) {
+    if (builder.getTokenType() != JavaTokenType.LBRACE) return null;
+    if (isStatement && isParseStatementCodeBlocksDeep(builder)) return parseCodeBlockDeep(builder, false);
+    return parseBlockLazy(builder, JavaTokenType.LBRACE, JavaTokenType.RBRACE, CODE_BLOCK);
+  }
+
+  public @Nullable PsiBuilder.Marker parseCodeBlockDeep(@NotNull PsiBuilder builder, boolean parseUntilEof) {
+    if (builder.getTokenType() != JavaTokenType.LBRACE) return null;
+
+    PsiBuilder.Marker codeBlock = builder.mark();
+    builder.advanceLexer();
+
+    parseStatements(builder, parseUntilEof ? BraceMode.TILL_LAST : BraceMode.TILL_FIRST);
+
+    boolean greedyBlock = !expectOrError(builder, JavaTokenType.RBRACE, "expected.rbrace");
+    builder.getTokenType(); // eat spaces
+
+    done(codeBlock, CODE_BLOCK, builder, myWhiteSpaceAndCommentSetHolder);
+    if (greedyBlock) {
+      codeBlock.setCustomEdgeTokenBinders(null, WhitespacesBinders.GREEDY_RIGHT_BINDER);
+    }
+    return codeBlock;
+  }
+
+  public void parseStatements(@NotNull PsiBuilder builder) {
+    parseStatements(builder, null);
+  }
+
+  private void parseStatements(PsiBuilder builder, @Nullable BraceMode braceMode) {
+    while (builder.getTokenType() != null) {
+      PsiBuilder.Marker statement = parseStatement(builder);
+      if (statement != null) continue;
+
+      IElementType tokenType = builder.getTokenType();
+      if (tokenType == JavaTokenType.RBRACE &&
+          (braceMode == BraceMode.TILL_FIRST || braceMode == BraceMode.TILL_LAST && builder.lookAhead(1) == null)) {
+        break;
+      }
+
+      PsiBuilder.Marker error = builder.mark();
+      builder.advanceLexer();
+      if (tokenType == JavaTokenType.ELSE_KEYWORD) {
+        error.error(JavaPsiBundle.message("else.without.if"));
+      }
+      else if (tokenType == JavaTokenType.CATCH_KEYWORD) {
+        error.error(JavaPsiBundle.message("catch.without.try"));
+      }
+      else if (tokenType == JavaTokenType.FINALLY_KEYWORD) {
+        error.error(JavaPsiBundle.message("finally.without.try"));
+      }
+      else {
+        error.error(JavaPsiBundle.message("unexpected.token"));
+      }
+    }
+  }
+
+  public @Nullable PsiBuilder.Marker parseStatement(@NotNull PsiBuilder builder) {
+    IElementType tokenType = builder.getTokenType();
+    if (tokenType == JavaTokenType.IF_KEYWORD) {
+      return parseIfStatement(builder);
+    }
+    else if (tokenType == JavaTokenType.WHILE_KEYWORD) {
+      return parseWhileStatement(builder);
+    }
+    else if (tokenType == JavaTokenType.FOR_KEYWORD) {
+      return parseForStatement(builder);
+    }
+    else if (tokenType == JavaTokenType.DO_KEYWORD) {
+      return parseDoWhileStatement(builder);
+    }
+    else if (tokenType == JavaTokenType.SWITCH_KEYWORD) {
+      return parseSwitchStatement(builder);
+    }
+    else if (tokenType == JavaTokenType.CASE_KEYWORD || tokenType == JavaTokenType.DEFAULT_KEYWORD) {
+      return parseSwitchLabelStatement(builder);
+    }
+    else if (tokenType == JavaTokenType.BREAK_KEYWORD) {
+      return parseBreakStatement(builder);
+    }
+    else if (isStmtYieldToken(builder, tokenType)) {
+      return parseYieldStatement(builder);
+    }
+    else if (tokenType == JavaTokenType.CONTINUE_KEYWORD) {
+      return parseContinueStatement(builder);
+    }
+    else if (tokenType == JavaTokenType.RETURN_KEYWORD) {
+      return parseReturnStatement(builder);
+    }
+    else if (tokenType == JavaTokenType.THROW_KEYWORD) {
+      return parseThrowStatement(builder);
+    }
+    else if (tokenType == JavaTokenType.SYNCHRONIZED_KEYWORD) {
+      return parseSynchronizedStatement(builder);
+    }
+    else if (tokenType == JavaTokenType.TRY_KEYWORD) {
+      return parseTryStatement(builder);
+    }
+    else if (tokenType == JavaTokenType.ASSERT_KEYWORD) {
+      return parseAssertStatement(builder);
+    }
+    else if (tokenType == JavaTokenType.LBRACE) {
+      return parseBlockStatement(builder);
+    }
+    else if (tokenType instanceof ILazyParseableElementType) {
+      builder.advanceLexer();
+      return null;
+    }
+    else if (tokenType == JavaTokenType.SEMICOLON) {
+      PsiBuilder.Marker empty = builder.mark();
+      builder.advanceLexer();
+      done(empty, EMPTY_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+      return empty;
+    }
+    else if (tokenType == JavaTokenType.IDENTIFIER || tokenType == JavaTokenType.AT) {
+      PsiBuilder.Marker refPos = builder.mark();
+      boolean nonSealed = DeclarationParser.isNonSealedToken(builder, tokenType);
+      myParser.getDeclarationParser().parseAnnotations(builder);
+      skipQualifiedName(builder);
+      IElementType current = builder.getTokenType(), next = builder.lookAhead(1);
+      refPos.rollbackTo();
+
+      if (current == JavaTokenType.LT || current == JavaTokenType.DOT && next == JavaTokenType.AT || nonSealed) {
+        PsiBuilder.Marker declStatement = builder.mark();
+
+        if (myParser.getDeclarationParser().parse(builder, DeclarationParser.Context.CODE_BLOCK) != null) {
+          done(declStatement, DECLARATION_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+          return declStatement;
+        }
+
+        ReferenceParser.TypeInfo type = myParser.getReferenceParser().parseTypeInfo(builder, 0);
+        if (current == JavaTokenType.LT && (type == null || !type.isParameterized)) {
+          declStatement.rollbackTo();
+        }
+        else if (type == null || builder.getTokenType() != JavaTokenType.DOUBLE_COLON) {
+          error(builder, JavaPsiBundle.message("expected.identifier"));
+          if (type == null) builder.advanceLexer();
+          done(declStatement, DECLARATION_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+          return declStatement;
+        }
+        else {
+          declStatement.rollbackTo();  // generic type followed by the double colon is a good candidate for being a constructor reference
+        }
+      }
+    }
+
+    PsiBuilder.Marker pos = builder.mark();
+    PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
+    IElementType incompleteDeclarationRestrictedTokenType = null;
+
+    if (expr != null) {
+      int count = 1;
+      PsiBuilder.Marker list = expr.precede();
+      PsiBuilder.Marker statement = list.precede();
+      while (builder.getTokenType() == JavaTokenType.COMMA) {
+        PsiBuilder.Marker commaPos = builder.mark();
+        builder.advanceLexer();
+        PsiBuilder.Marker expr1 = myParser.getExpressionParser().parse(builder);
+        if (expr1 == null) {
+          commaPos.rollbackTo();
+          break;
+        }
+        commaPos.drop();
+        count++;
+      }
+      if (count > 1) {
+        pos.drop();
+        done(list, EXPRESSION_LIST, builder, myWhiteSpaceAndCommentSetHolder);
+        semicolon(builder);
+        done(statement, EXPRESSION_LIST_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+        return statement;
+      }
+      if (exprType(expr) != REFERENCE_EXPRESSION) {
+        drop(list, pos);
+        semicolon(builder);
+        done(statement, EXPRESSION_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+        return statement;
+      }
+      boolean singleToken = expr.getEndIndex() - expr.getStartIndex() == 1;
+      pos.rollbackTo();
+      if (singleToken && builder.getTokenType() == JavaTokenType.IDENTIFIER) {
+        String text = builder.getTokenText();
+        if (JavaKeywords.RECORD.equals(text) && JavaFeature.RECORDS.isSufficient(getLanguageLevel(builder))) {
+          incompleteDeclarationRestrictedTokenType = JavaTokenType.RECORD_KEYWORD;
+        }
+        if (JavaKeywords.VAR.equals(text) && JavaFeature.LVTI.isSufficient(getLanguageLevel(builder))) {
+          incompleteDeclarationRestrictedTokenType = JavaTokenType.VAR_KEYWORD;
+        }
+      }
+    }
+    else {
+      pos.drop();
+    }
+
+    PsiBuilder.Marker decl = myParser.getDeclarationParser().parse(builder, DeclarationParser.Context.CODE_BLOCK);
+    if (decl != null) {
+      PsiBuilder.Marker statement = decl.precede();
+      done(statement, DECLARATION_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+      return statement;
+    }
+
+    if (builder.getTokenType() == JavaTokenType.IDENTIFIER && builder.lookAhead(1) == JavaTokenType.COLON) {
+      PsiBuilder.Marker statement = builder.mark();
+      advance(builder, 2);
+      parseStatement(builder);
+      done(statement, LABELED_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+      return statement;
+    }
+
+    if (expr != null) {
+      PsiBuilder.Marker statement = builder.mark();
+      IElementType statementType;
+      if (incompleteDeclarationRestrictedTokenType != null) {
+        builder.remapCurrentToken(incompleteDeclarationRestrictedTokenType);
+        builder.advanceLexer();
+        error(builder, JavaPsiBundle.message("expected.identifier"));
+        statementType = DECLARATION_STATEMENT;
+      }
+      else {
+        myParser.getExpressionParser().parse(builder);
+        statementType = EXPRESSION_STATEMENT;
+        semicolon(builder);
+      }
+      done(statement, statementType, builder, myWhiteSpaceAndCommentSetHolder);
+      return statement;
+    }
+
+    return null;
+  }
+
+  private @NotNull PsiBuilder.Marker parseIfStatement(PsiBuilder builder) {
+    ArrayList<PsiBuilder.Marker> stack = null;
+    PsiBuilder.Marker statement;
+    while (true) {
+      // replaced recursion with iteration plus stack to avoid huge call stack for extremely large else-if chains
+      statement = builder.mark();
+      builder.advanceLexer();
+
+      if (parseExprInParenth(builder)) {
+        if (parseStatement(builder) == null) {
+          error(builder, JavaPsiBundle.message("expected.statement"));
+        }
+        else if (expect(builder, JavaTokenType.ELSE_KEYWORD)) {
+          if (builder.getTokenType() == JavaTokenType.IF_KEYWORD) {
+            if (stack == null) stack = new ArrayList<>();
+            stack.add(statement);
+            continue;
+          }
+          else if (parseStatement(builder) == null) {
+            error(builder, JavaPsiBundle.message("expected.statement"));
+          }
+        }
+      }
+      break;
+    }
+    done(statement, IF_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+    if (stack != null) {
+      for (int i = stack.size() - 1; i >= 0; i--) {
+        statement = stack.get(i);
+        done(statement, IF_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+      }
+    }
+    return statement;
+  }
+
+  private @NotNull PsiBuilder.Marker parseWhileStatement(PsiBuilder builder) {
+    return parseExprInParenthWithBlock(builder, WHILE_STATEMENT, false);
+  }
+
+  @Contract(pure = true)
+  private boolean isRecordPatternInForEach(final PsiBuilder builder) {
+    PsiBuilder.Marker patternStart = myParser.getPatternParser().preParsePattern(builder);
+    if (patternStart == null) {
+      return false;
+    }
+    if (builder.getTokenType() != JavaTokenType.LPARENTH) {
+      patternStart.rollbackTo();
+      return false;
+    }
+    builder.advanceLexer();
+
+    // we must distinguish a record pattern from method call in for (foo();;)
+    int parenBalance = 1;
+    while (true) {
+      IElementType current = builder.getTokenType();
+      if (current == null) {
+        patternStart.rollbackTo();
+        return false;
+      }
+      if (current == JavaTokenType.LPARENTH) {
+        parenBalance++;
+      }
+      if (current == JavaTokenType.RPARENTH) {
+        parenBalance--;
+        if (parenBalance == 0) {
+          break;
+        }
+      }
+      builder.advanceLexer();
+    }
+    builder.advanceLexer();
+    boolean isRecordPattern = builder.getTokenType() != JavaTokenType.SEMICOLON && builder.getTokenType() != JavaTokenType.DOT;
+    patternStart.rollbackTo();
+    return isRecordPattern;
+  }
+
+  private @NotNull PsiBuilder.Marker parseForStatement(PsiBuilder builder) {
+    PsiBuilder.Marker statement = builder.mark();
+    builder.advanceLexer();
+
+    if (!expect(builder, JavaTokenType.LPARENTH)) {
+      error(builder, JavaPsiBundle.message("expected.lparen"));
+      done(statement, FOR_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+      return statement;
+    }
+
+    if (isRecordPatternInForEach(builder)) {
+      myParser.getPatternParser().parsePattern(builder);
+      if (builder.getTokenType() == JavaTokenType.COLON) {
+        return parseForEachFromColon(builder, statement, FOREACH_PATTERN_STATEMENT);
+      }
+      error(builder, JavaPsiBundle.message("expected.colon"));
+      // recovery: just skip everything until ')'
+      while (true) {
+        IElementType tokenType = builder.getTokenType();
+        if (tokenType == null) {
+          done(statement, FOREACH_PATTERN_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+          return statement;
+        }
+        if (tokenType == JavaTokenType.RPARENTH) {
+          return parserForEachFromRparenth(builder, statement, FOREACH_PATTERN_STATEMENT);
+        }
+        builder.advanceLexer();
+      }
+    }
+
+    PsiBuilder.Marker afterParenth = builder.mark();
+    PsiBuilder.Marker param = myParser.getDeclarationParser().parseParameter(builder, false, false, true);
+    if (param == null || exprType(param) != PARAMETER || builder.getTokenType() != JavaTokenType.COLON) {
+      afterParenth.rollbackTo();
+      return parseForLoopFromInitializer(builder, statement);
+    }
+    else {
+      afterParenth.drop();
+      return parseForEachFromColon(builder, statement, FOREACH_STATEMENT);
+    }
+  }
+
+  private @NotNull PsiBuilder.Marker parseForLoopFromInitializer(PsiBuilder builder, PsiBuilder.Marker statement) {
+    if (parseStatement(builder) == null) {
+      error(builder, JavaPsiBundle.message("expected.statement"));
+      if (!expect(builder, JavaTokenType.RPARENTH)) {
+        done(statement, FOR_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+        return statement;
+      }
+    }
+    else {
+      boolean missingSemicolon = false;
+      if (getLastToken(builder) != JavaTokenType.SEMICOLON) {
+        missingSemicolon = !expectOrError(builder, JavaTokenType.SEMICOLON, "expected.semicolon");
+      }
+
+      PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
+      missingSemicolon &= expr == null;
+
+      if (!expect(builder, JavaTokenType.SEMICOLON)) {
+        if (!missingSemicolon) {
+          error(builder, JavaPsiBundle.message("expected.semicolon"));
+        }
+        if (!expect(builder, JavaTokenType.RPARENTH)) {
+          done(statement, FOR_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+          return statement;
+        }
+      }
+      else {
+        parseForUpdateExpressions(builder);
+        if (!expect(builder, JavaTokenType.RPARENTH)) {
+          error(builder, JavaPsiBundle.message("expected.rparen"));
+          done(statement, FOR_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+          return statement;
+        }
+      }
+    }
+
+    PsiBuilder.Marker bodyStatement = parseStatement(builder);
+    if (bodyStatement == null) {
+      error(builder, JavaPsiBundle.message("expected.statement"));
+    }
+
+    done(statement, FOR_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+    return statement;
+  }
+
+  private void parseForUpdateExpressions(PsiBuilder builder) {
+    PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
+    if (expr == null) return;
+
+    PsiBuilder.Marker expressionStatement;
+    if (builder.getTokenType() != JavaTokenType.COMMA) {
+      expressionStatement = expr.precede();
+      done(expressionStatement, EXPRESSION_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+    }
+    else {
+      PsiBuilder.Marker expressionList = expr.precede();
+      expressionStatement = expressionList.precede();
+
+      do {
+        builder.advanceLexer();
+        PsiBuilder.Marker nextExpression = myParser.getExpressionParser().parse(builder);
+        if (nextExpression == null) {
+          error(builder, JavaPsiBundle.message("expected.expression"));
+        }
+      }
+      while (builder.getTokenType() == JavaTokenType.COMMA);
+
+      done(expressionList, EXPRESSION_LIST, builder, myWhiteSpaceAndCommentSetHolder);
+      done(expressionStatement, EXPRESSION_LIST_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+    }
+
+    expressionStatement.setCustomEdgeTokenBinders(null, WhitespacesBinders.DEFAULT_RIGHT_BINDER);
+  }
+
+  private @NotNull PsiBuilder.Marker parseForEachFromColon(PsiBuilder builder, PsiBuilder.Marker statement, IElementType foreachStatement) {
+    builder.advanceLexer();
+
+    if (myParser.getExpressionParser().parse(builder) == null) {
+      error(builder, JavaPsiBundle.message("expected.expression"));
+    }
+
+    return parserForEachFromRparenth(builder, statement, foreachStatement);
+  }
+
+  private PsiBuilder.Marker parserForEachFromRparenth(PsiBuilder builder, PsiBuilder.Marker statement, IElementType forEachType) {
+    if (expectOrError(builder, JavaTokenType.RPARENTH, "expected.rparen") && parseStatement(builder) == null) {
+      error(builder, JavaPsiBundle.message("expected.statement"));
+    }
+
+    done(statement, forEachType, builder, myWhiteSpaceAndCommentSetHolder);
+    return statement;
+  }
+
+  private @NotNull PsiBuilder.Marker parseDoWhileStatement(PsiBuilder builder) {
+    PsiBuilder.Marker statement = builder.mark();
+    builder.advanceLexer();
+
+    PsiBuilder.Marker body = parseStatement(builder);
+    if (body == null) {
+      error(builder, JavaPsiBundle.message("expected.statement"));
+    }
+    else if (!expect(builder, JavaTokenType.WHILE_KEYWORD)) {
+      error(builder, JavaPsiBundle.message("expected.while"));
+    }
+    else if (parseExprInParenth(builder)) {
+      semicolon(builder);
+    }
+
+    done(statement, DO_WHILE_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+    return statement;
+  }
+
+  private @NotNull PsiBuilder.Marker parseSwitchStatement(PsiBuilder builder) {
+    return parseExprInParenthWithBlock(builder, SWITCH_STATEMENT, true);
+  }
+
+  /**
+   * @return marker and whether it contains expression inside
+   */
+  @ApiStatus.Internal
+  public @NotNull Pair<PsiBuilder.@Nullable Marker, Boolean> parseCaseLabel(PsiBuilder builder) {
+    if (builder.getTokenType() == JavaTokenType.DEFAULT_KEYWORD) {
+      PsiBuilder.Marker defaultElement = builder.mark();
+      builder.advanceLexer();
+      done(defaultElement, DEFAULT_CASE_LABEL_ELEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+      return Pair.create(defaultElement, false);
+    }
+    if (myParser.getPatternParser().isPattern(builder)) {
+      PsiBuilder.Marker pattern = myParser.getPatternParser().parsePattern(builder);
+      return Pair.create(pattern, false);
+    }
+    return Pair.create(myParser.getExpressionParser().parseAssignmentForbiddingLambda(builder), true);
+  }
+
+  private PsiBuilder.Marker parseSwitchLabelStatement(PsiBuilder builder) {
+    PsiBuilder.Marker statement = builder.mark();
+    boolean isCase = builder.getTokenType() == JavaTokenType.CASE_KEYWORD;
+    builder.advanceLexer();
+
+    if (isCase) {
+      boolean patternsAllowed = JavaFeature.PATTERNS_IN_SWITCH.isSufficient(getLanguageLevel(builder));
+      PsiBuilder.Marker list = builder.mark();
+      do {
+        Pair<PsiBuilder.Marker, Boolean> markerAndIsExpression = parseCaseLabel(builder);
+        PsiBuilder.Marker caseLabel = markerAndIsExpression.first;
+        if (caseLabel == null) {
+          error(builder, JavaPsiBundle.message(patternsAllowed ? "expected.case.label.element" : "expected.expression"));
+        }
+      }
+      while (expect(builder, JavaTokenType.COMMA));
+      done(list, CASE_LABEL_ELEMENT_LIST, builder, myWhiteSpaceAndCommentSetHolder);
+      parseGuard(builder);
+    }
+
+    if (expect(builder, JavaTokenType.ARROW)) {
+      PsiBuilder.Marker expr;
+      if (builder.getTokenType() == JavaTokenType.LBRACE) {
+        PsiBuilder.Marker body = builder.mark();
+        parseCodeBlock(builder, true);
+        body.done(BLOCK_STATEMENT);
+        if (builder.getTokenType() == JavaTokenType.SEMICOLON) {
+          PsiBuilder.Marker mark = builder.mark();
+          while (builder.getTokenType() == JavaTokenType.SEMICOLON) builder.advanceLexer();
+          mark.error(JavaPsiBundle.message("expected.switch.label"));
+        }
+      }
+      else if (builder.getTokenType() == JavaTokenType.THROW_KEYWORD) {
+        parseThrowStatement(builder);
+      }
+      else if ((expr = myParser.getExpressionParser().parse(builder)) != null) {
+        PsiBuilder.Marker body = expr.precede();
+        semicolon(builder);
+        body.done(EXPRESSION_STATEMENT);
+      }
+      else {
+        error(builder, JavaPsiBundle.message("expected.switch.rule"));
+        expect(builder, JavaTokenType.SEMICOLON);
+      }
+      done(statement, SWITCH_LABELED_RULE, builder, myWhiteSpaceAndCommentSetHolder);
+    }
+    else {
+      expectOrError(builder, JavaTokenType.COLON, "expected.colon.or.arrow");
+      done(statement, SWITCH_LABEL_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+    }
+
+    return statement;
+  }
+
+  private void parseGuard(PsiBuilder builder) {
+    if (builder.getTokenType() == JavaTokenType.IDENTIFIER && JavaKeywords.WHEN.equals(builder.getTokenText())) {
+      builder.remapCurrentToken(JavaTokenType.WHEN_KEYWORD);
+      builder.advanceLexer();
+      PsiBuilder.Marker guardingExpression = myParser.getExpressionParser().parseAssignmentForbiddingLambda(builder);
+      if (guardingExpression == null) {
+        error(builder, JavaPsiBundle.message("expected.expression"));
+      }
+    }
+  }
+
+  private @NotNull PsiBuilder.Marker parseBreakStatement(PsiBuilder builder) {
+    PsiBuilder.Marker statement = builder.mark();
+    builder.advanceLexer();
+    expect(builder, JavaTokenType.IDENTIFIER);
+    semicolon(builder);
+    done(statement, BREAK_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+    return statement;
+  }
+
+  private @NotNull PsiBuilder.Marker parseYieldStatement(PsiBuilder builder) {
+    PsiBuilder.Marker statement = builder.mark();
+    builder.remapCurrentToken(JavaTokenType.YIELD_KEYWORD);
+    builder.advanceLexer();
+
+    if (myParser.getExpressionParser().parse(builder) == null) {
+      error(builder, JavaPsiBundle.message("expected.expression"));
+    }
+    else {
+      semicolon(builder);
+    }
+
+    done(statement, YIELD_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+    return statement;
+  }
+
+  private @NotNull PsiBuilder.Marker parseContinueStatement(PsiBuilder builder) {
+    PsiBuilder.Marker statement = builder.mark();
+    builder.advanceLexer();
+    expect(builder, JavaTokenType.IDENTIFIER);
+    semicolon(builder);
+    done(statement, CONTINUE_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+    return statement;
+  }
+
+  private @NotNull PsiBuilder.Marker parseReturnStatement(PsiBuilder builder) {
+    PsiBuilder.Marker statement = builder.mark();
+    builder.advanceLexer();
+    myParser.getExpressionParser().parse(builder);
+    semicolon(builder);
+    done(statement, RETURN_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+    return statement;
+  }
+
+  private @NotNull PsiBuilder.Marker parseThrowStatement(PsiBuilder builder) {
+    PsiBuilder.Marker statement = builder.mark();
+    builder.advanceLexer();
+
+    if (myParser.getExpressionParser().parse(builder) == null) {
+      error(builder, JavaPsiBundle.message("expected.expression"));
+    }
+    else {
+      semicolon(builder);
+    }
+
+    done(statement, THROW_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+    return statement;
+  }
+
+  private @NotNull PsiBuilder.Marker parseSynchronizedStatement(PsiBuilder builder) {
+    return parseExprInParenthWithBlock(builder, SYNCHRONIZED_STATEMENT, true);
+  }
+
+  private @NotNull PsiBuilder.Marker parseTryStatement(PsiBuilder builder) {
+    PsiBuilder.Marker statement = builder.mark();
+    builder.advanceLexer();
+
+    boolean hasResourceList = builder.getTokenType() == JavaTokenType.LPARENTH;
+    if (hasResourceList) {
+      myParser.getDeclarationParser().parseResourceList(builder);
+    }
+
+    PsiBuilder.Marker tryBlock = parseCodeBlock(builder, true);
+    if (tryBlock == null) {
+      error(builder, JavaPsiBundle.message("expected.lbrace"));
+    }
+    else if (!hasResourceList && !TRY_CLOSERS_SET.contains(builder.getTokenType())) {
+      error(builder, JavaPsiBundle.message("expected.catch.or.finally"));
+    }
+    else {
+      while (builder.getTokenType() == JavaTokenType.CATCH_KEYWORD) {
+        if (!parseCatchBlock(builder)) break;
+      }
+
+      if (expect(builder, JavaTokenType.FINALLY_KEYWORD)) {
+        PsiBuilder.Marker finallyBlock = parseCodeBlock(builder, true);
+        if (finallyBlock == null) {
+          error(builder, JavaPsiBundle.message("expected.lbrace"));
+        }
+      }
+    }
+
+    done(statement, TRY_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+    return statement;
+  }
+
+  public boolean parseCatchBlock(@NotNull PsiBuilder builder) {
+    assert builder.getTokenType() == JavaTokenType.CATCH_KEYWORD : builder.getTokenType();
+    PsiBuilder.Marker section = builder.mark();
+    builder.advanceLexer();
+
+    if (!expect(builder, JavaTokenType.LPARENTH)) {
+      error(builder, JavaPsiBundle.message("expected.lparen"));
+      done(section, CATCH_SECTION, builder, myWhiteSpaceAndCommentSetHolder);
+      return false;
+    }
+
+    PsiBuilder.Marker param = myParser.getDeclarationParser().parseParameter(builder, false, true, false);
+    if (param == null) {
+      error(builder, JavaPsiBundle.message("expected.parameter"));
+    }
+
+    if (!expect(builder, JavaTokenType.RPARENTH)) {
+      error(builder, JavaPsiBundle.message("expected.rparen"));
+      done(section, CATCH_SECTION, builder, myWhiteSpaceAndCommentSetHolder);
+      return false;
+    }
+
+    PsiBuilder.Marker body = parseCodeBlock(builder, true);
+    if (body == null) {
+      error(builder, JavaPsiBundle.message("expected.lbrace"));
+      done(section, CATCH_SECTION, builder, myWhiteSpaceAndCommentSetHolder);
+      return false;
+    }
+
+    done(section, CATCH_SECTION, builder, myWhiteSpaceAndCommentSetHolder);
+    return true;
+  }
+
+  private @NotNull PsiBuilder.Marker parseAssertStatement(PsiBuilder builder) {
+    PsiBuilder.Marker statement = builder.mark();
+    builder.advanceLexer();
+
+    if (myParser.getExpressionParser().parse(builder) == null) {
+      error(builder, JavaPsiBundle.message("expected.boolean.expression"));
+    }
+    else if (expect(builder, JavaTokenType.COLON) && myParser.getExpressionParser().parse(builder) == null) {
+      error(builder, JavaPsiBundle.message("expected.expression"));
+    }
+    else {
+      semicolon(builder);
+    }
+
+    done(statement, ASSERT_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+    return statement;
+  }
+
+  private @NotNull PsiBuilder.Marker parseBlockStatement(PsiBuilder builder) {
+    PsiBuilder.Marker statement = builder.mark();
+    parseCodeBlock(builder, true);
+    done(statement, BLOCK_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+    return statement;
+  }
+
+  public @NotNull PsiBuilder.Marker parseExprInParenthWithBlock(@NotNull PsiBuilder builder, @NotNull IElementType type, boolean block) {
+    PsiBuilder.Marker statement = builder.mark();
+    builder.advanceLexer();
+
+    if (parseExprInParenth(builder)) {
+      PsiBuilder.Marker body = block ? parseCodeBlock(builder, true) : parseStatement(builder);
+      if (body == null) {
+        error(builder, JavaPsiBundle.message(block ? "expected.lbrace" : "expected.statement"));
+      }
+    }
+
+    done(statement, type, builder, myWhiteSpaceAndCommentSetHolder);
+    return statement;
+  }
+
+  private boolean parseExprInParenth(PsiBuilder builder) {
+    if (!expect(builder, JavaTokenType.LPARENTH)) {
+      error(builder, JavaPsiBundle.message("expected.lparen"));
+      return false;
+    }
+
+    PsiBuilder.Marker beforeExpr = builder.mark();
+    PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
+    if (expr == null || builder.getTokenType() == JavaTokenType.SEMICOLON) {
+      beforeExpr.rollbackTo();
+      error(builder, JavaPsiBundle.message("expected.expression"));
+      if (builder.getTokenType() != JavaTokenType.RPARENTH) {
+        return false;
+      }
+    }
+    else {
+      beforeExpr.drop();
+      if (builder.getTokenType() != JavaTokenType.RPARENTH) {
+        error(builder, JavaPsiBundle.message("expected.rparen"));
+        return false;
+      }
+    }
+
+    builder.advanceLexer();
+    return true;
+  }
+
+  private static boolean isStmtYieldToken(@NotNull PsiBuilder builder, IElementType tokenType) {
+    if (!(tokenType == JavaTokenType.IDENTIFIER &&
+          JavaKeywords.YIELD.equals(builder.getTokenText()) &&
+          JavaFeature.SWITCH_EXPRESSION.isSufficient(getLanguageLevel(builder)))) {
+      return false;
+    }
+    // we prefer to parse it as yield stmt wherever possible (even in incomplete syntax)
+    PsiBuilder.Marker maybeYieldStmt = builder.mark();
+    builder.advanceLexer();
+    IElementType tokenAfterYield = builder.getTokenType();
+    if (tokenAfterYield == null || YIELD_STMT_INDICATOR_TOKENS.contains(tokenAfterYield)) {
+      maybeYieldStmt.rollbackTo();
+      return true;
+    }
+    if (JavaTokenType.PLUSPLUS.equals(tokenAfterYield) || JavaTokenType.MINUSMINUS.equals(tokenAfterYield)) {
+      builder.advanceLexer();
+      boolean isYieldStmt = !builder.getTokenType().equals(JavaTokenType.SEMICOLON);
+      maybeYieldStmt.rollbackTo();
+      return isYieldStmt;
+    }
+    maybeYieldStmt.rollbackTo();
+    return false;
+  }
+
+  private static void skipQualifiedName(PsiBuilder builder) {
+    if (!expect(builder, JavaTokenType.IDENTIFIER)) return;
+    while (builder.getTokenType() == JavaTokenType.DOT && builder.lookAhead(1) == JavaTokenType.IDENTIFIER) {
+      advance(builder, 2);
+    }
+  }
+
+  private static IElementType getLastToken(PsiBuilder builder) {
+    IElementType token;
+    int offset = -1;
+    while (JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains((token = builder.rawLookup(offset)))) offset--;
+    return token;
+  }
+
+  private enum BraceMode {
+    TILL_FIRST, TILL_LAST
+  }
+}

@@ -1,0 +1,5 @@
+// CHOSEN_OPTION: FIELD|Add use-site target 'field'
+
+annotation class A
+
+class Constructor(@field:A val foo: String)

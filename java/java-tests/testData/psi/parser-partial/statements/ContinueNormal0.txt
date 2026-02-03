@@ -1,0 +1,4 @@
+PsiJavaFile:ContinueNormal0.java
+  PsiContinueStatement
+    PsiKeyword:continue('continue')
+    PsiJavaToken:SEMICOLON(';')

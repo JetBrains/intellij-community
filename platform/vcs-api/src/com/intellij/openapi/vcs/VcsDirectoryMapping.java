@@ -1,0 +1,101 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vcs;
+
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
+
+import java.util.Objects;
+import java.util.function.Supplier;
+
+public final class VcsDirectoryMapping {
+  public static final String DEFAULT_MAPPING_DIR = "";
+
+  public static final Supplier<@Nls String> PROJECT_CONSTANT = VcsBundle.messagePointer("label.project.vcs.root.mapping");
+  public static final VcsDirectoryMapping[] EMPTY_ARRAY = new VcsDirectoryMapping[0];
+
+  private final @NotNull String myDirectory;
+  private final String myVcs;
+  private final VcsRootSettings myRootSettings;
+
+  /**
+   * Empty string as 'directory' denotes "default mapping" aka "&lt;Project&gt;".
+   * Such mapping will use {@link com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy} to
+   * find actual vcs roots that cover project files.
+   */
+  public VcsDirectoryMapping(@NotNull String directory, @Nullable String vcs) {
+    this(directory, vcs, null);
+  }
+
+  public VcsDirectoryMapping(@NotNull String directory, @Nullable String vcs, @Nullable VcsRootSettings rootSettings) {
+    myDirectory = FileUtil.normalize(directory);
+    myVcs = StringUtil.notNullize(vcs);
+    myRootSettings = rootSettings;
+  }
+
+  public static @NotNull VcsDirectoryMapping createDefault(@NotNull String vcs) {
+    return new VcsDirectoryMapping(DEFAULT_MAPPING_DIR, vcs);
+  }
+
+  public @NotNull @SystemIndependent String getDirectory() {
+    return myDirectory;
+  }
+
+  public @NotNull String getVcs() {
+    return myVcs;
+  }
+
+  /**
+   * Returns the VCS-specific settings for the given mapping.
+   *
+   * @return VCS-specific settings, or null if none have been defined.
+   * @see AbstractVcs#getRootConfigurable(VcsDirectoryMapping)
+   */
+  public @Nullable VcsRootSettings getRootSettings() {
+    return myRootSettings;
+  }
+
+  /**
+   * @return if this mapping denotes "default mapping" aka "&lt;Project&gt;".
+   */
+  public boolean isDefaultMapping() {
+    return myDirectory.isEmpty();
+  }
+
+  /**
+   * @return if this mapping denotes "no vcs" aka "&lt;none&gt;".
+   */
+  public boolean isNoneMapping() {
+    return myVcs.isEmpty();
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final VcsDirectoryMapping mapping = (VcsDirectoryMapping)o;
+
+    if (!myDirectory.equals(mapping.myDirectory)) return false;
+    if (!Objects.equals(myVcs, mapping.myVcs)) return false;
+    if (!Objects.equals(myRootSettings, mapping.myRootSettings)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result;
+    result = myDirectory.hashCode();
+    result = 31 * result + (myVcs != null ? myVcs.hashCode() : 0);
+    return result;
+  }
+
+  @Override
+  public String toString() {
+    return isDefaultMapping() ? PROJECT_CONSTANT.get() : myDirectory;
+  }
+}

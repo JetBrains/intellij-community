@@ -1,0 +1,12 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <plugin id="com.intellij.platform.images"/>
+    <module name="intellij.grid.core.impl"/>
+    <module name="intellij.platform.navbar.frontend"/>
+    <module name="intellij.grid.impl"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij.database.datagrid">
+    <cellViewerFactory implementation="com.intellij.grid.images.impl.ImageCellViewerFactory"/>
+  </extensions>
+</idea-plugin>

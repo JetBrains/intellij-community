@@ -1,0 +1,66 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.tasks.youtrack;
+
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.tasks.TaskBundle;
+import com.intellij.tasks.config.BaseRepositoryEditor;
+import com.intellij.tasks.youtrack.lang.YouTrackLanguage;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.LanguageTextField;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.util.Consumer;
+import com.intellij.util.ui.FormBuilder;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.JComponent;
+import javax.swing.SwingConstants;
+
+/**
+ * @author Dmitry Avdeev
+ */
+public class YouTrackRepositoryEditor extends BaseRepositoryEditor<YouTrackRepository> {
+  private EditorTextField myDefaultSearch;
+  private JBLabel mySearchLabel;
+
+  public YouTrackRepositoryEditor(final Project project, final YouTrackRepository repository, Consumer<? super YouTrackRepository> changeListener) {
+    super(project, repository, changeListener);
+    myPasswordLabel.setText(TaskBundle.message("label.token"));
+
+    // Setup document for completion and highlighting
+    final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDefaultSearch.getDocument());
+    assert file != null;
+    file.putUserData(YouTrackIntellisense.INTELLISENSE_KEY, new YouTrackIntellisense(myRepository));
+  }
+
+  @Override
+  protected void afterTestConnection(boolean connectionSuccessful) {
+    super.afterTestConnection(connectionSuccessful);
+    // highlight query if connection was successful
+    if (connectionSuccessful) {
+      DaemonCodeAnalyzer.getInstance(myProject).restart(this);
+    }
+  }
+
+  @Override
+  public void apply() {
+    myRepository.setDefaultSearch(myDefaultSearch.getText());
+    super.apply();
+  }
+
+  @Override
+  protected @Nullable JComponent createCustomPanel() {
+    mySearchLabel = new JBLabel(TaskBundle.message("label.search"), SwingConstants.RIGHT);
+    myDefaultSearch = new LanguageTextField(YouTrackLanguage.INSTANCE, myProject, myRepository.getDefaultSearch());
+    installListener(myDefaultSearch);
+    return FormBuilder.createFormBuilder().addLabeledComponent(mySearchLabel, myDefaultSearch).getPanel();
+  }
+
+  @Override
+  public void setAnchor(final @Nullable JComponent anchor) {
+    super.setAnchor(anchor);
+    mySearchLabel.setAnchor(anchor);
+  }
+}

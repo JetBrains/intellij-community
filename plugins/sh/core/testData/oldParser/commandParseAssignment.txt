@@ -1,0 +1,8 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    ASSIGNMENT_COMMAND
+      LITERAL
+        PsiElement(word)('a')
+      PsiElement(=)('=')
+      LITERAL
+        PsiElement(word)('a')

@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       https://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<!--
+  This POM has been created manually by the Ant Development Team.
+  Please contact us if you are not satisfied with the data contained in this POM.
+  URL : https://ant.apache.org
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/maven-v4_0_0.xsd">
+  <parent>
+    <groupId>org.apache.ant</groupId>
+    <artifactId>ant-parent</artifactId>
+    <relativePath>../pom.xml</relativePath>
+    <version>1.10.14</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <url>https://ant.apache.org/</url>  
+  <groupId>org.apache.ant</groupId>
+  <artifactId>ant-junit</artifactId>
+  <version>1.10.14</version>
+  <name>Apache Ant + JUnit</name>
+  <description>contains the junit and junirreport tasks</description>
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.ant</groupId>
+      <artifactId>ant</artifactId>
+      <version>1.10.14</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.13.2</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>xerces</groupId>
+      <artifactId>xercesImpl</artifactId>
+      <version>2.12.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>xalan</groupId>
+      <artifactId>xalan</artifactId>
+      <version>2.7.3</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-junit-xsl</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <copy todir="${project.build.outputDirectory}/org/apache/tools/ant/taskdefs/optional/junit/xsl">
+                  <fileset dir="${project.build.scriptSourceDirectory}">
+                    <include name="junit-frames.xsl"/>
+                    <include name="junit-noframes.xsl"/>
+                    <include name="junit-frames-saxon.xsl"/>
+                    <include name="junit-noframes-saxon.xsl"/>
+                  </fileset>
+                </copy>              
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <includes>
+            <include>org/apache/tools/ant/taskdefs/optional/junit/*</include>
+          </includes>
+          <testIncludes>
+            <include>org/apache/tools/ant/taskdefs/optional/junit/</include>
+            <include>org/example/junit/</include>
+            <include>org/example/tasks/*.java</include>
+            <include>org/example/types/</include>
+          </testIncludes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <!-- Cannot exclude JUnit 4-specific classes from compilation because tests depend on them -->
+          <excludes>
+            <exclude>org/apache/tools/ant/taskdefs/optional/junit/JUnit4TestMethodAdapter*</exclude>
+            <exclude>org/apache/tools/ant/taskdefs/optional/junit/CustomJUnit4TestAdapterCache*</exclude>
+          </excludes>
+          <archive>
+            <index>true</index>
+            <manifest>
+              <addExtensions>true</addExtensions>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <basedir>../../../..</basedir>
+          <workingDirectory>../../../..</workingDirectory>
+          <systemProperties>
+            <property>
+              <name>build.tests.value</name>
+              <value>${project.basedir}/../../../../target/${project.artifactId}/testcases</value>
+            </property>
+            <property>
+              <name>ant.test.basedir.ignore</name>
+              <value>true</value>
+            </property>
+          </systemProperties>
+          <excludes>
+            <exclude>org/example/junit/*</exclude>
+            <exclude>org/apache/tools/ant/taskdefs/optional/junit/*$*</exclude>
+            <!-- test fails as classloaders are different when run via Maven -->
+            <exclude>org/apache/tools/ant/taskdefs/optional/junit/JUnitTaskTest*</exclude>
+            <exclude>org/apache/tools/ant/taskdefs/optional/junit/JUnitClassLoaderTest*</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+    </plugins>
+    <resources>
+      <resource>
+        <directory>../../../..</directory>
+        <targetPath>META-INF</targetPath>
+        <includes>
+          <include>LICENSE</include>
+          <include>NOTICE</include>
+        </includes>
+      </resource>
+    </resources>
+    <testResources>
+      <testResource>
+        <directory>../../../../src/etc/testcases</directory>
+        <includes>
+         <include>taskdefs/optional/junit/**</include>
+          <include>taskdefs/optional/junit.xml</include>
+          <include>taskdefs/optional/junitreport.xml</include>
+         <include>buildfiletest-base.xml</include>
+        </includes>
+      </testResource>
+      <testResource>
+        <directory>../../../../src</directory>
+        <includes>
+          <include>tests/junit/org/apache/tools/ant/taskdefs/optional/junit/*Test.java</include>
+        </includes>
+      </testResource>
+      <testResource>
+        <directory>../../../../src/tests/junit</directory>
+        <includes>
+          <include>org/example/tasks/*.xml</include>
+        </includes>
+      </testResource>
+    </testResources>
+    <sourceDirectory>../../../../src/main</sourceDirectory>
+    <testSourceDirectory>../../../../src/tests/junit</testSourceDirectory>
+    <scriptSourceDirectory>../../../../src/etc</scriptSourceDirectory>
+    <outputDirectory>../../../../target/${project.artifactId}/classes</outputDirectory>
+    <testOutputDirectory>../../../../target/${project.artifactId}/testcases</testOutputDirectory>
+    <directory>../../../../target/${project.artifactId}</directory>
+  </build>
+</project>

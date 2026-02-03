@@ -1,0 +1,52 @@
+### auto-generated section `build intellij.tasks.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "core_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "core",
+  module_name = "intellij.tasks.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":core_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/tasks/tasks-api:tasks",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/vcs-api:vcs",
+    "//platform/lang-impl",
+    "//platform/vcs-impl",
+    "//plugins/tasks/tasks-core/lib:tasks-core-axis-1-4",
+    "//libraries/gson",
+    "//xml/impl",
+    "//platform/core-api:core",
+    "//platform/lang-api:lang",
+    "//RegExpSupport:regexp",
+    "//platform/xdebugger-api:debugger",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//libraries/http-client",
+    "//platform/tasks-platform-impl:tasks-impl",
+    "//platform/tasks-platform-api:tasks",
+    "//plugins/tasks/tasks-compatibility:compatibility",
+    "@lib//:tasks-core-commons-discovery",
+    "//libraries/javax/annotation",
+    "//platform/core-ui",
+    "//libraries/jsonpath",
+    "//platform/core-impl",
+    "//platform/statistics",
+    "//platform/util/jdom",
+    "//platform/markdown-utils",
+    "//platform/util/text-matching",
+    "//platform/polySymbols",
+    "//platform/forms_rt:java-guiForms-rt",
+  ],
+  exports = ["//plugins/tasks/tasks-core/lib:tasks-core-axis-1-4"]
+)
+### auto-generated section `build intellij.tasks.core` end

@@ -1,0 +1,21 @@
+<component name="libraryTable">
+  <library name="kotlin-test" type="repository">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-test:2.3.10-RC">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.3.10-RC/kotlin-test-2.3.10-RC.jar">
+          <sha256sum>1f45eb5d2feb788ca14ef857171c3848144f3a90778fb26f297a07834537e1fb</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.3.10-RC/kotlin-test-2.3.10-RC.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.3.10-RC/kotlin-test-2.3.10-RC-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

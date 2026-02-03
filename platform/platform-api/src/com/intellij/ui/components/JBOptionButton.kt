@@ -1,0 +1,91 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.components
+
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText
+import com.intellij.openapi.ui.OptionAction
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.Weighted
+import com.intellij.ui.UIBundle
+import org.jetbrains.annotations.Nls
+import java.awt.Color
+import java.awt.event.ActionEvent
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.JButton
+import javax.swing.KeyStroke.getKeyStroke
+
+private val DEFAULT_SHOW_POPUP_SHORTCUT = CustomShortcutSet(getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_MASK or InputEvent.SHIFT_MASK))
+
+open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(action), Weighted {
+  var options: Array<Action>? = null
+    set(value) {
+      val oldOptions = options
+      field = value
+
+      firePropertyChange(PROP_OPTIONS, oldOptions, options)
+      if (!oldOptions.contentEquals(options)) {
+        revalidate()
+        repaint()
+      }
+    }
+
+  fun setOptions(actions: List<AnAction>?) {
+    options = actions?.map { AnActionWrapper(it) }?.toTypedArray()
+  }
+
+  var optionTooltipText: @Nls String? = null
+    set(value) {
+      val oldValue = optionTooltipText
+      field = value
+      firePropertyChange(PROP_OPTION_TOOLTIP, oldValue, optionTooltipText)
+    }
+  var optionAdText: @NlsContexts.PopupAdvertisement String? = null
+
+  val isSimpleButton: Boolean get() = options.isNullOrEmpty()
+
+  var addSeparator: Boolean = true
+  var hideDisabledOptions: Boolean = false
+  var selectFirstItem: Boolean = true
+  var popupBackgroundColor: Color? = null
+  var showPopupYOffset: Int = 6
+  var popupHandler: ((JBPopup) -> Unit)? = null
+
+  init {
+    this.options = options
+  }
+
+  override fun getUIClassID(): String = "OptionButtonUI"
+  override fun getUI(): OptionButtonUI = super.getUI() as OptionButtonUI
+
+  override fun getWeight(): Double = 0.5
+
+  fun togglePopup(): Unit = getUI().togglePopup()
+  fun showPopup(actionToSelect: Action? = null, ensureSelection: Boolean = true): Unit = getUI().showPopup(actionToSelect, ensureSelection)
+  fun closePopup(): Unit = getUI().closePopup()
+
+  companion object {
+    const val PROP_OPTIONS: String = "OptionActions"
+    const val PROP_OPTION_TOOLTIP: String = "OptionTooltip"
+    const val PLACE: String = "ActionPlace"
+
+    @JvmStatic
+    fun getDefaultShowPopupShortcut(): CustomShortcutSet = DEFAULT_SHOW_POPUP_SHORTCUT
+
+    @JvmStatic
+    fun getDefaultTooltip(): @Nls String = UIBundle.message("option.button.tooltip.shortcut.text",
+                                                            getFirstKeyboardShortcutText(getDefaultShowPopupShortcut()))
+  }
+}
+
+private class AnActionWrapper(action: AnAction) : AbstractAction() {
+  init {
+    putValue(OptionAction.AN_ACTION, action)
+  }
+
+  override fun actionPerformed(e: ActionEvent) = Unit
+}

@@ -1,0 +1,37 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.java"/>
+    <module name="intellij.java.indexing"/>
+    <module name="intellij.java.resources"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.core.ui"/>
+
+    <module name="intellij.platform.backend"/>
+    <plugin id="com.intellij.modules.java-capable"/>
+
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.exceptionFilter" interface="com.intellij.execution.filters.ExceptionFilterFactory"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.java.programPatcher"
+                    interface="com.intellij.execution.runners.JavaProgramPatcher" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.java.consoleDecorator"
+                    interface="com.intellij.execution.application.JavaConsoleDecorator" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.junitPatcher"
+                    interface="com.intellij.execution.JUnitPatcher" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.junitRecognizer"
+                    interface="com.intellij.execution.JUnitRecognizer" dynamic="true"/>
+    <!-- See com.intellij.execution.filters.ExceptionFilter -->
+    <extensionPoint qualifiedName="com.intellij.jvm.exceptionFilter" interface="com.intellij.execution.filters.JvmExceptionOccurrenceFilter"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.execution.applicationRunLineMarkerHider"
+                    interface="com.intellij.execution.ApplicationRunLineMarkerHider" dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

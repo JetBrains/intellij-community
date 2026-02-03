@@ -1,0 +1,16 @@
+def foo() {
+  '''<caret>
+class Foo {
+  void foo() {}
+}
+'''
+}
+-----
+def foo() {
+  '''
+<caret>
+class Foo {
+  void foo() {}
+}
+'''
+}

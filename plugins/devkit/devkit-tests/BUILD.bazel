@@ -1,0 +1,64 @@
+### auto-generated section `build intellij.devkit.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/devkit/devkit-core:core",
+    "//java/testFramework",
+    "//platform/util",
+    "//platform/testFramework",
+    "//xml/dom-tests",
+    "//java/compiler:compiler-tests",
+    "//xml/dom-openapi:dom",
+    "//xml/dom-impl",
+    "//java/compiler/openapi:java-compiler",
+    "//jvm/jvm-analysis-api:analysis",
+  ]
+)
+
+jvm_library(
+  name = "testFramework_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = ["//plugins/devkit/devkit-core:core"],
+  deps = [
+    "//java/testFramework",
+    "@lib//:assert_j",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/lang-core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//xml/dom-tests",
+    "//xml/dom-tests:dom-tests_test_lib",
+    "//java/compiler:compiler-tests",
+    "//java/compiler:compiler-tests_test_lib",
+    "//xml/dom-openapi:dom",
+    "//xml/dom-impl",
+    "//java/compiler/openapi:java-compiler",
+    "//jvm/jvm-analysis-api:analysis",
+    "//xml/xml-analysis-api:analysis",
+    "//xml/xml-analysis-impl:analysis-impl",
+    "//xml/xml-psi-api:psi",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
+  ],
+  runtime_deps = [":testFramework"]
+)
+### auto-generated section `build intellij.devkit.testFramework` end
+
+### auto-generated section `test intellij.devkit.testFramework` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "testFramework_test",
+  runtime_deps = [":testFramework_test_lib"]
+)
+### auto-generated section `test intellij.devkit.testFramework` end

@@ -1,0 +1,70 @@
+### auto-generated section `build intellij.vcs.git.terminal` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "terminal_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "terminal",
+  module_name = "intellij.vcs.git.terminal",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":terminal_resources"],
+  deps = [
+    "//platform/ide-core",
+    "//platform/util",
+    "//platform/util:util-ui",
+    "//plugins/git4idea/shared",
+    "//plugins/terminal",
+    "//plugins/git4idea:vcs-git",
+    "//plugins/terminal/completion",
+    "//platform/core-api:core",
+    "//platform/dvcs-impl:vcs-dvcs-impl",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+  ]
+)
+
+jvm_library(
+  name = "terminal_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":terminal"],
+  deps = [
+    "//platform/ide-core",
+    "//platform/util",
+    "//platform/util:util-ui",
+    "//plugins/git4idea/shared",
+    "//plugins/terminal",
+    "//plugins/git4idea:vcs-git",
+    "//plugins/git4idea:vcs-git_test_lib",
+    "//plugins/terminal/completion",
+    "//plugins/terminal/completion:completion_test_lib",
+    "//platform/core-api:core",
+    "//platform/dvcs-impl:vcs-dvcs-impl",
+    "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "@lib//:junit5",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/vcs-impl/shared",
+    "//platform/vcs-impl/shared:shared_test_lib",
+    "//platform/vcs-api/shared",
+    "@lib//:assert_j",
+    "//libraries/mockito",
+  ]
+)
+### auto-generated section `build intellij.vcs.git.terminal` end
+
+### auto-generated section `test intellij.vcs.git.terminal` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "terminal_test",
+  runtime_deps = [":terminal_test_lib"]
+)
+### auto-generated section `test intellij.vcs.git.terminal` end

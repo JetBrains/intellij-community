@@ -1,0 +1,16 @@
+// "Replace with 'kotlin.math.cos(x)'" "true"
+// WITH_STDLIB
+
+package package1
+
+import package1.Math.cos
+
+object Math {
+    @Deprecated("Replace", ReplaceWith("kotlin.math.cos(x)", "kotlin.math.cos"))
+    fun cos(x: Double): Double = kotlin.math.cos(x)
+}
+
+val test = <caret>cos(kotlin.math.PI)
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

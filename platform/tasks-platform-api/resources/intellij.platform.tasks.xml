@@ -1,0 +1,10 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.vcs"/>
+  </dependencies>
+  <extensionPoints>
+    <extensionPoint name="tasks.contextProvider" interface="com.intellij.tasks.context.WorkingContextProvider" dynamic="true"/>
+    <extensionPoint name="tasks.repositoryType" interface="com.intellij.tasks.TaskRepositoryType" dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

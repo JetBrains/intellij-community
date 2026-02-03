@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="jediterm-core" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.jediterm:jediterm-core:3.61">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-core/3.61/jediterm-core-3.61.jar">
+          <sha256sum>7a84af314d92bb8bf16ed6d09ba7ec7f563ebb8ba026001ba84aa88db7bd2636</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-core/3.61/jediterm-core-3.61.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-core/3.61/jediterm-core-3.61-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

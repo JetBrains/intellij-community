@@ -1,0 +1,11 @@
+def foo() {
+    <begin>[].collect { it }<end>
+}
+-----
+def foo() {
+    testMethod()
+}
+
+private List<Object> testMethod() {
+    return [].collect { it }
+}

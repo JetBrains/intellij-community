@@ -1,0 +1,4 @@
+"aaa${<begin>aaa[0]<end>}aaa"
+-----
+def preved = aaa[0]
+"aaa${preved<caret>}aaa"

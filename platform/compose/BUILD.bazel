@@ -1,0 +1,92 @@
+### auto-generated section `build intellij.platform.compose` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "compose_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "compose",
+  module_name = "intellij.platform.compose",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":compose_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/jewel/ui",
+    "//platform/jewel/foundation",
+    "//platform/jewel/ide-laf-bridge",
+    "//platform/core-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/analysis-api:analysis",
+    "@lib//:jetbrains-annotations",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/compose-runtime-desktop",
+    "//libraries/skiko",
+    "@lib//:jetbrains-compose-components-ui-tooling-preview-desktop",
+    "//platform/diagnostic/telemetry",
+    "//platform/core-impl",
+  ],
+  exports = [
+    "//platform/jewel/ui",
+    "//platform/jewel/foundation",
+    "//platform/jewel/ide-laf-bridge",
+    "@lib//:jetbrains-compose-components-ui-tooling-preview-desktop",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
+
+jvm_library(
+  name = "compose_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [":compose"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/jewel/ui",
+    "//platform/jewel/ui:ui_test_lib",
+    "//platform/jewel/foundation",
+    "//platform/jewel/foundation:foundation_test_lib",
+    "//platform/jewel/ide-laf-bridge",
+    "//platform/jewel/ide-laf-bridge:ide-laf-bridge_test_lib",
+    "//platform/core-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/analysis-api:analysis",
+    "@lib//:jetbrains-annotations",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/compose-runtime-desktop",
+    "//libraries/skiko",
+    "@lib//:jetbrains-compose-components-ui-tooling-preview-desktop",
+    "@lib//:junit4",
+    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
+    "//platform/diagnostic/telemetry",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/core-impl",
+  ],
+  exports = [
+    "//platform/jewel/ui",
+    "//platform/jewel/ui:ui_test_lib",
+    "//platform/jewel/foundation",
+    "//platform/jewel/foundation:foundation_test_lib",
+    "//platform/jewel/ide-laf-bridge",
+    "//platform/jewel/ide-laf-bridge:ide-laf-bridge_test_lib",
+    "@lib//:jetbrains-compose-components-ui-tooling-preview-desktop",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
+### auto-generated section `build intellij.platform.compose` end
+
+### auto-generated section `test intellij.platform.compose` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "compose_test",
+  runtime_deps = [":compose_test_lib"]
+)
+### auto-generated section `test intellij.platform.compose` end

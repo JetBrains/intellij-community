@@ -1,0 +1,6 @@
+-InsideClass.java
+ -[InsideClass]
+  InsideClass()
+  foo(): void
+  num1: int
+  num2: int

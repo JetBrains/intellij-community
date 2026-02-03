@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.jzlib.jar
+  modules:
+  - name: intellij.libraries.jzlib
+    libraries:
+      jzlib:
+      - name: $MAVEN_REPOSITORY$/com/jcraft/jzlib/1/jzlib-1.jar

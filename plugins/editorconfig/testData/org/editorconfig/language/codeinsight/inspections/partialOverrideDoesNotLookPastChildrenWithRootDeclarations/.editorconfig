@@ -1,0 +1,7 @@
+root = true
+
+# Is NOT overlapped by [{a,b,c}] in ./withRoot/.editorconfig.
+# Due to the `root = there`, these sections do not interact and so the user should not try to fix anything.
+[{a,b}]
+
+<weak_warning>[{1,2}]</weak_warning>

@@ -1,0 +1,5 @@
+<project name="Some Project" default="all">
+  <target name="all" unless="my.prop">
+    <property name="new.prop" value="${<ref>my.prop}"/>
+  </target>
+</project>

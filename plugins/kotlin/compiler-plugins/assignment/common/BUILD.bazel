@@ -1,0 +1,41 @@
+### auto-generated section `build intellij.kotlin.compilerPlugins.assignment.fixes` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_kotlin-compilerPlugins-assignment-fixes",
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "kotlin-compilerPlugins-assignment-fixes_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-compilerPlugins-assignment-fixes",
+  module_name = "intellij.kotlin.compilerPlugins.assignment.fixes",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-compilerPlugins-assignment-fixes_resources"],
+  kotlinc_opts = ":custom_kotlin-compilerPlugins-assignment-fixes",
+  deps = [
+    "//platform/core-api:core",
+    "@lib//:kotlin-stdlib",
+    "//plugins/kotlin/code-insight/api",
+    "@lib//:kotlinc-analysis-api-k2",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+    "//plugins/kotlin/fir",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "//platform/util",
+    "//platform/core-impl",
+    "//platform/analysis-api:analysis",
+    "//java/java-psi-api:psi",
+    "//plugins/kotlin/code-insight/fixes-k2:kotlin-codeInsight-fixes",
+    "//plugins/kotlin/base/project-structure",
+  ]
+)
+### auto-generated section `build intellij.kotlin.compilerPlugins.assignment.fixes` end

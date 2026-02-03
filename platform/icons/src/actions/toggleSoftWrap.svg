@@ -1,0 +1,11 @@
+<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <g fill="none" fill-rule="evenodd">
+    <rect width="3" height="2" x="2" y="12" fill="#6E6E6E" fill-rule="nonzero"/>
+    <rect width="1" height="2" x="10" y="12" fill="#6E6E6E" fill-rule="nonzero"/>
+    <rect width="9" height="2" x="2" y="7" fill="#6E6E6E" fill-rule="nonzero"/>
+    <rect width="12" height="2" x="2" y="2" fill="#6E6E6E" fill-rule="nonzero"/>
+    <polygon fill="#6E6E6E" fill-rule="nonzero" points="10 10 10 16 7 13"/>
+    <path fill="#6E6E6E" fill-rule="nonzero" d="M11,7 L11.5,7 C13.4329966,7 15,8.56700338 15,10.5 C15,12.4329966 13.4329966,14 11.5,14 L11,14 L11,12 L11.5,12 C12.3284271,12 13,11.3284271 13,10.5 C13,9.67157288 12.3284271,9 11.5,9 L11,9 L11,7 Z"/>
+  </g>
+</svg>

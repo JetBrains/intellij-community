@@ -1,0 +1,136 @@
+### auto-generated section `build intellij.xml.emmet` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
+
+resourcegroup(
+  name = "emmet_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_provided_library(
+  name = "platform_core_provided",
+  lib = "//platform/core-api:core"
+)
+
+jvm_provided_library(
+  name = "platform_analysis-impl_provided",
+  lib = "//platform/analysis-impl"
+)
+
+jvm_provided_library(
+  name = "xml_psi_provided",
+  lib = "//xml/xml-psi-api:psi"
+)
+
+jvm_provided_library(
+  name = "platform_lang-impl_provided",
+  lib = "//platform/lang-impl"
+)
+
+jvm_provided_library(
+  name = "platform_projectModel_provided",
+  lib = "//platform/projectModel-api:projectModel"
+)
+
+jvm_provided_library(
+  name = "platform_editor-ui_provided",
+  lib = "//platform/editor-ui-api:editor-ui"
+)
+
+jvm_provided_library(
+  name = "platform_codeStyle_provided",
+  lib = "//platform/code-style-api:codeStyle"
+)
+
+jvm_provided_library(
+  name = "xml_psi-impl_provided",
+  lib = "//xml/xml-psi-impl:psi-impl"
+)
+
+jvm_provided_library(
+  name = "xml_parser_provided",
+  lib = "//xml/xml-parser:parser"
+)
+
+jvm_provided_library(
+  name = "libraries_xerces_provided",
+  lib = "//libraries/xerces"
+)
+
+jvm_provided_library(
+  name = "platform_analysis_provided",
+  lib = "//platform/analysis-api:analysis"
+)
+
+jvm_provided_library(
+  name = "platform_core-impl_provided",
+  lib = "//platform/core-impl"
+)
+
+jvm_provided_library(
+  name = "xml_ui-common_provided",
+  lib = "//xml/xml-ui-common:ui-common"
+)
+
+jvm_provided_library(
+  name = "platform_ide-core_provided",
+  lib = "//platform/ide-core"
+)
+
+jvm_provided_library(
+  name = "platform_ide-impl_provided",
+  lib = "//platform/platform-impl:ide-impl"
+)
+
+jvm_provided_library(
+  name = "platform_editor-ex_provided",
+  lib = "//platform/editor-ui-ex:editor-ex"
+)
+
+jvm_provided_library(
+  name = "platform_lang_provided",
+  lib = "//platform/lang-api:lang"
+)
+
+jvm_provided_library(
+  name = "platform_core-ui_provided",
+  lib = "//platform/core-ui"
+)
+
+jvm_provided_library(
+  name = "platform_refactoring_provided",
+  lib = "//platform/refactoring"
+)
+
+jvm_library(
+  name = "emmet",
+  module_name = "intellij.xml.emmet",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":emmet_resources"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib-provided",
+    "//platform/forms_rt:java-guiForms-rt",
+    ":platform_core_provided",
+    ":platform_analysis-impl_provided",
+    ":xml_psi_provided",
+    ":platform_lang-impl_provided",
+    ":platform_projectModel_provided",
+    ":platform_editor-ui_provided",
+    ":platform_codeStyle_provided",
+    ":xml_psi-impl_provided",
+    ":xml_parser_provided",
+    ":libraries_xerces_provided",
+    ":platform_analysis_provided",
+    ":platform_core-impl_provided",
+    ":xml_ui-common_provided",
+    ":platform_ide-core_provided",
+    ":platform_ide-impl_provided",
+    ":platform_editor-ex_provided",
+    ":platform_lang_provided",
+    ":platform_core-ui_provided",
+    ":platform_refactoring_provided",
+  ]
+)
+### auto-generated section `build intellij.xml.emmet` end

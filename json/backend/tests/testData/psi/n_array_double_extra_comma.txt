@@ -1,0 +1,9 @@
+JsonFile: n_array_double_extra_comma.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"x"')
+    PsiElement(,)(',')
+    PsiErrorElement:',' unexpected
+      PsiElement(,)(',')
+    PsiElement(])(']')

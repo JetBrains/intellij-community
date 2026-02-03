@@ -1,0 +1,2 @@
+version = "4.41.*"
+upstream_repository = "https://github.com/braintree/braintree_python"

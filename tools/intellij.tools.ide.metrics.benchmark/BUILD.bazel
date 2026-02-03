@@ -1,0 +1,74 @@
+### auto-generated section `build intellij.tools.ide.metrics.benchmark` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "ide-metrics-benchmark_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+resourcegroup(
+  name = "ide-metrics-benchmark_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "ide-metrics-benchmark",
+  module_name = "intellij.tools.ide.metrics.benchmark",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ide-metrics-benchmark_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//platform/core-api:core",
+    "//platform/diagnostic/telemetry",
+    "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector",
+    "//tools/intellij.tools.ide.util.common:ide-util-common",
+    "//platform/testFramework",
+    "@lib//:opentelemetry",
+    "//platform/boot",
+    "//platform/core-impl",
+  ]
+)
+
+jvm_library(
+  name = "ide-metrics-benchmark_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":ide-metrics-benchmark_test_resources"],
+  associates = [":ide-metrics-benchmark"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//platform/core-api:core",
+    "//platform/diagnostic/telemetry",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "@lib//:junit4",
+    "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector",
+    "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector_test_lib",
+    "//tools/intellij.tools.ide.util.common:ide-util-common",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "@lib//:opentelemetry",
+    "//platform/boot",
+    "//platform/core-impl",
+  ]
+)
+### auto-generated section `build intellij.tools.ide.metrics.benchmark` end
+
+### auto-generated section `test intellij.tools.ide.metrics.benchmark` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "ide-metrics-benchmark_test",
+  runtime_deps = [":ide-metrics-benchmark_test_lib"]
+)
+### auto-generated section `test intellij.tools.ide.metrics.benchmark` end

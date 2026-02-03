@@ -1,0 +1,50 @@
+### auto-generated section `build fleet.util.core` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_core",
+  opt_in = ["kotlin.concurrent.atomics.ExperimentalAtomicApi"],
+  x_consistent_data_class_copy_visibility = True,
+  x_lambdas = "class"
+)
+
+resourcegroup(
+  name = "core_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_provided_library(
+  name = "fleet_util_multiplatform_provided",
+  lib = "//fleet/util/multiplatform"
+)
+
+jvm_library(
+  name = "core",
+  module_name = "fleet.util.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form", "srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  resources = [":core_resources"],
+  kotlinc_opts = ":custom_core",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//fleet/util/logging/api",
+    "@lib//:kotlinx-collections-immutable",
+    "//fleet/reporting/api",
+    "//fleet/reporting/shared",
+    "//fleet/multiplatform.shims",
+    "//fleet/util/serialization",
+    ":fleet_util_multiplatform_provided",
+  ],
+  exports = [
+    "//fleet/util/logging/api",
+    "@lib//:kotlinx-collections-immutable",
+    "//fleet/multiplatform.shims",
+    "//fleet/util/serialization",
+  ]
+)
+### auto-generated section `build fleet.util.core` end

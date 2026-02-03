@@ -1,0 +1,17 @@
+interface AccountModule {
+  static void createAccount(String a, String b) {
+  }
+
+    String getB();
+}
+class UseModule implements AccountModule {
+
+  public void createSome() {
+      AccountModule.createAccount("", getB());
+  }
+
+  @Override
+  public String getB() {
+    return "";
+  }
+}

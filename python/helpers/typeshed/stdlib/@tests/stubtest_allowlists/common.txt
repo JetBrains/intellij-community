@@ -1,0 +1,552 @@
+# ============================================
+# TODO: Allowlist entries that should be fixed
+# ============================================
+
+# Please keep sorted alphabetically
+
+importlib.abc.Loader.exec_module  # See Lib/importlib/_abc.py. Might be defined for backwards compatibility
+importlib.abc.MetaPathFinder.find_spec  # Not defined on the actual class, but expected to exist.
+importlib.abc.PathEntryFinder.find_spec  # Not defined on the actual class, but expected to exist.
+tkinter.simpledialog.[A-Z_]+
+tkinter.simpledialog.TclVersion
+tkinter.simpledialog.TkVersion
+tarfile.TarInfo.__slots__  # it's a big dictionary at runtime and the dictionary values are a bit long
+
+
+# ===============================================================
+# TODO: Modules that exist at runtime, but are missing from stubs
+# ===============================================================
+
+turtledemo
+turtledemo\..+
+
+
+# ======================================================================
+# TODO: Module members that exist at runtime, but are missing from stubs
+# ======================================================================
+
+tkinter.Misc.config
+
+
+# ======================================================================
+# Modules that exist at runtime, but are deliberately missing from stubs
+# ======================================================================
+
+idlelib
+
+
+# =============================================================================
+# Module members that exist at runtime, but are deliberately missing from stubs
+# =============================================================================
+
+_collections_abc.AsyncIterable.__class_getitem__
+_collections_abc.Awaitable.__class_getitem__
+_collections_abc.Container.__class_getitem__
+_collections_abc.Iterable.__class_getitem__
+_collections_abc.MappingView.__class_getitem__
+
+_collections_abc.Mapping.__reversed__  # set to None at runtime for a better error message
+
+# Adding these reflected dunders to `typing.AbstractSet` causes a large number of false-positives. See #7414.
+_collections_abc.Set.__rand__
+_collections_abc.Set.__ror__
+_collections_abc.Set.__rsub__
+_collections_abc.Set.__rxor__
+
+# Undocumented implementation details of a deprecated class
+_frozen_importlib_external.WindowsRegistryFinder.DEBUG_BUILD
+_frozen_importlib_external.WindowsRegistryFinder.REGISTRY_KEY
+_frozen_importlib_external.WindowsRegistryFinder.REGISTRY_KEY_DEBUG
+
+builtins.OSError.characters_written  # GetSetDescriptor that always raises AttributeError
+builtins.float.__getformat__  # Internal method for CPython test suite
+
+# These super() dunders don't seem to be particularly useful,
+# and having them pop up on autocomplete suggestions would be annoying
+builtins.super.__self__
+builtins.super.__self_class__
+builtins.super.__thisclass__
+
+# Undocumented implementation details
+email.contentmanager.get_and_fixup_unknown_message_content
+email.contentmanager.get_message_content
+email.contentmanager.get_non_text_content
+email.contentmanager.get_text_content
+email.contentmanager.set_bytes_content
+email.contentmanager.set_message_content
+email.contentmanager.set_text_content
+
+ftplib.FTP.trust_server_pasv_ipv4_address  # Dangerous to use, intentionally undocumented #6154
+hmac.HMAC.blocksize  # use block_size instead
+
+# Undocumented implementation details of a deprecated class
+importlib._bootstrap_external.WindowsRegistryFinder.DEBUG_BUILD
+importlib._bootstrap_external.WindowsRegistryFinder.REGISTRY_KEY
+importlib._bootstrap_external.WindowsRegistryFinder.REGISTRY_KEY_DEBUG
+importlib.machinery.WindowsRegistryFinder.DEBUG_BUILD
+importlib.machinery.WindowsRegistryFinder.REGISTRY_KEY
+importlib.machinery.WindowsRegistryFinder.REGISTRY_KEY_DEBUG
+
+# Undocumented implementation details
+profile.Profile.dispatch
+profile.Profile.fake_code
+profile.Profile.fake_frame
+profile.Profile.trace_dispatch
+profile.Profile.trace_dispatch_c_call
+profile.Profile.trace_dispatch_call
+profile.Profile.trace_dispatch_exception
+profile.Profile.trace_dispatch_i
+profile.Profile.trace_dispatch_l
+profile.Profile.trace_dispatch_mac
+profile.Profile.trace_dispatch_return
+
+re.Pattern.scanner  # Undocumented and not useful. #6405
+
+# Missing aliases to existing methods that not many people seem to use.
+# Complicated multiple inheritance, confuses type checkers.
+tkinter.Grid.bbox
+tkinter.Grid.columnconfigure
+tkinter.Grid.config
+tkinter.Grid.configure
+tkinter.Grid.forget
+tkinter.Grid.grid_bbox
+tkinter.Grid.grid_columnconfigure
+tkinter.Grid.grid_location
+tkinter.Grid.grid_propagate
+tkinter.Grid.grid_rowconfigure
+tkinter.Grid.grid_size
+tkinter.Grid.grid_slaves
+tkinter.Grid.info
+tkinter.Grid.propagate
+tkinter.Grid.rowconfigure
+tkinter.Grid.slaves
+tkinter.Pack.config
+tkinter.Pack.configure
+tkinter.Pack.info
+tkinter.Pack.pack_propagate
+tkinter.Pack.pack_slaves
+tkinter.Pack.slaves
+tkinter.Place.config
+tkinter.Place.configure
+tkinter.Place.forget
+tkinter.Place.place_slaves
+tkinter.Place.slaves
+
+turtle.ScrolledCanvas.adjustScrolls  # Undocumented implementation detail
+turtle.ScrolledCanvas.onResize  # Undocumented implementation detail
+typing_extensions.NewType.__mro_entries__  # just exists for an error message
+uuid.bytes_  # Attributes that are intended to be private
+uuid.int_  # Attributes that are intended to be private
+wave.Wave_read.initfp  # Undocumented implementation detail
+wave.Wave_write.initfp  # Undocumented implementation detail
+_?weakref\.ProxyType\.__bytes__  # Doesn't actually exist
+
+# Undocumented and have a comment in the source code saying "State variables (don't mess with these)"
+wsgiref.handlers.BaseHandler.bytes_sent
+wsgiref.handlers.BaseHandler.headers
+wsgiref.handlers.BaseHandler.headers_sent
+wsgiref.handlers.BaseHandler.result
+wsgiref.handlers.BaseHandler.status
+
+
+# =====================================
+# Platform and installation differences
+# =====================================
+
+# LC_MESSAGES is sometimes present in __all__, sometimes not,
+# so stubtest will sometimes complain about exported names being different at runtime to the exported names in the stub
+(locale.__all__)?
+
+# Loadable SQLite extensions are disabled on GitHub runners
+(sqlite3(.dbapi2)?.Connection.enable_load_extension)?
+(sqlite3(.dbapi2)?.Connection.load_extension)?
+
+# sys attributes that are not always defined
+sys.gettotalrefcount  # Available on python debug builds
+sys.last_traceback  # Available after an unhandled error has occured
+sys.last_type  # Available after an unhandled error has occured
+sys.last_value  # Available after an unhandled error has occured
+sys.ps1  # Available in interactive mode
+sys.ps2  # Available in interactive mode
+sys.tracebacklimit  # Must be set first
+
+# This is only present if Python was built with zlib-ng.
+(zlib\.ZLIBNG_VERSION)?
+(compression\.zlib\.ZLIBNG_VERSION)?
+
+
+# ==========================================================
+# Other allowlist entries that cannot or should not be fixed
+# ==========================================================
+
+# async at runtime, deliberately not in the stub, see #7491
+_collections_abc.AsyncGenerator.asend  # pos-only differences also.
+_collections_abc.AsyncGenerator.__anext__
+_collections_abc.AsyncGenerator.aclose
+_collections_abc.AsyncIterator.__anext__
+
+# Pretend typing.ByteString is a Union, to better match its documented semantics.
+# As a side effect, this changes the definition of collections.abc.ByteString, which is okay,
+# because it's not an ABC that makes any sense and was deprecated in 3.12
+_collections_abc\.ByteString
+typing\.ByteString
+
+_collections_abc.Callable  # Typing-related weirdness
+_collections_abc.Mapping.get  # Adding None to the Union messed up mypy
+_collections_abc.Sequence.index  # Supporting None in end is not mandatory
+
+_ctypes.CFuncPtr  # stubtest erroneously thinks it can't be subclassed
+
+# runtime is *args, **kwargs due to a wrapper; we have more accurate signatures in the stubs
+_frozen_importlib_external.ExtensionFileLoader.get_filename
+_frozen_importlib_external.FileLoader.get_filename
+_frozen_importlib_external.FileLoader.get_resource_reader
+_frozen_importlib_external.FileLoader.load_module
+
+# Mismatch of default values of `report` parameter:
+_markupbase.ParserBase.parse_comment
+_markupbase.ParserBase.parse_marked_section
+
+_pydecimal.*  # See comments in file
+_typeshed.*  # Utility types for typeshed, doesn't exist at runtime
+argparse.Namespace.__getattr__  # The whole point of this class is its attributes are dynamic
+
+# Runtime AST node runtime constructor behaviour is too loose.
+# For static typing, the loose behaviour is undesirable (https://github.com/python/typeshed/issues/8378).
+# For the runtime, the loose behaviour is deprecated in Python 3.13 (https://github.com/python/cpython/issues/105858)
+_?ast.AST.__init__
+_?ast.excepthandler.__init__
+_?ast.expr.__init__
+_?ast.stmt.__init__
+
+_ast.ImportFrom.level  # None on the class, but never None on instances
+
+argparse.Namespace.__setattr__  # should allow setting any attribute
+
+ast.ImportFrom.level  # None on the class, but never None on instances
+ast.NodeVisitor.visit_\w+  # Methods are discovered dynamically, see #3796
+
+# Condition functions are exported in __init__
+asyncio.Condition.acquire
+asyncio.Condition.locked
+asyncio.Condition.release
+asyncio.locks.Condition.acquire
+asyncio.locks.Condition.locked
+asyncio.locks.Condition.release
+
+builtins.memoryview.__contains__  # C type that implements __getitem__
+builtins.reveal_locals  # Builtins that type checkers pretends exist
+builtins.reveal_type  # Builtins that type checkers pretends exist
+
+# The following CodecInfo properties are added in __new__
+codecs.CodecInfo.decode
+codecs.CodecInfo.encode
+codecs.CodecInfo.incrementaldecoder
+codecs.CodecInfo.incrementalencoder
+codecs.CodecInfo.streamreader
+codecs.CodecInfo.streamwriter
+
+# See comments in file. List out methods that are delegated by __getattr__ at runtime.
+# Used to make the relevant class satisfy BinaryIO interface.
+codecs.StreamReaderWriter.\w+
+codecs.StreamRecoder.\w+
+
+collections.UserList.sort  # Runtime has *args but will error if any are supplied
+collections.abc.*  # Types are re-exported from _collections_abc, so errors should be fixed there
+configparser.SectionProxy.__getattr__  # SectionProxy can have arbitrary attributes when custom converters are used
+configparser.SectionProxy.getboolean  # SectionProxy get functions are set in __init__
+configparser.SectionProxy.getfloat  # SectionProxy get functions are set in __init__
+configparser.SectionProxy.getint  # SectionProxy get functions are set in __init__
+
+# Treated an alias of a typing class in the stubs,
+# they are generic to type checkers anyway.
+contextlib.AbstractAsyncContextManager.__class_getitem__
+contextlib.AbstractContextManager.__class_getitem__
+
+copy.PyStringMap  # defined only in Jython
+
+# The Dialect properties are initialized as None in Dialect but their values are enforced in _Dialect
+csv.Dialect.delimiter
+csv.Dialect.doublequote
+csv.Dialect.lineterminator
+csv.Dialect.quoting
+csv.Dialect.skipinitialspace
+
+csv.DictReader.__init__  # runtime sig has *args but will error if more than 5 positional args are supplied
+csv.DictWriter.__init__  # runtime sig has *args but will error if more than 5 positional args are supplied
+_?ctypes.Array._type_  # _type_ is abstract, https://github.com/python/typeshed/pull/6361
+_?ctypes.Array._length_  # _length_ is abstract, https://github.com/python/typeshed/pull/6361
+_?ctypes.Array.raw  # exists but stubtest can't see it; only available if _CT == c_char
+ctypes.CDLL._FuncPtr  # None at class level but initialized in __init__ to this value
+_?ctypes.Structure.__getattr__  # doesn't exist, but makes things easy if we pretend it does
+_?ctypes.Structure.__setattr__  # doesn't exist, but makes things easy if we pretend it does
+_?ctypes.Union.__getattr__  # doesn't exist, but makes things easy if we pretend it does
+_?ctypes.Union.__setattr__  # doesn't exist, but makes things easy if we pretend it does
+
+# Iterable classes that don't define __iter__ at runtime (usually iterable via __getitem__)
+# These would ideally be special-cased by type checkers; see https://github.com/python/mypy/issues/2220
+_?ctypes.Array.__iter__
+
+# __all__-related weirdness (see #6523)
+email.__all__
+email.base64mime
+email.charset
+email.encoders
+email.errors
+email.feedparser
+email.generator
+email.header
+email.iterators
+email.message
+email.mime
+email.parser
+email.quoprimime
+email.utils
+
+email.policy.EmailPolicy.message_factory  # "type" at runtime, but protocol in stubs
+enum.auto.__or__  # enum.auto is magic, see comments
+enum.auto.__and__  # enum.auto is magic, see comments
+enum.auto.__xor__  # enum.auto is magic, see comments
+
+functools._lru_cache_wrapper.cache_parameters  # Cannot be detected statically
+functools.cached_property.__set__  # doesn't exist, but cached_property is settable by another mechanism
+
+hmac.new  # Raises TypeError if optional argument digestmod is not provided
+html.parser.HTMLParser.parse_bogus_comment  # default values mismatch
+http.HTTPStatus.description  # set in __new__; work-around for enum wierdness
+http.HTTPStatus.phrase  # set in __new__; work-around for enum wierdness
+imaplib.IMAP4_SSL.ssl  # Depends on the existence and flags of SSL
+
+# runtime is *args, **kwargs due to a wrapper; we have more accurate signatures in the stubs
+importlib._bootstrap_external.ExtensionFileLoader.get_filename
+importlib._bootstrap_external.FileLoader.get_filename
+importlib._bootstrap_external.FileLoader.get_resource_reader
+importlib._bootstrap_external.FileLoader.load_module
+importlib.abc.FileLoader.get_filename
+importlib.abc.FileLoader.load_module
+importlib.machinery.ExtensionFileLoader.get_filename
+
+# We can't distinguish not having a default value from having a default value of inspect.Parameter.empty
+inspect.Parameter.__init__
+inspect.Signature.__init__
+
+logging.LogRecord.__setattr__  # doesn't exist, but makes things easy if we pretend it does
+
+# Iterable classes that don't define __iter__ at runtime (usually iterable via __getitem__)
+# These would ideally be special-cased by type checkers; see https://github.com/python/mypy/issues/2220
+mmap.mmap.__iter__
+mmap.mmap.__contains__
+
+multiprocessing.dummy.Condition.acquire  # Condition functions are exported in __init__
+multiprocessing.dummy.Condition.release  # Condition functions are exported in __init__
+
+# At runtime, these are functions from multiprocessing.context._default_context.
+# Typeshed makes them classes instead, which matches CPython documentation.
+# This has been heavily discussed, see #4266 for the primary issue about it.
+multiprocessing.JoinableQueue
+multiprocessing.Queue
+multiprocessing.SimpleQueue
+
+# A factory function that returns 'most efficient lock'.
+# Marking it as a function will make it impossible for users to use the Lock type as an annotation.
+multiprocessing.dummy.RLock
+
+# These multiprocessing proxy methods have *args, **kwargs signatures at runtime,
+# But have more precise (accurate) signatures in the stub
+multiprocessing.managers.BaseListProxy.__len__
+multiprocessing.managers.BaseListProxy.__reversed__
+multiprocessing.managers.BaseListProxy.reverse
+multiprocessing.managers.BaseListProxy.sort
+
+# runtime is *args, **kwargs due to a wrapper, but we have more accurate signatures in the stubs
+multiprocessing.managers.SyncManager.Event
+multiprocessing.managers.SyncManager.Lock
+multiprocessing.managers.SyncManager.Namespace
+multiprocessing.managers.SyncManager.RLock
+
+multiprocessing.(dummy|managers).Namespace.__[gs]etattr__  # Any field can be set on Namespace
+multiprocessing.pool.Pool.__del__  # Non-private parameter on __del__
+
+# These are because the ctx argument has a default value in the stubs but not
+# at runtime. This is a compromise between the runtime signatures of (for example)
+# multiprocessing.Queue and multiprocessing.queues.Queue, which typeshed
+# treats as the same object.
+multiprocessing.queues.JoinableQueue.__init__
+multiprocessing.queues.Queue.__init__
+multiprocessing.queues.SimpleQueue.__init__
+
+# These methods are dynamically created after object initialization,
+# copied from a wrapped lock object. Stubtest doesn't think they exist
+# because of that.
+multiprocessing.synchronize.Condition.acquire
+multiprocessing.synchronize.Condition.release
+multiprocessing.synchronize.SemLock.acquire
+multiprocessing.synchronize.SemLock.release
+
+numbers.Number.__hash__  # typeshed marks this as abstract but code just sets this as None
+
+optparse.Values.__getattr__  # Some attributes are set in __init__ using setattr
+optparse.Values.__setattr__  # doesn't exist, but makes things easy if we pretend it does
+
+os._wrap_close.read  # Methods that come from __getattr__() at runtime
+os._wrap_close.readable  # Methods that come from __getattr__() at runtime
+os._wrap_close.readline  # Methods that come from __getattr__() at runtime
+os._wrap_close.readlines  # Methods that come from __getattr__() at runtime
+os._wrap_close.writable  # Methods that come from __getattr__() at runtime
+os._wrap_close.write  # Methods that come from __getattr__() at runtime
+os._wrap_close.writelines  # Methods that come from __getattr__() at runtime
+os.PathLike.__class_getitem__  # PathLike is a protocol; we don't expect all PathLike classes to implement class_getitem
+
+pickle._Pickler\..*  # Best effort typing for undocumented internals
+pickle._Unpickler\..*  # Best effort typing for undocumented internals
+shutil.rmtree  # function with attributes, which we approximate with a callable protocol
+socketserver.BaseServer.get_request  # Not implemented, but expected to exist on subclasses.
+ssl.PROTOCOL_SSLv2  # Depends on the existence and flags of SSL
+ssl.PROTOCOL_SSLv3  # Depends on the existence and flags of SSL
+sys.implementation  # Actually SimpleNamespace but then you wouldn't have convenient attributes
+tarfile.TarFile.errors  # errors is initialized for some reason as None even though it really only accepts str
+tempfile._TemporaryFileWrapper.[\w_]+  # Dynamically specified by __getattr__, and thus don't exist on the class
+threading.Condition.acquire  # Condition functions are exported in __init__
+threading.Condition.release  # Condition functions are exported in __init__
+
+# A factory function that returns 'most efficient lock'.
+# Marking it as a function will make it impossible for users to use the Lock type as an annotation.
+threading.RLock
+
+tkinter.Misc.after  # we intentionally don't allow everything that "works" at runtime
+
+# Methods that come from __getattr__() at runtime
+tkinter.Tk.adderrorinfo
+tkinter.Tk.call
+tkinter.Tk.createcommand
+tkinter.Tk.createtimerhandler
+tkinter.Tk.dooneevent
+tkinter.Tk.eval
+tkinter.Tk.evalfile
+tkinter.Tk.exprboolean
+tkinter.Tk.exprdouble
+tkinter.Tk.exprlong
+tkinter.Tk.exprstring
+tkinter.Tk.globalgetvar
+tkinter.Tk.globalsetvar
+tkinter.Tk.globalunsetvar
+tkinter.Tk.interpaddr
+tkinter.Tk.record
+tkinter.Tk.splitlist
+tkinter.Tk.unsetvar
+tkinter.Tk.wantobjects
+tkinter.Tk.willdispatch
+
+tkinter.Misc.grid_propagate  # The noarg placeholder is a set value list
+tkinter.Misc.pack_propagate  # The noarg placeholder is a set value list
+tkinter.Tk.report_callback_exception  # A bit of a lie, since it's actually a method, but typing it as an attribute allows it to be assigned to
+tkinter.Wm.wm_iconphoto  # Default value of argument can't be used without runtime error
+tkinter.font.Font.__getitem__  # Argument name differs (doesn't matter for __dunder__ methods)
+traceback.TracebackException.from_exception  # explicitly expanding arguments going into TracebackException __init__
+turtle.ScrolledCanvas.find_all  # Dynamically created, has unnecessary *args
+turtle.ScrolledCanvas.select_clear  # Dynamically created, has unnecessary *args
+turtle.ScrolledCanvas.select_item  # Dynamically created, has unnecessary *args
+
+types.GenericAlias.__call__  # Would be complicated to fix properly, Any could silence problems. #6392
+types.GenericAlias.__getattr__
+
+typing.type_check_only  # typing decorator that is not available at runtime
+
+# Details of runtime definition don't need to be in stubs
+typing._Final
+typing._Final.__init_subclass__
+typing\.Protocol
+typing(_extensions)?\._TypedDict
+typing(_extensions)?\.Any.*
+typing(_extensions)?\.TypedDict
+typing_extensions\.ParamSpec.*
+typing_extensions\.TypeVar.*
+
+# Special primitives
+typing(_extensions)?\.AbstractSet
+typing(_extensions)?\.AsyncGenerator
+typing(_extensions)?\.AsyncIterable
+typing(_extensions)?\.AsyncIterator
+typing(_extensions)?\.Awaitable
+typing(_extensions)?\.Collection
+typing(_extensions)?\.Container
+typing(_extensions)?\.Coroutine
+typing(_extensions)?\.Generator
+typing(_extensions)?\.Hashable
+typing(_extensions)?\.ItemsView
+typing(_extensions)?\.Iterable
+typing(_extensions)?\.Iterator
+typing(_extensions)?\.KeysView
+typing(_extensions)?\.Mapping
+typing(_extensions)?\.MappingView
+typing(_extensions)?\.Match
+typing(_extensions)?\.MutableMapping
+typing(_extensions)?\.MutableSequence
+typing(_extensions)?\.MutableSet
+typing(_extensions)?\.NamedTuple
+typing(_extensions)?\.Pattern
+typing(_extensions)?\.Reversible
+typing(_extensions)?\.Sequence
+typing(_extensions)?\.Sized
+typing(_extensions)?\.ValuesView
+typing_extensions\.LiteralString
+
+# Typing-related weirdness
+typing._SpecialForm.__call__
+typing._SpecialForm.__init__
+
+# These are abstract properties at runtime,
+# but marking them as such in the stub breaks half the the typed-Python ecosystem (see #8726)
+typing(_extensions)?\.IO\.closed
+typing(_extensions)?\.IO\.mode
+typing(_extensions)?\.IO\.name
+typing(_extensions)?\.TextIO\.buffer
+typing(_extensions)?\.TextIO\.encoding
+typing(_extensions)?\.TextIO\.errors
+typing(_extensions)?\.TextIO\.line_buffering
+typing(_extensions)?\.TextIO\.newlines
+
+# These are typing._SpecialGenericAlias at runtime, which is not a real type, but it
+# behaves like one in most cases
+typing(_extensions)?\.(Async)?ContextManager
+
+# Iterable classes that don't define __iter__ at runtime (usually iterable via __getitem__)
+# These would ideally be special-cased by type checkers; see https://github.com/python/mypy/issues/2220
+# See https://github.com/python/typeshed/commit/97bc450acd60c1bcdafef3ce8fbe3b95a9c0cac3
+typing(_extensions)?\.IO\.__iter__
+typing(_extensions)?\.IO\.__next__
+
+types.MethodType.__closure__  # read-only but not actually a property; stubtest thinks it doesn't exist.
+types.MethodType.__code__  # read-only but not actually a property; stubtest thinks it doesn't exist.
+types.MethodType.__defaults__  # read-only but not actually a property; stubtest thinks it doesn't exist.
+types.ModuleType.__dict__  # read-only but not actually a property; stubtest thinks it's a mutable attribute.
+types.ModuleType.__getattr__  # this doesn't exist at runtime
+unittest.runner._WritelnDecorator.flush  # Methods that come from __getattr__() at runtime
+unittest.runner._WritelnDecorator.write  # Methods that come from __getattr__() at runtime
+urllib.response.addbase.write  # Methods that come from __getattr__() at runtime
+urllib.response.addbase.writelines  # Methods that come from __getattr__() at runtime
+unittest.mock.patch  # function with attributes, which we approximate with a callable class
+
+_?weakref\.CallableProxyType\.__getattr__  # Should have all attributes of proxy
+_?weakref\.(ref|ReferenceType)\.__init__  # C implementation has incorrect signature
+_?weakref\.(ref|ReferenceType)\.__call__  # C function default annotation is wrong
+_?weakref\.ProxyType\.__getattr__  # Should have all attributes of proxy
+_?weakref\.ProxyType\.__reversed__  # Doesn't really exist
+weakref.WeakValueDictionary.setdefault  # has a default value for the "default" argument, but always errors out if no value is supplied for the parameter by the user
+
+webbrowser.UnixBrowser.remote_action  # Always overridden in inheriting class
+webbrowser.UnixBrowser.remote_action_newtab  # Always overridden in inheriting class
+webbrowser.UnixBrowser.remote_action_newwin  # Always overridden in inheriting class
+xml.__all__  # __all__-related weirdness (see #6523)
+xml.dom  # __all__-related weirdness (see #6523)
+xml.etree  # __all__-related weirdness (see #6523)
+xml.parsers  # __all__-related weirdness (see #6523)
+xml.sax  # __all__-related weirdness (see #6523)
+xml.dom.minidom.StringTypes  # Unnecessary re-export
+xml.etree.ElementTree.XMLParser.__init__  # Defined in C so has general signature
+xml.etree.cElementTree.XMLParser.__init__  # Defined in C so has general signature
+
+# Iterable classes that don't define __iter__ at runtime (usually iterable via __getitem__)
+# These would ideally be special-cased by type checkers; see https://github.com/python/mypy/issues/2220
+xml.etree.ElementTree.Element.__iter__
+xml.etree.cElementTree.Element.__iter__

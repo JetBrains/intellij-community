@@ -1,0 +1,13 @@
+// EXTRACTION_TARGET: property with initializer
+
+fun foo(p: (String) -> Boolean) {
+
+}
+
+private val function: (String) -> Boolean = { it.isBlank() }
+
+fun bar() {
+    foo(function)
+}
+
+// IGNORE_K1

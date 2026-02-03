@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.jediterm.core.jar
+  modules:
+  - name: intellij.libraries.jediterm.core
+  library: jediterm-core
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-core/3/jediterm-core-3.jar

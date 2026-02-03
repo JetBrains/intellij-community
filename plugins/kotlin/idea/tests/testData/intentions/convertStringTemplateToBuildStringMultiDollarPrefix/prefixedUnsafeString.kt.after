@@ -1,0 +1,8 @@
+// COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
+// PRIORITY: LOW
+
+fun test() {
+    buildString {
+        append($$"$a$b$c")
+    }
+}

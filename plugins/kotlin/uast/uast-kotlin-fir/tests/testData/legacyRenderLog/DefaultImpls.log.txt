@@ -1,0 +1,9 @@
+UFile (package = )
+    UClass (name = Foo)
+        UMethod (name = bar)
+            UBlockExpression
+                UReturnExpression
+                    UPolyadicExpression (operator = +)
+                        ULiteralExpression (value = "Hello!")
+    UClass (name = Baz)
+        UMethod (name = Baz)

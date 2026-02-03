@@ -1,0 +1,5 @@
+fun <caret>funValParamE(aca: AuxClassA = AuxClassA(), afa: AuxFaceA = object : AuxFaceA {}) {}
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">fun</span> <span style="color:#000000;">funValParamE</span>(
+//INFO:     <span style="color:#000000;">aca</span><span style="">: </span><span style="color:#000000;"><a href="psi_element://AuxClassA">AuxClassA</a></span><span style=""> = </span><span style="">AuxClassA()</span>,
+//INFO:     <span style="color:#000000;">afa</span><span style="">: </span><span style="color:#000000;"><a href="psi_element://AuxFaceA">AuxFaceA</a></span><span style=""> = </span><span style="color:#000080;font-weight:bold;">object&#32;</span><span style="">:&#32;AuxFaceA&#32;{}</span>
+//INFO: )<span style="">: </span><span style="color:#000000;"><a href="psi_element://kotlin.Unit">Unit</a></span></pre></div><div class='bottom'><icon src="KotlinBaseResourcesIcons.Kotlin_file"/>&nbsp;funValParamE.kt<br/></div>

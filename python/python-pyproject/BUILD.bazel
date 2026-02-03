@@ -1,0 +1,108 @@
+### auto-generated section `build intellij.python.pyproject` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "pyproject_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+resourcegroup(
+  name = "pyproject_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "pyproject",
+  module_name = "intellij.python.pyproject",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":pyproject_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//python/openapi:community",
+    "//python/python-psi-impl:psi-impl",
+    "//platform/core-api:core",
+    "//python/python-sdk:sdk",
+    "//platform/util",
+    "//plugins/toml/core",
+    "@lib//:tuweni-toml",
+    "//platform/external-system-api:externalSystem",
+    "//platform/ide-core",
+    "//platform/progress/shared:ide-progress",
+    "//platform/backend/workspace",
+    "//platform/workspace/storage",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/workspace/jps",
+    "//platform/projectModel-impl",
+    "//platform/projectModel-api:projectModel",
+    "//python/common",
+    "//platform/lang-impl",
+    "//platform/lang-core",
+    "//platform/backend/observation",
+    "//platform/statistics",
+    "//platform/indexing-api:indexing",
+  ],
+  exports = ["@lib//:tuweni-toml"]
+)
+
+jvm_library(
+  name = "pyproject_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  resources = [":pyproject_test_resources"],
+  associates = [":pyproject"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/assertj-core",
+    "//python/openapi:community",
+    "//python/openapi:community_test_lib",
+    "//python/python-psi-impl:psi-impl",
+    "//platform/core-api:core",
+    "//python/python-sdk:sdk",
+    "//python/python-sdk:sdk_test_lib",
+    "//platform/util",
+    "//plugins/toml/core",
+    "@lib//:tuweni-toml",
+    "@lib//:junit5",
+    "@lib//:junit5Params",
+    "//platform/external-system-api:externalSystem",
+    "//platform/ide-core",
+    "//platform/progress/shared:ide-progress",
+    "//platform/backend/workspace",
+    "//platform/workspace/storage",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/workspace/jps",
+    "//platform/projectModel-impl",
+    "//platform/projectModel-api:projectModel",
+    "//python/common",
+    "//platform/lang-impl",
+    "//platform/lang-core",
+    "//platform/backend/observation",
+    "//platform/backend/observation:observation_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/testFramework/junit5/projectStructure",
+    "//platform/testFramework/junit5/projectStructure:projectStructure_test_lib",
+    "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/indexing-api:indexing",
+  ],
+  exports = ["@lib//:tuweni-toml"]
+)
+### auto-generated section `build intellij.python.pyproject` end
+
+### auto-generated section `test intellij.python.pyproject` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "pyproject_test",
+  runtime_deps = [":pyproject_test_lib"]
+)
+### auto-generated section `test intellij.python.pyproject` end

@@ -1,0 +1,4 @@
+<option>SPACE_WITHIN_BRACKETS=true</option>
+arr [y    ]
+-----
+arr[ y ]

@@ -1,0 +1,129 @@
+### auto-generated section `build intellij.platform.collaborationTools` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "collaboration-tools_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "collaboration-tools",
+  module_name = "intellij.platform.collaborationTools",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":collaboration-tools_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/credential-store",
+    "//platform/lang-api:lang",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/util-ex",
+    "//platform/core-impl",
+    "//platform/platform-api:ide",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/diff",
+    "//platform/vcs-log/impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/ide-core-impl",
+    "//platform/vcs-api:vcs",
+    "//platform/observable",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/lang-impl",
+    "//libraries/miglayout-swing",
+    "@lib//:kotlin-stdlib",
+    "//platform/diff-api:diff",
+    "//libraries/fastutil",
+    "//platform/diff-impl",
+    "//platform/credential-store-ui:credentialStore-ui",
+    "//platform/vcs-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/vcs-log/api:vcs-log",
+    "//libraries/caffeine",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/markdown",
+    "//platform/dvcs-impl:vcs-dvcs-impl",
+    "//platform/util/coroutines",
+    "//platform/credential-store-impl:credentialStore-impl",
+    "//platform/dvcs-impl/shared",
+    "//libraries/http-client",
+    "//platform/vcs-impl/shared",
+  ]
+)
+
+jvm_library(
+  name = "collaboration-tools_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [":collaboration-tools"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/credential-store",
+    "//platform/lang-api:lang",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/util-ex",
+    "//platform/core-impl",
+    "//platform/platform-api:ide",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/diff",
+    "//platform/vcs-log/impl",
+    "//platform/vcs-log/impl:impl_test_lib",
+    "//platform/platform-impl:ide-impl",
+    "//platform/ide-core-impl",
+    "//platform/vcs-api:vcs",
+    "//platform/observable",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/lang-impl",
+    "//libraries/miglayout-swing",
+    "@lib//:kotlin-stdlib",
+    "//platform/diff-api:diff",
+    "//libraries/fastutil",
+    "//platform/diff-impl",
+    "@lib//:junit4",
+    "//platform/credential-store-ui:credentialStore-ui",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/vcs-impl",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/vcs-log/api:vcs-log",
+    "//libraries/caffeine",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/markdown",
+    "//libraries/kotlin/test:libraries-kotlinTest",
+    "//libraries/kotlinx/coroutines/test",
+    "//platform/dvcs-impl:vcs-dvcs-impl",
+    "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
+    "//platform/util/coroutines",
+    "@lib//:io-mockk",
+    "@lib//:io-mockk-jvm",
+    "//platform/credential-store-impl:credentialStore-impl",
+    "//platform/credential-store-impl:credentialStore-impl_test_lib",
+    "//platform/dvcs-impl/shared",
+    "//libraries/mockito",
+    "//libraries/http-client",
+    "@lib//:app-cash-turbine-jvm",
+    "@lib//:assert_j",
+    "//platform/vcs-impl/shared",
+    "//platform/vcs-impl/shared:shared_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.collaborationTools` end
+
+### auto-generated section `test intellij.platform.collaborationTools` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "collaboration-tools_test",
+  runtime_deps = [":collaboration-tools_test_lib"]
+)
+### auto-generated section `test intellij.platform.collaborationTools` end

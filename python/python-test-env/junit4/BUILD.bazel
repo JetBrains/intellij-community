@@ -1,0 +1,46 @@
+### auto-generated section `build intellij.python.test.env.junit4` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "junit4_test_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "junit4",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:jetbrains-annotations",
+    "//python/python-test-env/core",
+    "@lib//:kotlin-stdlib",
+  ]
+)
+
+jvm_library(
+  name = "junit4_test_lib",
+  module_name = "intellij.python.test.env.junit4",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":junit4_test_resources"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:junit4",
+    "//python/python-test-env/core",
+    "//python/python-test-env/core:core_test_lib",
+    "@lib//:kotlin-stdlib",
+    "//python/python-test-env/common:common_test_lib",
+  ],
+  runtime_deps = [":junit4"]
+)
+### auto-generated section `build intellij.python.test.env.junit4` end
+
+### auto-generated section `test intellij.python.test.env.junit4` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "junit4_test",
+  runtime_deps = [":junit4_test_lib"]
+)
+### auto-generated section `test intellij.python.test.env.junit4` end

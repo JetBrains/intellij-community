@@ -1,0 +1,10 @@
+<project name="n" default="t">
+  <target name="t">
+    <mytask/>
+  </target>
+  <macrodef name="mytask">
+    <sequential>
+      <<ref>mytask/>
+    </sequential>
+  </macrodef>
+</project>

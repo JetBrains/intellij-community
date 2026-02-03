@@ -1,0 +1,6 @@
+def foo = {r -><caret>3
+}
+-----
+def foo = {r ->
+  <caret>3
+}

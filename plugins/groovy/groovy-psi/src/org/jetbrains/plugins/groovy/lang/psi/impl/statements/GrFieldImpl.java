@@ -1,0 +1,226 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
+
+import com.intellij.lang.ASTNode;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.ResolveScopeManager;
+import com.intellij.psi.presentation.java.JavaPresentationUtil;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.ui.IconManager;
+import com.intellij.util.IncorrectOperationException;
+import icons.JetgroovyIcons;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrNamedArgumentSearchVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+
+import javax.swing.Icon;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrField, StubBasedPsiElement<GrFieldStub> {
+
+  public GrFieldImpl(@NotNull ASTNode node) {
+    super(node);
+  }
+
+  public GrFieldImpl(GrFieldStub stub) {
+    this(stub, GroovyStubElementTypes.FIELD);
+  }
+
+  public GrFieldImpl(GrFieldStub stub, IStubElementType nodeType) {
+    super(stub, nodeType);
+  }
+
+  @Override
+  public void accept(@NotNull GroovyElementVisitor visitor) {
+    visitor.visitField(this);
+  }
+
+  @Override
+  public String toString() {
+    return "Field";
+  }
+
+  @Override
+  public PsiExpression getInitializer() {
+    return org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.getOrCreatePisExpression(getInitializerGroovy());
+  }
+
+  @Override
+  public void setInitializer(@Nullable PsiExpression psiExpression) throws IncorrectOperationException {
+    GrExpression oldInitializer = getInitializerGroovy();
+    if (psiExpression == null) {
+      if (oldInitializer != null) {
+        oldInitializer.delete();
+        PsiElement assign = findChildByType(GroovyTokenTypes.mASSIGN);
+        if (assign != null) {
+          assign.delete();
+        }
+      }
+      return;
+    }
+
+
+    GrExpression newInitializer = GroovyPsiElementFactory.getInstance(getProject()).createExpressionFromText(psiExpression.getText());
+    if (oldInitializer != null) {
+      oldInitializer.replaceWithExpression(newInitializer, true);
+    }
+    else {
+      getNode().addLeaf(GroovyTokenTypes.mASSIGN, "=", getNode().getLastChildNode());
+      addAfter(newInitializer, getLastChild());
+    }
+  }
+
+  @Override
+  public boolean isDeprecated() {
+    final GrFieldStub stub = getStub();
+    if (stub != null) {
+      return stub.isDeprecatedByDocTag() || PsiImplUtil.isDeprecatedByAnnotation(this);
+    }
+
+    return PsiImplUtil.isDeprecatedByDocTag(this) || PsiImplUtil.isDeprecatedByAnnotation(this);
+  }
+
+  @Override
+  public PsiType getTypeGroovy() {
+    PsiType type = TypeInferenceHelper.inTopContext(() -> getEnhancedType());
+    if (type != null) {
+      return type;
+    }
+    return TypeInferenceHelper.inTopContext(() -> super.getTypeGroovy());
+  }
+
+  private @Nullable PsiType getEnhancedType() {
+    return CachedValuesManager.getProjectPsiDependentCache(this, GrFieldImpl::doGetEnhancedType);
+  }
+
+  private static @Nullable PsiType doGetEnhancedType(@NotNull GrFieldImpl field) {
+    if (field.getDeclaredType() == null && field.getInitializerGroovy() == null) {
+      final PsiType type1 = GrVariableEnhancer.getEnhancedType(field);
+      if (type1 != null) {
+        return type1;
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public PsiClass getContainingClass() {
+    PsiElement parent = getParent().getParent();
+    if (parent instanceof GrTypeDefinitionBody) {
+      final PsiElement pparent = parent.getParent();
+      if (pparent instanceof PsiClass) {
+        return (PsiClass)pparent;
+      }
+    }
+
+    final PsiFile file = getContainingFile();
+    if (file instanceof GroovyFileBase) {
+      return ((GroovyFileBase)file).getScriptClass();
+    }
+
+    return null;
+  }
+
+  @Override
+  public boolean isProperty() {
+    final GrFieldStub stub = getStub();
+    if (stub != null) {
+      return stub.isProperty();
+    }
+    return PsiUtil.isProperty(this);
+  }
+
+  @Override
+  public @Nullable GrAccessorMethod getSetter() {
+    return GrClassImplUtil.findSetter(this);
+  }
+
+  @Override
+  public GrAccessorMethod @NotNull [] getGetters() {
+    return GrClassImplUtil.findGetters(this);
+  }
+
+  @Override
+  public @NotNull SearchScope getUseScope() {
+    if (isProperty()) {
+      return ResolveScopeManager.getElementUseScope(this); //maximal scope
+    }
+    return PsiImplUtil.getMemberUseScope(this);
+  }
+
+  @Override
+  public ItemPresentation getPresentation() {
+    return JavaPresentationUtil.getFieldPresentation(this);
+  }
+
+  @Override
+  public PsiElement getOriginalElement() {
+    final PsiClass containingClass = getContainingClass();
+    if (containingClass == null) return this;
+    PsiClass originalClass = (PsiClass)containingClass.getOriginalElement();
+    PsiField originalField = originalClass.findFieldByName(getName(), false);
+    return originalField != null ? originalField : this;
+  }
+
+  @Override
+  protected @Nullable Icon getElementIcon(@IconFlags int flags) {
+    boolean isAbstract = hasModifierProperty(PsiModifier.ABSTRACT);
+    Icon fieldIcon = isProperty()
+                     ? isAbstract ? JetgroovyIcons.Groovy.AbstractProperty : JetgroovyIcons.Groovy.Property
+                     : isAbstract ? JetgroovyIcons.Groovy.AbstractField : JetgroovyIcons.Groovy.Field;
+    return IconManager.getInstance().createLayeredIcon(this, fieldIcon, ElementPresentationUtil.getFlags(this, false));
+  }
+
+  @Override
+  public @NotNull Map<String, NamedArgumentDescriptor> getNamedParameters() {
+    final GrFieldStub stub = getStub();
+    if (stub != null) {
+      String[] namedParameters = stub.getNamedParameters();
+      if (namedParameters.length == 0) return Collections.emptyMap();
+
+      Map<String, NamedArgumentDescriptor> result = new HashMap<>();
+      for (String parameter : namedParameters) {
+        result.put(parameter, GrNamedArgumentSearchVisitor.CODE_NAMED_ARGUMENTS_DESCR);
+      }
+      return result;
+    }
+
+    return GrNamedArgumentSearchVisitor.find(this);
+  }
+
+  @Override
+  public GrDocComment getDocComment() {
+    return GrDocCommentUtil.findDocComment(this);
+  }
+}

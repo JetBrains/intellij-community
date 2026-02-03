@@ -1,0 +1,141 @@
+### auto-generated section `build kotlin.fir.tests` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_tests",
+  opt_in = [
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+  ],
+  x_context_parameters = True
+)
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlinc-analysis-api",
+    "//java/testFramework",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-low-level-api-fir",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "//platform/usageView",
+    "//platform/core-api:core",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/project-structure",
+    "//platform/editor-ui-ex:editor-ex",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+    "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
+    "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement",
+    "//plugins/kotlin/fir",
+    "//plugins/gradle:gradle-tests",
+    "//xml/xml-psi-api:psi",
+    "//plugins/kotlin/test-framework",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+  ]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "kotlin.fir.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_tests",
+  deps = [
+    "@lib//:kotlinc-analysis-api",
+    "//java/java-indexing-api:indexing",
+    "//java/testFramework",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-low-level-api-fir",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
+    "//platform/indexing-api:indexing",
+    "//platform/execution",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/usageView",
+    "//platform/core-api:core",
+    "//plugins/kotlin/plugin/k2",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//java/debugger/openapi:java-debugger",
+    "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
+    "//platform/editor-ui-ex:editor-ex",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+    "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
+    "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement",
+    "//plugins/kotlin/fir",
+    "//plugins/gradle:gradle-tests",
+    "//plugins/gradle:gradle-tests_test_lib",
+    "//xml/xml-psi-api:psi",
+    "//plugins/kotlin/test-framework",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
+    "//plugins/kotlin/formatter/minimal",
+    "//plugins/kotlin/base/code-insight/minimal",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/jvm-debugger/core",
+    "//plugins/kotlin/jvm-debugger/evaluation",
+    "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform",
+    "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform_test_lib",
+    "//plugins/kotlin/base/analysis-api-platform:kotlin-base-analysis-platform",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//plugins/kotlin/project-wizard/idea",
+    "//plugins/kotlin/run-configurations/jvm",
+    "//java/execution/impl",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move_test_lib",
+    "//plugins/kotlin/completion/api",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//plugins/kotlin/completion/impl-k2:kotlin-completion-impl",
+    "//platform/smRunner",
+    "//platform/smRunner:smRunner_test_lib",
+    "//java/java-runtime:rt",
+    "//plugins/kotlin/kotlin.searching",
+    "//plugins/kotlin/run-configurations/junit",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+    "//plugins/kotlin/completion/impl-shared:kotlin-completion-impl-shared",
+    "//plugins/kotlin/completion/tests-shared:kotlin-completion-tests-shared_test_lib",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build kotlin.fir.tests` end
+
+### auto-generated section `test kotlin.fir.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test kotlin.fir.tests` end

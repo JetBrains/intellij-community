@@ -1,0 +1,1 @@
+new java.lang.<caret>String()

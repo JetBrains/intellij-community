@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.kotlinx.io` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "io_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "io",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":io_resources"],
+  exports = ["@lib//:kotlinx-io-core"],
+  runtime_deps = ["@lib//:kotlinx-io-core"]
+)
+### auto-generated section `build intellij.libraries.kotlinx.io` end

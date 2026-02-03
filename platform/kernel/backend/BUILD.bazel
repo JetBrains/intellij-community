@@ -1,0 +1,42 @@
+### auto-generated section `build intellij.platform.kernel.backend` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_backend",
+  opt_in = [
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+    "kotlin.ExperimentalStdlibApi",
+  ]
+)
+
+resourcegroup(
+  name = "backend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.platform.kernel.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend_resources"],
+  kotlinc_opts = ":custom_backend",
+  deps = [
+    "//platform/extensions",
+    "//platform/util",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/coroutines",
+    "//platform/kernel/shared:kernel",
+    "//platform/kernel/rpc.backend",
+    "//platform/core-api:core",
+  ],
+  exports = [
+    "//platform/kernel/shared:kernel",
+    "//platform/kernel/rpc.backend",
+  ],
+  runtime_deps = ["//platform/backend"]
+)
+### auto-generated section `build intellij.platform.kernel.backend` end

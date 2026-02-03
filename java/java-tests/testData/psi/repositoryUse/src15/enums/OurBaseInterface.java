@@ -1,0 +1,4 @@
+package enums;
+
+interface OurBaseInterface {
+}

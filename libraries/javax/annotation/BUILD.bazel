@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.javax.annotation` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "annotation_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "annotation",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":annotation_resources"],
+  exports = ["@lib//:javax-annotation-api"],
+  runtime_deps = ["@lib//:javax-annotation-api"]
+)
+### auto-generated section `build intellij.libraries.javax.annotation` end

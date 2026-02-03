@@ -1,0 +1,18 @@
+// "Remove 'lateinit' modifier" "true"
+// ERROR: There's a cycle in the delegation calls chain
+// K2_AFTER_ERROR: There's a cycle in the delegation calls chain.
+
+class Foo {
+    <caret>lateinit var bar: String
+
+    constructor() {
+        bar = ""
+    }
+
+    constructor(a: Int) : this(a) {
+        bar = "a"
+    }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase

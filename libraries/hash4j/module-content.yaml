@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.hash4j.jar
+  modules:
+  - name: intellij.libraries.hash4j
+    libraries:
+      hash4j:
+      - name: $MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0/hash4j-0.jar

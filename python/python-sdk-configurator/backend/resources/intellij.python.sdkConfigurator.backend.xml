@@ -1,0 +1,24 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.platform.rpc"/>
+    <module name="intellij.python.pyproject"/>
+    <module name="intellij.python.sdk"/>
+    <module name="intellij.python.community"/>
+    <module name="intellij.python.sdkConfigurator.common"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.python.common"/>
+  </dependencies>
+  <resource-bundle>messages.PySdkConfiguratorBundle</resource-bundle>
+  <projectListeners>
+    <listener class="com.intellij.python.sdkConfigurator.backend.impl.platformBridge.ModelRebuiltListenerImplToConfigureSdk"
+              topic="com.intellij.python.pyproject.model.api.ModelRebuiltListener"/>
+  </projectListeners>
+  <extensions defaultExtensionNs="com.intellij.platform">
+    <rpc.backend.remoteApiProvider implementation="com.intellij.python.sdkConfigurator.backend.impl.rpcBridge.ApiProvider"/>
+  </extensions>
+
+  <actions>
+    <action class="com.intellij.python.sdkConfigurator.backend.impl.platformBridge.ConfigureSDKAction" id="ConfigureSDKAction"/>
+  </actions>
+</idea-plugin>

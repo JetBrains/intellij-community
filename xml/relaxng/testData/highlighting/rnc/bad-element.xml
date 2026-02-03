@@ -1,0 +1,3 @@
+<addressBook xmlns="urn:test:addressBook">
+  <<error descr="Element foo is not allowed here">foo</error> />
+</addressBook>

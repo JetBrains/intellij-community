@@ -1,0 +1,3 @@
+package some
+
+class SomeClass

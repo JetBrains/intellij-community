@@ -1,0 +1,17 @@
+// FIR_IDENTICAL
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// LANGUAGE_VERSION: 2.2
+
+interface Foo {
+    context(a: String)
+    fun foo()
+}
+
+class Bar: Foo {
+    context(a: String)
+    override fun foo() {
+        TODO("Not yet implemented")
+    }
+}
+
+// MEMBER: "context(a: String)\n foo(): Unit"

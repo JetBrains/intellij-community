@@ -1,0 +1,3 @@
+def foo():
+    a = bar()
+    

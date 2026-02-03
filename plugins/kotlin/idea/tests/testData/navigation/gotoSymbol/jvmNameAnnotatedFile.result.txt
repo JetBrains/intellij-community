@@ -1,0 +1,8 @@
+NavigationItem:
+    name: null
+ItemPresentation:
+    presentableText: renamedFile
+    locationString: jvmNameAnnotatedFile.kt in <root>
+    icon: org/jetbrains/kotlin/idea/icons/kotlin_file.svg
+TargetElement: @file:JvmName("renamedFile")
+QualifiedName: renamedFile

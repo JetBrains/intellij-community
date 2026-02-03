@@ -1,0 +1,94 @@
+com.intellij.collaboration.auth.credentials.Credentials
+- a:getAccessToken():java.lang.String
+com.intellij.collaboration.auth.credentials.CredentialsWithRefresh
+- com.intellij.collaboration.auth.credentials.Credentials
+- a:getExpiresIn():J
+- a:getRefreshToken():java.lang.String
+- a:isAccessTokenValid():Z
+f:com.intellij.collaboration.auth.credentials.SimpleCredentials
+- com.intellij.collaboration.auth.credentials.Credentials
+- <init>(java.lang.String):V
+- getAccessToken():java.lang.String
+a:com.intellij.collaboration.auth.services.OAuthCallbackHandler
+- <init>():V
+- execute(io.netty.handler.codec.http.QueryStringDecoder,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.ChannelHandlerContext):java.lang.String
+- pf:getService():com.intellij.collaboration.auth.services.OAuthService
+- f:getServiceName():java.lang.String
+- handleAcceptCode(Z):com.intellij.collaboration.auth.services.OAuthCallbackHandler$AcceptCodeHandleResult
+- p:handleOAuthResult(com.intellij.collaboration.auth.services.OAuthService$OAuthResult):com.intellij.collaboration.auth.services.OAuthCallbackHandler$AcceptCodeHandleResult
+- pa:oauthService():com.intellij.collaboration.auth.services.OAuthService
+a:com.intellij.collaboration.auth.services.OAuthCallbackHandler$AcceptCodeHandleResult
+f:com.intellij.collaboration.auth.services.OAuthCallbackHandler$AcceptCodeHandleResult$Page
+- com.intellij.collaboration.auth.services.OAuthCallbackHandler$AcceptCodeHandleResult
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.collaboration.auth.services.OAuthCallbackHandler$AcceptCodeHandleResult$Page
+- bs:copy$default(com.intellij.collaboration.auth.services.OAuthCallbackHandler$AcceptCodeHandleResult$Page,java.lang.String,I,java.lang.Object):com.intellij.collaboration.auth.services.OAuthCallbackHandler$AcceptCodeHandleResult$Page
+- equals(java.lang.Object):Z
+- f:getHtml():java.lang.String
+- hashCode():I
+f:com.intellij.collaboration.auth.services.OAuthCallbackHandler$AcceptCodeHandleResult$Redirect
+- com.intellij.collaboration.auth.services.OAuthCallbackHandler$AcceptCodeHandleResult
+- <init>(com.intellij.util.Url):V
+- f:component1():com.intellij.util.Url
+- f:copy(com.intellij.util.Url):com.intellij.collaboration.auth.services.OAuthCallbackHandler$AcceptCodeHandleResult$Redirect
+- bs:copy$default(com.intellij.collaboration.auth.services.OAuthCallbackHandler$AcceptCodeHandleResult$Redirect,com.intellij.util.Url,I,java.lang.Object):com.intellij.collaboration.auth.services.OAuthCallbackHandler$AcceptCodeHandleResult$Redirect
+- equals(java.lang.Object):Z
+- f:getUrl():com.intellij.util.Url
+- hashCode():I
+com.intellij.collaboration.auth.services.OAuthCredentialsAcquirer
+- a:acquireCredentials(java.lang.String):com.intellij.collaboration.auth.services.OAuthCredentialsAcquirer$AcquireCredentialsResult
+a:com.intellij.collaboration.auth.services.OAuthCredentialsAcquirer$AcquireCredentialsResult
+f:com.intellij.collaboration.auth.services.OAuthCredentialsAcquirer$AcquireCredentialsResult$Error
+- com.intellij.collaboration.auth.services.OAuthCredentialsAcquirer$AcquireCredentialsResult
+- <init>(java.lang.String):V
+- f:getDescription():java.lang.String
+f:com.intellij.collaboration.auth.services.OAuthCredentialsAcquirer$AcquireCredentialsResult$Success
+- com.intellij.collaboration.auth.services.OAuthCredentialsAcquirer$AcquireCredentialsResult
+- <init>(com.intellij.collaboration.auth.credentials.Credentials):V
+- f:getCredentials():com.intellij.collaboration.auth.credentials.Credentials
+com.intellij.collaboration.auth.services.OAuthRequest
+- a:getAuthUrlWithParameters():com.intellij.util.Url
+- a:getAuthorizationCodeUrl():com.intellij.util.Url
+- a:getCredentialsAcquirer():com.intellij.collaboration.auth.services.OAuthCredentialsAcquirer
+com.intellij.collaboration.auth.services.OAuthService
+- a:authorize(com.intellij.collaboration.auth.services.OAuthRequest):java.util.concurrent.CompletableFuture
+- a:getName():java.lang.String
+- handleOAuthServerCallback(java.lang.String,java.util.Map):com.intellij.collaboration.auth.services.OAuthService$OAuthResult
+- handleOAuthServerCredentialsCallback(java.lang.String,java.util.Map):com.intellij.collaboration.auth.services.OAuthService$OAuthResultCredentials
+- handleServerCallback(java.lang.String,java.util.Map):Z
+- a:revokeToken(java.lang.String):V
+f:com.intellij.collaboration.auth.services.OAuthService$OAuthResult
+- <init>(com.intellij.collaboration.auth.services.OAuthRequest,Z):V
+- f:getRequest():com.intellij.collaboration.auth.services.OAuthRequest
+- f:isAccepted():Z
+f:com.intellij.collaboration.auth.services.OAuthService$OAuthResultCredentials
+- <init>(com.intellij.collaboration.auth.services.OAuthRequest,java.lang.Object):V
+- f:getCallbackAnswer-d1pmJ48():java.lang.Object
+- f:getRequest():com.intellij.collaboration.auth.services.OAuthRequest
+- f:isAccepted():Z
+a:com.intellij.collaboration.auth.services.OAuthServiceBase
+- com.intellij.collaboration.auth.services.OAuthService
+- <init>():V
+- authorize(com.intellij.collaboration.auth.services.OAuthRequest):java.util.concurrent.CompletableFuture
+- pf:getCurrentRequest():java.util.concurrent.atomic.AtomicReference
+- handleOAuthServerCallback(java.lang.String,java.util.Map):com.intellij.collaboration.auth.services.OAuthService$OAuthResult
+- handleOAuthServerCredentialsCallback(java.lang.String,java.util.Map):com.intellij.collaboration.auth.services.OAuthService$OAuthResultCredentials
+- handleServerCallback(java.lang.String,java.util.Map):Z
+- p:startAuthorization(com.intellij.collaboration.auth.services.OAuthRequest):V
+pf:com.intellij.collaboration.auth.services.OAuthServiceBase$OAuthRequestWithResult
+- <init>(com.intellij.collaboration.auth.services.OAuthRequest,java.util.concurrent.CompletableFuture):V
+- f:component1():com.intellij.collaboration.auth.services.OAuthRequest
+- f:component2():java.util.concurrent.CompletableFuture
+- f:copy(com.intellij.collaboration.auth.services.OAuthRequest,java.util.concurrent.CompletableFuture):com.intellij.collaboration.auth.services.OAuthServiceBase$OAuthRequestWithResult
+- bs:copy$default(com.intellij.collaboration.auth.services.OAuthServiceBase$OAuthRequestWithResult,com.intellij.collaboration.auth.services.OAuthRequest,java.util.concurrent.CompletableFuture,I,java.lang.Object):com.intellij.collaboration.auth.services.OAuthServiceBase$OAuthRequestWithResult
+- equals(java.lang.Object):Z
+- f:getRequest():com.intellij.collaboration.auth.services.OAuthRequest
+- f:getResult():java.util.concurrent.CompletableFuture
+- hashCode():I
+com.intellij.collaboration.auth.services.OAuthServiceWithRefresh
+- com.intellij.collaboration.auth.services.OAuthService
+- a:updateAccessToken(com.intellij.collaboration.auth.services.OAuthServiceWithRefresh$RefreshTokenRequest):java.util.concurrent.CompletableFuture
+com.intellij.collaboration.auth.services.OAuthServiceWithRefresh$RefreshTokenRequest
+- a:getRefreshToken():java.lang.String
+- a:getRefreshTokenUrlWithParameters():com.intellij.util.Url

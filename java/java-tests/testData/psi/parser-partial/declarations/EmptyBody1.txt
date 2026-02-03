@@ -1,0 +1,5 @@
+PsiJavaFile:EmptyBody1.java
+  PsiJavaToken:LBRACE('{')
+  PsiErrorElement:'}' expected
+    <empty list>
+  PsiWhiteSpace(' ')

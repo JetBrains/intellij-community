@@ -1,0 +1,12 @@
+interface IReport {
+    val id: Int
+}
+
+class BReport {
+    private fun IReport.f1() = id
+    private fun f2(report: IReport) {
+        val i = report.id
+    }
+}
+
+// IGNORE_K1

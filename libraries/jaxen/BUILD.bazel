@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.jaxen` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "jaxen_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jaxen",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":jaxen_resources"],
+  exports = ["@lib//:libraries-jaxen-_jaxen"],
+  runtime_deps = ["@lib//:libraries-jaxen-_jaxen"]
+)
+### auto-generated section `build intellij.libraries.jaxen` end

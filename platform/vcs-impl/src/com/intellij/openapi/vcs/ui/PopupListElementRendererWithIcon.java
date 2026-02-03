@@ -1,0 +1,89 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.vcs.ui;
+
+import com.intellij.ui.ErrorLabel;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.ui.popup.list.IconListPopupRenderer;
+import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.ui.popup.list.PopupListElementRenderer;
+import com.intellij.util.IconUtil;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.border.Border;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Point;
+import java.awt.Rectangle;
+
+@ApiStatus.Internal
+public class PopupListElementRendererWithIcon extends PopupListElementRenderer<Object> implements IconListPopupRenderer {
+  protected IconComponent myIconLabel;
+
+  public PopupListElementRendererWithIcon(ListPopupImpl aPopup) {
+    super(aPopup);
+  }
+
+  @Override
+  public boolean isIconAt(@NotNull Point point) {
+    JList list = myPopup.getList();
+    int index = myPopup.getList().locationToIndex(point);
+    Rectangle bounds = myPopup.getList().getCellBounds(index, index);
+    Component renderer = getListCellRendererComponent(list, list.getSelectedValue(), index, true, true);
+    renderer.setBounds(bounds);
+    renderer.doLayout();
+    point.translate(-bounds.x, -bounds.y);
+    return SwingUtilities.getDeepestComponentAt(renderer, point.x, point.y) instanceof IconComponent;
+  }
+
+  @Override
+  protected void customizeComponent(JList<?> list, Object value, boolean isSelected) {
+    super.customizeComponent(list, value, isSelected);
+    myIconLabel.setIcon(isSelected ? IconUtil.wrapToSelectionAwareIcon(myDescriptor.getSelectedIconFor(value)) : myDescriptor.getIconFor(value));
+  }
+
+  @Override
+  protected void setComponentIcon(Icon icon, Icon disabledIcon) {
+    myIconLabel.setIcon(icon);
+    myIconLabel.setDisabledIcon(disabledIcon);
+  }
+
+  @Override
+  protected @Nullable JComponent createIconBar() {
+    return myIconLabel;
+  }
+
+  @Override
+  protected JComponent createItemComponent() {
+    myTextLabel = new ErrorLabel();
+    myTextLabel.setOpaque(true);
+    myTextLabel.setBorder(JBUI.Borders.empty(1));
+
+    myIconLabel = new IconComponent();
+
+    JPanel panel = new OpaquePanel(new BorderLayout(), JBColor.WHITE);
+    panel.add(myIconLabel, BorderLayout.WEST);
+    panel.add(myTextLabel, BorderLayout.CENTER);
+    return layoutComponent(panel);
+  }
+
+  public static class IconComponent extends JLabel {
+
+    public IconComponent(Border border) {
+      setBorder(border);
+    }
+
+    public IconComponent() {
+      this(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap()));
+    }
+  }
+}

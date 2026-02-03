@@ -1,0 +1,43 @@
+### auto-generated section `build kotlin.code-insight.override-implement.k1` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_kotlin-code-insight-override-implement-k1",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-code-insight-override-implement-k1",
+  module_name = "kotlin.code-insight.override-implement.k1",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-code-insight-override-implement-k1",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//java/java-psi-api:psi",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/lang-impl",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/base/fe10/code-insight",
+    "//platform/core-impl",
+    "//plugins/kotlin/base/kdoc",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+    "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/frontend-independent",
+    "//platform/lang-api:lang",
+  ]
+)
+### auto-generated section `build kotlin.code-insight.override-implement.k1` end

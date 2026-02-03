@@ -1,0 +1,35 @@
+// FILE: first.before.kt
+// "Import operator 'ClosedRange.iterator'" "true"
+// ERROR: For-loop range must have an 'iterator()' method
+// WITH_STDLIB
+
+package bar
+
+import foo.Foo
+
+fun foo(start: Foo, end: Foo) {
+    for (date in start<caret>..end) {}
+}
+
+// FILE: second.kt
+package foo
+
+class Foo : Comparable<Foo> {
+    override fun compareTo(other: Foo): Int = TODO()
+}
+
+operator fun ClosedRange<Foo>.iterator(): Iterator<Foo> = TODO()
+
+// FILE: first.after.kt
+// "Import operator 'ClosedRange.iterator'" "true"
+// ERROR: For-loop range must have an 'iterator()' method
+// WITH_STDLIB
+
+package bar
+
+import foo.Foo
+import foo.iterator
+
+fun foo(start: Foo, end: Foo) {
+    for (date in start<caret>..end) {}
+}

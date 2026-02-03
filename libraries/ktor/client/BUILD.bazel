@@ -1,0 +1,41 @@
+### auto-generated section `build intellij.libraries.ktor.client` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "client_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "client",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":client_resources"],
+  exports = [
+    "@lib//:ktor-client-core",
+    "@lib//:ktor-client-java",
+    "@lib//:libraries-ktor-client-ktor-client-encoding",
+    "@lib//:libraries-ktor-client-ktor-client-content-negotiation",
+    "@lib//:ktor-serialization-kotlinx-json",
+    "@lib//:kotlinx-serialization-json-io",
+    "@lib//:libraries-ktor-client-ktor-client-auth",
+    "@lib//:libraries-ktor-client-ktor-client-logging",
+    "//libraries/ktor/utils",
+    "//libraries/ktor/io",
+  ],
+  runtime_deps = [
+    "@lib//:ktor-client-core",
+    "@lib//:ktor-client-java",
+    "@lib//:libraries-ktor-client-ktor-client-encoding",
+    "@lib//:libraries-ktor-client-ktor-client-content-negotiation",
+    "@lib//:ktor-serialization-kotlinx-json",
+    "@lib//:kotlinx-serialization-json-io",
+    "@lib//:libraries-ktor-client-ktor-client-auth",
+    "@lib//:libraries-ktor-client-ktor-client-logging",
+    "//libraries/ktor/utils",
+    "//libraries/ktor/io",
+    "//libraries/kotlinx/coroutines/slf4j",
+  ]
+)
+### auto-generated section `build intellij.libraries.ktor.client` end

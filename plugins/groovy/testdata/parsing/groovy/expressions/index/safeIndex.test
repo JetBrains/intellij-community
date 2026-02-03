@@ -1,0 +1,12 @@
+a?[b]
+-----
+Groovy script
+  Property by index
+    Reference expression
+      PsiElement(identifier)('a')
+    PsiElement(?)('?')
+    Arguments
+      PsiElement([)('[')
+      Reference expression
+        PsiElement(identifier)('b')
+      PsiElement(])(']')

@@ -1,0 +1,2 @@
+foo = "something"
+del foo

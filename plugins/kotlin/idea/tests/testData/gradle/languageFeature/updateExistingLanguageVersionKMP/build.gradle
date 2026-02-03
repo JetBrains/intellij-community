@@ -1,0 +1,23 @@
+plugins {
+    id 'org.jetbrains.kotlin.multiplatform' version '1.8.0'
+}
+
+repositories {
+    mavenCentral()
+}
+
+kotlin {
+    jvm {
+        withJava()
+    }
+    sourceSets {
+        jvmMain {
+
+        }
+        all {
+            languageSettings {
+                languageVersion = "1.8"
+            }
+        }
+    }
+}

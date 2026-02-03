@@ -1,0 +1,52 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.util.scopeChooser;
+
+import com.intellij.openapi.util.ColoredItem;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.search.SearchScope;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.Icon;
+import java.awt.Color;
+
+/**
+ * @author anna
+ */
+public class ScopeDescriptor implements ColoredItem {
+  private final SearchScope myScope;
+
+  public ScopeDescriptor(@Nullable SearchScope scope) {
+    myScope = scope;
+  }
+
+  public @Nullable @Nls String getDisplayName() {
+    return myScope == null ? null : myScope.getDisplayName();
+  }
+
+  public @Nullable Icon getIcon() {
+    return myScope == null ? null : myScope.getIcon();
+  }
+
+  public @Nullable SearchScope getScope() {
+    return myScope;
+  }
+
+  /**
+   * @return true if obtaining this scope requires user interaction (e.g., UI dialog, confirmation); false if it can be resolved programmatically.
+   */
+  @ApiStatus.Experimental
+  public boolean needsUserInputForScope() {
+    return false;
+  }
+
+  public boolean scopeEquals(SearchScope scope) {
+    return Comparing.equal(myScope, scope);
+  }
+
+  @Override
+  public @Nullable Color getColor() {
+    return myScope instanceof ColoredItem ? ((ColoredItem)myScope).getColor() : null;
+  }
+}

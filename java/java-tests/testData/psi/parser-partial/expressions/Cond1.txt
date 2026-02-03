@@ -1,0 +1,10 @@
+PsiJavaFile:Cond1.java
+  PsiConditionalExpression:cond ?
+    PsiReferenceExpression:cond
+      PsiReferenceParameterList
+        <empty list>
+      PsiIdentifier:cond('cond')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:QUEST('?')
+    PsiErrorElement:Expression expected
+      <empty list>

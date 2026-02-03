@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.jettison` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "jettison_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jettison",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":jettison_resources"],
+  exports = ["@lib//:libraries-jettison-jettison"],
+  runtime_deps = ["@lib//:libraries-jettison-jettison"]
+)
+### auto-generated section `build intellij.libraries.jettison` end

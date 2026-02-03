@@ -1,0 +1,3 @@
+print a?.b().<caret>c.d
+-----
+print a?.b()?.c.d

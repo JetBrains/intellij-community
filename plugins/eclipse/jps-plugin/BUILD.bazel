@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.eclipse.jps` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "jps_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jps",
+  module_name = "intellij.eclipse.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":jps_resources"],
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "//platform/util",
+    "//jps/model-api:model",
+    "//jps/model-serialization",
+    "//plugins/eclipse/common-eclipse-util:common",
+    "//platform/util/jdom",
+  ]
+)
+### auto-generated section `build intellij.eclipse.jps` end

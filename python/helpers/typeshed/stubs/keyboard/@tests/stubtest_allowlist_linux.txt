@@ -1,0 +1,3 @@
+# Defaults don't align with possible values
+keyboard.mouse.on_button
+keyboard.mouse.wait

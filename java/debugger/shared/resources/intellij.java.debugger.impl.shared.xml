@@ -1,0 +1,7 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <dependencies>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl"/>
+  </dependencies>
+  <xi:include href="intellij.java.debugger.impl.shared.content.xml"/>
+</idea-plugin>

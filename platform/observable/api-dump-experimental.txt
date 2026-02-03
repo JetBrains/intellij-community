@@ -1,0 +1,54 @@
+*:com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+- *sf:Companion:com.intellij.openapi.observable.dispatcher.SingleEventDispatcher$Companion
+- s:create():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher$Multicaster
+- s:create():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0$Multicaster
+- s:create2():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher2$Multicaster
+- a:filterEvents(kotlin.jvm.functions.Function1):com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+- a:ignoreParameters():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
+- a:mapParameters(kotlin.jvm.functions.Function1):com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+- a:onceWhenEventHappened(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- onceWhenEventHappened(kotlin.jvm.functions.Function1):V
+- a:whenEventHappened(I,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- whenEventHappened(I,kotlin.jvm.functions.Function1):V
+- a:whenEventHappened(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- whenEventHappened(kotlin.jvm.functions.Function1):V
+*f:com.intellij.openapi.observable.dispatcher.SingleEventDispatcher$Companion
+- f:create():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher$Multicaster
+- f:create():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0$Multicaster
+- f:create2():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher2$Multicaster
+*:com.intellij.openapi.observable.dispatcher.SingleEventDispatcher$Multicaster
+- com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+- a:fireEvent(java.lang.Object):V
+*Fa:com.intellij.openapi.observable.operation.core.AbstractObservableOperationTrace
+- com.intellij.openapi.observable.operation.core.ObservableTaskOperationTrace
+- <init>():V
+- getDetachTaskObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+- getFinishObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
+- getFinishTaskObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher2
+- getScheduleObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
+- getScheduleTaskObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+- getStartObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
+- getStartTaskObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+*f:com.intellij.openapi.observable.operation.core.AtomicOperationTrace
+- com.intellij.openapi.observable.operation.core.AbstractObservableOperationTrace
+- com.intellij.openapi.observable.operation.core.MutableOperationTrace
+- *sf:Companion:com.intellij.openapi.observable.operation.core.AtomicOperationTrace$Companion
+- <init>():V
+- <init>(java.lang.String):V
+- <init>(java.lang.String,Z):V
+- <init>(Z):V
+- detach(com.intellij.openapi.observable.operation.OperationExecutionId):V
+- detachAll():V
+- getName():java.lang.String
+- getState():com.intellij.openapi.observable.operation.core.ObservableOperationState
+- getStatus():com.intellij.openapi.observable.operation.core.ObservableOperationStatus
+- traceFinish(com.intellij.openapi.observable.operation.OperationExecutionId,com.intellij.openapi.observable.operation.OperationExecutionStatus):V
+- traceSchedule(com.intellij.openapi.observable.operation.OperationExecutionId):V
+- traceStart(com.intellij.openapi.observable.operation.OperationExecutionId):V
+*f:com.intellij.openapi.observable.operation.core.AtomicOperationTrace$Companion
+*:com.intellij.openapi.observable.operation.core.ObservableOperationTrace
+- a:getFinishObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
+- a:getName():java.lang.String
+- a:getScheduleObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
+- a:getStartObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
+- a:getStatus():com.intellij.openapi.observable.operation.core.ObservableOperationStatus

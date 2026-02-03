@@ -1,0 +1,15 @@
+// FIR_COMPARISON
+package a
+
+// Should be sorted, ignoring backticks
+import b.`fun`
+import b.g
+import b.`val`
+
+class Foo(
+    fun bar() {
+        g()
+        `fun`()
+        `val`()
+    }
+)

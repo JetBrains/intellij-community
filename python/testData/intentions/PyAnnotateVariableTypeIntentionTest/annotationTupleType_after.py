@@ -1,0 +1,1 @@
+var: [tuple[int, str, None]] = (1, 'foo', None)

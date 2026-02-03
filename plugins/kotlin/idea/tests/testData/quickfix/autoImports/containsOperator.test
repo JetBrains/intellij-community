@@ -1,0 +1,33 @@
+// FILE: first.before.kt
+// "Import operator 'Container.contains'" "true"
+// ERROR: Unresolved reference: in
+package test
+
+import dependency.Container
+import dependency.Element
+
+fun usage(e: Element, container: Container) {
+    e <caret>in container
+}
+
+// FILE: dependency.kt
+package dependency
+
+class Container
+
+class Element
+
+operator fun Container.contains(e: Element): Boolean = false
+
+// FILE: first.after.kt
+// "Import operator 'Container.contains'" "true"
+// ERROR: Unresolved reference: in
+package test
+
+import dependency.Container
+import dependency.Element
+import dependency.contains
+
+fun usage(e: Element, container: Container) {
+    e <caret>in container
+}

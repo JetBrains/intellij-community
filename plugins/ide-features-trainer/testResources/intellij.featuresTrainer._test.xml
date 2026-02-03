@@ -1,0 +1,6 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="training"/>
+    <module name="intellij.platform.testFramework"/>
+  </dependencies>
+</idea-plugin>

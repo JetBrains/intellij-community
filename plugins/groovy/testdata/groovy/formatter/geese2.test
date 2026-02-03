@@ -1,0 +1,11 @@
+foo {
+  bar {
+    test {
+
+    }}}
+-----
+foo {
+  bar {
+    test {
+
+} } }

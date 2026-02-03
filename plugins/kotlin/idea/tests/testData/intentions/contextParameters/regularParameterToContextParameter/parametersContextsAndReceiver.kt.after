@@ -1,0 +1,12 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+context(c1: Int, c2: Double, p2: Char)
+fun Float.foo(p1: String, p3: Long) {
+}
+
+context(c1: Double, c2: Int)
+fun bar(f: Float) {
+    with('c') {
+        f.foo("baz", 0L)
+    }
+}

@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.diff.impl.jar
+  modules:
+  - name: intellij.platform.diff.impl

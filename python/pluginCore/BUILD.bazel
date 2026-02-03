@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.python.community.plugin` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "community-plugin_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "community-plugin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":community-plugin_resources"],
+  runtime_deps = [
+    "//platform/lang-api:lang",
+    "//python/intellij.python.community.communityOnly:community-communityOnly",
+    "//python/services/system-python",
+    "//python/services/shared",
+    "//json/backend",
+    "//python/aliasProvider",
+    "//python/impl.helperLocator:community-helpersLocator",
+  ]
+)
+### auto-generated section `build intellij.python.community.plugin` end

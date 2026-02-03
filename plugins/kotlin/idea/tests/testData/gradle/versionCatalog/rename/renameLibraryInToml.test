@@ -1,0 +1,12 @@
+// FILE: gradle/libs.versions.toml
+## RENAME_TO: some_renamed-library
+## FILE_TO_CHECK: build.gradle.kts
+[libraries]
+<caret>some_test-library = { module = "org.junit.jupiter:junit-jupiter"}
+
+// FILE: build.gradle.kts
+libs.some.test.library
+
+// FILE: build.gradle.kts.after
+libs.some.renamed.library
+

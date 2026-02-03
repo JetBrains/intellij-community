@@ -1,0 +1,28 @@
+# Build detekt-compose-rules-binary_deploy.jar to get plugin binary
+java_binary(
+    name = "detekt-compose-rules-binary",
+    main_class = "NoMainClass",
+    visibility = ["//visibility:public"],
+    runtime_deps = ["detekt-compose-rules"],
+)
+
+### auto-generated section `build intellij.libraries.detekt.compose.rules` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "detekt-compose-rules_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "detekt-compose-rules",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":detekt-compose-rules_resources"],
+  runtime_deps = [
+    "@lib//:libraries-detekt-compose-rules-io-nlopez-compose-rules-detekt",
+    "//libraries/kotlin/reflect",
+  ]
+)
+### auto-generated section `build intellij.libraries.detekt.compose.rules` end

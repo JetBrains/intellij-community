@@ -1,0 +1,4 @@
+<project default="A">
+  <property file="props.properties" />
+  <target name="A"/>
+</project>

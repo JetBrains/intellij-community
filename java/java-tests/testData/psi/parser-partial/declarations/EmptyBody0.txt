@@ -1,0 +1,4 @@
+PsiJavaFile:EmptyBody0.java
+  PsiJavaToken:LBRACE('{')
+  PsiWhiteSpace(' ')
+  PsiJavaToken:RBRACE('}')

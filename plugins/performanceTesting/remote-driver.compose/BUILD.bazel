@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.performanceTesting.remoteDriver.compose` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "remote-driver.compose_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "remote-driver.compose",
+  module_name = "intellij.performanceTesting.remoteDriver.compose",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":remote-driver.compose_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/performanceTesting/core:performanceTesting",
+    "//platform/remote-driver/model",
+    "//platform/platform-api:ide",
+    "//platform/compose",
+    "//platform/core-ui",
+    "//plugins/performanceTesting/remote-driver",
+  ]
+)
+### auto-generated section `build intellij.performanceTesting.remoteDriver.compose` end

@@ -1,0 +1,4 @@
+<?import p.Root?>
+<Root xmlns:fx="http://javafx.com/fxml">
+  <axis/>
+</Root>

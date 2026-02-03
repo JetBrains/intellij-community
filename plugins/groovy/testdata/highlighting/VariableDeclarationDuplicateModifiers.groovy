@@ -1,0 +1,1 @@
+def final <error descr="Duplicate modifier 'def'">def</error> foo = 44

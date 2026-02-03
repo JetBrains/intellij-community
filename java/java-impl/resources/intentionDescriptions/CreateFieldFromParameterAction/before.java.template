@@ -1,0 +1,4 @@
+public class X {
+  void f(int <spot>parameter</spot>) {
+  }
+}

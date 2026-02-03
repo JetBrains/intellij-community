@@ -1,0 +1,6 @@
+JsonFile: n_string_incomplete_surrogate.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"\uD834\uDd"')
+    PsiElement(])(']')

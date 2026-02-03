@@ -1,0 +1,139 @@
+if ([string]::IsNullOrEmpty($Env:INTELLIJ_TERMINAL_COMMAND_BLOCKS_REWORKED)) {
+  return
+}
+
+# Do not source the shell integration if shell is launched in not "FullLanguage" mode
+if ($ExecutionContext.SessionState.LanguageMode -ne "FullLanguage") {
+	return
+}
+
+# We require PSReadLine module for our integration, so if it is not loaded for some reason, we can't continue.
+if ((Get-Module -Name PSReadLine) -eq $null) {
+  return
+}
+
+$Global:__JetBrainsIntellijState = @{
+  IsInitialized = $false
+	IsCommandRunning = $false
+	OriginalPSConsoleHostReadLine = $function:PSConsoleHostReadLine
+}
+
+function Global:__JetBrainsIntellijOSC([string]$body) {
+  return "$([char]0x1B)]1341;$body`a"
+}
+
+function Global:__JetBrainsIntellijEncode([string]$value) {
+  $Bytes = [System.Text.Encoding]::UTF8.GetBytes($value)
+  return [System.BitConverter]::ToString($Bytes).Replace("-", "")
+}
+
+$Global:__JetBrainsIntellijTerminalInitialized=$false
+
+if (Test-Path Function:\Prompt) {
+  Rename-Item Function:\Prompt Global:__JetBrainsIntellijOriginalPrompt
+}
+else {
+  function Global:__JetBrainsIntellijOriginalPrompt() { return "" }
+}
+
+function Global:Prompt() {
+  $Success = $Global:?
+
+  $Result = ""
+  $CurrentDirectory = (Get-Location).Path
+  if ($Global:__JetBrainsIntellijState.IsInitialized -eq $false) {
+    $Global:__JetBrainsIntellijState.IsInitialized = $true
+    $Result += Global:__JetBrainsIntellijOSC "initialized;current_directory=$(Global:__JetBrainsIntellijEncode $CurrentDirectory)"
+    $Result += Global:__JetBrainsIntellijGetAliases
+  }
+  elseif ($Global:__JetBrainsIntellijState.IsCommandRunning -eq $true){
+    $Global:__JetBrainsIntellijState.IsCommandRunning = $false
+    $ExitCode = if ($Success) { 0 } else { 1 }
+    $Result += Global:__JetBrainsIntellijOSC "command_finished;exit_code=$ExitCode;current_directory=$(Global:__JetBrainsIntellijEncode $CurrentDirectory)"
+  }
+
+  $Result += Global:__JetBrainsIntellijOSC "prompt_started"
+  # It is a hack to restore the state of $Global:? variable
+  # So, the original prompt logic will see the real state.
+  # The written error won't be shown anywhere thanks to `-ErrorAction ignore`.
+  if ($Success -eq $false) {
+  	Write-Error "error" -ErrorAction ignore
+  }
+  $Result += __JetBrainsIntellijOriginalPrompt
+  $Result += Global:__JetBrainsIntellijOSC "prompt_finished"
+
+  return $Result
+}
+
+function Global:PSConsoleHostReadLine {
+  $Command = $Global:__JetBrainsIntellijState.OriginalPSConsoleHostReadLine.Invoke()
+  # Do not consider pressing enter without entering the command or pressing Ctrl+C as "command_started"
+  if ($Command -ne "") {
+    $Global:__JetBrainsIntellijState.IsCommandRunning = $true
+    $OSC = Global:__JetBrainsIntellijOSC "command_started;command=$(Global:__JetBrainsIntellijEncode $Command)"
+    [Console]::Write($OSC)
+  }
+
+  return $Command
+}
+
+function Global:__JetBrainsIntellijGetAliases {
+  $Aliases = Get-Alias | ForEach-Object { [PSCustomObject]@{ name = $_.Name; definition = $_.Definition } }
+  $AliasesJson = $Aliases | ConvertTo-Json -Compress
+  $OSC = Global:__JetBrainsIntellijOSC "aliases_received;result=$(Global:__JetBrainsIntellijEncode $AliasesJson)"
+  return $OSC
+}
+
+function Global:__JetBrainsIntellijSendCompletions {
+	$CommandText = ""
+	$CursorIndex = 0
+	[Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$CommandText, [ref]$CursorIndex)
+
+  $ResultObject = $null
+	if ($CommandText.Length -eq 0) {
+	  # TabExpansion2 will throw if command text is empty, so just return an empty result.
+	  $ResultObject = [PSCustomObject]@{
+      CommandText = ""
+      CursorIndex = 0
+      ReplacementIndex = 0
+      ReplacementLength = 0
+      CompletionMatches = @()
+    }
+	}
+	else {
+	  $Completions = $null
+  	try {
+  	  $Completions = TabExpansion2 -inputScript $CommandText -cursorColumn $CursorIndex
+  	}
+  	catch {
+  	  # Catch all possible exceptions, just in case.
+  	  # Because failure here will print an error to the terminal screen.
+  	}
+    if ($Completions -ne $null) {
+      $ResultObject = [PSCustomObject]@{
+        CommandText = $CommandText
+        CursorIndex = $CursorIndex
+        ReplacementIndex = $Completions.ReplacementIndex
+        ReplacementLength = $Completions.ReplacementLength
+        CompletionMatches = $Completions.CompletionMatches
+      }
+    }
+    else {
+      $ResultObject = [PSCustomObject]@{
+        CommandText = $CommandText
+        CursorIndex = $CursorIndex
+        ReplacementIndex = $CursorIndex
+        ReplacementLength = 0
+        CompletionMatches = @()
+      }
+    }
+	}
+
+  $ResultJson = $ResultObject | ConvertTo-Json -Compress
+  $ResultOSC = Global:__JetBrainsIntellijOSC "completion_finished;result=$(Global:__JetBrainsIntellijEncode $ResultJson)"
+  Write-Host -NoNewLine $ResultOSC
+}
+
+Set-PSReadLineKeyHandler -Chord 'F12,e' -ScriptBlock {
+	Global:__JetBrainsIntellijSendCompletions
+}

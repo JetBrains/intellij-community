@@ -1,0 +1,34 @@
+### auto-generated section `build intellij.devkit.uiDesigner` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "uiDesigner_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "uiDesigner",
+  module_name = "intellij.devkit.uiDesigner",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":uiDesigner_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//java/java-indexing-api:indexing",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-api:ide",
+    "//plugins/ui-designer:java-guiForms-designer",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/devkit/devkit-core:core",
+    "//platform/core-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/text-matching",
+    "//platform/platform-impl/designer",
+    "//platform/lang-api:lang",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
+)
+### auto-generated section `build intellij.devkit.uiDesigner` end

@@ -1,0 +1,57 @@
+### auto-generated section `build intellij.junit` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "junit_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "junit",
+  module_name = "intellij.junit",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":junit_resources"],
+  deps = [
+    "//java/execution/openapi:java-execution",
+    "//java/openapi:java",
+    "//java/execution/impl",
+    "//java/java-runtime:rt",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/testRunner",
+    "//platform/vcs-api:vcs",
+    "//plugins/junit_rt:junit-rt",
+    "//java/compiler/openapi:java-compiler",
+    "//platform/platform-impl:ide-impl",
+    "//java/java-impl:impl",
+    "//jvm/jvm-analysis-refactoring:analysis-refactoring",
+    "//java/java-indexing-api:indexing",
+    "//platform/smRunner",
+    "//java/debugger/impl",
+    "//java/idea-ui:ui",
+    "//platform/external-system-api:externalSystem",
+    "//jvm/jvm-analysis-api:analysis",
+    "//jvm/jvm-analysis-quickFix:analysis-quickFix",
+    "//libraries/fastutil",
+    "//platform/platform-util-io:ide-util-io",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//platform/util/jdom",
+    "//plugins/properties/properties-psi-impl:backend-psi",
+    "//platform/core-ui",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
+  ],
+  exports = ["//jvm/jvm-analysis-api:analysis"]
+)
+### auto-generated section `build intellij.junit` end

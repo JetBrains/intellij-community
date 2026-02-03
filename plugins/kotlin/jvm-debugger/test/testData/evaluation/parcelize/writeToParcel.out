@@ -1,0 +1,9 @@
+LineBreakpoint created at main.kt:15
+Run Java
+Connected to the target VM
+main.kt:15
+Compile bytecode for value.bar
+Compile bytecode for DataParcelable::writeToParcel
+Disconnected from the target VM
+
+Process finished with exit code 0

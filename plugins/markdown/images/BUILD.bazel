@@ -1,0 +1,36 @@
+### auto-generated section `build intellij.markdown.images` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "images_resources",
+  srcs = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "images",
+  module_name = "intellij.markdown.images",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
+  resources = [":images_resources"],
+  deps = [
+    "//plugins/markdown/core:markdown",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/lang-api:lang",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/core-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//xml/xml-psi-api:psi",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/core-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//images",
+    "//xml/xml-parser:parser",
+    "@lib//:kotlin-stdlib",
+  ],
+  runtime_deps = ["//platform/backend"]
+)
+### auto-generated section `build intellij.markdown.images` end

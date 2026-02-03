@@ -1,0 +1,5 @@
+<project default="A">
+  <jarlib-resolve property="prop">
+  </jarlib-resolve>
+  <target name="A"/>
+</project>

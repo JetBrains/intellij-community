@@ -1,0 +1,31 @@
+<idea-plugin allow-bundled-update="true" package="com.intellij.ide.customization.java">
+  <id>com.intellij.java.ide</id>
+  <name>Java IDE Customization</name>
+  <vendor>JetBrains</vendor>
+  <category>IDE Settings</category>
+  <description>
+    Provides customization for IDEs which main language is Java (e.g., IntelliJ IDEA, Android Studio).
+  </description>
+
+  <incompatible-with>com.intellij.modules.appcode.ide</incompatible-with>
+
+  <dependencies>
+    <module name="intellij.java.backend"/>
+  </dependencies>
+
+  <content namespace="jetbrains">
+    <module name="intellij.java.ide.customization.training"/>
+  </content>
+
+  <resource-bundle>messages.ActionsBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationActivity implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
+    <applicationActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"/>
+    <postStartupActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler$MyStartupActivity"/>
+
+    <applicationService serviceInterface="com.intellij.lang.IdeLanguageCustomization"
+                        serviceImplementation="com.intellij.ide.customization.java.JavaIdeLanguageCustomization"
+                        overrides="true"/>
+  </extensions>
+</idea-plugin>

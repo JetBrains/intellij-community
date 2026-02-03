@@ -1,0 +1,33 @@
+{
+  "language": "Another",
+  "projectPath": "../ml-eval/keycloak",
+  "repository": "https://github.com/keycloak/keycloak",
+  "revision": "a21e95c5aedf755693b97cdc2425dc56b249395f",
+  "outputDir": "bin/ml-eval-askai-keycloak-output",
+  "strategy": {
+    "collectContextOnly": false
+  },
+  "actions": {
+    "evaluationRoots": [
+      "."
+    ],
+    "_sourceFile": "remote:https://huggingface.co/datasets/JetBrains/ask_ai_dataset/resolve/main/askai/askai_keycloak_dataset.json",
+    "sourceFile": "config:../../staticdataset/askai/askai_keycloak_dataset.json"
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 1000,
+    "filesLimit": 1000,
+    "order": "LINEAR",
+    "trainTestSplit": 70,
+    "registry": ""
+  },
+  "reports": {
+    "evaluationTitle": "Default",
+    "defaultMetrics": null,
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}

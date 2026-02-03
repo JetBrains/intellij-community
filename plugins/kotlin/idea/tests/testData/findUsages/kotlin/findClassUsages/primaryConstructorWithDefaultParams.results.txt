@@ -1,0 +1,7 @@
+[primaryConstructorWithDefaultParams.0.kt] New instance creation 11 A(0)
+[primaryConstructorWithDefaultParams.0.kt] New instance creation 12 A()
+[primaryConstructorWithDefaultParams.1.java] Method return type 9 A foo();
+[primaryConstructorWithDefaultParams.1.java] New instance creation 3 I i = A::new;
+[primaryConstructorWithDefaultParams.1.java] New instance creation 4 I i1 = () -> new A();
+[primaryConstructorWithDefaultParams.1.java] New instance creation 5 I i22 = () -> new A(22);
+[primaryConstructorWithDefaultParams.1.java] Unclassified 3 I i = A::new;

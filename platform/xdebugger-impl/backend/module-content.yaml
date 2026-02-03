@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.debugger.impl.backend.jar
+  modules:
+  - name: intellij.platform.debugger.impl.backend

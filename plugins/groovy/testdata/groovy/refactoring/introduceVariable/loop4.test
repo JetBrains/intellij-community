@@ -1,0 +1,6 @@
+while (true) 
+<begin>foo foo<end>
+-----
+while (true) {
+    def preved = foo foo<caret>
+}

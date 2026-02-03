@@ -1,0 +1,93 @@
+### auto-generated section `build intellij.kotlin.onboarding` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "onboarding_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "onboarding",
+  module_name = "intellij.kotlin.onboarding",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":onboarding_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/statistics",
+    "//platform/core-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/projectModel-impl",
+    "//platform/feedback",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/plugin",
+    "//libraries/kotlinx/datetime",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/preferences",
+  ]
+)
+
+jvm_library(
+  name = "onboarding_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [":onboarding"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/core-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/projectModel-impl",
+    "//platform/feedback",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//libraries/kotlinx/datetime",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlin/test:libraries-kotlinTest",
+    "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
+    "@lib//:kotlin-test-junit",
+    "@lib//:junit5",
+    "//java/testFramework",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/preferences",
+  ]
+)
+### auto-generated section `build intellij.kotlin.onboarding` end
+
+### auto-generated section `test intellij.kotlin.onboarding` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "onboarding_test",
+  runtime_deps = [":onboarding_test_lib"]
+)
+### auto-generated section `test intellij.kotlin.onboarding` end

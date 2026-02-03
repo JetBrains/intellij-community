@@ -1,0 +1,188 @@
+### auto-generated section `build intellij.gradle.java` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "java_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "java",
+  module_name = "intellij.gradle.java",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":java_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/gradle",
+    "//plugins/gradle:gradle-common",
+    "//plugins/coverage",
+    "//plugins/gradle/jps-plugin:jps",
+    "//java/java-indexing-api:indexing",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/platform-impl:ide-impl",
+    "//java/idea-ui:ui",
+    "//platform/observable",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/usageView",
+    "//platform/lang-api:lang",
+    "//platform/external-system-api/dependency-updater",
+    "//platform/ide-core-impl",
+    "//java/compiler/openapi:java-compiler",
+    "//plugins/groovy",
+    "//platform/workspace/storage",
+    "//plugins/toml",
+    "//plugins/toml/core",
+    "//java/execution/impl",
+    "//platform/lang-impl",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+    "//platform/smRunner",
+    "//libraries/gson",
+    "//jps/jps-builders:build",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+    "//libraries/xstream",
+    "//plugins/groovy/groovy-psi:psi",
+    "//java/execution/openapi:java-execution",
+    "//plugins/maven",
+    "//plugins/properties/properties-psi-api:psi",
+    "//plugins/properties/properties-psi-impl:backend-psi",
+    "//jps/model-impl",
+    "//platform/statistics",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//java/debugger/impl",
+    "//platform/util/jdom",
+    "//java/compiler/impl",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/object-serializer:objectSerializer-annotations",
+    "//plugins/completion-ml-ranking",
+    "//plugins/performanceTesting/core:performanceTesting",
+    "//platform/backend/workspace",
+    "//platform/backend/observation",
+    "//libraries/hash4j",
+    "//libraries/fastutil",
+    "//platform/platform-impl/ui",
+    "//java/debugger/shared",
+    "//platform/eel-provider",
+    "//platform/execution",
+  ],
+  exports = ["//plugins/gradle:gradle-common"],
+  runtime_deps = ["@lib//ant/lib:ant"]
+)
+### auto-generated section `build intellij.gradle.java` end
+
+### auto-generated section `build intellij.gradle.java.tests` start
+resourcegroup(
+  name = "java-tests_test_resources",
+  srcs = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
+jvm_library(
+  name = "java-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/observable",
+    "//platform/external-system-api/dependency-updater",
+    "//platform/core-ui",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+  ]
+)
+
+jvm_library(
+  name = "java-tests_test_lib",
+  module_name = "intellij.gradle.java.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
+  resources = [":java-tests_test_resources"],
+  deps = [
+    "@lib//:jmock",
+    "@lib//:junit4",
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/testFramework",
+    "//platform/observable",
+    "//java/java-runtime:rt",
+    "//plugins/gradle/properties",
+    "//plugins/gradle/java",
+    "//plugins/gradle:gradle-tests_test_lib",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
+    "//java/compiler/impl",
+    "//platform/xdebugger-api:debugger",
+    "//platform/external-system-api/dependency-updater",
+    "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
+    "//plugins/maven-server-api:maven-server",
+    "//libraries/mockito",
+    "@lib//:mockito-kotlin",
+    "//java/execution/impl",
+    "//plugins/groovy",
+    "//plugins/groovy:groovy_test_lib",
+    "@lib//:assert_j",
+    "//platform/object-serializer",
+    "//platform/object-serializer:object-serializer_test_lib",
+    "@lib//:org-codehaus-groovy-groovy-json",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//jps/model-impl",
+    "//platform/workspace/storage",
+    "//plugins/properties/properties-psi-api:psi",
+    "//plugins/toml",
+    "//plugins/toml/core",
+    "//plugins/gradle/intellij.gradle.analysis:analysis",
+    "//android/gradle-dsl-toml",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/backend/workspace",
+    "//platform/backend/observation",
+    "//platform/backend/observation:observation_test_lib",
+    "//platform/workspace/jps",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+    "//platform/external-system-impl:externalSystem-tests_test_lib",
+    "//plugins/maven",
+    "//platform/smRunner",
+    "//platform/smRunner:smRunner_test_lib",
+    "//platform/statistics/testFramework",
+    "//platform/execution",
+    "//platform/refactoring",
+  ],
+  runtime_deps = [":java-tests"]
+)
+### auto-generated section `build intellij.gradle.java.tests` end
+
+### auto-generated section `test intellij.gradle.java.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "java-tests_test",
+  runtime_deps = [":java-tests_test_lib"]
+)
+### auto-generated section `test intellij.gradle.java.tests` end

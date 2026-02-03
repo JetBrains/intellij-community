@@ -1,0 +1,6 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="ext" interface="foo.FooFooFooFooFoo"/>
+    <extensionPoint name="ext2" interface="FFFFoo<caret>"/>
+  </extensionPoints>
+</idea-plugin>

@@ -1,0 +1,56 @@
+### auto-generated section `build intellij.kotlin.base.analysis.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
+    "//platform/core-impl",
+  ]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "intellij.kotlin.base.analysis.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/projectModel-api:projectModel",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//java/testFramework",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//platform/core-impl",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "@lib//:junit4",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build intellij.kotlin.base.analysis.tests` end
+
+### auto-generated section `test intellij.kotlin.base.analysis.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test intellij.kotlin.base.analysis.tests` end

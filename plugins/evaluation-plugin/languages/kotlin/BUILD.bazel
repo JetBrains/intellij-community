@@ -1,0 +1,70 @@
+### auto-generated section `build intellij.evaluationPlugin.languages.kotlin` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "kotlin_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin",
+  module_name = "intellij.evaluationPlugin.languages.kotlin",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/evaluation-plugin/languages",
+    "//platform/core-impl",
+    "//plugins/evaluation-plugin/core",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "//platform/analysis-api:analysis",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+  ],
+  runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"]
+)
+
+jvm_library(
+  name = "kotlin_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [":kotlin"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/evaluation-plugin/languages",
+    "//platform/core-impl",
+    "//plugins/evaluation-plugin/core",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "//platform/analysis-api:analysis",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//libraries/gson",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/evaluation-plugin:evaluationPlugin-tests_test_lib",
+  ]
+)
+### auto-generated section `build intellij.evaluationPlugin.languages.kotlin` end
+
+### auto-generated section `test intellij.evaluationPlugin.languages.kotlin` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "kotlin_test",
+  runtime_deps = [":kotlin_test_lib"]
+)
+### auto-generated section `test intellij.evaluationPlugin.languages.kotlin` end

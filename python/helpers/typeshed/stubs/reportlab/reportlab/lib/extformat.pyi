@@ -1,0 +1,6 @@
+from typing import Final
+
+__version__: Final[str]
+
+def dictformat(_format, L={}, G={}): ...
+def magicformat(format): ...

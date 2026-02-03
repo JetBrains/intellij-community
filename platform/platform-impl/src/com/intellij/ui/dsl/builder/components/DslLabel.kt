@@ -1,0 +1,208 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.ui.dsl.builder.components
+
+import com.intellij.lang.documentation.DocumentationMarkup.EXTERNAL_LINK_ICON
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.impl.DslComponentPropertyInternal
+import com.intellij.ui.dsl.builder.impl.checkDeniedHtmlTags
+import com.intellij.util.ui.ExtendableHTMLViewFactory
+import com.intellij.util.ui.HTMLEditorKitBuilder
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
+import java.awt.Dimension
+import javax.swing.Icon
+import javax.swing.JEditorPane
+import javax.swing.event.HyperlinkEvent
+import javax.swing.text.DefaultCaret
+import kotlin.math.min
+
+private const val LINK_GROUP = "link"
+private val BROWSER_LINK_REGEX = Regex("""<a\s+href\s*=\s*['"]?(?<href>https?://[^>'"]*)['"]?\s*>(?<link>[^<]*)</a>""",
+                                       setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE))
+
+@ApiStatus.Internal
+enum class DslLabelType {
+  LABEL,
+  COMMENT
+}
+
+@ApiStatus.Internal
+class DslLabel(@ApiStatus.Internal val type: DslLabelType) : JEditorPane() {
+
+  var action: HyperlinkEventAction? = null
+
+  var maxLineLength: Int = MAX_LINE_LENGTH_NO_WRAP
+    set(value) {
+      field = value
+      updateEditorPaneText()
+    }
+
+  var limitPreferredSize: Boolean = false
+
+  @ApiStatus.Internal
+  @Nls
+  var userText: String? = null
+    private set
+
+  init {
+    contentType = UIUtil.HTML_MIME
+    editorKit = HTMLEditorKitBuilder()
+      .withViewFactoryExtensions(ExtendableHTMLViewFactory.Extensions.WORD_WRAP, ExtendableHTMLViewFactory.Extensions.icons(::existingIconsProvider))
+      .build()
+
+    // BasicTextUI adds caret width to the preferred size of the component (see usages of 'caretMargin' field in BasicTextUI),
+    // so the resulting width is 1px greater than the width specified inside updateEditorPaneText() if line length is limited.
+    // Set caret width to 0, to make the width of the component equal to the specified width.
+    putClientProperty("caretWidth", 0)
+
+    foreground = when (type) {
+      DslLabelType.COMMENT -> JBUI.CurrentTheme.ContextHelp.FOREGROUND
+      DslLabelType.LABEL -> JBUI.CurrentTheme.Label.foreground()
+    }
+
+    addHyperlinkListener { e ->
+      when (e?.eventType) {
+        HyperlinkEvent.EventType.ACTIVATED -> action?.hyperlinkActivated(e)
+        HyperlinkEvent.EventType.ENTERED -> action?.hyperlinkEntered(e)
+        HyperlinkEvent.EventType.EXITED -> action?.hyperlinkExited(e)
+      }
+    }
+
+    patchFont()
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+
+    isFocusable = false
+    isEditable = false
+    border = null
+    background = UIUtil.TRANSPARENT_COLOR
+    isOpaque = false
+    disabledTextColor = JBUI.CurrentTheme.Label.disabledForeground()
+
+    // JEditorPane.setText updates cursor and requests scrolling to cursor position if scrollable is used. Disable it
+    (caret as DefaultCaret).updatePolicy = DefaultCaret.NEVER_UPDATE
+
+    patchFont()
+    updateEditorPaneText()
+  }
+
+  override fun getBaseline(width: Int, height: Int): Int {
+    // JEditorPane doesn't support baseline, calculate it manually from font
+    val fontMetrics = getFontMetrics(font)
+    return fontMetrics.ascent
+  }
+
+  override fun getMinimumSize(): Dimension {
+    val result = super.getMinimumSize()
+    return if (maxLineLength == MAX_LINE_LENGTH_WORD_WRAP && limitPreferredSize)
+      Dimension(min(getSupposedWidth(DEFAULT_COMMENT_WIDTH / 2), result.width), result.height)
+    else result
+  }
+
+  override fun getPreferredSize(): Dimension {
+    val result = super.getPreferredSize()
+    return if (maxLineLength == MAX_LINE_LENGTH_WORD_WRAP && limitPreferredSize)
+      Dimension(min(getSupposedWidth(getPreferredColumnsWordWrap()), result.width), result.height)
+    else result
+  }
+
+  override fun setText(@Nls t: String?) {
+    userText = t
+    updateEditorPaneText()
+  }
+
+  private fun getPreferredColumnsWordWrap(): Int {
+    return getClientProperty(DslComponentPropertyInternal.PREFERRED_COLUMNS_LABEL_WORD_WRAP) as Int? ?: DEFAULT_COMMENT_WIDTH
+  }
+
+  private fun updateEditorPaneText() {
+    val text = userText
+    if (text == null) {
+      super.setText(null)
+      return
+    }
+
+    checkDeniedHtmlTags(text)
+
+    @Suppress("HardCodedStringLiteral")
+    var processedText = text.replace("<a>", "<a href=''>", ignoreCase = true)
+    processedText = appendExternalLinkIcons(processedText)
+    var body = HtmlChunk.body()
+    if (maxLineLength > 0 && maxLineLength != MAX_LINE_LENGTH_NO_WRAP && text.length > maxLineLength) {
+      body = body.attr("width", getSupposedWidth(maxLineLength))
+    }
+
+    @NonNls val css = createCss()
+    super.setText(HtmlBuilder()
+                    .append(HtmlChunk.raw(css))
+                    .append(HtmlChunk.raw(processedText).wrapWith(body))
+                    .wrapWith(HtmlChunk.html())
+                    .toString())
+
+    // There is a bug in JDK: if JEditorPane gets height = 0 (text is null) then it never gets correct preferred size afterwards
+    // Below is a simple workaround to fix that, see details in BasicTextUI.getPreferredSize
+    // See also https://stackoverflow.com/questions/49273118/jeditorpane-getpreferredsize-not-always-working-in-java-9
+    size = Dimension(0, 0)
+  }
+
+  @Nls
+  private fun appendExternalLinkIcons(@Nls text: String): String {
+    val matchers = BROWSER_LINK_REGEX.findAll(text)
+    if (!matchers.any()) {
+      return text
+    }
+
+    val result = StringBuilder()
+    val externalLink = EXTERNAL_LINK_ICON.toString()
+    var i = 0
+    for (matcher in matchers) {
+      val linkEnd = matcher.groups[LINK_GROUP]!!.range.last
+      result.append(text.substring(i..linkEnd))
+      result.append(externalLink)
+      i = linkEnd + 1
+    }
+    result.append(text.substring(i))
+
+    @Suppress("HardCodedStringLiteral")
+    return result.toString()
+  }
+
+  private fun patchFont() {
+    if (type == DslLabelType.COMMENT) {
+      font = ComponentPanelBuilder.getCommentFont(font)
+    }
+  }
+
+  private fun createCss(): String {
+    val styles = mutableListOf(
+      "a, a:link {color:#${ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.ENABLED)};}",
+      "a:visited {color:#${ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.VISITED)};}",
+      "a:hover {color:#${ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.HOVERED)};}",
+      "a:active {color:#${ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.PRESSED)};}"
+    )
+
+    when (maxLineLength) {
+      MAX_LINE_LENGTH_NO_WRAP -> styles.add("body, p {white-space:nowrap;}")
+    }
+
+    return styles.joinToString(" ", "<head><style type='text/css'>", "</style></head>")
+  }
+
+  private fun getSupposedWidth(charCount: Int): Int {
+    return getFontMetrics(font).charWidth('0') * charCount
+  }
+
+  private fun existingIconsProvider(key: String): Icon? {
+    val iconsProvider = getClientProperty(DslComponentProperty.ICONS_PROVIDER) as IconsProvider?
+    return iconsProvider?.getIcon(key)
+  }
+}

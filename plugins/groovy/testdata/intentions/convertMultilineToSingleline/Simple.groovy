@@ -1,0 +1,2 @@
+print '''<caret>
+print d'''

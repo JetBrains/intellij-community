@@ -1,0 +1,31 @@
+### auto-generated section `build intellij.kotlin.highlighting.minimal` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "kotlin-highlighting-minimal_resources",
+  srcs = glob(["resource/**/*"]),
+  strip_prefix = "resource"
+)
+
+jvm_library(
+  name = "kotlin-highlighting-minimal",
+  module_name = "intellij.kotlin.highlighting.minimal",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-highlighting-minimal_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/analysis-impl",
+    "//platform/core-ui",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/util:util-ui",
+    "//platform/lang-impl",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//platform/platform-api:ide",
+  ],
+  runtime_deps = ["//plugins/kotlin/base/frontend-agnostic"]
+)
+### auto-generated section `build intellij.kotlin.highlighting.minimal` end

@@ -1,0 +1,9 @@
+# stubtest produces false positives for Jetson.GPIO-related modules in CI
+# The high-level Jetson.GPIO library can only be imported on Jetson SBC,
+# and requires specific system permissions (/dev/gpiochip0 access).
+Jetson.GPIO
+Jetson.GPIO.gpio
+Jetson.GPIO.gpio_pinmux_lookup
+
+# This builtin error doesn't need to be re-exported
+Jetson.GPIO.gpio_event.InterruptedError

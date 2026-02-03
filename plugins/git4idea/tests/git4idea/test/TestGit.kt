@@ -1,0 +1,172 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package git4idea.test
+
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
+import git4idea.branch.GitRebaseParams
+import git4idea.commands.GitCommandResult
+import git4idea.commands.GitImpl
+import git4idea.commands.GitLineHandler
+import git4idea.commands.GitLineHandlerListener
+import git4idea.commands.GitRebaseCommandResult
+import git4idea.push.GitPushParams
+import git4idea.rebase.GitInteractiveRebaseEditorHandler
+import git4idea.rebase.GitRebaseEditorHandler
+import git4idea.repo.GitRepository
+import java.io.File
+
+/**
+ * Any unknown error that could be returned by Git.
+ */
+const val UNKNOWN_ERROR_TEXT: String = "unknown error"
+
+class TestGitImpl : GitImpl() {
+  private val LOG = Logger.getInstance(TestGitImpl::class.java)
+
+  @Volatile
+  var stashListener: ((GitRepository) -> Unit)? = null
+  @Volatile
+  var mergeListener: ((GitRepository) -> Unit)? = null
+  @Volatile
+  var pushListener: ((GitRepository) -> Unit)? = null
+
+  @Volatile
+  private var rebaseShouldFail: (GitRepository) -> Boolean = { false }
+  @Volatile
+  private var pushHandler: (GitRepository) -> GitCommandResult? = { null }
+  @Volatile
+  private var branchDeleteHandler: (GitRepository) -> GitCommandResult? = { null }
+  @Volatile
+  private var checkoutNewBranchHandler: (GitRepository) -> GitCommandResult? = { null }
+  @Volatile
+  private var interactiveRebaseEditor: InteractiveRebaseEditor? = null
+
+  class InteractiveRebaseEditor(val entriesEditor: ((String) -> String)?,
+                                val plainTextEditor: ((String) -> String)?)
+
+  override fun push(repository: GitRepository,
+                    pushParams: GitPushParams,
+                    vararg listeners: GitLineHandlerListener): GitCommandResult {
+    pushListener?.invoke(repository)
+    return pushHandler(repository) ?: super.push(repository, pushParams, *listeners)
+  }
+
+  override fun checkoutNewBranch(repository: GitRepository, branchName: String, listener: GitLineHandlerListener?): GitCommandResult {
+    return checkoutNewBranchHandler(repository) ?: super.checkoutNewBranch(repository, branchName, listener)
+  }
+
+  override fun branchDelete(repository: GitRepository,
+                            branchName: String,
+                            force: Boolean,
+                            vararg listeners: GitLineHandlerListener?): GitCommandResult {
+    return branchDeleteHandler(repository) ?: super.branchDelete(repository, branchName, force, *listeners)
+  }
+
+  override fun rebase(repository: GitRepository,
+                      params: GitRebaseParams,
+                      vararg listeners: GitLineHandlerListener): GitRebaseCommandResult {
+    return failOrCallRebase(repository) {
+      super.rebase(repository, params, *listeners)
+    }
+  }
+
+  override fun rebaseAbort(repository: GitRepository, vararg listeners: GitLineHandlerListener?): GitRebaseCommandResult {
+    return failOrCallRebase(repository) {
+      super.rebaseAbort(repository, *listeners)
+    }
+  }
+
+  override fun rebaseContinue(repository: GitRepository, vararg listeners: GitLineHandlerListener?): GitRebaseCommandResult {
+    return failOrCallRebase(repository) {
+      super.rebaseContinue(repository, *listeners)
+    }
+  }
+
+  override fun rebaseSkip(repository: GitRepository, vararg listeners: GitLineHandlerListener?): GitRebaseCommandResult {
+    return failOrCallRebase(repository) {
+      super.rebaseSkip(repository, *listeners)
+    }
+  }
+
+  override fun createRebaseEditor(project: Project, root: VirtualFile, handler: GitLineHandler,
+                                  commitListAware: Boolean): GitRebaseEditorHandler {
+    if (interactiveRebaseEditor == null) return super.createRebaseEditor(project, root, handler, commitListAware)
+
+    val editor = object : GitInteractiveRebaseEditorHandler(project, root) {
+      override fun handleUnstructuredEditor(file: File): Boolean {
+        val plainTextEditor = interactiveRebaseEditor!!.plainTextEditor
+        return if (plainTextEditor != null) handleEditor(file, plainTextEditor) else super.handleUnstructuredEditor(file)
+      }
+
+      override fun handleInteractiveEditor(file: File): Boolean {
+        val entriesEditor = interactiveRebaseEditor!!.entriesEditor
+        return if (entriesEditor != null) handleEditor(file, entriesEditor) else super.handleInteractiveEditor(file)
+      }
+
+      private fun handleEditor(file: File, editor: (String) -> String): Boolean {
+        FileUtil.writeToFile(file, editor(FileUtil.loadFile(file)))
+        return true
+      }
+    }
+    return editor
+  }
+
+  override fun stashSave(repository: GitRepository, message: String): GitCommandResult {
+    stashListener?.invoke(repository)
+    return super.stashSave(repository, message)
+  }
+
+  override fun merge(repository: GitRepository,
+                     branchToMerge: String,
+                     additionalParams: MutableList<String>?,
+                     vararg listeners: GitLineHandlerListener?): GitCommandResult {
+    mergeListener?.invoke(repository)
+    return super.merge(repository, branchToMerge, additionalParams, *listeners)
+  }
+
+  fun setShouldRebaseFail(shouldFail: (GitRepository) -> Boolean) {
+    rebaseShouldFail = shouldFail
+  }
+
+  fun onPush(handler: (GitRepository) -> GitCommandResult?) {
+    pushHandler = handler
+  }
+
+  fun onCheckoutNewBranch(handler: (GitRepository) -> GitCommandResult?) {
+    checkoutNewBranchHandler = handler
+  }
+
+  fun onBranchDelete(handler: (GitRepository) -> GitCommandResult?) {
+    branchDeleteHandler = handler
+  }
+
+  fun setInteractiveRebaseEditor(editor: InteractiveRebaseEditor) {
+    interactiveRebaseEditor = editor
+  }
+
+  fun reset() {
+    rebaseShouldFail = { false }
+    pushHandler = { null }
+    checkoutNewBranchHandler = { null }
+    branchDeleteHandler = { null }
+    interactiveRebaseEditor = null
+    pushListener = null
+    stashListener = null
+    mergeListener = null
+  }
+
+  private fun failOrCallRebase(repository: GitRepository, delegate: () -> GitRebaseCommandResult): GitRebaseCommandResult {
+    return if (rebaseShouldFail(repository)) {
+      GitRebaseCommandResult(fatalResult())
+    }
+    else {
+      delegate()
+    }
+  }
+
+  private fun fatalResult() = GitCommandResult(false, 128, listOf("fatal: error: $UNKNOWN_ERROR_TEXT"), emptyList<String>(), null)
+}
+
+

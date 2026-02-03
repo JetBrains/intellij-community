@@ -1,0 +1,7 @@
+- name: dist.all/lib/intellij.libraries.aalto.xml.jar
+  modules:
+  - name: intellij.libraries.aalto.xml
+  library: aalto-xml
+  files:
+  - name: $MAVEN_REPOSITORY$/com/fasterxml/aalto-xml/1/aalto-xml-1.jar
+  - name: $MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/4/stax2-api-4.jar

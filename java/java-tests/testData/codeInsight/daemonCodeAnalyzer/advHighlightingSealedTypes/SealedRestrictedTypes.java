@@ -1,0 +1,2 @@
+class <error descr="'sealed' is a restricted identifier and cannot be used for type declarations">sealed</error> {}
+class <error descr="'permits' is a restricted identifier and cannot be used for type declarations">permits</error> {}

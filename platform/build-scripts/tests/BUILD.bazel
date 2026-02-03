@@ -1,0 +1,66 @@
+### auto-generated section `build intellij.platform.buildScripts.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "tests_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "intellij.platform.buildScripts.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":tests_test_resources"],
+  deps = [
+    "//platform/build-scripts",
+    "@lib//:junit4",
+    "@lib//:kotlin-stdlib",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/build-scripts/downloader",
+    "//platform/util",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:assert_j",
+    "@lib//:junit5",
+    "//platform/testFramework/extensions:testExtensions",
+    "//build/tasks",
+    "//build/tasks:tasks_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/commons/compress",
+    "//build",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/util/zip",
+    "//platform/util/jdom",
+    "//platform/util-ex",
+    "@community//build:zip",
+    "//libraries/netty/buffer",
+    "//libraries/hash4j",
+    "//libraries/fastutil",
+    "//libraries/maven-resolver-provider",
+    "//libraries/mockito",
+    "@lib//:mockito-kotlin",
+    "//jps/model-serialization",
+    "//jps/model-api:model",
+    "//libraries/jsoup",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build intellij.platform.buildScripts.tests` end
+
+### auto-generated section `test intellij.platform.buildScripts.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test intellij.platform.buildScripts.tests` end

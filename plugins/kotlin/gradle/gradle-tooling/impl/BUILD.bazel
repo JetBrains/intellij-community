@@ -1,0 +1,75 @@
+### auto-generated section `build intellij.kotlin.gradle.tooling.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
+
+resourcegroup(
+  name = "impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_provided_library(
+  name = "platform_extensions_provided",
+  lib = "//platform/extensions"
+)
+
+jvm_library(
+  name = "impl",
+  module_name = "intellij.kotlin.gradle.tooling.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":impl_resources"],
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlin/reflect",
+    "@lib//:kotlin-tooling-core",
+    "@lib//:kotlin-gradle-plugin-idea-proto",
+    "@lib//:kotlin-gradle-plugin-idea",
+    "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-tooling",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/project-model",
+    "//plugins/gradle/tooling-extension-api:toolingExtension",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+    "@lib//:opentelemetry",
+    "@lib//:jspecify-provided",
+    ":platform_extensions_provided",
+  ]
+)
+
+jvm_library(
+  name = "impl_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  associates = [":impl"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlin/reflect",
+    "@lib//:kotlin-tooling-core",
+    "@lib//:kotlin-gradle-plugin-idea-proto",
+    "@lib//:kotlin-gradle-plugin-idea",
+    "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-tooling",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/project-model",
+    "//plugins/gradle/tooling-extension-api:toolingExtension",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+    "@lib//:junit4",
+    "@lib//:kotlin-test-junit",
+    "@lib//:kotlin-test",
+    "@lib//:opentelemetry",
+    "@lib//:jspecify-provided",
+    ":platform_extensions_provided",
+  ]
+)
+### auto-generated section `build intellij.kotlin.gradle.tooling.impl` end
+
+### auto-generated section `test intellij.kotlin.gradle.tooling.impl` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "impl_test",
+  runtime_deps = [":impl_test_lib"]
+)
+### auto-generated section `test intellij.kotlin.gradle.tooling.impl` end

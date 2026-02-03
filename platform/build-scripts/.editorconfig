@@ -1,0 +1,14 @@
+[{*.kt,*.kts}]
+
+ij_kotlin_method_parameters_new_line_after_left_paren = true
+ij_kotlin_method_parameters_right_paren_on_new_line = true
+ij_kotlin_call_parameters_new_line_after_left_paren = true
+ij_kotlin_call_parameters_right_paren_on_new_line = true
+
+# critical subsystem - named params used a lot
+max_line_length = 180
+
+
+ij_kotlin_packages_to_use_import_on_demand = unset
+ij_java_packages_to_use_import_on_demand = unset
+ij_kotlin_name_count_to_use_star_import = 999

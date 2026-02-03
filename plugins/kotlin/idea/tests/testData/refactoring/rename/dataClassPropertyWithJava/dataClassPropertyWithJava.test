@@ -1,0 +1,7 @@
+{
+  "type": "AUTO_DETECT",
+  "mainFile": "test.kt",
+  "newName": "p1",
+  "withRuntime": "true",
+   "enabledInK2": true
+}

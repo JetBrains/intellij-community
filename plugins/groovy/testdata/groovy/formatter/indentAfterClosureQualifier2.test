@@ -1,0 +1,13 @@
+foo {
+  closure
+}.
+     bar {
+  closure
+}
+-----
+foo {
+  closure
+}.
+    bar {
+      closure
+    }

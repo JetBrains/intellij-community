@@ -1,0 +1,91 @@
+# Is a functools.partial, so stubtest says "is not a function"
+setuptools.modified.newer_pairwise_group
+setuptools._distutils._modified.newer_pairwise_group
+
+# Runtime initializes to None, but this really should never be None when used
+setuptools._distutils.compilers.C.base.Compiler.compiler_type
+
+# Dynamically created in __init__
+setuptools._distutils.dist.Distribution.get_name
+setuptools._distutils.dist.Distribution.get_version
+setuptools._distutils.dist.Distribution.get_fullname
+setuptools._distutils.dist.Distribution.get_author
+setuptools._distutils.dist.Distribution.get_author_email
+setuptools._distutils.dist.Distribution.get_maintainer
+setuptools._distutils.dist.Distribution.get_maintainer_email
+setuptools._distutils.dist.Distribution.get_contact
+setuptools._distutils.dist.Distribution.get_contact_email
+setuptools._distutils.dist.Distribution.get_url
+setuptools._distutils.dist.Distribution.get_license
+setuptools._distutils.dist.Distribution.get_licence
+setuptools._distutils.dist.Distribution.get_description
+setuptools._distutils.dist.Distribution.get_long_description
+setuptools._distutils.dist.Distribution.get_keywords
+setuptools._distutils.dist.Distribution.get_platforms
+setuptools._distutils.dist.Distribution.get_classifiers
+setuptools._distutils.dist.Distribution.get_download_url
+setuptools._distutils.dist.Distribution.get_requires
+setuptools._distutils.dist.Distribution.get_provides
+setuptools._distutils.dist.Distribution.get_obsoletes
+
+# Missing objects from setuptools._distutils
+setuptools._distutils.archive_util.ARCHIVE_FORMATS
+setuptools._distutils.archive_util.check_archive_formats
+setuptools._distutils.cmd.Command.dump_options
+setuptools._distutils.command.build_ext.extension_name_re
+setuptools._distutils.command.install.HAS_USER_SITE
+setuptools._distutils.command.install.INSTALL_SCHEMES
+setuptools._distutils.command.install.SCHEME_KEYS
+setuptools._distutils.command.install.WINDOWS_SCHEME
+setuptools._distutils.command.install_lib.PYTHON_SOURCE_EXTENSION
+setuptools._distutils.dist.fix_help_options
+setuptools._distutils.extension.read_setup_file
+setuptools._distutils.filelist.findall
+setuptools._distutils.filelist.glob_to_re
+setuptools._distutils.filelist.translate_pattern
+setuptools._distutils.sysconfig.BASE_EXEC_PREFIX
+setuptools._distutils.sysconfig.BASE_PREFIX
+setuptools._distutils.sysconfig.IS_PYPY
+setuptools._distutils.sysconfig.build_flags
+setuptools._distutils.sysconfig.expand_makefile_vars
+setuptools._distutils.sysconfig.get_python_version
+setuptools._distutils.sysconfig.parse_config_h
+setuptools._distutils.sysconfig.parse_makefile
+setuptools._distutils.sysconfig.project_base
+setuptools._distutils.sysconfig.python_build
+setuptools._distutils.util.is_freethreaded
+setuptools._distutils.util.MACOSX_VERSION_VAR
+
+# Missing submodules from setuptools._distutils
+# (Many of these may be implementation details,
+# but they can be added if people ask for them)
+setuptools._distutils.command.__all__
+setuptools._distutils.command.bdist_dumb
+setuptools._distutils.command.build_scripts
+setuptools._distutils.command.check
+setuptools._distutils.command.clean
+setuptools._distutils.command.config
+setuptools._distutils.command.install_egg_info
+setuptools._distutils.command.install_headers
+setuptools._distutils.compat.numpy
+setuptools._distutils.compat.py39
+setuptools._distutils.core
+setuptools._distutils.cygwinccompiler
+setuptools._distutils.debug
+setuptools._distutils.dir_util
+setuptools._distutils.fancy_getopt
+setuptools._distutils.file_util
+setuptools._distutils.log
+setuptools._distutils.text_file
+setuptools._distutils.version
+setuptools._distutils.versionpredicate
+setuptools._distutils.zosccompiler
+
+# Reexported from setuptools._distutils; problems should be fixed there
+distutils\..+
+
+# Private APIs, tests and other vendored code
+setuptools.config._validate_pyproject.*
+setuptools.compat.*
+setuptools.command.build_py.build_py.existing_egg_info_dir
+.+?\.tests.*

@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.debugger.streams.shared.jar
+  modules:
+  - name: intellij.debugger.streams.shared

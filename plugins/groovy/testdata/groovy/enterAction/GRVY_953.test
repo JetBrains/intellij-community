@@ -1,0 +1,5 @@
+static hasMany = [<caret>]
+-----
+static hasMany = [
+    <caret>
+]

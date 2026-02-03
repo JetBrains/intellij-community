@@ -1,0 +1,2 @@
+@Anno(<spot>TheClass</spot>)
+def foo(param) {}

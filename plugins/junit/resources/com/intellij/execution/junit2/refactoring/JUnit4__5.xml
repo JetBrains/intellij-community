@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+
+<migrationMap>
+  <name value="JUnit (4.x -&gt; 5.0)" />
+  <description value="For transferring the JUnit 4 test annotations to the new jupiter ones, may result in red code! Assertions won't be migrated.
+ Please see the 'Java | JUnit issues | JUnit 4 test can be JUnit 5' inspection to migrate only tests which can be converted fully automatically." />
+  <entry oldName="org.junit.Before" newName="org.junit.jupiter.api.BeforeEach" type="class"/>
+  <entry oldName="org.junit.BeforeClass" newName="org.junit.jupiter.api.BeforeAll" type="class"/>
+  <entry oldName="org.junit.After" newName="org.junit.jupiter.api.AfterEach" type="class"/>
+  <entry oldName="org.junit.AfterClass" newName="org.junit.jupiter.api.AfterAll" type="class"/>
+  <entry oldName="org.junit.Test" newName="org.junit.jupiter.api.Test" type="class"/>
+  <entry oldName="org.junit.Ignore" newName="org.junit.jupiter.api.Disabled" type="class"/>
+</migrationMap>
+

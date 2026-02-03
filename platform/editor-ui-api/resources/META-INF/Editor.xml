@@ -1,0 +1,27 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="editorFactoryListener" interface="com.intellij.openapi.editor.event.EditorFactoryListener" dynamic="true"/>
+    <extensionPoint name="syntaxHighlighter"
+                    beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.SyntaxHighlighter"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.mergeableGutterIconRendererProvider" interface="com.intellij.openapi.editor.MergeableGutterIconRendererProvider" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.ide.ui.UISettingsStateDefaultsProviderImpl"
+                        serviceInterface="com.intellij.ide.ui.UISettingsStateDefaultsProvider" />
+    <applicationService serviceImplementation="com.intellij.ide.ui.UISettings"/>
+    <applicationSettings service="com.intellij.ide.ui.UISettings"/>
+
+    <projectService
+      serviceInterface="com.intellij.openapi.vcs.FileStatusManager" open="true"
+      serviceImplementation="com.intellij.openapi.vcs.DefaultFileStatusManager" />
+    <projectService
+      serviceInterface="com.intellij.openapi.vcs.ElementStatusTracker" open="true"
+      serviceImplementation="com.intellij.openapi.vcs.DefaultElementStatusTracker" />
+    <applicationService serviceImplementation="com.intellij.ide.ui.NotRoamableUiSettings" />
+    <applicationService serviceImplementation="com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorCustomizer" open="true"/>
+  </extensions>
+</idea-plugin>

@@ -1,0 +1,9 @@
+PsiJavaFile:Marker.java
+  PsiAnnotation
+    PsiJavaToken:AT('@')
+    PsiJavaCodeReferenceElement:Preliminary
+      PsiIdentifier:Preliminary('Preliminary')
+      PsiReferenceParameterList
+        <empty list>
+    PsiAnnotationParameterList
+      <empty list>

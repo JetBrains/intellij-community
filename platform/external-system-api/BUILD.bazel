@@ -1,0 +1,44 @@
+### auto-generated section `build intellij.platform.externalSystem` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "externalSystem_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "externalSystem",
+  module_name = "intellij.platform.externalSystem",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":externalSystem_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/util",
+    "//platform/projectModel-api:projectModel",
+    "//platform/platform-api:ide",
+    "//platform/lang-api:lang",
+    "//platform/external-system-rt:externalSystem-rt",
+    "@lib//:kotlin-stdlib",
+    "//platform/observable",
+    "//platform/util/jdom",
+    "//platform/object-serializer",
+    "//platform/object-serializer:objectSerializer-annotations",
+    "//platform/util:util-ui",
+    "//platform/util/concurrency",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/external-system-api/dependency-updater",
+    "//platform/core-ui",
+    "//platform/backend/observation",
+    "//platform/workspace/storage",
+    "//platform/backend/workspace",
+    "//platform/execution",
+  ],
+  exports = ["//platform/external-system-rt:externalSystem-rt"]
+)
+### auto-generated section `build intellij.platform.externalSystem` end

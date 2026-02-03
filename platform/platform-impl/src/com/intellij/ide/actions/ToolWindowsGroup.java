@@ -1,0 +1,83 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.actions;
+
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
+import static java.lang.String.CASE_INSENSITIVE_ORDER;
+import static java.util.Comparator.comparingInt;
+
+@ApiStatus.Internal
+public final class ToolWindowsGroup extends ActionGroup implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(getEventProject(e) != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+    Project project = getEventProject(e);
+    if (project == null) return EMPTY_ARRAY;
+    List<ActivateToolWindowAction> result = getToolWindowActions(project, false);
+    return result.toArray(AnAction.EMPTY_ARRAY);
+  }
+
+  public static List<ActivateToolWindowAction> getToolWindowActions(@NotNull Project project, boolean shouldSkipShown) {
+    ActionManager actionManager = ActionManager.getInstance();
+    ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(project);
+    List<ActivateToolWindowAction> result = new ArrayList<>();
+    for (ToolWindow window : manager.getToolWindows()) {
+      if (shouldSkipShown && window.isShowStripeButton() && window.isAvailable() && manager.isStripeButtonShow(window)) {
+        continue;
+      }
+      String actionId = ActivateToolWindowAction.Manager.getActionIdForToolWindow(window.getId());
+      AnAction action = actionManager.getAction(actionId);
+      if (action instanceof ActivateToolWindowAction) {
+        result.add((ActivateToolWindowAction)action);
+      }
+    }
+    AnAction activateGroup = actionManager.getAction("ActivateToolWindowActions");
+    if (activateGroup instanceof DefaultActionGroup group) {
+      AnAction[] children = group.getChildren(actionManager);
+      for (AnAction child : children) {
+        if (child instanceof ActivateToolWindowAction && !result.contains(child)) {
+          String windowId = ((ActivateToolWindowAction)child).getToolWindowId();
+          ToolWindow window = manager.getToolWindow(windowId);
+          if (window != null && window.isShowStripeButton() && shouldSkipShown && manager.isStripeButtonShow(window)) {
+            continue;
+          }
+          result.add((ActivateToolWindowAction) child);
+        }
+      }
+    }
+    result.sort(getActionComparator());
+    return result;
+  }
+
+  private static @NotNull Comparator<ActivateToolWindowAction> getActionComparator() {
+    return comparingMnemonic().thenComparing(it -> it.getToolWindowId(), CASE_INSENSITIVE_ORDER);
+  }
+
+  private static @NotNull Comparator<ActivateToolWindowAction> comparingMnemonic() {
+    return comparingInt(it -> {
+      int mnemonic = ActivateToolWindowAction.Manager.getMnemonicForToolWindow(it.getToolWindowId());
+      return mnemonic != -1 ? mnemonic : Integer.MAX_VALUE;
+    });
+  }
+}

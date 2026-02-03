@@ -1,0 +1,39 @@
+### auto-generated section `build kotlin.project-wizard.idea.k1` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_kotlin-project-wizard-idea-k1",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
+
+resourcegroup(
+  name = "kotlin-project-wizard-idea-k1_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-project-wizard-idea-k1",
+  module_name = "kotlin.project-wizard.idea.k1",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-project-wizard-idea-k1_resources"],
+  kotlinc_opts = ":custom_kotlin-project-wizard-idea-k1",
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/kotlin/project-wizard/core",
+    "//plugins/kotlin/project-wizard/idea",
+    "//plugins/kotlin/idea",
+    "//plugins/kotlin/code-insight/api",
+    "//platform/lang-impl",
+    "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
+    "@lib//:kotlin-stdlib",
+  ]
+)
+### auto-generated section `build kotlin.project-wizard.idea.k1` end

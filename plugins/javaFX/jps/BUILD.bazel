@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.javaFX.jps` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "jps_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jps",
+  module_name = "intellij.javaFX.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":jps_resources"],
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "//jps/jps-builders:build",
+    "//jps/model-api:model",
+    "//platform/util",
+    "//jps/model-serialization",
+    "//plugins/javaFX/common",
+    "//jps/model-impl",
+    "//platform/util/jdom",
+    "@lib//:jetbrains-annotations",
+  ]
+)
+### auto-generated section `build intellij.javaFX.jps` end

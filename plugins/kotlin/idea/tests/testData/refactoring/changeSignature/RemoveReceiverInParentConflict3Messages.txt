@@ -1,0 +1,2 @@
+'receiver' is used in declaration body
+'receiver' is used in declaration body

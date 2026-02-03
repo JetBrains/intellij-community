@@ -1,0 +1,12 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.editorconfig.common.syntax.psi
+
+import com.intellij.psi.NavigatablePsiElement
+import com.intellij.psi.PsiElement
+
+interface EditorConfigDescribableElement : PsiElement, NavigatablePsiElement {
+  val option: EditorConfigOption
+  val section: EditorConfigSection
+  val describableParent: EditorConfigDescribableElement?
+  val declarationSite: String
+}

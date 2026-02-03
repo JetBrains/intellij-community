@@ -1,0 +1,21 @@
+JsonFile: n_structure_open_open.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"\{["')
+    PsiErrorElement:',' or ']' expected, got '\'
+      PsiElement(BAD_CHARACTER)('\')
+    JsonObject
+      PsiElement({)('{')
+      PsiErrorElement:<property> or '}' expected, got '['
+        <empty list>
+    JsonArray
+      PsiElement([)('[')
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"\{["')
+      PsiErrorElement:',' or ']' expected, got '\'
+        PsiElement(BAD_CHARACTER)('\')
+      JsonObject
+        PsiElement({)('{')
+        PsiErrorElement:<property> or '}' expected
+          <empty list>

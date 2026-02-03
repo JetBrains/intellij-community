@@ -1,0 +1,37 @@
+#if (${PACKAGE_NAME} && ${PACKAGE_NAME} != "")
+package ${PACKAGE_NAME};
+
+#parse("File Header.java")
+// ${SearchEverywhereComment1}
+// ${SearchEverywhereComment2}
+public class Main {
+    static void main() {
+        // ${ShowIntentionComment1}
+        // ${ShowIntentionComment2}
+        IO.println(String.format("Hello and welcome!"));
+
+        // ${RunComment}
+        for (int i = 1; i <= 5; i++) {
+
+            // ${DebugComment1}
+            // ${DebugComment2}
+            IO.println("i = " + i);
+        }
+    }
+}
+#else
+#parse("File Header.java")
+void main() {
+  // ${ShowIntentionComment1}
+  // ${ShowIntentionComment2}
+  IO.println(String.format("Hello and welcome!"));
+
+  // ${RunComment}
+  for (int i = 1; i <= 5; i++) {
+
+    // ${DebugComment1}
+    // ${DebugComment2}
+    IO.println("i = " + i);
+  }
+}
+#end

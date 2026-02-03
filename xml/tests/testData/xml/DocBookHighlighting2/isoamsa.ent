@@ -1,0 +1,97 @@
+
+<!--
+     File isoamsa.ent produced by the XSL script entities.xsl
+     from input data in unicode.xml.
+
+     Please report any errors to David Carlisle
+     via the public W3C list www-math@w3.org.
+
+     The numeric character values assigned to each entity
+     (should) match the Unicode assignments in Unicode 4.0.
+
+     Entity names in this file are derived from files carrying the
+     following notice:
+
+     (C) International Organization for Standardization 1986
+     Permission to copy in any form is granted for use with
+     conforming SGML systems and applications as defined in
+     ISO 8879, provided this notice is included in all copies.
+
+-->
+
+
+<!-- 
+     Version: $Id: isoamsa.ent,v 1.2 2003/12/08 15:14:43 davidc Exp $
+
+       Public identifier: ISO 8879:1986//ENTITIES Added Math Symbols: Arrow Relations//EN//XML
+       System identifier: http://www.w3.org/2003/entities/iso8879/isoamsa.ent
+
+     The public identifier should always be used verbatim.
+     The system identifier may be changed to suit local requirements.
+
+     Typical invocation:
+
+       <!ENTITY % isoamsa PUBLIC
+         "ISO 8879:1986//ENTITIES Added Math Symbols: Arrow Relations//EN//XML"
+         "http://www.w3.org/2003/entities/iso8879/isoamsa.ent"
+       >
+       %isoamsa;
+
+-->
+
+<!ENTITY cularr           "&#x021B6;" ><!--ANTICLOCKWISE TOP SEMICIRCLE ARROW -->
+<!ENTITY curarr           "&#x021B7;" ><!--CLOCKWISE TOP SEMICIRCLE ARROW -->
+<!ENTITY dArr             "&#x021D3;" ><!--DOWNWARDS DOUBLE ARROW -->
+<!ENTITY darr2            "&#x021CA;" ><!--DOWNWARDS PAIRED ARROWS -->
+<!ENTITY dharl            "&#x021C3;" ><!--DOWNWARDS HARPOON WITH BARB LEFTWARDS -->
+<!ENTITY dharr            "&#x021C2;" ><!--DOWNWARDS HARPOON WITH BARB RIGHTWARDS -->
+<!ENTITY dlarr            "&#x02199;" ><!--SOUTH WEST ARROW -->
+<!ENTITY drarr            "&#x02198;" ><!--SOUTH EAST ARROW -->
+<!ENTITY hArr             "&#x021D4;" ><!--LEFT RIGHT DOUBLE ARROW -->
+<!ENTITY harr             "&#x02194;" ><!--LEFT RIGHT ARROW -->
+<!ENTITY harrw            "&#x021AD;" ><!--LEFT RIGHT WAVE ARROW -->
+<!ENTITY lAarr            "&#x021DA;" ><!--LEFTWARDS TRIPLE ARROW -->
+<!ENTITY Larr             "&#x0219E;" ><!--LEFTWARDS TWO HEADED ARROW -->
+<!ENTITY larr2            "&#x021C7;" ><!--LEFTWARDS PAIRED ARROWS -->
+<!ENTITY larrhk           "&#x021A9;" ><!--LEFTWARDS ARROW WITH HOOK -->
+<!ENTITY larrlp           "&#x021AB;" ><!--LEFTWARDS ARROW WITH LOOP -->
+<!ENTITY larrtl           "&#x021A2;" ><!--LEFTWARDS ARROW WITH TAIL -->
+<!ENTITY lhard            "&#x021BD;" ><!--LEFTWARDS HARPOON WITH BARB DOWNWARDS -->
+<!ENTITY lharu            "&#x021BC;" ><!--LEFTWARDS HARPOON WITH BARB UPWARDS -->
+<!ENTITY lrarr2           "&#x021C6;" ><!--LEFTWARDS ARROW OVER RIGHTWARDS ARROW -->
+<!ENTITY lrhar2           "&#x021CB;" ><!--LEFTWARDS HARPOON OVER RIGHTWARDS HARPOON -->
+<!ENTITY lsh              "&#x021B0;" ><!--UPWARDS ARROW WITH TIP LEFTWARDS -->
+<!ENTITY map              "&#x021A6;" ><!--RIGHTWARDS ARROW FROM BAR -->
+<!ENTITY mumap            "&#x022B8;" ><!--MULTIMAP -->
+<!ENTITY nearr            "&#x02197;" ><!--NORTH EAST ARROW -->
+<!ENTITY nhArr            "&#x021CE;" ><!--LEFT RIGHT DOUBLE ARROW WITH STROKE -->
+<!ENTITY nharr            "&#x021AE;" ><!--LEFT RIGHT ARROW WITH STROKE -->
+<!ENTITY nlArr            "&#x021CD;" ><!--LEFTWARDS DOUBLE ARROW WITH STROKE -->
+<!ENTITY nlarr            "&#x0219A;" ><!--LEFTWARDS ARROW WITH STROKE -->
+<!ENTITY nrArr            "&#x021CF;" ><!--RIGHTWARDS DOUBLE ARROW WITH STROKE -->
+<!ENTITY nrarr            "&#x0219B;" ><!--RIGHTWARDS ARROW WITH STROKE -->
+<!ENTITY nwarr            "&#x02196;" ><!--NORTH WEST ARROW -->
+<!ENTITY olarr            "&#x021BA;" ><!--ANTICLOCKWISE OPEN CIRCLE ARROW -->
+<!ENTITY orarr            "&#x021BB;" ><!--CLOCKWISE OPEN CIRCLE ARROW -->
+<!ENTITY rAarr            "&#x021DB;" ><!--RIGHTWARDS TRIPLE ARROW -->
+<!ENTITY Rarr             "&#x021A0;" ><!--RIGHTWARDS TWO HEADED ARROW -->
+<!ENTITY rarr2            "&#x021C9;" ><!--RIGHTWARDS PAIRED ARROWS -->
+<!ENTITY rarrhk           "&#x021AA;" ><!--RIGHTWARDS ARROW WITH HOOK -->
+<!ENTITY rarrlp           "&#x021AC;" ><!--RIGHTWARDS ARROW WITH LOOP -->
+<!ENTITY rarrtl           "&#x021A3;" ><!--RIGHTWARDS ARROW WITH TAIL -->
+<!ENTITY rarrw            "&#x0219D;" ><!--RIGHTWARDS WAVE ARROW -->
+<!ENTITY rhard            "&#x021C1;" ><!--RIGHTWARDS HARPOON WITH BARB DOWNWARDS -->
+<!ENTITY rharu            "&#x021C0;" ><!--RIGHTWARDS HARPOON WITH BARB UPWARDS -->
+<!ENTITY rlarr2           "&#x021C4;" ><!--RIGHTWARDS ARROW OVER LEFTWARDS ARROW -->
+<!ENTITY rlhar2           "&#x021CC;" ><!--RIGHTWARDS HARPOON OVER LEFTWARDS HARPOON -->
+<!ENTITY rsh              "&#x021B1;" ><!--UPWARDS ARROW WITH TIP RIGHTWARDS -->
+<!ENTITY uArr             "&#x021D1;" ><!--UPWARDS DOUBLE ARROW -->
+<!ENTITY uarr2            "&#x021C8;" ><!--UPWARDS PAIRED ARROWS -->
+<!ENTITY uharl            "&#x021BF;" ><!--UPWARDS HARPOON WITH BARB LEFTWARDS -->
+<!ENTITY uharr            "&#x021BE;" ><!--UPWARDS HARPOON WITH BARB RIGHTWARDS -->
+<!ENTITY vArr             "&#x021D5;" ><!--UP DOWN DOUBLE ARROW -->
+<!ENTITY varr             "&#x02195;" ><!--UP DOWN ARROW -->
+<!ENTITY xhArr            "&#x027FA;" ><!--LONG LEFT RIGHT DOUBLE ARROW -->
+<!ENTITY xharr            "&#x027F7;" ><!--LONG LEFT RIGHT ARROW -->
+<!ENTITY xlArr            "&#x027F8;" ><!--LONG LEFTWARDS DOUBLE ARROW -->
+<!ENTITY xrArr            "&#x027F9;" ><!--LONG RIGHTWARDS DOUBLE ARROW -->

@@ -1,0 +1,7 @@
+1 errors:
+[1]: ------------------------------
+Module 'intellij.angularJs/diagram' is registered in 'AngularJs' plugin using deprecated module.name/subDescriptor syntax.
+Extract it to a separate JPS module using the quick-fix provided by the DevKit plugin as described in https://youtrack.jetbrains.com/issue/IJPL-165543. (
+  referencingDescriptorFile=intellij.angularJs/META-INF/plugin.xml
+)
+-----------------------------------

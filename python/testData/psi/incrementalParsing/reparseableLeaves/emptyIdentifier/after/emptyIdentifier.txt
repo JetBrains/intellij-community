@@ -1,0 +1,10 @@
+Original text:
+---------------
+def foo(self): ...
+def bar(self): ...
+---------------
+Subtree: Language: Python
+---------------
+<reparse>def (self): ...
+def bar(self): ...</reparse>
+---------------

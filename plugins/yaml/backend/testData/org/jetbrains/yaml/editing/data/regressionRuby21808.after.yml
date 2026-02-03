@@ -1,0 +1,7 @@
+dependencies:
+  override:
+    - sudo apt-get install -y nodejs
+    - [which npm]
+    <caret>
+    - {test}
+    - (install)

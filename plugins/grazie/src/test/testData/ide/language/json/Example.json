@@ -1,0 +1,29 @@
+{
+  "escape": "\uAcad<TYPO descr="Typo: In word 'demically'">demically</TYPO>, \t<TYPO descr="Typo: In word 'asteful'">asteful</TYPO>, \b<TYPO descr="Typo: In word 'rawn'">rawn</TYPO>, Wo\n<TYPO descr="Typo: In word 'derful'">derful</TYPO>",
+  "menu": {
+    "id": "file",
+    "value": "File",
+    "knownPhrases": "Apache APISIX or Apache Gobblin",
+    "popup": {
+      "menu_item": [
+        {
+          "<TYPO descr="Typo: In word 'valuue'">valuue</TYPO>": "New",
+          "onclick": "CreateNewDoc()"
+        },
+        {
+          "value": "There is document.",
+          "onclick": "OpenDoc()"
+        },
+        {
+          "value": "Close",
+          "onclick": "CloseDoc()"
+        },
+        {
+          "value": "В моей коробке лежало <GRAMMAR_ERROR descr="Sklonenije_NUM_NN">пять карандаша</GRAMMAR_ERROR>.",
+          "onclick": "А <GRAMMAR_ERROR descr="grammar_vse_li_noun">все ли ошибка</GRAMMAR_ERROR> найдены?",
+          "de": "er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, <GRAMMAR_ERROR descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</GRAMMAR_ERROR>"
+        }
+      ]
+    }
+  }
+}

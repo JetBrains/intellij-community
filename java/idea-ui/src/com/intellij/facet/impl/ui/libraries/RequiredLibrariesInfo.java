@@ -1,0 +1,115 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package com.intellij.facet.impl.ui.libraries;
+
+import com.google.common.io.BaseEncoding;
+import com.intellij.facet.ui.libraries.LibraryInfo;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.io.DigestUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+public class RequiredLibrariesInfo {
+  private final List<LibraryInfo> myLibraryInfos = new ArrayList<>();
+
+  public RequiredLibrariesInfo(LibraryInfo... libs) {
+    myLibraryInfos.addAll(new ArrayList<>(Arrays.asList(libs)));
+  }
+
+  public @Nullable RequiredClassesNotFoundInfo checkLibraries(VirtualFile[] libraryFiles) {
+    return checkLibraries(Arrays.asList(libraryFiles));
+  }
+
+  public @Nullable RequiredClassesNotFoundInfo checkLibraries(List<? extends VirtualFile> libraryFiles) {
+    List<LibraryInfo> infos = new ArrayList<>();
+    List<String> classes = new ArrayList<>();
+
+    for (LibraryInfo info : myLibraryInfos) {
+      boolean notFound;
+      final String md5 = info.getMd5();
+      if (!StringUtil.isEmptyOrSpaces(md5)) {
+        notFound = true;
+        for (VirtualFile libraryFile : libraryFiles) {
+           final VirtualFile jarFile = JarFileSystem.getInstance().getVirtualFileForJar(libraryFile);
+          if (md5.equals(md5(jarFile))) {
+            notFound = false;
+            break;
+          }
+        }
+      } else {
+        notFound = false;
+        for (String className : info.getRequiredClasses()) {
+          if (!LibraryUtil.isClassAvailableInLibrary(libraryFiles, className)) {
+            classes.add(className);
+            notFound = true;
+          }
+        }
+      }
+
+      if (notFound) {
+        infos.add(info);
+      }
+    }
+    if (infos.isEmpty()) {
+      return null;
+    }
+    return new RequiredClassesNotFoundInfo(ArrayUtilRt.toStringArray(classes), infos.toArray(LibraryInfo.EMPTY_ARRAY));
+  }
+
+  public static @Nullable String md5(@NotNull VirtualFile file) {
+    try {
+      MessageDigest md5 = DigestUtil.md5();
+      md5.update(file.contentsToByteArray());
+      final byte[] digest = md5.digest();
+
+      return BaseEncoding.base16().lowerCase().encode(digest);
+    }
+    catch (Exception e) {
+      return null;
+    }
+  }
+
+  public static String getLibrariesPresentableText(final LibraryInfo[] libraryInfos) {
+    StringBuilder missedJarsText = new StringBuilder();
+    for (int i = 0; i < libraryInfos.length; i++) {
+      if (i > 0) {
+        missedJarsText.append(", ");
+      }
+
+      missedJarsText.append(libraryInfos[i].getName());
+    }
+    return missedJarsText.toString();
+  }
+
+  public static class RequiredClassesNotFoundInfo {
+    private final String[] myClassNames;
+    private final LibraryInfo[] myLibraryInfos;
+
+    public RequiredClassesNotFoundInfo(final String[] classNames, final LibraryInfo[] libraryInfos) {
+      myClassNames = classNames;
+      myLibraryInfos = libraryInfos;
+    }
+
+    public String[] getClassNames() {
+      return myClassNames;
+    }
+
+    public LibraryInfo[] getLibraryInfos() {
+      return myLibraryInfos;
+    }
+
+    public @NlsSafe String getMissingJarsText() {
+      return getLibrariesPresentableText(myLibraryInfos);
+    }
+  }
+}

@@ -1,0 +1,10 @@
+File name: classes.groovy
+
+class Foo {
+
+}
+-----
+File name: Bar.groovy
+
+<spot>class Bar {
+}</spot>

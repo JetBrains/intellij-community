@@ -1,0 +1,331 @@
+package com.intellij.terminal.frontend.view.completion
+
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
+import com.intellij.codeInsight.completion.CompletionResult
+import com.intellij.codeInsight.completion.CompletionService
+import com.intellij.codeInsight.completion.PlainPrefixMatcher
+import com.intellij.codeInsight.completion.PrioritizedLookupElement
+import com.intellij.codeInsight.lookup.LookupArranger.DefaultArranger
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInsight.lookup.LookupFocusDegree
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import com.intellij.terminal.completion.spec.ShellSuggestionType
+import com.intellij.terminal.frontend.view.TerminalView
+import com.intellij.terminal.frontend.view.impl.toRelative
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
+import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
+import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil
+import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
+import org.jetbrains.plugins.terminal.view.TerminalOutputModel
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
+
+/**
+ * Manages the currently running terminal command completion process in the project.
+ * Use [invokeCompletion] to schedule a new completion request.
+ * Use [activeProcess] to get the currently running completion session.
+ */
+@ApiStatus.Internal
+@Service(Service.Level.PROJECT)
+class TerminalCommandCompletionService(
+  private val project: Project,
+  coroutineScope: CoroutineScope,
+) {
+  private val contributors: List<TerminalCommandCompletionContributor> = listOf(
+    PowerShellCompletionContributor(),
+    TerminalCommandSpecCompletionContributor(),
+  )
+
+  private val fallbackContributor: TerminalCommandCompletionContributor = TerminalFilesCompletionContributor()
+
+  @get:RequiresEdt
+  internal var activeProcess: TerminalCommandCompletionProcess? = null
+    private set
+
+  private val requestsCount = MutableStateFlow(0)
+  private val requestsChannel = Channel<TerminalCommandCompletionContext>(
+    capacity = Channel.CONFLATED,
+    onUndeliveredElement = { requestsCount.update { it - 1 } }
+  )
+
+  init {
+    coroutineScope.launch(Dispatchers.UiWithModelAccess + CoroutineName("Completion requests processing")) {
+      requestsChannel.consumeAsFlow().collectLatest { request ->
+        try {
+          processCompletionRequest(request)
+        }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Exception) {
+          LOG.error("Exception during completion requests processing", e)
+        }
+        finally {
+          requestsCount.update { it - 1 }
+        }
+      }
+    }
+  }
+
+  @RequiresEdt
+  fun invokeCompletion(
+    terminalView: TerminalView,
+    editor: Editor,
+    outputModel: TerminalOutputModel,
+    shellIntegration: TerminalShellIntegration,
+    isAutoPopup: Boolean,
+  ) {
+    if (shellIntegration.outputStatus.value != TerminalOutputStatus.TypingCommand) {
+      return
+    }
+
+    // Ensure that the editor caret is synced with the terminal one
+    val cursorOffset = outputModel.cursorOffset
+    editor.caretModel.primaryCaret.moveToOffset(cursorOffset.toRelative(outputModel))
+
+    val activeBlock = shellIntegration.blocksModel.activeBlock as TerminalCommandBlock
+    val commandText = getRawCommandText(activeBlock, outputModel) ?: return
+
+    val context = TerminalCommandCompletionContext(
+      project = project,
+      terminalView = terminalView,
+      editor = editor,
+      outputModel = outputModel,
+      shellIntegration = shellIntegration,
+      commandStartOffset = activeBlock.commandStartOffset!!,
+      initialCursorOffset = cursorOffset,
+      commandText = commandText,
+      isAutoPopup = isAutoPopup,
+    )
+
+    requestsCount.update { it + 1 }
+    val result = requestsChannel.trySend(context)
+    if (!result.isSuccess) {
+      requestsCount.update { it - 1 }
+    }
+  }
+
+  private suspend fun processCompletionRequest(context: TerminalCommandCompletionContext) = coroutineScope {
+    // Pass the current scope to the completion process to link the lifecycles of the process and the current completion request.
+    val process = createCompletionProcess(context, coroutineScope = this)
+    activeProcess = process
+    try {
+      val shouldShow = withContext(Dispatchers.Default) {
+        val result = getCompletionSuggestions(context)
+        if (result != null && shouldShowCompletion(context, result.suggestions)) {
+          submitSuggestions(process, result)
+          true
+        }
+        else false
+      }
+      if (!shouldShow) {
+        return@coroutineScope
+      }
+
+      if (checkContextValid(context)) {
+        // Show the lookup only if context is still valid
+        if (process.tryInsertOrShowPopup()) {
+          // If a lookup was shown, leave the process alive until the shown lookup is closed
+          awaitCancellation()
+        }
+      }
+      else if (process.lookup.isAvailableToUser && !process.isPopupMeaningless()) {
+        // Restart the process again in case the lookup is already showing and valid,
+        // but the current context became outdated.
+        process.scheduleRestart()
+      }
+    }
+    finally {
+      // The coroutine can be canceled at this moment, and the logic of closing the Lookup might not expect it.
+      // So, let's close the Lookup in the non-cancellable context to avoid problems.
+      withContext(NonCancellable) {
+        process.cancel()
+        activeProcess = null
+      }
+    }
+  }
+
+  private suspend fun getCompletionSuggestions(context: TerminalCommandCompletionContext): TerminalCommandCompletionResult? {
+    val results = coroutineScope {
+      contributors.map { contributor ->
+        async {
+          contributor.getCompletionSuggestions(context)
+        }
+      }.awaitAll().filterNotNull()
+    }
+
+    val nonEmptyResults = results.filter { it.suggestions.isNotEmpty() }
+    if (nonEmptyResults.isEmpty()) {
+      return fallbackContributor.getCompletionSuggestions(context)
+    }
+
+    val maxReplacementLength = nonEmptyResults.maxOf { it.beforePrefixReplacementLength }
+    val maxLenResults = nonEmptyResults.filter { it.beforePrefixReplacementLength == maxReplacementLength }
+    if (maxLenResults.size == 1) {
+      return maxLenResults.first()
+    }
+
+    val suggestions = maxLenResults.asSequence()
+      .flatMap { it.suggestions }
+      .distinctBy { it.name }
+      .toList()
+    return TerminalCommandCompletionResult(
+      suggestions,
+      prefix = maxLenResults.first().prefix,
+      beforePrefixReplacementLength = maxReplacementLength,
+      afterPrefixReplacementLength = maxLenResults.first().afterPrefixReplacementLength,
+    )
+  }
+
+  private fun submitSuggestions(
+    process: TerminalCommandCompletionProcess,
+    result: TerminalCommandCompletionResult,
+  ) {
+    val prefixReplacementIndex = result.suggestions.firstOrNull()?.prefixReplacementIndex ?: 0
+    val prefix = result.prefix.substring(prefixReplacementIndex)
+    val prefixMatcher = PlainPrefixMatcher(prefix, true)
+    val sorter = CompletionService.getCompletionService().defaultSorter(process.parameters, prefixMatcher)
+
+    val items = result.suggestions.mapNotNull {
+      val element = it.toLookupElement()
+      CompletionResult.wrap(element, prefixMatcher, sorter)
+    }
+    process.addItems(items, result.beforePrefixReplacementLength, result.afterPrefixReplacementLength)
+  }
+
+  /**
+   * Returns true if the cursor is at the same position and there is the same command text that was
+   * at the initialization of the completion context.
+   */
+  @RequiresEdt
+  private fun checkContextValid(context: TerminalCommandCompletionContext): Boolean {
+    val outputModel = context.outputModel
+    val activeBlock = context.shellIntegration.blocksModel.activeBlock as TerminalCommandBlock
+    val curCommandText = getRawCommandText(activeBlock, outputModel)?.let {
+      val cursorOffset = outputModel.cursorOffset - activeBlock.commandStartOffset!!
+      it.substring(0, cursorOffset.toInt())
+    }
+    val contextCommandText = context.commandText.let {
+      val cursorOffset = context.initialCursorOffset - context.commandStartOffset
+      it.substring(0, cursorOffset.toInt())
+    }
+    return outputModel.cursorOffset == context.initialCursorOffset
+           && curCommandText == contextCommandText
+  }
+
+  @RequiresEdt
+  private fun createCompletionProcess(
+    context: TerminalCommandCompletionContext,
+    coroutineScope: CoroutineScope,
+  ): TerminalCommandCompletionProcess {
+    val lookup = obtainLookup(context.editor, project, context.isAutoPopup)
+    val process = TerminalCommandCompletionProcess(context, lookup, coroutineScope)
+    val arranger = TerminalCompletionLookupArranger(process)
+    process.setLookupArranger(arranger)
+    return process
+  }
+
+  private fun shouldShowCompletion(context: TerminalCommandCompletionContext, suggestions: List<ShellCompletionSuggestion>): Boolean {
+    return !context.isAutoPopup
+           || TerminalOptionsProvider.instance.commandCompletionShowingMode == TerminalCommandCompletionShowingMode.ALWAYS
+           || isSuggestingOnlyParameters(suggestions)
+  }
+
+  private fun isSuggestingOnlyParameters(suggestions: List<ShellCompletionSuggestion>): Boolean {
+    // Show the popup only if there are no suggestions for subcommands (only options and arguments).
+    return suggestions.none { it.type == ShellSuggestionType.COMMAND }
+  }
+
+  /**
+   * Returns command text with possible trailing new lines and spaces.
+   * Returns null if the cursor is in the incorrect place or the block is invalid.
+   */
+  private fun getRawCommandText(block: TerminalCommandBlock, model: TerminalOutputModel): String? {
+    val start = block.commandStartOffset ?: return null
+    val end = block.endOffset
+    if (start < model.startOffset || start > model.endOffset
+        || end < model.startOffset || end > model.endOffset
+        || start > end) {
+      return null
+    }
+    return model.getText(start, end).toString()
+  }
+
+  @RequiresEdt
+  private fun obtainLookup(editor: Editor, project: Project, isAutoPopup: Boolean): LookupImpl {
+    val existing = LookupManager.getActiveLookup(editor) as? LookupImpl
+    if (existing != null && existing.isCompletion) {
+      existing.markReused()
+      existing.putUserData(TerminalCommandCompletion.LAST_SELECTED_ITEM_KEY, null)
+      if (!isAutoPopup) {
+        existing.setLookupFocusDegree(LookupFocusDegree.FOCUSED)
+      }
+      return existing
+    }
+
+    val arranger = object : DefaultArranger() {
+      override fun isCompletion(): Boolean {
+        return true
+      }
+    }
+    val lookup = LookupManager.getInstance(project).createLookup(editor, LookupElement.EMPTY_ARRAY, "", arranger) as LookupImpl
+    lookup.setLookupFocusDegree(if (isAutoPopup) LookupFocusDegree.SEMI_FOCUSED else LookupFocusDegree.FOCUSED)
+    return lookup
+  }
+
+  private fun ShellCompletionSuggestion.toLookupElement(): LookupElement {
+    val actualIcon = icon ?: TerminalCompletionUtil.findIconForSuggestion(name, type)
+    val nextSuggestions = TerminalCompletionUtil.getNextSuggestionsString(this).takeIf { it.isNotEmpty() }
+
+    val element = LookupElementBuilder.create(this, name)
+      .withPresentableText(displayName ?: name)
+      .withTailText(nextSuggestions, true)
+      .withIcon(TerminalStatefulDelegatingIcon(actualIcon))
+    // Actual insertion logic is performed in TerminalLookupListener
+    element.putUserData(CodeCompletionHandlerBase.DIRECT_INSERTION, true)
+
+    val adjustedPriority = priority.coerceIn(0, 100)
+    return PrioritizedLookupElement.withPriority(element, adjustedPriority / 100.0)
+  }
+
+  @TestOnly
+  suspend fun awaitPendingRequestsProcessed() {
+    requestsCount.first { it == 0 }
+  }
+
+  companion object {
+    fun getInstance(project: Project): TerminalCommandCompletionService = project.service()
+
+    private val LOG = logger<TerminalCommandCompletionService>()
+  }
+}

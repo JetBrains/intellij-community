@@ -1,0 +1,2 @@
+# staticmethod weirdness:
+entrypoints.CaseSensitiveConfigParser.optionxform

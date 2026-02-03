@@ -1,0 +1,23 @@
+### auto-generated section `build intellij.platform.foldings` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "foldings",
+  module_name = "intellij.platform.foldings",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/util/jdom",
+    "@lib//:kotlin-stdlib",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
+    "//platform/analysis-impl",
+    "//platform/core-impl",
+  ]
+)
+### auto-generated section `build intellij.platform.foldings` end

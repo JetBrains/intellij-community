@@ -1,0 +1,70 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.pasta.common
+
+import andel.editor.RangeMarkerId
+import andel.editor.substring
+import andel.text.TextRange
+import com.jetbrains.rhizomedb.ChangeScope
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.EntityType
+import com.jetbrains.rhizomedb.Indexing
+import com.jetbrains.rhizomedb.RefFlags
+import com.jetbrains.rhizomedb.RetractableEntity
+import com.jetbrains.rhizomedb.entity
+import com.jetbrains.rhizomedb.exists
+import fleet.util.UID
+
+
+internal data class LocalRangeMarker(override val eid: EID) : RetractableEntity, Entity {
+  val rangeMarkerId: RangeMarkerId by RangeMarkerIdAttr
+  val anchorStorage: LocalAnchorStorageEntity by AnchorStorageAttr
+
+  val range: TextRange
+    get() = requireNotNull(anchorStorage.anchorStorage.resolveRangeMarker(rangeMarkerId))
+
+  val substring: String
+    get() = document.text.substring(range)
+
+  val document: DocumentEntity
+    get() = anchorStorage.document
+
+  override fun onRetract(): RetractableEntity.Callback {
+    val anchorStorage = anchorStorage
+    val rangeMarkerId = rangeMarkerId
+    return RetractableEntity.Callback {
+      if (anchorStorage.exists()) {
+        anchorStorage[LocalAnchorStorageEntity.AnchorStorageAttr] = anchorStorage.anchorStorage.removeRangeMarker(rangeMarkerId)
+      }
+    }
+  }
+
+  companion object : EntityType<LocalRangeMarker>(
+    LocalRangeMarker::class.java.name,
+    "com.intellij.platform.editor",
+    ::LocalRangeMarker,
+  ) {
+    val RangeMarkerIdAttr: Required<RangeMarkerId> = requiredValue("rangeMarkerId", RangeMarkerId.serializer(), Indexing.UNIQUE)
+    val AnchorStorageAttr: Required<LocalAnchorStorageEntity> = requiredRef("anchorStorage", RefFlags.CASCADE_DELETE_BY)
+  }
+}
+
+internal fun ChangeScope.createRangeMarker(
+  document: DocumentEntity,
+  from: Long,
+  to: Long,
+  closedLeft: Boolean = false,
+  closedRight: Boolean = false,
+  rangeMarkerId: RangeMarkerId = RangeMarkerId(UID.random()),
+): LocalRangeMarker {
+  require(from >= 0) { "From for the range marker should be >= 0" }
+  require(to >= 0) { "To for the range marker should be >= 0" }
+  val storage = ensureLocalAnchorStorageCreated(document)
+  storage[LocalAnchorStorageEntity.AnchorStorageAttr] = storage.anchorStorage
+    .removeRangeMarker(rangeMarkerId)
+    .addRangeMarker(rangeMarkerId, from, to, closedLeft, closedRight)
+  return entity(LocalRangeMarker.RangeMarkerIdAttr, rangeMarkerId) ?: LocalRangeMarker.new {
+    it[LocalRangeMarker.AnchorStorageAttr] = storage
+    it[LocalRangeMarker.RangeMarkerIdAttr] = rangeMarkerId
+  }
+}

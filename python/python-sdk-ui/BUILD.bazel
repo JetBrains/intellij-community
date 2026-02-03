@@ -1,0 +1,35 @@
+### auto-generated section `build intellij.python.sdk.ui` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "sdk-ui_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "sdk-ui",
+  module_name = "intellij.python.sdk.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":sdk-ui_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//python/openapi:community",
+    "//python/python-sdk:sdk",
+    "//python/python-syntax-core:syntax-core",
+    "//libraries/caffeine",
+    "@lib//:io-github-z4kn4fein-semver-jvm",
+    "//python/python-exec-service:community-execService",
+    "//python/python-poetry/common",
+    "//python/python-uv/common",
+  ]
+)
+### auto-generated section `build intellij.python.sdk.ui` end

@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.ktor.io.jar
+  modules:
+  - name: intellij.libraries.ktor.io
+    libraries:
+      ktor-io:
+      - name: $MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/3/ktor-io-jvm-3.jar

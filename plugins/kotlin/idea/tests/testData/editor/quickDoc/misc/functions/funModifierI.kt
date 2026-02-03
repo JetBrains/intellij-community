@@ -1,0 +1,2 @@
+private fun <caret>funModifierI() = 0
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">private</span> <span style="color:#000080;font-weight:bold;">fun</span> <span style="color:#000000;">funModifierI</span>()<span style="">: </span><span style="color:#000000;"><a href="psi_element://kotlin.Int">Int</a></span></pre></div><div class='bottom'><icon src="KotlinBaseResourcesIcons.Kotlin_file"/>&nbsp;funModifierI.kt<br/></div>

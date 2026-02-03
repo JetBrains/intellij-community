@@ -1,0 +1,1 @@
+val from = "Lo<selection>rem \$ Ips</selection>um"

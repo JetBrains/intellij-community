@@ -1,0 +1,72 @@
+### auto-generated section `build intellij.java.execution.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "impl",
+  module_name = "intellij.java.execution.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":impl_resources"],
+  deps = [
+    "//java/openapi:java",
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
+    "//platform/platform-impl:ide-impl",
+    "//java/execution/openapi:java-execution",
+    "//java/java-runtime:rt",
+    "//java/debugger/impl",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/testRunner",
+    "//platform/vcs-api:vcs",
+    "//platform/usageView",
+    "//platform/ide-core-impl",
+    "//java/compiler/openapi:java-compiler",
+    "//java/debugger/openapi:java-debugger",
+    "//java/java-impl:impl",
+    "//java/java-indexing-api:indexing",
+    "//platform/smRunner",
+    "@lib//:intellij-test-discovery",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//libraries/gson",
+    "//libraries/jackson/jackson",
+    "//libraries/miglayout-swing",
+    "//platform/vcs-impl",
+    "//platform/vcs-impl/lang",
+    "//platform/util/nanoxml",
+    "//libraries/jackson/databind",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//libraries/fastutil",
+    "//platform/statistics",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/diff-api:diff",
+    "//platform/core-ui",
+    "//platform/platform-util-io-impl:ide-util-io-impl",
+    "//platform/util/jdom",
+    "//platform/threadDumpParser",
+    "//platform/eel-provider",
+    "//java/debugger/shared",
+    "//platform/platform-impl/concurrency",
+    "//java/codeserver/core",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
+  ],
+  exports = [
+    "//java/execution/openapi:java-execution",
+    "//platform/testRunner",
+    "//platform/statistics",
+  ]
+)
+### auto-generated section `build intellij.java.execution.impl` end

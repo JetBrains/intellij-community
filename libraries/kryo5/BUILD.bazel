@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.kryo5` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "kryo5_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kryo5",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":kryo5_resources"],
+  exports = ["@lib//:libraries-kryo5-kryo"],
+  runtime_deps = ["@lib//:libraries-kryo5-kryo"]
+)
+### auto-generated section `build intellij.libraries.kryo5` end

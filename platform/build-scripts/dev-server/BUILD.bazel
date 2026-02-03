@@ -1,0 +1,36 @@
+### auto-generated section `build intellij.platform.buildScripts.devBuildServer` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "buildScripts-devBuildServer",
+  module_name = "intellij.platform.buildScripts.devBuildServer",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/build-scripts",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//build/tasks",
+    "@lib//:slf4j-api",
+    "//platform/util",
+    "//jps/model-api:model",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/diagnostic/telemetry",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/build-scripts/downloader",
+    "//platform/boot",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/util/rt-java8",
+    "//libraries/fastutil",
+    "//libraries/hash4j",
+    "//platform/diagnostic/telemetry.exporters",
+    "//platform/util/coroutines",
+    "//platform/util/zip",
+    "//libraries/kotlinx/serialization/protobuf",
+  ],
+  runtime_deps = ["//libraries/xz"]
+)
+### auto-generated section `build intellij.platform.buildScripts.devBuildServer` end

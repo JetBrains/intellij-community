@@ -1,0 +1,15 @@
+def foo = {
+    int x, int y ->
+<begin>    println (x + y)
+    foo(x, y)
+<end>}
+-----
+def foo = {
+    int x, int y ->
+        <caret>testMethod(x, y)
+}
+
+private testMethod(int x, int y) {
+    println(x + y)
+    foo(x, y)
+}

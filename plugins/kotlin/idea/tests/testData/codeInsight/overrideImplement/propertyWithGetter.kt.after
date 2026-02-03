@@ -1,0 +1,12 @@
+// FIR_IDENTICAL
+open class Foo {
+    open val v: Int
+        get() = 10
+}
+
+class Bar: Foo() {
+    override val v: Int
+        get() = super.v
+}
+
+// MEMBER: "v: Int"

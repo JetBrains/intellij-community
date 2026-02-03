@@ -1,0 +1,36 @@
+aws_xray_sdk.core.models.subsegment.subsegment_decorator
+aws_xray_sdk.core.sampling.connector.ServiceConnector.fetch_sampling_rules
+
+# Inconsistency because `context_missing` param can be passed in *args or **kwargs:
+aws_xray_sdk.core.async_context.AsyncContext.__init__
+
+# We can not import 3rd-party libraries in teststubs runtime,
+# but we can use Protocol to replace this types:
+aws_xray_sdk.ext.aiobotocore
+aws_xray_sdk.ext.aiobotocore.patch
+aws_xray_sdk.ext.aiohttp.client
+aws_xray_sdk.ext.aiohttp.middleware
+aws_xray_sdk.ext.bottle.middleware
+aws_xray_sdk.ext.django.apps
+aws_xray_sdk.ext.django.conf
+aws_xray_sdk.ext.django.db
+aws_xray_sdk.ext.django.middleware
+aws_xray_sdk.ext.django.templates
+aws_xray_sdk.ext.flask.middleware
+aws_xray_sdk.ext.flask_sqlalchemy.query
+aws_xray_sdk.ext.httpx
+aws_xray_sdk.ext.httpx.patch
+aws_xray_sdk.ext.mysql
+aws_xray_sdk.ext.mysql.patch
+aws_xray_sdk.ext.pg8000
+aws_xray_sdk.ext.pg8000.patch
+aws_xray_sdk.ext.pymongo
+aws_xray_sdk.ext.pymongo.patch
+aws_xray_sdk.ext.pymysql
+aws_xray_sdk.ext.pymysql.patch
+aws_xray_sdk.ext.pynamodb
+aws_xray_sdk.ext.pynamodb.patch
+aws_xray_sdk.ext.sqlalchemy.query
+aws_xray_sdk.ext.sqlalchemy.util.decorators
+aws_xray_sdk.ext.sqlalchemy_core
+aws_xray_sdk.ext.sqlalchemy_core.patch

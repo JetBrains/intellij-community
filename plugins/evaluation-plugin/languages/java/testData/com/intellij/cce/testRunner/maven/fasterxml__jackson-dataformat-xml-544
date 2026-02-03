@@ -1,0 +1,19 @@
+/bin/sh ./mvnw -Didea.version=2025.3 -Dmaven.ext.class.path=/mnt/agent/work/6c98fc0e8ce99749/ide/plugins/maven/lib/maven-event-listener.jar -Djansi.passthrough=true -Dstyle.color=always -Dtest=com.fasterxml.jackson.dataformat.xml.misc.XmlTextTest,com.fasterxml.jackson.dataformat.xml.stream.XmlGeneratorTest test
+[IJ]-1-ProjectDiscoveryStarted-[IJ]-id=unknown
+[INFO] Scanning for projects...
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson:jackson-base:pom:2.14.0-SNAPSHOT-[IJ]-error=
+[ERROR] [ERROR] Some problems were encountered while processing the POMs:
+[FATAL] Non-resolvable parent POM for com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.14.0-SNAPSHOT: Failure to find com.fasterxml.jackson:jackson-base:pom:2.14.0-SNAPSHOT in https://oss.sonatype.org/content/repositories/snapshots was cached in the local repository, resolution will not be reattempted until the update interval of sonatype-nexus-snapshots has elapsed or updates are forced and 'parent.relativePath' points at wrong local POM @ line 9, column 11
+ @
+[ERROR] The build could not read 1 project -> [Help 1]
+[ERROR]
+[ERROR]   The project com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.14.0-SNAPSHOT (/mnt/agent/work/6c98fc0e8ce99749/evaluation-project/pom.xml) has 1 error
+[ERROR]     Non-resolvable parent POM for com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.14.0-SNAPSHOT: Failure to find com.fasterxml.jackson:jackson-base:pom:2.14.0-SNAPSHOT in https://oss.sonatype.org/content/repositories/snapshots was cached in the local repository, resolution will not be reattempted until the update interval of sonatype-nexus-snapshots has elapsed or updates are forced and 'parent.relativePath' points at wrong local POM @ line 9, column 11 -> [Help 2]
+[ERROR]
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR]
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/ProjectBuildingException
+[ERROR] [Help 2] http://cwiki.apache.org/confluence/display/MAVEN/UnresolvableModelException
+

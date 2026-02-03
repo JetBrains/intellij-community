@@ -1,0 +1,29 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->
+<!-- Source: see moduleSet("xml") function in CommunityModuleSets.kt -->
+<!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
+<idea-plugin>
+  <module value="com.intellij.modules.xml"/>
+
+  <content namespace="jetbrains">
+    <module name="intellij.xml.dom" loading="embedded"/>
+    <module name="intellij.xml.dom.impl" loading="embedded"/>
+    <module name="intellij.xml.structureView" loading="embedded"/>
+    <module name="intellij.xml.structureView.impl" loading="embedded"/>
+    <module name="intellij.xml.psi" loading="embedded"/>
+    <module name="intellij.xml.psi.impl" loading="embedded"/>
+    <module name="intellij.xml.analysis" loading="embedded"/>
+    <module name="intellij.xml.emmet"/>
+    <module name="intellij.xml.emmet.backend"/>
+    <module name="intellij.xml.ui.common" loading="embedded"/>
+    <module name="intellij.xml.parser" loading="embedded"/>
+    <module name="intellij.xml.syntax" loading="embedded"/>
+    <module name="intellij.relaxng"/>
+    <module name="intellij.xml.impl" loading="embedded"/>
+    <module name="intellij.xml.analysis.impl" loading="embedded"/>
+    <module name="intellij.libraries.cglib" loading="embedded"/>
+    <module name="intellij.libraries.xerces" loading="embedded"/>
+    <module name="intellij.xml.langInjection"/>
+    <module name="intellij.xml.langInjection.xpath"/>
+  </content>
+</idea-plugin>

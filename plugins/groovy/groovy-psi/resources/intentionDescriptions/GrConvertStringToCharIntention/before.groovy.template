@@ -1,0 +1,5 @@
+def foo(char c) {
+  ...
+}
+
+foo(<spot>'a'</spot>)

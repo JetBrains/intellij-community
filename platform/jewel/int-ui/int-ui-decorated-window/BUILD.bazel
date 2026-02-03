@@ -1,0 +1,40 @@
+### auto-generated section `build intellij.platform.jewel.intUi.decoratedWindow` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_jewel-intUi-decoratedWindow",
+  opt_in = [
+    "androidx.compose.ui.ExperimentalComposeUiApi",
+    "androidx.compose.foundation.ExperimentalFoundationApi",
+    "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+    "org.jetbrains.jewel.foundation.InternalJewelApi",
+  ],
+  x_context_parameters = True,
+  x_explicit_api_mode = "strict"
+)
+
+resourcegroup(
+  name = "jewel-intUi-decoratedWindow_resources",
+  srcs = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "jewel-intUi-decoratedWindow",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":jewel-intUi-decoratedWindow_resources"],
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:jetbrains-annotations",
+    "//platform/jewel/decorated-window",
+    "//platform/jewel/ui",
+    "//libraries/compose-foundation-desktop",
+    "//platform/jewel/foundation",
+    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
+### auto-generated section `build intellij.platform.jewel.intUi.decoratedWindow` end

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="BuildJarProjectSettings">
+    <option name="BUILD_JARS_ON_MAKE" value="false" />
+  </component>
+  <component name="BuildProcessPlugins">
+    <project-library name="devkit.runtime.module.repository.jps" />
+  </component>
+  <component name="CompilerConfiguration">
+    <option name="BUILD_PROCESS_HEAP_SIZE" value="10000" />
+    <option name="BUILD_PROCESS_ADDITIONAL_VM_OPTIONS" value="-Dorg.jetbrains.jps.incremental.dependencies.resolution.retry.download.corrupted.zip=true" />
+    <resourceExtensions>
+      <entry name=".+\.(properties|gif|png|jpeg|jpg|xml|dtd|tld|xsd|ft|html|template)" />
+    </resourceExtensions>
+    <wildcardResourcePatterns>
+      <entry name="!*" />
+    </wildcardResourcePatterns>
+    <annotationProcessing>
+      <profile name="jmh" enabled="true">
+        <module name="intellij.platform.benchmarks" />
+      </profile>
+    </annotationProcessing>
+  </component>
+  <component name="EclipseCompilerSettings">
+    <option name="GENERATE_NO_WARNINGS" value="true" />
+    <option name="DEPRECATION" value="false" />
+  </component>
+  <component name="EclipseEmbeddedCompilerSettings">
+    <option name="GENERATE_NO_WARNINGS" value="true" />
+    <option name="DEPRECATION" value="false" />
+  </component>
+  <component name="JavacSettings">
+    <option name="PREFER_TARGET_JDK_COMPILER" value="false" />
+    <option name="ADDITIONAL_OPTIONS_STRING" value="-Xlint:unchecked" />
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="intellij.android.adt.swingp" options="-Xlint:unchecked --add-exports java.desktop/sun.java2d=ALL-UNNAMED --add-exports java.desktop/sun.awt.image=ALL-UNNAMED" />
+      <module name="intellij.android.adt.ui" options="-Xlint:unchecked --add-exports java.desktop/sun.swing=ALL-UNNAMED --add-exports java.desktop/java.awt.peer=ALL-UNNAMED --add-exports java.desktop/sun.java2d.pipe=ALL-UNNAMED --add-exports java.desktop/sun.awt=ALL-UNNAMED" />
+      <module name="intellij.android.artwork" options="-Xlint:unchecked --add-modules java.desktop" />
+      <module name="intellij.android.core" options="-Xlint:unchecked --add-exports java.desktop/sun.awt.image=ALL-UNNAMED --add-exports jdk.attach/sun.tools.attach=ALL-UNNAMED" />
+      <module name="intellij.android.core.jetbrains" options="-Xlint:unchecked --add-exports jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED" />
+      <module name="intellij.android.core.rendering" options="-Xlint:unchecked --add-exports jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED" />
+      <module name="intellij.android.observable" options="-Xlint:unchecked --add-modules java.desktop" />
+      <module name="intellij.android.rendering" options="-Xlint:unchecked --add-modules java.desktop" />
+      <module name="intellij.android.testFramework" options="-Xlint:unchecked --add-exports jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED" />
+      <module name="intellij.android.transportDatabase" options="-Xlint:unchecked --add-modules java.sql" />
+      <module name="intellij.grid.impl" options="-Xlint:unchecked --add-exports java.desktop/sun.swing=ALL-UNNAMED" />
+      <module name="intellij.platform.core.nio.fs" options="-Xlint:unchecked --add-exports java.base/sun.nio.fs=ALL-UNNAMED" />
+      <module name="intellij.platform.ide" options="-Xlint:unchecked --add-exports java.desktop/sun.swing=ALL-UNNAMED --add-exports java.desktop/sun.awt=ALL-UNNAMED" />
+      <module name="intellij.platform.ide.impl" options="-Xlint:unchecked --add-exports java.desktop/sun.awt=ALL-UNNAMED --add-exports java.desktop/sun.font=ALL-UNNAMED --add-exports java.desktop/java.awt.peer=ALL-UNNAMED --add-exports jdk.attach/sun.tools.attach=ALL-UNNAMED --add-exports java.desktop/sun.awt.image=ALL-UNNAMED --add-exports java.desktop/sun.awt.datatransfer=ALL-UNNAMED --add-exports java.desktop/sun.swing=ALL-UNNAMED --add-exports java.base/sun.nio.fs=ALL-UNNAMED" />
+      <module name="intellij.platform.indexing.impl" options="-Xlint:unchecked --add-modules java.logging" />
+      <module name="intellij.platform.lang.impl" options="-Xlint:unchecked --add-exports java.desktop/sun.awt.image=ALL-UNNAMED --add-exports java.desktop/sun.awt=ALL-UNNAMED" />
+      <module name="intellij.platform.testFramework.common" options="-Xlint:unchecked --add-exports java.desktop/sun.awt=ALL-UNNAMED" />
+      <module name="intellij.platform.ui.jcef" options="-Xlint:unchecked --add-exports java.desktop/sun.awt=ALL-UNNAMED --add-exports java.desktop/java.awt.peer=ALL-UNNAMED" />
+      <module name="intellij.platform.util.ui" options="-Xlint:unchecked --add-exports java.desktop/sun.font=ALL-UNNAMED --add-exports java.desktop/sun.awt.image=ALL-UNNAMED --add-exports java.desktop/sun.swing=ALL-UNNAMED" />
+    </option>
+    <option name="MAXIMUM_HEAP_SIZE" value="400" />
+  </component>
+</project>

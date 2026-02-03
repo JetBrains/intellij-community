@@ -1,0 +1,51 @@
+package com.intellij.cce.visitor
+
+import com.intellij.cce.core.CodeFragment
+import com.intellij.cce.core.CodeToken
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
+
+// TODO should be language-agnostic
+abstract class SelfIdentificationVisitor : EvaluationVisitor, PsiElementVisitor() {
+  override val feature: String = "self-identification"
+
+  private lateinit var codeFragment: CodeFragment
+
+  override fun getFile(): CodeFragment = codeFragment
+
+  override fun visitFile(psiFile: PsiFile) {
+    codeFragment = CodeFragment(psiFile.textOffset, psiFile.textLength).apply {
+      spacedLines(psiFile.text).forEach {
+        addChild(it)
+      }
+    }
+    super.visitFile(psiFile)
+  }
+
+  private fun spacedLines(text: String): List<CodeToken> {
+    val lines = text.lines()
+    val result = mutableListOf<CodeToken>()
+
+    var offset = 0
+    var previousWasAdded = false
+    for (lineNumber in lines.indices) {
+      val line = lines[lineNumber]
+      val currentOffset = offset
+      offset += line.length + 1
+
+      if (previousWasAdded) {
+        previousWasAdded = false
+        continue
+      }
+
+      if (line.trim().length < 10) {
+        continue
+      }
+
+      result.add(CodeToken(line, currentOffset))
+      previousWasAdded = true
+    }
+
+    return result
+  }
+}

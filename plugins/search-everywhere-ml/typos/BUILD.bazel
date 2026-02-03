@@ -1,0 +1,77 @@
+### auto-generated section `build intellij.searchEverywhereMl.typos` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "typos_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "typos",
+  module_name = "intellij.searchEverywhereMl.typos",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":typos_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/lang-api:lang",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/lang-impl",
+    "//platform/core-impl",
+    "//plugins/grazie/src:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/platform-impl:ide-impl",
+    "//libraries/ai.grazie.spell.gec.engine.local",
+    "//platform/statistics",
+    "//plugins/search-everywhere-ml",
+    "//libraries/fastutil",
+    "//platform/ml-impl",
+    "@lib//:search_everywhere_ml-typos-ai-grazie-spell-gec-engine-local-jvm",
+  ]
+)
+
+jvm_library(
+  name = "typos_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":typos"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/lang-api:lang",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/lang-impl",
+    "//platform/core-impl",
+    "//plugins/grazie/src:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/platform-impl:ide-impl",
+    "//libraries/ai.grazie.spell.gec.engine.local",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//plugins/search-everywhere-ml",
+    "//plugins/search-everywhere-ml:search-everywhere-ml_test_lib",
+    "//libraries/fastutil",
+    "//platform/ml-impl",
+    "//platform/ml-impl:ml-impl_test_lib",
+    "@lib//:search_everywhere_ml-typos-ai-grazie-spell-gec-engine-local-jvm",
+  ]
+)
+### auto-generated section `build intellij.searchEverywhereMl.typos` end
+
+### auto-generated section `test intellij.searchEverywhereMl.typos` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "typos_test",
+  runtime_deps = [":typos_test_lib"]
+)
+### auto-generated section `test intellij.searchEverywhereMl.typos` end

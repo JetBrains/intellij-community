@@ -1,0 +1,86 @@
+### auto-generated section `build intellij.devkit.i18n` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "i18n_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+resourcegroup(
+  name = "i18n_test_resources",
+  srcs = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
+jvm_library(
+  name = "i18n",
+  module_name = "intellij.devkit.i18n",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":i18n_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//java/java-indexing-api:indexing",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/ide-core-impl",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/properties/properties-psi-api:psi",
+    "//plugins/properties/properties-psi-impl:backend-psi",
+    "//plugins/java-i18n",
+    "//jvm/jvm-analysis-api:analysis",
+    "//platform/platform-impl:ide-impl",
+    "//xml/dom-openapi:dom",
+    "//xml/xml-psi-api:psi",
+    "//xml/xml-analysis-api:analysis",
+    "//xml/xml-psi-impl:psi-impl",
+    "//plugins/devkit/devkit-core:core",
+    "//platform/core-ui",
+  ]
+)
+
+jvm_library(
+  name = "i18n_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  resources = [":i18n_test_resources"],
+  associates = [":i18n"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//java/java-indexing-api:indexing",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/ide-core-impl",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/properties/properties-psi-api:psi",
+    "//plugins/properties/properties-psi-impl:backend-psi",
+    "//plugins/java-i18n",
+    "//plugins/java-i18n:java-i18n_test_lib",
+    "//jvm/jvm-analysis-api:analysis",
+    "//platform/platform-impl:ide-impl",
+    "//xml/dom-openapi:dom",
+    "//xml/xml-psi-api:psi",
+    "//xml/xml-analysis-api:analysis",
+    "//xml/xml-psi-impl:psi-impl",
+    "//plugins/devkit/devkit-core:core",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/testFramework",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
+    "//platform/core-ui",
+  ]
+)
+### auto-generated section `build intellij.devkit.i18n` end
+
+### auto-generated section `test intellij.devkit.i18n` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "i18n_test",
+  runtime_deps = [":i18n_test_lib"]
+)
+### auto-generated section `test intellij.devkit.i18n` end

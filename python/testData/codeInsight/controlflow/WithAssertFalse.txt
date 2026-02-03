@@ -1,0 +1,12 @@
+0(1) element: null
+1(2) element: PyWithStatement
+2(4) READ ACCESS: context_manager
+3(10) exit context manager: context_manager
+4(5,3) element: PyAssertStatement
+5(6,3) READ ACCESS: False
+6(7,3) READ ACCESS: f
+7(8,3) element: PyCallExpression: f
+8(11,3) raise: PyAssertStatement
+9(10,3) element: PyPrintStatement
+10(11) element: PyPrintStatement
+11() element: null

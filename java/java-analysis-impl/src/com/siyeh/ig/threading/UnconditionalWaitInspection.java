@@ -1,0 +1,129 @@
+/*
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.siyeh.ig.threading;
+
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSynchronizedStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+public final class UnconditionalWaitInspection extends BaseInspection {
+
+  @Override
+  protected @NotNull String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "unconditional.wait.problem.descriptor");
+  }
+
+  @Override
+  public @NotNull BaseInspectionVisitor buildVisitor() {
+    return new UnconditionalWaitVisitor();
+  }
+
+  private static class UnconditionalWaitVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      super.visitMethod(method);
+      if (!method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+        return;
+      }
+      final PsiCodeBlock body = method.getBody();
+      if (body != null) {
+        checkBody(body);
+      }
+    }
+
+    @Override
+    public void visitSynchronizedStatement(
+      @NotNull PsiSynchronizedStatement statement) {
+      super.visitSynchronizedStatement(statement);
+      final PsiCodeBlock body = statement.getBody();
+      if (body != null) {
+        checkBody(body);
+      }
+    }
+
+    private void checkBody(PsiCodeBlock body) {
+      final PsiStatement[] statements = body.getStatements();
+      for (final PsiStatement statement : statements) {
+        if (isConditional(statement)) {
+          return;
+        }
+        if (!(statement instanceof PsiExpressionStatement)) {
+          continue;
+        }
+        final PsiExpression firstExpression =
+          ((PsiExpressionStatement)statement).getExpression();
+        if (!(firstExpression instanceof PsiMethodCallExpression methodCallExpression)) {
+          continue;
+        }
+        final PsiReferenceExpression methodExpression =
+          methodCallExpression.getMethodExpression();
+        final @NonNls String methodName =
+          methodExpression.getReferenceName();
+        if (!HardcodedMethodConstants.WAIT.equals(methodName)) {
+          continue;
+        }
+        final PsiMethod method = methodCallExpression.resolveMethod();
+        if (method == null) {
+          continue;
+        }
+        final PsiParameterList parameterList =
+          method.getParameterList();
+        final int numParams = parameterList.getParametersCount();
+        if (numParams > 2) {
+          continue;
+        }
+        final PsiParameter[] parameters = parameterList.getParameters();
+        if (numParams > 0) {
+          final PsiType parameterType = parameters[0].getType();
+          if (!parameterType.equals(PsiTypes.longType())) {
+            continue;
+          }
+        }
+        if (numParams > 1) {
+          final PsiType parameterType = parameters[1].getType();
+          if (!parameterType.equals(PsiTypes.intType())) {
+            continue;
+          }
+        }
+        registerMethodCallError(methodCallExpression);
+      }
+    }
+
+    private static boolean isConditional(PsiStatement statement) {
+      return statement instanceof PsiIfStatement;
+    }
+  }
+}

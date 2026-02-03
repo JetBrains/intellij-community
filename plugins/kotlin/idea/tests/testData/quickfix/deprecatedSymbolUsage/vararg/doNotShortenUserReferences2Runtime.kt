@@ -1,0 +1,14 @@
+// "Replace with 'newFun(*c)'" "true"
+// WITH_STDLIB
+
+@Deprecated("", ReplaceWith("newFun(*c)"))
+fun oldFun(vararg c: Char){}
+
+fun newFun(vararg c: Char){}
+
+fun foo() {
+    <caret>oldFun(*listOf(java.io.File.separatorChar).toCharArray())
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

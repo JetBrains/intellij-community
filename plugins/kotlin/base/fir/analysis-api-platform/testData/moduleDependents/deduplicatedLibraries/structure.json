@@ -1,0 +1,17 @@
+{
+  "libraries": [
+    { "name": "L1", "roots": ["R1", "R2"] },
+    { "name": "L2", "roots": ["R1", "R2"] },
+    { "name": "L3", "roots": ["R1", "R3"] }
+  ],
+  "modules": [
+    { "name": "A", "dependencies": ["L1", "L3"] },
+    { "name": "B", "dependencies": ["L2"] },
+    { "name": "C", "dependencies": ["L3"] }
+  ],
+  "targets": [
+    { "library": "L1" },
+    { "library": "L2" },
+    { "library": "L3" }
+  ]
+}

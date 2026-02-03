@@ -1,0 +1,10 @@
+com.intellij.designer.DesignerEditorPanelFacade
+- a:getClientProperty(java.lang.Object):java.lang.Object
+- a:getContentSplitter():com.intellij.openapi.ui.ThreeComponentsSplitter
+- a:putClientProperty(java.lang.Object,java.lang.Object):V
+com.intellij.designer.LightToolWindowContent
+- a:dispose():V
+com.intellij.designer.model.PropertyContext
+com.intellij.designer.propertyTable.PropertyRenderer
+- a:getComponent(com.intellij.designer.model.PropertiesContainer,com.intellij.designer.model.PropertyContext,java.lang.Object,Z,Z):javax.swing.JComponent
+- a:updateUI():V

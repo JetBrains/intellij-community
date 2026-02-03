@@ -1,0 +1,8 @@
+// COMPILER_ARGUMENTS: -XXLanguage:-ReferencesToSyntheticJavaProperties
+// PROBLEM: none
+// WITH_STDLIB
+import java.io.File
+
+fun foo(file: File) {
+    file::getAbsolutePath<caret>
+}

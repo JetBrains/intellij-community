@@ -1,0 +1,11 @@
+42 + 42
+-----
+Groovy script
+  Additive expression
+    Literal
+      PsiElement(Integer)('42')
+    PsiWhiteSpace(' ')
+    PsiElement(+)('+')
+    PsiWhiteSpace(' ')
+    Literal
+      PsiElement(Integer)('42')

@@ -1,0 +1,49 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.search.refIndex" visibility="internal">
+  <extensions defaultExtensionNs="com.intellij">
+    <codeUsageScopeOptimizer implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinScopeOptimizer"/>
+
+    <projectService
+            serviceImplementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService"
+            preload="notHeadless"/>
+
+    <advancedSetting
+            id="kotlin.compiler.ref.index"
+            default="true"
+            groupKey="group.advanced.settings.kotlin"
+            bundle="messages.KotlinReferenceIndexBundle"/>
+
+    <languageCompilerRefAdapter
+            implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerRefHelper"/>
+
+    <compiler.isUpToDateCheckConsumer
+            implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService$KCRIIsUpToDateConsumer"/>
+
+    <languageCompilerRefAdapter.directInheritorProvider
+            implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinDirectInheritorProvider"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.kotlinCompilerReferenceIndexStorageProvider"
+            interface="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexStorageProvider"
+            dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <kotlinCompilerReferenceIndexStorageProvider
+            implementation="org.jetbrains.kotlin.idea.search.refIndex.jps.JpsKotlinCompilerReferenceIndexStorageProvider"
+            id="JpsKotlinCompilerReferenceIndexStorageProvider"
+            order="last"/>
+  </extensions>
+
+  <actions>
+    <action
+            class="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexVerifierAction"
+            id="KotlinCompilerReferenceIndexVerifierAction"
+            internal="true">
+      <add-to-group group-id="Internal" anchor="last"/>
+    </action>
+  </actions>
+
+  <resource-bundle>messages.KotlinReferenceIndexBundle</resource-bundle>
+</idea-plugin>

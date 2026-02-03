@@ -1,0 +1,11 @@
+class A{
+  def foo(){
+    switch (x){
+      <caret>
+    }
+  }
+}
+-----
+case
+default
+if

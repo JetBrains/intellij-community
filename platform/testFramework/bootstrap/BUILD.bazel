@@ -1,0 +1,36 @@
+### auto-generated section `build intellij.tools.testsBootstrap` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
+
+resourcegroup(
+  name = "tools-testsBootstrap_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_provided_library(
+  name = "libraries_junit5-vintage_provided",
+  lib = "//libraries/junit5-vintage"
+)
+
+jvm_library(
+  name = "tools-testsBootstrap",
+  module_name = "intellij.tools.testsBootstrap",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":tools-testsBootstrap_resources"],
+  deps = [
+    "//libraries/junit4",
+    "@lib//:junit5Launcher-provided",
+    "@lib//:junit5-provided",
+    "@lib//:tc_service_messages",
+    "@lib//:opentest4j",
+    "//platform/core-nio-fs",
+    "//libraries/asm-tools",
+    ":libraries_junit5-vintage_provided",
+  ],
+  runtime_deps = [
+    "//platform/boot",
+    "//libraries/junit5-jupiter",
+  ]
+)
+### auto-generated section `build intellij.tools.testsBootstrap` end

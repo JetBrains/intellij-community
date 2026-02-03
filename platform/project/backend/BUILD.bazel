@@ -1,0 +1,31 @@
+### auto-generated section `build intellij.platform.project.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "backend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.platform.project.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend_resources"],
+  deps = [
+    "//platform/util",
+    "@lib//:kotlin-stdlib",
+    "//platform/project/shared:project",
+    "//platform/core-api:core",
+    "//platform/kernel/rpc.backend",
+    "//platform/projectModel-api:projectModel",
+    "//platform/kernel/backend",
+    "//platform/ide-core",
+    "//platform/platform-api:ide",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-impl/rpc",
+  ],
+  runtime_deps = ["//platform/backend"]
+)
+### auto-generated section `build intellij.platform.project.backend` end

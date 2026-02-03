@@ -1,0 +1,13 @@
+// WITH_STDLIB
+fun main() {
+    println(listOf(1, 2, 3).doubled())
+}
+
+fun <T> List<T>.doubled(): List<T> {
+    val result = mutableListOf<T>()
+    for (element in this@doubled) {
+        result.add(element)
+        result.add(element)
+    }
+    return result
+}

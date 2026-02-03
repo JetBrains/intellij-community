@@ -1,0 +1,1 @@
+print "abc${x}dfg\"hj\"df"

@@ -1,0 +1,13 @@
+println 'a'
+
+outer = {
+    println 'a'
+    pri<caret>ntln 'b' //aa
+}
+-----
+println 'a'
+
+outer = {
+    pri<caret>ntln 'b' //aa
+    println 'a'
+}

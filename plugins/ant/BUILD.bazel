@@ -1,0 +1,133 @@
+### auto-generated section `build intellij.ant` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "ant_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ant",
+  module_name = "intellij.ant",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ant_resources"],
+  deps = [
+    "//java/openapi:java",
+    "@lib//ant/lib:ant",
+    "//platform/analysis-api:analysis",
+    "//xml/xml-analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/ide-core-impl",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//java/compiler/impl",
+    "//platform/indexing-api:indexing",
+    "//platform/core-impl",
+    "//platform/lang-core",
+    "//platform/lvcs-api:lvcs",
+    "//platform/macro",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/platform-impl/concurrency",
+    "//java/java-runtime:rt",
+    "//java/execution/impl",
+    "//xml/impl",
+    "//plugins/properties:properties-backend",
+    "//platform/indexing-impl",
+    "//java/execution/openapi:java-execution",
+    "//java/idea-ui:ui",
+    "//xml/dom-openapi:dom",
+    "//platform/util",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/ant/jps-plugin:jps",
+    "//xml/dom-impl",
+    "//plugins/properties/properties-psi-api:psi",
+    "//platform/util/nanoxml",
+    "//libraries/stream",
+    "//platform/statistics",
+    "//libraries/fastutil",
+    "//platform/external-system-api:externalSystem",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/core-ui",
+    "//plugins/properties/properties-psi-impl:backend-psi",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/jdom",
+    "//xml/xml-psi-api:psi",
+    "//platform/execution",
+  ]
+)
+
+jvm_library(
+  name = "ant_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/src/**/*.kt", "tests/src/**/*.java", "tests/src/**/*.form"], allow_empty = True),
+  associates = [":ant"],
+  deps = [
+    "//java/openapi:java",
+    "//java/testFramework",
+    "@lib//:junit4",
+    "@lib//ant/lib:ant",
+    "//platform/analysis-api:analysis",
+    "//xml/xml-analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/ide-core-impl",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//java/compiler/impl",
+    "//platform/indexing-api:indexing",
+    "//platform/core-impl",
+    "//platform/lang-core",
+    "//platform/lvcs-api:lvcs",
+    "//platform/macro",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/platform-impl/concurrency",
+    "//java/java-runtime:rt",
+    "//java/execution/impl",
+    "//xml/impl",
+    "//plugins/properties:properties-backend",
+    "//platform/indexing-impl",
+    "//java/execution/openapi:java-execution",
+    "//java/idea-ui:ui",
+    "//xml/dom-openapi:dom",
+    "//platform/util",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/ant/jps-plugin:jps",
+    "//xml/dom-impl",
+    "//plugins/properties/properties-psi-api:psi",
+    "//platform/util/nanoxml",
+    "//libraries/stream",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//libraries/fastutil",
+    "//platform/external-system-api:externalSystem",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/core-ui",
+    "//plugins/properties/properties-psi-impl:backend-psi",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/jdom",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//xml/xml-psi-api:psi",
+    "//xml/testFramework",
+    "//platform/execution",
+  ]
+)
+### auto-generated section `build intellij.ant` end
+
+### auto-generated section `test intellij.ant` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "ant_test",
+  runtime_deps = [":ant_test_lib"]
+)
+### auto-generated section `test intellij.ant` end

@@ -1,0 +1,16 @@
+# implementation has *args and **kwds arguments that can't be used
+vobject.base.VBase.__init__
+
+# Only available on Windows
+# This module is currently broken on Python 3
+# See: https://github.com/eventable/vobject/pull/187
+vobject.win32tz
+
+# python2 compat
+vobject.base.basestring
+vobject.base.str_
+vobject.base.unicode_type
+
+# implementation details that users shouldn't depend on
+vobject.base.formatter
+vobject.base.handler

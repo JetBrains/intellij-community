@@ -1,0 +1,11 @@
+.. seealso::
+
+   Nothing
+   :attr:`napoleon_use_admonition_for_examples`
+   :attr:`napoleon_use_admonition_for_examples`
+
+.. rubric:: Example
+
+Some example follows.
+
+.. note:: Some unexceptional note.

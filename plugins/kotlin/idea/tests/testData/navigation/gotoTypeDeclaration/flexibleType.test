@@ -1,0 +1,8 @@
+// FILE: before.kt
+// IGNORE_K1
+fun foo(list: java.util.List<String>) {
+     val <caret>item /*: String! */ = list[0]
+}
+
+// FILE: after.kt
+public actual class <caret>String : Comparable<String>, CharSequence {

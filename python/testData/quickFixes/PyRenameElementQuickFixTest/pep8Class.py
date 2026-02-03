@@ -1,0 +1,2 @@
+class <caret>lowercase:
+    pass

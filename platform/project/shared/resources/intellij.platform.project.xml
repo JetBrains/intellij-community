@@ -1,0 +1,7 @@
+<!-- todo: register this as a content module (IJPL-210868); currently it's included via 'xi:include' tag -->
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.entityTypes implementation="com.intellij.platform.project.ProjectEntitiesProvider"/>
+    <postStartupActivity implementation="com.intellij.platform.project.module.ModuleStateInitializer"/>
+  </extensions>
+</idea-plugin>

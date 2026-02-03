@@ -1,0 +1,48 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="Analysis.analyzer.xml"/>
+  <extensionPoints>
+    <extensionPoint name="languageInjector" interface="com.intellij.psi.LanguageInjector" dynamic="true"/>
+    <extensionPoint name="completion.contributor" beanClass="com.intellij.codeInsight.completion.CompletionContributorEP" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionContributor"/>
+    </extensionPoint>
+
+    <extensionPoint name="gotoDeclarationHandler" interface="com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler"
+                    dynamic="true"/>
+    <extensionPoint name="completion.skip" interface="com.intellij.codeInsight.completion.CompletionPreselectSkipper" dynamic="true"/>
+    <extensionPoint name="inspectionCustomComponent" interface="com.intellij.codeInspection.options.CustomComponentExtension"
+                    dynamic="true"/>
+    <extensionPoint name="highlightErrorFilter" interface="com.intellij.codeInsight.highlighting.HighlightErrorFilter" area="IDEA_PROJECT" dynamic="true"/>
+
+    <extensionPoint name="fileContextProvider" interface="com.intellij.psi.FileContextProvider" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint name="fileLookupInfoProvider" interface="com.intellij.psi.file.FileLookupInfoProvider" dynamic="true"/>
+
+    <extensionPoint name="inspectionsReportConverter" interface="com.intellij.codeInspection.InspectionsReportConverter" dynamic="true"/>
+
+    <extensionPoint name="lang.inspectionSuppressor" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInspection.InspectionSuppressor"/>
+    </extensionPoint>
+
+    <extensionPoint name="liveTemplateContext" beanClass="com.intellij.codeInsight.template.LiveTemplateContextBean" dynamic="true">
+      <with attribute="implementation" implements="com.intellij.codeInsight.template.TemplateContextType"/>
+    </extensionPoint>
+
+    <extensionPoint name="liveTemplateContextProvider" interface="com.intellij.codeInsight.template.LiveTemplateContextProvider" dynamic="true"/>
+
+    <extensionPoint name="liveTemplateInternalContext" beanClass="com.intellij.codeInsight.template.LiveTemplateInternalContextBean" dynamic="true"/>
+
+    <extensionPoint name="liveTemplateMacro" interface="com.intellij.codeInsight.template.Macro" dynamic="true"/>
+
+    <extensionPoint name="localFileSystemTimestampEvaluator" interface="com.intellij.openapi.vfs.impl.local.LocalFileSystemTimestampEvaluator" dynamic="true"/>
+    <extensionPoint name="generatedSourcesFilter" interface="com.intellij.openapi.roots.GeneratedSourcesFilter" dynamic="true"/>
+    <extensionPoint name="optionController" interface="com.intellij.codeInspection.options.OptionControllerProvider" dynamic="true"/>
+    <extensionPoint name="formatting.caretRestorationDecider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.formatting.CaretRestorationDecider"/>
+    </extensionPoint>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.codeInsight.completion.InternalCompletionSettings" open="true"/>
+    <applicationService serviceInterface="com.intellij.lang.documentation.ClientDocumentationSettings"
+                        serviceImplementation="com.intellij.lang.documentation.LocalDocumentationSettings"
+                        client="local" />
+  </extensions>
+</idea-plugin>

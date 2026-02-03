@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="kotlinc.analysis-api-k2-tests" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-k2-tests-for-ide:2.4.0-dev-1645">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-tests-for-ide/2.4.0-dev-1645/analysis-api-k2-tests-for-ide-2.4.0-dev-1645.jar">
+          <sha256sum>6c68d4ce1bf598ccb0a2864a400de89f359faf40e7a9431eb28b3ea0241f8d04</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-tests-for-ide/2.4.0-dev-1645/analysis-api-k2-tests-for-ide-2.4.0-dev-1645.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-tests-for-ide/2.4.0-dev-1645/analysis-api-k2-tests-for-ide-2.4.0-dev-1645-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

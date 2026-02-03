@@ -1,0 +1,45 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="CoreImpl.analyzer.xml"/>
+
+  <extensionPoints>
+    <extensionPoint name="fileEditor.textPresentationTransformer" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.vfs.transformer.TextPresentationTransformer"/>
+    </extensionPoint>
+
+    <extensionPoint name="fileEditor.fileSizeChecker"
+                    interface="com.intellij.openapi.vfs.limits.FileSizeLimit"
+                    dynamic="true"/>
+    <extensionPoint name="psi.batchReferenceProcessingSuppressor"
+                    interface="com.intellij.psi.impl.PsiFileEx$BatchReferenceProcessingSuppressor"
+                    dynamic="true"/>
+    <extensionPoint name="psi.referenceContributor" beanClass="com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP" dynamic="true">
+      <with attribute="implementation" implements="com.intellij.psi.PsiReferenceContributor"/>
+    </extensionPoint>
+    <extensionPoint name="lang.ast.factory" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.ASTFactory"/>
+    </extensionPoint>
+    <extensionPoint name="controlFlowProvider" interface="com.intellij.codeInsight.controlflow.ControlFlowProvider" dynamic="true"/>
+    <extensionPoint name="lang.tokenSeparatorGenerator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.TokenSeparatorGenerator"/>
+    </extensionPoint>
+    <extensionPoint name="documentWriteAccessGuard" interface="com.intellij.openapi.editor.impl.DocumentWriteAccessGuard" dynamic="true"/>
+    <extensionPoint name="diagnostic.freezeProfiler" interface="com.intellij.diagnostic.FreezeProfiler" dynamic="true"/>
+    <extensionPoint name="inlineCompletionLineRendererCustomization"
+                    interface="com.intellij.codeInsight.inline.completion.render.InlineCompletionInlayRenderer" dynamic="true"/>
+    <extensionPoint name="lang.treePatcher" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.psi.templateLanguages.TreePatcher"/>
+    </extensionPoint>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.psi.PsiManager"
+                    serviceImplementation="com.intellij.psi.impl.PsiManagerImpl" preload="true"/>
+    <projectService serviceInterface="com.intellij.psi.SmartPointerManager"
+                    serviceImplementation="com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl"/>
+    <projectService serviceInterface="com.intellij.psi.util.CachedValuesManager"
+                    serviceImplementation="com.intellij.util.CachedValuesManagerImpl"/>
+    <projectService serviceInterface="com.intellij.util.CachedValuesFactory"
+                    serviceImplementation="com.intellij.psi.impl.PsiCachedValuesFactory"/>
+    <applicationService serviceInterface="com.intellij.psi.stubs.StubElementRegistryService"
+                        serviceImplementation="com.intellij.psi.stubs.StubElementRegistryServiceImpl"/>
+  </extensions>
+</idea-plugin>

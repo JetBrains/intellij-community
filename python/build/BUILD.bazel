@@ -1,0 +1,82 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+
+load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
+load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS")
+
+# Can't name the target 'installers' since it triggers elevation in Windows
+java_binary(
+  name = "i_build_target",
+  runtime_deps = [":build"],
+  main_class = "PyCharmCommunityInstallersBuildTarget",
+  add_opens = INTELLIJ_ADD_OPENS,
+  data = ALL_COMMUNITY_TARGETS,
+)
+
+### auto-generated section `build intellij.pycharm.community.build` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "build",
+  module_name = "intellij.pycharm.community.build",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "//build",
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/build-scripts/downloader",
+    "//build/tasks",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "@lib//:opentelemetry-extension-kotlin",
+    "//platform/core-api:core",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core",
+    "//python/python-sdk:sdk",
+    "//python/python-parser:parser",
+    "//jps/model-api:model",
+    "//libraries/jsoup",
+  ]
+)
+
+jvm_library(
+  name = "build_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":build"],
+  deps = [
+    "//build",
+    "//platform/build-scripts/testFramework",
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/build-scripts/downloader",
+    "//build/tasks",
+    "//build/tasks:tasks_test_lib",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "@lib//:opentelemetry-extension-kotlin",
+    "@lib//:junit5",
+    "//platform/core-api:core",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core",
+    "//python/python-sdk:sdk",
+    "//python/python-sdk:sdk_test_lib",
+    "//python/python-parser:parser",
+    "//jps/model-api:model",
+    "//libraries/jsoup",
+  ]
+)
+### auto-generated section `build intellij.pycharm.community.build` end
+
+### auto-generated section `test intellij.pycharm.community.build` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "build_test",
+  runtime_deps = [":build_test_lib"]
+)
+### auto-generated section `test intellij.pycharm.community.build` end

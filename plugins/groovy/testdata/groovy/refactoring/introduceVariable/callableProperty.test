@@ -1,0 +1,24 @@
+class Bar {
+    def call(int a) {}
+}
+
+class Foo {
+    Bar getProp() {}
+
+    def foo() {
+        <begin>prop<end>(2)
+    }
+}
+-----
+class Bar {
+    def call(int a) {}
+}
+
+class Foo {
+    Bar getProp() {}
+
+    def foo() {
+        def preved = prop
+        preved<caret>(2)
+    }
+}

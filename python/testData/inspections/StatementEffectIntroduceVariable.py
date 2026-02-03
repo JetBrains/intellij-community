@@ -1,0 +1,1 @@
+<warning descr="Statement seems to have no effect">a<caret>+ b</warning>

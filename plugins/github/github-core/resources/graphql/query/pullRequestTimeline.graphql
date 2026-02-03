@@ -1,0 +1,287 @@
+fragment issueCommentInfo on IssueComment {
+  ...comment
+  viewerCanUpdate
+  viewerCanDelete
+  viewerCanReact
+}
+
+fragment prCommitInfo on PullRequestCommit {
+  ...nodeInfo
+  commit {
+    ...commitShort
+  }
+  url
+}
+
+fragment reviewDismissedEvent on ReviewDismissedEvent {
+  actor {
+    ...actor
+  }
+  createdAt
+  dismissalMessageHTML
+  review {
+    author {
+      ...actor
+    }
+  }
+}
+
+fragment readyForReviewEvent on ReadyForReviewEvent {
+  actor {
+    ...actor
+  }
+  createdAt
+}
+
+fragment convertToDraftEvent on ConvertToDraftEvent {
+  actor {
+    ...actor
+  }
+  createdAt
+}
+
+fragment renamedEvent on RenamedTitleEvent {
+  actor {
+    ...actor
+  }
+  previousTitle
+  currentTitle
+  createdAt
+}
+
+fragment closedEvent on ClosedEvent {
+  actor {
+    ...actor
+  }
+  createdAt
+}
+
+fragment reopenedEvent on ReopenedEvent {
+  actor {
+    ...actor
+  }
+  createdAt
+}
+
+fragment mergedEvent on MergedEvent {
+  actor {
+    ...actor
+  }
+  createdAt
+  mergedEventCommit: commit {
+    ...commitShort
+  }
+  mergeRefName
+}
+
+fragment assignedEvent on AssignedEvent {
+  actor {
+    ...actor
+  }
+  createdAt
+  user {
+    ...user
+  }
+}
+
+fragment unassignedEvent on UnassignedEvent {
+  actor {
+    ...actor
+  }
+  createdAt
+  user {
+    ...user
+  }
+}
+
+fragment labeledEvent on LabeledEvent {
+  actor {
+    ...actor
+  }
+  createdAt
+  label {
+    ...labelInfo
+  }
+}
+
+fragment unlabeledEvent on UnlabeledEvent {
+  actor {
+    ...actor
+  }
+  createdAt
+  label {
+    ...labelInfo
+  }
+}
+
+fragment reviewRequestedEvent on ReviewRequestedEvent {
+  actor {
+    ...actor
+  }
+  createdAt
+  requestedReviewer {
+    ...pullRequestReviewer
+  }
+}
+
+fragment reviewRequestRemovedEvent on ReviewRequestRemovedEvent {
+  actor {
+    ...actor
+  }
+  createdAt
+  requestedReviewer {
+    ...pullRequestReviewer
+  }
+}
+
+fragment gitRefName on Ref {
+  name
+}
+
+fragment baseRefForcePushedEvent on BaseRefForcePushedEvent {
+  actor {
+    ...actor
+  }
+  createdAt
+  ref {
+    ...gitRefName
+  }
+}
+
+fragment headRefForcePushedEvent on HeadRefForcePushedEvent {
+  actor {
+    ...actor
+  }
+  createdAt
+  ref {
+    ...gitRefName
+  }
+  beforeCommit {
+    ...commitHash
+  }
+  afterCommit {
+    ...commitHash
+  }
+}
+
+fragment headRefDeletedEvent on HeadRefDeletedEvent {
+  actor {
+    ...actor
+  }
+  createdAt
+  headRefName
+}
+
+fragment headRefRestoredEvent on HeadRefRestoredEvent {
+  actor {
+    ...actor
+  }
+  createdAt
+}
+
+fragment baseRefChangedEvent on BaseRefChangedEvent {
+  actor {
+    ...actor
+  }
+  createdAt
+}
+
+fragment referenceSubject on ReferencedSubject {
+  __typename
+  ... on PullRequest {
+    title
+    number
+    prState: state
+    isDraft
+    url
+  }
+  ... on Issue {
+    title
+    number
+    issueState: state
+    url
+  }
+}
+
+fragment crossReferencedEvent on CrossReferencedEvent {
+  actor {
+    ...actor
+  }
+  createdAt
+  source {
+    ...referenceSubject
+  }
+}
+
+fragment connectedEvent on ConnectedEvent {
+  actor {
+    ...actor
+  }
+  createdAt
+  subject {
+    ...referenceSubject
+  }
+}
+
+fragment disconnectedEvent on DisconnectedEvent {
+  actor {
+    ...actor
+  }
+  createdAt
+  subject {
+    ...referenceSubject
+  }
+}
+
+query($repoOwner: String!, $repoName: String!, $number: Int!, $pageSize: Int = 100, $cursor: String, $since: DateTime) {
+  repository(owner: $repoOwner, name: $repoName) {
+    pullRequest(number: $number) {
+      timelineItems(first: $pageSize, after: $cursor, since: $since) {
+        pageInfo {
+          ...pageInfo
+        }
+        nodes {
+          __typename
+          ...prCommitInfo
+          ...pullRequestReview
+          ...issueCommentInfo
+
+          ...renamedEvent
+
+          ...closedEvent
+          ...reopenedEvent
+          ...mergedEvent
+
+          ...assignedEvent
+          ...unassignedEvent
+
+          ...labeledEvent
+          ...unlabeledEvent
+
+          ...reviewRequestedEvent
+          ...reviewRequestRemovedEvent
+
+          ...reviewDismissedEvent
+
+          ...readyForReviewEvent
+          ...convertToDraftEvent
+
+          ...baseRefChangedEvent
+          ...baseRefForcePushedEvent
+
+          ...headRefForcePushedEvent
+          ...headRefDeletedEvent
+          ...headRefRestoredEvent
+
+          ...crossReferencedEvent
+          ...connectedEvent
+          ...disconnectedEvent
+        }
+      }
+    }
+  }
+
+  rateLimit {
+    ...rates
+  }
+}

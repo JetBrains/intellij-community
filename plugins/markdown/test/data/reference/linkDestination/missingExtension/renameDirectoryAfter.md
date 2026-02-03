@@ -1,0 +1,1 @@
+[link](topDir/renamed/stub_in_inner_dir)

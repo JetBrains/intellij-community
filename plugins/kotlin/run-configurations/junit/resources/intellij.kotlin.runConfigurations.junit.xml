@@ -1,0 +1,24 @@
+<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.junit">
+  <dependencies>
+    <plugin id="JUnit"/>
+    <module name="intellij.kotlin.runConfigurations.jvm"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.junit.KotlinJUnitRunConfigurationProducer"/>
+    <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.junit.KotlinPatternConfigurationProducer"/>
+
+    <testFramework implementation="org.jetbrains.kotlin.idea.junit.KotlinJUnit3Framework"
+                   order="before junit3"/>
+    <testFramework implementation="org.jetbrains.kotlin.idea.junit.KotlinJUnit4Framework"
+                   order="before junit4"/>
+    <testFramework implementation="org.jetbrains.kotlin.idea.junit.KotlinJUnit5Framework"
+                   order="before junit5"/>
+    <testFramework implementation="org.jetbrains.kotlin.idea.junit.KotlinJUnit6Framework"
+                   order="before junit6"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
+    <testFrameworkProvider implementation="org.jetbrains.kotlin.idea.junit.JunitKotlinTestFrameworkProvider"/>
+  </extensions>
+</idea-plugin>

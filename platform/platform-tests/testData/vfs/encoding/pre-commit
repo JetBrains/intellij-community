@@ -1,0 +1,250 @@
+#!/bin/bash
+
+# ┌──────────────────────────────────────────────────────────────────────────┐
+# │                                                                          │
+# │ Git Pre-Commit Hook                                                      │
+# │                                                                          │
+# │ This shell script will execute our code analysis tools.                  │
+# │ In order to use this hook, run the following command:                    │
+# │                                                                          │
+# │ ┌──────────────────────────────────────────────┐                         │
+# │ │ git config --local core.hooksPath .githooks/ │                         │
+# │ └──────────────────────────────────────────────┘                         │
+# │                                                                          │
+# └──────────────────────────────────────────────────────────────────────────┘
+
+##############################################################################
+# Initial script setup
+##############################################################################
+
+# e: Exit immediately if a command exits with a non-zero status.
+# u: Treat unset variables as an error when performing parameter expansion.
+set -eu
+
+# Do word splitting by newline, so that files with spaces can be checked as well.
+# Use literal newline instead of IFS=$'\n' to be POSIX-compatible.
+IFS='
+'
+
+##############################################################################
+# Helper functions
+##############################################################################
+
+# Echo information about rechecking the whole codebase - if applicable.
+display_analysis_info() {
+    echo "Running pre-commit hook. Please wait..."
+    echo ""
+
+    # Get a list of all staged files, excluding deleted files (d)
+    ALL_STAGED_FILES=$(git diff --staged --name-only --diff-filter=d)
+
+    STAGED_ONLY_PHP_CS_FIXER=false
+    STAGED_ONLY_PHP_STAN=false
+
+    if (echo "${ALL_STAGED_FILES}" | grep -qE "^(composer\\.lock)$"); then
+        echo "The composer.lock file was modified:"
+        echo "All analysis tools will recheck the whole codebase, including unstaged files!"
+    else
+        if (echo "${ALL_STAGED_FILES}" | grep -qE "^(\\.php-cs-fixer(\\.dist)?\\.php)$"); then
+            echo "The PHP CS Fixer config was modified:"
+            echo "PHP CS Fixer will recheck the whole codebase, including unstaged files!"
+        else
+            STAGED_ONLY_PHP_CS_FIXER=true
+        fi
+
+        if (echo "${ALL_STAGED_FILES}" | grep -qE "^(phpstan-(baseline|bidx)?\.neon)$"); then
+            echo "The PHPStan config was modified:"
+            echo "PHPStan will recheck the whole codebase, including unstaged files!"
+        else
+            STAGED_ONLY_PHP_STAN=true
+        fi
+    fi
+
+    if [ "${STAGED_ONLY_PHP_CS_FIXER}" = true ] && [ "${STAGED_ONLY_PHP_STAN}" = true ]; then
+        echo "All analysis tools will analyse staged files only."
+    elif [ "${STAGED_ONLY_PHP_CS_FIXER}" = true ]; then
+        echo "PHP CS Fixer will analyse staged files only."
+    elif [ "${STAGED_ONLY_PHP_STAN}" = true ]; then
+        echo "PHPStan will analyse staged files only."
+    fi
+
+    if [ "${STAGED_ONLY_PHP_CS_FIXER}" = true ] || [ "${STAGED_ONLY_PHP_STAN}" = true ]; then
+        echo "Note: \"Partial analysis\" of partially staged files is not supported."
+    fi
+
+    echo ""
+}
+
+# Print formatted status message
+display_status_message() {
+  printf "[%s] %-16s %-8s %14s\n" "$1" "$2" "$3" "$(end_timer)"
+}
+
+# Echo tool output, and exit script with exit code 1
+display_fail_message_and_exit () {
+    # Remove last line (execution summary: error count, file count, etc.)
+    OUTPUT=$(echo "$OUTPUT" | sed '$d')
+
+    display_status_message "$1" "$2" "FAIL!"
+    echo ""
+    echo "$OUTPUT" >&2
+
+    exit 1
+}
+
+# Echo status message of a passed analysis
+display_ok_message () {
+    display_status_message "$1" "$2" "OK!"
+}
+
+# PHPStan has no "path-mode=intersection" option, so we need to intersect the staged files manually
+get_intersected_staged_files () {
+    # Include YAML parser
+    . "$(dirname "$0")/inc/parse_yaml.sh"
+
+    # Parse included/excluded paths from config and transform them to git pathspec format
+    INCLUDED_PATHS=$(parse_yaml phpstan.neon "" "_" | grep -E "^parameters_+paths_+[0-9]"        | sed -r "s/parameters_+paths_+[0-9]+='/:/g"         | tr -d "'" | sort -u)
+    EXCLUDED_PATHS=$(parse_yaml phpstan.neon "" "_" | grep -E "^parameters_+excludePaths_+[0-9]" | sed -r "s/parameters_+excludePaths_+[0-9]+='/:^/g" | tr -d "'" | sort -u)
+
+    # Get a list of staged files
+    # - Excluding deleted files (d)
+    # - Including files from "parameters.paths"
+    # - Excluding files from "parameters.excludePaths"
+    git diff --staged --name-only --diff-filter=d -- $INCLUDED_PATHS $EXCLUDED_PATHS
+}
+
+# Start performance timer
+start_timer () {
+    TIMER_START=$(date +%s%N)
+}
+
+# Echo elapsed time since timer start
+end_timer () {
+    ELAPSED_MS=$((($(date +%s%N) - TIMER_START)/1000000))
+    ELAPSED_SEC=$(echo $ELAPSED_MS 1000 | awk '{printf "(%.3f s)", $1/$2}')
+    echo "$ELAPSED_SEC"
+}
+
+##############################################################################
+# Start
+#
+# Execute analysis tools one-by-one.
+# Stop immediately if any error is reported.
+##############################################################################
+
+display_analysis_info
+
+##############################################################################
+# PHP Coding Standards Fixer
+#
+# @see https://cs.symfony.com/doc/usage.html#using-php-cs-fixer-on-ci
+# @see https://github.com/gerardroche/php-cs-fixer-pre-commit-hook
+##############################################################################
+
+# Get a list of all staged files, excluding deleted files (d)
+STAGED_FILES=$(git diff --staged --name-only --diff-filter=d)
+
+# Passing no files at all might cause PHP CS Fixer to run on the whole code base instead.
+# If no staged files are found, we pass a dummy PHP file, with which PHP CS Fixer will be done almost instantly.
+if [ -z "${STAGED_FILES}" ]; then
+    STAGED_FILES=".githooks/inc/phpstan-dummy.php"
+fi
+
+# Only do a full check if the config file itself or the Composer lock file has changed.
+# Otherwise, do a check only for staged files.
+# Note: Checking partially staged changes is not supported.
+if ! (echo "${STAGED_FILES}" | grep -qE "^(\\.php-cs-fixer(\\.dist)?\\.php|composer\\.lock)$"); then
+    EXTRA_ARGS=$(printf -- '--path-mode=intersection\n--sequential\n--\n%s' "${STAGED_FILES}")
+else
+    EXTRA_ARGS=''
+fi
+
+start_timer
+
+# PHP CS Fixer command:
+# check:           We don't wont to fix the files, we only want to check for rule violations ("check" is shorthand for "fix --dry-run").
+# --config:        The config file is explicitly required whenever we are providing more than one file (because they could belong to different projects).
+# --format=txt     Force plain text output format, which is the default value, but might be changed in the config file with "->setFormat()".
+# --no-ansi:       Disable coloring to prevent unreadable output in git GUIs that don't support shell colors.
+# --show-progress: There is no output during execution, so we don't need to output the progress.
+# --using-cache:   Make sure we are not skipping changed files by accident.
+# --verbose:       Output a list of violated rules next to each file.
+# --path-mode:     (Optional, see EXTRA_ARGS) Only check those files from the staged file list that are also matched by our config's Finder.
+# --sequential:    (Optional, see EXTRA_ARGS) Sequential processing is faster when checking only few files. Starting the workers for parallel processing is slower.
+# 2>/dev/null:     Drop stderr (version, config & runtime information), keep stdout (list of files + execution summary)
+OUTPUT=$(
+    vendor/bin/php-cs-fixer check \
+        --config=.php-cs-fixer.php \
+        --format=txt \
+        --no-ansi \
+        --show-progress=none \
+        --using-cache=no \
+        --verbose \
+        $EXTRA_ARGS \
+        2>/dev/null
+) || display_fail_message_and_exit "1/2" "PHP CS Fixer"
+
+display_ok_message "1/2" "PHP CS Fixer"
+
+##############################################################################
+# PHPStan
+#
+# PHPStan recommends analysing the whole project every time.
+# Otherwise some errors might not be detected.
+# -> e.g. renamed method that is being used in an unchanged file.
+# We will analyse staged files only. Doing this has two advantages:
+# - Faster analysis
+# - Don't fail because of errors in unstaged files
+# Our QA pipeline will run a full analysis every time.
+#
+# @see https://phpstan.org/blog/why-you-should-always-analyse-whole-project
+##############################################################################
+
+# Get a list of all staged files (intersected with paths from config), excluding deleted files (d).
+# This might result in an empty file list (e.g. if none of the staged files is a PHP file).
+STAGED_FILES_INTERSECTED=$(get_intersected_staged_files)
+
+# Passing an empty file list to PHPStan will cause a non-zero exit code in PHPStan 2.0.
+# If no staged (and intersected) files are found, we will skip PHPStan's analysis completely.
+# This behaviour is different from PHP CS Fixer, since we have already built the list of intersected files ourselves.
+# If this list is empty, will have PHPStan nothing to analyse, but still takes 2-3 seconds to process.
+should_skip_php_stan_analysis () {
+    [ -z "${STAGED_FILES_INTERSECTED}" ]
+}
+
+# Only do a full check if the config file itself, the baseline file or the Composer lock file has changed.
+# Otherwise, do a check only for staged files.
+# Note: Checking partially staged changes is not supported.
+if ! (echo "${STAGED_FILES}" | grep -qE "^(phpstan(\\.baseline)?\\.neon|composer\\.lock)$"); then
+    EXTRA_ARGS=$(printf -- '--debug\n--\n%s' "${STAGED_FILES_INTERSECTED}")
+else
+    EXTRA_ARGS=''
+fi
+
+start_timer
+
+# PHPStan command
+# analyse:         Perform a static code analysis.
+# --configuration: Provide the config file, just to be sure.
+# --no-ansi:       Disable coloring to prevent unreadable output in git GUIs that don't support shell colors.
+# --memory-limit:  Set PHP's memory limit to 2 GB, disregarding any value that has been set in "php.ini".
+# --error-format:  Force table output format. This is the default value, but might be set to something different in the config file via the "errorFormat" parameter.
+# --no-progress:   There is no output during execution, so we don't need to output the progress.
+# --debug:         (Optional, see EXTRA_ARGS) Only reliable way of disabling parallel processing. Will also disable the use of cache (wouldn't be used anyway, since we manually pass a list of files to analyse).
+# 2>/dev/null:     Drop stderr (version, config & runtime information), keep stdout (list of files + execution summary)
+OUTPUT=$(
+    should_skip_php_stan_analysis ||
+    vendor/bin/phpstan analyse \
+        --configuration=phpstan.neon \
+        --error-format=table \
+        --memory-limit=2G \
+        --no-ansi \
+        --no-progress \
+        $EXTRA_ARGS \
+        2>/dev/null
+) || display_fail_message_and_exit "2/2" "PHPStan"
+
+display_ok_message "2/2" "PHPStan"
+
+# Append newline to the output, to separate it from further output of Git
+echo ""

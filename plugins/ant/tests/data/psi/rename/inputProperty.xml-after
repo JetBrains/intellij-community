@@ -1,0 +1,6 @@
+<project name="testProject" default="test">
+  <input addproperty="p1-after"/>
+  <target name="test">
+    <echo message="${p1-after}"/>
+  </target>
+</project>

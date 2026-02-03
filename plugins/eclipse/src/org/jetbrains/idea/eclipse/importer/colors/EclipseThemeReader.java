@@ -1,0 +1,161 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.eclipse.importer.colors;
+
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.options.SchemeImportException;
+import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
+
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import java.awt.Color;
+import java.awt.Font;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+
+@SuppressWarnings("UseJBColor")
+public class EclipseThemeReader extends DefaultHandler implements EclipseColorThemeElements {
+  private final @Nullable OptionHandler myOptionHandler;
+  private @Nullable String myThemeName;
+  
+  private static final Map<String, Integer> ECLIPSE_DEFAULT_FONT_STYLES = new HashMap<>();
+  static {
+    ECLIPSE_DEFAULT_FONT_STYLES.put(KEYWORD_TAG, Font.BOLD);
+  }
+
+  public EclipseThemeReader(@Nullable OptionHandler handler) {
+    myOptionHandler = handler;
+  }
+
+
+  void readSettings(InputStream input) throws SchemeImportException {
+    SAXParserFactory spf = SAXParserFactory.newDefaultInstance();
+    spf.setValidating(false);
+    try {
+      SAXParser parser = spf.newSAXParser();
+      parser.parse(input, this);
+    }
+    catch (Exception e) {
+      if (e.getCause() instanceof NotAnEclipseThemeException) {
+        throw new SchemeImportException("The input file is not a valid Eclipse theme.");
+      }
+      else {
+        throw new SchemeImportException(e);
+      }
+    }
+  }
+  
+  private static class NotAnEclipseThemeException extends Exception {
+    NotAnEclipseThemeException(String message) {
+      super(message);
+    }
+  }
+
+  @Override
+  public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+    if (COLOR_THEME_TAG.equals(qName)) {
+      myThemeName = attributes.getValue(NAME_ATTR);
+      if (myThemeName == null) {
+        throw new SAXException(new NotAnEclipseThemeException("'name' attribute of 'colorTheme' is missing."));
+      }
+    }
+    else {
+      if (myThemeName != null) {
+        if (myOptionHandler != null) {
+          myOptionHandler.handleColorOption(qName, readTextAttributes(qName, attributes, isBackground(qName)));
+        }
+      }
+      else {
+        throw new SAXException(new NotAnEclipseThemeException("'colorTheme' element is missing."));
+      }
+    }
+  }
+  
+  public interface OptionHandler {
+    void handleColorOption(@NotNull String name, @NotNull TextAttributes textAttribute);
+  }
+  
+  private static TextAttributes readTextAttributes(@NotNull String tag, Attributes attributes, boolean isBackground) throws SAXException {
+    TextAttributes textAttributes = new TextAttributes();
+    Color color = getColor(attributes);
+    if (isBackground)  {
+      textAttributes.setBackgroundColor(color);
+    }
+    else {
+      textAttributes.setForegroundColor(color);
+    }
+    textAttributes.setFontType(getFontStyle(tag, attributes));
+    EffectType effectType = getEffectType(attributes);
+    if (effectType != null) {
+      textAttributes.setEffectType(effectType);
+      textAttributes.setEffectColor(textAttributes.getForegroundColor());
+    }
+    return textAttributes;
+  }
+  
+  private static boolean isBackground(@NotNull String tagName) {
+    if (tagName.length() >= BACKGROUND_SUFFIX.length()) {
+      tagName = tagName.substring(tagName.length() - BACKGROUND_SUFFIX.length());
+      return tagName.equalsIgnoreCase(BACKGROUND_SUFFIX);
+    }
+    return false;
+  }
+
+  public @Nullable String getThemeName() {
+    return myThemeName;
+  }
+  
+  private static @Nullable Color getColor(Attributes attributes) throws SAXException {
+    String colorString = attributes.getValue(COLOR_ATTR);
+    if (colorString != null && !colorString.isEmpty()) {
+      try {
+        int colorValue = Integer.decode(colorString);
+        return new Color(colorValue);
+      }
+      catch (NumberFormatException nfe) {
+        throw new SAXException("Invalid color value: '" + colorString + "'");
+      }
+    }
+    return null;
+  }
+
+  @JdkConstants.FontStyle
+  private static int getFontStyle(@NotNull String tag, @NotNull Attributes attributes) {
+    int fontStyle = getDefaultFontStyle(tag);
+    String boldValue = attributes.getValue(BOLD_ATTR);
+    if (boldValue != null) {
+      if (Boolean.parseBoolean(boldValue)) fontStyle |= Font.BOLD;
+      else fontStyle &= ~Font.BOLD;
+    }
+    String italicValue = attributes.getValue(ITALIC_ATTR);
+    if (italicValue != null) {
+      if (Boolean.parseBoolean(italicValue)) fontStyle |= Font.ITALIC;
+      else fontStyle &= ~Font.ITALIC;
+    }
+    return fontStyle;
+  }
+  
+  @JdkConstants.FontStyle
+  private static int getDefaultFontStyle(@NotNull String tag) {
+    //noinspection MagicConstant
+    return ECLIPSE_DEFAULT_FONT_STYLES.getOrDefault(tag, Font.PLAIN);
+  }
+  
+  private static @Nullable EffectType getEffectType(@NotNull Attributes attributes) {
+    String strikeThrough = attributes.getValue(STRIKETHROUGH_ATTR);
+    if (Boolean.parseBoolean(strikeThrough)) {
+      return EffectType.STRIKEOUT;
+    }
+    String underline = attributes.getValue(UNDERLINE_ATTR);
+    if (Boolean.parseBoolean(underline)) {
+      return EffectType.LINE_UNDERSCORE;
+    }
+    return null;
+  }
+}

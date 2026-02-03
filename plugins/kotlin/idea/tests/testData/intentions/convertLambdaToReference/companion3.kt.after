@@ -1,0 +1,12 @@
+// AFTER-WARNING: Parameter 's' is never used
+class C {
+    companion object {
+        fun foo(s: String) = 1
+    }
+}
+
+class Test {
+    val f = C.Companion::foo
+}
+
+// IGNORE_K2

@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.platform.pluginManager.shared` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "shared_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "shared",
+  module_name = "intellij.platform.pluginManager.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":shared_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/kernel/shared:kernel",
+    "//platform/platform-impl/rpc",
+    "//platform/platform-impl:ide-impl",
+    "//libraries/kotlinx/serialization/core",
+    "//platform/util",
+    "//platform/plugins/parser/impl",
+    "//platform/core-impl",
+    "//platform/project/shared:project",
+    "//platform/platform-impl/update-checker",
+  ]
+)
+### auto-generated section `build intellij.platform.pluginManager.shared` end

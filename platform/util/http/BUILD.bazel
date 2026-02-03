@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.platform.util.http` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "http",
+  module_name = "intellij.platform.util.http",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:jetbrains-annotations",
+    "//libraries/ktor/client",
+    "//libraries/io",
+  ]
+)
+### auto-generated section `build intellij.platform.util.http` end

@@ -1,0 +1,1 @@
+def s = "Say \"hello\" \n to the world"

@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.kotlin.base.indices` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "indices",
+  module_name = "intellij.kotlin.base.indices",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/core-api:core",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/psi",
+    "//platform/core-impl",
+    "//platform/indexing-api:indexing",
+    "//java/java-psi-impl:psi-impl",
+    "//java/manifest",
+    "//platform/indexing-impl",
+    "//platform/ide-core",
+    "//platform/analysis-api:analysis",
+    "//java/openapi:java",
+    "//plugins/kotlin/base/plugin",
+  ]
+)
+### auto-generated section `build intellij.kotlin.base.indices` end

@@ -1,0 +1,8 @@
+// WITH_STDLIB
+sealed interface Suggestion {
+    object YES : Suggestion
+    object NO : Suggestion
+}
+
+fun value(value: Boolean?) = value?.let { value(it) } ?: Suggestion.NO
+fun value(value: Boolean) = if (value) Suggestion.YES else Suggestion.NO

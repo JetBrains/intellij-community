@@ -1,0 +1,11 @@
+// "Specify 'Int' return type for enclosing function 'Derived.implicitFunReturnType'" "true"
+interface Base {
+    fun implicitFunReturnType() = 1
+}
+
+class Derived : Base {
+    override fun implicitFunReturnType(): Int = ret<caret>urn 1
+}
+
+// IGNORE_K1
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

@@ -1,0 +1,11 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.debugger.streams.core"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.backend.remoteApiProvider
+      implementation="com.intellij.debugger.streams.backend.BackendStreamDebuggerRemoteApiProvider"/>
+  </extensions>
+</idea-plugin>

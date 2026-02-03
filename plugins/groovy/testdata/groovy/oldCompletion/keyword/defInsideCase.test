@@ -1,0 +1,7 @@
+switch (x) {
+  case 2:
+    de<caret>
+}
+-----
+def
+default

@@ -1,0 +1,53 @@
+### auto-generated section `build intellij.kotlin.performanceExtendedPlugin` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "kotlin.performanceExtendedPlugin_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin.performanceExtendedPlugin",
+  module_name = "intellij.kotlin.performanceExtendedPlugin",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin.performanceExtendedPlugin_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/performanceTesting/core:performanceTesting",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//plugins/kotlin/frontend-independent",
+    "//platform/ide-core-impl",
+    "//plugins/kotlin/base/analysis",
+    "@lib//:kotlinc-analysis-api-platform-interface-provided",
+    "@lib//:kotlinc-analysis-api-provided",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/kotlin.searching/base",
+    "//java/java-analysis-impl:analysis-impl",
+    "//java/openapi:java",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/util",
+    "//platform/diagnostic/telemetry",
+    "//platform/diagnostic/telemetry-impl",
+    "//plugins/kotlin/base/code-insight/minimal",
+    "//plugins/kotlin/kotlin.ide",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/performanceTesting/vcs",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/j2k/shared",
+  ]
+)
+### auto-generated section `build intellij.kotlin.performanceExtendedPlugin` end

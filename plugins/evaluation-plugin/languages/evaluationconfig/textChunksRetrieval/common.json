@@ -1,0 +1,24 @@
+{
+  "projectPath": "../code-engine",
+  "outputDir": "bin/ml-eval-text-chunks-retrieval-java-output",
+  "strategy": {},
+  "actions": {
+    "evaluationRoots": [
+      "."
+    ]
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 100,
+    "order": "LINEAR",
+    "registry": ""
+  },
+  "reports": {
+    "evaluationTitle": "Text Chunks Retrieval Evaluation Report",
+    "defaultMetrics": null,
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}

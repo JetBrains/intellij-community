@@ -1,0 +1,19 @@
+// FILE: main.before.kt
+// "Import" "false"
+// ACTION: Create annotation 'Some'
+// ACTION: Create test
+// ACTION: Make internal
+// ACTION: Make private
+// ERROR: Unresolved reference: Some
+
+package test
+
+@Some<caret>
+fun test() {}
+
+// FILE: dependency.kt
+package dependency
+
+typealias Some = A
+
+class A

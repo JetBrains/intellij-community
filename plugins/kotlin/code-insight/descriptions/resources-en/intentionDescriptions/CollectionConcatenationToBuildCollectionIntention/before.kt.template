@@ -1,0 +1,1 @@
+val result = setOf(1,2) + listOf(3).map { it + 1 } - 4

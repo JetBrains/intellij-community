@@ -1,0 +1,4 @@
+public class X {
+
+  <spot>public void f()</spot> {}
+}

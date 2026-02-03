@@ -1,0 +1,119 @@
+### auto-generated section `build intellij.platform.vcs.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "vcs-testFramework",
+  module_name = "intellij.platform.vcs.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/testFramework",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-impl",
+    "//platform/projectModel-impl",
+    "//platform/ide-core-impl",
+    "//platform/diff-api:diff",
+    "//platform/analysis-api:analysis",
+    "@lib//:junit4",
+    "//platform/indexing-impl",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5/eel",
+  ]
+)
+### auto-generated section `build intellij.platform.vcs.testFramework` end
+
+### auto-generated section `build intellij.platform.vcs.tests` start
+jvm_library(
+  name = "vcs-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["//platform/vcs-tests:vcs-testFramework"],
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/vcs-tests:vcs-testFramework",
+    "//platform/vcs-impl",
+    "//platform/lang-impl",
+    "//platform/vcs-impl/lang",
+    "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/vcs-api:vcs",
+    "//platform/core-api:core",
+    "//platform/ide-core-impl",
+    "//platform/projectModel-impl",
+    "@lib//:junit4",
+    "//platform/util-ex",
+    "//platform/indexing-impl",
+    "//platform/platform-api:ide",
+    "//platform/diff-impl",
+    "@lib//:assert_j",
+    "//platform/core-ui",
+    "//libraries/fastutil",
+  ]
+)
+
+jvm_library(
+  name = "vcs-tests_test_lib",
+  module_name = "intellij.platform.vcs.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/diff",
+    "//platform/vcs-tests:vcs-testFramework",
+    "//platform/vcs-impl",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//platform/lang-impl",
+    "//platform/vcs-impl/lang",
+    "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
+    "//platform/vcs-api:vcs",
+    "//platform/core-api:core",
+    "//platform/ide-core-impl",
+    "//platform/projectModel-impl",
+    "@lib//:junit4",
+    "//platform/util-ex",
+    "//platform/indexing-impl",
+    "//platform/platform-api:ide",
+    "//platform/diff-impl/tests:tests_test_lib",
+    "//libraries/mockito",
+    "//platform/util:util-tests_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/diff-impl",
+    "@lib//:assert_j",
+    "//platform/core-ui",
+    "//libraries/fastutil",
+    "//platform/util/jdom",
+    "//xml/xml-psi-api:psi",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/vcs-impl/shared",
+    "//platform/vcs-impl/shared:shared_test_lib",
+    "//platform/core-impl",
+    "@lib//:app-cash-turbine-jvm",
+    "@lib//:mockito-kotlin",
+  ],
+  exports = ["//platform/vcs-tests:vcs-testFramework"],
+  runtime_deps = [":vcs-tests"]
+)
+### auto-generated section `build intellij.platform.vcs.tests` end
+
+### auto-generated section `test intellij.platform.vcs.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "vcs-tests_test",
+  runtime_deps = [":vcs-tests_test_lib"]
+)
+### auto-generated section `test intellij.platform.vcs.tests` end

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.java"/>
+    <module name="intellij.java.compiler"/>
+    <module name="intellij.java.compiler.impl"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.impl.refactorings"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.externalSystem.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.xml.dom"/>
+    <module name="intellij.java.syntax"/>
+    <module name="intellij.xml.psi"/>
+
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.aetherDependencyResolver"/>
+    <module name="intellij.libraries.maven.resolver.provider"/>
+    <!-- endregion -->
+
+    <plugin id="com.intellij.modules.java-capable"/>
+    <module name="intellij.platform.backend"/>
+
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.disableCompilationDependenciesResolutionTask"
+                    interface="com.intellij.jarRepository.DisableCompilationDependenciesResolutionTask"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.framework.type" interface="com.intellij.framework.FrameworkTypeEx" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.sdkEditorAdditionalOptionsProvider"
+                    interface="com.intellij.openapi.SdkEditorAdditionalOptionsProvider" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.frameworkSupportCommunicator"
+                    interface="com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportCommunicator" dynamic="true"/>
+
+    <!--new project wizard-->
+    <extensionPoint qualifiedName="com.intellij.projectWizard.projectCategory" interface="com.intellij.ide.projectWizard.ProjectCategory"
+                    dynamic="true"/>
+
+    <!-- both EP implementation classes requires constructor injection (our plugins fixed, but 3rd-party not) -->
+    <extensionPoint qualifiedName="com.intellij.projectImportProvider" interface="com.intellij.projectImport.ProjectImportProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.projectImportBuilder" interface="com.intellij.projectImport.ProjectImportBuilder"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.projectStructureDetector"
+                    interface="com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.projectStructureConfigurableFilter"
+                    interface="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableFilter" dynamic="true"/>
+
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint qualifiedName="com.intellij.configuration.ModuleStructureExtension" dynamic="true"
+                    interface="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureExtension"/>
+
+    <extensionPoint qualifiedName="com.intellij.projectStructureValidator"
+                    interface="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureValidator" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.library.javaSourceRootDetector"
+                    interface="com.intellij.openapi.roots.libraries.ui.RootDetector" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.starter.moduleImporter" interface="com.intellij.ide.starters.StarterModuleImporter"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.newProjectWizard.java.buildSystem"
+                    interface="com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.jarRepositoryAuthenticationDataProvider"
+                    interface="com.intellij.jarRepository.JarRepositoryAuthenticationDataProvider" dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

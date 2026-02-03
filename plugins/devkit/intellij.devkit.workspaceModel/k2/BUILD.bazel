@@ -1,0 +1,91 @@
+### auto-generated section `build intellij.devkit.workspaceModel.k2` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_k2",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+  ]
+)
+
+resourcegroup(
+  name = "k2_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "k2",
+  module_name = "intellij.devkit.workspaceModel.k2",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":k2_resources"],
+  kotlinc_opts = ":custom_k2",
+  deps = [
+    "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
+    "//platform/core-api:core",
+    "//platform/indexing-api:indexing",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/project-structure",
+    "//java/java-indexing-api:indexing",
+    "//platform/workspace/storage",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-analysis-api-provided",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "@lib//:workspace-model-codegen",
+    "//platform/core-impl",
+    "//java/openapi:java",
+    "//plugins/kotlin/base/psi",
+    "//platform/analysis-api:analysis",
+  ]
+)
+
+jvm_library(
+  name = "k2_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_k2",
+  associates = [":k2"],
+  deps = [
+    "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
+    "//platform/core-api:core",
+    "//platform/indexing-api:indexing",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//java/java-indexing-api:indexing",
+    "//platform/workspace/storage",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-analysis-api-provided",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "@lib//:workspace-model-codegen",
+    "//platform/core-impl",
+    "//java/openapi:java",
+    "//plugins/kotlin/base/psi",
+    "//plugins/devkit/intellij.devkit.workspaceModel/tests:tests_test_lib",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/plugin/k2",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//platform/analysis-api:analysis",
+  ]
+)
+### auto-generated section `build intellij.devkit.workspaceModel.k2` end
+
+### auto-generated section `test intellij.devkit.workspaceModel.k2` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "k2_test",
+  runtime_deps = [":k2_test_lib"]
+)
+### auto-generated section `test intellij.devkit.workspaceModel.k2` end

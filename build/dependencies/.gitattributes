@@ -1,0 +1,2 @@
+# Do not touch line endings, but show diff
+gradlew -text diff

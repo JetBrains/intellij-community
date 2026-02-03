@@ -1,0 +1,107 @@
+### auto-generated section `build intellij.kotlin.maven.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "@lib//:junit4",
+    "//libraries/gson",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/test",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/frontend-independent",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//plugins/kotlin/jvm/shared",
+    "//plugins/kotlin/formatter",
+    "//plugins/kotlin/maven",
+    "//plugins/kotlin/tests-common:common-tests",
+    "//plugins/kotlin/test-framework",
+    "//plugins/kotlin/compiler-plugins/allopen/maven",
+    "//plugins/kotlin/compiler-plugins/lombok/maven",
+    "//plugins/kotlin/compiler-plugins/noarg/maven",
+    "//plugins/kotlin/compiler-plugins/sam-with-receiver/maven",
+    "//plugins/kotlin/compiler-plugins/assignment/maven",
+    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/maven",
+    "//plugins/kotlin/compiler-plugins/kotlin-dataframe/maven",
+    "//plugins/maven",
+    "@lib//:kotlinc-analysis-api",
+  ]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "intellij.kotlin.maven.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "@lib//:junit4",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//plugins/kotlin/plugin/k2",
+    "//platform/projectModel-api:projectModel",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//libraries/gson",
+    "//xml/xml-psi-api:psi",
+    "//java/testFramework",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/jps",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/test",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/frontend-independent",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//plugins/kotlin/jvm/shared",
+    "//plugins/kotlin/formatter",
+    "//plugins/kotlin/maven",
+    "//plugins/kotlin/tests-common:common-tests",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/test-framework",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/maven",
+    "//plugins/maven/testFramework",
+    "//platform/util/jdom",
+    "//java/java-runtime:rt",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+    "@lib//:kotlinc-analysis-api",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build intellij.kotlin.maven.tests` end
+
+### auto-generated section `test intellij.kotlin.maven.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test intellij.kotlin.maven.tests` end

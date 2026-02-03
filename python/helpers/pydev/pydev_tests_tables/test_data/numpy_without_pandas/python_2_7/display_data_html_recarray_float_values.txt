@@ -1,0 +1,30 @@
+<table class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>col1</th>
+<th>col2</th>
+<th>col3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>1</td>
+<td>1.1</td>
+<td>1.001</td>
+</tr>
+<tr>
+<th>1</th>
+<td>2</td>
+<td>2.2</td>
+<td>2.002</td>
+</tr>
+<tr>
+<th>2</th>
+<td>3</td>
+<td>3.3</td>
+<td>3.0003</td>
+</tr>
+</tbody>
+</table>

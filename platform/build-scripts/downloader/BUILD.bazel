@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.platform.buildScripts.downloader` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "downloader",
+  module_name = "intellij.platform.buildScripts.downloader",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = "@community//:k17",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//libraries/commons/compress",
+    "@lib//:tc_service_messages",
+    "@lib//:zstd-jni",
+    "//libraries/commons/io",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "@lib//:opentelemetry-extension-kotlin",
+    "//libraries/hash4j",
+    "//libraries/ktor/client",
+    "//libraries/ktor/io",
+  ]
+)
+### auto-generated section `build intellij.platform.buildScripts.downloader` end

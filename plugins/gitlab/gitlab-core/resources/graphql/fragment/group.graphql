@@ -1,0 +1,10 @@
+fragment group on Group {
+  id
+
+  fullName
+  fullPath
+
+  userPermissions {
+    createProjects
+  }
+}

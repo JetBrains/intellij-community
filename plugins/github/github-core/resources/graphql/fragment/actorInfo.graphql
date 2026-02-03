@@ -1,0 +1,8 @@
+# Just the data that should be present for any type of Actor.
+fragment actorInfo on Actor {
+  __typename
+  ...nodeInfo
+  login
+  url
+  avatarUrl
+}

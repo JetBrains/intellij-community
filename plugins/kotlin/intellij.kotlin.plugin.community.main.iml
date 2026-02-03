@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.bootstrap" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.plugin" exported="" />
+    <orderEntry type="module" module-name="kotlin.plugin.common" exported="" />
+    <orderEntry type="module" module-name="kotlin.plugin.k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.plugin.k2" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.util" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.indices" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.navigation" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.psi" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.kdoc" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.projectModel" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.platforms" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.analysis" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.analysis.platform" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.scripting.k1" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.scripting" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.scripting.shared" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.analysis.utils" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.facet" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.jps" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.externalSystem" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration.ui" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.resources" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.statistics" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.obsolete-compat" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.plugin" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.analysis" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.analysis-api-platform" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.kdoc" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.obsolete-compat" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.project-structure" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.analysis.platform" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.base" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.projectStructure" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.api" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.shared" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.descriptions" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions.shared" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.fixes" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions.k1" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.intentions" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections.shared" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections.k1" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.inspections" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.k1" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement.shared" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement.k1" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.overrideImplement" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates.k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.structural-search.k1" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.structuralSearch" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.line-markers.shared" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.lineMarkers" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.refactorings.move" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.refactorings.rename" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common.k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.allopen.maven" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.gradle" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support.maven" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.kapt" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.gradle" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.serialization" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.serialization.maven" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.dataframe.maven" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.common" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.gradle" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.noarg.maven" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.gradle" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.samWithReceiver.maven" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.common.k1" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.assignment.fixes" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.gradle" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.assignment.maven" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.scripting" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.common" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.k1" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.gradle" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.completion.api" exported="" />
+    <orderEntry type="module" module-name="kotlin.completion.impl.shared" exported="" />
+    <orderEntry type="module" module-name="kotlin.completion.impl.k1" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.completion.impl" exported="" />
+    <orderEntry type="module" module-name="kotlin.core" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.eval4j" exported="" />
+    <orderEntry type="module" module-name="kotlin.fir.frontend-independent" exported="" />
+    <orderEntry type="module" module-name="kotlin.fir" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.uast" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.uast.idea" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.formatter" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.gradle" exported="" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.k1" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.java" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.common" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.toml" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.toml.k2" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling.impl" exported="" />
+    <orderEntry type="module" module-name="kotlin.idea" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.migration" exported="" />
+    <orderEntry type="module" module-name="kotlin.inspections" exported="" />
+    <orderEntry type="module" module-name="kotlin.j2k.shared" exported="" />
+    <orderEntry type="module" module-name="kotlin.j2k.k1.new" exported="" />
+    <orderEntry type="module" module-name="kotlin.j2k.k1.old" exported="" />
+    <orderEntry type="module" module-name="kotlin.j2k.k1.old.post-processing" exported="" />
+    <orderEntry type="module" module-name="kotlin.j2k.k1.new.post-processing" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.j2k" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.i18n" exported="" />
+    <orderEntry type="module" module-name="kotlin.jvm.shared" exported="" />
+    <orderEntry type="module" module-name="kotlin.jvm.k1" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.jvm" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.base.util" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.core" exported="" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.core-fe10" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.coroutines" exported="" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" exported="" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation.k1" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.evaluation" exported="" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.sequence.k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.injection.k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.injection" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.injection" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates.shared" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates.k1" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.liveTemplates" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.maven" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.native" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.projectWizard.cli" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.projectWizard.core" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.projectWizard.idea" exported="" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.idea.k1" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.projectWizard.compose" exported="" />
+    <orderEntry type="module" module-name="kotlin.repl" exported="" />
+    <orderEntry type="module" module-name="kotlin.scripting" exported="" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base" exported="" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" exported="" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea" exported="" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea-base" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerReferenceIndex" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.coverage" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.git" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.runConfigurations.testng" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.runConfigurations.junit" exported="" />
+    <orderEntry type="module" module-name="kotlin.run-configurations.junit-fe10" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.grazie" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.completion.ml" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.groovy" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.copyright" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.spellchecker" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.jvm.decompiler" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.plugin.updater" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.preferences" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.projectConfiguration" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.projectWizard.maven" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.projectWizard.gradle" exported="" />
+    <orderEntry type="module" module-name="kotlin.inspections-fe10" exported="" />
+    <orderEntry type="module" module-name="kotlin.highlighting.shared" exported="" />
+    <orderEntry type="module" module-name="kotlin.highlighting.k1" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.highlighting" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.utils" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.postfixTemplates" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.featuresTrainer" exported="" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-jps-common" level="project" />
+    <orderEntry type="module" module-name="intellij.kotlin.runConfigurations.jvm" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.gradle" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.lombok.maven" exported="" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-fe10" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-ir" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-common" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-jvm" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.analysis-api-platform-interface" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.analysis-api" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.analysis-api-impl-base" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.analysis-api-fe10" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.analysis-api-k2" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-fir" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.allopen-compiler-plugin" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlinx-serialization-compiler-plugin" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.noarg-compiler-plugin" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.sam-with-receiver-compiler-plugin" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.assignment-compiler-plugin" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-gradle-statistics" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.parcelize-compiler-plugin" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
+    <orderEntry type="library" scope="RUNTIME" name="kotlinc.kotlin-script-runtime" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="vavr" level="project" />
+    <orderEntry type="module" module-name="intellij.markdown" scope="RUNTIME" />
+    <orderEntry type="library" scope="RUNTIME" name="javax-inject" level="project" />
+    <orderEntry type="module" module-name="intellij.kotlin.searching" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.searching.base" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.refactorings" exported="" />
+    <orderEntry type="module" module-name="kotlin.refactorings.common" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.performanceExtendedPlugin" exported="" />
+    <orderEntry type="module" module-name="kotlin.bundled-compiler-plugins-support" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.onboarding" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.onboarding.gradle" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.onboarding.maven" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight.minimal" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.highlighting.minimal" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.formatter.minimal" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.ide" exported="" />
+    <orderEntry type="module" module-name="kotlin.jsr223" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.internal" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.scripting" exported="" />
+    <orderEntry type="module" module-name="kotlin.gradle.scripting.shared" exported="" />
+    <orderEntry type="module" module-name="kotlin.gradle.scripting.k1" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.scripting" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.serialization" exported="" />
+  </component>
+</module>

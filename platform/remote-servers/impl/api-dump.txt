@@ -1,0 +1,211 @@
+com.intellij.remoteServer.impl.runtime.ui.tree.DeploymentNode
+- com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNode
+- a:deploy():V
+- a:deployWithDebug():V
+- a:getDeploymentName():java.lang.String
+- a:getServerNode():com.intellij.remoteServer.impl.runtime.ui.tree.ServerNode
+- a:isDebugActionVisible():Z
+- a:isDeployActionEnabled():Z
+- a:isDeployActionVisible():Z
+- a:isDeployed():Z
+- a:isUndeployActionEnabled():Z
+- a:undeploy():V
+com.intellij.remoteServer.impl.runtime.ui.tree.ServerNode
+- com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNode
+- a:getProject():com.intellij.openapi.project.Project
+com.intellij.remoteServer.impl.runtime.ui.tree.ServerTreeNodeExpander
+- a:expand(com.intellij.remoteServer.runtime.ServerConnection,java.lang.String):V
+com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNode
+- a:getValue():java.lang.Object
+com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNodeSelector
+- a:select(com.intellij.remoteServer.runtime.ServerConnection):V
+- a:select(com.intellij.remoteServer.runtime.ServerConnection,java.lang.String):V
+- a:select(com.intellij.remoteServer.runtime.ServerConnection,java.lang.String,java.lang.String):V
+f:com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure
+- s:getServerNodeIcon(javax.swing.Icon,javax.swing.Icon):javax.swing.Icon
+c:com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure$DeploymentNodeImpl
+- com.intellij.ide.util.treeView.AbstractTreeNode
+- com.intellij.remoteServer.impl.runtime.ui.tree.DeploymentNode
+- com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure$LogProvidingNode
+- <init>(com.intellij.openapi.project.Project,com.intellij.remoteServer.runtime.ServerConnection,com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure$RemoteServerNode,com.intellij.remoteServer.runtime.Deployment,com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure$DeploymentNodeProducer):V
+- p:collectDeploymentChildren(java.util.List):V
+- p:collectLogChildren(java.util.List):V
+- deploy():V
+- deployWithDebug():V
+- doDeploy(com.intellij.execution.Executor):V
+- editConfiguration():V
+- getChildren():java.util.Collection
+- getComponent():javax.swing.JComponent
+- getConnection():com.intellij.remoteServer.runtime.ServerConnection
+- getDeployment():com.intellij.remoteServer.runtime.Deployment
+- getDeploymentName():java.lang.String
+- getId():java.lang.String
+- getLogId():java.lang.String
+- getServerNode():com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure$RemoteServerNode
+- isDebugActionVisible():Z
+- isDeployActionEnabled():Z
+- isDeployActionVisible():Z
+- isDeployed():Z
+- isEditConfigurationActionVisible():Z
+- isUndeployActionEnabled():Z
+- undeploy():V
+- p:update(com.intellij.ide.projectView.PresentationData):V
+com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure$DeploymentNodeProducer
+- a:createDeploymentNode(com.intellij.remoteServer.runtime.ServerConnection,com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure$RemoteServerNode,com.intellij.remoteServer.runtime.Deployment):com.intellij.ide.util.treeView.AbstractTreeNode
+com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure$LogProvidingNode
+- a:getComponent():javax.swing.JComponent
+- a:getLogId():java.lang.String
+c:com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure$RemoteServerNode
+- com.intellij.ide.util.treeView.AbstractTreeNode
+- com.intellij.remoteServer.impl.runtime.ui.tree.ServerNode
+- <init>(com.intellij.openapi.project.Project,com.intellij.remoteServer.configuration.RemoteServer,com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure$DeploymentNodeProducer):V
+- deploy(com.intellij.openapi.actionSystem.AnActionEvent):V
+- deployWithDebug(com.intellij.openapi.actionSystem.AnActionEvent):V
+- doDeploy(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.execution.Executor,java.lang.String,Z):V
+- editConfiguration():V
+- getChildren():java.util.Collection
+- getServer():com.intellij.remoteServer.configuration.RemoteServer
+- isConnected():Z
+- p:update(com.intellij.ide.projectView.PresentationData):V
+c:com.intellij.remoteServer.util.AgentTaskExecutor
+- com.intellij.remoteServer.agent.util.CloudAgentErrorHandler
+- <init>():V
+- execute(com.intellij.openapi.util.Computable):java.lang.Object
+- execute(com.intellij.openapi.util.Computable,com.intellij.remoteServer.util.CallbackWrapper):V
+- onError(java.lang.String):V
+com.intellij.remoteServer.util.CallbackWrapper
+- a:onError(java.lang.String):V
+- a:onSuccess(java.lang.Object):V
+c:com.intellij.remoteServer.util.CloudAccountSelectionEditor
+- b:$$$getRootComponent$$$():javax.swing.JComponent
+- <init>(java.util.List):V
+- s:createRunConfiguration(com.intellij.ide.util.projectWizard.WizardContext,com.intellij.remoteServer.ServerType,com.intellij.openapi.module.Module,com.intellij.remoteServer.util.CloudDeploymentNameConfiguration):V
+- getMainPanel():javax.swing.JComponent
+- getSelectedAccount():com.intellij.remoteServer.configuration.RemoteServer
+- setAccountOnContext(com.intellij.ide.util.projectWizard.WizardContext):V
+- setAccountSelectionListener(java.lang.Runnable):V
+- setSelectedAccount(java.lang.String):V
+- s:unsetAccountOnContext(com.intellij.ide.util.projectWizard.WizardContext,com.intellij.remoteServer.ServerType):V
+- validate():V
+a:com.intellij.remoteServer.util.CloudApplicationRuntime
+- com.intellij.remoteServer.runtime.deployment.DeploymentRuntime
+- <init>(java.lang.String):V
+- pa:getAgentTaskExecutor():com.intellij.remoteServer.util.AgentTaskExecutor
+- getApplicationName():java.lang.String
+- getCloudNotifier():com.intellij.remoteServer.util.CloudNotifier
+- pa:getCloudType():com.intellij.remoteServer.ServerType
+- getDeploymentModel():com.intellij.remoteServer.runtime.Deployment
+- getStatus():com.intellij.remoteServer.runtime.deployment.DeploymentStatus
+- getStatusText():java.lang.String
+- pa:getTaskExecutor():com.intellij.remoteServer.runtime.ServerTaskExecutor
+- setDeploymentModel(com.intellij.remoteServer.runtime.Deployment):V
+pa:com.intellij.remoteServer.util.CloudApplicationRuntime$LoggingTask
+- p:<init>(com.intellij.remoteServer.util.CloudApplicationRuntime):V
+- perform(com.intellij.openapi.project.Project,java.lang.Runnable):V
+- pa:run(com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler):V
+a:com.intellij.remoteServer.util.CloudApplicationRuntimeBase
+- com.intellij.remoteServer.util.CloudApplicationRuntime
+- <init>(com.intellij.remoteServer.runtime.ServerTaskExecutor,java.lang.String):V
+- p:getAgentTaskExecutor():com.intellij.remoteServer.util.AgentTaskExecutor
+- pa:getApplication():com.intellij.remoteServer.agent.util.CloudAgentApplication
+- p:getCloudType():com.intellij.remoteServer.ServerType
+- p:getTaskExecutor():com.intellij.remoteServer.runtime.ServerTaskExecutor
+- undeploy(com.intellij.remoteServer.runtime.deployment.DeploymentRuntime$UndeploymentTaskCallback):V
+c:com.intellij.remoteServer.util.CloudApplicationRuntimeImpl
+- com.intellij.remoteServer.util.CloudApplicationRuntimeBase
+- <init>(com.intellij.remoteServer.runtime.ServerTaskExecutor,com.intellij.remoteServer.agent.util.CloudAgentBase,com.intellij.remoteServer.agent.util.CloudRemoteApplication):V
+- p:getApplication():com.intellij.remoteServer.agent.util.CloudAgentApplication
+a:com.intellij.remoteServer.util.CloudConfigurableBase
+- com.intellij.remoteServer.RemoteServerConfigurable
+- pf:myConfiguration:com.intellij.remoteServer.util.CloudConfigurationBase
+- <init>(com.intellij.remoteServer.ServerType,com.intellij.remoteServer.util.CloudConfigurationBase):V
+- apply():V
+- p:applyCoreTo(com.intellij.remoteServer.util.CloudConfigurationBase):V
+- p:applyCoreTo(com.intellij.remoteServer.util.CloudConfigurationBase,Z):V
+- createComponent():javax.swing.JComponent
+- pf:getCloudType():com.intellij.remoteServer.ServerType
+- pa:getEmailTextField():javax.swing.JTextField
+- pa:getMainPanel():javax.swing.JComponent
+- pa:getPasswordField():javax.swing.JPasswordField
+- p:isCoreConfigEqual(com.intellij.remoteServer.util.CloudConfigurationBase,com.intellij.remoteServer.util.CloudConfigurationBase):Z
+- isModified():Z
+- reset():V
+c:com.intellij.remoteServer.util.CloudConfigurationBase
+- com.intellij.remoteServer.configuration.ServerConfigurationBase
+- com.intellij.remoteServer.agent.util.CloudAgentConfigBase
+- <init>():V
+- p:createCredentialAttributes():com.intellij.credentialStore.CredentialAttributes
+- ps:createCredentialAttributes(java.lang.String,java.lang.String):com.intellij.credentialStore.CredentialAttributes
+- ps:doGetSafeValue(com.intellij.credentialStore.CredentialAttributes,java.util.function.Supplier):java.lang.String
+- ps:doSetSafeValue(com.intellij.credentialStore.CredentialAttributes,java.lang.String,java.lang.String,java.util.function.Consumer):V
+- p:getCredentialUser():java.lang.String
+- getEmail():java.lang.String
+- getPassword():java.lang.String
+- getPasswordSafe():java.lang.String
+- getProxySettings():com.intellij.remoteServer.agent.util.CloudProxySettings
+- p:getServiceName():java.lang.String
+- ps:hasSafeCredentials(com.intellij.credentialStore.CredentialAttributes):Z
+- isPasswordSafe():Z
+- migrateToPasswordSafe():V
+- setEmail(java.lang.String):V
+- setPassword(java.lang.String):V
+- setPasswordSafe(java.lang.String):V
+- shouldMigrateToPasswordSafe():Z
+f:com.intellij.remoteServer.util.CloudConfigurationUtil
+- <init>():V
+- s:createCredentialAttributes(java.lang.String,java.lang.String):com.intellij.credentialStore.CredentialAttributes
+- s:doGetSafeValue(com.intellij.credentialStore.CredentialAttributes):java.util.Optional
+- s:doGetSafeValue(com.intellij.credentialStore.CredentialAttributes,java.util.function.Supplier):java.lang.String
+- s:doSetSafeValue(com.intellij.credentialStore.CredentialAttributes,java.lang.String,java.lang.String):V
+- s:doSetSafeValue(com.intellij.credentialStore.CredentialAttributes,java.lang.String,java.lang.String,java.util.function.Consumer):V
+- s:hasSafeCredentials(com.intellij.credentialStore.CredentialAttributes):Z
+c:com.intellij.remoteServer.util.CloudDeploymentNameConfiguration
+- com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationBase
+- com.intellij.remoteServer.util.DeploymentNameConfiguration
+- <init>():V
+- p:getDefaultDeploymentSourceName(com.intellij.remoteServer.configuration.deployment.DeploymentSource):java.lang.String
+- getDeploymentName():java.lang.String
+- getDeploymentSourceName(com.intellij.remoteServer.configuration.deployment.DeploymentSource):java.lang.String
+- isDefaultDeploymentName():Z
+- setDefaultDeploymentName(Z):V
+- setDeploymentName(java.lang.String):V
+com.intellij.remoteServer.util.CloudDeploymentNameProvider
+- sf:DEFAULT_NAME_PROVIDER:com.intellij.remoteServer.util.CloudDeploymentNameProvider
+- a:getDeploymentName(com.intellij.remoteServer.configuration.deployment.DeploymentSource):java.lang.String
+c:com.intellij.remoteServer.util.CloudLoggingHandlerImpl
+- com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler
+- <init>(com.intellij.remoteServer.runtime.deployment.DeploymentLogManager):V
+- createTerminal(java.lang.String,java.io.OutputStream,java.io.InputStream,java.io.InputStream):com.intellij.remoteServer.agent.util.log.TerminalListener
+- getOrCreateLogListener(java.lang.String):com.intellij.remoteServer.agent.util.log.LogListener
+- getProjectHash():java.lang.String
+- isTtySupported():Z
+- println(java.lang.String):V
+c:com.intellij.remoteServer.util.CloudNotifier
+- <init>(java.lang.String):V
+- showMessage(java.lang.String,com.intellij.openapi.ui.MessageType):V
+c:com.intellij.remoteServer.util.CloudSilentLoggingHandlerImpl
+- com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler
+- <init>(com.intellij.openapi.project.Project):V
+- createTerminal(java.lang.String,java.io.OutputStream,java.io.InputStream,java.io.InputStream):com.intellij.remoteServer.agent.util.log.TerminalListener
+- getOrCreateLogListener(java.lang.String):com.intellij.remoteServer.agent.util.log.LogListener
+- getProjectHash():java.lang.String
+- isTtySupported():Z
+- println(java.lang.String):V
+com.intellij.remoteServer.util.CloudsTriggerKeys
+- sf:UPLOAD_SSH_KEY:java.lang.String
+com.intellij.remoteServer.util.DeploymentNameConfiguration
+- a:getDeploymentName():java.lang.String
+- a:isDefaultDeploymentName():Z
+- a:setDefaultDeploymentName(Z):V
+- a:setDeploymentName(java.lang.String):V
+c:com.intellij.remoteServer.util.ServerRuntimeException
+- java.lang.Exception
+- <init>(java.lang.String):V
+- <init>(java.lang.Throwable):V
+f:com.intellij.remoteServer.util.TooltipUtil
+- <init>():V
+- s:createTooltip(java.lang.String):com.intellij.ui.HyperlinkLabel
+f:icons.RemoteServersIcons
+- sf:ResumeScaled:javax.swing.Icon
+- sf:SuspendScaled:javax.swing.Icon
+- <init>():V

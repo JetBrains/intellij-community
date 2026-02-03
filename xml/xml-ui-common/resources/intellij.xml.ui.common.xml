@@ -1,0 +1,78 @@
+<!--suppress PluginXmlValidity -->
+<idea-plugin visibility="public">
+  <extensionPoints>
+    <extensionPoint name="html.codestyle.panel" interface="com.intellij.application.options.HtmlCodeStylePanelExtension" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <lang.rearranger language="XML" implementationClass="com.intellij.xml.arrangement.XmlRearranger"/>
+    <lang.rearranger language="HTML" implementationClass="com.intellij.xml.arrangement.HtmlRearranger"/>
+
+    <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.XMLColorsPage"/>
+    <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.HTMLColorsPage"/>
+
+    <additionalTextAttributes scheme="IntelliJ Light" file="colorSchemes/XmlIntelliJLight.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colorSchemes/XmlDarcula.xml"/>
+    <additionalTextAttributes scheme="High contrast" file="colorSchemes/XmlHighContrast.xml"/>
+
+    <langCodeStyleSettingsProvider implementation="com.intellij.application.options.HtmlLanguageCodeStyleSettingsProvider"/>
+
+    <langCodeStyleSettingsProvider implementation="com.intellij.application.options.XmlLanguageCodeStyleSettingsProvider"/>
+
+    <lang.formatter language="XML" implementationClass="com.intellij.lang.xml.XmlFormattingModelBuilder"/>
+    <lang.formatter language="XHTML" implementationClass="com.intellij.lang.xhtml.XhtmlFormattingModelBuilder"/>
+    <lang.formatter language="HTML" implementationClass="com.intellij.lang.html.HtmlFormattingModelBuilder"/>
+    <lang.whiteSpaceFormattingStrategy language="XML" implementationClass="com.intellij.lang.xml.XmlWhiteSpaceFormattingStrategy"/>
+
+    <fileIndentOptionsProvider id="html" implementation="com.intellij.psi.formatter.xml.HtmlFileIndentOptionsProvider"/>
+
+    <lang.lineWrapStrategy language="XML" implementationClass="com.intellij.psi.formatter.MarkupLineWrapPositionStrategy"/>
+    <lang.lineWrapStrategy language="HTML" implementationClass="com.intellij.psi.formatter.MarkupLineWrapPositionStrategy"/>
+    <lang.lineWrapStrategy language="XHTML" implementationClass="com.intellij.psi.formatter.MarkupLineWrapPositionStrategy"/>
+
+    <lang.commenter language="DTD" implementationClass="com.intellij.lang.xml.XmlCommenter"/>
+    <lang.commenter language="XML" implementationClass="com.intellij.lang.xml.XmlCommenter"/>
+    <lang.commenter language="HTML" implementationClass="com.intellij.lang.xml.XmlCommenter"/>
+    <lang.commenter language="XHTML" implementationClass="com.intellij.lang.xml.XmlCommenter"/>
+
+    <braceMatcher filetype="XML" implementationClass="com.intellij.xml.impl.XmlBraceMatcher"/>
+    <braceMatcher filetype="DTD" implementationClass="com.intellij.xml.impl.XmlBraceMatcher"/>
+    <braceMatcher filetype="XHTML" implementationClass="com.intellij.xml.impl.XmlBraceMatcher"/>
+    <braceMatcher filetype="HTML" implementationClass="com.intellij.xml.impl.XmlBraceMatcher"/>
+
+    <quoteHandler fileType="XML" className="com.intellij.codeInsight.editorActions.XmlQuoteHandler"/>
+    <lang.quoteHandler language="XML" implementationClass="com.intellij.codeInsight.editorActions.XmlQuoteHandler"/>
+    <quoteHandler fileType="HTML" className="com.intellij.codeInsight.editorActions.HtmlQuoteHandler"/>
+    <quoteHandler fileType="XHTML" className="com.intellij.codeInsight.editorActions.HtmlQuoteHandler"/>
+
+    <selectionUnquotingFilter implementation="com.intellij.codeInsight.editorActions.XmlUnquotingFilter"/>
+
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.HtmlSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.XmlTagSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.XmlCDATAContentSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.DtdSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.XmlElementSelectioner"/>
+    <extendWordSelectionHandler id="xmlTokenSelectioner" implementation="com.intellij.codeInsight.editorActions.XmlTokenSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.XmlLineSelectioner"/>
+
+    <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlSlashTypedHandler" id="xmlSlash"/>
+    <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlEqTypedHandler" id="xmlEq"/>
+    <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlPiTypedHandler" id="xmlDecl"/>
+    <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlGtTypedHandler" id="xmlGt"/>
+
+    <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.EnterBetweenXmlTagsHandler" id="xmlEnter"/>
+
+    <basicWordSelectionFilter implementation="com.intellij.codeInsight.editorActions.XmlBasicWordSelectionFilter"/>
+
+    <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.XmlMover" id="xml" order="before line"/>
+    <moveLeftRightHandler language="XML" implementationClass="com.intellij.codeInsight.editorActions.moveLeftRight.XmlMoveLeftRightHandler"/>
+    <preFormatProcessor implementation="com.intellij.lang.html.HtmlQuotesFormatPreprocessor"/>
+
+    <liveTemplateContext contextId="HTML_TEXT" baseContextId="HTML" implementation="com.intellij.codeInsight.template.HtmlTextContextType"/>
+    <liveTemplateContext contextId="HTML" implementation="com.intellij.codeInsight.template.HtmlContextType"/>
+    <liveTemplateContext contextId="XSL_TEXT" baseContextId="XML" implementation="com.intellij.codeInsight.template.XslTextContextType"/>
+    <liveTemplateContext contextId="XML" implementation="com.intellij.codeInsight.template.XmlContextType"/>
+    <liveTemplateContext contextId="XML_TEXT" baseContextId="XML" implementation="com.intellij.codeInsight.template.XmlTextContextType"/>
+    <liveTemplateContext contextId="XML_TAG" baseContextId="XML" implementation="com.intellij.codeInsight.template.XmlElementContextType"/>
+  </extensions>
+</idea-plugin>

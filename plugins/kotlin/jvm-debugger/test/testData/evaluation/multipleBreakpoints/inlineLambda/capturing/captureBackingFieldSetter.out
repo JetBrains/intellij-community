@@ -1,0 +1,8 @@
+LineBreakpoint created at captureBackingFieldSetter.kt:16
+Run Java
+Connected to the target VM
+captureBackingFieldSetter.kt:16
+Compile bytecode for block()
+Disconnected from the target VM
+
+Process finished with exit code 0

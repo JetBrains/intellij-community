@@ -1,0 +1,77 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+/env/
+/lib/build/
+/develop-eggs/
+/dist/
+/downloads/
+/eggs/
+/lib64/
+/parts/
+/sdist/
+/var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+stubtest-output*
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Local utility scripts
+analyze.py
+
+# Editor backup files
+*~
+.*.sw?
+.vscode/*
+!.vscode/settings.default.json
+!.vscode/extensions.json
+.idea/
+.venv*/
+
+# Mypy cache
+.mypy_cache/
+
+# pyenv and uv local python version
+.python-version
+# we don't use uv's lock as we're not actually a project
+uv.lock
+
+# deliberately local test configuration files
+stdlib/@tests/stubtest_allowlists/*.local

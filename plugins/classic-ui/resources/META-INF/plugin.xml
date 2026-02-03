@@ -1,0 +1,22 @@
+<idea-plugin>
+    <name>Classic UI</name>
+    <id>com.intellij.classic.ui</id>
+    <vendor>JetBrains</vendor>
+
+    <incompatible-with>com.intellij.jetbrains.client</incompatible-with>
+
+    <description><![CDATA[
+        Provides the classic JetBrains IDE look and feel, which was used before the introduction of <a href="https://www.jetbrains.com/idea/new-ui">New UI</a>.
+        Includes UI layout, 3 tool window stripes and icons for IDEs and plugins.
+        If you prefer the old-school layout and visual style, this plugin brings back that familiar look and feel.
+    ]]></description>
+
+    <dependencies>
+      <module name="intellij.platform.monolith"/>
+    </dependencies>
+
+    <extensions defaultExtensionNs="com.intellij">
+      <!--suppress PluginXmlDynamicPlugin -->
+      <iconMapperSuppressor/>
+    </extensions>
+</idea-plugin>

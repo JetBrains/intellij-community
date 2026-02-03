@@ -1,0 +1,8 @@
+// WITH_STDLIB
+// FIX: Replace with indices
+fun <T> List<List<T>>.test() {
+    for (x in indices) {
+        val row = mutableListOf<T>()
+        row.add(this[0][x])
+    }
+}

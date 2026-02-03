@@ -1,0 +1,15 @@
+{
+  "buildNumber" : "221.6008.13",
+  "customProperties" : [ ],
+  "dataDirectoryName" : "IdeaIC2022.1",
+  "launch" : [ {
+    "launcherPath" : "bin/idea.sh",
+    "os" : "Linux",
+    "startupWmClass" : "jetbrains-idea-ce",
+    "vmOptionsFilePath" : "bin/idea64.vmoptions"
+  } ],
+  "name" : "IntelliJ IDEA",
+  "productCode" : "IC",
+  "svgIconPath" : "bin/idea.svg",
+  "version" : "2022.1.4"
+}

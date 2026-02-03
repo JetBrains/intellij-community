@@ -1,0 +1,22 @@
+### auto-generated section `build intellij.libraries.junit5.jupiter` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "junit5-jupiter_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "junit5-jupiter",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":junit5-jupiter_resources"],
+  exports = ["@lib//:junit5Jupiter"],
+  runtime_deps = [
+    "@lib//:junit5Jupiter",
+    "//libraries/junit5",
+    "//libraries/junit5-launcher",
+  ]
+)
+### auto-generated section `build intellij.libraries.junit5.jupiter` end

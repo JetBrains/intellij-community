@@ -1,0 +1,22 @@
+### auto-generated section `build intellij.groovy.rt.classLoader` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "classLoader_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "classLoader",
+  module_name = "intellij.groovy.rt.classLoader",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":classLoader_resources"],
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//platform/util-rt",
+  ]
+)
+### auto-generated section `build intellij.groovy.rt.classLoader` end

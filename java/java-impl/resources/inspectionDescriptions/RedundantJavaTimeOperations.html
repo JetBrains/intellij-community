@@ -1,0 +1,51 @@
+<!-- Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<html>
+<body>
+Reports redundant operation on 'java.time' object redundant:
+<ul>
+  <li>creation of date/time objects from the JDK <code>java.time</code> package
+    when simpler method calls can be used or creation can be avoided.</li>
+  <li><code>java.time</code> method calls with <code>java.time.temporal.ChronoField</code> and
+    <code>java.time.temporal.ChronoUnit</code> as arguments when these calls can be replaced with
+    calls of more specific methods.</li>
+  <li><code>java.time</code> comparisons with <code>compareTo()</code> calls that can be replaced with
+    <code>isAfter()</code>, <code>isBefore()</code> or <code>isEqual()</code> calls.</li>
+</ul>
+
+<p>Examples:</p>
+- Before:
+<pre><code>
+LocalDateTime now = LocalDateTime.now();
+return LocalDateTime.from(now);
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+LocalDateTime now = LocalDateTime.now();
+return now;
+</code></pre>
+- Before:
+<pre><code>
+LocalTime localTime = LocalTime.now();
+int minute = localTime.get(ChronoField.MINUTE_OF_HOUR);
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+LocalTime localTime = LocalTime.now();
+int minute = localTime.getMinute();
+</code></pre>
+- Before:
+<pre><code>
+  LocalDate date1 = LocalDate.now();
+  LocalDate date2 = LocalDate.now();
+  boolean t = date1.compareTo(date2) > 0;
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  LocalDate date1 = LocalDate.now();
+  LocalDate date2 = LocalDate.now();
+  boolean t = date1.isAfter(date2);
+</code></pre>
+<!-- tooltip end -->
+<p><small>New in 2024.3</small></p>
+</body>
+</html>

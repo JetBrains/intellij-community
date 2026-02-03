@@ -1,0 +1,17 @@
+JsonFile: Real2.json
+  JsonObject
+    PsiElement({)('{')
+    PsiWhiteSpace('\n  ')
+    PsiComment(BLOCK_COMMENT)('/*xxx*/')
+    PsiWhiteSpace(' ')
+    JsonProperty
+      JsonReferenceExpression
+        PsiElement(IDENTIFIER)('navigation')
+      PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"111"')
+    PsiWhiteSpace(' ')
+    PsiComment(LINE_COMMENT)('// yyy')
+    PsiWhiteSpace('\n')
+    PsiElement(})('}')

@@ -1,0 +1,12 @@
+import kotlin.reflect.KFunction1
+
+// "Create function 'bar'" "true"
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
+fun foo() {
+    bar(""::plus)
+}
+
+fun bar(kFunction1: KFunction1<Any?, String>) {
+    <selection>TODO("Not yet implemented")<caret></selection>
+}

@@ -1,0 +1,16 @@
+public class Foo {
+  public void doSomething() {
+  }
+
+  public void doSomethingElse(){
+  }
+}
+public class FooTest extends TestCase {
+  public void testDoSomething() {
+
+  }
+  <spot>
+  public void testDoSomethingElse() {
+  }
+  </spot>
+}

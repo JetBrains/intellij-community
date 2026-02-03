@@ -1,0 +1,6 @@
+JsonFile: y_string_uEscape.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"\u0061\u30af\u30EA\u30b9"')
+    PsiElement(])(']')

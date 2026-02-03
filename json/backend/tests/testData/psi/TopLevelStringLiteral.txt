@@ -1,0 +1,3 @@
+JsonFile: TopLevelStringLiteral.json
+  JsonStringLiteral
+    PsiElement(DOUBLE_QUOTED_STRING)('"should not be here"')

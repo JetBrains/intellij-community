@@ -1,0 +1,11 @@
+<idea-plugin>
+  <!-- Platform module intellij.emojipicker -->
+
+  <actions resource-bundle="messages.EmojipickerBundle">
+    <action id="EmojiPicker.Open" class="org.jetbrains.plugins.emojipicker.action.OpenEmojiPickerAction">
+      <add-to-group group-id="EditMenu" anchor="before" relative-to-action="EmojiAndSymbols"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="control alt SEMICOLON"/>
+    </action>
+  </actions>
+
+</idea-plugin>

@@ -1,0 +1,1055 @@
+Subject: [PATCH] Fix cross-compilation from Linux to Windows and macOS
+Refactor tool path string building
+Sanitize reproducer
+Reason using abi instead of os target for `gcc_tool` to reflect reality
+Drop `lib/clang/{LLVM_VERSION}/lib` libraries
+Fix cross-compilation to MSVC and clarify branches
+Reason about `linker` in `cc_toolchain_config` instead of compiler in specific places where it made no sense
+Remove redundant `--target` flag (not understood by `lld-link` linker
+Fix missing `.pdb` generation required by cc_rules in `debug` and `fastbuild` compilation
+Drop support for `lib_legacy` on Windows hosts
+Fix backward compatibility with eventual custom LLVM toolchains
+Fix cross-compilation `gcc` tool call on Windows
+Fix comments
+Remove Windows libclang, never relevant
+Remove UNIX specific libraires from Windows repo toolchain (review comment)
+Use a more idiomatic key mutation (review comment)
+Ensure backward compatibility with custom-build LLVM toolchains
+Clarify TODOs
+Clean TODOs
+Disable `cxx_builtin_include_directories` temporarily for Windows target
+Add support for Windows target and host
+---
+Index: platforms/BUILD.bazel
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platforms/BUILD.bazel b/platforms/BUILD.bazel
+--- a/platforms/BUILD.bazel	(revision ace6215bbfe8a76884646b2458b42380e2201607)
++++ b/platforms/BUILD.bazel	(revision b2f7dd342ccc0a9063f78251dd415a461ea1e839)
+@@ -93,3 +93,19 @@
+         "@platforms//cpu:wasm64",
+     ],
+ )
++
++platform(
++    name = "windows-x86_64",
++    constraint_values = [
++        "@platforms//os:windows",
++        "@platforms//cpu:x86_64",
++    ],
++)
++
++platform(
++    name = "windows-aarch64",
++    constraint_values = [
++        "@platforms//os:windows",
++        "@platforms//cpu:aarch64",
++    ],
++)
+Index: toolchain/BUILD.llvm_repo.tpl
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/toolchain/BUILD.llvm_repo.tpl b/toolchain/BUILD.llvm_repo.tpl
+--- a/toolchain/BUILD.llvm_repo.tpl	(revision ace6215bbfe8a76884646b2458b42380e2201607)
++++ b/toolchain/BUILD.llvm_repo.tpl	(revision 96cdedd9f4be889ddd63bd7fc77df5f7a29cb568)
+@@ -30,10 +30,13 @@
+ filegroup(
+     name = "clang",
+     srcs = [
+-        "bin/clang",
+-        "bin/clang++",
+-        "bin/clang-cpp",
+-    ],
++       "bin/clang",
++       "bin/clang++",
++       "bin/clang-cpp",
++    ] + glob([
++       "bin/clang-cl",
++       "bin/lld-link",
++    ], allow_empty = True),
+ )
+
+ filegroup(
+@@ -42,7 +45,10 @@
+     srcs = [
+         "bin/ld.lld",
+         "bin/ld64.lld",
+-    ] + glob(["bin/wasm-ld"], allow_empty = True),
++    ] + glob([
++        "bin/wasm-ld",
++        "bin/lld-link",
++    ], allow_empty = True),
+ )
+
+ filegroup(
+Index: toolchain/BUILD.llvm_repo_windows.tpl
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/toolchain/BUILD.llvm_repo_windows.tpl b/toolchain/BUILD.llvm_repo_windows.tpl
+new file mode 100644
+--- /dev/null	(revision 186793fd0824d0950240f790343184899e205171)
++++ b/toolchain/BUILD.llvm_repo_windows.tpl	(revision 186793fd0824d0950240f790343184899e205171)
+@@ -0,0 +1,209 @@
++# Copyright 2021 The Bazel Authors.
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#     http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++
++package(default_visibility = ["//visibility:public"])
++
++# Some targets may need to directly depend on these files.
++exports_files(glob(
++    [
++        "bin/*",
++        "lib/**",
++        "include/**",
++        "share/clang/*",
++    ],
++    allow_empty = True,
++))
++
++## LLVM toolchain files
++
++ALL_DLLS = glob(["bin/*.dll"], allow_empty=True)
++
++filegroup(
++    name = "clang",
++    srcs = [
++        "bin/clang.exe",
++        "bin/clang++.exe",
++        "bin/clang-cpp.exe",
++        "bin/clang-cl.exe",
++        "bin/lld-link.exe",
++    ] + ALL_DLLS,
++)
++
++filegroup(
++    name = "ld",
++    # Not all distributions contain wasm-ld.
++    srcs = [
++        "bin/ld.lld.exe",
++        "bin/ld64.lld.exe",
++    ] + ALL_DLLS,
++)
++
++filegroup(
++    name = "include",
++    srcs = glob(
++        [
++            "include/**/c++/**",
++            "lib/clang/*/include/**",
++        ],
++    ),
++)
++
++filegroup(
++    name = "all_includes",
++    srcs = glob(
++        ["include/**"],
++        allow_empty = True,
++    ),
++)
++
++# This filegroup should only have source directories, not individual files.
++# We rely on this assumption in system_module_map.bzl.
++filegroup(
++    name = "cxx_builtin_include",
++    srcs = [
++        "include/c++",
++        "lib/clang/{LLVM_VERSION}/include",
++    ],
++)
++
++filegroup(
++    name = "extra_config_site",
++    srcs = glob(["include/*/c++/v1/__config_site"], allow_empty = True)
++)
++
++filegroup(
++    name = "bin",
++    srcs = glob(["bin/**"]),
++)
++
++filegroup(
++    name = "lib",
++    srcs = [],
++)
++
++filegroup(
++    name = "lib_legacy",
++    srcs = [], # no reported Windows exec usage on older version of Bazel
++)
++
++filegroup(
++    name = "ar",
++    srcs = [
++        "bin/llvm-ar.exe",
++    ] + ALL_DLLS,
++)
++
++filegroup(
++    name = "as",
++    srcs = [
++        "bin/clang.exe",
++        "bin/llvm-as.exe",
++    ] + ALL_DLLS,
++)
++
++filegroup(
++    name = "nm",
++    srcs = [
++        "bin/llvm-nm.exe",
++    ] + ALL_DLLS,
++)
++
++filegroup(
++    name = "llvm-lib",
++    srcs = [
++        "bin/llvm-lib.exe",
++    ] + ALL_DLLS,
++)
++
++filegroup(
++    name = "objcopy",
++    srcs = [
++        "bin/llvm-objcopy.exe",
++    ] + ALL_DLLS,
++)
++
++filegroup(
++    name = "objdump",
++    srcs = [
++        "bin/llvm-objdump.exe",
++    ] + ALL_DLLS,
++)
++
++filegroup(
++    name = "profdata",
++    srcs = [
++        "bin/llvm-profdata.exe",
++    ] + ALL_DLLS,
++)
++
++filegroup(
++    name = "dwp",
++    srcs = [
++        "bin/llvm-dwp.exe",
++    ] + ALL_DLLS,
++)
++
++filegroup(
++    name = "ranlib",
++    srcs = [
++        "bin/llvm-ranlib.exe",
++    ] + ALL_DLLS,
++)
++
++filegroup(
++    name = "readelf",
++    srcs = [
++        "bin/llvm-readelf.exe",
++    ] + ALL_DLLS,
++)
++
++filegroup(
++    name = "strip",
++    srcs = [
++        "bin/llvm-strip.exe",
++    ] + ALL_DLLS,
++)
++
++filegroup(
++    name = "symbolizer",
++    srcs = [
++        "bin/llvm-symbolizer.exe",
++    ] + ALL_DLLS,
++)
++
++filegroup(
++    name = "clang-tidy",
++    srcs = [
++        "bin/clang-tidy.exe",
++    ] + ALL_DLLS,
++)
++
++filegroup(
++    name = "clang-format",
++    srcs = [
++        "bin/clang-format.exe",
++    ] + ALL_DLLS,
++)
++
++filegroup(
++    name = "git-clang-format",
++    srcs = [
++        "bin/git-clang-format.exe",
++    ] + ALL_DLLS,
++)
++
++filegroup(
++    name = "libclang",
++    srcs = ["lib/libclang.lib"],
++)
+Index: toolchain/cc_toolchain_config.bzl
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/toolchain/cc_toolchain_config.bzl b/toolchain/cc_toolchain_config.bzl
+--- a/toolchain/cc_toolchain_config.bzl	(revision ace6215bbfe8a76884646b2458b42380e2201607)
++++ b/toolchain/cc_toolchain_config.bzl	(revision e184349fb6fdd66906346f69224a11ecc1fb11b2)
+@@ -17,6 +17,10 @@
+     "@rules_cc//cc/private/toolchain:unix_cc_toolchain_config.bzl",
+     unix_cc_toolchain_config = "cc_toolchain_config",
+ )
++load(
++    "@rules_cc//cc/private/toolchain:windows_cc_toolchain_config.bzl",
++    windows_cc_toolchain_config = "cc_toolchain_config",
++)
+ load(
+     "//toolchain/internal:common.bzl",
+     _check_os_arch_keys = "check_os_arch_keys",
+@@ -28,6 +32,14 @@
+ def _fmt_flags(flags, toolchain_path_prefix):
+     return [f.format(toolchain_path_prefix = toolchain_path_prefix) for f in flags]
+
++def _machine_arch(target_arch):
++    if target_arch == "x86_64":
++        return "X64"
++    elif target_arch == "aarch64":
++        return "ARM64"
++    else:
++        fail("Unsupported target architecture: {}".format(target_arch))
++
+ # Macro for calling cc_toolchain_config from @bazel_tools with setting the
+ # right paths and flags for the tools.
+ def cc_toolchain_config(
+@@ -55,6 +67,7 @@
+         target_cpu,
+         target_libc,
+         compiler,
++        linker,
+         abi_version,
+         abi_libc_version,
+     ) = {
+@@ -63,6 +76,7 @@
+             "darwin",
+             "macosx",
+             "clang",
++            "ld.lld",
+             "darwin_x86_64",
+             "darwin_x86_64",
+         ),
+@@ -71,6 +85,7 @@
+             "darwin",
+             "macosx",
+             "clang",
++            "ld.lld",
+             "darwin_aarch64",
+             "darwin_aarch64",
+         ),
+@@ -79,6 +94,7 @@
+             "aarch64",
+             "glibc_unknown",
+             "clang",
++            "ld.lld",
+             "clang",
+             "glibc_unknown",
+         ),
+@@ -87,6 +103,7 @@
+             "armv7",
+             "glibc_unknown",
+             "clang",
++            "ld.lld",
+             "clang",
+             "glibc_unknown",
+         ),
+@@ -95,6 +112,7 @@
+             "k8",
+             "glibc_unknown",
+             "clang",
++            "ld.lld",
+             "clang",
+             "glibc_unknown",
+         ),
+@@ -103,6 +121,7 @@
+             "riscv32",
+             "unknown",
+             "clang",
++            "ld.lld",
+             "unknown",
+             "unknown",
+         ),
+@@ -111,6 +130,7 @@
+             "k8",
+             "unknown",
+             "clang",
++            "ld.lld",
+             "unknown",
+             "unknown",
+         ),
+@@ -119,6 +139,7 @@
+             "wasm32",
+             "unknown",
+             "clang",
++            "ld.lld",
+             "unknown",
+             "unknown",
+         ),
+@@ -127,6 +148,7 @@
+             "wasm64",
+             "unknown",
+             "clang",
++            "ld.lld",
+             "unknown",
+             "unknown",
+         ),
+@@ -135,6 +157,7 @@
+             "wasm32",
+             "unknown",
+             "clang",
++            "ld.lld",
+             "unknown",
+             "unknown",
+         ),
+@@ -143,6 +166,25 @@
+             "wasm64",
+             "unknown",
+             "clang",
++            "ld.lld",
++            "unknown",
++            "unknown",
++        ),
++        "windows-x86_64": (
++            "clang-x86_64-windows",
++            "x64_windows",
++            "msvc",
++            "clang-cl",
++            "lld-link",
++            "unknown",
++            "unknown",
++        ),
++        "windows-aarch64": (
++            "clang-aarch64-windows",
++            "arm64_windows",
++            "msvc",
++            "clang-cl",
++            "lld-link",
+             "unknown",
+             "unknown",
+         ),
+@@ -161,23 +203,48 @@
+         "-D__TIME__=\"redacted\"",
+     ]
+
++    sysroot_path = compiler_configuration["sysroot_path"]
++
+     # Default compiler flags:
+     compile_flags = [
+         "--target=" + target_system_name,
+-        # Security
+-        "-U_FORTIFY_SOURCE",  # https://github.com/google/sanitizers/issues/247
+-        "-fstack-protector",
+-        "-fno-omit-frame-pointer",
+-        # Diagnostics
+-        "-fcolor-diagnostics",
+-        "-Wall",
+-        "-Wthread-safety",
+-        "-Wself-assign",
+-    ]
++        # Diagnostics
++        "-fcolor-diagnostics",
++    ]
++    if compiler == "clang-cl":
++        compile_flags.extend([
++            "/Wall",
++            "/MT",
++            "/Brepro",
++            "/DWIN32",
++            "/D_WIN32",
++            "/D_WINDOWS",
++            "/clang:-fdebug-prefix-map={}=__bazel_toolchain_llvm_repo__/".format(toolchain_path_prefix),
++            "/clang-I{}/include".format(sysroot_path),
++        ])
++    else:
++        compile_flags.extend([
++            # Security
++            "-U_FORTIFY_SOURCE",  # https://github.com/google/sanitizers/issues/247
++            "-fstack-protector",
++            "-fno-omit-frame-pointer",
++            # Diagnostics
++            "-Wall",
++            "-Wthread-safety",
++            "-Wself-assign",
++        ])
+
+-    dbg_compile_flags = ["-g", "-fstandalone-debug"]
++    clangcl_debug_flags = ["/DEBUG"]  # ensures `.pdb` file is generated in `cc_rules` linking action when targeting Windows
++    dbg_compile_flags = [
++        "-g",
++        "-fstandalone-debug",
++    ]
++    if compiler == "clang-cl":
++        dbg_compile_flags.extend(clangcl_debug_flags)
+
+     fastbuild_compile_flags = []
++    if compiler == "clang-cl":
++        fastbuild_compile_flags.extend(clangcl_debug_flags)
+
+     opt_compile_flags = [
+         "-g0",
+@@ -188,18 +255,24 @@
+         "-fdata-sections",
+     ]
+
+-    link_flags = [
+-        "--target=" + target_system_name,
+-        "-no-canonical-prefixes",
+-        "-fuse-ld=lld",
+-    ]
++    if linker == "lld-link":
++        link_flags = [
++            "/MACHINE:{}".format(_machine_arch(target_arch)),
++            "/LIBPATH:{}/lib".format(sysroot_path),
++        ]
++    else:
++        link_flags = [
++            "--target=" + target_system_name,
++            "-no-canonical-prefixes",
++            "-fuse-ld=lld",
++        ]
+
+-    if exec_os == "darwin":
++    if exec_os == "darwin" and linker == "ld.lld":
+         # These will get expanded by osx_cc_wrapper's `sanitize_option`
+         link_flags.append("--ld-path=ld64.lld" if target_os == "darwin" else "--ld-path=ld.lld")
+
+     stdlib = compiler_configuration["stdlib"]
+-    if stdlib != "none":
++    if stdlib != "none" and linker == "ld.lld":
+         link_flags.extend([
+             "-lm",
+         ])
+@@ -225,33 +298,53 @@
+         # lld is invoked as wasm-ld for WebAssembly targets.
+         use_libtool = False
+     else:
+-        link_flags.extend([
+-            "-Wl,--build-id=md5",
+-            "-Wl,--hash-style=gnu",
+-            "-Wl,-z,relro,-z,now",
+-        ])
++        if target_os == "linux": # TODO: must reason in terms of ld64
++            link_flags.extend([
++                "-Wl,--build-id=md5",
++                "-Wl,--hash-style=gnu",
++                "-Wl,-z,relro,-z,now",
++            ])
+         use_libtool = False
+
+     # Pre-installed libtool on macOS has -static as default, but llvm-libtool-darwin needs it
+     # explicitly. cc_common.create_link_variables does not automatically add this either if
+     # output_file arg to it is None.
+-    archive_flags = ["-static"] if is_darwin_exec_and_target else []
++    if is_darwin_exec_and_target:
++        archive_flags = ["-static"]
++    elif compiler == "clang-cl":
++        archive_flags = ["/MACHINE:{}".format(_machine_arch(target_arch))]
++    else:
++        archive_flags = []
+
+     # Flags related to C++ standard.
+     # The linker has no way of knowing if there are C++ objects; so we
+     # always link C++ libraries.
+     cxx_standard = compiler_configuration["cxx_standard"]
+     conly_flags = compiler_configuration["conly_flags"]
+-    sysroot_path = compiler_configuration["sysroot_path"]
+
+     is_xcompile = not (exec_os == target_os and exec_arch == target_arch)
+
+     # Darwin has a universal sysroot so the builtin can compile cross-arch.
+     if stdlib == "builtin-libc++" and is_xcompile and not is_darwin_exec_and_target:
+         stdlib = "stdc++"
+-    if stdlib == "builtin-libc++":
++
++    if compiler == "clang-cl":
++        std_flag = "/std:"
++    else:
++        std_flag = "-std="
++
++    if target_libc == "msvc":  # there is no alternative stdlib support in MSVC
++        if compiler != "clang-cl":
++            fail("Compiling to MSVC requires `clang-cl` compiler")
++
+         cxx_flags = [
+-            "-std=" + cxx_standard,
++            std_flag + cxx_standard,
++            "-fms-compatibility",
++            "-fms-extensions",
++        ]
++    elif stdlib == "builtin-libc++":
++        cxx_flags = [
++            std_flag + cxx_standard,
+             "-stdlib=libc++",
+         ]
+
+@@ -287,10 +380,9 @@
+                 "-lpthread",
+                 "-ldl",
+             ]
+-
+     elif stdlib == "libc++":
+         cxx_flags = [
+-            "-std=" + cxx_standard,
++            std_flag + cxx_standard,
+             "-stdlib=libc++",
+         ]
+
+@@ -300,7 +392,7 @@
+         ])
+     elif stdlib == "dynamic-stdc++":
+         cxx_flags = [
+-            "-std=" + cxx_standard,
++            std_flag + cxx_standard,
+             "-stdlib=libstdc++",
+         ]
+
+@@ -309,16 +401,17 @@
+         ])
+     elif stdlib == "stdc++":
+         cxx_flags = [
+-            "-std=" + cxx_standard,
++            std_flag + cxx_standard,
+             "-stdlib=libstdc++",
+         ]
+
+-        link_flags.extend([
+-            "-l:libstdc++.a",
+-        ])
++        if target_os == "linux":
++            link_flags.extend([
++                "-l:libstdc++.a",
++            ])
+     elif stdlib == "libc":
+         cxx_flags = [
+-            "-std=" + cxx_standard,
++            std_flag + cxx_standard,
+         ]
+     elif stdlib == "none":
+         cxx_flags = [
+@@ -353,6 +446,25 @@
+     ## NOTE: make variables are missing here; unix_cc_toolchain_config doesn't
+     ## pass these to `create_cc_toolchain_config_info`.
+
++    def _tool(tool_name):
++        if exec_os == "windows":
++            binary_ext = ".exe"
++        else:
++            binary_ext = ""
++        return tools_path_prefix + tool_name + binary_ext
++
++    cc_wrapper_unix = wrapper_bin_prefix + "cc_wrapper.sh"
++    if target_libc == "msvc":
++        gcc_tool = _tool("clang-cl")
++    elif exec_os == "windows":
++        # TODO: we avoid the usage of a wrapper in Windows, it may not be an issue due to our
++        #  `use_absolute_paths_llvm=True` hack but that may need to be reconsider when we remove it.
++        #  Note: building a wrapper is tricky on Windows, we had many string interpretation issues when we tried
++        #  especially on escapes e.g. `\"`.
++        gcc_tool = _tool("clang")
++    else:
++        gcc_tool = cc_wrapper_unix
++
+     # The requirements here come from
+     # https://cs.opensource.google/bazel/bazel/+/master:src/main/starlark/builtins_bzl/common/cc/cc_toolchain_provider_helper.bzl;l=75;drc=f0150efd1cca473640269caaf92b5a23c288089d
+     # https://cs.opensource.google/bazel/bazel/+/master:src/main/java/com/google/devtools/build/lib/rules/cpp/CcModule.java;l=1257;drc=6743d76f9ecde726d592e88d8914b9db007b1c43
+@@ -360,19 +472,20 @@
+     # https://github.com/bazelbuild/rules_cc/blob/fe41fc4ea219c9d3680ee536bba6681f3baf838e/cc/private/toolchain/unix_cc_toolchain_config.bzl#L1887
+     # NOTE: Ensure these are listed in toolchain_tools in toolchain/internal/common.bzl.
+     tool_paths = {
+-        "ar": tools_path_prefix + ("llvm-ar" if not use_libtool else "libtool"),
+-        "cpp": tools_path_prefix + "clang-cpp",
+-        "dwp": tools_path_prefix + "llvm-dwp",
+-        "gcc": wrapper_bin_prefix + "cc_wrapper.sh",
+-        "gcov": tools_path_prefix + "llvm-profdata",
+-        "ld": tools_path_prefix + "ld.lld",
+-        "llvm-cov": tools_path_prefix + "llvm-cov",
+-        "llvm-profdata": tools_path_prefix + "llvm-profdata",
+-        "nm": tools_path_prefix + "llvm-nm",
+-        "objcopy": tools_path_prefix + "llvm-objcopy",
+-        "objdump": tools_path_prefix + "llvm-objdump",
+-        "strip": tools_path_prefix + "llvm-strip",
+-        "parse_headers": wrapper_bin_prefix + "cc_wrapper.sh",
++        "ar": _tool("llvm-ar" if not use_libtool else "libtool"),
++        "cpp": _tool("clang-cpp"),
++        "dwp": _tool("llvm-dwp"),
++        "gcc": gcc_tool,
++        "gcov": _tool("llvm-profdata"),
++        "ld": _tool(linker),
++        "llvm-lib": _tool("llvm-lib"),
++        "llvm-cov": _tool("llvm-cov"),
++        "llvm-profdata": _tool("llvm-profdata"),
++        "nm": _tool("llvm-nm"),
++        "objcopy": _tool("llvm-objcopy"),
++        "objdump": _tool("llvm-objdump"),
++        "strip": _tool("llvm-strip"),
++        "parse_headers": cc_wrapper_unix,
+     }
+
+     # Start-end group linker support:
+@@ -431,33 +544,74 @@
+     if compiler_configuration["extra_unfiltered_compile_flags"] != None:
+         unfiltered_compile_flags.extend(_fmt_flags(compiler_configuration["extra_unfiltered_compile_flags"], toolchain_path_prefix))
+
+-    # Source: https://cs.opensource.google/bazel/bazel/+/master:tools/cpp/unix_cc_toolchain_config.bzl
+-    unix_cc_toolchain_config(
+-        name = name,
+-        cpu = target_cpu,
+-        compiler = compiler,
+-        toolchain_identifier = toolchain_identifier,
+-        host_system_name = exec_arch,
+-        target_system_name = target_system_name,
+-        target_libc = target_libc,
+-        abi_version = abi_version,
+-        abi_libc_version = abi_libc_version,
+-        cxx_builtin_include_directories = cxx_builtin_include_directories,
+-        tool_paths = tool_paths,
+-        compile_flags = compile_flags,
+-        fastbuild_compile_flags = fastbuild_compile_flags,
+-        dbg_compile_flags = dbg_compile_flags,
+-        opt_compile_flags = opt_compile_flags,
+-        conly_flags = conly_flags,
+-        cxx_flags = cxx_flags,
+-        link_flags = link_flags + select({str(Label("@toolchains_llvm//toolchain/config:use_libunwind")): libunwind_link_flags, "//conditions:default": []}) +
+-                     select({str(Label("@toolchains_llvm//toolchain/config:use_compiler_rt")): compiler_rt_link_flags, "//conditions:default": []}),
+-        archive_flags = archive_flags,
+-        link_libs = link_libs,
+-        opt_link_flags = opt_link_flags,
+-        unfiltered_compile_flags = unfiltered_compile_flags,
+-        coverage_compile_flags = coverage_compile_flags,
+-        coverage_link_flags = coverage_link_flags,
+-        supports_start_end_lib = supports_start_end_lib,
+-        builtin_sysroot = sysroot_path,
+-    )
++    if target_os == "windows":
++        windows_cc_toolchain_config(
++            name = name,
++            cpu = target_cpu,
++            compiler = compiler,
++            toolchain_identifier = toolchain_identifier,
++            host_system_name = exec_arch,
++            target_system_name = target_system_name,
++            target_libc = target_libc,
++            abi_version = abi_version,
++            abi_libc_version = abi_libc_version,
++            msvc_env_include = ";".join([
++                "{}/include".format(sysroot_path),
++            ]),
++            # msvc_env_lib = ";".join([
++            #     "{}/lib".format(sysroot_path),
++            # ]),
++            msvc_cl_path = tool_paths["gcc"],
++            msvc_link_path = tool_paths["ld"],
++            msvc_lib_path = tool_paths["llvm-lib"],
++            cxx_builtin_include_directories = cxx_builtin_include_directories,
++            tool_paths = tool_paths,
++            archiver_flags = archive_flags,
++            default_link_flags = link_flags,
++            default_compile_flags = compile_flags + unfiltered_compile_flags,
++            dbg_mode_debug_flag = " ".join(dbg_compile_flags),
++            fastbuild_mode_debug_flag = " ".join(fastbuild_compile_flags),
++            supports_parse_showincludes = False,
++
++            # The following attributes are not yet supported (we had no need for it):
++            # msvc_env_tmp =
++            # msvc_env_path =
++            # msvc_ml_path =
++            #
++            # The following variables are not used on Windows toolchains:
++            # - opt_compile_flags
++            # - conly_flags
++            # - cxx_flags
++            # - link_libs
++        )
++    else:
++        # Source: https://cs.opensource.google/bazel/bazel/+/master:tools/cpp/unix_cc_toolchain_config.bzl
++        unix_cc_toolchain_config(
++            name = name,
++            cpu = target_cpu,
++            compiler = compiler,
++            toolchain_identifier = toolchain_identifier,
++            host_system_name = exec_arch,
++            target_system_name = target_system_name,
++            target_libc = target_libc,
++            abi_version = abi_version,
++            abi_libc_version = abi_libc_version,
++            cxx_builtin_include_directories = cxx_builtin_include_directories,
++            tool_paths = tool_paths,
++            compile_flags = compile_flags,
++            fastbuild_compile_flags = fastbuild_compile_flags,
++            dbg_compile_flags = dbg_compile_flags,
++            opt_compile_flags = opt_compile_flags,
++            conly_flags = conly_flags,
++            cxx_flags = cxx_flags,
++            link_flags = link_flags + select({str(Label("@toolchains_llvm//toolchain/config:use_libunwind")): libunwind_link_flags, "//conditions:default": []}) +
++                         select({str(Label("@toolchains_llvm//toolchain/config:use_compiler_rt")): compiler_rt_link_flags, "//conditions:default": []}),
++            archive_flags = archive_flags,
++            link_libs = link_libs,
++            opt_link_flags = opt_link_flags,
++            unfiltered_compile_flags = unfiltered_compile_flags,
++            coverage_compile_flags = coverage_compile_flags,
++            coverage_link_flags = coverage_link_flags,
++            supports_start_end_lib = supports_start_end_lib,
++            builtin_sysroot = sysroot_path,
++        )
+Index: toolchain/internal/common.bzl
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/toolchain/internal/common.bzl b/toolchain/internal/common.bzl
+--- a/toolchain/internal/common.bzl	(revision ace6215bbfe8a76884646b2458b42380e2201607)
++++ b/toolchain/internal/common.bzl	(revision c16ca8a7cdfe796165f6ed0039f4f560738a848e)
+@@ -24,6 +24,8 @@
+     ("none", "x86_64"),
+     ("wasip1", "wasm32"),
+     ("wasip1", "wasm64"),
++    ("windows", "x86_64"),
++    ("windows", "aarch64"),
+ ]
+
+ # These are targets that can build without a sysroot.
+@@ -38,6 +40,8 @@
+     name: name
+     for name in [
+         "clang-cpp",
++        "clang-cl",
++        "lld-link",
+         "clang-format",
+         "clang-tidy",
+         "clangd",
+@@ -46,6 +50,7 @@
+         "llvm-dwp",
+         "llvm-profdata",
+         "llvm-cov",
++        "llvm-lib",
+         "llvm-nm",
+         "llvm-objcopy",
+         "llvm-objdump",
+@@ -134,7 +139,7 @@
+
+     name = rctx.attr.exec_os
+     if name:
+-        if name in ("linux", "darwin", "none"):
++        if name in ("linux", "darwin", "windows", "none"):
+             return name
+         else:
+             fail("Unsupported value for exec_os: %s" % name)
+@@ -152,7 +157,7 @@
+
+ def os_bzl(os):
+     # Return the OS string as used in bazel platform constraints.
+-    return {"darwin": "osx", "linux": "linux", "none": "none", "wasip1": "wasi"}[os]
++    return {"darwin": "osx", "linux": "linux", "windows": "windows", "none": "none", "wasip1": "wasi"}[os]
+
+ def arch(rctx):
+     arch = rctx.attr.exec_arch
+@@ -267,7 +272,15 @@
+     return dict(tuples)
+
+ def toolchain_tools(os):
+-    tools = dict(_toolchain_tools)
+-    if os == "darwin":
++    if os == "windows":
++        tools = dict()
++        binary_ext = ".exe"
++        for bin, symlink in _toolchain_tools.items():
++            tools[bin + binary_ext] = symlink + binary_ext
++    elif os == "darwin":
++        tools = dict(_toolchain_tools)
+         tools.update(_toolchain_tools_darwin)
++    else:
++        tools = dict(_toolchain_tools)
++
+     return tools
+Index: toolchain/internal/configure.bzl
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/toolchain/internal/configure.bzl b/toolchain/internal/configure.bzl
+--- a/toolchain/internal/configure.bzl	(revision ace6215bbfe8a76884646b2458b42380e2201607)
++++ b/toolchain/internal/configure.bzl	(revision ef8695db09d3e6e027ca064a4abaf522453a7b96)
+@@ -72,9 +72,6 @@
+     _check_os_arch_keys(rctx.attr.extra_target_compatible_with)
+
+     os = _os(rctx)
+-    if os == "windows":
+-        _empty_repository(rctx)
+-        return None
+     arch = _arch(rctx)
+
+     if not rctx.attr.toolchain_roots:
+@@ -92,6 +89,23 @@
+     use_absolute_paths_llvm = rctx.attr.absolute_paths
+     use_absolute_paths_sysroot = use_absolute_paths_llvm
+
++    if os == "windows":
++        # TODO: Windows has an issue resolving symlinks in the execroot, so for now we force `absolute_paths = True` as a hack
++        #
++        # Here is an example of failure:
++        #   ERROR: <path>/BUILD.bazel:10:12: Compiling Rust bin somebinary (15 files) failed: error reading file '@@toolchains_llvm++llvm+llvm_toolchain//:bin/llvm-nm.exe':
++        #
++        # Command to reproduce:
++        #   $ bazel.exe clean --expunge
++        #   $ bazel.exe build //some/rust:somebinary # FAILS with the above error
++        #   $ dir C:/temp/k7ozco62/external/toolchains_llvm++llvm+llvm_toolchain/bin # shows `d----l` file modes on binaries
++        #   $ bazel.exe query --output build //some/rust:somebinary # WORKS
++        #   $ dir C:/temp/k7ozco62/external/toolchains_llvm++llvm+llvm_toolchain/bin # shows `d----l` file modes on binaries
++        #   $ bazel.exe build //some/rust:somebinary # WORKS
++        #   $ dir C:/temp/k7ozco62/external/toolchains_llvm++llvm+llvm_toolchain/bin # shows `-a----` file modes on binaries
++        #
++        use_absolute_paths_llvm = True
++
+     # Check if the toolchain root is a system path.
+     system_llvm = False
+     if _is_absolute_path(toolchain_root):
+@@ -193,7 +207,6 @@
+         extra_coverage_link_flags_dict = rctx.attr.extra_coverage_link_flags,
+         extra_unfiltered_compile_flags_dict = rctx.attr.extra_unfiltered_compile_flags,
+     )
+-    exec_dl_ext = "dylib" if os == "darwin" else "so"
+     cc_toolchains_str, toolchain_labels_str = _cc_toolchains_str(
+         rctx,
+         workspace_name,
+@@ -206,7 +219,6 @@
+         use_absolute_paths_llvm,
+         llvm_dist_rel_path,
+         llvm_dist_label_prefix,
+-        exec_dl_ext,
+     )
+ 
+     # Convenience macro to register all generated toolchains.
+@@ -354,6 +366,8 @@
+         "wasm64": "wasm64-unknown-unknown",
+         "wasip1-wasm32": "wasm32-wasip1",
+         "wasip1-wasm64": "wasm64-wasip1",
++        "windows-x86_64": "x86_64-pc-windows-msvc",
++        "windows-aarch64": "aarch64-pc-windows-msvc",
+     }[target_pair]
+ 
+     cxx_builtin_include_directories = [
+@@ -387,6 +401,17 @@
+             _join(sysroot_prefix, "/usr/include"),
+             _join(sysroot_prefix, "/System/Library/Frameworks"),
+         ])
++    elif target_os == "windows":
++        # TODO: when uncommented, we are getting:
++        #
++        # Error in fail: A %sysroot% prefix is only allowed if the default_sysroot option is set
++        # ERROR: C:/temp/k7ozco62/external/toolchains_llvm++llvm+llvm_toolchain/BUILD.bazel:764:13: Analysis of target '@@toolchains_llvm++llvm+llvm_toolchain//:cc-clang-aarch64-windows' (config: 40e6e70) failed
++        #
++        # if sysroot_prefix:
++        #     cxx_builtin_include_directories.extend([
++        #         _join(sysroot_prefix, "/Include"),
++        #     ])
++        pass
+     elif target_os == "none" or target_os == "wasip1":
+         if sysroot_prefix:
+             cxx_builtin_include_directories.extend([
+@@ -643,7 +668,18 @@
+ def _is_remote(rctx, exec_os, exec_arch):
+     return not (_os_from_rctx(rctx) == exec_os and _arch_from_rctx(rctx) == exec_arch)
+ 
+-def _convenience_targets_str(rctx, use_absolute_paths, llvm_dist_rel_path, llvm_dist_label_prefix, exec_dl_ext):
++def _convenience_targets_str(rctx, use_absolute_paths, llvm_dist_rel_path, llvm_dist_label_prefix):
++    ext = ""
++    exec_dl_ext = ""
++    os = _os(rctx)
++    if os == "windows":
++        ext = ".exe"
++        exec_dl_ext = "lib"
++    elif os == "darwin":
++        exec_dl_ext = "dylib"
++    else:
++        exec_dl_ext = "so"
++
+     if use_absolute_paths:
+         llvm_dist_label_prefix = ":"
+         filenames = []
+@@ -651,7 +687,7 @@
+             filename = "lib/{}.{}".format(libname, exec_dl_ext)
+             filenames.append(filename)
+         for toolname in _aliased_tools:
+-            filename = "bin/{}".format(toolname)
++            filename = "bin/{}{}".format(toolname, ext)
+             filenames.append(filename)
+ 
+         for filename in filenames:
+@@ -671,9 +707,9 @@
+         template = """
+ native_binary(
+     name = "{name}",
+-    out = "{name}",
+-    src = "{{llvm_dist_label_prefix}}bin/{name}",
+-)""".format(name = name)
++    out = "{bin_name}",
++    src = "{{llvm_dist_label_prefix}}bin/{bin_name}",
++)""".format(name = name, bin_name = name + ext)
+         tool_target_strs.append(template)
+ 
+     return "\n".join(lib_target_strs + tool_target_strs).format(
+Index: toolchain/internal/repo.bzl
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/toolchain/internal/repo.bzl b/toolchain/internal/repo.bzl
+--- a/toolchain/internal/repo.bzl	(revision ace6215bbfe8a76884646b2458b42380e2201607)
++++ b/toolchain/internal/repo.bzl	(revision b2f7dd342ccc0a9063f78251dd415a461ea1e839)
+@@ -14,7 +14,6 @@
+ load(
+     "//toolchain/internal:common.bzl",
+     _attr_dict = "attr_dict",
+-    _os = "os",
+     _supported_os_arch_keys = "supported_os_arch_keys",
+ )
+ load(
+@@ -418,17 +417,16 @@
+ })
+ 
+ def llvm_repo_impl(rctx):
+-    os = _os(rctx)
+-    if os == "windows":
+-        rctx.file("BUILD.bazel", executable = False)
+-        return None
+-
+     llvm_version = _required_llvm_version_rctx(rctx)
+     major_llvm_version = int(llvm_version.split(".")[0])
+ 
++    if rctx.os.name.startswith("windows"):
++        template_file_label = "//toolchain:BUILD.llvm_repo_windows.tpl"
++    else:
++        template_file_label = "//toolchain:BUILD.llvm_repo.tpl"
+     rctx.file(
+         "BUILD.bazel",
+-        content = rctx.read(Label("//toolchain:BUILD.llvm_repo.tpl")).format(
++        content = rctx.read(Label(template_file_label)).format(
+             # The versioning changed.
+             LLVM_VERSION = major_llvm_version if major_llvm_version >= 16 else llvm_version,
+         ),

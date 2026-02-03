@@ -1,0 +1,88 @@
+### auto-generated section `build intellij.platform.statistics.devkit` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "devkit_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "devkit",
+  module_name = "intellij.platform.statistics.devkit",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":devkit_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/projectModel-api:projectModel",
+    "//libraries/guava",
+    "//platform/statistics",
+    "//platform/util/progress",
+    "//json/backend",
+    "//platform/core-ui",
+    "//platform/statistics/uploader",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/core-impl",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//platform/util/jdom",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
+)
+
+jvm_library(
+  name = "devkit_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":devkit"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//libraries/guava",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/util/progress",
+    "//json/backend",
+    "//platform/core-ui",
+    "//platform/statistics/uploader",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/core-impl",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//platform/util/jdom",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
+)
+### auto-generated section `build intellij.platform.statistics.devkit` end
+
+### auto-generated section `test intellij.platform.statistics.devkit` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "devkit_test",
+  runtime_deps = [":devkit_test_lib"]
+)
+### auto-generated section `test intellij.platform.statistics.devkit` end

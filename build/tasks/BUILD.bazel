@@ -1,0 +1,91 @@
+### auto-generated section `build intellij.idea.community.build.tasks` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tasks",
+  module_name = "intellij.idea.community.build.tasks",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//platform/util/zip",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/fastutil",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//libraries/jackson/jr-objects:libraries-jackson-jr-objects",
+    "//libraries/jackson/jackson",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/util/rt-java8",
+    "//java/java-runtime:rt",
+    "//platform/util-rt",
+    "//platform/diagnostic/telemetry",
+    "//platform/diagnostic/telemetry.exporters",
+    "//platform/util-ex",
+    "//platform/build-scripts/downloader",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/base",
+    "//libraries/hash4j",
+    "@lib//:tc_service_messages",
+    "@lib//:opentelemetry-extension-kotlin",
+    "@community//build:zip",
+  ],
+  runtime_deps = [
+    "@lib//:slf4j-api",
+    "@lib//:slf4j-jdk14",
+    "//libraries/bouncy-castle-provider",
+  ]
+)
+
+jvm_library(
+  name = "tasks_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [":tasks"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//platform/util/zip",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/fastutil",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//libraries/jackson/jr-objects:libraries-jackson-jr-objects",
+    "//libraries/jackson/jackson",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/util/rt-java8",
+    "//java/java-runtime:rt",
+    "//platform/util-rt",
+    "//platform/util-rt:util-rt_test_lib",
+    "//platform/diagnostic/telemetry",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/diagnostic/telemetry.exporters",
+    "//platform/util-ex",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/extensions:testExtensions",
+    "@lib//:assert_j",
+    "@lib//:memoryfilesystem",
+    "@lib//:junit5",
+    "//platform/build-scripts/downloader",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/base",
+    "//libraries/hash4j",
+    "@lib//:tc_service_messages",
+    "@lib//:opentelemetry-extension-kotlin",
+    "@community//build:zip",
+  ]
+)
+### auto-generated section `build intellij.idea.community.build.tasks` end
+
+### auto-generated section `test intellij.idea.community.build.tasks` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tasks_test",
+  runtime_deps = [":tasks_test_lib"]
+)
+### auto-generated section `test intellij.idea.community.build.tasks` end

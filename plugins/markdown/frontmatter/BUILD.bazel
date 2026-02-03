@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.markdown.frontmatter` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "frontmatter_resources",
+  srcs = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "frontmatter",
+  module_name = "intellij.markdown.frontmatter",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
+  resources = [":frontmatter_resources"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/lang-impl",
+    "//plugins/IntelliLang:langInjection",
+    "//platform/core-impl",
+    "//plugins/markdown/core:markdown",
+    "//json/backend",
+    "@lib//:kotlin-stdlib",
+  ],
+  runtime_deps = ["//platform/backend"]
+)
+### auto-generated section `build intellij.markdown.frontmatter` end

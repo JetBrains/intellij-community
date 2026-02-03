@@ -1,0 +1,1 @@
+import nspackage.a<caret>

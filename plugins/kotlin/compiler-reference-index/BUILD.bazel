@@ -1,0 +1,39 @@
+### auto-generated section `build intellij.kotlin.compilerReferenceIndex` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "compiler-reference-index_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "compiler-reference-index",
+  module_name = "intellij.kotlin.compilerReferenceIndex",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":compiler-reference-index_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/psi",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/base/analysis",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//jps/jps-builders:build",
+    "//java/java-indexing-impl:indexing-impl",
+    "//java/compiler/impl",
+  ]
+)
+### auto-generated section `build intellij.kotlin.compilerReferenceIndex` end

@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.java.websocket.jar
+  modules:
+  - name: intellij.libraries.java.websocket
+  library: Java-WebSocket
+  files:
+  - name: $MAVEN_REPOSITORY$/org/java-websocket/Java-WebSocket/1/Java-WebSocket-1.jar

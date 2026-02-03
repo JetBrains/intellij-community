@@ -1,0 +1,31 @@
+### auto-generated section `build intellij.platform.polySymbols.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "backend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.platform.polySymbols.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/projectModel-impl",
+    "//platform/core-impl",
+    "//platform/lang-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/indexing-api:indexing",
+    "//platform/polySymbols",
+    "//platform/refactoring",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/core-ui",
+    "//platform/lang-api:lang",
+  ]
+)
+### auto-generated section `build intellij.platform.polySymbols.backend` end

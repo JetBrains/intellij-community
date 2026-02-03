@@ -1,0 +1,42 @@
+-AbstractList.kt
+ -AbstractList
+  -companion object
+   checkBoundsIndexes(Int, Int, Int): Unit
+   checkElementIndex(Int, Int): Unit
+   checkPositionIndex(Int, Int): Unit
+   checkRangeIndexes(Int, Int, Int): Unit
+   maxArraySize: Int
+   newCapacity(Int, Int): Int
+   orderedEquals(Collection<*>, Collection<*>): Boolean
+   orderedHashCode(Collection<*>): Int
+  constructor AbstractList()
+  equals(Any?): Boolean
+  get(Int): E
+  hashCode(): Int
+  indexOf(E): Int
+  iterator(): Iterator<E>
+  -IteratorImpl
+   hasNext(): Boolean
+   index: Int
+   next(): E
+  lastIndexOf(E): Int
+  listIterator(): ListIterator<E>
+  listIterator(Int): ListIterator<E>
+  -ListIteratorImpl
+   <class initializer>
+   constructor ListIteratorImpl(Int)
+   hasPrevious(): Boolean
+   nextIndex(): Int
+   previous(): E
+   previousIndex(): Int
+  size: Int
+  -SubList
+   <class initializer>
+   _size: Int
+   constructor SubList(AbstractList<E>, Int, Int)
+   fromIndex: Int
+   get(Int): E
+   list: AbstractList<E>
+   size: Int
+   subList(Int, Int): List<E>
+  subList(Int, Int): List<E>

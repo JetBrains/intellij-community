@@ -1,0 +1,4 @@
+- name: lib/lombok.jar
+  modules:
+  - name: intellij.lombok
+  - name: intellij.lombok.generated

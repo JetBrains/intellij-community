@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.driver.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "driver-impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "driver-impl",
+  module_name = "intellij.driver.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":driver-impl_resources"],
+  deps = [
+    "//platform/remote-driver/model",
+    "@lib//:jetbrains-annotations",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/diagnostic/telemetry",
+    "//platform/util",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//libraries/commons/lang3",
+  ]
+)
+### auto-generated section `build intellij.driver.impl` end

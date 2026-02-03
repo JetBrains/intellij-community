@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.jackson.dataformat.yaml.jar
+  modules:
+  - name: intellij.libraries.jackson.dataformat.yaml
+  library: jackson-dataformat-yaml
+  files:
+  - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2/jackson-dataformat-yaml-2.jar

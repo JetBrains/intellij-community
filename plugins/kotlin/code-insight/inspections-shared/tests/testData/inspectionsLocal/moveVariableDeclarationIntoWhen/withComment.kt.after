@@ -1,0 +1,10 @@
+// HIGHLIGHT: INFORMATION
+fun foo() {
+    // comment
+    when (1) {
+        1 -> {
+        }
+        else -> {
+        }
+    }
+}

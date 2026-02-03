@@ -1,0 +1,332 @@
+package com.intellij.grazie.grammar
+
+import com.intellij.grazie.GrazieBundle
+import com.intellij.grazie.GrazieConfig
+import com.intellij.grazie.GraziePlugin
+import com.intellij.grazie.detection.toAvailableLang
+import com.intellij.grazie.ide.ui.components.utils.html
+import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.jlanguage.LangTool
+import com.intellij.grazie.text.ExternalTextChecker
+import com.intellij.grazie.text.Rule
+import com.intellij.grazie.text.RuleGroup
+import com.intellij.grazie.text.TextContent
+import com.intellij.grazie.text.TextProblem
+import com.intellij.grazie.utils.TextStyleDomain
+import com.intellij.grazie.utils.getTextDomain
+import com.intellij.grazie.utils.shouldCheckGrammarStyle
+import com.intellij.grazie.utils.trimToNull
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.ClassLoaderUtil.computeWithClassLoader
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.Predicates
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vcs.ui.CommitMessage
+import com.intellij.util.ExceptionUtil
+import com.intellij.util.containers.Interner
+import com.intellij.util.io.computeDetached
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.html.p
+import kotlinx.html.style
+import org.jetbrains.annotations.ApiStatus
+import org.languagetool.JLanguageTool
+import org.languagetool.Languages
+import org.languagetool.markup.AnnotatedTextBuilder
+import org.languagetool.rules.GenericUnpairedBracketsRule
+import org.languagetool.rules.RuleMatch
+import org.languagetool.rules.en.EnglishUnpairedQuotesRule
+import org.slf4j.LoggerFactory
+import java.util.Locale
+import java.util.function.Predicate
+import kotlin.coroutines.cancellation.CancellationException
+
+
+open class LanguageToolChecker : ExternalTextChecker() {
+  @ApiStatus.Internal
+  class TestChecker : LanguageToolChecker()
+
+  override fun getRules(locale: Locale): Collection<Rule> {
+    val language = Languages.getLanguageForLocale(locale)
+    val lang = Lang.entries.find { it.jLanguage == language } ?: return emptyList()
+    return grammarRules(LangTool.getTool(lang, TextStyleDomain.Other), lang)
+  }
+
+  @OptIn(DelicateCoroutinesApi::class)
+  override suspend fun checkExternally(context: ProofreadingContext): List<Problem> {
+    if (!context.shouldCheckGrammarStyle()) return emptyList()
+    val domain = context.text.getTextDomain()
+    return computeDetached(Dispatchers.Default) {
+      try {
+        computeWithClassLoader<List<Problem>, Throwable>(GraziePlugin.classLoader) {
+          collectLanguageToolProblems(context.text, context.language.toAvailableLang(), domain)
+        }
+      }
+      catch (exception: Throwable) {
+        if (ExceptionUtil.causedBy(exception, CancellationException::class.java)) {
+          throw ProcessCanceledException()
+        }
+        logger.warn("Got exception from LanguageTool", exception)
+        emptyList()
+      }
+    }
+  }
+
+  private fun collectLanguageToolProblems(extracted: TextContent, lang: Lang, domain: TextStyleDomain): List<Problem> {
+    val tool = LangTool.getTool(lang, domain)
+    val sentences = tool.sentenceTokenize(extracted.toString())
+    if (sentences.any { it.length > 1000 }) {
+      return emptyList()
+    }
+
+    val matches = runLT(tool, extracted.toString())
+    val disappearsAfterAddingQuotes by lazy { checkQuotedText(extracted, tool) }
+    val state = GrazieConfig.get()
+    return matches.asSequence()
+      .filter { LanguageToolRule(lang, it.rule, isEnabledByLanguageTool = true).isEnabledInState(state, domain) }
+      .filterNot { possiblyMarkupDependent(it) && disappearsAfterAddingQuotes.test(it) }
+      .map { Problem(it, lang, extracted, this is TestChecker) }
+      .filterNot { isGitCherryPickedFrom(it.match, extracted) }
+      .filterNot { isKnownLTBug(it.match, extracted) }
+      .filterNot {
+        val range = when {
+          it.fitsGroup(RuleGroup.CASING) -> includeSentenceBounds(extracted, it.patternRange)
+          else -> it.patternRange
+        }
+        extracted.hasUnknownFragmentsIn(range)
+      }
+      .toList()
+  }
+
+  private fun checkQuotedText(extracted: TextContent, tool: JLanguageTool): Predicate<RuleMatch> = when {
+    extracted.markupOffsets().isEmpty() -> Predicates.alwaysFalse()
+    else -> {
+      val quotedText = extracted.replaceMarkupWith('"')
+      val quotedMatches = runLT(tool, quotedText.toString())
+      Predicate { om ->
+        ProgressManager.checkCanceled()
+        quotedMatches.none { qm ->
+          qm.rule.id == om.rule.id &&
+          quotedText.offsetToOriginal(qm.fromPos) == om.fromPos &&
+          quotedText.offsetToOriginal(qm.toPos) == om.toPos
+        }
+      }
+    }
+  }
+
+  private fun possiblyMarkupDependent(match: RuleMatch): Boolean {
+    return match.message.lowercase().contains("capitalize") ||
+           match.rule.id == "POSSESSIVE_APOSTROPHE"
+  }
+
+  private fun runLT(tool: JLanguageTool, str: String): List<RuleMatch> =
+    tool.check(AnnotatedTextBuilder().addText(str).build(), true, JLanguageTool.ParagraphHandling.NORMAL,
+               null, JLanguageTool.Mode.ALL, JLanguageTool.Level.PICKY)
+
+  private fun includeSentenceBounds(text: CharSequence, range: TextRange): TextRange {
+    var start = range.startOffset
+    var end = range.endOffset
+
+    while (start > 0 && text[start - 1].isWhitespace()) start--
+    while (end < text.length && text[end].isWhitespace()) end++
+    return TextRange(start, end)
+  }
+
+  class Problem(val match: RuleMatch, lang: Lang, text: TextContent, private val testDescription: Boolean)
+    : TextProblem(LanguageToolRule(lang, match.rule), text, TextRange(match.fromPos, match.toPos)) {
+
+    override fun getShortMessage(): String =
+      match.shortMessage.trimToNull() ?: match.rule.description.trimToNull() ?: match.rule.category.name
+
+    @Suppress("HardCodedStringLiteral")
+    override fun getDescriptionTemplate(isOnTheFly: Boolean): String =
+      if (testDescription) match.rule.id
+      else {
+        when (match.rule.id) {
+          "EN_PLAIN_ENGLISH_REPLACE" -> "'there are' is a wordy or complex expression. In some cases, it might be preferable to remove it entirely."
+          else -> match.messageSanitized
+        }
+      }
+
+    override fun getTooltipTemplate(): String = toTooltipTemplate(this)
+
+    override fun getSuggestions(): List<Suggestion> = when (match.rule.id) {
+      "EN_PLAIN_ENGLISH_REPLACE" -> listOf(Suggestion.replace(highlightRanges[0], ""))
+      else -> match.suggestedReplacements.map { Suggestion.replace(highlightRanges[0], it) }
+    }
+
+    override fun getPatternRange() = TextRange(match.patternFromPos, match.patternToPos)
+
+    override fun fitsGroup(group: RuleGroup): Boolean {
+      val highlightRange = highlightRanges[0]
+      val ruleId = match.rule.id
+      if (RuleGroup.INCOMPLETE_SENTENCE in group.rules) {
+        if (highlightRange.startOffset == 0 &&
+            (ruleId == "SENTENCE_FRAGMENT" || ruleId == "SENT_START_CONJUNCTIVE_LINKING_ADVERB_COMMA" || ruleId == "AGREEMENT_SENT_START")) {
+          return true
+        }
+        if (ruleId == "MASS_AGREEMENT" && text.subSequence(highlightRange.endOffset, text.length).startsWith(".")) {
+          return true
+        }
+      }
+
+      if (RuleGroup.UNDECORATED_SENTENCE_SEPARATION in group.rules && ruleId in sentenceSeparationRules) {
+        return true
+      }
+
+      return super.fitsGroup(group) || group.rules.any { id -> isAbstractCategory(id) && ruleId == id }
+    }
+
+    private fun isAbstractCategory(id: String) =
+      id == RuleGroup.SENTENCE_END_PUNCTUATION || id == RuleGroup.SENTENCE_START_CASE || id == RuleGroup.UNLIKELY_OPENING_PUNCTUATION
+
+    override fun isStyleLike(): Boolean {
+      return LanguageToolRule.isStyleLike(match.rule)
+    }
+  }
+
+}
+
+private val logger = LoggerFactory.getLogger(LanguageToolChecker::class.java)
+private val interner = Interner.createWeakInterner<String>()
+private val sentenceSeparationRules = setOf("LC_AFTER_PERIOD", "PUNT_GEEN_HL", "KLEIN_NACH_PUNKT")
+private val openClosedRangeStart = Regex("[\\[(].+?(\\.\\.|:|,|;).+[])]")
+private val openClosedRangeEnd = Regex(".*" + openClosedRangeStart.pattern)
+private val quotedLiteralPattern = Regex("['\"]\\S+['\"]")
+private val suggestionQuotePattern = Regex("(?<![\"'])</?suggestion>(?![\"'])")
+private val nextWordPattern = Regex("\\s+(\\w+)")
+private val an_vs_a_exclusions = mapOf(
+  "an" to listOf(
+    Regex("xlsx", RegexOption.IGNORE_CASE),
+    Regex("mp3", RegexOption.IGNORE_CASE),
+    Regex("url", RegexOption.IGNORE_CASE)
+  ),
+  "a" to listOf(
+    Regex("uint.*", RegexOption.IGNORE_CASE),
+    Regex("SCORM", RegexOption.IGNORE_CASE)
+  )
+)
+
+internal fun grammarRules(tool: JLanguageTool, lang: Lang): List<LanguageToolRule> {
+  return tool.allRules.asSequence()
+    .filter { !it.isDictionaryBasedSpellingRule }
+    .groupBy { it.id }
+    .map { (_, rules) -> LanguageToolRule(lang, rules.first(), rules) }
+}
+
+/**
+ * Git adds "cherry picked from", which doesn't seem entirely grammatical,
+ * but zillions of tools depend on this message, and it's unlikely to be changed.
+ * So we ignore this pattern in commit messages and literals (which might be used for parsing git output)
+ */
+private fun isGitCherryPickedFrom(match: RuleMatch, text: TextContent): Boolean {
+  return match.rule.id == "EN_COMPOUNDS_CHERRY_PICKED" && match.fromPos > 0 && text.startsWith("(cherry picked from", match.fromPos - 1) &&
+         (text.domain == TextContent.TextDomain.LITERALS ||
+          text.domain == TextContent.TextDomain.PLAIN_TEXT && runReadAction { CommitMessage.isCommitMessage(text.containingFile) })
+}
+
+private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
+  if (match.rule is EnglishUnpairedQuotesRule) {
+    if (match.fromPos > 0 &&
+        (text.startsWith("\")", match.fromPos - 1) || text.subSequence(0, match.fromPos).contains("(\""))) {
+      return true //https://github.com/languagetool-org/languagetool/issues/5269
+    }
+    if (text.startsWith("'", match.fromPos) && text.subSequence(match.fromPos + 1, text.length).contains("'")) {
+      return true // https://github.com/languagetool-org/languagetool/issues/7249
+    }
+    if (match.fromPos > 1 && text.startsWith("'", match.fromPos) && text.subSequence(0, match.fromPos).count { it == '\'' } == 1) {
+      return true // https://github.com/languagetool-org/languagetool/issues/11379
+    }
+    if (text.substring(match.fromPos, match.toPos) == "\"" && text.subSequence(0, match.fromPos).contains("\"")) {
+      return true // e.g. commented raise ValueError(f"a very long text so that the vicinity of the error doesn't seem like code")
+    }
+  }
+
+  if (match.rule is GenericUnpairedBracketsRule) {
+    if (couldBeOpenClosedRange(text, match.fromPos)) {
+      return true
+    }
+
+    if (isPartOfQuotedLiteralText(match, text)) {
+      return true
+    }
+  }
+
+  if (match.rule.id == "ARTICLE_ADJECTIVE_OF" && text.substring(match.fromPos, match.toPos).equals("iterable", ignoreCase = true)) {
+    return true // https://github.com/languagetool-org/languagetool/issues/5270
+  }
+
+  if (match.rule.id.endsWith("DOUBLE_PUNCTUATION") &&
+      (isNumberRange(match.fromPos, match.toPos, text) || isPathPart(match.fromPos, match.toPos, text))) {
+    return true
+  }
+
+  if (match.rule.id == "A_RB_NN" &&
+      text.substring(match.fromPos, match.toPos).equals("finally block", ignoreCase = true) &&
+      (text.domain == TextContent.TextDomain.DOCUMENTATION || text.domain == TextContent.TextDomain.COMMENTS)) {
+    return true // https://github.com/languagetool-org/languagetool/issues/9511
+  }
+
+  if (match.rule.fullId == "UP_TO_DATE_HYPHEN[1]") {
+    return true // https://github.com/languagetool-org/languagetool/issues/8285
+  }
+
+  // https://github.com/languagetool-org/languagetool/issues/11598
+  if (match.rule.id == "EN_A_VS_AN") {
+    val article = text.substring(match.fromPos, match.toPos)
+    val nextWordMatch = nextWordPattern.find(text.subSequence(match.toPos, text.length))
+    val nextWord = nextWordMatch?.groupValues?.get(1) ?: return false
+    return an_vs_a_exclusions[article.lowercase()]!!.any { regex -> regex.matches(nextWord) }
+  }
+
+  return false
+}
+
+private val RuleMatch.messageSanitized
+  get(): String {
+    val replacement = if (suggestionQuotePattern.containsMatchIn(message)) "'" else ""
+    return message
+      .replace("<suggestion>", replacement)
+      .replace("</suggestion>", replacement)
+  }
+
+private fun isPartOfQuotedLiteralText(match: RuleMatch, text: TextContent): Boolean {
+  return quotedLiteralPattern.findAll(text.toString())
+    .map { TextRange(it.range.first, it.range.last) }
+    .any { it.intersectsStrict(match.fromPos, match.toPos) }
+}
+
+// https://github.com/languagetool-org/languagetool/issues/6566
+private fun couldBeOpenClosedRange(text: TextContent, index: Int): Boolean {
+  val unpaired = text[index]
+  return "([".contains(unpaired) && openClosedRangeStart.matchesAt(text, index) ||
+         ")]".contains(unpaired) && openClosedRangeEnd.matches(text.subSequence(0, index + 1))
+}
+
+// https://github.com/languagetool-org/languagetool/issues/5230
+private fun isNumberRange(startOffset: Int, endOffset: Int, text: TextContent): Boolean {
+  return startOffset > 0 && endOffset < text.length && text[startOffset - 1].isDigit() && text[endOffset].isDigit()
+}
+
+// https://github.com/languagetool-org/languagetool/issues/5883
+private fun isPathPart(startOffset: Int, endOffset: Int, text: TextContent): Boolean {
+  return text.subSequence(0, startOffset).endsWith('/') || text.subSequence(endOffset, text.length).startsWith('/')
+}
+
+@NlsSafe
+private fun toTooltipTemplate(problem: TextProblem): String {
+  val html = html {
+    p {
+      +problem.getDescriptionTemplate(true)
+    }
+
+    p {
+      style = "text-align: left; font-size: x-small; color: gray; padding-top: 10px; padding-bottom: 0px;"
+      +" "
+      +GrazieBundle.message("grazie.tooltip.powered-by-language-tool")
+    }
+  }
+  return interner.intern(html)
+}

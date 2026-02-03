@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.webp` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "webp_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "webp",
+  module_name = "intellij.webp",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":webp_resources"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//plugins/webp/lib:webp-libwebp",
+  ]
+)
+### auto-generated section `build intellij.webp` end

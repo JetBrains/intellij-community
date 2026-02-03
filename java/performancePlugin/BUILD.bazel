@@ -1,0 +1,40 @@
+### auto-generated section `build intellij.java.performancePlugin` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "performancePlugin_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "performancePlugin",
+  module_name = "intellij.java.performancePlugin",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":performancePlugin_resources"],
+  deps = [
+    "//plugins/performanceTesting/core:performanceTesting",
+    "//java/java-analysis-impl:analysis-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//java/compiler/openapi:java-compiler",
+    "@lib//:opentelemetry",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:opentelemetry-semconv",
+    "//java/idea-ui:ui",
+    "//platform/diagnostic/telemetry",
+    "//java/java-psi-api:psi",
+    "//java/java-impl:impl",
+    "//plugins/performanceTesting/vcs",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//java/openapi:java",
+  ]
+)
+### auto-generated section `build intellij.java.performancePlugin` end

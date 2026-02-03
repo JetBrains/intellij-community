@@ -1,0 +1,2 @@
+def g():
+    return None

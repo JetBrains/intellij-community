@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.grid.types.jar
+  modules:
+  - name: intellij.grid.types

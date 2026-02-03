@@ -1,0 +1,4 @@
+class X {
+  def foo(); th<caret>
+}
+-----

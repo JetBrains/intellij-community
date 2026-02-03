@@ -1,0 +1,46 @@
+### auto-generated section `build kotlin.base.fe10.analysis-api-platform` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_analysis-api-platform",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+    "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+    "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
+
+resourcegroup(
+  name = "analysis-api-platform_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "analysis-api-platform",
+  module_name = "kotlin.base.fe10.analysis-api-platform",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":analysis-api-platform_resources"],
+  kotlinc_opts = ":custom_analysis-api-platform",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "//platform/core-api:core",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
+    "//platform/core-impl",
+    "//plugins/kotlin/base/analysis-api-platform:kotlin-base-analysis-platform",
+    "//java/openapi:java",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/fe10/analysis",
+  ]
+)
+### auto-generated section `build kotlin.base.fe10.analysis-api-platform` end

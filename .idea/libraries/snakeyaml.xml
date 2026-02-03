@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="snakeyaml" type="repository">
+    <properties maven-id="org.yaml:snakeyaml:2.4">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/yaml/snakeyaml/2.4/snakeyaml-2.4.jar">
+          <sha256sum>ef779af5d29a9dde8cc70ce0341f5c6f7735e23edff9685ceaa9d35359b7bb7f</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/yaml/snakeyaml/2.4/snakeyaml-2.4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/yaml/snakeyaml/2.4/snakeyaml-2.4-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

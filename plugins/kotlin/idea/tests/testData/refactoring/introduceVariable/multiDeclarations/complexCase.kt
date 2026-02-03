@@ -1,0 +1,14 @@
+// INPLACE_VARIABLE_NAME: i, j, s, i1
+data class Point(val i: Int, val j: Int)
+operator fun Point.component2(): Double = 0.0
+operator fun Point.component3(): String = "Hello, world!"
+operator fun Point.component4(): Int = 42
+
+operator fun Point.component6(): Int = 0
+
+fun main(point: Point) {
+    val x = 0
+    val y = 0
+    val component3 = 0
+    <selection>point</selection>
+}

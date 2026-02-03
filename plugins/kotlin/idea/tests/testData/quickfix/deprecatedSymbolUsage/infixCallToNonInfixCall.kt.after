@@ -1,0 +1,12 @@
+// "Replace with 'newFn(other)'" "true"
+
+@Deprecated("Use newFn instead", ReplaceWith("newFn(other)"))
+infix fun Int.oldPlus(other: Int) = newFn(other)
+
+fun Int.newFn(other: Int) = this + other
+
+fun main() {
+    1.newFn(2)
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

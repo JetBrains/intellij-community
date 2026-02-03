@@ -1,0 +1,337 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.gradle.declarativeSync
+
+import com.android.tools.idea.gradle.dsl.api.dependencies.DependenciesModel
+import com.android.tools.idea.gradle.dsl.api.ext.GradlePropertyModel
+import com.android.tools.idea.gradle.dsl.api.java.JavaDeclarativeModel
+import com.android.tools.idea.gradle.dsl.model.BuildModelContext
+import com.android.tools.idea.gradle.dsl.model.ProjectBuildModelImpl
+import com.android.tools.idea.gradle.feature.flags.DeclarativeStudioSupport
+import com.intellij.gradle.declarativeSync.GradleLibrariesResolver.LibDepData
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.externalSystem.service.project.nameGenerator.ModuleNameGenerator
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.isFile
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ContentRootEntityBuilder
+import com.intellij.platform.workspace.jps.entities.DependencyScope
+import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.ModuleDependency
+import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
+import com.intellij.platform.workspace.jps.entities.ModuleTypeId
+import com.intellij.platform.workspace.jps.entities.SdkDependency
+import com.intellij.platform.workspace.jps.entities.SdkId
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
+import com.intellij.platform.workspace.jps.serialization.impl.toPath
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
+import org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeEntitySource
+import org.jetbrains.plugins.gradle.service.syncAction.virtualFileUrl
+import java.io.File
+
+private val LOG = logger<GradleDeclarativeSyncContributor>()
+
+/**
+ * Statically analyzes declarative Gradle build files and builds a model of the project structure if possible
+ */
+internal class GradleDeclarativeSyncContributor : GradleSyncContributor {
+
+  override val phase: GradleSyncPhase = GradleSyncPhase.DECLARATIVE_PHASE
+
+  override suspend fun createProjectModel(
+    context: ProjectResolverContext,
+    storage: ImmutableEntityStorage,
+  ): ImmutableEntityStorage {
+    if (!DeclarativeStudioSupport.isEnabled()) {
+      LOG.debug("Skipped Declarative Gradle static import: Disabled")
+      return storage
+    }
+    LOG.debug("Removing preview project root")
+    val builder = MutableEntityStorage.create()
+    LOG.debug("Starting Declarative Gradle static import")
+    configureProject(context, builder)
+    LOG.debug("Finished Declarative Gradle static import")
+    return builder.toSnapshot()
+  }
+
+  private fun configureProject(
+    context: ProjectResolverContext,
+    storage: MutableEntityStorage,
+  ) {
+    val project = context.project
+
+    val projectRootUrl = context.virtualFileUrl(context.projectPath)
+    val entitySource = GradleDeclarativeEntitySource(context.projectPath, phase)
+
+    // try finding the Gradle build file in the project root directory
+    val declarativeGradleBuildFile = File(context.projectPath, "build.gradle.dcl")
+
+    val virtualBuildFile: VirtualFile? =
+      if (declarativeGradleBuildFile.isFile)
+        VfsUtil.findFileByIoFile(declarativeGradleBuildFile, false)
+      else null
+
+    val androidContext = BuildModelContext.create(project, createBuildModelContext(context.projectPath))
+
+    val projectBuildModel = ProjectBuildModelImpl(project, virtualBuildFile, androidContext)
+    val projectName = projectRootUrl.fileName // the settings model does not contain the project name
+
+    val settingsModel = projectBuildModel.projectSettingsModel
+
+    val rootDependencyDependencies = GradleLibrariesResolver()
+      .resolveAndAddLibraries(project, storage, context, entitySource, projectBuildModel)
+
+    if (settingsModel == null) { // no settings file so assume simple project
+      LOG.debug("No settings file found in project root")
+      val projectBuildModel = projectBuildModel.projectBuildModel
+      if (projectBuildModel == null) {
+        LOG.debug("No build file found in project root")
+        addEmptyModule(storage, entitySource, projectName, projectRootUrl)
+        return // zero info so return early
+      }
+      LOG.debug("Found build file in project root, adding root project module and its content root")
+      configureModule(storage, entitySource, projectRootUrl, projectRootUrl, projectName, projectBuildModel.javaApplication(), rootDependencyDependencies)
+    }
+    else {
+      LOG.debug("Found settings file in project root, adding modules and their content roots")
+      // configure all modules found in settings file include statements including the root
+      for (modulePath in settingsModel.modulePaths()) {
+        LOG.debug("Found module path: $modulePath")
+        val buildModel = settingsModel.moduleModel(modulePath)
+        val moduleRootUrl = context.virtualFileUrl(settingsModel.moduleDirectory(modulePath) ?: continue)
+        val moduleName: String = resolveModuleName(modulePath, projectRootUrl)
+
+        // if the build file is missing in root, configure the project root module
+        if (buildModel == null || !buildModel.virtualFile.isFile) {
+          LOG.debug("No build file found for module path: '$modulePath', skipping module")
+          if (!modulePath.equals(":")) continue
+          addEmptyModule(storage, entitySource, moduleName, moduleRootUrl)
+          continue
+        }
+        LOG.debug("Found build file for module path: '$modulePath', configuring module")
+        configureModule(storage, entitySource, projectRootUrl, moduleRootUrl, moduleName, buildModel.javaApplication(), rootDependencyDependencies)
+      }
+    }
+  }
+
+  private fun addEmptyModule(
+    storage: MutableEntityStorage,
+    entitySource: EntitySource,
+    moduleName: String,
+    moduleRootUrl: VirtualFileUrl,
+  ) {
+    val rootModuleEntity = addModuleEntity(storage, entitySource, moduleName, listOf(
+      InheritedSdkDependency,
+      ModuleSourceDependency
+    ))
+    addContentRootEntity(storage, entitySource, rootModuleEntity, moduleRootUrl)
+  }
+
+  private fun configureModule(
+    storage: MutableEntityStorage,
+    entitySource: EntitySource,
+    projectRootUrl: VirtualFileUrl,
+    moduleRootUrl: VirtualFileUrl,
+    moduleName: String,
+    javaModel: JavaDeclarativeModel,
+    rootDependencyMapping: Map<LibDepData, List<LibDepData>>,
+  ) {
+    val java_sdk = "JavaSDK"
+    val src_main_path = "src/main"
+    val src_test_path = "src/test"
+
+    addEmptyModule(storage, entitySource, moduleName, moduleRootUrl)
+
+    // Main submodule configuration
+    val mainSdkDependencyItem: ModuleDependencyItem = if (javaModel.javaVersion().getValueType() == GradlePropertyModel.ValueType.NONE)
+      InheritedSdkDependency
+    else
+      SdkDependency(SdkId(javaModel.javaVersion().toString(), java_sdk))
+
+
+    val mainDependencies = buildDependenciesList(
+      mainSdkDependencyItem,
+      javaModel.dependencies(), rootDependencyMapping,
+      projectRootUrl
+    )
+
+    val mainModuleEntity = addModuleEntity(storage, entitySource, "$moduleName.main", mainDependencies)
+    val mainContentRootEntity = addContentRootEntity(
+      storage, entitySource, mainModuleEntity, moduleRootUrl.append(src_main_path)
+    )
+    addSourceRoots(
+      storage, entitySource, mainContentRootEntity,
+      listOf(Pair("java-source", "java"), Pair("java-resource", "resources")),
+      moduleRootUrl.append(src_main_path)
+    )
+
+    // Test submodule configuration
+    val testSdkDependencyItem: ModuleDependencyItem = if (javaModel.testing().javaVersion().getValueType() == GradlePropertyModel.ValueType.NONE) {
+      mainSdkDependencyItem
+    }
+    else {
+      SdkDependency(SdkId(javaModel.testing().javaVersion().toString(), java_sdk))
+    }
+
+    val mainModuleDependency = ModuleDependency(ModuleId(mainModuleEntity.name), false, DependencyScope.COMPILE, false)
+    val testDependencies = buildDependenciesList(
+      testSdkDependencyItem,
+      javaModel.testing().dependencies(), rootDependencyMapping,
+      projectRootUrl, additionalDependencies = listOf(mainModuleDependency).plus(mainDependencies)
+    )
+
+    val testModuleEntity = addModuleEntity(storage, entitySource, "$moduleName.test", testDependencies)
+    val testContentRootEntity = addContentRootEntity(
+      storage, entitySource, testModuleEntity, moduleRootUrl.append(src_test_path)
+    )
+    addSourceRoots(
+      storage, entitySource, testContentRootEntity,
+      listOf(Pair("java-test", "java"), Pair("java-test-resource", "resources")),
+      moduleRootUrl.append(src_test_path)
+    )
+  }
+
+  private fun addSourceRoots(
+    storage: MutableEntityStorage,
+    entitySource: EntitySource,
+    contentRootEntity: ContentRootEntityBuilder,
+    sourceRoots: List<Pair<String, String>>,
+    basePath: VirtualFileUrl,
+  ) {
+    sourceRoots.forEach { (type, path) ->
+      addSourceRootEntity(storage, entitySource, type, basePath.append(path), contentRootEntity)
+    }
+  }
+
+  private fun buildDependenciesList(
+    sdkDependency: ModuleDependencyItem,
+    dependenciesModel: DependenciesModel,
+    rootDependencyMapping: Map<LibDepData, List<LibDepData>>,
+    projectRootUrl: VirtualFileUrl,
+    additionalDependencies: List<ModuleDependencyItem> = emptyList(),
+  ): List<ModuleDependencyItem> {
+    return listOf(sdkDependency, ModuleSourceDependency)
+      .plus(additionalDependencies)
+      .plus(convertDependenciesModel(dependenciesModel, projectRootUrl))
+      .plus(
+        dependenciesModel.artifacts()
+          .map { LibDepData(it) }
+          .flatMap { rootDependencyMapping[it] ?: emptyList() }
+          .map { convertLibDependency(it) }
+      ).distinct()
+  }
+
+  private fun convertDependenciesModel(
+    dependenciesModel: DependenciesModel,
+    projectRootUrl: VirtualFileUrl,
+  ): List<ModuleDependencyItem> {
+    return (dependenciesModel.artifacts().map {
+      LibraryDependency(
+        LibraryId("Gradle: " + it.compactNotation(), LibraryTableId.ProjectLibraryTableId),
+        false, DependencyScope.COMPILE)
+    }).plus(dependenciesModel.modules().map {
+      ModuleDependency(
+        ModuleId(resolveModuleName(it.name(), projectRootUrl) + ".main"),
+        false, DependencyScope.COMPILE, false)
+    })
+  }
+
+  private fun convertLibDependency(
+    dependency: LibDepData,
+  ): ModuleDependencyItem {
+    return LibraryDependency(
+      LibraryId("Gradle: " + dependency.compactNotation(), LibraryTableId.ProjectLibraryTableId),
+      false, DependencyScope.COMPILE)
+  }
+
+  private fun resolveModuleName(
+    moduleName: String,
+    projectRootUrl: VirtualFileUrl,
+  ): String {
+    if (moduleName == ":") return projectRootUrl.fileName
+    return ModuleNameGenerator.generate(null, moduleName.removePrefix(":").replace(':', '.'), projectRootUrl.toPath(), ".").first()
+  }
+
+  private fun addModuleEntity(
+    storage: MutableEntityStorage,
+    entitySource: EntitySource,
+    moduleName: String,
+    dependencies: List<ModuleDependencyItem>,
+  ): ModuleEntityBuilder {
+    val moduleName = moduleName
+    val moduleEntity = ModuleEntity(
+      name = moduleName,
+      entitySource = entitySource,
+      dependencies = dependencies
+    ) {
+      type = ModuleTypeId("JAVA_MODULE")
+    }
+    storage addEntity moduleEntity
+    return moduleEntity
+  }
+
+  private fun addContentRootEntity(
+    storage: MutableEntityStorage,
+    entitySource: EntitySource,
+    moduleEntity: ModuleEntityBuilder,
+    url: VirtualFileUrl,
+  ): ContentRootEntityBuilder {
+    val contentRootEntity = ContentRootEntity(
+      url = url,
+      entitySource = entitySource,
+      excludedPatterns = emptyList()
+    ) {
+      module = moduleEntity
+    }
+    storage addEntity contentRootEntity
+    return contentRootEntity
+  }
+
+  private fun addSourceRootEntity(
+    storage: MutableEntityStorage,
+    entitySource: EntitySource,
+    type: String,
+    url: VirtualFileUrl,
+    contentRootEntity: ContentRootEntityBuilder,
+  ) {
+    storage addEntity SourceRootEntity(
+      url = url,
+      rootTypeId = SourceRootTypeId(type),
+      entitySource = entitySource
+    ) {
+      contentRoot = contentRootEntity
+    }
+  }
+
+  private fun createBuildModelContext(
+    projectPath: String,
+  ): BuildModelContext.ResolvedConfigurationFileLocationProvider {
+    return object : BuildModelContext.ResolvedConfigurationFileLocationProvider {
+      // Resolved location is unknown (no sync).
+      override fun getGradleBuildFile(module: Module) = null
+      override fun getGradleProjectRootPath(module: Module) = projectPath
+      override fun getGradleProjectRootPath(project: Project) = projectPath
+    }
+  }
+
+  private data class GradleDeclarativeEntitySource(
+    override val projectPath: String,
+    override val phase: GradleSyncPhase,
+  ) : GradleBridgeEntitySource
+}

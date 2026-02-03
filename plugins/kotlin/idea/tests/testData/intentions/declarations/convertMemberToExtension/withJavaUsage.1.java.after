@@ -1,0 +1,10 @@
+package b;
+
+import a.A;
+import a.WithJavaUsageKt;
+
+class B {
+    void m(A a) {
+        WithJavaUsageKt.f(a);
+    }
+}

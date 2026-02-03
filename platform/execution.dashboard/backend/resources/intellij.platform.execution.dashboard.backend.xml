@@ -1,0 +1,34 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.execution.dashboard"/>
+    <module name="intellij.platform.execution.serviceView"/>
+    <module name="intellij.platform.execution.serviceView.backend"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint name="runDashboardChecker" interface="com.intellij.execution.dashboard.RunDashboardChecker" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="true"
+                 restartRequired="true"
+                 description="Enable displaying backend Run toolwindow content in services view via LUX"
+                 key="services.view.split.run.luxing.enabled"/>
+    <runDashboardManagerProxy implementation="com.intellij.platform.execution.dashboard.backend.BackendRunDashboardManagerProxy" order="last"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.execution.dashboard.backend.BackendRunDashboardApiProviderApiProvider"/>
+    <serviceViewLocatableSearcher implementation="com.intellij.platform.execution.dashboard.backend.RunDashboardLocatableSearcher"/>
+    <backgroundPostStartupActivity implementation="com.intellij.platform.execution.dashboard.backend.RunDashboardCheckerActivity"/>
+    <backgroundPostStartupActivity implementation="com.intellij.platform.execution.dashboard.backend.BackendDashboardListenerInstaller"/>
+    <notificationGroup id="Services Tool Window" displayType="BALLOON" isLogByDefault="true" bundle="messages.ExecutionBundle"
+                       key="notification.group.services"
+                       notificationIds="run.dashboard.multiple.run.configurations"/>
+    <backendServiceViewSelectedItemProvider implementation="com.intellij.platform.execution.dashboard.backend.BackendRunDashboardSelectedItemProvider"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.platform.execution.dashboard.backend.RunDashboardConfigurationsListener"
+              topic="com.intellij.execution.RunManagerListener"/>
+  </projectListeners>
+</idea-plugin>

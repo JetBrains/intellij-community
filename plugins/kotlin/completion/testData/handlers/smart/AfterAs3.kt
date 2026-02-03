@@ -1,0 +1,9 @@
+fun foo(l: List<String>){}
+fun foo(l: List<String>, p: Int){}
+
+fun bar(o: Any) {
+    foo(o as <caret>)
+}
+
+// AUTOCOMPLETE_SETTING: true
+// IGNORE_K2

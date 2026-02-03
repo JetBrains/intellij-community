@@ -1,0 +1,152 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.psi.impl.source.tree.java;
+
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.TokenType;
+import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
+
+public class MethodElement extends CompositeElement implements Constants {
+  private static final Logger LOG = Logger.getInstance(MethodElement.class);
+
+  public MethodElement() {
+    super(METHOD);
+  }
+
+  protected MethodElement(IElementType type) {
+    super(type);
+  }
+
+  @Override
+  public int getTextOffset() {
+    ASTNode name = findChildByType(IDENTIFIER);
+    return name != null ? name.getStartOffset() : this.getStartOffset();
+  }
+
+  @Override
+  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
+    if (first == last && first.getElementType() == JavaElementType.CODE_BLOCK) {
+      ASTNode semicolon = TreeUtil.findChildBackward(this, SEMICOLON);
+      if (semicolon != null) {
+        deleteChildInternal(semicolon);
+      }
+    }
+    return super.addInternal(first, last, anchor, before);
+  }
+
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    if (child.getElementType() == CODE_BLOCK) {
+      final ASTNode prevWS = TreeUtil.prevLeaf(child);
+      if (prevWS != null && prevWS.getElementType() == TokenType.WHITE_SPACE) {
+        removeChild(prevWS);
+      }
+      super.deleteChildInternal(child);
+      final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
+      LeafElement semicolon = Factory.createSingleLeafElement(SEMICOLON, ";", 0, 1, treeCharTab, getManager());
+      addInternal(semicolon, semicolon, null, Boolean.TRUE);
+    }
+    else if (child.getElementType() == PARAMETER_LIST) {
+      throw new IllegalArgumentException("Deleting parameter list is prohibited");
+    }
+    else {
+      super.deleteChildInternal(child);
+    }
+  }
+
+  @Override
+  public ASTNode findChildByRole(int role) {
+    LOG.assertTrue(ChildRole.isUnique(role));
+    switch (role) {
+      case ChildRole.DOC_COMMENT:
+        return PsiImplUtil.findDocComment(this);
+
+      case ChildRole.MODIFIER_LIST:
+        return findChildByType(MODIFIER_LIST);
+
+      case ChildRole.TYPE_PARAMETER_LIST:
+        return findChildByType(TYPE_PARAMETER_LIST);
+
+      case ChildRole.NAME:
+        return findChildByType(IDENTIFIER);
+
+      case ChildRole.TYPE:
+        return findChildByType(TYPE);
+
+      case ChildRole.METHOD_BODY:
+        return findChildByType(CODE_BLOCK);
+
+      case ChildRole.PARAMETER_LIST:
+        return findChildByType(PARAMETER_LIST);
+
+      case ChildRole.THROWS_LIST:
+        return findChildByType(THROWS_LIST);
+
+      case ChildRole.CLOSING_SEMICOLON:
+        return TreeUtil.findChildBackward(this, SEMICOLON);
+
+      case ChildRole.DEFAULT_KEYWORD:
+        return findChildByType(DEFAULT_KEYWORD);
+
+      default:
+        return null;
+    }
+  }
+
+  @Override
+  public int getChildRole(@NotNull ASTNode child) {
+    LOG.assertTrue(child.getTreeParent() == this);
+    IElementType i = child.getElementType();
+    if (DOC_COMMENT_TOKENS.contains(i)) {
+      return getChildRole(child, ChildRole.DOC_COMMENT);
+    }
+    else if (i == MODIFIER_LIST) {
+      return ChildRole.MODIFIER_LIST;
+    }
+    else if (i == TYPE_PARAMETER_LIST) {
+      return ChildRole.TYPE_PARAMETER_LIST;
+    }
+    else if (i == CODE_BLOCK) {
+      return ChildRole.METHOD_BODY;
+    }
+    else if (i == PARAMETER_LIST) {
+      return ChildRole.PARAMETER_LIST;
+    }
+    else if (i == THROWS_LIST) {
+      return ChildRole.THROWS_LIST;
+    }
+    else if (i == TYPE) {
+      return getChildRole(child, ChildRole.TYPE);
+    }
+    else if (i == IDENTIFIER) {
+      return getChildRole(child, ChildRole.NAME);
+    }
+    else if (i == SEMICOLON) {
+      return getChildRole(child, ChildRole.CLOSING_SEMICOLON);
+    }
+    else if (i == DEFAULT_KEYWORD) {
+      return ChildRole.DEFAULT_KEYWORD;
+    }
+    else {
+      return ChildRoleBase.NONE;
+    }
+  }
+
+  @Override
+  protected boolean isVisibilitySupported() {
+    return true;
+  }
+}

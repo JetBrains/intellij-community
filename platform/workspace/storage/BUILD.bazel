@@ -1,0 +1,44 @@
+### auto-generated section `build intellij.platform.workspace.storage` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_storage",
+  jvm_target = "11",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi",
+    "com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi",
+  ],
+  x_explicit_api_mode = "strict"
+)
+
+resourcegroup(
+  name = "storage_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "storage",
+  module_name = "intellij.platform.workspace.storage",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":storage_resources"],
+  kotlinc_opts = ":custom_storage",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/guava",
+    "//libraries/kotlin/reflect",
+    "//platform/util",
+    "//libraries/fastutil",
+    "//libraries/caffeine",
+    "//libraries/kryo5",
+    "//platform/diagnostic/telemetry",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/diagnostic",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+  ]
+)
+### auto-generated section `build intellij.platform.workspace.storage` end

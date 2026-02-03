@@ -1,0 +1,45 @@
+root = true
+
+[*]
+end_of_line = lf
+indent_style = space
+indent_size = 2
+ij_continuation_indent_size = 2
+max_line_length = 140
+tab_width = 2
+
+ij_any_else_on_new_line = true
+ij_any_catch_on_new_line = true
+ij_any_finally_on_new_line = true
+ij_any_block_comment_at_first_column = false
+ij_any_line_comment_at_first_column = false
+ij_javascript_force_semicolon_style = true
+ij_javascript_use_semicolon_after_statement = false
+
+;======Kotlin=====
+[{*.kt,*.kts}]
+ij_kotlin_code_style_defaults = KOTLIN_OFFICIAL
+
+ij_kotlin_else_on_new_line = true
+ij_kotlin_while_on_new_line = true
+ij_kotlin_catch_on_new_line = true
+ij_kotlin_finally_on_new_line = true
+ij_kotlin_line_break_after_multiline_when_entry = false
+
+; should break, but it is not configurable for now
+ij_kotlin_align_multiline_binary_operation = true
+
+ij_kotlin_align_multiline_parameters_in_calls = true
+ij_kotlin_align_multiline_extends_list = true
+
+; so that a comma is appended to the multiline function parameter list
+ij_kotlin_allow_trailing_comma = true
+
+; the official styleguide forces newlines and we don't want to reformat the whole repo
+ij_kotlin_call_parameters_right_paren_on_new_line = unset
+ij_kotlin_call_parameters_new_line_after_left_paren = unset
+ij_kotlin_if_rparen_on_new_line = unset
+
+; IJI-3282
+ij_kotlin_name_count_to_use_star_import = 9999
+;=====Kotlin=====

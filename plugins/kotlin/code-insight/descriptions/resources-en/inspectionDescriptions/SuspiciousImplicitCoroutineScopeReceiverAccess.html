@@ -1,0 +1,67 @@
+<html>
+<body>
+<p>Reports potentially problematic implicit <code>CoroutineScope</code> receiver access from within a suspending context.</p>
+
+<p>
+    When a suspend function or lambda captures an implicit <code>CoroutineScope</code> receiver from the outer context, it might lead to
+    unexpected behavior.
+</p>
+<p>
+    Such code can be prone to violating the rules of Structured Concurrency, 
+    even though it might look deceptively well-structured.
+</p>
+<p>
+    This can lead to incorrect behaviors when handling errors, 
+    cancelling computations, or managing lifetimes.
+</p>
+
+<p><b>A typical example:</b></p>
+
+<pre><code>
+fun processFlow(flow: Flow&lt;String&gt;) {
+  runBlocking {
+    flow.collectLatest {
+      
+      // launched on this@runBlocking CoroutineScope
+      launch { 
+        longProcessing(value)
+      }
+  
+    }
+  }
+}
+  
+suspend fun longProcessing(value: String) { ... }
+</code></pre>
+
+<p>
+    In the example above, the <code>launch { ... }</code> call launches coroutines in the implicit
+    <code>CoroutineScope</code> from the outer <code>runBlocking</code> call.
+</p>
+<p>
+    Because of this, <code>collectLatest</code> would not be able
+    to cancel those coroutines when it needs to.
+</p>
+<p>
+    This inspection will detect that <code>launch</code> is called on a
+    <code>CoroutineScope</code> which is captured from the outside of the current
+    suspending lambda (i.e. <code>collectLatest</code>'s body).
+</p>
+<p>
+    For more information about this particular problem, see <a href="https://github.com/Kotlin/kotlinx.coroutines/issues/3533">this GitHub Issue</a>.
+</p>
+
+<p><b>Possible solutions:</b></p>
+
+<p>To fix this issue, you can:</p>
+<ul>
+    <li>Use <code>coroutineScope { ... }</code> builder to create a child scope that is tied to the suspend function's lifecycle</li>
+    <li>Rearrange the code so that the implicit <code>CoroutineScope</code> comes from the current syntactical context</li>
+</ul>
+<p>
+    In case you are sure that the code is correct, you can explicitly specify the receiver
+    to make your intention clear. In the example above, that would be <code>this@runBlocking.launch { ... }</code>.
+    Note, however, that in this case the semantics of the code <b>won't change</b>.
+</p>
+</body>
+</html>

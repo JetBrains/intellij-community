@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.platform.rpc` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "rpc_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "rpc",
+  module_name = "intellij.platform.rpc",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":rpc_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//fleet/util/logging/api",
+    "//fleet/rpc",
+    "//platform/util",
+    "//platform/core-api:core",
+  ],
+  exports = [
+    "@lib//:kotlin-stdlib",
+    "//fleet/rpc",
+  ]
+)
+### auto-generated section `build intellij.platform.rpc` end

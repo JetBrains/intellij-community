@@ -1,0 +1,16 @@
+// WITH_STDLIB
+class A {
+    fun foo(string: String, n: Int): Boolean {
+        return string.length - n/2 > 1
+    }
+
+    fun test() {
+        foo("1", 2)
+    }
+}
+
+fun test() {
+    with(A()) {
+        foo("1", 2)
+    }
+}

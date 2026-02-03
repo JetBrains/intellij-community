@@ -1,0 +1,2 @@
+KtNamedFunction: f
+KtNamedFunction: f

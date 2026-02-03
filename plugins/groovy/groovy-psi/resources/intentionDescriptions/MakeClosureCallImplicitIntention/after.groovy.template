@@ -1,0 +1,2 @@
+def Closure myClosure
+<spot>myClosure(arg1, arg2)</spot>

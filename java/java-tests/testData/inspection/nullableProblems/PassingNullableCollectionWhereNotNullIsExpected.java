@@ -1,0 +1,46 @@
+import typeUse.*;
+import java.util.*;
+import java.util.function.*;
+
+class JC {
+
+  void testList() {
+    List<@Nullable String> nullableList = new ArrayList<>();
+    print(<warning descr="Assigning a class with nullable type arguments when a class with not-null type arguments is expected">nullableList</warning>);
+
+    List<@NotNull String> <warning descr="Assigning a class with nullable type arguments when a class with not-null type arguments is expected">list2</warning> = nullableList;
+
+    List<@NotNull String> list3;
+    list2 <warning descr="Assigning a class with nullable type arguments when a class with not-null type arguments is expected">=</warning> nullableList;
+
+    List<? super @NotNull String> list4 = nullableList;
+    List<? extends @NotNull String> <warning descr="Assigning a class with nullable type arguments when a class with not-null type arguments is expected">list5</warning> = nullableList;
+  }
+  
+  private static void print(List<@NotNull String> list) {
+    for (String s : list) {
+      System.out.println(s.length());
+    }
+  }
+
+  List<@Nullable String> getNullableList() {return new ArrayList<>();}
+
+  List<@NotNull String> testReturnValue() {
+    List<@Nullable String> list = new ArrayList<>();
+
+    Supplier<List<@NotNull String>> supplier = () -> <warning descr="Assigning a class with nullable type arguments when a class with not-null type arguments is expected">list</warning>;
+    Supplier<List<@NotNull String>> supplierRef = <warning descr="Assigning a class with nullable type arguments when a class with not-null type arguments is expected">this::getNullableList</warning>;
+
+    Supplier<List<@NotNull String>> supplier3 = () -> { return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected">list</warning>;};
+
+    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected">list</warning>;
+  }
+  
+}
+
+class Test<T extends @Nullable CharSequence> {
+  public void test() {
+    List<T> nullableList = new ArrayList<>();
+    List<? extends @NotNull CharSequence> <warning descr="Assigning a class with nullable type arguments when a class with not-null type arguments is expected">list2</warning> = nullableList;
+  }
+}

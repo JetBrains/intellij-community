@@ -1,0 +1,6 @@
+$ ('$')
+{ ('{')
+word ('var')
+param_separator ('##')
+word ('abc')
+} ('}')

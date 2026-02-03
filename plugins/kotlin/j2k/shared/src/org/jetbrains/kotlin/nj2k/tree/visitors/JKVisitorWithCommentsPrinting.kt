@@ -1,0 +1,1132 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.nj2k.tree.visitors
+
+import org.jetbrains.kotlin.nj2k.tree.JKAnnotation
+import org.jetbrains.kotlin.nj2k.tree.JKAnnotationList
+import org.jetbrains.kotlin.nj2k.tree.JKAnnotationNameParameter
+import org.jetbrains.kotlin.nj2k.tree.JKAnnotationParameter
+import org.jetbrains.kotlin.nj2k.tree.JKAnnotationParameterImpl
+import org.jetbrains.kotlin.nj2k.tree.JKArgument
+import org.jetbrains.kotlin.nj2k.tree.JKArgumentImpl
+import org.jetbrains.kotlin.nj2k.tree.JKArgumentList
+import org.jetbrains.kotlin.nj2k.tree.JKArrayAccessExpression
+import org.jetbrains.kotlin.nj2k.tree.JKAssignmentChainAlsoLink
+import org.jetbrains.kotlin.nj2k.tree.JKAssignmentChainLetLink
+import org.jetbrains.kotlin.nj2k.tree.JKBinaryExpression
+import org.jetbrains.kotlin.nj2k.tree.JKBlock
+import org.jetbrains.kotlin.nj2k.tree.JKBlockImpl
+import org.jetbrains.kotlin.nj2k.tree.JKBlockStatement
+import org.jetbrains.kotlin.nj2k.tree.JKBlockStatementWithoutBrackets
+import org.jetbrains.kotlin.nj2k.tree.JKBreakStatement
+import org.jetbrains.kotlin.nj2k.tree.JKCallExpression
+import org.jetbrains.kotlin.nj2k.tree.JKCallExpressionImpl
+import org.jetbrains.kotlin.nj2k.tree.JKClass
+import org.jetbrains.kotlin.nj2k.tree.JKClassAccessExpression
+import org.jetbrains.kotlin.nj2k.tree.JKClassBody
+import org.jetbrains.kotlin.nj2k.tree.JKClassLiteralExpression
+import org.jetbrains.kotlin.nj2k.tree.JKConstructor
+import org.jetbrains.kotlin.nj2k.tree.JKConstructorImpl
+import org.jetbrains.kotlin.nj2k.tree.JKContinueStatement
+import org.jetbrains.kotlin.nj2k.tree.JKDeclaration
+import org.jetbrains.kotlin.nj2k.tree.JKDeclarationStatement
+import org.jetbrains.kotlin.nj2k.tree.JKDelegationConstructorCall
+import org.jetbrains.kotlin.nj2k.tree.JKDoWhileStatement
+import org.jetbrains.kotlin.nj2k.tree.JKElement
+import org.jetbrains.kotlin.nj2k.tree.JKEmptyStatement
+import org.jetbrains.kotlin.nj2k.tree.JKEnumConstant
+import org.jetbrains.kotlin.nj2k.tree.JKExpression
+import org.jetbrains.kotlin.nj2k.tree.JKExpressionStatement
+import org.jetbrains.kotlin.nj2k.tree.JKField
+import org.jetbrains.kotlin.nj2k.tree.JKFieldAccessExpression
+import org.jetbrains.kotlin.nj2k.tree.JKFile
+import org.jetbrains.kotlin.nj2k.tree.JKForInStatement
+import org.jetbrains.kotlin.nj2k.tree.JKForLoopParameter
+import org.jetbrains.kotlin.nj2k.tree.JKFormattingOwner
+import org.jetbrains.kotlin.nj2k.tree.JKIfElseExpression
+import org.jetbrains.kotlin.nj2k.tree.JKIfElseStatement
+import org.jetbrains.kotlin.nj2k.tree.JKImportList
+import org.jetbrains.kotlin.nj2k.tree.JKImportStatement
+import org.jetbrains.kotlin.nj2k.tree.JKInheritanceInfo
+import org.jetbrains.kotlin.nj2k.tree.JKIsExpression
+import org.jetbrains.kotlin.nj2k.tree.JKJavaAnnotationMethod
+import org.jetbrains.kotlin.nj2k.tree.JKJavaAssertStatement
+import org.jetbrains.kotlin.nj2k.tree.JKJavaAssignmentExpression
+import org.jetbrains.kotlin.nj2k.tree.JKJavaDefaultSwitchCase
+import org.jetbrains.kotlin.nj2k.tree.JKJavaForLoopStatement
+import org.jetbrains.kotlin.nj2k.tree.JKJavaLabelSwitchCase
+import org.jetbrains.kotlin.nj2k.tree.JKJavaNewArray
+import org.jetbrains.kotlin.nj2k.tree.JKJavaNewEmptyArray
+import org.jetbrains.kotlin.nj2k.tree.JKJavaStaticInitDeclaration
+import org.jetbrains.kotlin.nj2k.tree.JKJavaSwitchCase
+import org.jetbrains.kotlin.nj2k.tree.JKJavaSwitchStatement
+import org.jetbrains.kotlin.nj2k.tree.JKJavaSynchronizedStatement
+import org.jetbrains.kotlin.nj2k.tree.JKJavaTryCatchSection
+import org.jetbrains.kotlin.nj2k.tree.JKJavaTryStatement
+import org.jetbrains.kotlin.nj2k.tree.JKKtAnnotationArrayInitializerExpression
+import org.jetbrains.kotlin.nj2k.tree.JKKtAssignmentChainLink
+import org.jetbrains.kotlin.nj2k.tree.JKKtAssignmentStatement
+import org.jetbrains.kotlin.nj2k.tree.JKKtConvertedFromForLoopSyntheticWhileStatement
+import org.jetbrains.kotlin.nj2k.tree.JKKtDestructuringDeclaration
+import org.jetbrains.kotlin.nj2k.tree.JKKtDestructuringDeclarationEntry
+import org.jetbrains.kotlin.nj2k.tree.JKKtElseWhenLabel
+import org.jetbrains.kotlin.nj2k.tree.JKKtInitDeclaration
+import org.jetbrains.kotlin.nj2k.tree.JKKtItExpression
+import org.jetbrains.kotlin.nj2k.tree.JKKtPrimaryConstructor
+import org.jetbrains.kotlin.nj2k.tree.JKKtTryCatchSection
+import org.jetbrains.kotlin.nj2k.tree.JKKtTryExpression
+import org.jetbrains.kotlin.nj2k.tree.JKKtValueWhenLabel
+import org.jetbrains.kotlin.nj2k.tree.JKKtWhenBlock
+import org.jetbrains.kotlin.nj2k.tree.JKKtWhenCase
+import org.jetbrains.kotlin.nj2k.tree.JKKtWhenExpression
+import org.jetbrains.kotlin.nj2k.tree.JKKtWhenLabel
+import org.jetbrains.kotlin.nj2k.tree.JKKtWhenStatement
+import org.jetbrains.kotlin.nj2k.tree.JKLabel
+import org.jetbrains.kotlin.nj2k.tree.JKLabelEmpty
+import org.jetbrains.kotlin.nj2k.tree.JKLabelText
+import org.jetbrains.kotlin.nj2k.tree.JKLabeledExpression
+import org.jetbrains.kotlin.nj2k.tree.JKLambdaExpression
+import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression
+import org.jetbrains.kotlin.nj2k.tree.JKLocalVariable
+import org.jetbrains.kotlin.nj2k.tree.JKLoopStatement
+import org.jetbrains.kotlin.nj2k.tree.JKMethod
+import org.jetbrains.kotlin.nj2k.tree.JKMethodAccessExpression
+import org.jetbrains.kotlin.nj2k.tree.JKMethodImpl
+import org.jetbrains.kotlin.nj2k.tree.JKMethodReferenceExpression
+import org.jetbrains.kotlin.nj2k.tree.JKModalityModifierElement
+import org.jetbrains.kotlin.nj2k.tree.JKModifierElement
+import org.jetbrains.kotlin.nj2k.tree.JKMutabilityModifierElement
+import org.jetbrains.kotlin.nj2k.tree.JKNameIdentifier
+import org.jetbrains.kotlin.nj2k.tree.JKNamedArgument
+import org.jetbrains.kotlin.nj2k.tree.JKNewExpression
+import org.jetbrains.kotlin.nj2k.tree.JKOperatorExpression
+import org.jetbrains.kotlin.nj2k.tree.JKOtherModifierElement
+import org.jetbrains.kotlin.nj2k.tree.JKPackageAccessExpression
+import org.jetbrains.kotlin.nj2k.tree.JKPackageDeclaration
+import org.jetbrains.kotlin.nj2k.tree.JKParameter
+import org.jetbrains.kotlin.nj2k.tree.JKParenthesizedExpression
+import org.jetbrains.kotlin.nj2k.tree.JKPostfixExpression
+import org.jetbrains.kotlin.nj2k.tree.JKPrefixExpression
+import org.jetbrains.kotlin.nj2k.tree.JKQualifiedExpression
+import org.jetbrains.kotlin.nj2k.tree.JKReturnStatement
+import org.jetbrains.kotlin.nj2k.tree.JKStatement
+import org.jetbrains.kotlin.nj2k.tree.JKStubExpression
+import org.jetbrains.kotlin.nj2k.tree.JKSuperExpression
+import org.jetbrains.kotlin.nj2k.tree.JKThisExpression
+import org.jetbrains.kotlin.nj2k.tree.JKThrowExpression
+import org.jetbrains.kotlin.nj2k.tree.JKTreeRoot
+import org.jetbrains.kotlin.nj2k.tree.JKTypeArgumentList
+import org.jetbrains.kotlin.nj2k.tree.JKTypeCastExpression
+import org.jetbrains.kotlin.nj2k.tree.JKTypeElement
+import org.jetbrains.kotlin.nj2k.tree.JKTypeParameter
+import org.jetbrains.kotlin.nj2k.tree.JKTypeParameterList
+import org.jetbrains.kotlin.nj2k.tree.JKTypeQualifierExpression
+import org.jetbrains.kotlin.nj2k.tree.JKUnaryExpression
+import org.jetbrains.kotlin.nj2k.tree.JKVariable
+import org.jetbrains.kotlin.nj2k.tree.JKVisibilityModifierElement
+import org.jetbrains.kotlin.nj2k.tree.JKWhileStatement
+
+abstract class JKVisitorWithCommentsPrinting : JKVisitor() {
+    abstract fun printLeftNonCodeElements(element: JKFormattingOwner)
+    abstract fun printRightNonCodeElements(element: JKFormattingOwner)
+
+    override fun visitTreeElement(treeElement: JKElement) {
+        if (treeElement is JKFormattingOwner) {
+            printLeftNonCodeElements(treeElement)
+        }
+        visitTreeElementRaw(treeElement)
+        if (treeElement is JKFormattingOwner) {
+            printRightNonCodeElements(treeElement)
+        }
+    }
+
+    abstract fun visitTreeElementRaw(treeElement: JKElement)
+
+    override fun visitDeclaration(declaration: JKDeclaration) {
+        printLeftNonCodeElements(declaration)
+        visitDeclarationRaw(declaration)
+        printRightNonCodeElements(declaration)
+    }
+
+    open fun visitDeclarationRaw(declaration: JKDeclaration) = visitTreeElementRaw(declaration)
+
+    override fun visitClass(klass: JKClass) {
+        printLeftNonCodeElements(klass)
+        visitClassRaw(klass)
+        printRightNonCodeElements(klass)
+    }
+
+    open fun visitClassRaw(klass: JKClass) = visitDeclarationRaw(klass)
+
+    override fun visitVariable(variable: JKVariable) {
+        printLeftNonCodeElements(variable)
+        visitVariableRaw(variable)
+        printRightNonCodeElements(variable)
+    }
+
+    open fun visitVariableRaw(variable: JKVariable) = visitDeclarationRaw(variable)
+
+    override fun visitLocalVariable(localVariable: JKLocalVariable) {
+        printLeftNonCodeElements(localVariable)
+        visitLocalVariableRaw(localVariable)
+        printRightNonCodeElements(localVariable)
+    }
+
+    open fun visitLocalVariableRaw(localVariable: JKLocalVariable) = visitVariableRaw(localVariable)
+
+    override fun visitForLoopParameter(forLoopParameter: JKForLoopParameter) {
+        printLeftNonCodeElements(forLoopParameter)
+        visitForLoopParameterRaw(forLoopParameter)
+        printRightNonCodeElements(forLoopParameter)
+    }
+
+    open fun visitForLoopParameterRaw(forLoopParameter: JKForLoopParameter) = visitParameterRaw(forLoopParameter)
+
+    override fun visitDestructuringDeclaration(destructuringDeclaration: JKKtDestructuringDeclaration) {
+        printLeftNonCodeElements(destructuringDeclaration)
+        visitDestructuringDeclarationRaw(destructuringDeclaration)
+        printRightNonCodeElements(destructuringDeclaration)
+    }
+
+    open fun visitDestructuringDeclarationRaw(destructuringDeclaration: JKKtDestructuringDeclaration) =
+        visitVariableRaw(destructuringDeclaration)
+
+    override fun visitDestructuringDeclarationEntry(destructuringDeclarationEntry: JKKtDestructuringDeclarationEntry) {
+        printLeftNonCodeElements(destructuringDeclarationEntry)
+        visitDestructuringDeclarationEntryRaw(destructuringDeclarationEntry)
+        printRightNonCodeElements(destructuringDeclarationEntry)
+    }
+
+    open fun visitDestructuringDeclarationEntryRaw(destructuringDeclarationEntry: JKKtDestructuringDeclarationEntry) =
+        visitVariableRaw(destructuringDeclarationEntry)
+
+    override fun visitParameter(parameter: JKParameter) {
+        printLeftNonCodeElements(parameter)
+        visitParameterRaw(parameter)
+        printRightNonCodeElements(parameter)
+    }
+
+    open fun visitParameterRaw(parameter: JKParameter) = visitVariableRaw(parameter)
+
+    override fun visitEnumConstant(enumConstant: JKEnumConstant) {
+        printLeftNonCodeElements(enumConstant)
+        visitEnumConstantRaw(enumConstant)
+        printRightNonCodeElements(enumConstant)
+    }
+
+    open fun visitEnumConstantRaw(enumConstant: JKEnumConstant) = visitVariableRaw(enumConstant)
+
+    override fun visitTypeParameter(typeParameter: JKTypeParameter) {
+        printLeftNonCodeElements(typeParameter)
+        visitTypeParameterRaw(typeParameter)
+        printRightNonCodeElements(typeParameter)
+    }
+
+    open fun visitTypeParameterRaw(typeParameter: JKTypeParameter) = visitDeclarationRaw(typeParameter)
+
+    override fun visitMethod(method: JKMethod) {
+        printLeftNonCodeElements(method)
+        visitMethodRaw(method)
+        printRightNonCodeElements(method)
+    }
+
+    open fun visitMethodRaw(method: JKMethod) = visitDeclarationRaw(method)
+
+    override fun visitMethodImpl(methodImpl: JKMethodImpl) {
+        printLeftNonCodeElements(methodImpl)
+        visitMethodImplRaw(methodImpl)
+        printRightNonCodeElements(methodImpl)
+    }
+
+    open fun visitMethodImplRaw(methodImpl: JKMethodImpl) = visitMethodRaw(methodImpl)
+
+    override fun visitConstructor(constructor: JKConstructor) {
+        printLeftNonCodeElements(constructor)
+        visitConstructorRaw(constructor)
+        printRightNonCodeElements(constructor)
+    }
+
+    open fun visitConstructorRaw(constructor: JKConstructor) = visitMethodRaw(constructor)
+
+    override fun visitConstructorImpl(constructorImpl: JKConstructorImpl) {
+        printLeftNonCodeElements(constructorImpl)
+        visitConstructorImplRaw(constructorImpl)
+        printRightNonCodeElements(constructorImpl)
+    }
+
+    open fun visitConstructorImplRaw(constructorImpl: JKConstructorImpl) = visitConstructorRaw(constructorImpl)
+
+    override fun visitKtPrimaryConstructor(ktPrimaryConstructor: JKKtPrimaryConstructor) {
+        printLeftNonCodeElements(ktPrimaryConstructor)
+        visitKtPrimaryConstructorRaw(ktPrimaryConstructor)
+        printRightNonCodeElements(ktPrimaryConstructor)
+    }
+
+    open fun visitKtPrimaryConstructorRaw(ktPrimaryConstructor: JKKtPrimaryConstructor) = visitConstructorRaw(ktPrimaryConstructor)
+
+    override fun visitField(field: JKField) {
+        printLeftNonCodeElements(field)
+        visitFieldRaw(field)
+        printRightNonCodeElements(field)
+    }
+
+    open fun visitFieldRaw(field: JKField) = visitVariableRaw(field)
+
+    override fun visitKtInitDeclaration(ktInitDeclaration: JKKtInitDeclaration) {
+        printLeftNonCodeElements(ktInitDeclaration)
+        visitKtInitDeclarationRaw(ktInitDeclaration)
+        printRightNonCodeElements(ktInitDeclaration)
+    }
+
+    open fun visitKtInitDeclarationRaw(ktInitDeclaration: JKKtInitDeclaration) = visitDeclarationRaw(ktInitDeclaration)
+
+    override fun visitJavaStaticInitDeclaration(javaStaticInitDeclaration: JKJavaStaticInitDeclaration) {
+        printLeftNonCodeElements(javaStaticInitDeclaration)
+        visitJavaStaticInitDeclarationRaw(javaStaticInitDeclaration)
+        printRightNonCodeElements(javaStaticInitDeclaration)
+    }
+
+    open fun visitJavaStaticInitDeclarationRaw(javaStaticInitDeclaration: JKJavaStaticInitDeclaration) =
+        visitDeclarationRaw(javaStaticInitDeclaration)
+
+    override fun visitTreeRoot(treeRoot: JKTreeRoot) {
+        printLeftNonCodeElements(treeRoot)
+        visitTreeRootRaw(treeRoot)
+        printRightNonCodeElements(treeRoot)
+    }
+
+    open fun visitTreeRootRaw(treeRoot: JKTreeRoot) = visitTreeElementRaw(treeRoot)
+
+    override fun visitFile(file: JKFile) {
+        printLeftNonCodeElements(file)
+        visitFileRaw(file)
+        printRightNonCodeElements(file)
+    }
+
+    open fun visitFileRaw(file: JKFile) = visitTreeElementRaw(file)
+
+    override fun visitTypeElement(typeElement: JKTypeElement) {
+        printLeftNonCodeElements(typeElement)
+        visitTypeElementRaw(typeElement)
+        printRightNonCodeElements(typeElement)
+    }
+
+    open fun visitTypeElementRaw(typeElement: JKTypeElement) = visitTreeElementRaw(typeElement)
+
+    override fun visitBlock(block: JKBlock) {
+        printLeftNonCodeElements(block)
+        visitBlockRaw(block)
+        printRightNonCodeElements(block)
+    }
+
+    open fun visitBlockRaw(block: JKBlock) = visitTreeElementRaw(block)
+
+    override fun visitInheritanceInfo(inheritanceInfo: JKInheritanceInfo) {
+        printLeftNonCodeElements(inheritanceInfo)
+        visitInheritanceInfoRaw(inheritanceInfo)
+        printRightNonCodeElements(inheritanceInfo)
+    }
+
+    open fun visitInheritanceInfoRaw(inheritanceInfo: JKInheritanceInfo) = visitTreeElementRaw(inheritanceInfo)
+
+    override fun visitPackageDeclaration(packageDeclaration: JKPackageDeclaration) {
+        printLeftNonCodeElements(packageDeclaration)
+        visitPackageDeclarationRaw(packageDeclaration)
+        printRightNonCodeElements(packageDeclaration)
+    }
+
+    open fun visitPackageDeclarationRaw(packageDeclaration: JKPackageDeclaration) = visitTreeElementRaw(packageDeclaration)
+
+    override fun visitLabel(label: JKLabel) {
+        printLeftNonCodeElements(label)
+        visitLabelRaw(label)
+        printRightNonCodeElements(label)
+    }
+
+    open fun visitLabelRaw(label: JKLabel) = visitTreeElementRaw(label)
+
+    override fun visitLabelEmpty(labelEmpty: JKLabelEmpty) {
+        printLeftNonCodeElements(labelEmpty)
+        visitLabelEmptyRaw(labelEmpty)
+        printRightNonCodeElements(labelEmpty)
+    }
+
+    open fun visitLabelEmptyRaw(labelEmpty: JKLabelEmpty) = visitLabelRaw(labelEmpty)
+
+    override fun visitLabelText(labelText: JKLabelText) {
+        printLeftNonCodeElements(labelText)
+        visitLabelTextRaw(labelText)
+        printRightNonCodeElements(labelText)
+    }
+
+    open fun visitLabelTextRaw(labelText: JKLabelText) = visitLabelRaw(labelText)
+
+    override fun visitImportStatement(importStatement: JKImportStatement) {
+        printLeftNonCodeElements(importStatement)
+        visitImportStatementRaw(importStatement)
+        printRightNonCodeElements(importStatement)
+    }
+
+    open fun visitImportStatementRaw(importStatement: JKImportStatement) = visitTreeElementRaw(importStatement)
+
+    override fun visitImportList(importList: JKImportList) {
+        printLeftNonCodeElements(importList)
+        visitImportListRaw(importList)
+        printRightNonCodeElements(importList)
+    }
+
+    open fun visitImportListRaw(importList: JKImportList) = visitTreeElementRaw(importList)
+
+    override fun visitAnnotationParameter(annotationParameter: JKAnnotationParameter) {
+        printLeftNonCodeElements(annotationParameter)
+        visitAnnotationParameterRaw(annotationParameter)
+        printRightNonCodeElements(annotationParameter)
+    }
+
+    open fun visitAnnotationParameterRaw(annotationParameter: JKAnnotationParameter) = visitTreeElementRaw(annotationParameter)
+
+    override fun visitAnnotationParameterImpl(annotationParameterImpl: JKAnnotationParameterImpl) {
+        printLeftNonCodeElements(annotationParameterImpl)
+        visitAnnotationParameterImplRaw(annotationParameterImpl)
+        printRightNonCodeElements(annotationParameterImpl)
+    }
+
+    open fun visitAnnotationParameterImplRaw(annotationParameterImpl: JKAnnotationParameterImpl) =
+        visitAnnotationParameterRaw(annotationParameterImpl)
+
+    override fun visitAnnotationNameParameter(annotationNameParameter: JKAnnotationNameParameter) {
+        printLeftNonCodeElements(annotationNameParameter)
+        visitAnnotationNameParameterRaw(annotationNameParameter)
+        printRightNonCodeElements(annotationNameParameter)
+    }
+
+    open fun visitAnnotationNameParameterRaw(annotationNameParameter: JKAnnotationNameParameter) =
+        visitAnnotationParameterRaw(annotationNameParameter)
+
+    override fun visitArgument(argument: JKArgument) {
+        printLeftNonCodeElements(argument)
+        visitArgumentRaw(argument)
+        printRightNonCodeElements(argument)
+    }
+
+    open fun visitArgumentRaw(argument: JKArgument) = visitTreeElementRaw(argument)
+
+    override fun visitNamedArgument(namedArgument: JKNamedArgument) {
+        printLeftNonCodeElements(namedArgument)
+        visitNamedArgumentRaw(namedArgument)
+        printRightNonCodeElements(namedArgument)
+    }
+
+    open fun visitNamedArgumentRaw(namedArgument: JKNamedArgument) = visitArgumentRaw(namedArgument)
+
+    override fun visitArgumentImpl(argumentImpl: JKArgumentImpl) {
+        printLeftNonCodeElements(argumentImpl)
+        visitArgumentImplRaw(argumentImpl)
+        printRightNonCodeElements(argumentImpl)
+    }
+
+    open fun visitArgumentImplRaw(argumentImpl: JKArgumentImpl) = visitArgumentRaw(argumentImpl)
+
+    override fun visitArgumentList(argumentList: JKArgumentList) {
+        printLeftNonCodeElements(argumentList)
+        visitArgumentListRaw(argumentList)
+        printRightNonCodeElements(argumentList)
+    }
+
+    open fun visitArgumentListRaw(argumentList: JKArgumentList) = visitTreeElementRaw(argumentList)
+
+    override fun visitTypeParameterList(typeParameterList: JKTypeParameterList) {
+        printLeftNonCodeElements(typeParameterList)
+        visitTypeParameterListRaw(typeParameterList)
+        printRightNonCodeElements(typeParameterList)
+    }
+
+    open fun visitTypeParameterListRaw(typeParameterList: JKTypeParameterList) = visitTreeElementRaw(typeParameterList)
+
+    override fun visitAnnotationList(annotationList: JKAnnotationList) {
+        printLeftNonCodeElements(annotationList)
+        visitAnnotationListRaw(annotationList)
+        printRightNonCodeElements(annotationList)
+    }
+
+    open fun visitAnnotationListRaw(annotationList: JKAnnotationList) = visitTreeElementRaw(annotationList)
+
+    override fun visitAnnotation(annotation: JKAnnotation) {
+        printLeftNonCodeElements(annotation)
+        visitAnnotationRaw(annotation)
+        printRightNonCodeElements(annotation)
+    }
+
+    open fun visitAnnotationRaw(annotation: JKAnnotation) = visitTreeElementRaw(annotation)
+
+    override fun visitTypeArgumentList(typeArgumentList: JKTypeArgumentList) {
+        printLeftNonCodeElements(typeArgumentList)
+        visitTypeArgumentListRaw(typeArgumentList)
+        printRightNonCodeElements(typeArgumentList)
+    }
+
+    open fun visitTypeArgumentListRaw(typeArgumentList: JKTypeArgumentList) = visitTreeElementRaw(typeArgumentList)
+
+    override fun visitNameIdentifier(nameIdentifier: JKNameIdentifier) {
+        printLeftNonCodeElements(nameIdentifier)
+        visitNameIdentifierRaw(nameIdentifier)
+        printRightNonCodeElements(nameIdentifier)
+    }
+
+    open fun visitNameIdentifierRaw(nameIdentifier: JKNameIdentifier) = visitTreeElementRaw(nameIdentifier)
+
+    override fun visitBlockImpl(blockImpl: JKBlockImpl) {
+        printLeftNonCodeElements(blockImpl)
+        visitBlockImplRaw(blockImpl)
+        printRightNonCodeElements(blockImpl)
+    }
+
+    open fun visitBlockImplRaw(blockImpl: JKBlockImpl) = visitBlockRaw(blockImpl)
+
+    override fun visitKtWhenCase(ktWhenCase: JKKtWhenCase) {
+        printLeftNonCodeElements(ktWhenCase)
+        visitKtWhenCaseRaw(ktWhenCase)
+        printRightNonCodeElements(ktWhenCase)
+    }
+
+    open fun visitKtWhenCaseRaw(ktWhenCase: JKKtWhenCase) = visitTreeElementRaw(ktWhenCase)
+
+    override fun visitKtWhenLabel(ktWhenLabel: JKKtWhenLabel) {
+        printLeftNonCodeElements(ktWhenLabel)
+        visitKtWhenLabelRaw(ktWhenLabel)
+        printRightNonCodeElements(ktWhenLabel)
+    }
+
+    open fun visitKtWhenLabelRaw(ktWhenLabel: JKKtWhenLabel) = visitTreeElementRaw(ktWhenLabel)
+
+    override fun visitKtElseWhenLabel(ktElseWhenLabel: JKKtElseWhenLabel) {
+        printLeftNonCodeElements(ktElseWhenLabel)
+        visitKtElseWhenLabelRaw(ktElseWhenLabel)
+        printRightNonCodeElements(ktElseWhenLabel)
+    }
+
+    open fun visitKtElseWhenLabelRaw(ktElseWhenLabel: JKKtElseWhenLabel) = visitKtWhenLabelRaw(ktElseWhenLabel)
+
+    override fun visitKtValueWhenLabel(ktValueWhenLabel: JKKtValueWhenLabel) {
+        printLeftNonCodeElements(ktValueWhenLabel)
+        visitKtValueWhenLabelRaw(ktValueWhenLabel)
+        printRightNonCodeElements(ktValueWhenLabel)
+    }
+
+    open fun visitKtValueWhenLabelRaw(ktValueWhenLabel: JKKtValueWhenLabel) = visitKtWhenLabelRaw(ktValueWhenLabel)
+
+    override fun visitClassBody(classBody: JKClassBody) {
+        printLeftNonCodeElements(classBody)
+        visitClassBodyRaw(classBody)
+        printRightNonCodeElements(classBody)
+    }
+
+    open fun visitClassBodyRaw(classBody: JKClassBody) = visitTreeElementRaw(classBody)
+
+    override fun visitJavaTryCatchSection(javaTryCatchSection: JKJavaTryCatchSection) {
+        printLeftNonCodeElements(javaTryCatchSection)
+        visitJavaTryCatchSectionRaw(javaTryCatchSection)
+        printRightNonCodeElements(javaTryCatchSection)
+    }
+
+    open fun visitJavaTryCatchSectionRaw(javaTryCatchSection: JKJavaTryCatchSection) = visitStatementRaw(javaTryCatchSection)
+
+    override fun visitJavaSwitchCase(javaSwitchCase: JKJavaSwitchCase) {
+        printLeftNonCodeElements(javaSwitchCase)
+        visitJavaSwitchCaseRaw(javaSwitchCase)
+        printRightNonCodeElements(javaSwitchCase)
+    }
+
+    open fun visitJavaSwitchCaseRaw(javaSwitchCase: JKJavaSwitchCase) = visitTreeElementRaw(javaSwitchCase)
+
+    override fun visitJavaDefaultSwitchCase(javaDefaultSwitchCase: JKJavaDefaultSwitchCase) {
+        printLeftNonCodeElements(javaDefaultSwitchCase)
+        visitJavaDefaultSwitchCaseRaw(javaDefaultSwitchCase)
+        printRightNonCodeElements(javaDefaultSwitchCase)
+    }
+
+    open fun visitJavaDefaultSwitchCaseRaw(javaDefaultSwitchCase: JKJavaDefaultSwitchCase) = visitJavaSwitchCaseRaw(javaDefaultSwitchCase)
+
+    override fun visitJavaLabelSwitchCase(javaLabelSwitchCase: JKJavaLabelSwitchCase) {
+        printLeftNonCodeElements(javaLabelSwitchCase)
+        visitJavaLabelSwitchCaseRaw(javaLabelSwitchCase)
+        printRightNonCodeElements(javaLabelSwitchCase)
+    }
+
+    open fun visitJavaLabelSwitchCaseRaw(javaLabelSwitchCase: JKJavaLabelSwitchCase) = visitJavaSwitchCaseRaw(javaLabelSwitchCase)
+
+    override fun visitExpression(expression: JKExpression) {
+        printLeftNonCodeElements(expression)
+        visitExpressionRaw(expression)
+        printRightNonCodeElements(expression)
+    }
+
+    open fun visitExpressionRaw(expression: JKExpression) = visitTreeElementRaw(expression)
+
+    override fun visitOperatorExpression(operatorExpression: JKOperatorExpression) {
+        printLeftNonCodeElements(operatorExpression)
+        visitOperatorExpressionRaw(operatorExpression)
+        printRightNonCodeElements(operatorExpression)
+    }
+
+    open fun visitOperatorExpressionRaw(operatorExpression: JKOperatorExpression) = visitExpressionRaw(operatorExpression)
+
+    override fun visitBinaryExpression(binaryExpression: JKBinaryExpression) {
+        printLeftNonCodeElements(binaryExpression)
+        visitBinaryExpressionRaw(binaryExpression)
+        printRightNonCodeElements(binaryExpression)
+    }
+
+    open fun visitBinaryExpressionRaw(binaryExpression: JKBinaryExpression) = visitOperatorExpressionRaw(binaryExpression)
+
+    override fun visitUnaryExpression(unaryExpression: JKUnaryExpression) {
+        printLeftNonCodeElements(unaryExpression)
+        visitUnaryExpressionRaw(unaryExpression)
+        printRightNonCodeElements(unaryExpression)
+    }
+
+    open fun visitUnaryExpressionRaw(unaryExpression: JKUnaryExpression) = visitOperatorExpressionRaw(unaryExpression)
+
+    override fun visitPrefixExpression(prefixExpression: JKPrefixExpression) {
+        printLeftNonCodeElements(prefixExpression)
+        visitPrefixExpressionRaw(prefixExpression)
+        printRightNonCodeElements(prefixExpression)
+    }
+
+    open fun visitPrefixExpressionRaw(prefixExpression: JKPrefixExpression) = visitUnaryExpressionRaw(prefixExpression)
+
+    override fun visitPostfixExpression(postfixExpression: JKPostfixExpression) {
+        printLeftNonCodeElements(postfixExpression)
+        visitPostfixExpressionRaw(postfixExpression)
+        printRightNonCodeElements(postfixExpression)
+    }
+
+    open fun visitPostfixExpressionRaw(postfixExpression: JKPostfixExpression) = visitUnaryExpressionRaw(postfixExpression)
+
+    override fun visitQualifiedExpression(qualifiedExpression: JKQualifiedExpression) {
+        printLeftNonCodeElements(qualifiedExpression)
+        visitQualifiedExpressionRaw(qualifiedExpression)
+        printRightNonCodeElements(qualifiedExpression)
+    }
+
+    open fun visitQualifiedExpressionRaw(qualifiedExpression: JKQualifiedExpression) = visitExpressionRaw(qualifiedExpression)
+
+    override fun visitArrayAccessExpression(arrayAccessExpression: JKArrayAccessExpression) {
+        printLeftNonCodeElements(arrayAccessExpression)
+        visitArrayAccessExpressionRaw(arrayAccessExpression)
+        printRightNonCodeElements(arrayAccessExpression)
+    }
+
+    open fun visitArrayAccessExpressionRaw(arrayAccessExpression: JKArrayAccessExpression) = visitExpressionRaw(arrayAccessExpression)
+
+    override fun visitParenthesizedExpression(parenthesizedExpression: JKParenthesizedExpression) {
+        printLeftNonCodeElements(parenthesizedExpression)
+        visitParenthesizedExpressionRaw(parenthesizedExpression)
+        printRightNonCodeElements(parenthesizedExpression)
+    }
+
+    open fun visitParenthesizedExpressionRaw(parenthesizedExpression: JKParenthesizedExpression) =
+        visitExpressionRaw(parenthesizedExpression)
+
+    override fun visitTypeCastExpression(typeCastExpression: JKTypeCastExpression) {
+        printLeftNonCodeElements(typeCastExpression)
+        visitTypeCastExpressionRaw(typeCastExpression)
+        printRightNonCodeElements(typeCastExpression)
+    }
+
+    open fun visitTypeCastExpressionRaw(typeCastExpression: JKTypeCastExpression) = visitExpressionRaw(typeCastExpression)
+
+    override fun visitLiteralExpression(literalExpression: JKLiteralExpression) {
+        printLeftNonCodeElements(literalExpression)
+        visitLiteralExpressionRaw(literalExpression)
+        printRightNonCodeElements(literalExpression)
+    }
+
+    open fun visitLiteralExpressionRaw(literalExpression: JKLiteralExpression) = visitExpressionRaw(literalExpression)
+
+    override fun visitStubExpression(stubExpression: JKStubExpression) {
+        printLeftNonCodeElements(stubExpression)
+        visitStubExpressionRaw(stubExpression)
+        printRightNonCodeElements(stubExpression)
+    }
+
+    open fun visitStubExpressionRaw(stubExpression: JKStubExpression) = visitExpressionRaw(stubExpression)
+
+    override fun visitThisExpression(thisExpression: JKThisExpression) {
+        printLeftNonCodeElements(thisExpression)
+        visitThisExpressionRaw(thisExpression)
+        printRightNonCodeElements(thisExpression)
+    }
+
+    open fun visitThisExpressionRaw(thisExpression: JKThisExpression) = visitExpressionRaw(thisExpression)
+
+    override fun visitSuperExpression(superExpression: JKSuperExpression) {
+        printLeftNonCodeElements(superExpression)
+        visitSuperExpressionRaw(superExpression)
+        printRightNonCodeElements(superExpression)
+    }
+
+    open fun visitSuperExpressionRaw(superExpression: JKSuperExpression) = visitExpressionRaw(superExpression)
+
+    override fun visitIfElseExpression(ifElseExpression: JKIfElseExpression) {
+        printLeftNonCodeElements(ifElseExpression)
+        visitIfElseExpressionRaw(ifElseExpression)
+        printRightNonCodeElements(ifElseExpression)
+    }
+
+    open fun visitIfElseExpressionRaw(ifElseExpression: JKIfElseExpression) = visitExpressionRaw(ifElseExpression)
+
+    override fun visitLambdaExpression(lambdaExpression: JKLambdaExpression) {
+        printLeftNonCodeElements(lambdaExpression)
+        visitLambdaExpressionRaw(lambdaExpression)
+        printRightNonCodeElements(lambdaExpression)
+    }
+
+    open fun visitLambdaExpressionRaw(lambdaExpression: JKLambdaExpression) = visitExpressionRaw(lambdaExpression)
+
+    override fun visitCallExpression(callExpression: JKCallExpression) {
+        printLeftNonCodeElements(callExpression)
+        visitCallExpressionRaw(callExpression)
+        printRightNonCodeElements(callExpression)
+    }
+
+    open fun visitCallExpressionRaw(callExpression: JKCallExpression) = visitExpressionRaw(callExpression)
+
+    override fun visitDelegationConstructorCall(delegationConstructorCall: JKDelegationConstructorCall) {
+        printLeftNonCodeElements(delegationConstructorCall)
+        visitDelegationConstructorCallRaw(delegationConstructorCall)
+        printRightNonCodeElements(delegationConstructorCall)
+    }
+
+    open fun visitDelegationConstructorCallRaw(delegationConstructorCall: JKDelegationConstructorCall) =
+        visitCallExpressionRaw(delegationConstructorCall)
+
+    override fun visitCallExpressionImpl(callExpressionImpl: JKCallExpressionImpl) {
+        printLeftNonCodeElements(callExpressionImpl)
+        visitCallExpressionImplRaw(callExpressionImpl)
+        printRightNonCodeElements(callExpressionImpl)
+    }
+
+    open fun visitCallExpressionImplRaw(callExpressionImpl: JKCallExpressionImpl) = visitCallExpressionRaw(callExpressionImpl)
+
+    override fun visitNewExpression(newExpression: JKNewExpression) {
+        printLeftNonCodeElements(newExpression)
+        visitNewExpressionRaw(newExpression)
+        printRightNonCodeElements(newExpression)
+    }
+
+    open fun visitNewExpressionRaw(newExpression: JKNewExpression) = visitExpressionRaw(newExpression)
+
+    override fun visitFieldAccessExpression(fieldAccessExpression: JKFieldAccessExpression) {
+        printLeftNonCodeElements(fieldAccessExpression)
+        visitFieldAccessExpressionRaw(fieldAccessExpression)
+        printRightNonCodeElements(fieldAccessExpression)
+    }
+
+    open fun visitFieldAccessExpressionRaw(fieldAccessExpression: JKFieldAccessExpression) = visitExpressionRaw(fieldAccessExpression)
+
+    override fun visitPackageAccessExpression(packageAccessExpression: JKPackageAccessExpression) {
+        printLeftNonCodeElements(packageAccessExpression)
+        visitPackageAccessExpressionRaw(packageAccessExpression)
+        printRightNonCodeElements(packageAccessExpression)
+    }
+
+    open fun visitPackageAccessExpressionRaw(packageAccessExpression: JKPackageAccessExpression) =
+        visitExpressionRaw(packageAccessExpression)
+
+    override fun visitMethodAccessExpression(methodAccessExpression: JKMethodAccessExpression) {
+        printLeftNonCodeElements(methodAccessExpression)
+        visitMethodAccessExpressionRaw(methodAccessExpression)
+        printRightNonCodeElements(methodAccessExpression)
+    }
+
+    open fun visitMethodAccessExpressionRaw(methodAccessExpression: JKMethodAccessExpression) = visitExpressionRaw(methodAccessExpression)
+
+    override fun visitTypeQualifierExpression(typeQualifierExpression: JKTypeQualifierExpression) {
+        printLeftNonCodeElements(typeQualifierExpression)
+        visitTypeQualifierExpressionRaw(typeQualifierExpression)
+        printRightNonCodeElements(typeQualifierExpression)
+    }
+
+    open fun visitTypeQualifierExpressionRaw(typeQualifierExpression: JKTypeQualifierExpression) =
+        visitExpressionRaw(typeQualifierExpression)
+
+    override fun visitClassAccessExpression(classAccessExpression: JKClassAccessExpression) {
+        printLeftNonCodeElements(classAccessExpression)
+        visitClassAccessExpressionRaw(classAccessExpression)
+        printRightNonCodeElements(classAccessExpression)
+    }
+
+    open fun visitClassAccessExpressionRaw(classAccessExpression: JKClassAccessExpression) = visitExpressionRaw(classAccessExpression)
+
+    override fun visitMethodReferenceExpression(methodReferenceExpression: JKMethodReferenceExpression) {
+        printLeftNonCodeElements(methodReferenceExpression)
+        visitMethodReferenceExpressionRaw(methodReferenceExpression)
+        printRightNonCodeElements(methodReferenceExpression)
+    }
+
+    open fun visitMethodReferenceExpressionRaw(methodReferenceExpression: JKMethodReferenceExpression) =
+        visitExpressionRaw(methodReferenceExpression)
+
+    override fun visitLabeledExpression(labeledExpression: JKLabeledExpression) {
+        printLeftNonCodeElements(labeledExpression)
+        visitLabeledExpressionRaw(labeledExpression)
+        printRightNonCodeElements(labeledExpression)
+    }
+
+    open fun visitLabeledExpressionRaw(labeledExpression: JKLabeledExpression) = visitExpressionRaw(labeledExpression)
+
+    override fun visitClassLiteralExpression(classLiteralExpression: JKClassLiteralExpression) {
+        printLeftNonCodeElements(classLiteralExpression)
+        visitClassLiteralExpressionRaw(classLiteralExpression)
+        printRightNonCodeElements(classLiteralExpression)
+    }
+
+    open fun visitClassLiteralExpressionRaw(classLiteralExpression: JKClassLiteralExpression) = visitExpressionRaw(classLiteralExpression)
+
+    override fun visitKtAssignmentChainLink(ktAssignmentChainLink: JKKtAssignmentChainLink) {
+        printLeftNonCodeElements(ktAssignmentChainLink)
+        visitKtAssignmentChainLinkRaw(ktAssignmentChainLink)
+        printRightNonCodeElements(ktAssignmentChainLink)
+    }
+
+    open fun visitKtAssignmentChainLinkRaw(ktAssignmentChainLink: JKKtAssignmentChainLink) = visitExpressionRaw(ktAssignmentChainLink)
+
+    override fun visitAssignmentChainAlsoLink(assignmentChainAlsoLink: JKAssignmentChainAlsoLink) {
+        printLeftNonCodeElements(assignmentChainAlsoLink)
+        visitAssignmentChainAlsoLinkRaw(assignmentChainAlsoLink)
+        printRightNonCodeElements(assignmentChainAlsoLink)
+    }
+
+    open fun visitAssignmentChainAlsoLinkRaw(assignmentChainAlsoLink: JKAssignmentChainAlsoLink) =
+        visitKtAssignmentChainLinkRaw(assignmentChainAlsoLink)
+
+    override fun visitAssignmentChainLetLink(assignmentChainLetLink: JKAssignmentChainLetLink) {
+        printLeftNonCodeElements(assignmentChainLetLink)
+        visitAssignmentChainLetLinkRaw(assignmentChainLetLink)
+        printRightNonCodeElements(assignmentChainLetLink)
+    }
+
+    open fun visitAssignmentChainLetLinkRaw(assignmentChainLetLink: JKAssignmentChainLetLink) =
+        visitKtAssignmentChainLinkRaw(assignmentChainLetLink)
+
+    override fun visitIsExpression(isExpression: JKIsExpression) {
+        printLeftNonCodeElements(isExpression)
+        visitIsExpressionRaw(isExpression)
+        printRightNonCodeElements(isExpression)
+    }
+
+    open fun visitIsExpressionRaw(isExpression: JKIsExpression) = visitExpressionRaw(isExpression)
+
+    override fun visitKtThrowExpression(ktThrowExpression: JKThrowExpression) {
+        printLeftNonCodeElements(ktThrowExpression)
+        visitKtThrowExpressionRaw(ktThrowExpression)
+        printRightNonCodeElements(ktThrowExpression)
+    }
+
+    open fun visitKtThrowExpressionRaw(ktThrowExpression: JKThrowExpression) = visitExpressionRaw(ktThrowExpression)
+
+    override fun visitKtItExpression(ktItExpression: JKKtItExpression) {
+        printLeftNonCodeElements(ktItExpression)
+        visitKtItExpressionRaw(ktItExpression)
+        printRightNonCodeElements(ktItExpression)
+    }
+
+    open fun visitKtItExpressionRaw(ktItExpression: JKKtItExpression) = visitExpressionRaw(ktItExpression)
+
+    override fun visitKtAnnotationArrayInitializerExpression(ktAnnotationArrayInitializerExpression: JKKtAnnotationArrayInitializerExpression) {
+        printLeftNonCodeElements(ktAnnotationArrayInitializerExpression)
+        visitKtAnnotationArrayInitializerExpressionRaw(ktAnnotationArrayInitializerExpression)
+        printRightNonCodeElements(ktAnnotationArrayInitializerExpression)
+    }
+
+    open fun visitKtAnnotationArrayInitializerExpressionRaw(ktAnnotationArrayInitializerExpression: JKKtAnnotationArrayInitializerExpression) =
+        visitExpressionRaw(ktAnnotationArrayInitializerExpression)
+
+    override fun visitKtTryExpression(ktTryExpression: JKKtTryExpression) {
+        printLeftNonCodeElements(ktTryExpression)
+        visitKtTryExpressionRaw(ktTryExpression)
+        printRightNonCodeElements(ktTryExpression)
+    }
+
+    open fun visitKtTryExpressionRaw(ktTryExpression: JKKtTryExpression) = visitExpressionRaw(ktTryExpression)
+
+    override fun visitKtTryCatchSection(ktTryCatchSection: JKKtTryCatchSection) {
+        printLeftNonCodeElements(ktTryCatchSection)
+        visitKtTryCatchSectionRaw(ktTryCatchSection)
+        printRightNonCodeElements(ktTryCatchSection)
+    }
+
+    open fun visitKtTryCatchSectionRaw(ktTryCatchSection: JKKtTryCatchSection) = visitTreeElementRaw(ktTryCatchSection)
+
+    override fun visitJavaNewEmptyArray(javaNewEmptyArray: JKJavaNewEmptyArray) {
+        printLeftNonCodeElements(javaNewEmptyArray)
+        visitJavaNewEmptyArrayRaw(javaNewEmptyArray)
+        printRightNonCodeElements(javaNewEmptyArray)
+    }
+
+    open fun visitJavaNewEmptyArrayRaw(javaNewEmptyArray: JKJavaNewEmptyArray) = visitExpressionRaw(javaNewEmptyArray)
+
+    override fun visitJavaNewArray(javaNewArray: JKJavaNewArray) {
+        printLeftNonCodeElements(javaNewArray)
+        visitJavaNewArrayRaw(javaNewArray)
+        printRightNonCodeElements(javaNewArray)
+    }
+
+    open fun visitJavaNewArrayRaw(javaNewArray: JKJavaNewArray) = visitExpressionRaw(javaNewArray)
+
+    override fun visitJavaAssignmentExpression(javaAssignmentExpression: JKJavaAssignmentExpression) {
+        printLeftNonCodeElements(javaAssignmentExpression)
+        visitJavaAssignmentExpressionRaw(javaAssignmentExpression)
+        printRightNonCodeElements(javaAssignmentExpression)
+    }
+
+    open fun visitJavaAssignmentExpressionRaw(javaAssignmentExpression: JKJavaAssignmentExpression) =
+        visitExpressionRaw(javaAssignmentExpression)
+
+    override fun visitModifierElement(modifierElement: JKModifierElement) {
+        printLeftNonCodeElements(modifierElement)
+        visitModifierElementRaw(modifierElement)
+        printRightNonCodeElements(modifierElement)
+    }
+
+    open fun visitModifierElementRaw(modifierElement: JKModifierElement) = visitTreeElementRaw(modifierElement)
+
+    override fun visitMutabilityModifierElement(mutabilityModifierElement: JKMutabilityModifierElement) {
+        printLeftNonCodeElements(mutabilityModifierElement)
+        visitMutabilityModifierElementRaw(mutabilityModifierElement)
+        printRightNonCodeElements(mutabilityModifierElement)
+    }
+
+    open fun visitMutabilityModifierElementRaw(mutabilityModifierElement: JKMutabilityModifierElement) =
+        visitModifierElementRaw(mutabilityModifierElement)
+
+    override fun visitModalityModifierElement(modalityModifierElement: JKModalityModifierElement) {
+        printLeftNonCodeElements(modalityModifierElement)
+        visitModalityModifierElementRaw(modalityModifierElement)
+        printRightNonCodeElements(modalityModifierElement)
+    }
+
+    open fun visitModalityModifierElementRaw(modalityModifierElement: JKModalityModifierElement) =
+        visitModifierElementRaw(modalityModifierElement)
+
+    override fun visitVisibilityModifierElement(visibilityModifierElement: JKVisibilityModifierElement) {
+        printLeftNonCodeElements(visibilityModifierElement)
+        visitVisibilityModifierElementRaw(visibilityModifierElement)
+        printRightNonCodeElements(visibilityModifierElement)
+    }
+
+    open fun visitVisibilityModifierElementRaw(visibilityModifierElement: JKVisibilityModifierElement) =
+        visitModifierElementRaw(visibilityModifierElement)
+
+    override fun visitOtherModifierElement(otherModifierElement: JKOtherModifierElement) {
+        printLeftNonCodeElements(otherModifierElement)
+        visitOtherModifierElementRaw(otherModifierElement)
+        printRightNonCodeElements(otherModifierElement)
+    }
+
+    open fun visitOtherModifierElementRaw(otherModifierElement: JKOtherModifierElement) = visitModifierElementRaw(otherModifierElement)
+
+    override fun visitStatement(statement: JKStatement) {
+        printLeftNonCodeElements(statement)
+        visitStatementRaw(statement)
+        printRightNonCodeElements(statement)
+    }
+
+    open fun visitStatementRaw(statement: JKStatement) = visitTreeElementRaw(statement)
+
+    override fun visitEmptyStatement(emptyStatement: JKEmptyStatement) {
+        printLeftNonCodeElements(emptyStatement)
+        visitEmptyStatementRaw(emptyStatement)
+        printRightNonCodeElements(emptyStatement)
+    }
+
+    open fun visitEmptyStatementRaw(emptyStatement: JKEmptyStatement) = visitStatementRaw(emptyStatement)
+
+    override fun visitLoopStatement(loopStatement: JKLoopStatement) {
+        printLeftNonCodeElements(loopStatement)
+        visitLoopStatementRaw(loopStatement)
+        printRightNonCodeElements(loopStatement)
+    }
+
+    open fun visitLoopStatementRaw(loopStatement: JKLoopStatement) = visitStatementRaw(loopStatement)
+
+    override fun visitWhileStatement(whileStatement: JKWhileStatement) {
+        printLeftNonCodeElements(whileStatement)
+        visitWhileStatementRaw(whileStatement)
+        printRightNonCodeElements(whileStatement)
+    }
+
+    open fun visitWhileStatementRaw(whileStatement: JKWhileStatement) = visitLoopStatementRaw(whileStatement)
+
+    override fun visitDoWhileStatement(doWhileStatement: JKDoWhileStatement) {
+        printLeftNonCodeElements(doWhileStatement)
+        visitDoWhileStatementRaw(doWhileStatement)
+        printRightNonCodeElements(doWhileStatement)
+    }
+
+    open fun visitDoWhileStatementRaw(doWhileStatement: JKDoWhileStatement) = visitLoopStatementRaw(doWhileStatement)
+
+    override fun visitForInStatement(forInStatement: JKForInStatement) {
+        printLeftNonCodeElements(forInStatement)
+        visitForInStatementRaw(forInStatement)
+        printRightNonCodeElements(forInStatement)
+    }
+
+    open fun visitForInStatementRaw(forInStatement: JKForInStatement) = visitStatementRaw(forInStatement)
+
+    override fun visitIfElseStatement(ifElseStatement: JKIfElseStatement) {
+        printLeftNonCodeElements(ifElseStatement)
+        visitIfElseStatementRaw(ifElseStatement)
+        printRightNonCodeElements(ifElseStatement)
+    }
+
+    open fun visitIfElseStatementRaw(ifElseStatement: JKIfElseStatement) = visitStatementRaw(ifElseStatement)
+
+    override fun visitBreakStatement(breakStatement: JKBreakStatement) {
+        printLeftNonCodeElements(breakStatement)
+        visitBreakStatementRaw(breakStatement)
+        printRightNonCodeElements(breakStatement)
+    }
+
+    open fun visitBreakStatementRaw(breakStatement: JKBreakStatement) = visitStatementRaw(breakStatement)
+
+    override fun visitContinueStatement(continueStatement: JKContinueStatement) {
+        printLeftNonCodeElements(continueStatement)
+        visitContinueStatementRaw(continueStatement)
+        printRightNonCodeElements(continueStatement)
+    }
+
+    open fun visitContinueStatementRaw(continueStatement: JKContinueStatement) = visitStatementRaw(continueStatement)
+
+    override fun visitBlockStatement(blockStatement: JKBlockStatement) {
+        printLeftNonCodeElements(blockStatement)
+        visitBlockStatementRaw(blockStatement)
+        printRightNonCodeElements(blockStatement)
+    }
+
+    open fun visitBlockStatementRaw(blockStatement: JKBlockStatement) = visitStatementRaw(blockStatement)
+
+    override fun visitBlockStatementWithoutBrackets(blockStatementWithoutBrackets: JKBlockStatementWithoutBrackets) {
+        printLeftNonCodeElements(blockStatementWithoutBrackets)
+        visitBlockStatementWithoutBracketsRaw(blockStatementWithoutBrackets)
+        printRightNonCodeElements(blockStatementWithoutBrackets)
+    }
+
+    open fun visitBlockStatementWithoutBracketsRaw(blockStatementWithoutBrackets: JKBlockStatementWithoutBrackets) =
+        visitStatementRaw(blockStatementWithoutBrackets)
+
+    override fun visitExpressionStatement(expressionStatement: JKExpressionStatement) {
+        printLeftNonCodeElements(expressionStatement)
+        visitExpressionStatementRaw(expressionStatement)
+        printRightNonCodeElements(expressionStatement)
+    }
+
+    open fun visitExpressionStatementRaw(expressionStatement: JKExpressionStatement) = visitStatementRaw(expressionStatement)
+
+    override fun visitDeclarationStatement(declarationStatement: JKDeclarationStatement) {
+        printLeftNonCodeElements(declarationStatement)
+        visitDeclarationStatementRaw(declarationStatement)
+        printRightNonCodeElements(declarationStatement)
+    }
+
+    open fun visitDeclarationStatementRaw(declarationStatement: JKDeclarationStatement) = visitStatementRaw(declarationStatement)
+
+    override fun visitKtWhenStatement(ktWhenStatement: JKKtWhenStatement) {
+        printLeftNonCodeElements(ktWhenStatement)
+        visitKtWhenStatementRaw(ktWhenStatement)
+        printRightNonCodeElements(ktWhenStatement)
+    }
+
+    open fun visitKtWhenStatementRaw(ktWhenStatement: JKKtWhenStatement) = visitStatementRaw(ktWhenStatement)
+
+    override fun visitKtWhenExpression(ktWhenExpression: JKKtWhenExpression) {
+        printLeftNonCodeElements(ktWhenExpression)
+        visitKtWhenExpressionRaw(ktWhenExpression)
+        printRightNonCodeElements(ktWhenExpression)
+    }
+
+    open fun visitKtWhenExpressionRaw(ktWhenExpression: JKKtWhenExpression) = visitExpressionRaw(ktWhenExpression)
+
+    override fun visitKtWhenBlock(ktWhenBlock: JKKtWhenBlock) {
+        printLeftNonCodeElements(ktWhenBlock)
+        visitKtWhenBlockRaw(ktWhenBlock)
+        printRightNonCodeElements(ktWhenBlock)
+    }
+
+    open fun visitKtWhenBlockRaw(ktWhenBlock: JKKtWhenBlock) = visitTreeElementRaw(ktWhenBlock)
+
+    override fun visitKtConvertedFromForLoopSyntheticWhileStatement(ktConvertedFromForLoopSyntheticWhileStatement: JKKtConvertedFromForLoopSyntheticWhileStatement) {
+        printLeftNonCodeElements(ktConvertedFromForLoopSyntheticWhileStatement)
+        visitKtConvertedFromForLoopSyntheticWhileStatementRaw(ktConvertedFromForLoopSyntheticWhileStatement)
+        printRightNonCodeElements(ktConvertedFromForLoopSyntheticWhileStatement)
+    }
+
+    open fun visitKtConvertedFromForLoopSyntheticWhileStatementRaw(ktConvertedFromForLoopSyntheticWhileStatement: JKKtConvertedFromForLoopSyntheticWhileStatement) =
+        visitStatementRaw(ktConvertedFromForLoopSyntheticWhileStatement)
+
+    override fun visitKtAssignmentStatement(ktAssignmentStatement: JKKtAssignmentStatement) {
+        printLeftNonCodeElements(ktAssignmentStatement)
+        visitKtAssignmentStatementRaw(ktAssignmentStatement)
+        printRightNonCodeElements(ktAssignmentStatement)
+    }
+
+    open fun visitKtAssignmentStatementRaw(ktAssignmentStatement: JKKtAssignmentStatement) = visitStatementRaw(ktAssignmentStatement)
+
+    override fun visitReturnStatement(returnStatement: JKReturnStatement) {
+        printLeftNonCodeElements(returnStatement)
+        visitReturnStatementRaw(returnStatement)
+        printRightNonCodeElements(returnStatement)
+    }
+
+    open fun visitReturnStatementRaw(returnStatement: JKReturnStatement) = visitStatementRaw(returnStatement)
+
+    override fun visitJavaSwitchStatement(javaSwitchStatement: JKJavaSwitchStatement) {
+        printLeftNonCodeElements(javaSwitchStatement)
+        visitJavaSwitchStatementRaw(javaSwitchStatement)
+        printRightNonCodeElements(javaSwitchStatement)
+    }
+
+    open fun visitJavaSwitchStatementRaw(javaSwitchStatement: JKJavaSwitchStatement) = visitStatementRaw(javaSwitchStatement)
+
+    override fun visitJavaTryStatement(javaTryStatement: JKJavaTryStatement) {
+        printLeftNonCodeElements(javaTryStatement)
+        visitJavaTryStatementRaw(javaTryStatement)
+        printRightNonCodeElements(javaTryStatement)
+    }
+
+    open fun visitJavaTryStatementRaw(javaTryStatement: JKJavaTryStatement) = visitStatementRaw(javaTryStatement)
+
+    override fun visitJavaSynchronizedStatement(javaSynchronizedStatement: JKJavaSynchronizedStatement) {
+        printLeftNonCodeElements(javaSynchronizedStatement)
+        visitJavaSynchronizedStatementRaw(javaSynchronizedStatement)
+        printRightNonCodeElements(javaSynchronizedStatement)
+    }
+
+    open fun visitJavaSynchronizedStatementRaw(javaSynchronizedStatement: JKJavaSynchronizedStatement) =
+        visitStatementRaw(javaSynchronizedStatement)
+
+    override fun visitJavaAssertStatement(javaAssertStatement: JKJavaAssertStatement) {
+        printLeftNonCodeElements(javaAssertStatement)
+        visitJavaAssertStatementRaw(javaAssertStatement)
+        printRightNonCodeElements(javaAssertStatement)
+    }
+
+    open fun visitJavaAssertStatementRaw(javaAssertStatement: JKJavaAssertStatement) = visitStatementRaw(javaAssertStatement)
+
+    override fun visitJavaForLoopStatement(javaForLoopStatement: JKJavaForLoopStatement) {
+        printLeftNonCodeElements(javaForLoopStatement)
+        visitJavaForLoopStatementRaw(javaForLoopStatement)
+        printRightNonCodeElements(javaForLoopStatement)
+    }
+
+    open fun visitJavaForLoopStatementRaw(javaForLoopStatement: JKJavaForLoopStatement) = visitLoopStatementRaw(javaForLoopStatement)
+
+    override fun visitJavaAnnotationMethod(javaAnnotationMethod: JKJavaAnnotationMethod) {
+        printLeftNonCodeElements(javaAnnotationMethod)
+        visitJavaAnnotationMethodRaw(javaAnnotationMethod)
+        printRightNonCodeElements(javaAnnotationMethod)
+    }
+
+    open fun visitJavaAnnotationMethodRaw(javaAnnotationMethod: JKJavaAnnotationMethod) = visitMethodRaw(javaAnnotationMethod)
+}

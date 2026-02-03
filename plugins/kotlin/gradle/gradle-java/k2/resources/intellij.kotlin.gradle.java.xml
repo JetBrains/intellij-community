@@ -1,0 +1,7 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.gradleJava.k2">
+
+  <dependencies>
+    <module name="kotlin.gradle.gradle-java"/>
+    <plugin id="com.intellij.modules.kotlin.k2"/>
+  </dependencies>
+</idea-plugin>

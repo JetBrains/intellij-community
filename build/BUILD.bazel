@@ -1,0 +1,124 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+load("//build:intellij_dev_community.bzl", "intellij_dev_binary_community")
+load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
+load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS")
+
+# Can't name the target 'installers' since it triggers elevation in Windows
+java_binary(
+  name = "i_build_target",
+  runtime_deps = [":build"],
+  main_class = "OpenSourceCommunityInstallersBuildTarget",
+  add_opens = INTELLIJ_ADD_OPENS,
+  data = ALL_COMMUNITY_TARGETS,
+)
+
+java_binary(
+  name = "run_tests_build_target",
+  runtime_deps = [":build"],
+  main_class = "CommunityRunTestsBuildTarget",
+  jvm_flags = [
+    # Reduce output which is not strictly required to run tests, but keep it discoverable
+    # see org.jetbrains.intellij.build.telemetry.ConsoleSpanExporter.Companion.getTempFile
+    "-Dintellij.build.console.exporter.to.temp.file=true",
+    # Reduce output which is not strictly required to run tests, but keep it discoverable
+    # it prints where all debug logs are in org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl.setDebugLogPath
+    "-Dintellij.build.console.messages.verbose=false",
+  ],
+  add_opens = INTELLIJ_ADD_OPENS,
+  data = ALL_COMMUNITY_TARGETS,
+)
+
+# Dev-build targets for running IDEs locally via `bazel run //build:<target>`
+intellij_dev_binary_community(
+    name = "idea_community",
+    platform_prefix = "community",
+)
+
+intellij_dev_binary_community(
+    name = "android_studio",
+    platform_prefix = "AndroidStudio",
+)
+
+# production intellij.platform.jps.build.dependencyGraph; cannot use @rules_jvm//dependency-graph:dependency-graph directly because it's mainly
+# used to bootstrap jvm_library rule (from rules_jvm) via kt_jvm_library rule (from rules_kotlin) and @rules_jvm//:rules_jvm_bootstrap_kotlinc_options flags
+jvm_library(
+  name = "dependency-graph",
+  module_name = "intellij.platform.jps.build.dependencyGraph",
+  visibility = ["//visibility:public"],
+  srcs = ["@rules_jvm//dependency-graph:dependency-graph_sources"],
+  resources = ["@rules_jvm//dependency-graph:dependency-graph_resources"],
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    ":build-javac-rt",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-metadata",
+    "@lib//:caffeine",
+    "@community//libraries/asm:asm",
+    "@community//libraries/hash4j:hash4j",
+    "@community//libraries/fastutil:fastutil",
+    "@lib//:kotlin-stdlib-provided",
+  ]
+)
+
+# production intellij.platform.jps.build.javac.rt; cannot use @rules_jvm//jps-builders-6:build-javac-rt directly because it's mainly
+# used to bootstrap jvm_library rule (from rules_jvm) via kt_jvm_library rule (from rules_kotlin) and @rules_jvm//:rules_jvm_bootstrap_kotlinc_options flags
+jvm_library(
+  name = "build-javac-rt",
+  module_name = "intellij.platform.jps.build.javac.rt",
+  visibility = ["//visibility:public"],
+  srcs = ["@rules_jvm//jps-builders-6:build-javac-rt_sources"],
+  resources = ["@rules_jvm//jps-builders-6:build-javac-rt_resources"],
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:javax-annotation-api",
+    "@lib//:jps-javac-extension",
+    "@lib//:protobuf",
+    "@lib//:netty-jps-provided",
+  ]
+)
+
+# production intellij.idea.community.build.zip; cannot use @rules_jvm//zip:zip directly because it's mainly
+# used to bootstrap jvm_library rule (from rules_jvm) via kt_jvm_library rule (from rules_kotlin) and @rules_jvm//:rules_jvm_bootstrap_kotlinc_options flags
+jvm_library(
+  name = "zip",
+  module_name = "intellij.idea.community.build.zip",
+  visibility = ["//visibility:public"],
+  srcs = ["@rules_jvm//zip:zip_sources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:netty-buffer",
+    "@lib//:fastutil-min",
+    "@community//libraries/hash4j:hash4j",
+  ]
+)
+
+### auto-generated section `build intellij.idea.community.build` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "build",
+  module_name = "intellij.idea.community.build",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/build-scripts",
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//jps/model-api:model",
+    "//build/deps:dependencies",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//build/tasks",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/build-scripts/downloader",
+    "@community//build:zip",
+    "//libraries/maven-resolver-provider",
+  ],
+  exports = ["//platform/build-scripts"],
+  runtime_deps = ["@lib//:test-discovery-plugin-base"]
+)
+### auto-generated section `build intellij.idea.community.build` end

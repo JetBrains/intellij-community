@@ -1,0 +1,8 @@
+{
+    int a = 1
+    <selection>a</selection> + b
+}
+-----
+{
+    1<caret> + b
+}

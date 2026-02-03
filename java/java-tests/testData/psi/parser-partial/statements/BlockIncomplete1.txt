@@ -1,0 +1,11 @@
+PsiJavaFile:BlockIncomplete1.java
+  PsiCodeBlock
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiBlockStatement
+      PsiCodeBlock
+        PsiJavaToken:LBRACE('{')
+        PsiWhiteSpace(' ')
+        PsiJavaToken:RBRACE('}')
+    PsiErrorElement:'}' expected
+      <empty list>

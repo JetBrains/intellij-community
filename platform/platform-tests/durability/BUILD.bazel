@@ -1,0 +1,57 @@
+### auto-generated section `build intellij.platform.durability` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_durability",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+  ]
+)
+
+jvm_library(
+  name = "durability",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/util-ex",
+    "//platform/platform-impl:ide-impl",
+    "//platform/util",
+    "//platform/util/storages",
+    "//libraries/fastutil",
+  ]
+)
+
+jvm_library(
+  name = "durability_test_lib",
+  module_name = "intellij.platform.durability",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_durability",
+  deps = [
+    "//platform/util-ex",
+    "@lib//:ktor-network-tls",
+    "//libraries/io",
+    "//platform/platform-impl:ide-impl",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "@lib//:kotlinc-kotlinx-serialization-compiler-plugin",
+    "//libraries/kotlin/reflect",
+    "//platform/util",
+    "//platform/util/storages",
+    "//libraries/fastutil",
+  ],
+  runtime_deps = [":durability"]
+)
+### auto-generated section `build intellij.platform.durability` end
+
+### auto-generated section `test intellij.platform.durability` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "durability_test",
+  runtime_deps = [":durability_test_lib"]
+)
+### auto-generated section `test intellij.platform.durability` end

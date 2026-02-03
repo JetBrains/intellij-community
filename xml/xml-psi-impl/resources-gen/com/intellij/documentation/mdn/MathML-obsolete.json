@@ -1,0 +1,94 @@
+{
+  "license": {
+    "name": "CC-BY-SA 2.5",
+    "url": "https://creativecommons.org/licenses/by-sa/2.5/"
+  },
+  "author": {
+    "name": "Mozilla Contributors",
+    "url": "https://github.com/mdn/content"
+  },
+  "lang": "en-us",
+  "attrs": {},
+  "tags": {
+    "mo": {
+      "doc": "",
+      "attrs": {
+        "moveablelimits": {
+          "url": "$MDN_URL$/web/mathml/element/mo#moveablelimits",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {
+            "Chrome": "109",
+            "ChromeAndroid": "109",
+            "Edge": "109",
+            "Firefox": "",
+            "Opera": "95",
+            "Safari": "10",
+            "SafariIOS": "10"
+          }
+        }
+      }
+    },
+    "ms": {
+      "doc": "",
+      "attrs": {
+        "lquote": {
+          "url": "$MDN_URL$/web/mathml/element/ms#lquote",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "The opening quote to enclose the content. The default value is <code>&amp;quot;</code>."
+        },
+        "rquote": {
+          "url": "$MDN_URL$/web/mathml/element/ms#rquote",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "The closing quote to enclose the content. The default value is <code>&amp;quot;</code>."
+        }
+      }
+    },
+    "mstyle": {
+      "doc": "",
+      "attrs": {
+        "scriptminsize": {
+          "url": "$MDN_URL$/web/mathml/element/mstyle#scriptminsize",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "Specifies a minimum font size allowed due to changes in <code>scriptlevel</code>. The default value is <code>8pt</code>."
+        },
+        "scriptsizemultiplier": {
+          "url": "$MDN_URL$/web/mathml/element/mstyle#scriptsizemultiplier",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "Specifies the multiplier to be used to adjust font size due to changes in <code>scriptlevel</code>. The default value is <code>0.71</code>."
+        }
+      }
+    },
+    "semantics": {
+      "doc": "",
+      "attrs": {
+        "encoding": {
+          "url": "$MDN_URL$/web/mathml/element/semantics#encoding",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "The encoding of the semantic information in the annotation (e.g. <code>\"MathML-Content\"</code>, <code>\"MathML-Presentation\"</code>, <code>\"application/openmath+xml\"</code>, <code>\"image/png\"</code>)"
+        },
+        "src": {
+          "url": "$MDN_URL$/web/mathml/element/semantics#src",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "The location of an external source for semantic information."
+        }
+      }
+    }
+  },
+  "tagAliases": {}
+}

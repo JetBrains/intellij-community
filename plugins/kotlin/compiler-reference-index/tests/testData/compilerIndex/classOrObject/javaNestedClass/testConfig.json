@@ -1,0 +1,8 @@
+{
+    "mainFile": "JavaClass.java",
+    "usages": [
+        "ConstructorUsage.kt",
+        "JavaClass.java",
+        "TypeUsage.kt"
+    ]
+}

@@ -1,0 +1,51 @@
+### auto-generated section `build intellij.kotlin.compilerReferenceIndex.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "kotlin-compilerReferenceIndex-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-compilerReferenceIndex-tests_test_lib",
+  module_name = "intellij.kotlin.compilerReferenceIndex.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/plugin/k2",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//java/java-tests:tests_test_lib",
+    "//platform/core-api:core",
+    "//java/testFramework",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:junit4",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/code-insight/line-markers",
+    "//plugins/kotlin/code-insight/line-markers:line-markers_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/kotlin/fir/tests:tests_test_lib",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+  ],
+  runtime_deps = [":kotlin-compilerReferenceIndex-tests"]
+)
+### auto-generated section `build intellij.kotlin.compilerReferenceIndex.tests` end
+
+### auto-generated section `test intellij.kotlin.compilerReferenceIndex.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "kotlin-compilerReferenceIndex-tests_test",
+  runtime_deps = [":kotlin-compilerReferenceIndex-tests_test_lib"]
+)
+### auto-generated section `test intellij.kotlin.compilerReferenceIndex.tests` end

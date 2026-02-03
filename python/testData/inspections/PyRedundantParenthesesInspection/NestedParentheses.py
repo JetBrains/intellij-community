@@ -1,0 +1,1 @@
+x = (<weak_warning descr="Remove redundant parentheses">((42))</weak_warning>)

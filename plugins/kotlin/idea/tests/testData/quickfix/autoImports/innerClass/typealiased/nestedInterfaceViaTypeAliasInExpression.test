@@ -1,0 +1,18 @@
+// FILE: first.before.kt
+// "Import" "false"
+// IGNORE_K1
+
+package test
+
+class Outer {
+    interface NestedInterface
+}
+
+fun usage(f: Outer) {
+    f.<caret>NestedInterfaceAlias
+}
+
+// FILE: second.kt
+package some
+
+typealias NestedInterfaceAlias = test.Outer.NestedInterface

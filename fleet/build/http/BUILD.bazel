@@ -1,0 +1,69 @@
+### auto-generated section `build fleet.build.http` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_http",
+  opt_in = [
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+    "kotlin.ExperimentalStdlibApi",
+  ],
+  x_consistent_data_class_copy_visibility = True,
+  x_context_parameters = True,
+  x_jvm_default = "all-compatibility",
+  x_lambdas = "class"
+)
+
+jvm_library(
+  name = "http",
+  module_name = "fleet.build.http",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  kotlinc_opts = ":custom_http",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//fleet/ktor/client/core",
+    "//fleet/build/fs",
+    "@lib//:fleet-io-ktor-client-logging",
+    "@lib//:slf4j-api",
+    "@lib//:fleet-io-ktor-client-mock",
+  ],
+  exports = [
+    "@lib//:kotlinx-coroutines-core",
+    "//fleet/ktor/client/core",
+  ]
+)
+
+jvm_library(
+  name = "http_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcJvmTest/**/*.kt", "srcJvmTest/**/*.java", "srcJvmTest/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  kotlinc_opts = ":custom_http",
+  associates = [":http"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//fleet/ktor/client/core",
+    "//fleet/build/fs",
+    "//fleet/build/fs:fs_test_lib",
+    "@lib//:fleet-io-ktor-client-logging",
+    "@lib//:slf4j-api",
+    "//fleet/test-runtime",
+    "@lib//:fleet-io-ktor-client-mock",
+  ],
+  exports = [
+    "@lib//:kotlinx-coroutines-core",
+    "//fleet/ktor/client/core",
+  ]
+)
+### auto-generated section `build fleet.build.http` end
+
+### auto-generated section `test fleet.build.http` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "http_test",
+  runtime_deps = [":http_test_lib"]
+)
+### auto-generated section `test fleet.build.http` end

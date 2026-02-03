@@ -1,0 +1,47 @@
+### auto-generated section `build intellij.properties.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "properties-backend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "properties-backend",
+  module_name = "intellij.properties.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":properties-backend_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/diff-api:diff",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-api:lang",
+    "//platform/duplicates-analysis",
+    "//platform/platform-api:ide",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/diff",
+    "//spellchecker",
+    "//xml/impl",
+    "//plugins/properties/properties-psi-api:psi",
+    "//plugins/properties/properties-psi-impl:backend-psi",
+    "//platform/usageView",
+    "//platform/core-ui",
+    "//platform/refactoring",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/util/jdom",
+    "//platform/ide-core-impl",
+    "//platform/structuralsearch:structuralSearch",
+    "//plugins/properties/properties-common:properties",
+    "//platform/diff-impl",
+    "//platform/forms_rt:java-guiForms-rt",
+  ],
+  runtime_deps = ["//platform/backend"]
+)
+### auto-generated section `build intellij.properties.backend` end

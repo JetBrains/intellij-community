@@ -1,0 +1,159 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.execution.impl
+
+import com.intellij.configurationStore.LazySchemeProcessor
+import com.intellij.configurationStore.SchemeContentChangedHandler
+import com.intellij.configurationStore.SchemeDataHolder
+import com.intellij.execution.RunConfigurationConverter
+import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.execution.configurations.ConfigurationType
+import com.intellij.execution.configurations.UnknownConfigurationType
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.InvalidDataException
+import com.intellij.openapi.util.JDOMUtil
+import org.jdom.Element
+import java.util.function.Function
+
+private val LOG = logger<RunConfigurationSchemeManager>()
+
+internal class RunConfigurationSchemeManager(
+  private val manager: RunManagerImpl,
+  private val templateDifferenceHelper: TemplateDifferenceHelper,
+  private val isShared: Boolean,
+  private val isWrapSchemeIntoComponentElement: Boolean,
+) :
+  LazySchemeProcessor<RunnerAndConfigurationSettingsImpl, RunnerAndConfigurationSettingsImpl>(), SchemeContentChangedHandler<RunnerAndConfigurationSettingsImpl> {
+
+  override fun getSchemeKey(scheme: RunnerAndConfigurationSettingsImpl): String {
+    // here only isShared, because for workspace `workspaceSchemeManagerProvider.load` is used (see RunManagerImpl.loadState)
+    return when {
+      isShared -> {
+        if (scheme.type.isManaged) {
+          scheme.name
+        }
+        else {
+          // do not use name as a scheme key for Unknown RC or for Rider (some Rider RC types can use RC with not unique names)
+          // using isManaged not strictly correct, but separate API will be an overkill for now
+          scheme.uniqueID
+        }
+      }
+      else -> "${scheme.type.id}-${scheme.name}"
+    }
+  }
+
+  override fun createScheme(dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>,
+                            name: String,
+                            attributeProvider: (String) -> String?,
+                            isBundled: Boolean): RunnerAndConfigurationSettingsImpl {
+    val settings = RunnerAndConfigurationSettingsImpl(manager)
+    val element = readData(settings, dataHolder)
+    manager.addConfiguration(element, settings, isCheckRecentsLimit = false)
+    return settings
+  }
+
+  private fun readData(settings: RunnerAndConfigurationSettingsImpl,
+                       dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>): Element {
+    var element = dataHolder.read()
+
+    if (isShared && element.name == "component") {
+      element = element.getChild("configuration") ?: throw RuntimeException("Unexpected element: " + JDOMUtil.write(element))
+    }
+
+    ConfigurationType.CONFIGURATION_TYPE_EP.extensionList.filterIsInstance<RunConfigurationConverter>().any {
+      LOG.runAndLogException { it.convertRunConfigurationOnDemand(element) } ?: false
+    }
+
+    try {
+      settings.readExternal(element, isShared)
+    }
+    catch (e: InvalidDataException) {
+      LOG.error(e)
+    }
+
+    var elementAfterStateLoaded: Element? = element
+
+    if (!settings.needsToBeMigrated()) {
+      try {
+        elementAfterStateLoaded = writeScheme(settings)
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        LOG.error("Cannot compute digest for RC using state after load", e)
+      }
+    }
+
+    // very important to not write file with only changed line separators
+    dataHolder.updateDigest(elementAfterStateLoaded)
+
+    return element
+  }
+
+  override fun getSchemeKey(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String? {
+    var name = attributeProvider.apply("name")
+    if (name == "<template>" || name == null) {
+      attributeProvider.apply("type")?.let {
+        if (name == null) {
+          name = "<template>"
+        }
+        name += " of type ${it}"
+      }
+    }
+    else if (!isShared) {
+      val typeId = attributeProvider.apply("type")
+      LOG.assertTrue(typeId != null)
+      return "$typeId-${name}"
+    }
+
+    return name
+  }
+
+  override fun isExternalizable(scheme: RunnerAndConfigurationSettingsImpl) = true
+
+  override fun schemeContentChanged(scheme: RunnerAndConfigurationSettingsImpl, name: String, dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>) {
+    readData(scheme, dataHolder)
+    manager.eventPublisher.runConfigurationChanged(scheme)
+  }
+
+  override fun onSchemeAdded(scheme: RunnerAndConfigurationSettingsImpl) {
+    // createScheme automatically call addConfiguration
+  }
+
+  override fun onSchemeDeleted(scheme: RunnerAndConfigurationSettingsImpl) {
+    manager.removeConfigurations(listOf(scheme), onSchemeManagerDeleteEvent = true)
+  }
+
+  override fun writeScheme(scheme: RunnerAndConfigurationSettingsImpl): Element? {
+    val result = super.writeScheme(scheme) ?: return null
+    if (isShared && isWrapSchemeIntoComponentElement) {
+      return Element("component")
+        .setAttribute("name", "ProjectRunConfigurationManager")
+        .addContent(result)
+    }
+    else if (scheme.isTemplate) {
+      val factory = scheme.factory
+      if (factory != UnknownConfigurationType.getInstance() && !templateDifferenceHelper.isTemplateModified(result, factory)) {
+        return null
+      }
+    }
+    return result
+  }
+}
+
+internal class TemplateDifferenceHelper(private val manager: RunManagerImpl) {
+  private val cachedSerializedTemplateIdToData = HashMap<String, Element>()
+
+  fun isTemplateModified(serialized: Element, factory: ConfigurationFactory): Boolean {
+    val originalTemplate = cachedSerializedTemplateIdToData.getOrPut(factory.id) {
+      JDOMUtil.internElement(manager.createTemplateSettings(factory).writeScheme())
+    }
+    return !JDOMUtil.areElementsEqual(serialized, originalTemplate)
+  }
+
+  fun clearCache() {
+    cachedSerializedTemplateIdToData.clear()
+  }
+}

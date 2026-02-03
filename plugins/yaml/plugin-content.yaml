@@ -1,0 +1,12 @@
+- name: lib/modules/intellij.yaml.backend.jar
+  contentModules:
+  - name: intellij.yaml.backend
+- name: lib/modules/intellij.yaml.frontend.split.jar
+  contentModules:
+  - name: intellij.yaml.frontend.split
+- name: lib/modules/intellij.yaml.helm.jar
+  contentModules:
+  - name: intellij.yaml.helm
+- name: lib/yaml.jar
+  contentModules:
+  - name: intellij.yaml

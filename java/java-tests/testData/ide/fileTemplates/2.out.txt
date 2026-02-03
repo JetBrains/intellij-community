@@ -1,0 +1,5 @@
+// MyClass.java
+// $Author$
+// Created on 31-Dec-2002 by myakovlev
+package com.idea;
+public class MyClass { }

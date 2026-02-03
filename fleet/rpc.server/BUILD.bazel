@@ -1,0 +1,38 @@
+### auto-generated section `build fleet.rpc.server` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_rpc.server",
+  x_consistent_data_class_copy_visibility = True,
+  x_context_parameters = True,
+  x_jvm_default = "all-compatibility",
+  x_lambdas = "class"
+)
+
+resourcegroup(
+  name = "rpc.server_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "rpc.server",
+  module_name = "fleet.rpc.server",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  resources = [":rpc.server_resources"],
+  kotlinc_opts = ":custom_rpc.server",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//fleet/rpc",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//fleet/reporting/api",
+    "//fleet/reporting/shared",
+    "//fleet/multiplatform.shims",
+    "//fleet/util/core",
+  ]
+)
+### auto-generated section `build fleet.rpc.server` end

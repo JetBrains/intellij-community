@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.platform.progress.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "backend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.platform.progress.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/progress/shared:ide-progress",
+    "//platform/kernel/shared:kernel",
+    "//platform/core-api:core",
+  ],
+  runtime_deps = ["//platform/backend"]
+)
+### auto-generated section `build intellij.platform.progress.backend` end

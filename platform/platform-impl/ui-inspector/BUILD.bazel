@@ -1,0 +1,35 @@
+### auto-generated section `build intellij.platform.ide.ui.inspector` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "ide-ui-inspector_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ide-ui-inspector",
+  module_name = "intellij.platform.ide.ui.inspector",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ide-ui-inspector_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/analysis-impl",
+    "//platform/lang-api:lang",
+    "//platform/core-ui",
+    "//platform/core-impl",
+    "//platform/ide-core-impl",
+    "//libraries/miglayout-swing",
+    "//libraries/guava",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/execution",
+  ]
+)
+### auto-generated section `build intellij.platform.ide.ui.inspector` end

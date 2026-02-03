@@ -1,0 +1,48 @@
+### auto-generated section `build kotlin.j2k.k1.old` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_k1.old",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ],
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "k1.old_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "k1.old",
+  module_name = "kotlin.j2k.k1.old",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":k1.old_resources"],
+  kotlinc_opts = ":custom_k1.old",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-analysis-api",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/idea",
+    "//plugins/kotlin/frontend-independent",
+    "//platform/lang-api:lang",
+    "//java/java-psi-impl:psi-impl",
+    "//plugins/kotlin/j2k/shared",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//java/java-analysis-impl:analysis-impl",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/fe10/code-insight",
+    "//plugins/kotlin/j2k/k1.new",
+  ]
+)
+### auto-generated section `build kotlin.j2k.k1.old` end

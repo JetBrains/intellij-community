@@ -1,0 +1,152 @@
+LineBreakpoint created at nestedScopesWithSyncFrame.kt:12
+LineBreakpoint created at nestedScopesWithSyncFrame.kt:15
+LineBreakpoint created at nestedScopesWithSyncFrame.kt:18
+LineBreakpoint created at nestedScopesWithSyncFrame.kt:21
+LineBreakpoint created at nestedScopesWithSyncFrame.kt:24
+LineBreakpoint created at nestedScopesWithSyncFrame.kt:28
+LineBreakpoint created at nestedScopesWithSyncFrame.kt:31
+Run Java
+Connected to the target VM
+nestedScopesWithSyncFrame.kt:12
+vvv stack trace vvv
+  invokeSuspend:12, NestedScopesWithSyncFrameKt$main$1$1
+  invokeSuspend:10, NestedScopesWithSyncFrameKt$main$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  main:9, NestedScopesWithSyncFrameKt
+  main:-1, NestedScopesWithSyncFrameKt
+^^^ stack trace ^^^
+nestedScopesWithSyncFrame.kt:15
+vvv stack trace vvv
+  invokeSuspend:15, NestedScopesWithSyncFrameKt$main$1$1$1
+  foo:46, NestedScopesWithSyncFrameKt
+  invokeSuspend:13, NestedScopesWithSyncFrameKt$main$1$1
+  invokeSuspend:10, NestedScopesWithSyncFrameKt$main$1
+  invoke:-1, NestedScopesWithSyncFrameKt$main$1$1$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  main:9, NestedScopesWithSyncFrameKt
+  main:-1, NestedScopesWithSyncFrameKt
+^^^ stack trace ^^^
+nestedScopesWithSyncFrame.kt:18
+vvv stack trace vvv
+  invokeSuspend:18, NestedScopesWithSyncFrameKt$main$1$1$1$1
+  invokeSuspend:59, NestedScopesWithSyncFrameKt$sync$1
+  invoke:-1, NestedScopesWithSyncFrameKt$main$1$1$1$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  sync:57, NestedScopesWithSyncFrameKt
+  <hidden frames>
+  invokeSuspend:16, NestedScopesWithSyncFrameKt$main$1$1$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  main:9, NestedScopesWithSyncFrameKt
+  main:-1, NestedScopesWithSyncFrameKt
+^^^ stack trace ^^^
+nestedScopesWithSyncFrame.kt:21
+vvv stack trace vvv
+  invokeSuspend:21, NestedScopesWithSyncFrameKt$main$1$1$1$1$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  invokeSuspend:19, NestedScopesWithSyncFrameKt$main$1$1$1$1
+  invoke:-1, NestedScopesWithSyncFrameKt$main$1$1$1$1
+  invoke:-1, NestedScopesWithSyncFrameKt$main$1$1$1$1
+  invokeSuspend:59, NestedScopesWithSyncFrameKt$sync$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  sync:57, NestedScopesWithSyncFrameKt
+  <hidden frames>
+  invokeSuspend:16, NestedScopesWithSyncFrameKt$main$1$1$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  main:9, NestedScopesWithSyncFrameKt
+  main:-1, NestedScopesWithSyncFrameKt
+^^^ stack trace ^^^
+nestedScopesWithSyncFrame.kt:24
+vvv stack trace vvv
+  invokeSuspend:24, NestedScopesWithSyncFrameKt$main$1$1$1$1$1$1
+  invokeSuspend:22, NestedScopesWithSyncFrameKt$main$1$1$1$1$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  invokeSuspend:19, NestedScopesWithSyncFrameKt$main$1$1$1$1
+  invoke:-1, NestedScopesWithSyncFrameKt$main$1$1$1$1
+  invoke:-1, NestedScopesWithSyncFrameKt$main$1$1$1$1
+  invokeSuspend:59, NestedScopesWithSyncFrameKt$sync$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  sync:57, NestedScopesWithSyncFrameKt
+  <hidden frames>
+  invokeSuspend:16, NestedScopesWithSyncFrameKt$main$1$1$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  main:9, NestedScopesWithSyncFrameKt
+  main:-1, NestedScopesWithSyncFrameKt
+^^^ stack trace ^^^
+nestedScopesWithSyncFrame.kt:28
+vvv stack trace vvv
+  invokeSuspend:28, NestedScopesWithSyncFrameKt$main$1$1$1$1$1$1$1
+  joo:52, NestedScopesWithSyncFrameKt
+  invokeSuspend:26, NestedScopesWithSyncFrameKt$main$1$1$1$1$1$1
+  invokeSuspend:22, NestedScopesWithSyncFrameKt$main$1$1$1$1$1
+  invoke:-1, NestedScopesWithSyncFrameKt$main$1$1$1$1$1$1$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  invokeSuspend:19, NestedScopesWithSyncFrameKt$main$1$1$1$1
+  invoke:-1, NestedScopesWithSyncFrameKt$main$1$1$1$1
+  invoke:-1, NestedScopesWithSyncFrameKt$main$1$1$1$1
+  invokeSuspend:59, NestedScopesWithSyncFrameKt$sync$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  sync:57, NestedScopesWithSyncFrameKt
+  <hidden frames>
+  invokeSuspend:16, NestedScopesWithSyncFrameKt$main$1$1$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  main:9, NestedScopesWithSyncFrameKt
+  main:-1, NestedScopesWithSyncFrameKt
+^^^ stack trace ^^^
+nestedScopesWithSyncFrame.kt:31
+vvv stack trace vvv
+  invokeSuspend:31, NestedScopesWithSyncFrameKt$main$1$1$1$1$1$1$1$1
+  invokeSuspend:29, NestedScopesWithSyncFrameKt$main$1$1$1$1$1$1$1
+  joo:52, NestedScopesWithSyncFrameKt
+  invokeSuspend:26, NestedScopesWithSyncFrameKt$main$1$1$1$1$1$1
+  invokeSuspend:22, NestedScopesWithSyncFrameKt$main$1$1$1$1$1
+  invoke:-1, NestedScopesWithSyncFrameKt$main$1$1$1$1$1$1$1$1
+  <hidden frames>
+  invoke:-1, NestedScopesWithSyncFrameKt$main$1$1$1$1$1$1$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  invokeSuspend:19, NestedScopesWithSyncFrameKt$main$1$1$1$1
+  invoke:-1, NestedScopesWithSyncFrameKt$main$1$1$1$1
+  invoke:-1, NestedScopesWithSyncFrameKt$main$1$1$1$1
+  invokeSuspend:59, NestedScopesWithSyncFrameKt$sync$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  sync:57, NestedScopesWithSyncFrameKt
+  <hidden frames>
+  invokeSuspend:16, NestedScopesWithSyncFrameKt$main$1$1$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  main:9, NestedScopesWithSyncFrameKt
+  main:-1, NestedScopesWithSyncFrameKt
+^^^ stack trace ^^^
+Disconnected from the target VM
+
+Process finished with exit code 0

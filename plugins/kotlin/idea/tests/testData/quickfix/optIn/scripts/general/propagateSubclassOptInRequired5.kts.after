@@ -1,0 +1,22 @@
+// "Propagate 'SubclassOptInRequired(UnstableApi::class)' opt-in requirement to 'SomeImplementation'" "true"
+// ACTION: Add full qualifier
+// ACTION: Implement abstract class
+// ACTION: Introduce import alias
+// ACTION: Opt in for 'UnstableApi' in containing file 'propagateSubclassOptInRequired5.kts'
+// ACTION: Opt in for 'UnstableApi' in module 'light_idea_test_case'
+// ACTION: Opt in for 'UnstableApi' on 'SomeImplementation'
+// ACTION: Propagate 'SubclassOptInRequired(UnstableApi::class)' opt-in requirement to 'SomeImplementation'
+// RUNTIME_WITH_SCRIPT_RUNTIME
+// LANGUAGE_VERSION: 2.1
+
+@RequiresOptIn
+annotation class UnstableApi
+
+interface MockApi
+
+@SubclassOptInRequired(UnstableApi::class)
+interface CoreLibraryApi
+
+@SubclassOptInRequired(UnstableApi::class)
+abstract class SomeImplementation : MockApi, CoreLibrary<caret>Api
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$PropagateOptInAnnotationFix

@@ -1,0 +1,12 @@
+java.FILE
+  IMPORT_LIST
+    IMPORT_STATEMENT
+      IMPORT_KEYWORD
+      WHITE_SPACE
+      JAVA_CODE_REFERENCE
+        IDENTIFIER
+        REFERENCE_PARAMETER_LIST
+          <empty list>
+      DOT
+      ASTERISK
+      SEMICOLON

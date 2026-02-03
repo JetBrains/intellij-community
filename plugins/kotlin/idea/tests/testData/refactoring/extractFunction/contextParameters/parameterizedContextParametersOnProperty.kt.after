@@ -1,0 +1,20 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+context(c: A)
+val <A> p: A
+    get() = c
+
+interface MyFormatter {
+    fun format(input: String): String
+}
+
+context(param: String)
+fun MyFormatter.problematicFunction(): String {
+    return string()
+}
+
+context(param: String)
+private fun MyFormatter.string(): String = with(this) {
+    return p.format("Value: $param")
+}
+// IGNORE_K1

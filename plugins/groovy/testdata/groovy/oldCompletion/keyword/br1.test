@@ -1,0 +1,10 @@
+while (true) {
+  if (true) {
+    b<caret>
+  }
+}
+-----
+boolean
+break
+byte
+double

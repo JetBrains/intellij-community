@@ -1,0 +1,9 @@
+<idea-plugin>
+  <id>com.intellij</id>
+  <name>IDEA CORE</name>
+
+  <actions>
+    <action id="a" class="<caret>"/>
+  </actions>
+  
+</idea-plugin>

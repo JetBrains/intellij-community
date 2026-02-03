@@ -1,0 +1,205 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package com.intellij.ide.projectView.impl;
+
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.SelectInTarget;
+import com.intellij.ide.impl.ProjectPaneSelectInTarget;
+import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.ProjectViewSettings;
+import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.canBeSelected.CanBeSelectedInProjectPaneProvider;
+import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
+import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode;
+import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.ui.EDT;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+import javax.accessibility.AccessibleContext;
+import javax.swing.Icon;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeModel;
+import java.awt.Font;
+
+import static com.intellij.openapi.module.ModuleGrouperKt.isQualifiedModuleNamesEnabled;
+
+public class ProjectViewPane extends AbstractProjectViewPaneWithAsyncSupport {
+  public static final @NonNls String ID = "ProjectPane";
+
+  public ProjectViewPane(Project project) {
+    super(project);
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void configureAsyncSupport(@NotNull ProjectViewPaneSupport support) {
+    support.setMultiSelectionEnabled(false);
+  }
+
+  @Override
+  public @NotNull String getTitle() {
+    return IdeBundle.message("title.project");
+  }
+
+  @Override
+  public @NotNull String getId() {
+    return ID;
+  }
+
+  @Override
+  public @NotNull Icon getIcon() {
+    return AllIcons.General.ProjectTab;
+  }
+
+
+  @Override
+  public @NotNull SelectInTarget createSelectInTarget() {
+    return new ProjectPaneSelectInTarget(myProject);
+  }
+
+  @Override
+  protected @NotNull ProjectAbstractTreeStructureBase createStructure() {
+    return new ProjectViewPaneTreeStructure();
+  }
+
+  @Override
+  protected @NotNull ProjectViewTree createTree(@NotNull DefaultTreeModel treeModel) {
+    return new MyProjectViewTree(treeModel, getTitle());
+  }
+
+  public @NotNull String getComponentName() {
+    return "ProjectPane";
+  }
+
+  /**
+   * @return {@code true} if 'Project View' have more than one top-level module node or have top-level module group nodes
+   */
+  private boolean hasSeveralTopLevelModuleNodes() {
+    if (!EDT.isCurrentThreadEdt()) return true; // do not check nodes during building
+    // TODO: have to rewrite this logic without using walking in a tree
+    TreeModel treeModel = myTree.getModel();
+    Object root = treeModel.getRoot();
+    int count = treeModel.getChildCount(root);
+    if (count <= 1) return false;
+    int moduleNodes = 0;
+    for (int i = 0; i < count; i++) {
+      Object child = treeModel.getChild(root, i);
+      if (child instanceof DefaultMutableTreeNode) {
+        Object node = ((DefaultMutableTreeNode)child).getUserObject();
+        if (node instanceof ProjectViewModuleNode || node instanceof PsiDirectoryNode) {
+          moduleNodes++;
+          if (moduleNodes > 1) {
+            return true;
+          }
+        }
+        else if (node instanceof ModuleGroupNode) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public boolean isFileNestingEnabled() {
+    return true;
+  }
+
+  // should be first
+  @Override
+  public int getWeight() {
+    return 0;
+  }
+
+  protected class ProjectViewPaneTreeStructure extends ProjectTreeStructure implements ProjectViewSettings {
+    protected ProjectViewPaneTreeStructure() {
+      super(ProjectViewPane.this.myProject, ProjectViewPane.this.getId());
+    }
+
+    @Override
+    protected AbstractTreeNode<?> createRoot(@NotNull Project project, @NotNull ViewSettings settings) {
+      return new ProjectViewProjectNode(project, settings);
+    }
+
+    @Override
+    public boolean isShowExcludedFiles() {
+      return ProjectView.getInstance(myProject).isShowExcludedFiles(getId());
+    }
+
+    @Override
+    public boolean isShowLibraryContents() {
+      return true;
+    }
+
+    @Override
+    public boolean isUseFileNestingRules() {
+      return ProjectView.getInstance(myProject).isUseFileNestingRules(getId());
+    }
+
+    @Override
+    public boolean isToBuildChildrenInBackground(@NotNull Object element) {
+      return Registry.is("ide.projectView.ProjectViewPaneTreeStructure.BuildChildrenInBackground");
+    }
+  }
+
+  public static boolean canBeSelectedInProjectView(@NotNull Project project, @NotNull VirtualFile file) {
+    return CanBeSelectedInProjectPaneProvider.canBeSelected(project, file);
+  }
+
+  @Override
+  public boolean supportsFlattenModules() {
+    return PlatformUtils.isIntelliJ() && isQualifiedModuleNamesEnabled(myProject) && hasSeveralTopLevelModuleNodes();
+  }
+
+  @Override
+  public boolean supportsShowExcludedFiles() {
+    return true;
+  }
+
+  @Override
+  public boolean supportsShowScratchesAndConsoles() {
+    return true;
+  }
+
+  private static class MyProjectViewTree extends ProjectViewTree {
+    private final @NotNull String myTitle;
+
+    MyProjectViewTree(@NotNull DefaultTreeModel treeModel, @NotNull String title) {
+      super(treeModel);
+      myTitle = title;
+    }
+
+    @Override
+    public String toString() {
+      return myTitle + " " + super.toString();
+    }
+
+    @Override
+    public void setFont(Font font) {
+      if (AdvancedSettings.getBoolean("bigger.font.in.project.view")) {
+        font = font.deriveFont(font.getSize() + 1.0f);
+      }
+      super.setFont(font);
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = super.getAccessibleContext();
+        accessibleContext.setAccessibleName(IdeBundle.message("project.structure.tree.accessible.name"));
+      }
+      return accessibleContext;
+    }
+  }
+}

@@ -1,0 +1,62 @@
+- name: lib/ai.grazie.emb.jar
+  library: ai.grazie.emb
+  module: intellij.searchEverywhereMl
+  files:
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-emb-jvm/0/model-emb-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0/model-text-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0/model-common-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0/utils-common-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-multiplatform-jvm/0/utils-multiplatform-jvm-0.jar
+- name: lib/ai.grazie.model.swagger.annotations.jvm.jar
+  library: ai.grazie.model.swagger.annotations.jvm
+  module: intellij.searchEverywhereMl
+  files:
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0/swagger-annotations-jvm-0.jar
+- name: lib/jetbrains.mlapi.core.jar
+  library: jetbrains.mlapi.core
+  files:
+  - name: $MAVEN_REPOSITORY$/com/jetbrains/mlapi/mlapi-core/0/mlapi-core-0.jar
+  reason: <- intellij.platform.ml.logs
+- name: lib/modules/intellij.searchEverywhereMl.ranking.core.jar
+  contentModules:
+  - name: intellij.searchEverywhereMl.ranking.core
+    libraries:
+      find-action-model:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/252/find-action-model-252.jar
+      find-action-model-experimental:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/252/find-action-model-252.jar
+      find-file-model:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/252/find-file-model-252.jar
+      find-file-model-experimental:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/252/find-file-model-252.jar
+      find-classes-model:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/252/find-classes-model-252.jar
+      find-classes-model-experimental:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/252/find-classes-model-252.jar
+      find-all-model-experimental:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/252/find-all-model-252.jar
+      find-ec-model-experimental:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-ec-model/252/find-ec-model-252.jar
+- name: lib/modules/intellij.searchEverywhereMl.ranking.ext.jar
+  contentModules:
+  - name: intellij.searchEverywhereMl.ranking.ext
+- name: lib/modules/intellij.searchEverywhereMl.ranking.java.jar
+  contentModules:
+  - name: intellij.searchEverywhereMl.ranking.java
+- name: lib/modules/intellij.searchEverywhereMl.ranking.vcs.jar
+  contentModules:
+  - name: intellij.searchEverywhereMl.ranking.vcs
+- name: lib/modules/intellij.searchEverywhereMl.ranking.yaml.jar
+  contentModules:
+  - name: intellij.searchEverywhereMl.ranking.yaml
+- name: lib/modules/intellij.searchEverywhereMl.typos.jar
+  contentModules:
+  - name: intellij.searchEverywhereMl.typos
+    libraries:
+      ai.grazie.spell.gec.engine.local.jvm:
+      - name: $MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0/gec-spell-engine-local-0.jar
+- name: lib/searchEverywhereMl.jar
+  modules:
+  - name: intellij.searchEverywhereMl
+  contentModules:
+  - name: intellij.platform.ml.logs

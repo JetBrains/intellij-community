@@ -1,0 +1,80 @@
+### auto-generated section `build intellij.kotlin.refactorings` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_kotlin-refactorings",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+  ],
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "kotlin-refactorings_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-refactorings",
+  module_name = "intellij.kotlin.refactorings",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-refactorings_resources"],
+  kotlinc_opts = ":custom_kotlin-refactorings",
+  deps = [
+    "//java/java-indexing-api:indexing",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//plugins/kotlin/base/psi",
+    "//platform/usageView",
+    "//plugins/kotlin/base/util",
+    "//java/java-psi-api:psi",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/lang-impl",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//java/openapi:java",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//plugins/kotlin/kotlin.searching",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/kdoc",
+    "//platform/core-ui",
+    "//plugins/kotlin/base/analysis",
+    "//platform/platform-impl:ide-impl",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+    "//plugins/kotlin/base/project-structure",
+    "@lib//:kotlinc-kotlin-compiler-fir",
+    "//plugins/kotlin/code-insight/api",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "@lib//:kotlinc-analysis-api-k2",
+    "//plugins/kotlin/code-insight/utils",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/kotlin.searching/base",
+    "@lib//:kotlinc-analysis-api-impl-base",
+    "//libraries/guava",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move",
+    "//platform/util/text-matching",
+    "//plugins/kotlin/base/indices",
+    "//libraries/fastutil",
+    "//plugins/kotlin/j2k/shared",
+    "//platform/ide-core-impl",
+    "//plugins/kotlin/kotlin.ide",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
+)
+### auto-generated section `build intellij.kotlin.refactorings` end

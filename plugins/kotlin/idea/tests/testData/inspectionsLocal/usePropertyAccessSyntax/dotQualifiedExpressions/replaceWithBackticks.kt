@@ -1,0 +1,6 @@
+// FIX: Use property access syntax
+// PROBLEM: "Use of getter method instead of property access syntax"
+
+fun main() {
+    J().<caret>`isActive`()
+}

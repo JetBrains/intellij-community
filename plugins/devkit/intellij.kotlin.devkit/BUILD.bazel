@@ -1,0 +1,64 @@
+### auto-generated section `build intellij.kotlin.devkit` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_kotlin-devkit",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+  ],
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "kotlin-devkit_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-devkit",
+  module_name = "intellij.kotlin.devkit",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-devkit_resources"],
+  kotlinc_opts = ":custom_kotlin-devkit",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//plugins/devkit/devkit-core:core",
+    "//platform/analysis-api:analysis",
+    "//platform/core-impl",
+    "//java/java-psi-api:psi",
+    "//xml/dom-openapi:dom",
+    "//xml/xml-psi-api:psi",
+    "//xml/xml-analysis-api:analysis",
+    "//java/java-analysis-api:analysis",
+    "//plugins/kotlin/code-insight/utils",
+    "@lib//:kotlinc-analysis-api-provided",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "//platform/editor-ui-api:editor-ui",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+    "//plugins/kotlin/code-insight/api",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/uast/uast-kotlin-base",
+    "//platform/lang-impl",
+    "//platform/lang-api:lang",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+    "//platform/eel",
+    "//java/java-indexing-api:indexing",
+    "//java/openapi:java",
+  ]
+)
+### auto-generated section `build intellij.kotlin.devkit` end

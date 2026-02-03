@@ -1,0 +1,120 @@
+{
+  "inspections": [
+    {
+      "id": "EditorConfigNumerousWildcards",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "EditorConfigKeyCorrectness",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "EditorConfigEncoding",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EditorConfigEmptyHeader",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "EditorConfigSpaceInHeader",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "EditorConfigUnusedDeclaration",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EditorConfigRootDeclarationUniqueness",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "EditorConfigShadowedOption",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EditorConfigReferenceCorrectness",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "EditorConfigPartialOverride",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EditorConfigListAcceptability",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "EditorConfigPatternEnumerationRedundancy",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "EditorConfigNoMatchingFiles",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EditorConfigHeaderUniqueness",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "EditorConfigValueCorrectness",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "EditorConfigRootDeclarationCorrectness",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "EditorConfigPatternRedundancy",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EditorConfigDeprecatedDescriptor",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EditorConfigCharClassRedundancy",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EditorConfigEmptySection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EditorConfigVerifyByCore",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "EditorConfigOptionRedundancy",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EditorConfigWildcardRedundancy",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EditorConfigValueUniqueness",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EditorConfigUnexpectedComma",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "EditorConfigShadowingOption",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EditorConfigCharClassLetterRedundancy",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EditorConfigMissingRequiredDeclaration",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "EditorConfigPairAcceptability",
+      "codeQualityCategory": "Reliability"
+    }
+  ]
+}

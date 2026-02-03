@@ -1,0 +1,8 @@
+<test>
+    <element
+            attribute="test1"/>
+    <element
+            attribute="test3"/>
+    <element
+            attribute="test2"/>
+</test>

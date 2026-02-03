@@ -1,0 +1,3 @@
+def func(Arg):
+    pass
+

@@ -1,0 +1,17 @@
+### auto-generated section `build intellij.tasks.compatibility` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "compatibility",
+  module_name = "intellij.tasks.compatibility",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/platform-api:ide",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/tasks/tasks-api:tasks",
+    "@lib//:tasks-compatibility-http-client-3-1",
+  ],
+  exports = ["@lib//:tasks-compatibility-http-client-3-1"]
+)
+### auto-generated section `build intellij.tasks.compatibility` end

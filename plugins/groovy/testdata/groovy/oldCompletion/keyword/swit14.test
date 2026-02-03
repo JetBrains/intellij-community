@@ -1,0 +1,10 @@
+class A{
+  def foo() {
+    switch (k){
+      case 1:
+        wh<caret>(true){}
+    }
+  }
+}
+-----
+while

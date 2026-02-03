@@ -1,0 +1,36 @@
+### auto-generated section `build intellij.platform.usageView` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "usageView_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "usageView",
+  module_name = "intellij.platform.usageView",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":usageView_resources"],
+  deps = [
+    "//libraries/fastutil",
+    "//platform/statistics",
+    "//platform/core-ui",
+    "//platform/util",
+    "//platform/ide-core",
+    "//platform/ide-core-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/core-api:core",
+    "//platform/indexing-api:indexing",
+    "//platform/util:util-ui",
+    "//platform/analysis-api:analysis",
+    "//platform/core-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/concurrency",
+    "//platform/analysis-impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/projectModel-impl",
+  ]
+)
+### auto-generated section `build intellij.platform.usageView` end

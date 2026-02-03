@@ -1,0 +1,12 @@
+#if (${PACKAGE_NAME} && ${PACKAGE_NAME} != "")package ${PACKAGE_NAME}
+
+#end
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectActivity
+
+#parse("File Header.java")
+internal class ${NAME} : ProjectActivity {
+    override suspend fun execute(project: Project) {
+
+    }
+}

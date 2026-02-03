@@ -1,0 +1,153 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.searchEverywhere.frontend.ui
+
+import com.intellij.ide.rpc.ThrottledAccumulatedItems
+import com.intellij.ide.rpc.ThrottledItems
+import com.intellij.ide.rpc.ThrottledOneItem
+import com.intellij.platform.searchEverywhere.SeItemDataKeys
+import com.intellij.platform.searchEverywhere.SeResultAddedEvent
+import com.intellij.platform.searchEverywhere.SeResultEndEvent
+import com.intellij.platform.searchEverywhere.SeResultEvent
+import com.intellij.platform.searchEverywhere.SeResultReplacedEvent
+import com.intellij.platform.searchEverywhere.frontend.SeSearchStatePublisher
+import com.intellij.platform.searchEverywhere.frontend.vm.SeSearchContext
+import com.intellij.platform.searchEverywhere.providers.SeLog
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import org.jetbrains.annotations.ApiStatus.Internal
+import javax.swing.DefaultListModel
+import javax.swing.ListSelectionModel
+import kotlin.text.toBoolean
+
+@Internal
+class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher,
+                        private val selectionModelProvider: () -> ListSelectionModel): DefaultListModel<SeResultListRow>() {
+  val freezer: Freezer = Freezer { size }
+
+  val isValid: Boolean get() = isValidState.value
+  val isValidState: StateFlow<Boolean> get() = _isValidState.asStateFlow()
+  private val _isValidState = MutableStateFlow(true)
+
+  val pendingReplacementElementUuids: MutableSet<String> = mutableSetOf()
+
+  var isValidAndHasOnlySemantic: Boolean = false
+    private set
+
+  fun reset() {
+    SeLog.log(SeLog.THROTTLING) { "Will reset result list model" }
+    freezer.reset()
+    _isValidState.value = true
+    pendingReplacementElementUuids.clear()
+    removeAllElements()
+    isValidAndHasOnlySemantic = false
+  }
+
+  fun invalidate() {
+    _isValidState.value = false
+    isValidAndHasOnlySemantic = false
+  }
+
+  fun removeLoadingItem() {
+    if (size > 0 && getElementAt(size - 1) is SeResultListMoreRow) {
+      removeElementAt(size - 1)
+    }
+  }
+
+  fun addFromThrottledEvent(searchContext: SeSearchContext, throttledEvent: ThrottledItems<SeResultEvent>) {
+    if (!isValid) reset()
+
+    val wasEmpty = isEmpty
+
+    val resultListAdapter = SeResultListModelAdapter(this, selectionModelProvider())
+    when (throttledEvent) {
+      is ThrottledAccumulatedItems<SeResultEvent> -> {
+        val accumulatedList = SeResultListCollection(pendingReplacementElementUuids)
+        throttledEvent.items.forEach {
+          accumulatedList.handleEvent(searchContext, it)
+        }
+
+        // Remove SeResultListMoreRow from the accumulatedList if we already have one in the real listModel
+        if (size > 0 && getElementAt(size - 1) is SeResultListMoreRow
+            && accumulatedList.list.isNotEmpty() && accumulatedList.list.last() is SeResultListMoreRow) {
+          accumulatedList.list.removeLast()
+        }
+
+        addAll(resultListAdapter.lastIndexToInsertItem, accumulatedList.list)
+        SeLog.log(SeLog.THROTTLING) {
+          "Added batch of throttled events: ${accumulatedList.list.size}; Providers:" +
+          accumulatedList.list.mapNotNull { (it as? SeResultListItemRow)?.item?.providerId?.value }.groupingBy { it }.eachCount().map {
+            "${it.key} - ${it.value}"
+          }.joinToString(", ")
+        }
+
+        accumulatedList.list.filterIsInstance<SeResultListItemRow>().takeIf { it.isNotEmpty() }?.map {
+          it.item
+        }?.let { items ->
+          searchStatePublisher.elementsAdded(searchContext.searchId, items.associateBy { it.uuid })
+        }
+      }
+      is ThrottledOneItem<SeResultEvent> -> {
+        resultListAdapter.handleEvent(searchContext, throttledEvent.item, onAdd = {
+          searchStatePublisher.elementsAdded(searchContext.searchId, mapOf(it.uuid to it))
+        }, onRemove = {
+          searchStatePublisher.elementsRemoved(searchContext.searchId, 1)
+        })
+      }
+    }
+
+    if (!throttledEvent.isEndEvent()) { // isValidAndHasOnlySemantic does not change if it is an end event
+      isValidAndHasOnlySemantic = (isValidAndHasOnlySemantic || (wasEmpty && !isEmpty)) && throttledEvent.allItemsAreSemantic()
+    }
+  }
+
+  class Freezer(private val listSize: () -> Int) {
+    private var frozenCountToApply: Int = 0
+    var isEnabled: Boolean = false
+      private set
+
+    val frozenCount: Int get() = if (isEnabled) frozenCountToApply else 0
+
+    fun enable() {
+      isEnabled = true
+      SeLog.log(SeLog.FROZEN_COUNT) { "frozenCount = $frozenCountToApply; size = ${listSize()}; isApplied = $isEnabled" }
+    }
+
+    fun freezeIfEnabled(count: Int) {
+      if (count > frozenCountToApply) {
+        frozenCountToApply = count
+        SeLog.log(SeLog.FROZEN_COUNT) { "frozenCount = $frozenCountToApply; size = ${listSize()}; isApplied = $isEnabled" }
+      }
+    }
+
+    fun reset() {
+      isEnabled = false
+      frozenCountToApply = 0
+    }
+  }
+}
+
+private fun <T : SeResultEvent> ThrottledItems<T>.allItemsAreSemantic(): Boolean =
+  when (this) {
+    is ThrottledAccumulatedItems<T> -> items.all { it.isSemantic() }
+    is ThrottledOneItem<T> -> item.isSemantic()
+  }
+
+private fun <T : SeResultEvent> ThrottledItems<T>.isEndEvent(): Boolean =
+  when (this) {
+    is ThrottledAccumulatedItems<T> -> items.size == 1 && items[0] is SeResultEndEvent
+    is ThrottledOneItem<T> -> item is SeResultEndEvent
+  }
+
+private fun SeResultEvent.isSemantic(): Boolean {
+  val itemData = when (this) {
+    is SeResultAddedEvent -> {
+      itemData
+    }
+    is SeResultReplacedEvent -> {
+      newItemData
+    }
+    else -> null
+  }
+  return itemData?.additionalInfo[SeItemDataKeys.IS_SEMANTIC].toBoolean()
+}

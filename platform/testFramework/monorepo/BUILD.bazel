@@ -1,0 +1,62 @@
+### auto-generated section `build intellij.platform.testFramework.monorepo` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "monorepo",
+  module_name = "intellij.platform.testFramework.monorepo",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:junit5Jupiter",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/coroutines",
+    "//libraries/kotlinx/coroutines/core",
+    "//jps/model-api:model",
+    "//tools/apiDump",
+    "//platform/util-ex",
+    "//platform/util",
+    "//jps/model-serialization",
+    "//platform/testFramework",
+  ]
+)
+
+jvm_library(
+  name = "monorepo_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  associates = [":monorepo"],
+  deps = [
+    "@lib//:junit5Jupiter",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/coroutines",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/test",
+    "@lib//:jetbrains-annotations",
+    "//jps/model-api:model",
+    "//tools/apiDump",
+    "//platform/util/diff",
+    "//platform/util-ex",
+    "@lib//:junit5",
+    "//platform/util",
+    "//platform/testFramework/core",
+    "//jps/jps-builders:build",
+    "//jps/model-serialization",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/devkit/runtimeModuleRepository/generator",
+    "//java/java-runtime:rt",
+    "//platform/runtime/repository",
+  ]
+)
+### auto-generated section `build intellij.platform.testFramework.monorepo` end
+
+### auto-generated section `test intellij.platform.testFramework.monorepo` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "monorepo_test",
+  runtime_deps = [":monorepo_test_lib"]
+)
+### auto-generated section `test intellij.platform.testFramework.monorepo` end

@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.groovy.git` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "git_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "git",
+  module_name = "intellij.groovy.git",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":git_resources"],
+  deps = [
+    "//plugins/groovy",
+    "//platform/util",
+    "//plugins/git4idea:vcs-git",
+    "//platform/core-api:core",
+    "//platform/ide-core",
+    "@lib//:kotlin-stdlib",
+  ]
+)
+### auto-generated section `build intellij.groovy.git` end

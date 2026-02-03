@@ -1,0 +1,102 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.jetbrains.python.testing
+
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
+import com.intellij.util.Processor
+import com.jetbrains.python.extensions.inherits
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.testing.pyTestFixtures.TEST_FIXTURE_DECORATOR_NAMES
+
+/**
+ * Pytest could use any "test_" function as a test.
+ * See `PythonUnitTestDetectorsBasedOnSettings.isTestFunction`.
+ */
+fun isTestFunction(function: PyFunction): Boolean {
+  // Check if the function name starts with "test"
+  val isTestNamed = function.name?.startsWith("test") == true
+  if (!isTestNamed) return false
+
+  // Get the list of decorators, if any, otherwise consider this a test function
+  val decoratorList = function.decoratorList?.decorators ?: return true
+
+  // Determine if any decorator matches known pytest fixture names
+  val isPytestFixture = decoratorList.any { decorator ->
+    val decoratorName = decorator.callee?.text
+    decoratorName in TEST_FIXTURE_DECORATOR_NAMES
+  }
+
+  // A test function must not be a pytest fixture
+  return !isPytestFixture
+}
+
+/**
+ * Inheritor of TestCase class is always test for unittest and could also be launched with pytest.
+ * See `PythonUnitTestDetectorsBasedOnSettings.isTestFunction`.
+ */
+fun isUnitTestCaseClass(clazz: PyClass, context: TypeEvalContext): Boolean =
+  clazz.inherits(context, "unittest.TestCase", "unittest.case.TestCase")
+
+/**
+ * Checks if class [isUnitTestCaseClass] or both conditions are true: it's name starts/ends with "Test" and it has at least one
+ * "test" or setup method.
+ * See `PythonUnitTestDetectorsBasedOnSettings.isTestFunction`.
+ */
+fun isTestClass(clazz: PyClass, context: TypeEvalContext): Boolean {
+  if (isUnitTestCaseClass(clazz, context)) {
+    return true
+  }
+  val className = clazz.name ?: return false
+  if (!className.startsWith("Test") && !className.endsWith("Test")) {
+    return false
+  }
+
+  // Check if any method is a test method or setUp
+  var hasTestMethod = false
+  clazz.visitMethods(object : Processor<PyFunction> {
+    override fun process(function: PyFunction): Boolean {
+      if (isTestFunction(function) || function.name?.equals("setUp") == true) {
+        hasTestMethod = true
+        return false
+      }
+      return true
+    }
+  }, true, context)
+
+  // Check nested classes
+  val hasTestInNested = clazz.statementList.statements?.any { stmt ->
+    stmt is PyClass && isTestClass(stmt, context)
+  } ?: false
+
+  return hasTestMethod || hasTestInNested
+}
+
+fun isTestFile(
+  file: PyFile,
+  context: TypeEvalContext,
+): Boolean {
+  return if (file.topLevelClasses.any { o: PyClass ->
+      isTestClass(o, context)
+    }) {
+    true
+  }
+  else file.name.startsWith("test_") ||
+       file.topLevelFunctions.any { o: PyFunction ->
+         isTestFunction(o)
+       }
+}
+
+fun isTestElement(element: PsiElement, typeEvalContext: TypeEvalContext): Boolean = when (element) {
+  is PyFile -> isTestFile(element, typeEvalContext)
+  is PsiDirectory -> element.name.contains("test", true) || element.children.any {
+    it is PyFile && isTestFile(it, typeEvalContext)
+  }
+  is PyFunction -> isTestFunction(element)
+  is PyClass -> {
+    isTestClass(element, typeEvalContext)
+  }
+  else -> false
+}

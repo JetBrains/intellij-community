@@ -1,0 +1,54 @@
+### auto-generated section `build intellij.kotlin.codeInsight.structuralSearch.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//platform/execution"]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "intellij.kotlin.codeInsight.structuralSearch.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/kotlin/plugin/k2",
+    "//platform/structuralsearch:structuralSearch",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/execution",
+    "//java/testFramework",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//java/idea-ui:ui",
+    "//java/openapi:java",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/code-insight/structural-search-k2:kotlin-codeInsight-structuralSearch",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//platform/duplicates-analysis",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build intellij.kotlin.codeInsight.structuralSearch.tests` end
+
+### auto-generated section `test intellij.kotlin.codeInsight.structuralSearch.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test intellij.kotlin.codeInsight.structuralSearch.tests` end

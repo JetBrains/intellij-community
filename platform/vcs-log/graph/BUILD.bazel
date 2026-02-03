@@ -1,0 +1,60 @@
+### auto-generated section `build intellij.platform.vcs.log.graph.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "vcs-log-graph-impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-log-graph-impl",
+  module_name = "intellij.platform.vcs.log.graph.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":vcs-log-graph-impl_resources"],
+  deps = [
+    "//platform/util",
+    "//platform/vcs-log/graph-api:vcs-log-graph",
+    "@lib//:kotlin-stdlib",
+    "//libraries/guava",
+    "//libraries/fastutil",
+  ],
+  exports = [
+    "//platform/util",
+    "//platform/vcs-log/graph-api:vcs-log-graph",
+  ]
+)
+
+jvm_library(
+  name = "vcs-log-graph-impl_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [":vcs-log-graph-impl"],
+  deps = [
+    "//platform/util",
+    "//platform/vcs-log/graph-api:vcs-log-graph",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:junit4",
+    "@lib//:kotlin-stdlib",
+    "//libraries/guava",
+    "//libraries/fastutil",
+    "@lib//:assert_j",
+    "//libraries/kotlin/test:libraries-kotlinTest",
+  ],
+  exports = [
+    "//platform/util",
+    "//platform/vcs-log/graph-api:vcs-log-graph",
+  ]
+)
+### auto-generated section `build intellij.platform.vcs.log.graph.impl` end
+
+### auto-generated section `test intellij.platform.vcs.log.graph.impl` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "vcs-log-graph-impl_test",
+  runtime_deps = [":vcs-log-graph-impl_test_lib"]
+)
+### auto-generated section `test intellij.platform.vcs.log.graph.impl` end

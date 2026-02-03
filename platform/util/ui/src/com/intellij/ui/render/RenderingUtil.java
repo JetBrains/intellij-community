@@ -1,0 +1,210 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.render;
+
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Key;
+import com.intellij.ui.ClientProperty;
+import com.intellij.util.ui.JBUI.CurrentTheme;
+import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JTable;
+import javax.swing.JTree;
+import java.awt.Color;
+import java.util.function.Supplier;
+
+public final class RenderingUtil {
+  /**
+   * This key can be set to a list or a tree to paint unfocused selection as focused.
+   *
+   * @see JComponent#putClientProperty
+   */
+  public static final Key<Boolean> ALWAYS_PAINT_SELECTION_AS_FOCUSED = Key.create("ALWAYS_PAINT_SELECTION_AS_FOCUSED");
+
+  /**
+   * This key allows to paint a background of a hovered row if it is not selected.
+   */
+  @ApiStatus.Experimental
+  public static final Key<Boolean> PAINT_HOVERED_BACKGROUND = Key.create("PAINT_HOVERED_BACKGROUND");
+
+  /**
+   * This key allows to paint focused selection even if a component does not have a focus.
+   * Our tree table implementations use a table as a focusable sibling of a tree.
+   * In such case the table colors will be used to paint the tree.
+   */
+  @ApiStatus.Internal
+  public static final Key<JComponent> FOCUSABLE_SIBLING = Key.create("FOCUSABLE_SIBLING");
+
+  /**
+   * This key can be set to provide a custom selection background.
+   */
+  @ApiStatus.Internal
+  public static final Key<Supplier<Color>> CUSTOM_SELECTION_BACKGROUND = Key.create("CUSTOM_SELECTION_BACKGROUND");
+
+  /**
+   * This key can be set to provide a custom selection foreground.
+   */
+  @ApiStatus.Internal
+  public static final Key<Supplier<Color>> CUSTOM_SELECTION_FOREGROUND = Key.create("CUSTOM_SELECTION_FOREGROUND");
+
+
+  /**
+   * @param icon     an icon to render
+   * @param selected specifies whether is a selection background expected
+   * @return a lighter icon if applicable, the given icon otherwise
+   */
+  public static @Nullable Icon getIcon(@Nullable Icon icon, boolean selected) {
+    return !selected || icon == null || StartupUiUtil.isUnderDarcula() ? icon : IconLoader.getDarkIcon(icon, true);
+  }
+
+
+  public static @NotNull Color getBackground(@NotNull JList<?> list, boolean selected) {
+    return selected ? getSelectionBackground(list) : getBackground(list);
+  }
+
+  public static @NotNull Color getBackground(@NotNull JTable table, boolean selected) {
+    return selected ? getSelectionBackground(table) : getBackground(table);
+  }
+
+  public static @NotNull Color getBackground(@NotNull JTree tree, boolean selected) {
+    return selected ? getSelectionBackground(tree) : getBackground(tree);
+  }
+
+
+  public static @NotNull Color getBackground(@NotNull JList<?> list) {
+    Color background = list.getBackground();
+    return background != null ? background : CurrentTheme.List.BACKGROUND;
+  }
+
+  public static @NotNull Color getBackground(@NotNull JTable table) {
+    Color background = table.getBackground();
+    return background != null ? background : CurrentTheme.Table.BACKGROUND;
+  }
+
+  public static @NotNull Color getBackground(@NotNull JTree tree) {
+    JTable table = getTableFor(tree);
+    if (table != null) return getBackground(table); // tree table
+    Color background = tree.getBackground();
+    return background != null ? background : CurrentTheme.Tree.BACKGROUND;
+  }
+
+
+  public static @NotNull Color getSelectionBackground(@NotNull JList<?> list) {
+    Color background = getCustomColor(list, CUSTOM_SELECTION_BACKGROUND);
+    return background != null ? background : CurrentTheme.List.Selection.background(isFocused(list));
+  }
+
+  public static @NotNull Color getSelectionBackground(@NotNull JTable table) {
+    Color background = getCustomColor(table, CUSTOM_SELECTION_BACKGROUND);
+    return background != null ? background : CurrentTheme.Table.Selection.background(isFocused(table));
+  }
+
+  public static @NotNull Color getSelectionBackground(@NotNull JTree tree) {
+    JTable table = getTableFor(tree);
+    if (table != null) return getSelectionBackground(table); // tree table
+    Color background = getCustomColor(tree, CUSTOM_SELECTION_BACKGROUND);
+    return background != null ? background : CurrentTheme.Tree.Selection.background(isFocused(tree));
+  }
+
+
+  public static @NotNull Color getForeground(@NotNull JList<?> list, boolean selected) {
+    return selected ? getSelectionForeground(list) : getForeground(list);
+  }
+
+  public static @NotNull Color getForeground(@NotNull JTable table, boolean selected) {
+    return selected ? getSelectionForeground(table) : getForeground(table);
+  }
+
+  public static @NotNull Color getForeground(@NotNull JTree tree, boolean selected) {
+    return selected ? getSelectionForeground(tree) : getForeground(tree);
+  }
+
+
+  public static @NotNull Color getForeground(@NotNull JList<?> list) {
+    Color foreground = list.getForeground();
+    return foreground != null ? foreground : CurrentTheme.List.FOREGROUND;
+  }
+
+  public static @NotNull Color getForeground(@NotNull JTable table) {
+    Color foreground = table.getForeground();
+    return foreground != null ? foreground : CurrentTheme.Table.FOREGROUND;
+  }
+
+  public static @NotNull Color getForeground(@NotNull JTree tree) {
+    JTable table = getTableFor(tree);
+    if (table != null) return getForeground(table); // tree table
+    Color foreground = tree.getForeground();
+    return foreground != null ? foreground : CurrentTheme.Tree.FOREGROUND;
+  }
+
+
+  public static @NotNull Color getSelectionForeground(@NotNull JList<?> list) {
+    Color foreground = getCustomColor(list, CUSTOM_SELECTION_FOREGROUND);
+    return foreground != null ? foreground : CurrentTheme.List.Selection.foreground(isFocused(list));
+  }
+
+  public static @NotNull Color getSelectionForeground(@NotNull JTable table) {
+    Color foreground = getCustomColor(table, CUSTOM_SELECTION_FOREGROUND);
+    return foreground != null ? foreground : CurrentTheme.Table.Selection.foreground(isFocused(table));
+  }
+
+  public static @NotNull Color getSelectionForeground(@NotNull JTree tree) {
+    JTable table = getTableFor(tree);
+    if (table != null) return getSelectionForeground(table); // tree table
+    Color foreground = getCustomColor(tree, CUSTOM_SELECTION_FOREGROUND);
+    return foreground != null ? foreground : CurrentTheme.Tree.Selection.foreground(isFocused(tree));
+  }
+
+
+  @ApiStatus.Internal
+  public static boolean isHoverPaintingDisabled(@NotNull JComponent component) {
+    return Boolean.FALSE.equals(component.getClientProperty(PAINT_HOVERED_BACKGROUND));
+  }
+
+  @ApiStatus.Internal
+  public static void setHoverPaintingDisabled(@NotNull JComponent component, boolean disabled) {
+    component.putClientProperty(PAINT_HOVERED_BACKGROUND, !disabled);
+  }
+  public static @Nullable Color getHoverBackground(@NotNull JList<?> list) {
+    if (isHoverPaintingDisabled(list)) return null;
+    return CurrentTheme.List.Hover.background(isFocused(list));
+  }
+
+  public static @Nullable Color getHoverBackground(@NotNull JTable table) {
+    if (isHoverPaintingDisabled(table)) return null;
+    return CurrentTheme.Table.Hover.background(isFocused(table));
+  }
+
+  public static @Nullable Color getHoverBackground(@NotNull JTree tree) {
+    JTable table = getTableFor(tree);
+    if (table != null) return getHoverBackground(table); // tree table
+    if (isHoverPaintingDisabled(tree)) return null;
+    return CurrentTheme.Tree.Hover.background(isFocused(tree));
+  }
+
+
+  public static boolean isFocused(@NotNull JComponent component) {
+    if (isFocusedImpl(component)) return true;
+    JComponent sibling = ClientProperty.get(component, FOCUSABLE_SIBLING);
+    return sibling != null && isFocusedImpl(sibling);
+  }
+
+  private static boolean isFocusedImpl(@NotNull JComponent component) {
+    return component.hasFocus() || ClientProperty.isTrue(component, ALWAYS_PAINT_SELECTION_AS_FOCUSED);
+  }
+
+  private static JTable getTableFor(@NotNull JTree tree) {
+    JComponent sibling = ClientProperty.get(tree, FOCUSABLE_SIBLING);
+    return sibling instanceof JTable ? (JTable)sibling : null;
+  }
+
+  private static Color getCustomColor(@NotNull JComponent component, @NotNull Key<Supplier<Color>> key) {
+    Supplier<Color> supplier = ClientProperty.get(component, key);
+    return supplier == null ? null : supplier.get();
+  }
+}

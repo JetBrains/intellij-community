@@ -1,0 +1,1 @@
+def x = new <error descr="Instantiation of built-in type">int</error>()

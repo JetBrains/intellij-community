@@ -1,0 +1,57 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
+
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
+import org.jetbrains.annotations.Nullable;
+
+public final class CollectionUtil {
+  public static @Nullable PsiClassType createSimilarCollection(@Nullable PsiType collection, Project project, PsiType... itemType) {
+    if (InheritanceUtil.isInheritor(collection, CommonClassNames.JAVA_UTIL_SORTED_SET)) {
+      return createCollection(project, CommonClassNames.JAVA_UTIL_SORTED_SET, itemType);
+    }
+    if (InheritanceUtil.isInheritor(collection, CommonClassNames.JAVA_UTIL_LINKED_HASH_SET)) {
+      return createCollection(project, CommonClassNames.JAVA_UTIL_LINKED_HASH_SET, itemType);
+    }
+    if (InheritanceUtil.isInheritor(collection, CommonClassNames.JAVA_UTIL_SET)) {
+      return createCollection(project, "java.util.HashSet", itemType);
+    }
+    if (InheritanceUtil.isInheritor(collection, CommonClassNames.JAVA_UTIL_LINKED_LIST)) {
+      return createCollection(project, CommonClassNames.JAVA_UTIL_LINKED_LIST, itemType);
+    }
+    if (InheritanceUtil.isInheritor(collection, CommonClassNames.JAVA_UTIL_STACK)) {
+      return createCollection(project, CommonClassNames.JAVA_UTIL_STACK, itemType);
+    }
+    if (InheritanceUtil.isInheritor(collection, "java.util.Vector")) {
+      return createCollection(project, "java.util.Vector", itemType);
+    }
+    if (InheritanceUtil.isInheritor(collection, CommonClassNames.JAVA_UTIL_LIST)) {
+      return createCollection(project, "java.util.ArrayList", itemType);
+    }
+    if (InheritanceUtil.isInheritor(collection, CommonClassNames.JAVA_UTIL_QUEUE)) {
+      return createCollection(project, CommonClassNames.JAVA_UTIL_LINKED_LIST, itemType);
+    }
+
+    return createCollection(project, "java.util.ArrayList", itemType);
+  }
+
+  private static @Nullable PsiClassType createCollection(Project project, String collectionName, PsiType... item) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    PsiClass collection =
+      JavaPsiFacade.getInstance(project).findClass(collectionName, GlobalSearchScope.allScope(project));
+    if (collection == null) return null;
+
+    PsiTypeParameter[] parameters = collection.getTypeParameters();
+    if (parameters.length != 1) return null;
+
+    return factory.createType(collection, item);
+  }
+}

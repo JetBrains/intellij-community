@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.lz4` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "lz4_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "lz4",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":lz4_resources"],
+  exports = ["@lib//:libraries-lz4-lz4-java"],
+  runtime_deps = ["@lib//:libraries-lz4-lz4-java"]
+)
+### auto-generated section `build intellij.libraries.lz4` end

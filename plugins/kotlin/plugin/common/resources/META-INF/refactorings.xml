@@ -1,0 +1,91 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.renameHandler"
+            interface="com.intellij.refactoring.rename.RenameHandler"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.foreignUsagesRenameProcessor"
+            interface="org.jetbrains.kotlin.idea.refactoring.rename.ForeignUsagesRenameProcessor"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.postInsertDeclarationCallback"
+            interface="org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.PostInsertDeclarationCallback"
+            dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="extracted" description="Default name for extracted function" key="kotlin.extract.function.default.name"/>
+    <refactoring.helper implementation="org.jetbrains.kotlin.idea.refactoring.helper.KotlinOptimizeImportsRefactoringHelper" order="last"/>
+
+    <vetoRenameCondition implementation="org.jetbrains.kotlin.idea.refactoring.KotlinVetoRenameCondition"/>
+
+    <lang.namesValidator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.refactoring.KotlinNamesValidator"/>
+    <renameInputValidator implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinDeclarationRenameInputValidator"/>
+
+    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameDispatcherHandler"/>
+    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinDirectoryAsPackageRenameHandler"/>
+
+    <renamePsiElementProcessor id="KotlinClass"
+                               implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameKotlinClassifierProcessor"
+                               order="first"/>
+    <renamePsiElementProcessor implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameKotlinFunctionProcessor"
+                               id="KotlinFunction"
+                               order="first"/>
+    <renamePsiElementProcessor implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameKotlinPropertyProcessor"
+                               id="KotlinProperty"
+                               order="first"/>
+    <renamePsiElementProcessor implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameKotlinParameterProcessor"
+                               id="KotlinParameter"
+                               order="first"/>
+    <renamePsiElementProcessor implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameKotlinFileProcessor"
+                               id="KotlinFile"
+                               order="first"/>
+    <renamePsiElementProcessor implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameKotlinTypeParameterProcessor"
+                               id="KotlinTypeParameter"/>
+    <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.AutomaticVariableRenamerFactory"/>
+    <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.AutomaticVariableRenamerFactoryForJavaClass"/>
+    <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.AutomaticVariableInJavaRenamerFactory"/>
+    <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.AutomaticFileRenamerFactory"/>
+    <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinAutomaticTestMethodRenamerFactory"/>
+    <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.AutomaticParameterRenamerFactory"/>
+    <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.AutomaticParameterRenamerFactoryForJavaParam"/>
+    <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.AutomaticInheritorRenamerFactory"/>
+    <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.AutomaticOverloadsRenamerFactory"/>
+    <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinAutomaticTestRenamerFactory"/>
+
+    <renamePsiElementProcessor id="KotlinAwareJavaGetter"
+                               implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinAwareJavaGetterRenameProcessor"
+                               order="first"/>
+    <renamePsiElementProcessor implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameJavaSyntheticPropertyHandler$Processor"
+                               id="JavaSyntheticPropertyFromKotlin"/>
+
+    <refactoring.overrideMethodProcessor implementation="org.jetbrains.kotlin.idea.refactoring.inline.KotlinOverrideMethodsProcessor"/>
+
+    <refactoring.moveMemberHandler
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.refactoring.move.MoveKotlinMemberHandler"/>
+    <refactoring.moveInnerHandler
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.refactoring.move.MoveKotlinInnerHandler"/>
+    <refactoring.moveInnerClassUsagesHandler
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.refactoring.move.java.MoveJavaInnerClassKotlinUsagesHandler"/>
+    <refactoring.moveClassHandler
+            order="first"
+            implementation="org.jetbrains.kotlin.idea.refactoring.move.MoveKotlinAliasClassHandler"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinMemberInplaceRenameHandler"/>
+    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler"/>
+    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.handlers.RenameKotlinImplicitLambdaParameter"/>
+    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.handlers.RenameSyntheticDeclarationByReferenceHandler"/>
+    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.handlers.RenameCompilerPluginDeclarationByReferenceHandler"/>
+    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.handlers.RenameBackingFieldReferenceHandler"/>
+    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.handlers.RenameOnSecondaryConstructorHandler"/>
+    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameClassByCompanionObjectShortReferenceHandler"/>
+    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameJavaSyntheticPropertyHandler"/>
+    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameImportAliasByReferenceHandler"/>
+  </extensions>
+</idea-plugin>

@@ -1,0 +1,89 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="additionalLibraryRootsProvider" interface="com.intellij.openapi.roots.AdditionalLibraryRootsProvider"
+                    dynamic="true"/>
+    <extensionPoint name="workspaceModel.moduleExtensionBridgeFactory"
+                    interface="com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory"
+                    dynamic="true"/>
+    <extensionPoint name="projectPathMacroContributor" interface="com.intellij.openapi.components.impl.ProjectWidePathMacroContributor"
+                    dynamic="true"/>
+    <extensionPoint name="pathMacroSubstitutorProvider" interface="com.intellij.openapi.components.impl.PathMacroSubstitutorProvider"
+                    dynamic="true"/>
+    <extensionPoint name="workspaceModel.facetContributor" interface="com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor"
+                    dynamic="true"/>
+    <extensionPoint name="workspaceFileIndexContributorEnforcer" interface="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributorEnforcer"
+                    dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.openapi.components.PathMacroManager" open="true"
+                    serviceImplementation="com.intellij.openapi.components.impl.ProjectPathMacroManager"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.impl.ModifiableModelCommitterService"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableModelCommitterServiceBridge"/>
+    <applicationService serviceInterface="com.intellij.openapi.project.ProjectLocator"
+                        serviceImplementation="com.intellij.openapi.project.ProjectLocatorImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryTablesRegistrar"
+                        serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl"/>
+    <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry"
+                        serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistryImpl"/>
+    <projectService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.WorkspaceModelLegacyBridge"
+                        serviceImplementation="com.intellij.workspaceModel.ide.legacyBridge.WorkspaceModelLegacyBridgeImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.TestModulePropertiesProvider"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridgeProvider"/>
+    <!-- Global Workspace Model -->
+    <applicationService serviceInterface="com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer"
+                        serviceImplementation="com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl"
+                        open="true"/>
+    <!-- Global or Custom Workspace Model Libraries -->
+    <workspace.bridgeInitializer
+      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalAndCustomLibraryTableBridgeInitializer"/>
+
+    <projectService serviceInterface="com.intellij.openapi.roots.FileIndexFacade" open="true"
+                    serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexFacade"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.ProjectFileIndex" open="true"
+                    serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexImpl"/>
+    <projectService serviceInterface="com.intellij.workspaceModel.ide.EntitiesOrphanage"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.EntitiesOrphanageImpl"/>
+    <projectService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeJpsEntitySourceFactoryImpl"/>
+
+    <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl"
+                    serviceInterface="com.intellij.workspaceModel.ide.JpsProjectLoadingManager"/>
+
+    <projectService serviceInterface="com.intellij.openapi.module.AutomaticModuleUnloader" open="true"
+                    serviceImplementation="com.intellij.openapi.module.DummyAutomaticModuleUnloader"/>
+    <projectService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex" 
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleDependencyIndexImpl"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.roots.AdditionalLibraryRootsListenerHelper"
+                        serviceImplementation="com.intellij.openapi.roots.impl.AdditionalLibraryRootsListenerHelperImpl"/>
+
+    <workspaceModel.preUpdateHandler implementation="com.intellij.workspaceModel.ide.impl.ModulePreUpdateHandler"/>
+    <workspaceModel.serializerHook implementation="com.intellij.workspaceModel.ide.impl.RemoveTransientJpsEntities"/>
+
+    <projectService serviceInterface="com.intellij.openapi.roots.impl.DirectoryIndex" open="true"
+                    serviceImplementation="com.intellij.openapi.roots.impl.DirectoryIndexImpl" preload="true"/>
+
+    <moduleService serviceInterface="com.intellij.openapi.roots.ModuleFileIndex"
+                   serviceImplementation="com.intellij.openapi.roots.impl.ModuleFileIndexImpl"
+                   open="true"/>
+
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.ContentRootFileIndexContributor"/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.SourceRootFileIndexContributor"/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.LibraryRootFileIndexContributor"/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.ExcludedRootFileIndexContributor"/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.UnloadedContentRootFileIndexContributor"/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.SdkEntityFileIndexContributor"/>
+
+    <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.OrphanageActivity"/>
+
+  </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelSynchronizerListener"
+              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
+    <listener class="com.intellij.workspaceModel.ide.impl.OrphanListener"
+              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
+    <listener class="com.intellij.workspaceModel.ide.impl.JpsProjectLoadedListenerImpl"
+              topic="com.intellij.workspaceModel.ide.JpsProjectLoadedListener"/>
+  </projectListeners>
+</idea-plugin>

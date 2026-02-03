@@ -1,0 +1,205 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.inspections.internal;
+
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiEditorUtil;
+import com.intellij.uast.UastHintedVisitorAdapter;
+import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
+import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UImportStatement;
+import org.jetbrains.uast.UQualifiedReferenceExpression;
+import org.jetbrains.uast.UReferenceExpression;
+import org.jetbrains.uast.USimpleNameReferenceExpression;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
+import org.jetbrains.uast.generate.UastElementFactory;
+import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
+
+import java.awt.Color;
+
+@ApiStatus.Internal
+public final class UseJBColorInspection extends DevKitUastInspectionBase implements CleanupLocalInspectionTool {
+
+  private static final String AWT_COLOR_CLASS_NAME = Color.class.getName();
+  private static final String JB_COLOR_CLASS_NAME = JBColor.class.getName();
+
+  @SuppressWarnings("unchecked")
+  public static final Class<? extends UElement>[] HINTS =
+    new Class[]{UCallExpression.class, UQualifiedReferenceExpression.class, USimpleNameReferenceExpression.class};
+
+  @Override
+  public @NotNull PsiElementVisitor buildInternalVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
+
+      @Override
+      public boolean visitCallExpression(@NotNull UCallExpression expression) {
+        if (isAwtColorConstructor(expression) && isJBColorClassAccessible(holder) && !isUsedAsJBColorConstructorParameter(expression)) {
+          PsiElement sourcePsi = expression.getSourcePsi();
+          if (sourcePsi != null) {
+            LocalQuickFix[] fixes = sourcePsi.getLanguage().is(JavaLanguage.INSTANCE) ?
+                                    new LocalQuickFix[]{new ConvertToJBColorQuickFix()} :
+                                    LocalQuickFix.EMPTY_ARRAY;
+            holder.registerProblem(sourcePsi, DevKitBundle.message("inspections.awt.color.used"), fixes);
+          }
+        }
+        return super.visitCallExpression(expression);
+      }
+
+      private static boolean isAwtColorConstructor(@NotNull UCallExpression constructorCall) {
+        return isColorTypeConstructor(constructorCall, AWT_COLOR_CLASS_NAME);
+      }
+
+      private static boolean isColorTypeConstructor(@NotNull UCallExpression call, @NotNull String colorClassName) {
+        PsiMethod constructor = call.resolve();
+        if (constructor == null || !constructor.isConstructor()) return false;
+        PsiClass constructorClass = constructor.getContainingClass();
+        if (constructorClass == null) return false;
+        return colorClassName.equals(constructorClass.getQualifiedName());
+      }
+
+      private static boolean isJBColorClassAccessible(@NotNull ProblemsHolder holder) {
+        return DevKitInspectionUtil.isClassAvailable(holder, JB_COLOR_CLASS_NAME);
+      }
+
+      private static boolean isUsedAsJBColorConstructorParameter(@NotNull UExpression expression) {
+        UCallExpression containingCall = UastContextKt.getUastParentOfType(expression.getSourcePsi(), UCallExpression.class, true);
+        return containingCall != null && isJBColorConstructor(containingCall);
+      }
+
+      private static boolean isJBColorConstructor(@NotNull UCallExpression call) {
+        return isColorTypeConstructor(call, JB_COLOR_CLASS_NAME);
+      }
+
+      @Override
+      public boolean visitQualifiedReferenceExpression(@NotNull UQualifiedReferenceExpression node) {
+        if (!(node.getUastParent() instanceof UImportStatement)) {
+          inspectExpression(node);
+        }
+        return super.visitQualifiedReferenceExpression(node);
+      }
+
+      @Override
+      public boolean visitSimpleNameReferenceExpression(@NotNull USimpleNameReferenceExpression node) {
+        inspectExpression(node);
+        return super.visitSimpleNameReferenceExpression(node);
+      }
+
+      private void inspectExpression(@NotNull UReferenceExpression expression) {
+        if (isAwtColorConstantReference(expression) &&
+            isJBColorClassAccessible(holder) &&
+            !isUsedAsJBColorConstructorParameter(expression)) {
+          PsiElement sourcePsi = expression.getSourcePsi();
+          if (sourcePsi != null) {
+            holder.registerProblem(sourcePsi, DevKitBundle.message("inspections.awt.color.used"), new ConvertToJBColorConstantQuickFix());
+          }
+        }
+      }
+
+      private static boolean isAwtColorConstantReference(@NotNull UReferenceExpression expression) {
+        // avoid double warning for qualified and simple reference in Kotlin:
+        if (expression.getUastParent() instanceof UQualifiedReferenceExpression) return false;
+        PsiElement colorField = expression.resolve();
+        if (colorField instanceof PsiField && ((PsiField)colorField).hasModifierProperty(PsiModifier.STATIC)) {
+          PsiClass colorClass = ((PsiField)colorField).getContainingClass();
+          return colorClass != null && AWT_COLOR_CLASS_NAME.equals(colorClass.getQualifiedName());
+        }
+        return false;
+      }
+    }, HINTS);
+  }
+
+  private static class ConvertToJBColorConstantQuickFix implements LocalQuickFix {
+
+    @Override
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return DevKitBundle.message("inspections.awt.color.used.fix.use.jb.color.constant.family.name");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getPsiElement();
+      UReferenceExpression awtColorConstantReference = getReferenceExpression(element);
+      if (awtColorConstantReference == null) return;
+      UastCodeGenerationPlugin generationPlugin = UastCodeGenerationPlugin.byLanguage(element.getLanguage());
+      if (generationPlugin == null) return;
+      UastElementFactory pluginElementFactory = generationPlugin.getElementFactory(project);
+      String jbColorConstant = JBColor.class.getName() + '.' + buildColorConstantName(element);
+      UQualifiedReferenceExpression jbColorConstantReference = pluginElementFactory.createQualifiedReference(jbColorConstant, element);
+      if (jbColorConstantReference != null) {
+        generationPlugin.replace(awtColorConstantReference, jbColorConstantReference, UQualifiedReferenceExpression.class);
+      }
+    }
+
+    private static @Nullable UReferenceExpression getReferenceExpression(PsiElement element) {
+      UReferenceExpression expression = UastContextKt.toUElement(element, UQualifiedReferenceExpression.class);
+      if (expression == null) {
+        expression = UastContextKt.toUElement(element, USimpleNameReferenceExpression.class);
+      }
+      return expression;
+    }
+
+    private static @NotNull @NonNls String buildColorConstantName(@NotNull PsiElement expression) {
+      @NonNls String text = expression.getText();
+      if (text.contains(".")) {
+        text = text.substring(text.lastIndexOf('.'));
+      }
+      text = StringUtil.trimStart(text, ".");
+      if (text.equalsIgnoreCase("lightGray")) {
+        text = "LIGHT_GRAY";
+      }
+      else if (text.equalsIgnoreCase("darkGray")) {
+        text = "DARK_GRAY";
+      }
+      return StringUtil.toUpperCase(text);
+    }
+  }
+
+  private static class ConvertToJBColorQuickFix implements LocalQuickFix {
+    @Override
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return DevKitBundle.message("inspections.awt.color.used.fix.use.jb.color.fix.family.name");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+      final String newJBColor = String.format("new %s(%s, new java.awt.Color())", JBColor.class.getName(), element.getText());
+      final PsiExpression expression = factory.createExpressionFromText(newJBColor, element.getContext());
+      final PsiElement newElement = element.replace(expression);
+      final PsiElement el = JavaCodeStyleManager.getInstance(project).shortenClassReferences(newElement);
+      final int offset = el.getTextOffset() + el.getText().length() - 2;
+      final Editor editor = PsiEditorUtil.findEditor(el);
+      if (editor != null) {
+        editor.getCaretModel().moveToOffset(offset);
+      }
+    }
+  }
+}

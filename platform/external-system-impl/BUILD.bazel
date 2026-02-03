@@ -1,0 +1,149 @@
+### auto-generated section `build intellij.platform.externalSystem.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "externalSystem-impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "externalSystem-impl",
+  module_name = "intellij.platform.externalSystem.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":externalSystem-impl_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/lang-api:lang",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/external-system-api:externalSystem",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/lvcs-api:lvcs",
+    "//platform/macro",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/observable",
+    "//platform/testRunner",
+    "//platform/configuration-store-impl:configurationStore-impl",
+    "//libraries/kotlin/reflect",
+    "//platform/object-serializer",
+    "//platform/platform-impl/concurrency",
+    "//platform/object-serializer:objectSerializer-annotations",
+    "//platform/xdebugger-api:debugger",
+    "//platform/statistics",
+    "//platform/workspace/jps",
+    "//platform/workspace/storage",
+    "//libraries/fastutil",
+    "//libraries/commons/cli",
+    "//platform/core-ui",
+    "//platform/platform-util-io-impl:ide-util-io-impl",
+    "//platform/core-impl",
+    "//platform/util/jdom",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/diagnostic/telemetry",
+    "//platform/ide-core-impl",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/backend/workspace",
+    "//platform/diagnostic",
+    "//platform/backend/observation",
+    "//platform/settings",
+    "//libraries/kotlinx/serialization/core",
+    "//platform/eel-provider",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
+)
+### auto-generated section `build intellij.platform.externalSystem.impl` end
+
+### auto-generated section `build intellij.platform.externalSystem.tests` start
+resourcegroup(
+  name = "externalSystem-tests_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "externalSystem-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["//platform/lang-impl:lang-tests"],
+  runtime_deps = [
+    "//platform/observable",
+    "//libraries/kotlin/reflect",
+    "//platform/core-ui",
+    "//platform/workspace/storage",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
+)
+
+jvm_library(
+  name = "externalSystem-tests_test_lib",
+  module_name = "intellij.platform.externalSystem.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":externalSystem-tests_test_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/object-serializer",
+    "//platform/object-serializer:object-serializer_test_lib",
+    "//platform/testFramework/extensions:testExtensions",
+    "//java/testFramework",
+    "//platform/observable",
+    "//platform/configuration-store-impl:configurationStore-tests_test_lib",
+    "//java/compiler:compiler-tests_test_lib",
+    "//java/compiler/impl",
+    "//libraries/kotlin/reflect",
+    "//java/openapi:java",
+    "@lib//:junit4",
+    "@lib//:assert_j",
+    "//libraries/mockito",
+    "@lib//:mockito-kotlin",
+    "//platform/lang-impl:lang-tests_test_lib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/core-ui",
+    "//platform/workspace/storage",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/external-system-api/testFramework",
+    "//platform/util/jdom",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//platform/backend/observation",
+    "//platform/backend/observation:observation_test_lib",
+    "//plugins/gradle",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
+  ],
+  exports = ["//platform/lang-impl:lang-tests_test_lib"],
+  runtime_deps = [":externalSystem-tests"]
+)
+### auto-generated section `build intellij.platform.externalSystem.tests` end
+
+### auto-generated section `test intellij.platform.externalSystem.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "externalSystem-tests_test",
+  runtime_deps = [":externalSystem-tests_test_lib"]
+)
+### auto-generated section `test intellij.platform.externalSystem.tests` end

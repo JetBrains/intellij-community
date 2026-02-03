@@ -1,0 +1,3 @@
+dependencies{
+implementation 'testGroupId:testArtifactId:1.0'
+}

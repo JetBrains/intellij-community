@@ -1,0 +1,78 @@
+### auto-generated section `build kotlin.uast.uast-kotlin.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/core-api:core",
+    "@lib//:kotlin-stdlib",
+    "//libraries/asm",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/uast/uast-kotlin",
+    "//uast/uast-common:uast",
+    "//java/java-psi-impl:psi-impl",
+    "//uast/uast-java:java-uast",
+    "@lib//:vavr",
+  ]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "kotlin.uast.uast-kotlin.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "@lib//:kotlin-stdlib",
+    "//libraries/asm",
+    "@lib//:junit4",
+    "//java/testFramework",
+    "@lib//:kotlin-test",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
+    "//platform/refactoring",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "@lib//:kotlinc-kotlin-compiler-fir",
+    "@lib//:kotlinc-kotlin-compiler-cli",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/kotlin/plugin/k1",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/uast/uast-kotlin",
+    "//plugins/kotlin/uast/uast-kotlin-idea-base",
+    "//plugins/kotlin/uast/uast-kotlin-base",
+    "//plugins/kotlin/uast/uast-kotlin-base/tests:tests_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//uast/uast-common:uast",
+    "//uast/testFramework",
+    "//java/java-psi-impl:psi-impl",
+    "//uast/uast-java:java-uast",
+    "//plugins/groovy/groovy-uast-tests:uast-tests_test_lib",
+    "@lib//:vavr",
+    "//plugins/kotlin/idea/tests:tests_test_lib",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build kotlin.uast.uast-kotlin.tests` end
+
+### auto-generated section `test kotlin.uast.uast-kotlin.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test kotlin.uast.uast-kotlin.tests` end

@@ -1,0 +1,23 @@
+<html>
+<body>
+Reports unnecessarily escaped characters in <code>String</code> literals,
+and optionally <code>char</code> literals.
+<p>Escaped tab characters (<code>\t</code>) are not reported, even though escaping them is not required,
+because tab characters are hard to tell apart from spaces.</p>
+<p>Examples:</p>
+<pre><code>
+  String s = "\'Scare\' quotes";
+  String t = """
+    All you need is\n\tLove\n""";
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  String s = "'Scare' quotes";
+  String t = """
+    All you need is
+    \tLove
+    """;
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

@@ -1,0 +1,51 @@
+<idea-plugin  visibility="public">
+  <dependencies>
+    <plugin id="com.intellij.modules.xml"/>
+    <module name="intellij.java.indexing"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.java.indexing.impl"/>
+    <module name="intellij.java.psi.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.java.analysis"/>
+    <module name="intellij.java.resources.en"/>
+    <module name="intellij.xml.psi"/>
+    <module name="intellij.xml.psi.impl"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.java"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.java.frontback.impl"/>
+    <module name="intellij.java.codeserver.highlighting"/>
+    <module name="intellij.java.codeserver.core"/>
+    <module name="intellij.xml.analysis"/>
+
+    <module name="intellij.platform.backend"/>
+    <plugin id="com.intellij.modules.java-capable"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.deadCode"
+                    interface="com.intellij.codeInspection.reference.EntryPoint" dynamic="true"/>
+
+    <!-- See com.intellij.codeInspection.visibility.VisibilityInspection -->
+    <extensionPoint qualifiedName="com.intellij.visibility" interface="com.intellij.codeInspection.visibility.VisibilityExtension" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.java.errorFixProvider" dynamic="true"
+                    interface="com.intellij.codeInsight.daemon.impl.analysis.JavaErrorFixProvider"/>
+
+    <extensionPoint qualifiedName="com.intellij.allowedApiFilter" interface="com.intellij.psi.impl.AllowedApiFilterExtension" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.canBeFinal" interface="com.intellij.codeInspection.canBeFinal.CanBeFinalHandler" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.implicitSubclassProvider" interface="com.intellij.codeInspection.inheritance.ImplicitSubclassProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.lang.jvm.ignoreVariableCanBeFinalSupport" interface="com.intellij.codeInspection.localCanBeFinal.IgnoreVariableCanBeFinalSupport" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.javaLanguageLevelPusherCustomizer" interface="com.intellij.openapi.roots.impl.JavaLanguageLevelPusherCustomizer" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.propertyAccessorDetector" interface="com.intellij.psi.util.PropertyAccessorDetector" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.injectedLanguageJavaReferenceSupplier"
+                    beanClass="com.intellij.codeInsight.daemon.impl.analysis.InjectedLanguageJavaReferenceSupplier" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.lang.jvm.bytecodeAnalysisSuppressor"
+                    interface="com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisSuppressor" dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

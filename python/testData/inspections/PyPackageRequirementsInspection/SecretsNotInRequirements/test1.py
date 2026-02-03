@@ -1,0 +1,3 @@
+import secrets
+
+print(secrets)

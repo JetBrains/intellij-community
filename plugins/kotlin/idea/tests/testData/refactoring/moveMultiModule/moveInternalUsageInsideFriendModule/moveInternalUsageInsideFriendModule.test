@@ -1,0 +1,11 @@
+{
+  "mainFile": "B/src/foo/Bar.kt",
+  "type": "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS",
+  "targetPackage": "bar",
+  "targetSourceRoot": "B/src",
+  "withRuntime": "true",
+  "modulesWithRuntime": ["B"],
+  "modulesWithCommonRuntime": ["A"],
+  "enabledInK1": "false",
+  "enabledInK2": "true"
+}

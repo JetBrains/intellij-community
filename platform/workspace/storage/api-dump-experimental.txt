@@ -1,0 +1,2 @@
+com.intellij.platform.workspace.storage.EntityStorage
+- *a:hasReferrers(com.intellij.platform.workspace.storage.SymbolicEntityId):Z

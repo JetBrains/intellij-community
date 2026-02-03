@@ -1,0 +1,13 @@
+if (true) {
+    println 'a'
+
+}
+pri<caret>ntln 'b'
+println 'c'
+-----
+if (true) {
+    println 'a'
+
+    pri<caret>ntln 'b'
+}
+println 'c'

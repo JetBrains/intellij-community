@@ -1,0 +1,1 @@
+"I want to rename this{to_be_r<caret>enamed}".format(to_be_renamed="renaming")

@@ -1,0 +1,10 @@
+com.intellij.structuralsearch.MatchResultSink
+- a:getProgressIndicator():com.intellij.openapi.progress.ProgressIndicator
+- a:matchingFinished():V
+- a:newMatch(com.intellij.structuralsearch.MatchResult):V
+- a:processFile(com.intellij.psi.PsiFile):V
+- a:setMatchingProcess(com.intellij.structuralsearch.MatchingProcess):V
+a:com.intellij.structuralsearch.StructuralSearchProfile
+- getTemplateContextTypeClass(com.intellij.lang.Language):java.lang.Class
+f:com.intellij.structuralsearch.plugin.ui.UIUtil
+- s:getTemplateContextType(com.intellij.structuralsearch.StructuralSearchProfile,com.intellij.lang.Language):com.intellij.codeInsight.template.TemplateContextType

@@ -1,0 +1,2 @@
+com.intellij.ide.macro.MacroWithParams
+com.intellij.ide.macro.SecondQueueExpandMacro

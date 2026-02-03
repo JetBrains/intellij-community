@@ -1,0 +1,1 @@
+val from = """Lorem ${<selection>'$'} Ips</selection>um"""

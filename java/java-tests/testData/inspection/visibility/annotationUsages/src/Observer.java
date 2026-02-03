@@ -1,0 +1,3 @@
+@interface Observer {
+    String value();
+}

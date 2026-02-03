@@ -1,0 +1,55 @@
+### auto-generated section `build intellij.xml.psi.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "psi-impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+resourcegroup(
+  name = "psi-impl_resources_1",
+  srcs = glob(["resources-gen/**/*"]),
+  strip_prefix = "resources-gen"
+)
+
+jvm_library(
+  name = "psi-impl",
+  module_name = "intellij.xml.psi.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [
+    ":psi-impl_resources",
+    ":psi-impl_resources_1",
+  ],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/editor-ui-api:editor-ui",
+    "//jps/model-serialization",
+    "//platform/projectModel-api:projectModel",
+    "//xml/xml-psi-api:psi",
+    "//platform/core-api:core",
+    "//platform/projectModel-impl",
+    "//platform/core-impl",
+    "//xml/xml-parser:parser",
+    "//platform/ide-core-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "@lib//:xml-resolver",
+    "//platform/util:util-ui",
+    "//libraries/fastutil",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/caffeine",
+    "//platform/util/jdom",
+    "//platform/markdown-utils",
+    "//platform/polySymbols",
+    "//RegExpSupport:regexp",
+    "//platform/syntax/syntax-psi:psi",
+    "//xml/xml-syntax:syntax",
+    "//platform/platform-impl:ide-impl",
+  ]
+)
+### auto-generated section `build intellij.xml.psi.impl` end

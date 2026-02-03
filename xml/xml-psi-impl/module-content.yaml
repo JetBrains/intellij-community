@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.xml.psi.impl.jar
+  modules:
+  - name: intellij.xml.psi.impl
+  library: xml-resolver
+  files:
+  - name: $MAVEN_REPOSITORY$/xml-resolver/xml-resolver/1/xml-resolver-1.jar

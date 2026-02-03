@@ -1,0 +1,58 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+interface IFace {
+    fun foo(s: String)
+
+    private fun usage1(s: String) {
+        with(s) {
+            foo(this)
+        }
+    }
+
+    private fun String.usage2() {
+        foo(this@usage2)
+    }
+
+    context(s: String)
+    private fun usage3() {
+        foo(s)
+    }
+}
+
+open class OpenClass : IFace {
+    override fun foo(s: String) {}
+
+    private fun usage1(s: String) {
+        with(s) {
+            foo(this)
+        }
+    }
+
+    private fun String.usage2() {
+        foo(this@usage2)
+    }
+
+    context(s: String)
+    private fun usage3() {
+        foo(s)
+    }
+}
+
+class FinalClass : OpenClass(), IFace {
+    override fun foo(s: String) {}
+
+    private fun usage1(s: String) {
+        with(s) {
+            foo(this)
+        }
+    }
+
+    private fun String.usage2() {
+        foo(this@usage2)
+    }
+
+    context(s: String)
+    private fun usage3() {
+        foo(s)
+    }
+}

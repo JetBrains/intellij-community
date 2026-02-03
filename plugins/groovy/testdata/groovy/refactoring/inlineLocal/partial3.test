@@ -1,0 +1,7 @@
+def <selection>a</selection> = 3
+
+a=3
+-----
+def a
+
+a=3

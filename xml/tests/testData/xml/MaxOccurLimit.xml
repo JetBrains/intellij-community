@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<procedure xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="MaxOccurLimit.xsd">
+    <parameter name="caaxtgt">
+        <string>
+            <processingType>TYPE1</processingType>
+        </string>
+    </parameter>
+</procedure>

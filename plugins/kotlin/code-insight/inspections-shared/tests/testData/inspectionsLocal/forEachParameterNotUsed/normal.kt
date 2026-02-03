@@ -1,0 +1,6 @@
+// WITH_STDLIB
+// FIX: Introduce anonymous parameter
+
+fun test(list: List<String>) {
+    list.for<caret>Each {}
+}

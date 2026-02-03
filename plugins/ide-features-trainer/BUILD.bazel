@@ -1,0 +1,141 @@
+### auto-generated section `build intellij.featuresTrainer` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "featuresTrainer_resources",
+  srcs = glob(["res/**/*"]),
+  strip_prefix = "res"
+)
+
+resourcegroup(
+  name = "featuresTrainer_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "featuresTrainer",
+  module_name = "intellij.featuresTrainer",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":featuresTrainer_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/guava",
+    "@lib//:assert_j",
+    "@lib//:assertj-swing",
+    "//platform/analysis-api:analysis",
+    "//platform/util-ex",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/lang-api:lang",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/core-impl",
+    "//platform/projectModel-impl",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/xdebugger-api:debugger",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-impl/shared",
+    "//platform/projectModel-api:projectModel",
+    "//platform/ide-core-impl",
+    "//platform/usageView",
+    "//platform/statistics",
+    "//platform/refactoring",
+    "//platform/core-ui",
+    "//xml/xml-psi-api:psi",
+    "//platform/feedback",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/datetime",
+    "//platform/util/jdom",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/lvcs-impl",
+    "//platform/tips-of-the-day:tips",
+    "//platform/diagnostic",
+    "//platform/execution",
+    "//platform/xdebugger-impl/ui",
+  ],
+  exports = [
+    "@lib//:assert_j",
+    "@lib//:assertj-swing",
+  ]
+)
+
+jvm_library(
+  name = "featuresTrainer_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":featuresTrainer_test_resources"],
+  associates = [":featuresTrainer"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlin/test:libraries-kotlinTest",
+    "//libraries/guava",
+    "@lib//:assert_j",
+    "@lib//:assertj-swing",
+    "//platform/analysis-api:analysis",
+    "//platform/util-ex",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core",
+    "//platform/lang-api:lang",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/core-impl",
+    "//platform/projectModel-impl",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/xdebugger-api:debugger",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-impl:debugger-impl_test_lib",
+    "//platform/xdebugger-impl/shared",
+    "//platform/projectModel-api:projectModel",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/ide-core-impl",
+    "//platform/usageView",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/refactoring",
+    "//platform/core-ui",
+    "//xml/xml-psi-api:psi",
+    "//platform/feedback",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/datetime",
+    "//platform/util/jdom",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/lvcs-impl",
+    "//platform/lvcs-impl:lvcs-impl_test_lib",
+    "//platform/tips-of-the-day:tips",
+    "//platform/diagnostic",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "@lib//:mockito-kotlin",
+    "//libraries/mockito",
+    "//platform/execution",
+    "//platform/xdebugger-impl/ui",
+  ],
+  exports = [
+    "@lib//:assert_j",
+    "@lib//:assertj-swing",
+  ]
+)
+### auto-generated section `build intellij.featuresTrainer` end
+
+### auto-generated section `test intellij.featuresTrainer` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "featuresTrainer_test",
+  runtime_deps = [":featuresTrainer_test_lib"]
+)
+### auto-generated section `test intellij.featuresTrainer` end

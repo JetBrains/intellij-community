@@ -1,0 +1,107 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.eclipse.config
+
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
+import com.intellij.platform.workspace.jps.entities.customImlData
+import com.intellij.platform.workspace.jps.serialization.impl.CustomModuleComponentSerializer
+import com.intellij.platform.workspace.jps.serialization.impl.ErrorReporter
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import org.jdom.Element
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.CONELEMENT
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.EXPECTED_POSITION
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.FORCED_JDK
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.LIBELEMENT
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.LINK_PREFIX
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.PREFIX_ATTR
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.SRC_DESCRIPTION
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.SRC_FOLDER
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.SRC_LINK_PREFIX
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.SRC_PREFIX
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.VALUE_ATTR
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.VARELEMENT
+import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.VAR_ATTRIBUTE
+import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer
+import org.jetbrains.jps.model.serialization.JDomSerializationUtil
+import org.jetbrains.jps.model.serialization.JpsProjectLoader
+
+/**
+ * Implements loading and saving configuration from [EclipseModuleManagerImpl] in iml file when workspace model is used
+ */
+class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
+  override val componentName: String = "EclipseModuleManager"
+
+  override fun loadComponent(detachedModuleEntity: ModuleEntityBuilder,
+                             componentTag: Element,
+                             errorReporter: ErrorReporter,
+                             virtualFileManager: VirtualFileUrlManager) {
+    val entity = EclipseProjectPropertiesEntity(LinkedHashMap(), ArrayList(), ArrayList(), ArrayList(), false, 0,
+                                                LinkedHashMap(), detachedModuleEntity.entitySource) {
+      this.module = detachedModuleEntity
+    }
+    entity.apply {
+      componentTag.getChildren(LIBELEMENT).forEach {
+        eclipseUrls.add(virtualFileManager.getOrCreateFromUrl(it.getAttributeValue(VALUE_ATTR)!!))
+      }
+      componentTag.getChildren(VARELEMENT).forEach {
+        variablePaths = variablePaths.toMutableMap().also { map ->
+          map[it.getAttributeValue(VAR_ATTRIBUTE)!!] =
+            it.getAttributeValue(PREFIX_ATTR, "") + it.getAttributeValue(VALUE_ATTR)
+        }
+      }
+      componentTag.getChildren(CONELEMENT).forEach {
+        unknownCons.add(it.getAttributeValue(VALUE_ATTR)!!)
+      }
+      forceConfigureJdk = componentTag.getAttributeValue(FORCED_JDK)?.toBoolean() ?: false
+      val srcDescriptionTag = componentTag.getChild(SRC_DESCRIPTION)
+      if (srcDescriptionTag != null) {
+        expectedModuleSourcePlace = srcDescriptionTag.getAttributeValue(EXPECTED_POSITION)?.toInt() ?: 0
+        srcDescriptionTag.getChildren(SRC_FOLDER).forEach {
+          srcPlace = srcPlace.toMutableMap().also { map ->
+            map[it.getAttributeValue(VALUE_ATTR)!!] = it.getAttributeValue(EXPECTED_POSITION)!!.toInt()
+          }
+        }
+      }
+    }
+  }
+
+  override fun saveComponent(moduleEntity: ModuleEntity): Element? {
+    val moduleOptions = moduleEntity.customImlData?.customModuleOptions
+    if (moduleOptions != null && moduleOptions[JpsProjectLoader.CLASSPATH_ATTRIBUTE] == JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID) {
+      return null
+    }
+    val eclipseProperties = moduleEntity.eclipseProperties
+    if (eclipseProperties == null || eclipseProperties.eclipseUrls.isEmpty() && eclipseProperties.variablePaths.isEmpty()
+        && !eclipseProperties.forceConfigureJdk && eclipseProperties.unknownCons.isEmpty()) {
+      return null
+    }
+
+    val componentTag = JDomSerializationUtil.createComponentElement("EclipseModuleManager")
+    eclipseProperties.eclipseUrls.forEach {
+      componentTag.addContent(Element(LIBELEMENT).setAttribute(VALUE_ATTR, it.url))
+    }
+    eclipseProperties.variablePaths.forEach { (name, path) ->
+      val prefix = listOf(SRC_PREFIX, SRC_LINK_PREFIX, LINK_PREFIX).firstOrNull { name.startsWith(it) } ?: ""
+      val varTag = Element(VARELEMENT)
+      varTag.setAttribute(VAR_ATTRIBUTE, name.removePrefix(prefix))
+      if (prefix != "") {
+        varTag.setAttribute(PREFIX_ATTR, prefix)
+      }
+      varTag.setAttribute(VALUE_ATTR, path)
+      componentTag.addContent(varTag)
+    }
+    eclipseProperties.unknownCons.forEach {
+      componentTag.addContent(Element(CONELEMENT).setAttribute(VALUE_ATTR, it))
+    }
+    if (eclipseProperties.forceConfigureJdk) {
+      componentTag.setAttribute(FORCED_JDK, true.toString())
+    }
+    val srcDescriptionTag = Element(SRC_DESCRIPTION)
+    srcDescriptionTag.setAttribute(EXPECTED_POSITION, eclipseProperties.expectedModuleSourcePlace.toString())
+    eclipseProperties.srcPlace.forEach { (url, position) ->
+      srcDescriptionTag.addContent(Element(SRC_FOLDER).setAttribute(VALUE_ATTR, url).setAttribute(EXPECTED_POSITION, position.toString()))
+    }
+    componentTag.addContent(srcDescriptionTag)
+    return componentTag
+  }
+}

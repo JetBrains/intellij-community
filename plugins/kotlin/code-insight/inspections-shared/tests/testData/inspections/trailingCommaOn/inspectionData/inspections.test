@@ -1,0 +1,3 @@
+// INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.TrailingCommaInspection
+// K2_INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.TrailingCommaInspection
+// COMPILER_ARGUMENTS: -XXLanguage:+TrailingCommas

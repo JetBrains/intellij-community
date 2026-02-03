@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.libraries.ktor.client.cio` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "libraries-ktor-client-cio_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "libraries-ktor-client-cio",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":libraries-ktor-client-cio_resources"],
+  exports = [
+    "@lib//:libraries-ktor-client-cio-ktor-client-cio-internal",
+    "//libraries/ktor/client",
+    "//libraries/ktor/network-tls:libraries-ktor-network-tls",
+  ],
+  runtime_deps = [
+    "@lib//:libraries-ktor-client-cio-ktor-client-cio-internal",
+    "//libraries/ktor/client",
+    "//libraries/ktor/network-tls:libraries-ktor-network-tls",
+  ]
+)
+### auto-generated section `build intellij.libraries.ktor.client.cio` end

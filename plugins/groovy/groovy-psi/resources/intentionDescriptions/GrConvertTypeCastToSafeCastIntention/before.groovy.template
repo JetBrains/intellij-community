@@ -1,0 +1,3 @@
+def foo(String s){...}
+
+foo((String)2)

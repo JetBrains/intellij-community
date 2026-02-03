@@ -1,0 +1,6 @@
+// "Change type of 'f' to '(Long) -> Unit'" "true"
+fun foo() {
+    var f: (Long) -> Unit =<caret> if (true) { x: Long ->  } else { x: Long ->  }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVariableTypeFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

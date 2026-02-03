@@ -1,0 +1,100 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.jvm.k1">
+  <dependencies>
+    <module name="kotlin.jvm.shared"/>
+    <module name="kotlin.base.scripting.k1"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scratchFileLanguageProvider"
+            beanClass="com.intellij.lang.LanguageExtensionPoint"
+            dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.kotlin.idea.jvm.k1.scratch.ScratchFileLanguageProvider"/>
+    </extensionPoint>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+
+    <storageComponentContainerContributor
+            implementation="org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.IdeSamWithReceiverComponentContributor"/>
+
+    <declarationAttributeAltererExtension
+            implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.IdeAllOpenDeclarationAttributeAltererExtension"/>
+    <ultraLightClassModifierExtension
+            implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.AllOpenUltraLightClassModifierExtension"/>
+
+    <storageComponentContainerContributor
+            implementation="org.jetbrains.kotlin.idea.compilerPlugin.noarg.IdeNoArgComponentContainerContributor"/>
+    <ultraLightClassModifierExtension
+            implementation="org.jetbrains.kotlin.idea.compilerPlugin.noarg.NoArgUltraLightClassModifierExtension"/>
+
+    <!--suppress KotlinObjectExtensionRegistration -->
+    <defaultErrorMessages implementation="org.jetbrains.kotlin.noarg.diagnostic.DefaultErrorMessagesNoArg"/>
+
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="org.jetbrains.kotlin.console.KotlinConsoleKeeper"/>
+    <fileEditorProvider id="KtsScratchFileEditorProvider"
+                        implementation="org.jetbrains.kotlin.idea.jvm.k1.scratch.K1ScratchFileEditorProvider"/>
+
+    <runLineMarkerContributor language="kotlin"
+                              implementationClass="org.jetbrains.kotlin.idea.jvm.k1.scratch.actions.ScratchRunLineMarkerContributor"/>
+
+    <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.JSLibraryType"/>
+    <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.WasmJsLibraryType"/>
+    <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.WasmWasiLibraryType"/>
+
+    <configurationType implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationType"/>
+    <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer"/>
+
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFileAutoRunner"
+                    serviceImplementation="org.jetbrains.kotlin.idea.jvm.k1.scratch.ScratchFileAutoRunnerK1"/>
+    <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector"
+                        serviceImplementation="org.jetbrains.kotlin.idea.jvm.k1.run.KotlinFE10MainFunctionDetector"/>
+
+    <applicationService serviceInterface="org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService"
+                        serviceImplementation="org.jetbrains.uast.kotlin.internal.IdeaKotlinUastResolveProviderService"/>
+    <projectService serviceInterface="org.jetbrains.uast.kotlin.KotlinUastResolveProviderService"
+                    serviceImplementation="org.jetbrains.uast.kotlin.internal.IdeaKotlinUastResolveProviderService"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.uast">
+    <uastLanguagePlugin implementation="org.jetbrains.uast.kotlin.KotlinUastLanguagePlugin"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin.idea.jvm.shared.bytecode">
+    <compilationConfigurationEnricher implementation="org.jetbrains.kotlin.idea.jvm.k1.bytecode.K1CompilationConfigurationEnricher"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <quickFixContributor implementation="org.jetbrains.kotlin.idea.jvm.k1.quickfix.JvmQuickFixRegistrar"/>
+    <scratchFileLanguageProvider language="kotlin"
+                                 implementationClass="org.jetbrains.kotlin.idea.jvm.k1.scratch.K1ScratchFileLanguageProvider"/>
+
+    <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10JvmIdePlatformKindTooling"/>
+    <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10JsIdePlatformKindTooling"/>
+    <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10WasmJsIdePlatformKindTooling"/>
+    <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10WasmWasiIdePlatformKindTooling"/>
+    <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10NativeIdePlatformKindTooling"/>
+    <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10CommonIdePlatformKindTooling"/>
+  </extensions>
+
+  <resource-bundle>messages.KotlinBundle</resource-bundle>
+
+  <actions>
+    <!-- Kotlin Console REPL-->
+    <action id="KotlinConsoleREPL" class="org.jetbrains.kotlin.console.actions.RunKotlinConsoleAction"
+            icon="org.jetbrains.kotlin.idea.KotlinIcons.LAUNCH">
+      <add-to-group group-id="KotlinToolsGroup" anchor="last"/>
+    </action>
+
+    <action id="Kotlin.RunScratch" class="org.jetbrains.kotlin.idea.jvm.k1.scratch.actions.RunScratchAction" icon="AllIcons.Actions.Execute">
+      <keyboard-shortcut first-keystroke="control alt W" keymap="$default"/>
+      <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
+    </action>
+    <action id="Kotlin.ClearScratch" class="org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.ClearScratchAction" icon="AllIcons.Actions.GC"/>
+    <action id="Kotlin.StopScratch" class="org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.StopScratchAction" icon="AllIcons.Actions.Suspend"/>
+  </actions>
+
+</idea-plugin>

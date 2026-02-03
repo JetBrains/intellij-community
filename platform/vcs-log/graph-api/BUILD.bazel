@@ -1,0 +1,22 @@
+### auto-generated section `build intellij.platform.vcs.log.graph` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "vcs-log-graph_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-log-graph",
+  module_name = "intellij.platform.vcs.log.graph",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":vcs-log-graph_resources"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "//platform/util-rt",
+  ]
+)
+### auto-generated section `build intellij.platform.vcs.log.graph` end

@@ -1,0 +1,112 @@
+### auto-generated section `build intellij.platform.testFramework.junit5` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
+
+resourcegroup(
+  name = "junit5_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+resourcegroup(
+  name = "junit5_test_resources",
+  srcs = glob(["test-resources/**/*"]),
+  strip_prefix = "test-resources"
+)
+
+jvm_provided_library(
+  name = "libraries_junit5-jupiter_provided",
+  lib = "//libraries/junit5-jupiter"
+)
+
+jvm_provided_library(
+  name = "libraries_junit5_provided",
+  lib = "//libraries/junit5"
+)
+
+jvm_provided_library(
+  name = "libraries_junit5-launcher_provided",
+  lib = "//libraries/junit5-launcher"
+)
+
+jvm_library(
+  name = "junit5",
+  module_name = "intellij.platform.testFramework.junit5",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":junit5_resources"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:opentest4j",
+    "//java/java-runtime:rt",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/eel",
+    "//platform/eel-provider",
+    "//platform/execution",
+    "//platform/ide-core-impl",
+    "//platform/platform-impl:ide-impl",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//platform/testFramework/common",
+    "//platform/testFramework/core",
+    "//platform/util",
+    "//platform/util/coroutines",
+    "//platform/util-ex",
+    "//platform/util/jdom",
+    ":libraries_junit5-jupiter_provided",
+    ":libraries_junit5_provided",
+    ":libraries_junit5-launcher_provided",
+  ]
+)
+
+jvm_library(
+  name = "junit5_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  resources = [":junit5_test_resources"],
+  associates = [":junit5"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:opentest4j",
+    "@lib//:junit5Params",
+    "//java/java-runtime:rt",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/eel",
+    "//platform/eel-provider",
+    "//platform/execution",
+    "//platform/ide-core-impl",
+    "//platform/platform-impl:ide-impl",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//platform/testFramework/common",
+    "//platform/testFramework/core",
+    "//platform/util",
+    "//platform/util/coroutines",
+    "//platform/util-ex",
+    "//platform/util/jdom",
+    ":libraries_junit5-jupiter_provided",
+    ":libraries_junit5_provided",
+    ":libraries_junit5-launcher_provided",
+  ]
+)
+### auto-generated section `build intellij.platform.testFramework.junit5` end
+
+### auto-generated section `test intellij.platform.testFramework.junit5` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "junit5_test",
+  runtime_deps = [":junit5_test_lib"]
+)
+### auto-generated section `test intellij.platform.testFramework.junit5` end

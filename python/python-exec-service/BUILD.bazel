@@ -1,0 +1,92 @@
+### auto-generated section `build intellij.python.community.execService` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_community-execService",
+  opt_in = ["kotlin.time.ExperimentalTime"]
+)
+
+resourcegroup(
+  name = "community-execService_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+resourcegroup(
+  name = "community-execService_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "community-execService",
+  module_name = "intellij.python.community.execService",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":community-execService_resources"],
+  kotlinc_opts = ":custom_community-execService",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//python/openapi:community",
+    "//platform/eel-provider",
+    "//platform/util",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/core-api:core",
+    "//platform/eel",
+    "//platform/util/progress",
+    "//platform/execution",
+    "//platform/projectModel-api:projectModel",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/core",
+    "//platform/remote-servers/impl",
+    "//libraries/guava",
+  ]
+)
+
+jvm_library(
+  name = "community-execService_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  resources = [":community-execService_test_resources"],
+  kotlinc_opts = ":custom_community-execService",
+  associates = [":community-execService"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//python/openapi:community",
+    "//python/openapi:community_test_lib",
+    "//platform/eel-provider",
+    "//platform/util",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "@lib//:junit5",
+    "//libraries/hamcrest",
+    "@lib//:junit5Params",
+    "//platform/core-api:core",
+    "//platform/eel",
+    "//platform/testFramework/junit5/eel",
+    "//platform/testFramework/junit5/eel:eel_test_lib",
+    "@lib//:junit5Pioneer",
+    "//platform/testFramework/common",
+    "//platform/util/progress",
+    "//platform/execution",
+    "//platform/projectModel-api:projectModel",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/core",
+    "//platform/remote-servers/impl",
+    "//libraries/guava",
+  ]
+)
+### auto-generated section `build intellij.python.community.execService` end
+
+### auto-generated section `test intellij.python.community.execService` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "community-execService_test",
+  runtime_deps = [":community-execService_test_lib"]
+)
+### auto-generated section `test intellij.python.community.execService` end

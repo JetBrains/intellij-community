@@ -1,0 +1,108 @@
+/* Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. */
+html {
+    font-family: Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif;
+}
+
+body {
+    color: #4C4C4C;
+    margin: 0;
+}
+
+p {
+    font-size: 1em;
+    margin: 0 0 1em 0;
+}
+
+.grayout {
+    opacity: 0.6;
+}
+
+body, input, select, textarea, th, td {
+    font-size: 1em;
+}
+
+li {
+    position: relative;
+    list-style: none;
+    margin-top: 5px;
+}
+
+label:hover {
+    color: #0C479D;
+    text-decoration: underline;
+}
+
+li::before {
+    content: "\23FA";
+    margin: 0 5px 0 0;
+}
+
+li input {
+    position: absolute;
+    left: 0;
+    margin-left: 0;
+    background: none;
+    opacity: 0;
+    z-index: 2;
+    cursor: pointer;
+    height: 1em;
+    width: 1em;
+    top: 0;
+}
+
+li input + ol {
+    margin: -15px 0 0 -44px;
+    height: 1em;
+}
+
+li input + ol > li {
+    display: none;
+    margin-left: -14px !important;
+    padding-left: 1px;
+}
+
+li input:checked + ol {
+    margin: -20px 0 0 -44px;
+    padding: 25px 0 0 80px;
+    height: auto;
+}
+
+li input:checked + ol > li {
+    display: block;
+    margin: 0 0 2px;
+}
+
+li input:checked + ol > li:last-child {
+    margin: 0 0 1px;
+}
+
+div.location {
+    margin-left: 40px;
+}
+
+html, body, #inspection-tree, #description {
+  height: 100%;
+}
+
+#inspection-tree {
+    float: left;
+    overflow: auto;
+    margin-left: 20px;
+    width: 50%;
+}
+
+#description {
+  width: calc(50% - 40px);
+  float: left;
+  overflow: auto;
+  margin-left: 20px;
+}
+
+.problem-description-group {
+    margin-top: 40px;
+    font-weight: bold;
+}
+
+.problem-description {
+  margin-left: 40px;
+}

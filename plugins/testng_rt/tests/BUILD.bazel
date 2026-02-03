@@ -1,0 +1,53 @@
+### auto-generated section `build intellij.testng.rt.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/lang-core",
+    "//platform/smRunner",
+  ]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "intellij.testng.rt.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "//java/java-tests:tests_test_lib",
+    "//platform/core-api:core",
+    "//platform/execution",
+    "//platform/execution-impl",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/testFramework",
+    "//plugins/testng",
+    "//plugins/testng:testng_test_lib",
+    "//java/execution/impl",
+    "//platform/lang-core",
+    "//platform/smRunner",
+    "//platform/smRunner:smRunner_test_lib",
+    "//aether-dependency-resolver",
+    "//aether-dependency-resolver:aether-dependency-resolver_test_lib",
+    "//java/java-runtime:rt",
+    "//platform/core-ui",
+    "//plugins/testng_rt:testng-rt",
+    "//platform/platform-util-io:ide-util-io",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build intellij.testng.rt.tests` end
+
+### auto-generated section `test intellij.testng.rt.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test intellij.testng.rt.tests` end

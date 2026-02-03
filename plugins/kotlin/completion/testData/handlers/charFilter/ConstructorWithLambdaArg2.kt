@@ -1,0 +1,10 @@
+class C(filter: (String) -> Boolean)
+
+fun foo(p: C) {
+    val c: C = <caret>
+}
+
+// IGNORE_K2
+// COMPLETION_TYPE: SMART
+// ELEMENT: C
+// CHAR: (

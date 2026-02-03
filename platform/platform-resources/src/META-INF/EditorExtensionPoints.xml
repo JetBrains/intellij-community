@@ -1,0 +1,124 @@
+<idea-plugin>
+  <extensionPoints>
+    <!--@formatter:off-->
+    <extensionPoint name="wordBoundaryFilter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.editor.actions.WordBoundaryFilter"/>
+    </extensionPoint>
+    <extensionPoint name="bidiRegionsSeparator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.editor.bidi.BidiRegionsSeparator"/>
+    </extensionPoint>
+    <extensionPoint name="enterBetweenBracesDelegate" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesDelegate"/>
+    </extensionPoint>
+    <extensionPoint name="editor.backspaceModeOverride" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.BackspaceModeOverride"/>
+    </extensionPoint>
+
+    <extensionPoint name="extendWordSelectionHandler" interface="com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler" dynamic="true"/>
+    <extensionPoint name="basicWordSelectionFilter" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
+    <extensionPoint name="typedHandler" interface="com.intellij.codeInsight.editorActions.TypedHandlerDelegate" dynamic="true"/>
+    <extensionPoint name="nonWriteAccessTypedHandler" interface="com.intellij.codeInsight.editorActions.NonWriteAccessTypedHandler" dynamic="true"/>
+    <extensionPoint name="selectionUnquotingFilter" interface="com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler$UnquotingFilter" dynamic="true"/>
+    <extensionPoint name="joinLinesHandler" interface="com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate" dynamic="true"/>
+    <extensionPoint name="enterHandlerDelegate" interface="com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate" dynamic="true"/>
+    <extensionPoint name="backspaceHandlerDelegate" interface="com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate" dynamic="true"/>
+
+    <extensionPoint dynamic="true" name="generalEditorOptionsExtension" beanClass="com.intellij.application.options.editor.GeneralEditorOptionsProviderEP">
+      <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable" />
+    </extensionPoint>
+
+    <extensionPoint dynamic="true" name="generalEditorOptionsCustomizer" interface="com.intellij.application.options.editor.EditorOptionsPageCustomizer"/>
+
+    <!--quote handlers-->
+    <extensionPoint name="quoteHandler" beanClass="com.intellij.codeInsight.editorActions.QuoteHandlerEP" dynamic="true">
+      <with attribute="className" implements="com.intellij.codeInsight.editorActions.QuoteHandler"/>
+    </extensionPoint>
+    <extensionPoint name="lang.quoteHandler" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.QuoteHandler"/>
+    </extensionPoint>
+
+    <extensionPoint name="typingActionsExtension" interface="com.intellij.codeInsight.editorActions.TypingActionsExtension" dynamic="true"/>
+
+    <!--copy/paste-->
+    <extensionPoint name="customPasteProvider" interface="com.intellij.ide.PasteProvider" dynamic="true"/>
+    <extensionPoint name="copyPastePreProcessor" interface="com.intellij.codeInsight.editorActions.CopyPastePreProcessor" dynamic="true"/>
+    <extensionPoint name="copyPastePostProcessor" interface="com.intellij.codeInsight.editorActions.CopyPastePostProcessor" dynamic="true"/>
+    <extensionPoint name="preserveIndentOnPaste" beanClass="com.intellij.codeInsight.editorActions.PreserveIndentOnPasteBean" dynamic="true"/>
+
+    <extensionPoint name="commentCompleteHandler" interface="com.intellij.codeInsight.editorActions.CommentCompleteHandler" dynamic="true"/>
+    <extensionPoint name="statementUpDownMover" interface="com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover" dynamic="true"/>
+
+    <extensionPoint name="lang.emacs" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.emacs.EmacsProcessingHandler"/>
+    </extensionPoint>
+    <extensionPoint name="codeInsight.fillParagraph" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.fillParagraph.ParagraphFillHandler"/>
+    </extensionPoint>
+    <extensionPoint name="codeBlockProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.CodeBlockProvider"/>
+    </extensionPoint>
+    <extensionPoint name="lang.smartEnterProcessor" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor"/>
+    </extensionPoint>
+    <extensionPoint name="moveLeftRightHandler" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.moveLeftRight.MoveElementLeftRightHandler"/>
+    </extensionPoint>
+    <extensionPoint name="flipCommaIntention.flipper" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.editor.actions.FlipCommaIntention$Flipper"/>
+    </extensionPoint>
+
+    <extensionPoint name="listSplitJoinContext" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.editor.actions.lists.ListSplitJoinContext"/>
+    </extensionPoint>
+
+    <extensionPoint
+      name="inline.completion.provider"
+      interface="com.intellij.codeInsight.inline.completion.InlineCompletionProvider"
+      dynamic="true"/>
+    <extensionPoint
+      name="inline.completion.partial.accept.handler"
+      interface="com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionPartialAcceptHandler"
+      dynamic="true"/>
+    <extensionPoint
+      name="inline.completion.element.manipulator"
+      interface="com.intellij.codeInsight.inline.completion.elements.InlineCompletionElementManipulator"
+      dynamic="true"/>
+    <extensionPoint
+      name="inline.completion.handlerInitializer"
+      interface="com.intellij.codeInsight.inline.completion.InlineCompletionHandlerInitializer"
+      dynamic="true"/>
+    <extensionPoint
+      name="inline.completion.editorInsertHandler"
+      interface="com.intellij.codeInsight.inline.completion.InlineCompletionEditorInsertHandler"
+      dynamic="true"/>
+    <extensionPoint
+      name="inline.completion.insertActionIdResolver"
+      interface="com.intellij.codeInsight.inline.completion.tooltip.InlineCompletionInsertActionIdResolver"
+      dynamic="true"/>
+    <extensionPoint
+      name="inline.completion.usage.data"
+      interface="com.intellij.codeInsight.inline.completion.logs.InlineCompletionProviderSpecificUsageData"
+      dynamic="true"/>
+    <extensionPoint name="inline.completion.quoteHandlerEx"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionQuoteHandlerEx"/>
+    </extensionPoint>
+    <extensionPoint
+      name="inline.completion.session.logs"
+      interface="com.intellij.codeInsight.inline.completion.logs.InlineCompletionSessionLogsEP"
+      dynamic="true"/>
+    <extensionPoint
+      name="inline.completion.editorTypeResolver"
+      interface="com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorTypeResolver"
+      dynamic="true"/>
+    <extensionPoint
+      name="inline.edit.awaiter"
+      interface="com.intellij.codeInsight.inline.edit.InlineEditAwaiter"
+      dynamic="true"/>
+    <extensionPoint
+      name="inline.completion.suppress.state.supplier"
+      interface="com.intellij.codeInsight.inline.completion.suppress.InlineCompletionSuppressStateSupplier"
+      dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

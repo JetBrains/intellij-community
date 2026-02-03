@@ -1,0 +1,54 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.gradle.util;
+
+import com.intellij.ide.ui.UISettings;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+
+public class TextIcon implements Icon {
+
+  private final @NotNull String myText;
+
+  private final int myControlWidth;
+  private final int myControlHeight;
+  
+  private int myTextHeight;
+
+  public TextIcon(@NotNull String text) {
+    myText = text;
+    JLabel label = new JLabel("");
+    Font font = label.getFont();
+    FontMetrics metrics = label.getFontMetrics(font);
+    myControlWidth = metrics.stringWidth(text) + 4;
+    myControlHeight = font.getSize();
+  }
+
+  @Override
+  public void paintIcon(Component c, Graphics g, int x, int y) {
+    UISettings.setupAntialiasing(g);
+    if (myTextHeight <= 0) {
+      myTextHeight = g.getFont().createGlyphVector(((Graphics2D)g).getFontRenderContext(), myText).getPixelBounds(null, 0, 0).height;
+    }
+
+    g.setColor(UIUtil.getLabelForeground());
+    g.drawString(myText, x + 2, y + myControlHeight - ((myControlHeight - myTextHeight) / 2));
+  }
+
+  @Override
+  public int getIconWidth() {
+    return myControlWidth;
+  }
+
+  @Override
+  public int getIconHeight() {
+    return myControlHeight;
+  }
+}

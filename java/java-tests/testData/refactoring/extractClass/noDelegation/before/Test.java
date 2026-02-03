@@ -1,0 +1,3 @@
+class Test {
+  void foo(){}
+}

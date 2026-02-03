@@ -1,0 +1,64 @@
+### auto-generated section `build kotlin.base.fe10.code-insight` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_code-insight",
+  opt_in = [
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+    "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
+
+resourcegroup(
+  name = "code-insight_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "code-insight",
+  module_name = "kotlin.base.fe10.code-insight",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":code-insight_resources"],
+  kotlinc_opts = ":custom_code-insight",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-compiler-ir",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinc-analysis-api",
+    "//libraries/guava",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/execution-impl",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/project-model",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/highlighting/highlighting-k1:kotlin-highlighting-k1",
+    "//platform/core-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/projectModel-impl",
+    "//platform/refactoring",
+    "//platform/lang-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/util:util-ui",
+    "//platform/core-ui",
+    "//java/java-psi-api:psi",
+    "//plugins/kotlin/code-insight/api",
+    "//platform/lang-api:lang",
+  ]
+)
+### auto-generated section `build kotlin.base.fe10.code-insight` end

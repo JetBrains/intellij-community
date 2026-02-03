@@ -1,0 +1,246 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.fus
+
+import com.intellij.internal.statistic.beans.MetricEvent
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventId
+import com.intellij.internal.statistic.eventLog.events.EventId1
+import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
+import com.intellij.openapi.editor.colors.FontPreferences
+import com.intellij.terminal.TerminalUiSettingsManager
+import org.jetbrains.plugins.terminal.DEFAULT_TERMINAL_COLUMN_SPACING
+import org.jetbrains.plugins.terminal.DEFAULT_TERMINAL_FONT_SIZE
+import org.jetbrains.plugins.terminal.DEFAULT_TERMINAL_LINE_SPACING
+import org.jetbrains.plugins.terminal.RunCommandUsingIdeUtil
+import org.jetbrains.plugins.terminal.TerminalEngine
+import org.jetbrains.plugins.terminal.TerminalFontSettingsService
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
+import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
+import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
+import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
+import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
+
+internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
+  private val GROUP = EventLogGroup("terminalShell.settings", 6)
+
+  private val NON_DEFAULT_OPTIONS = GROUP.registerEvent(
+    "non.default.options",
+    EventFields.Enum<BooleanOptions>("option_name") { it.settingName },
+    EventFields.Enabled
+  )
+  private val NON_DEFAULT_SHELL = GROUP.registerEvent(
+    "non.default.shell",
+    EventFields.String("shell", TerminalShellInfoStatistics.KNOWN_SHELLS.toList()),
+    "User modified the default shell path"
+  )
+  private val NON_DEFAULT_TAB_NAME = GROUP.registerEvent("non.default.tab.name", "User modified the default terminal tab name")
+  private val NON_DEFAULT_ENGINE = GROUP.registerEvent(
+    "non.default.engine",
+    EventFields.Enum<TerminalEngine>("engine")
+  )
+  private val NON_DEFAULT_CURSOR_SHAPE = GROUP.registerEvent(
+    "non.default.cursor.shape",
+    EventFields.Enum<TerminalUiSettingsManager.CursorShape>("shape")
+  )
+  private val NON_DEFAULT_PROMPT_STYLE = GROUP.registerEvent(
+    "non.default.prompt.style",
+    EventFields.Enum<TerminalPromptStyle>("style")
+  )
+  private val NON_DEFAULT_COMMAND_COMPLETION_MODE = GROUP.registerEvent(
+    "non.default.command.completion.mode",
+    EventFields.Enum<TerminalCommandCompletionMode>("mode"),
+    "Users preference of showing completion popup automatically"
+  )
+  private val NON_DEFAULT_FONT_NAME = GROUP.registerEvent(
+    "non.default.font.name",
+    "User modified the default terminal font name",
+  )
+  private val NON_DEFAULT_FONT_SIZE = GROUP.registerEvent(
+    "non.default.font.size", 
+    EventFields.Float("font_size"),
+  )
+  private val NON_DEFAULT_LINE_SPACING = GROUP.registerEvent(
+    "non.default.line.spacing", 
+    EventFields.Float("line_spacing"),
+  )
+  private val NON_DEFAULT_COLUMN_SPACING = GROUP.registerEvent(
+    "non.default.column.spacing", 
+    EventFields.Float("column_spacing"),
+  )
+
+  override fun getGroup(): EventLogGroup = GROUP
+
+  override fun getMetrics(): Set<MetricEvent> {
+    val metrics = mutableSetOf<MetricEvent>()
+    addNonDefaultBooleanOptions(metrics)
+
+    addIfNotDefault(metrics, NON_DEFAULT_TAB_NAME, TerminalOptionsProvider.instance.tabName, TerminalOptionsProvider.State().myTabName)
+
+    addIfNotDefault(
+      metrics,
+      NON_DEFAULT_SHELL,
+      curValue = TerminalLocalOptions.getInstance().shellPath,
+      defaultValue = null,
+    ) { shellCommandLine -> TerminalShellInfoStatistics.getShellNameForStat(shellCommandLine) }
+
+    addIfNotDefault(
+      metrics,
+      NON_DEFAULT_ENGINE,
+      curValue = TerminalOptionsProvider.instance.terminalEngine,
+      defaultValue = TerminalOptionsProvider.State().terminalEngine
+    )
+
+    addIfNotDefault(
+      metrics,
+      NON_DEFAULT_CURSOR_SHAPE,
+      curValue = TerminalOptionsProvider.instance.cursorShape,
+      defaultValue = TerminalOptionsProvider.State().cursorShape
+    )
+
+    addIfNotDefault(
+      metrics,
+      NON_DEFAULT_PROMPT_STYLE,
+      curValue = BlockTerminalOptions.getInstance().promptStyle,
+      defaultValue = BlockTerminalOptions.State().promptStyle
+    )
+
+    addIfNotDefault(
+      metrics,
+      NON_DEFAULT_COMMAND_COMPLETION_MODE,
+      curValue = TerminalCommandCompletionMode.fromSettings(TerminalOptionsProvider.instance.state),
+      defaultValue = TerminalCommandCompletionMode.default()
+    )
+
+    addIfNotDefault(
+      metrics,
+      NON_DEFAULT_FONT_NAME,
+      TerminalFontSettingsService.getInstance().getSettings().fontFamily,
+      FontPreferences.DEFAULT_FONT_NAME,
+    )
+
+    addIfNotDefault(
+      metrics,
+      NON_DEFAULT_FONT_SIZE,
+      TerminalFontSettingsService.getInstance().getSettings().fontSize,
+      DEFAULT_TERMINAL_FONT_SIZE,
+    ) { it.floatValue }
+
+    addIfNotDefault(
+      metrics,
+      NON_DEFAULT_LINE_SPACING,
+      TerminalFontSettingsService.getInstance().getSettings().lineSpacing,
+      DEFAULT_TERMINAL_LINE_SPACING,
+    ) { it.floatValue }
+
+    addIfNotDefault(
+      metrics,
+      NON_DEFAULT_COLUMN_SPACING,
+      TerminalFontSettingsService.getInstance().getSettings().columnSpacing,
+      DEFAULT_TERMINAL_COLUMN_SPACING,
+    ) { it.floatValue }
+
+    return metrics
+  }
+
+  private fun addNonDefaultBooleanOptions(metrics: MutableSet<MetricEvent>) {
+    val curOptions = TerminalOptionsProvider.instance.state
+    val defaultOptions = TerminalOptionsProvider.State()
+
+    addBooleanIfNotDefault(metrics, BooleanOptions.ENABLE_AUDIBLE_BELL, curOptions, defaultOptions) { it.mySoundBell }
+    addBooleanIfNotDefault(metrics, BooleanOptions.CLOSE_ON_SESSION_END, curOptions, defaultOptions) { it.myCloseSessionOnLogout }
+    addBooleanIfNotDefault(metrics, BooleanOptions.REPORT_MOUSE, curOptions, defaultOptions) { it.myReportMouse }
+    addBooleanIfNotDefault(metrics, BooleanOptions.PASTE_ON_MIDDLE_MOUSE_BUTTON, curOptions, defaultOptions) { it.myPasteOnMiddleMouseButton }
+    addBooleanIfNotDefault(metrics, BooleanOptions.COPY_ON_SELECTION, curOptions, defaultOptions) { it.myCopyOnSelection }
+    addBooleanIfNotDefault(metrics, BooleanOptions.OVERRIDE_IDE_SHORTCUTS, curOptions, defaultOptions) { it.myOverrideIdeShortcuts }
+    addBooleanIfNotDefault(metrics, BooleanOptions.ENABLE_SHELL_INTEGRATION, curOptions, defaultOptions) { it.myShellIntegration }
+    addBooleanIfNotDefault(metrics, BooleanOptions.HIGHLIGHT_HYPERLINKS, curOptions, defaultOptions) { it.myHighlightHyperlinks }
+    addBooleanIfNotDefault(metrics, BooleanOptions.USE_OPTION_AS_META, curOptions, defaultOptions) { it.useOptionAsMetaKey }
+
+    val curBlockOptions = BlockTerminalOptions.getInstance().state
+    val defaultBlockOptions = BlockTerminalOptions.State()
+    addBooleanIfNotDefault(metrics, BooleanOptions.SHOW_SEPARATORS_BETWEEN_COMMANDS, curBlockOptions, defaultBlockOptions) { it.showSeparatorsBetweenBlocks }
+
+    addIfNotDefault(
+      metrics,
+      BooleanOptions.RUN_COMMANDS_USING_IDE,
+      curValue = RunCommandUsingIdeUtil.isEnabled,
+      defaultValue = RunCommandUsingIdeUtil.DEFAULT_VALUE
+    )
+  }
+
+  private inline fun <T> addBooleanIfNotDefault(
+    metrics: MutableSet<MetricEvent>,
+    option: BooleanOptions,
+    curState: T,
+    defaultState: T,
+    valueFunction: (T) -> Boolean,
+  ) {
+    val curValue = valueFunction(curState)
+    val defaultValue = valueFunction(defaultState)
+    addIfNotDefault(metrics, option, curValue, defaultValue)
+  }
+
+  private fun addIfNotDefault(metrics: MutableSet<MetricEvent>, option: BooleanOptions, curValue: Boolean, defaultValue: Boolean) {
+    if (curValue != defaultValue) {
+      metrics.add(NON_DEFAULT_OPTIONS.metric(option, curValue))
+    }
+  }
+
+  private fun <T> addIfNotDefault(metrics: MutableSet<MetricEvent>, event: EventId, curValue: T, defaultValue: T) {
+    if (curValue != defaultValue) {
+      metrics.add(event.metric())
+    }
+  }
+
+  private fun <T> addIfNotDefault(metrics: MutableSet<MetricEvent>, event: EventId1<T>, curValue: T, defaultValue: T) {
+    if (curValue != defaultValue) {
+      metrics.add(event.metric(curValue))
+    }
+  }
+
+  private fun <T, V> addIfNotDefault(metrics: MutableSet<MetricEvent>, event: EventId1<T>, curValue: V, defaultValue: V, extractor: (V) -> T) {
+    if (curValue != defaultValue) {
+      metrics.add(event.metric(extractor(curValue)))
+    }
+  }
+
+  private enum class BooleanOptions(val settingName: String) {
+    ENABLE_AUDIBLE_BELL("enable_audible_bell"),
+    CLOSE_ON_SESSION_END("close_on_session_end"),
+    REPORT_MOUSE("report_mouse"),
+    COPY_ON_SELECTION("copy_on_selection"),
+    PASTE_ON_MIDDLE_MOUSE_BUTTON("paste_on_middle_mouse_button"),
+    OVERRIDE_IDE_SHORTCUTS("override_ide_shortcuts"),
+    ENABLE_SHELL_INTEGRATION("enable_shell_integration"),
+    HIGHLIGHT_HYPERLINKS("highlight_hyperlinks"),
+    USE_OPTION_AS_META("use_option_as_meta"),
+    RUN_COMMANDS_USING_IDE("run_commands_using_ide"),
+    SHOW_SEPARATORS_BETWEEN_COMMANDS("show_separators_between_commands"),
+  }
+}
+
+/**
+ * Use the single enum for reporting the mode of command completion.
+ * As reporting separate [TerminalOptionsProvider.showCompletionPopupAutomatically] and [TerminalOptionsProvider.commandCompletionShowingMode]
+ * looks not suitable for further analysis.
+ */
+private enum class TerminalCommandCompletionMode {
+  ALWAYS,
+  ONLY_PARAMETERS,
+  NEVER;
+
+  companion object {
+    fun fromSettings(state: TerminalOptionsProvider.State): TerminalCommandCompletionMode {
+      return when {
+        !state.showCompletionPopupAutomatically -> NEVER
+        state.commandCompletionShowingMode == TerminalCommandCompletionShowingMode.ONLY_PARAMETERS -> ONLY_PARAMETERS
+        else -> ALWAYS
+      }
+    }
+
+    fun default(): TerminalCommandCompletionMode {
+      return fromSettings(TerminalOptionsProvider.State())
+    }
+  }
+}

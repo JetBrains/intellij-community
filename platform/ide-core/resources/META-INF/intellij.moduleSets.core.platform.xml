@@ -1,0 +1,122 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->
+<!-- Source: see moduleSet("core.platform") function in UltimateModuleSets.kt -->
+<!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
+<idea-plugin>
+  <content namespace="jetbrains">
+    <!-- region nested: libraries.platform -->
+    <module name="intellij.libraries.kotlin.reflect" loading="embedded"/>
+    <module name="intellij.libraries.kotlinx.io" loading="embedded"/>
+    <module name="intellij.libraries.kotlinx.serialization.cbor" loading="embedded"/>
+    <module name="intellij.libraries.kotlinx.serialization.core" loading="embedded"/>
+    <module name="intellij.libraries.kotlinx.serialization.json" loading="embedded"/>
+    <module name="intellij.libraries.kotlinx.serialization.protobuf" loading="embedded"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable" loading="embedded"/>
+    <module name="intellij.libraries.kotlinx.datetime" loading="embedded"/>
+    <module name="intellij.libraries.kotlinx.html" loading="embedded"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core" loading="embedded"/>
+    <module name="intellij.libraries.kotlinx.coroutines.debug" loading="embedded"/>
+    <module name="intellij.libraries.kotlinx.coroutines.guava"/>
+    <module name="intellij.libraries.kotlinx.coroutines.slf4j" loading="embedded"/>
+    <module name="intellij.libraries.aalto.xml" loading="embedded"/>
+    <module name="intellij.libraries.asm" loading="embedded"/>
+    <module name="intellij.libraries.asm.tools" loading="embedded"/>
+    <module name="intellij.libraries.automaton" loading="embedded"/>
+    <module name="intellij.libraries.bouncy.castle.provider" loading="embedded"/>
+    <module name="intellij.libraries.bouncy.castle.pgp" loading="embedded"/>
+    <module name="intellij.libraries.blockmap" loading="embedded"/>
+    <module name="intellij.libraries.caffeine" loading="embedded"/>
+    <module name="intellij.libraries.classgraph" loading="embedded"/>
+    <module name="intellij.libraries.cli.parser" loading="embedded"/>
+    <module name="intellij.libraries.commons.cli" loading="embedded"/>
+    <module name="intellij.libraries.commons.codec" loading="embedded"/>
+    <module name="intellij.libraries.commons.compress" loading="embedded"/>
+    <module name="intellij.libraries.commons.io" loading="embedded"/>
+    <module name="intellij.libraries.commons.imaging" loading="embedded"/>
+    <module name="intellij.libraries.commons.lang3" loading="embedded"/>
+    <module name="intellij.libraries.commons.logging" loading="embedded"/>
+    <module name="intellij.libraries.fastutil" loading="embedded"/>
+    <module name="intellij.libraries.gson" loading="embedded"/>
+    <module name="intellij.libraries.guava" loading="embedded"/>
+    <module name="intellij.libraries.hash4j" loading="embedded"/>
+    <module name="intellij.libraries.hdr.histogram" loading="embedded"/>
+    <module name="intellij.libraries.http.client" loading="embedded"/>
+    <module name="intellij.libraries.icu4j" loading="embedded"/>
+    <module name="intellij.libraries.imgscalr" loading="embedded"/>
+    <module name="intellij.libraries.ini4j" loading="embedded"/>
+    <module name="intellij.libraries.ion" loading="embedded"/>
+    <module name="intellij.libraries.jackson" loading="embedded"/>
+    <module name="intellij.libraries.jackson.jr.objects" loading="embedded"/>
+    <module name="intellij.libraries.jackson.databind" loading="embedded"/>
+    <module name="intellij.libraries.jackson.dataformat.yaml" loading="embedded"/>
+    <module name="intellij.libraries.jackson.module.kotlin" loading="embedded"/>
+    <module name="intellij.libraries.java.websocket" loading="embedded"/>
+    <module name="intellij.libraries.javax.annotation" loading="embedded"/>
+    <module name="intellij.libraries.jaxen" loading="embedded"/>
+    <module name="intellij.libraries.jbr" loading="embedded"/>
+    <module name="intellij.libraries.jcip" loading="embedded"/>
+    <module name="intellij.libraries.jsoup" loading="embedded"/>
+    <module name="intellij.libraries.jsonpath" loading="embedded"/>
+    <module name="intellij.libraries.jsvg" loading="embedded"/>
+    <module name="intellij.libraries.jvm.native.trusted.roots" loading="embedded"/>
+    <module name="intellij.libraries.jzlib" loading="embedded"/>
+    <module name="intellij.libraries.kryo5" loading="embedded"/>
+    <module name="intellij.libraries.lz4" loading="embedded"/>
+    <module name="intellij.libraries.markdown" loading="embedded"/>
+    <module name="intellij.libraries.mvstore" loading="embedded"/>
+    <module name="intellij.libraries.netty.buffer" loading="embedded"/>
+    <module name="intellij.libraries.netty.codec.compression" loading="embedded"/>
+    <module name="intellij.libraries.netty.codec.http" loading="embedded"/>
+    <module name="intellij.libraries.netty.handler.proxy" loading="embedded"/>
+    <module name="intellij.libraries.oro.matcher" loading="embedded"/>
+    <module name="intellij.libraries.protobuf" loading="embedded"/>
+    <module name="intellij.libraries.proxy.vole" loading="embedded"/>
+    <module name="intellij.libraries.rhino" loading="embedded"/>
+    <module name="intellij.libraries.snakeyaml" loading="embedded"/>
+    <module name="intellij.libraries.snakeyaml.engine" loading="embedded"/>
+    <module name="intellij.libraries.stream" loading="embedded"/>
+    <module name="intellij.libraries.velocity" loading="embedded"/>
+    <module name="intellij.libraries.xtext.xbase" loading="embedded"/>
+    <module name="intellij.libraries.xz" loading="embedded"/>
+    <!-- endregion -->
+
+    <!-- region nested: rpc.minimal -->
+    <!-- region nested: rpc.minimal > fleet -->
+    <module name="fleet.bifurcan" loading="embedded"/>
+    <module name="fleet.fastutil" loading="embedded"/>
+    <module name="fleet.kernel" loading="embedded"/>
+    <module name="fleet.multiplatform.shims" loading="embedded"/>
+    <module name="fleet.reporting.api" loading="embedded"/>
+    <module name="fleet.reporting.shared" loading="embedded"/>
+    <module name="fleet.rhizomedb" loading="embedded"/>
+    <module name="fleet.rhizomedb.transactor" loading="embedded"/>
+    <module name="fleet.rhizomedb.transactor.rebase" loading="embedded"/>
+    <module name="fleet.rpc" loading="embedded"/>
+    <module name="fleet.util.codepoints" loading="embedded"/>
+    <module name="fleet.util.core" loading="embedded"/>
+    <module name="fleet.util.logging.api" loading="embedded"/>
+    <module name="fleet.util.serialization" loading="embedded"/>
+    <module name="fleet.rpc.server" loading="embedded"/>
+    <!-- endregion -->
+
+    <!-- region direct modules -->
+    <module name="intellij.platform.rpc" loading="embedded"/>
+    <module name="intellij.platform.kernel" loading="embedded"/>
+    <!-- endregion -->
+    <!-- endregion -->
+
+    <!-- region direct modules -->
+    <module name="intellij.platform.util.ex" loading="embedded"/>
+    <module name="intellij.platform.util.ui" loading="embedded"/>
+    <module name="intellij.platform.locking.impl" loading="embedded"/>
+    <module name="intellij.platform.core" loading="embedded"/>
+    <module name="intellij.platform.core.ui" loading="embedded"/>
+    <module name="intellij.platform.core.impl" loading="embedded"/>
+    <module name="intellij.platform.projectModel" loading="embedded"/>
+    <module name="intellij.platform.projectModel.impl" loading="embedded"/>
+    <module name="intellij.platform.analysis" loading="embedded"/>
+    <module name="intellij.platform.analysis.impl" loading="embedded"/>
+    <module name="intellij.platform.ide.core" loading="embedded"/>
+    <!-- endregion -->
+  </content>
+</idea-plugin>

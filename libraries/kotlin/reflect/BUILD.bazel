@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.kotlin.reflect` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "reflect_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "reflect",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":reflect_resources"],
+  exports = ["@lib//:kotlin-reflect"],
+  runtime_deps = ["@lib//:kotlin-reflect"]
+)
+### auto-generated section `build intellij.libraries.kotlin.reflect` end

@@ -1,0 +1,1 @@
+data_path = dirname(realpath(__file__)).replace("\\", '/')

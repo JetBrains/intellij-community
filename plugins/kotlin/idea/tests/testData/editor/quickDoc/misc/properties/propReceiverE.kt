@@ -1,0 +1,4 @@
+var (suspend () -> Unit).<caret>propReceiverE: AuxFaceA
+    get() = object: AuxFaceA {}
+    set(value) {}
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">var</span> <span style="">(</span><span style="color:#000080;font-weight:bold;">suspend</span> <span style="">(</span><span style="">) </span><span style="">-&gt;</span> <span style="color:#000000;"><a href="psi_element://kotlin.Unit">Unit</a></span><span style="">)</span><span style="">.</span><span style="color:#660e7a;font-weight:bold;">propReceiverE</span><span style="">: </span><span style="color:#000000;"><a href="psi_element://AuxFaceA">AuxFaceA</a></span></pre></div><div class='bottom'><icon src="KotlinBaseResourcesIcons.Kotlin_file"/>&nbsp;propReceiverE.kt<br/></div>

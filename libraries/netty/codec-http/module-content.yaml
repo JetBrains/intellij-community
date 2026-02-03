@@ -1,0 +1,13 @@
+- name: dist.all/lib/intellij.libraries.netty.codec.http.jar
+  modules:
+  - name: intellij.libraries.netty.codec.http
+  library: netty-codec-http
+  files:
+  - name: $MAVEN_REPOSITORY$/io/netty/netty-codec-http2/4/netty-codec-http2-4.jar
+  - name: $MAVEN_REPOSITORY$/io/netty/netty-transport/4/netty-transport-4.jar
+  - name: $MAVEN_REPOSITORY$/io/netty/netty-resolver/4/netty-resolver-4.jar
+  - name: $MAVEN_REPOSITORY$/io/netty/netty-codec/4/netty-codec-4.jar
+  - name: $MAVEN_REPOSITORY$/io/netty/netty-codec-base/4/netty-codec-base-4.jar
+  - name: $MAVEN_REPOSITORY$/io/netty/netty-handler/4/netty-handler-4.jar
+  - name: $MAVEN_REPOSITORY$/io/netty/netty-transport-native-unix-common/4/netty-transport-native-unix-common-4.jar
+  - name: $MAVEN_REPOSITORY$/io/netty/netty-codec-http/4/netty-codec-http-4.jar

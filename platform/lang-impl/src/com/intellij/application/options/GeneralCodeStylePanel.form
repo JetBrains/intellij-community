@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.application.options.GeneralCodeStylePanel">
+  <grid id="56a6e" binding="myPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+    <constraints>
+      <xy x="35" y="113" width="889" height="600"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <tabbedpane id="db4aa" class="com.intellij.ui.components.JBTabbedPane" binding="myTabbedPane">
+        <constraints border-constraint="Center"/>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <grid id="6090a" binding="myGeneralTab" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints>
+              <tabbedpane title-resource-bundle="messages/ApplicationBundle" title-key="settings.code.style.general.tab.title"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children/>
+          </grid>
+          <grid id="b4d8" binding="myFormatterTab" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints>
+              <tabbedpane title-resource-bundle="messages/ApplicationBundle" title-key="settings.code.style.formatter.control.tab.title"/>
+            </constraints>
+            <properties/>
+            <border type="none">
+              <size top="0" left="0" bottom="5" right="0"/>
+            </border>
+            <children/>
+          </grid>
+        </children>
+      </tabbedpane>
+    </children>
+  </grid>
+</form>

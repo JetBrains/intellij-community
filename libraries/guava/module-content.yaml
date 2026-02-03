@@ -1,0 +1,7 @@
+- name: dist.all/lib/intellij.libraries.guava.jar
+  modules:
+  - name: intellij.libraries.guava
+  library: Guava
+  files:
+  - name: $MAVEN_REPOSITORY$/com/google/guava/guava/33/guava-33.jar
+  - name: $MAVEN_REPOSITORY$/com/google/guava/failureaccess/1/failureaccess-1.jar

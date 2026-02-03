@@ -1,0 +1,8 @@
+/gsdfjk$ gsdkf$ $/
+-----
+Groovy script
+  Literal
+    GroovyASTPsiElementImpl(SLASHY_LITERAL)
+      PsiElement(regex begin)('/')
+      PsiElement(regex content)('gsdfjk$ gsdkf$ $')
+      PsiElement(regex end)('/')

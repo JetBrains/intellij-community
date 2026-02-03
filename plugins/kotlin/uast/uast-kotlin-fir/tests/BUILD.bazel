@@ -1,0 +1,78 @@
+### auto-generated section `build intellij.kotlin.uast.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//libraries/asm",
+    "//plugins/kotlin/uast/uast-kotlin-base",
+    "//plugins/kotlin/uast/uast-kotlin-fir:kotlin-uast",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-k2",
+    "@lib//:kotlinc-analysis-api-impl-base",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/fir",
+    "//uast/uast-common:uast",
+    "//platform/core-api:core",
+    "//java/java-psi-impl:psi-impl",
+    "//uast/uast-java:java-uast",
+    "//plugins/kotlin/uast/uast-kotlin-idea-fir:kotlin-uast-idea",
+    "@lib//:kotlinc-low-level-api-fir",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "@lib//:kotlinc-symbol-light-classes",
+  ]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "intellij.kotlin.uast.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "//plugins/kotlin/plugin/k2",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//java/testFramework",
+    "//libraries/asm",
+    "//plugins/kotlin/uast/uast-kotlin-base",
+    "//plugins/kotlin/uast/uast-kotlin-base/tests:tests_test_lib",
+    "//plugins/kotlin/uast/uast-kotlin-fir:kotlin-uast",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-k2",
+    "@lib//:kotlinc-analysis-api-impl-base",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "@lib//:kotlinc-analysis-api-impl-base-tests",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//uast/uast-common:uast",
+    "//platform/core-api:core",
+    "//java/java-psi-impl:psi-impl",
+    "//uast/uast-java:java-uast",
+    "@lib//:kotlinc-kotlin-compiler-cli",
+    "@lib//:kotlinc-low-level-api-fir",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "@lib//:kotlinc-symbol-light-classes",
+    "//uast/testFramework",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build intellij.kotlin.uast.tests` end
+
+### auto-generated section `test intellij.kotlin.uast.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test intellij.kotlin.uast.tests` end

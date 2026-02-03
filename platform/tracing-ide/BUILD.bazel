@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.platform.tracing.ide` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "tracing-ide_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "tracing-ide",
+  module_name = "intellij.platform.tracing.ide",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":tracing-ide_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-api:ide",
+    "//platform/projectModel-api:projectModel",
+    "//platform/tracing:tracing-rt",
+    "//platform/lang-api:lang",
+    "//java/compiler/impl",
+  ]
+)
+### auto-generated section `build intellij.platform.tracing.ide` end

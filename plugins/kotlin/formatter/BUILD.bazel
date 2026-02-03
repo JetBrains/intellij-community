@@ -1,0 +1,39 @@
+### auto-generated section `build intellij.kotlin.formatter` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "formatter_resources",
+  srcs = glob(["resources-en/**/*"]),
+  strip_prefix = "resources-en"
+)
+
+jvm_library(
+  name = "formatter",
+  module_name = "intellij.kotlin.formatter",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":formatter_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//platform/util/jdom",
+    "//platform/lang-api:lang",
+    "//platform/core-impl",
+    "//java/java-psi-api:psi",
+    "//platform/util:util-ui",
+    "//platform/core-ui",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
+    "//plugins/kotlin/base/util",
+    "//platform/lang-impl",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/statistics",
+    "//plugins/kotlin/formatter/minimal",
+  ],
+  exports = ["//plugins/kotlin/formatter/minimal"]
+)
+### auto-generated section `build intellij.kotlin.formatter` end

@@ -1,0 +1,1 @@
+Sealed hierarchy of 'SealedClass' would be split. Package 'foo' of module 'light_idea_test_case' would still contain its members: [foo.Impl3, foo.SealedClass.Impl1, foo.SealedClass.Impl2].

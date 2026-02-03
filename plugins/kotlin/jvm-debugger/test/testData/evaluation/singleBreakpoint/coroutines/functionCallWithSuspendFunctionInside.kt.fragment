@@ -1,0 +1,9 @@
+fun foo(): Int {
+    return 1 + one()
+}
+
+fun boo() = one() + 1
+
+foo() + boo()
+
+// RESULT: Suspension functions can be called only within coroutine body

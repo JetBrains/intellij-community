@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.jgoodies.forms.jar
+  modules:
+  - name: intellij.libraries.jgoodies.forms
+    libraries:
+      jgoodies-forms:
+      - name: $MAVEN_REPOSITORY$/com/jgoodies/forms/1/forms-1.jar

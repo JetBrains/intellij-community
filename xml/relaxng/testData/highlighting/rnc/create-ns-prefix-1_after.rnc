@@ -1,0 +1,2 @@
+namespace xxx = ""
+a = element xxx:foo { }

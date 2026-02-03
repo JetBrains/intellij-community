@@ -1,0 +1,309 @@
+# =========================
+# New errors in Python 3.10
+# =========================
+
+
+# =======
+# >= 3.10
+# =======
+
+builtins.ellipsis  # type is not exposed anywhere
+importlib._abc.Loader.exec_module  # See Lib/importlib/_abc.py. Might be defined for backwards compatibility
+
+# positional-only complaints caused by differences between typing aliases and the "real" classes in the stdlib
+_collections_abc.Coroutine.send
+_collections_abc.Coroutine.throw
+_collections_abc.Generator.send
+_collections_abc.Generator.throw
+
+# These are not positional-only at runtime, but we treat them as positional-only to match dict.
+_collections_abc.MutableMapping.pop
+_collections_abc.MutableMapping.setdefault
+
+# These three have a pos-or-keyword first parameter at runtime, but deliberately have a pos-only first parameter in the stub. #6812
+posixpath.join
+ntpath.join
+os.path.join
+
+# this is implemented with *args having a minimum size so arguments before it must be positional (but stubtest doesn't see that)
+tkinter.ttk.Style.element_create
+
+# typing.IO uses positional-or-keyword arguments, but in the stubs we prefer
+# to mark these as positional-only for compatibility with existing sub-classes.
+typing(_extensions)?\.BinaryIO\.write
+typing(_extensions)?\.IO\.read
+typing(_extensions)?\.IO\.readline
+typing(_extensions)?\.IO\.readlines
+typing(_extensions)?\.IO\.seek
+typing(_extensions)?\.IO\.truncate
+typing(_extensions)?\.IO\.write
+typing(_extensions)?\.IO\.writelines
+
+
+# =========
+# 3.10 only
+# =========
+
+# The "loop" argument exists at runtime, but raises TypeError if you try to provide any value for it
+asyncio.BoundedSemaphore.__init__
+asyncio.Condition.__init__
+asyncio.Event.__init__
+asyncio.Lock.__init__
+asyncio.Queue.__init__
+asyncio.Semaphore.__init__
+asyncio.locks.BoundedSemaphore.__init__
+asyncio.locks.Condition.__init__
+asyncio.locks.Event.__init__
+asyncio.locks.Lock.__init__
+asyncio.locks.Semaphore.__init__
+asyncio.queues.Queue.__init__
+
+_random.Random.__init__  # Issues with __new__/__init__ correspondence
+
+bdb.Breakpoint.clearBreakpoints  # Exists at runtime, but missing from stubs
+
+
+# ============
+# 3.10 to 3.11
+# ============
+
+importlib.metadata._meta.SimplePath.__truediv__  # Runtime definition of protocol is incorrect
+
+
+# ===================================
+# Pre-existing errors from Python 3.9
+# ===================================
+
+
+# =======
+# <= 3.10
+# =======
+
+builtins.float.__setformat__  # Internal method for CPython test suite
+email.contentmanager.typ
+gettext.install  # codeset default value is ['unspecified'] so can't be specified
+gettext.translation  # codeset default value is ['unspecified'] so can't be specified
+inspect.Signature.from_builtin  # Removed in 3.11, can add if someone needs this
+inspect.Signature.from_function  # Removed in 3.11, can add if someone needs this
+
+# SpooledTemporaryFile implements IO except these methods before Python 3.11
+# See also https://github.com/python/typeshed/pull/2452#issuecomment-420657918
+tempfile.SpooledTemporaryFile.__next__
+tempfile.SpooledTemporaryFile.readable
+tempfile.SpooledTemporaryFile.seekable
+tempfile.SpooledTemporaryFile.writable
+
+tkinter.Tk.split  # Exists at runtime, but missing from stubs
+typing._SpecialForm.__mro_entries__  # Exists at runtime, but missing from stubs
+
+# Will always raise. Not included to avoid type checkers inferring that
+# Sentinel instances are callable.
+typing_extensions.Sentinel.__call__
+
+
+# =======
+# <= 3.11
+# =======
+
+enum.Enum._generate_next_value_
+importlib.abc.Finder.find_module
+urllib.request.HTTPPasswordMgrWithPriorAuth.__init__  # Args are passed as is to super, so super args are specified
+xml.etree.ElementTree.Element.__bool__  # Doesn't really exist; see comments in stub
+xml.etree.cElementTree.Element.__bool__  # Doesn't really exist; see comments in stub
+
+
+# =======
+# <= 3.12
+# =======
+
+# Exists at runtime, but missing from stubs
+lib2to3.btm_utils
+lib2to3.fixer_util
+lib2to3.patcomp
+lib2to3.pgen2.grammar.Grammar.loads
+lib2to3.pygram.pattern_symbols
+lib2to3.pygram.python_symbols
+lib2to3.pytree.Base.__new__
+lib2to3.pytree.Base.children
+lib2to3.pytree.Base.type
+lib2to3.pytree.BasePattern.__new__
+lib2to3.pytree.BasePattern.type
+lib2to3.pytree.NegatedPattern.match
+lib2to3.pytree.NegatedPattern.match_seq
+tkinter.tix.[A-Z_]+
+tkinter.tix.CObjView
+tkinter.tix.DialogShell
+tkinter.tix.ExFileSelectDialog
+tkinter.tix.FileSelectDialog
+tkinter.tix.FileTypeList
+tkinter.tix.Grid
+tkinter.tix.NoteBookFrame
+tkinter.tix.OptionName
+tkinter.tix.ResizeHandle
+tkinter.tix.ScrolledGrid
+tkinter.tix.ScrolledHList
+tkinter.tix.ScrolledListBox
+tkinter.tix.ScrolledTList
+tkinter.tix.ScrolledText
+tkinter.tix.ScrolledWindow
+tkinter.tix.Shell
+tkinter.tix.TclVersion
+tkinter.tix.TkVersion
+
+
+# =======
+# <= 3.13
+# =======
+
+ast.Ellipsis.__new__  # Implementation has *args, but shouldn't allow any
+
+_?hashlib.scrypt  # Raises TypeError if salt, n, r or p are None
+
+importlib.abc.Traversable.open  # Problematic protocol signature at runtime, see source code comments.
+
+# Will always raise. Not included to avoid type checkers inferring that
+# TypeAliasType instances are callable.
+typing_extensions.TypeAliasType.__call__
+
+
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; >= 3.10
+# =============================================================
+
+# Runtime AST node runtime constructor behaviour is too loose.
+# For static typing, the loose behaviour is undesirable (https://github.com/python/typeshed/issues/8378).
+# For the runtime, the loose behaviour is deprecated in Python 3.13 (https://github.com/python/cpython/issues/105858)
+_?ast.pattern.__init__
+
+_collections_abc.AsyncGenerator.athrow  # async at runtime, deliberately not in the stub, see #7491. Pos-only differences also.
+builtins.property.__set_name__  # Doesn't actually exist
+collections\.UserList\.index  # ignoring pos-or-keyword parameter
+dataclasses.KW_ONLY  # white lies around defaults
+importlib.metadata._meta.SimplePath.joinpath  # Runtime definition of protocol is incorrect
+
+
+# ===============================================================
+# Allowlist entries that cannot or should not be fixed; 3.10 only
+# ===============================================================
+
+importlib.abc.Traversable.joinpath  # Problematic protocol signatures at runtime, see source code comments.
+
+
+# ==================================================================
+# Allowlist entries that cannot or should not be fixed; 3.10 to 3.11
+# ==================================================================
+
+# Deprecation wrapper classes; their methods are just pass-through, so we can ignore them.
+importlib.metadata.DeprecatedList.reverse
+importlib.metadata.DeprecatedList.sort
+
+# We pretend it's a read-only property for forward compatibility with 3.12
+typing.ParamSpec(Args|Kwargs).__origin__
+
+
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; <= 3.10
+# =============================================================
+
+# Side effects from module initialization
+_compat_pickle.excname
+email.contentmanager.maintype
+email.contentmanager.subtype
+inspect.k
+inspect.mod_dict
+inspect.v
+json.encoder.i
+lib2to3.pgen2.grammar.line
+lib2to3.pgen2.grammar.name
+lib2to3.pgen2.grammar.op
+
+pstats.SortKey.__new__  # Derives from (str, Enum)
+pydoc.Helper.symbol  # Loop variable in class https://github.com/python/typeshed/issues/6401#issuecomment-981178522
+pydoc.Helper.symbols_  # Loop variable in class https://github.com/python/typeshed/issues/6401#issuecomment-981178522
+pydoc.Helper.topic  # Loop variable in class https://github.com/python/typeshed/issues/6401#issuecomment-981178522
+sqlite3.test  # Modules that exist at runtime, but shouldn't be added to typeshed
+sqlite3\.test\..+  # Modules that exist at runtime, but shouldn't be added to typeshed
+tkinter.EventType.__new__  # Derives from (str, Enum)
+types.CodeType.replace  # stubtest thinks default values are None but None doesn't work at runtime
+
+
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; <= 3.11
+# =============================================================
+
+.*.__buffer__  # We lie about the existence of these methods
+.*.__release_buffer__  # We lie about the existence of these methods
+asynchat.async_chat.encoding  # Removed in 3.12
+asynchat.async_chat.use_encoding  # Removed in 3.12
+asynchat.find_prefix_at_end  # Removed in 3.12
+asyncore.dispatcher.addr  # Removed in 3.12
+asyncore.dispatcher.handle_accepted  # Removed in 3.12
+ctypes.test  # Modules that exist at runtime, but shouldn't be added to typeshed
+ctypes\.test\..+  # Modules that exist at runtime, but shouldn't be added to typeshed
+distutils\..*  # Removed in 3.12
+lib2to3.tests  # Modules that exist at runtime, but shouldn't be added to typeshed
+lib2to3\.tests\..+  # Modules that exist at runtime, but shouldn't be added to typeshed
+pkgutil.ImpImporter\..*  # Removed in 3.12
+pkgutil.ImpLoader\..*  # Removed in 3.12
+platform.platform  # runtime default is 0, we pretend it's a bool
+poplib.POP3_SSL.stls  # bad declaration of inherited function. See poplib.pyi
+tkinter.test  # Modules that exist at runtime, but shouldn't be added to typeshed
+tkinter\.test\..+  # Modules that exist at runtime, but shouldn't be added to typeshed
+
+# We call them read-only properties, runtime implementation is slightly different
+typing_extensions\.TypeAliasType\.__(parameters|type_params|name|module|value)__
+
+unittest.test  # Modules that exist at runtime, but shouldn't be added to typeshed
+unittest\.test\..+  # Modules that exist at runtime, but shouldn't be added to typeshed
+
+
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; <= 3.12
+# =============================================================
+
+# Undocumented implementation details
+cgi.FieldStorage.bufsize
+cgi.FieldStorage.read_binary
+cgi.FieldStorage.read_lines
+cgi.FieldStorage.read_lines_to_eof
+cgi.FieldStorage.read_lines_to_outerboundary
+cgi.FieldStorage.read_multi
+cgi.FieldStorage.read_single
+cgi.FieldStorage.read_urlencoded
+cgi.FieldStorage.skip_lines
+
+ctypes._endian.DEFAULT_MODE  # Incorrectly star import.
+ctypes._endian.RTLD_GLOBAL  # Incorrectly star import.
+ctypes._endian.RTLD_LOCAL  # Incorrectly star import.
+multiprocessing.dummy.Lock  # Factory function at runtime, but that wouldn't let us use it in type hints
+
+# These multiprocessing proxy methods have *args, **kwargs signatures at runtime,
+# But have more precise (accurate) signatures in the stub
+multiprocessing.managers.DictProxy.__iter__
+multiprocessing.managers.DictProxy.__len__
+multiprocessing.managers.DictProxy.copy
+multiprocessing.managers.DictProxy.items
+multiprocessing.managers.DictProxy.keys
+multiprocessing.managers.DictProxy.values
+
+# Runtime signature is incorrect (https://github.com/python/cpython/issues/93021)
+multiprocessing.managers.DictProxy.clear
+multiprocessing.managers.DictProxy.popitem
+
+# Undocumented implementation details
+pipes.Template.makepipeline
+pipes.Template.open_r
+pipes.Template.open_w
+sunau.Au_read.initfp
+sunau.Au_write.initfp
+
+threading.Lock  # Factory function at runtime, but that wouldn't let us use it in type hints
+types.SimpleNamespace.__init__  # class doesn't accept positional arguments but has default C signature
+typing_extensions\.Annotated  # Undocumented implementation details
+typing\.Annotated  # Super-special typing primitive
+
+# These methods have no default implementation for Python < 3.13.
+_pickle.Pickler.persistent_id
+_pickle.Unpickler.persistent_load
+pickle.Pickler.persistent_id
+pickle.Unpickler.persistent_load

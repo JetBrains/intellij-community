@@ -1,0 +1,19 @@
+# Lookup NamedTuple: Parameter name mismatch between inferred stub and runtime
+django_filters.fields.Lookup.__new__
+django_filters.fields.Lookup.__doc__
+
+# ChoiceIteratorMixin.choices: Cannot define choices property due to incompatibility with base class ChoiceField
+django_filters.fields.ChoiceIteratorMixin.choices
+
+# Our __init__ signatures are more precise -- ignore "stub does not have *args argument"
+django_filters.fields.BaseCSVField.__init__
+django_filters.fields.ChoiceField.__init__
+django_filters.fields.ChoiceIteratorMixin.__init__
+django_filters.fields.LookupChoiceField.__init__
+django_filters.fields.MultipleChoiceField.__init__
+django_filters.fields.RangeField.__init__
+django_filters.filters.QuerySetRequestMixin.__init__
+django_filters.widgets.CSVWidget.__init__
+
+# BaseCSVFilter constructs a custom class dynamically, which stubtest can't handle.
+django_filters(\.\w+)*\.OrderingFilter.field_class

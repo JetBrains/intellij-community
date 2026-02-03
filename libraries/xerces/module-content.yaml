@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.xerces.jar
+  modules:
+  - name: intellij.libraries.xerces
+    libraries:
+      Xerces:
+      - name: $MAVEN_REPOSITORY$/xerces/xercesImpl/2/xercesImpl-2.jar

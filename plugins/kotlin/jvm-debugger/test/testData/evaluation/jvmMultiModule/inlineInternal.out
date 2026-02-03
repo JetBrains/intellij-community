@@ -1,0 +1,17 @@
+LineBreakpoint created at call.kt:11
+LineBreakpoint created at call.kt:16
+LineBreakpoint created at call.kt:21
+LineBreakpoint created at call.kt:26
+Run Java
+Connected to the target VM
+call.kt:11
+Compile bytecode for topLevelFunc{1}
+Compile bytecode for topLevelProperty
+Compile bytecode for c.memberFunc{3}
+Compile bytecode for c.memberProperty
+call.kt:16
+resuming call.kt:21
+resuming call.kt:26
+Disconnected from the target VM
+
+Process finished with exit code 0

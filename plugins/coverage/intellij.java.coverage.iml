@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library name="JaCoCo" type="repository">
+        <properties maven-id="org.jacoco:org.jacoco.ant:0.8.14">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.ant/0.8.14/org.jacoco.ant-0.8.14.jar">
+              <sha256sum>9fff68954d5de3aad2bf838eaf886ed67d2c22a2d6c6f095548bade8c45caeae</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.core/0.8.14/org.jacoco.core-0.8.14.jar">
+              <sha256sum>28abbf0eea5a08e4f24097f2fbac663ca17c341c25c3a04d90d6cd325943c995</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.9/asm-9.9.jar">
+              <sha256sum>03d99a74ad1ee5c71334ef67437f4ef4fe3488caa7c96d8645abc73c8e2017d4</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/9.9/asm-commons-9.9.jar">
+              <sha256sum>db2f6f26150bbe7c126606b4a1151836bcc22a1e05a423b3585698bece995ff8</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.9/asm-tree-9.9.jar">
+              <sha256sum>42178f3775c9c63f9e5e1446747d29b4eca4d91bd6e75e5c43cfa372a47d38c6</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.report/0.8.14/org.jacoco.report-0.8.14.jar">
+              <sha256sum>a3e2026060ab8b8d5c650706406234bb4c033dfd5376afeb8b1666e8ed27c453</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14.jar">
+              <sha256sum>20be9853385bdfc65a5929643412d09243d14514304b89ba23a265158cc8792b</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.ant/0.8.14/org.jacoco.ant-0.8.14.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.core/0.8.14/org.jacoco.core-0.8.14.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.9/asm-9.9.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/9.9/asm-commons-9.9.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.9/asm-tree-9.9.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.report/0.8.14/org.jacoco.report-0.8.14.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.ant/0.8.14/org.jacoco.ant-0.8.14-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.core/0.8.14/org.jacoco.core-0.8.14-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.9/asm-9.9-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/9.9/asm-commons-9.9-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.9/asm-tree-9.9-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.report/0.8.14/org.jacoco.report-0.8.14-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.coverage" exported="" />
+    <orderEntry type="module" module-name="intellij.java.execution" exported="" />
+    <orderEntry type="module" module-name="intellij.java" exported="" />
+    <orderEntry type="module" module-name="intellij.java.execution.impl" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" />
+    <orderEntry type="module" module-name="intellij.platform.lang.core" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
+    <orderEntry type="module" module-name="intellij.platform.refactoring" />
+    <orderEntry type="module" module-name="intellij.platform.testRunner" />
+    <orderEntry type="module" module-name="intellij.testng.rt" />
+    <orderEntry type="module" module-name="intellij.junit.rt" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="intellij.java.compiler" />
+    <orderEntry type="module" module-name="intellij.java.coverage.rt" />
+    <orderEntry type="module" module-name="intellij.java.psi.impl" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.concurrency" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module-library">
+      <library name="coverage-report" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps:coverage-report:1.0.25">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1.0.25/coverage-report-1.0.25.jar">
+              <sha256sum>8627281c15b1b5347ca618d0dbc2090aa92a096a867c1d030198a51efcc33bfe</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/freemarker/freemarker/2.3.32/freemarker-2.3.32.jar">
+              <sha256sum>04d65ec1bde6cea20e3495d5e78ef96ab774d9936434861d3254bd88e7e94f92</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains:annotations" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1.0.25/coverage-report-1.0.25.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/freemarker/freemarker/2.3.32/freemarker-2.3.32.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1.0.25/coverage-report-1.0.25-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/freemarker/freemarker/2.3.32/freemarker-2.3.32-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.coverage.agent" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
+    <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution" />
+  </component>
+</module>

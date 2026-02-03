@@ -1,0 +1,6 @@
+test.java.file
+  FOR_STATEMENT
+    FOR_KEYWORD
+    LPARENTH
+    ERROR_ELEMENT
+      <empty list>

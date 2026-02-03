@@ -1,0 +1,5 @@
+expect class <selection><caret></selection>A<T> {
+    class C<F>
+    class D<F : Any>
+    class E<F>
+}

@@ -1,0 +1,8 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.grpc"/>
+    <module name="intellij.platform.core"/>
+    <!-- endregion -->
+  </dependencies>
+</idea-plugin>

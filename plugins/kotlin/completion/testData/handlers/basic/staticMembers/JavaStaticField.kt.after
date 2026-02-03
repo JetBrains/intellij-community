@@ -1,0 +1,8 @@
+import java.io.File
+
+fun foo() {
+    File.pathSeparator<caret>
+}
+
+// INVOCATION_COUNT: 2
+// ELEMENT_TEXT: "File.pathSeparator"

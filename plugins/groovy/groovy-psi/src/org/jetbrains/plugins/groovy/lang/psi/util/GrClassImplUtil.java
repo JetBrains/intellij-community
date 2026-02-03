@@ -1,0 +1,627 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.psi.util;
+
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.NameHint;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MostlySingularMultiMap;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConstantInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrScriptField;
+import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.CompilationPhaseHint;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyClassImplUtilKt.processPhase;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.isAnnotationResolve;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessTypeParameters;
+
+/**
+ * @author Maxim.Medvedev
+ */
+public final class GrClassImplUtil {
+  private static final Logger LOG = Logger.getInstance(GrClassImplUtil.class);
+
+  private GrClassImplUtil() {
+  }
+
+  private static final Condition<PsiMethod> CONSTRUCTOR_CONDITION = PsiMethod::isConstructor;
+
+  public static GrMethod @NotNull [] getCodeConstructors(@NotNull GrTypeDefinition definition) {
+    GrMethod[] methods = definition.getCodeMethods();
+    List<GrMethod> result = ContainerUtil.filter(methods, CONSTRUCTOR_CONDITION);
+    return result.toArray(GrMethod.EMPTY_ARRAY);
+  }
+
+  public static PsiMethod @NotNull [] getConstructors(@NotNull GrTypeDefinition definition) {
+    PsiMethod[] methods = definition.getMethods();
+    List<PsiMethod> result = ContainerUtil.filter(methods, CONSTRUCTOR_CONDITION);
+    return result.toArray(PsiMethod.EMPTY_ARRAY);
+  }
+
+  public static @Nullable PsiClass findInnerClassByName(GrTypeDefinition grType, String name, boolean checkBases) {
+    if (!checkBases) {
+      for (PsiClass inner : grType.getInnerClasses()) {
+        if (name.equals(inner.getName())) return inner;
+      }
+      return null;
+    }
+    else {
+      Map<String, CandidateInfo> innerClasses = CollectClassMembersUtil.getAllInnerClasses(grType, true);
+      final CandidateInfo info = innerClasses.get(name);
+      return info == null ? null : (PsiClass)info.getElement();
+    }
+  }
+
+  public static @Nullable PsiClass getSuperClass(@NotNull GrTypeDefinition grType) {
+    return getSuperClass(grType, grType.getExtendsListTypes());
+  }
+
+  public static @Nullable PsiClass getSuperClass(@NotNull GrTypeDefinition grType, PsiClassType @NotNull [] extendsListTypes) {
+    if (extendsListTypes.length == 0) return getBaseClass(grType);
+    final PsiClass superClass = extendsListTypes[0].resolve();
+    return superClass != null ? superClass : getBaseClass(grType);
+  }
+
+  public static @Nullable PsiClass getBaseClass(GrTypeDefinition grType) {
+    if (grType.isEnum()) {
+      return JavaPsiFacade.getInstance(grType.getProject()).findClass(CommonClassNames.JAVA_LANG_ENUM, grType.getResolveScope());
+    }
+    else {
+      return JavaPsiFacade.getInstance(grType.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, grType.getResolveScope());
+    }
+  }
+
+  public static PsiClassType @NotNull [] getSuperTypes(GrTypeDefinition grType, boolean includeSynthetic) {
+    PsiClassType[] extendsList = grType.getExtendsListTypes(includeSynthetic);
+    if (extendsList.length == 0) {
+      extendsList = new PsiClassType[]{createBaseClassType(grType)};
+    }
+
+    return ArrayUtil.mergeArrays(extendsList, grType.getImplementsListTypes(includeSynthetic), PsiClassType.ARRAY_FACTORY);
+  }
+
+  public static PsiClassType createBaseClassType(GrTypeDefinition grType) {
+    if (grType.isEnum()) {
+      return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_ENUM, grType);
+    }
+    return TypesUtil.getJavaLangObject(grType);
+  }
+
+  public static PsiMethod @NotNull [] getAllMethods(final GrTypeDefinition grType) {
+    return CachedValuesManager.getCachedValue(grType, () -> {
+      List<PsiMethod> list = new ArrayList<>();
+      getAllMethodsInner(grType, list, new HashSet<>());
+      return CachedValueProvider.Result
+        .create(list.toArray(PsiMethod.EMPTY_ARRAY), PsiModificationTracker.MODIFICATION_COUNT, grType);
+    });
+  }
+
+  public static @NotNull List<PsiMethod> getAllMethods(Collection<? extends PsiClass> classes) {
+    List<PsiMethod> allMethods = new ArrayList<>();
+    HashSet<PsiClass> visited = new HashSet<>();
+
+    for (PsiClass psiClass : classes) {
+      getAllMethodsInner(psiClass, allMethods, visited);
+    }
+
+    return allMethods;
+  }
+
+  private static void getAllMethodsInner(PsiClass clazz, List<? super PsiMethod> allMethods, HashSet<? super PsiClass> visited) {
+    if (visited.contains(clazz)) return;
+    visited.add(clazz);
+
+    ContainerUtil.addAll(allMethods, clazz.getMethods());
+
+    final PsiClass[] supers = clazz.getSupers();
+    for (PsiClass aSuper : supers) {
+      getAllMethodsInner(aSuper, allMethods, visited);
+    }
+  }
+
+  public static PsiClassType[] getReferenceListTypes(@Nullable GrReferenceList list) {
+    if (list == null) return PsiClassType.EMPTY_ARRAY;
+    return list.getReferencedTypes();
+  }
+
+  public static PsiClass @NotNull [] getInterfaces(GrTypeDefinition grType) {
+    return getInterfaces(grType, true);
+  }
+
+  public static PsiClass @NotNull [] getInterfaces(GrTypeDefinition grType, boolean includeSynthetic) {
+    final PsiClassType[] implementsListTypes = grType.getImplementsListTypes(includeSynthetic);
+    List<PsiClass> result = new ArrayList<>(implementsListTypes.length);
+    for (PsiClassType type : implementsListTypes) {
+      final PsiClass psiClass = type.resolve();
+      if (psiClass != null) result.add(psiClass);
+    }
+    return result.toArray(PsiClass.EMPTY_ARRAY);
+  }
+
+  public static PsiClass @NotNull [] getSupers(GrTypeDefinition grType, boolean includeSynthetic) {
+    PsiClassType[] superTypes = grType.getSuperTypes(includeSynthetic);
+    List<PsiClass> result = new ArrayList<>();
+    for (PsiClassType superType : superTypes) {
+      PsiClass superClass = superType.resolve();
+      if (superClass != null) {
+        result.add(superClass);
+      }
+    }
+
+    return result.toArray(PsiClass.EMPTY_ARRAY);
+  }
+
+  public static boolean processDeclarations(@NotNull GrTypeDefinition grType,
+                                            @NotNull PsiScopeProcessor processor,
+                                            @NotNull ResolveState state,
+                                            @Nullable PsiElement lastParent,
+                                            @NotNull PsiElement place) {
+    if (isAnnotationResolve(processor)) return true; //don't process class members while resolving annotation
+
+    if (processor.getHint(CompilationPhaseHint.HINT_KEY) != null) {
+      return processPhase(grType, processor, state);
+    }
+
+    if (shouldProcessTypeParameters(processor)) {
+      for (final PsiTypeParameter typeParameter : grType.getTypeParameters()) {
+        if (!ResolveUtil.processElement(processor, typeParameter, state)) return false;
+      }
+    }
+
+    NameHint nameHint = processor.getHint(NameHint.KEY);
+    String name = nameHint == null ? null : nameHint.getName(state);
+    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
+    final PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getProject());
+
+    boolean processInstanceMethods = (ResolveUtil.shouldProcessMethods(classHint) || ResolveUtil.shouldProcessProperties(classHint)) &&
+                                     shouldProcessInstanceMembers(grType, lastParent);
+
+    LanguageLevel level = PsiUtil.getLanguageLevel(place);
+    if (ResolveUtil.shouldProcessProperties(classHint)) {
+      Map<String, CandidateInfo> fieldsMap = CollectClassMembersUtil.getAllFields(grType);
+      if (name != null) {
+        CandidateInfo fieldInfo = fieldsMap.get(name);
+        if (fieldInfo != null) {
+          if (!processField(grType, processor, state, place, processInstanceMethods, substitutor, factory, level, fieldInfo)) {
+            return false;
+          }
+        }
+        else if (grType.isTrait() && lastParent != null) {
+          PsiField field = findFieldByName(grType, name, false, true);
+          if (field != null && field.hasModifierProperty(PsiModifier.PUBLIC)) {
+            if (!processField(grType, processor, state, place, processInstanceMethods, substitutor, factory, level,
+                              new CandidateInfo(field, PsiSubstitutor.EMPTY))) {
+              return false;
+            }
+          }
+        }
+      }
+      else {
+        for (CandidateInfo info : fieldsMap.values()) {
+          if (!processField(grType, processor, state, place, processInstanceMethods, substitutor, factory, level, info)) {
+            return false;
+          }
+        }
+        if (grType.isTrait() && lastParent != null) {
+          for (PsiField field : CollectClassMembersUtil.getFields(grType, true)) {
+            if (field.hasModifierProperty(PsiModifier.PUBLIC)) {
+              if (!processField(grType, processor, state, place, processInstanceMethods, substitutor, factory, level,
+                                new CandidateInfo(field, PsiSubstitutor.EMPTY))) {
+                return false;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (ResolveUtil.shouldProcessMethods(classHint)) {
+      Map<String, List<CandidateInfo>> methodsMap = CollectClassMembersUtil.getAllMethods(grType, true);
+      boolean isPlaceGroovy = place.getLanguage() == GroovyLanguage.INSTANCE;
+      if (name == null) {
+        for (List<CandidateInfo> list : methodsMap.values()) {
+          for (CandidateInfo info : list) {
+            if (!processMethod(grType, processor, state, place, processInstanceMethods, substitutor, factory, level, isPlaceGroovy, info)) {
+              return false;
+            }
+          }
+        }
+      }
+      else {
+        List<CandidateInfo> byName = methodsMap.get(name);
+        if (byName != null) {
+          for (CandidateInfo info : byName) {
+            if (!processMethod(grType, processor, state, place, processInstanceMethods, substitutor, factory, level, isPlaceGroovy, info)) {
+              return false;
+            }
+          }
+        }
+      }
+    }
+
+    if (ResolveUtil.shouldProcessClasses(classHint)) {
+      Map<String, CandidateInfo> classes = CollectClassMembersUtil.getAllInnerClasses(grType, true);
+      if (name == null) {
+        for (CandidateInfo info : classes.values()) {
+          if (!processor.execute(info.getElement(), state)) return false;
+        }
+      }
+      else {
+        CandidateInfo info = classes.get(name);
+        if (info != null) {
+          if (!processor.execute(info.getElement(), state)) return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  private static boolean processField(@NotNull GrTypeDefinition grType,
+                                      @NotNull PsiScopeProcessor processor,
+                                      @NotNull ResolveState state,
+                                      @NotNull PsiElement place,
+                                      boolean processInstanceMethods,
+                                      @NotNull PsiSubstitutor substitutor,
+                                      @NotNull PsiElementFactory factory,
+                                      @NotNull LanguageLevel level, CandidateInfo fieldInfo) {
+    final PsiField field = (PsiField)fieldInfo.getElement();
+    if (!shouldProcessTraitMember(grType, field, place)) return true;
+    if (!processInstanceMember(processInstanceMethods, field) || isSameDeclaration(place, field)) {
+      return true;
+    }
+    LOG.assertTrue(field.getContainingClass() != null);
+    final PsiSubstitutor finalSubstitutor =
+      PsiClassImplUtil.obtainFinalSubstitutor(field.getContainingClass(), fieldInfo.getSubstitutor(), grType, substitutor, factory, level);
+
+    return processor.execute(field, state.put(PsiSubstitutor.KEY, finalSubstitutor));
+  }
+
+  private static boolean processMethod(@NotNull GrTypeDefinition grType,
+                                       @NotNull PsiScopeProcessor processor,
+                                       @NotNull ResolveState state,
+                                       @NotNull PsiElement place,
+                                       boolean processInstanceMethods,
+                                       @NotNull PsiSubstitutor substitutor,
+                                       @NotNull PsiElementFactory factory,
+                                       @NotNull LanguageLevel level,
+                                       boolean placeGroovy,
+                                       @NotNull CandidateInfo info) {
+    PsiMethod method = (PsiMethod)info.getElement();
+    if (!shouldProcessTraitMember(grType, method, place)) return true;
+    if (!processInstanceMember(processInstanceMethods, method) ||
+        isSameDeclaration(place, method) ||
+        !isMethodVisible(placeGroovy, method)) {
+      return true;
+    }
+    LOG.assertTrue(method.getContainingClass() != null);
+    final PsiSubstitutor finalSubstitutor =
+      PsiClassImplUtil.obtainFinalSubstitutor(method.getContainingClass(), info.getSubstitutor(), grType, substitutor, factory, level);
+
+    return processor.execute(method, state.put(PsiSubstitutor.KEY, finalSubstitutor));
+  }
+
+  private static boolean shouldProcessTraitMember(@NotNull GrTypeDefinition grType,
+                                                  @NotNull PsiMember element,
+                                                  @NotNull PsiElement place) {
+    return !grType.isTrait() ||
+           !element.hasModifierProperty(PsiModifier.STATIC) ||
+           grType.equals(element.getContainingClass()) && PsiTreeUtil.isAncestor(grType, place, true);
+  }
+
+  private static boolean shouldProcessInstanceMembers(@NotNull GrTypeDefinition grType, @Nullable PsiElement lastParent) {
+    if (lastParent != null) {
+      final GrModifierList modifierList = grType.getModifierList();
+      if (modifierList != null && modifierList.hasAnnotation(GroovyCommonClassNames.GROOVY_LANG_CATEGORY)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static boolean processInstanceMember(boolean shouldProcessInstance, @NotNull PsiMember member) {
+    if (shouldProcessInstance) return true;
+
+    if (member instanceof GrReflectedMethod) {
+      return ((GrReflectedMethod)member).getBaseMethod().hasModifierProperty(PsiModifier.STATIC);
+    }
+    else {
+      return member.hasModifierProperty(PsiModifier.STATIC);
+    }
+  }
+
+  public static boolean isSameDeclaration(PsiElement place, PsiElement element) {
+    if (element instanceof GrAccessorMethod) element = ((GrAccessorMethod)element).getProperty();
+
+    if (!(element instanceof GrField)) return false;
+    if (element instanceof GrScriptField) element = ((GrScriptField)element).getOriginalVariable();
+
+    while (place != null) {
+      if (place == element) return true;
+      place = place.getParent();
+      if (element instanceof GrField && ((GrField)element).getInitializerGroovy() == place) {
+        return false;
+      }
+      if (place instanceof GrClosableBlock) return false;
+      if (place instanceof GrEnumConstantInitializer) return false;
+    }
+    return false;
+  }
+
+  private static boolean isMethodVisible(boolean isPlaceGroovy, PsiMethod method) {
+    return isPlaceGroovy || !(method instanceof GrGdkMethod);
+  }
+
+  public static @Nullable PsiMethod findMethodBySignature(GrTypeDefinition grType, PsiMethod patternMethod, boolean checkBases) {
+    final MethodSignature patternSignature = patternMethod.getSignature(PsiSubstitutor.EMPTY);
+    for (PsiMethod method : findMethodsByName(grType, patternMethod.getName(), checkBases, false)) {
+      MethodSignature signature = getSignatureForInheritor(method, grType);
+      if (patternSignature.equals(signature)) return method;
+    }
+
+    return null;
+  }
+
+  private static PsiMethod[] findMethodsByName(GrTypeDefinition grType,
+                                               String name,
+                                               boolean checkBases,
+                                               boolean includeSyntheticAccessors) {
+    if (!checkBases) {
+      List<PsiMethod> result = new ArrayList<>();
+      for (PsiMethod method : CollectClassMembersUtil.getMethods(grType, includeSyntheticAccessors)) {
+        if (name.equals(method.getName())) result.add(method);
+      }
+
+      return result.toArray(PsiMethod.EMPTY_ARRAY);
+    }
+
+    Map<String, List<CandidateInfo>> methodsMap = CollectClassMembersUtil.getAllMethods(grType, includeSyntheticAccessors);
+    return PsiImplUtil.mapToMethods(methodsMap.get(name));
+  }
+
+  public static PsiMethod @NotNull [] findMethodsBySignature(GrTypeDefinition grType, PsiMethod patternMethod, boolean checkBases) {
+    return findMethodsBySignature(grType, patternMethod, checkBases, true);
+  }
+
+  public static PsiMethod @NotNull [] findCodeMethodsBySignature(GrTypeDefinition grType, PsiMethod patternMethod, boolean checkBases) {
+    return findMethodsBySignature(grType, patternMethod, checkBases, false);
+  }
+
+  public static PsiMethod @NotNull [] findMethodsByName(GrTypeDefinition grType, @NonNls String name, boolean checkBases) {
+    return findMethodsByName(grType, name, checkBases, true);
+  }
+
+  private static PsiMethod[] findMethodsBySignature(GrTypeDefinition grType,
+                                                    PsiMethod patternMethod,
+                                                    boolean checkBases,
+                                                    boolean includeSynthetic) {
+    ArrayList<PsiMethod> result = new ArrayList<>();
+    final MethodSignature patternSignature = patternMethod.getSignature(PsiSubstitutor.EMPTY);
+    for (PsiMethod method : findMethodsByName(grType, patternMethod.getName(), checkBases, includeSynthetic)) {
+      MethodSignature signature = getSignatureForInheritor(method, grType);
+      if (patternSignature.equals(signature)) {
+        result.add(method);
+      }
+    }
+    return result.toArray(PsiMethod.EMPTY_ARRAY);
+  }
+
+  private static @Nullable MethodSignature getSignatureForInheritor(@NotNull PsiMethod methodFromSuperClass, @NotNull GrTypeDefinition inheritor) {
+    final PsiClass clazz = methodFromSuperClass.getContainingClass();
+    if (clazz == null) return null;
+    PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(clazz, inheritor, PsiSubstitutor.EMPTY);
+    if (superSubstitutor == null) return null;
+
+    return methodFromSuperClass.getSignature(superSubstitutor);
+  }
+
+
+  public static PsiMethod @NotNull [] findCodeMethodsByName(GrTypeDefinition grType, @NonNls String name, boolean checkBases) {
+    return findMethodsByName(grType, name, checkBases, false);
+  }
+
+  public static @NotNull List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(GrTypeDefinition grType,
+                                                                                                     String name,
+                                                                                                     boolean checkBases) {
+    final ArrayList<Pair<PsiMethod, PsiSubstitutor>> result = new ArrayList<>();
+
+    if (!checkBases) {
+      final PsiMethod[] methods = grType.findMethodsByName(name, false);
+      for (PsiMethod method : methods) {
+        result.add(Pair.create(method, PsiSubstitutor.EMPTY));
+      }
+    }
+    else {
+      final Map<String, List<CandidateInfo>> map = CollectClassMembersUtil.getAllMethods(grType, true);
+      final List<CandidateInfo> candidateInfos = map.get(name);
+      if (candidateInfos != null) {
+        for (CandidateInfo info : candidateInfos) {
+          final PsiElement element = info.getElement();
+          result.add(Pair.create((PsiMethod)element, info.getSubstitutor()));
+        }
+      }
+    }
+
+    return result;
+  }
+
+  public static @NotNull List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors(GrTypeDefinition grType) {
+    final Map<String, List<CandidateInfo>> allMethodsMap = CollectClassMembersUtil.getAllMethods(grType, true);
+    List<Pair<PsiMethod, PsiSubstitutor>> result = new ArrayList<>();
+    for (List<CandidateInfo> infos : allMethodsMap.values()) {
+      for (CandidateInfo info : infos) {
+        result.add(Pair.create((PsiMethod)info.getElement(), info.getSubstitutor()));
+      }
+    }
+
+    return result;
+  }
+
+  public static @Nullable PsiField findFieldByName(GrTypeDefinition grType, String name, boolean checkBases, boolean includeSynthetic) {
+    if (!checkBases) {
+      for (PsiField field : CollectClassMembersUtil.getFields(grType, includeSynthetic)) {
+        if (name.equals(field.getName())) return field;
+      }
+
+      return null;
+    }
+
+    Map<String, CandidateInfo> fieldsMap = CollectClassMembersUtil.getAllFields(grType, includeSynthetic);
+    final CandidateInfo info = fieldsMap.get(name);
+    return info == null ? null : (PsiField)info.getElement();
+  }
+
+  public static PsiField[] getAllFields(GrTypeDefinition grType) {
+    return getAllFields(grType, true);
+  }
+
+  public static PsiField[] getAllFields(GrTypeDefinition grType, boolean includeSynthetic) {
+    Map<String, CandidateInfo> fieldsMap = CollectClassMembersUtil.getAllFields(grType, includeSynthetic);
+    return ContainerUtil.map2Array(fieldsMap.values(), PsiField.class, entry -> (PsiField)entry.getElement());
+  }
+
+  public static boolean isClassEquivalentTo(GrTypeDefinitionImpl definition, PsiElement another) {
+    return PsiClassImplUtil.isClassEquivalentTo(definition, another);
+  }
+
+  public static @NotNull Collection<? extends PsiMethod> expandReflectedMethods(@NotNull PsiMethod method) {
+    if (method instanceof GrMethod) {
+      GrReflectedMethod[] methods = ((GrMethod)method).getReflectedMethods();
+      if (methods.length > 0) {
+        return new SmartList<>(methods);
+      }
+    }
+    return Collections.singletonList(method);
+  }
+
+  public static @NotNull Set<MethodSignature> getDuplicatedSignatures(@NotNull PsiClass clazz) {
+    return CachedValuesManager.getCachedValue(clazz, () -> {
+      PsiElementFactory factory = JavaPsiFacade.getInstance(clazz.getProject()).getElementFactory();
+      MostlySingularMultiMap<MethodSignature, PsiMethod> signatures = new MostlySingularMultiMap<>();
+      for (PsiMethod method : clazz.getMethods()) {
+        MethodSignature signature = method.getSignature(factory.createRawSubstitutor(method));
+        signatures.add(signature, method);
+      }
+
+      Set<MethodSignature> result = new HashSet<>();
+      for (MethodSignature signature : signatures.keySet()) {
+        if (signatures.valuesForKey(signature) > 1) {
+          result.add(signature);
+        }
+      }
+
+      return CachedValueProvider.Result.create(result, clazz);
+    });
+  }
+
+  public static GrAccessorMethod findSetter(GrField field) {
+    return CachedValuesManager.getCachedValue(field, () -> CachedValueProvider.Result.create(
+      doGetSetter(field), PsiModificationTracker.MODIFICATION_COUNT
+    ));
+  }
+
+  private static @Nullable GrAccessorMethod doGetSetter(GrField field) {
+    PsiClass containingClass = field.getContainingClass();
+    if (containingClass == null) return null;
+    PsiMethod[] setters = containingClass.findMethodsByName(GroovyPropertyUtils.getSetterName(field.getName()), false);
+    for (PsiMethod setter : setters) {
+      if (setter instanceof GrAccessorMethod) {
+        return (GrAccessorMethod)setter;
+      }
+    }
+    return null;
+  }
+
+  public static GrAccessorMethod[] findGetters(GrField field) {
+    return CachedValuesManager.getCachedValue(field, () -> CachedValueProvider.Result.create(
+      doGetGetters(field), PsiModificationTracker.MODIFICATION_COUNT
+    ));
+  }
+
+  private static GrAccessorMethod @NotNull [] doGetGetters(GrField field) {
+    PsiClass containingClass = field.getContainingClass();
+    if (!(containingClass instanceof GrTypeDefinition)) return GrAccessorMethod.EMPTY_ARRAY;
+
+    GrAccessorMethod getter = null;
+    GrAccessorMethod booleanGetter = null;
+
+    for (PsiMethod method : containingClass.getMethods()) {
+      if (method instanceof GrAccessorMethod && !((GrAccessorMethod)method).isSetter() && ((GrAccessorMethod)method).getProperty() == field) {
+        getter = (GrAccessorMethod)method;
+        break;
+      }
+    }
+
+    PsiMethod[] booleanGetters = containingClass.findMethodsByName(GroovyPropertyUtils.getGetterNameBoolean(field.getName()), false);
+    for (PsiMethod method : booleanGetters) {
+      if (method instanceof GrAccessorMethod) {
+        booleanGetter = (GrAccessorMethod)method;
+        break;
+      }
+    }
+
+    if (getter != null && booleanGetter != null) {
+      return new GrAccessorMethod[]{getter, booleanGetter};
+    }
+    else if (getter != null) {
+      return new GrAccessorMethod[]{getter};
+    }
+    else {
+      return GrAccessorMethod.EMPTY_ARRAY;
+    }
+  }
+}

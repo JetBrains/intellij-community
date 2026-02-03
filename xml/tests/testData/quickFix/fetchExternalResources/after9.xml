@@ -1,0 +1,3 @@
+<!-- "Fetch external resource" "true" -->
+
+<project default="aaa" xmlns:z="http://nowhere.com2<caret>"/>

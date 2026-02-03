@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="StreamEx" type="repository">
+        <properties maven-id="one.util:streamex:0.8.4">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/one/util/streamex/0.8.4/streamex-0.8.4.jar">
+              <sha256sum>c8bcde95bb6c659bd611a5bc464380f38118a10a0443f3fc15304d91e5c9dd81</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/one/util/streamex/0.8.4/streamex-0.8.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/one/util/streamex/0.8.4/streamex-0.8.4-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

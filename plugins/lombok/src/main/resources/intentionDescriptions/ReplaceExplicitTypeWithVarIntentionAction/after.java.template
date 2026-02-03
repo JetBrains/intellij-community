@@ -1,0 +1,6 @@
+public class X {
+  void a() {
+    var a = 2;
+    a++;
+  }
+}

@@ -1,0 +1,94 @@
+/*
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
+package org.jetbrains.uast.kotlin
+
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiIdentifier
+import com.intellij.psi.PsiMethod
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForScript
+import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtScript
+import org.jetbrains.kotlin.psi.KtScriptInitializer
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UClassInitializer
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.convertOpt
+import org.jetbrains.uast.getOrBuild
+
+@ApiStatus.Internal
+class KotlinScriptUClass(
+    psi: KtLightClassForScript,
+    givenParent: UElement?
+) : AbstractKotlinUClass(givenParent), PsiClass by psi {
+    private val uastAnchorPart = UastLazyPart<UIdentifier>()
+
+    override fun getContainingFile(): PsiFile = unwrapFakeFileForLightClass(psi.containingFile)
+
+    override fun getNameIdentifier(): PsiIdentifier = UastLightIdentifier(psi, psi.kotlinOrigin)
+
+    override val uastAnchor: UIdentifier
+        get() = uastAnchorPart.getOrBuild {
+            KotlinUIdentifier(
+                { nameIdentifier },
+                sourcePsi?.nameIdentifier,
+                this
+            )
+        }
+
+    override val javaPsi: PsiClass = psi
+
+    override val sourcePsi: KtClassOrObject? = psi.kotlinOrigin
+
+    override val psi: KtLightClassForScript = unwrap<UClass, KtLightClassForScript>(psi)
+
+    override fun getSuperClass(): UClass? = super.getSuperClass()
+
+    override fun getFields(): Array<UField> = super.getFields()
+
+    override fun getInitializers(): Array<UClassInitializer> = super.getInitializers()
+
+    override fun getInnerClasses(): Array<UClass> =
+        psi.innerClasses.mapNotNull {
+            baseResolveProviderService.languagePlugin.convertOpt<UClass>(it, this)
+        }.toTypedArray()
+
+    override fun getMethods(): Array<UMethod> = psi.methods.map(this::createUMethod).toTypedArray()
+
+    private fun createUMethod(method: PsiMethod): UMethod {
+        return if (method.isConstructor) {
+            KotlinScriptConstructorUMethod(psi.script, method as KtLightMethod, this)
+        } else {
+            languagePlugin?.convertOpt(method, this) ?: reportConvertFailure(method)
+        }
+    }
+
+    override fun getOriginalElement(): PsiElement? = psi.originalElement
+
+    @ApiStatus.Internal
+    class KotlinScriptConstructorUMethod(
+        private val script: KtScript,
+        override val psi: KtLightMethod,
+        givenParent: UElement?
+    ) : KotlinUMethod(psi, psi.kotlinOrigin, givenParent) {
+        private val uastBodyPart = UastLazyPart<UExpression?>()
+
+        override val uastBody: UExpression?
+            get() = uastBodyPart.getOrBuild {
+                val initializers = script.declarations.filterIsInstance<KtScriptInitializer>()
+                KotlinLazyUBlockExpression.create(initializers, this)
+            }
+
+        override val javaPsi: KtLightMethod = psi
+    }
+}

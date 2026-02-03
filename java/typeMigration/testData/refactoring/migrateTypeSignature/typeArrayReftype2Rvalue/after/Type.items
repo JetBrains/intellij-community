@@ -1,0 +1,13 @@
+Types:
+PsiField:myField : Subject[][]
+PsiParameter:pa : Subject[][]
+PsiReferenceExpression:myField : Subject[][]
+PsiReferenceExpression:myField : Subject[][]
+PsiReferenceExpression:myField : Subject[][]
+PsiReferenceExpression:pa : Subject[][]
+
+Conversions:
+pd -> $
+
+New expression type changes:
+Fails:

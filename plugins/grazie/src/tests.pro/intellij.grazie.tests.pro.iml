@@ -1,0 +1,787 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/testData" type="java-test-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.rd.core" />
+    <orderEntry type="module" module-name="intellij.markdown" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.collaborationTools" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="RUNTIME" />
+    <orderEntry type="module-library" scope="TEST">
+      <library name="jetbrains.intellij.deps.languagetool.language.de" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-de:6.7.20">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-de/6.7.20/language-de-6.7.20.jar">
+              <sha256sum>91d7d42c173b92d918cdf4266f7f6b468726445dca98740976002745ebdd9678</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/de/danielnaber/german-pos-dict/1.2.4/german-pos-dict-1.2.4.jar">
+              <sha256sum>56f0b00adb704cbc1e86776b45f6890efe90685ab370a34b5b299593cdcaae22</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.7/jwordsplitter-4.7.jar">
+              <sha256sum>0435e604abe8b4a0b27f568db9349fbe0546df286bbe62f667c9fd9663df71b2</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar">
+              <sha256sum>33021c9cca70c6292d53ff7dac5d1832d422e986aba52ec998532a5f47f921f8</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.18.0/commons-lang3-3.18.0.jar">
+              <sha256sum>4eeeae8d20c078abb64b015ec158add383ac581571cddc45c68f0c9ae0230720</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.intellij.deps.languagetool:languagetool-core" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-de/6.7.20/language-de-6.7.20.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/german-pos-dict/1.2.4/german-pos-dict-1.2.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.7/jwordsplitter-4.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.18.0/commons-lang3-3.18.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-de/6.7.20/language-de-6.7.20-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.7/jwordsplitter-4.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.18.0/commons-lang3-3.18.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library name="jetbrains.intellij.deps.languagetool.language.el" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-el:6.7.20">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-el/6.7.20/language-el-6.7.20.jar">
+              <sha256sum>da622c6b8d7581a1ce9d58e3cab8c7e9b6770cbe994bb2982d1d82d743dfc436</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/ioperm/morphology-el/1.0.0/morphology-el-1.0.0.jar">
+              <sha256sum>caa36b7e96fd4c1804b3f4763de803ce87468d86908087087814f7d47caee668</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.intellij.deps.languagetool:languagetool-core" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-el/6.7.20/language-el-6.7.20.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ioperm/morphology-el/1.0.0/morphology-el-1.0.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-el/6.7.20/language-el-6.7.20-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ioperm/morphology-el/1.0.0/morphology-el-1.0.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library name="jetbrains.intellij.deps.languagetool.language.uk" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-uk:6.7.20">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-uk/6.7.20/language-uk-6.7.20.jar">
+              <sha256sum>bc94dd9aaee1f3e076d55bc91872d383cd92c9293cc7efd2e316915690963280</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/ua/net/nlp/morfologik-ukrainian-lt/6.7.1/morfologik-ukrainian-lt-6.7.1.jar">
+              <sha256sum>453886930ba7ba0d80d1158577e3e10d814e2c739ee17e297f062542d92dfd04</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.intellij.deps.languagetool:languagetool-core" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-uk/6.7.20/language-uk-6.7.20.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ua/net/nlp/morfologik-ukrainian-lt/6.7.1/morfologik-ukrainian-lt-6.7.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-uk/6.7.20/language-uk-6.7.20-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library name="jetbrains.intellij.deps.languagetool.language.ru" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-ru:6.7.20">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-ru/6.7.20/language-ru-6.7.20.jar">
+              <sha256sum>37ee7871b86ded531c364ab448ebf446a1666aef088ecbd35c9bebd25f7239f4</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar">
+              <sha256sum>33021c9cca70c6292d53ff7dac5d1832d422e986aba52ec998532a5f47f921f8</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.intellij.deps.languagetool:languagetool-core" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-ru/6.7.20/language-ru-6.7.20.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-ru/6.7.20/language-ru-6.7.20-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library name="jetbrains.intellij.deps.languagetool.core" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:languagetool-core:6.7.20">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.7.20/languagetool-core-6.7.20.jar">
+              <sha256sum>2ceb4fddcf6e6943e8e418a417caf05affd239c9f7855ba22aa8494aa0668256</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/carrotsearch/hppc/0.8.2/hppc-0.8.2.jar">
+              <sha256sum>97e45d4e0106d98dd3e76d9610e0bd3895409bd1ab1ed189855b05af0571025e</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.18.0/jackson-databind-2.18.0.jar">
+              <sha256sum>2bf1927b7f3224683ed0157a1ec3b0ede75179da3e597d78c572d56ed00f9f3c</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.18.0/jackson-annotations-2.18.0.jar">
+              <sha256sum>a09367d2eeb526873abf737ff754c5085f82073a382ee72c3bbe15412217671f</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.18.0/jackson-core-2.18.0.jar">
+              <sha256sum>215bbd7c8fd65be504cb92ff3aa1c4b790fc7b14cca72f4546aac4143c101bb5</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/gitlab/dumonts/hunspell/2.1.2/hunspell-2.1.2.jar">
+              <sha256sum>973329ae3a43d35dacd618b93a5773a0a9210c8bf2b58a6b2d2a1e1c9f0389e9</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/net/java/dev/jna/jna-platform/5.12.1/jna-platform-5.12.1.jar">
+              <sha256sum>8ce969116cac95bd61b07a8d5e07174b352e63301473caac72c395e3c08488d2</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.12.1/jna-5.12.1.jar">
+              <sha256sum>91a814ac4f40d60dee91d842e1a8ad874c62197984403d0e3c30d39e55cf53b3</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/google/guava/guava/33.3.1-jre/guava-33.3.1-jre.jar">
+              <sha256sum>4bf0e2c5af8e4525c96e8fde17a4f7307f97f8478f11c4c8e35a0e3298ae4e90</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/google/guava/failureaccess/1.0.2/failureaccess-1.0.2.jar">
+              <sha256sum>8a8f81cf9b359e3f6dfa691a1e776985c061ef2f223c9b2c80753e1b458e8064</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/google/guava/listenablefuture/9999.0-empty-to-avoid-conflict-with-guava/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar">
+              <sha256sum>b372a037d4230aa57fbeffdef30fd6123f9c0c2db85d0aced00c91b974f33f99</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar">
+              <sha256sum>766ad2a0783f2687962c8ad74ceecc38a28b9f72a2d085ee438b7813e928d0c7</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/checkerframework/checker-qual/3.43.0/checker-qual-3.43.0.jar">
+              <sha256sum>3fbc2e98f05854c3df16df9abaa955b91b15b3ecac33623208ed6424640ef0f6</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/mojo/animal-sniffer-annotations/1.24/animal-sniffer-annotations-1.24.jar">
+              <sha256sum>c720e6e5bcbe6b2f48ded75a47bccdb763eede79d14330102e0d352e3d89ed92</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.28.0/error_prone_annotations-2.28.0.jar">
+              <sha256sum>f3fc8a3a0a4020706a373b00e7f57c2512dd26d1f83d28c7d38768f8682b231e</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/google/j2objc/j2objc-annotations/3.0.0/j2objc-annotations-3.0.0.jar">
+              <sha256sum>88241573467ddca44ffd4d74aa04c2bbfd11bf7c17e0c342c94c9de7a70a7c64</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java/3.25.8/protobuf-java-3.25.8.jar">
+              <sha256sum>72bdb32eb38cafb7dcd288262c29a34d57cba2e19101af9685155ba8c0a56008</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/hankcs/aho-corasick-double-array-trie/1.2.2/aho-corasick-double-array-trie-1.2.2.jar">
+              <sha256sum>cbc79badb1e3d18dd18fdb77850da17d4566371c955e5ae85654b770c6e17858</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/optimaize/languagedetector/language-detector/0.6/language-detector-0.6.jar">
+              <sha256sum>f53ecc3d71da9ebc82edd10fb35638d32e8b9d849273dd717a021eca02f2278d</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/net/arnx/jsonic/1.2.11/jsonic-1.2.11.jar">
+              <sha256sum>76a787944faab6c9bea64dc78400949027ed6fb686fe9b328d18f949852bc89f</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/annotations/12.0/annotations-12.0.jar">
+              <sha256sum>f8ab13b14be080fe2f617f90e55599760e4a1b4deeea5c595df63d0d6375ed6d</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/commons-logging/commons-logging/1.3.4/commons-logging-1.3.4.jar">
+              <sha256sum>bc2dfe32f1ef06509e6a065144c1adf7b420eabf11a87f30bd127f8faa332016</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/commons-validator/commons-validator/1.9.0/commons-validator-1.9.0.jar">
+              <sha256sum>c3c14748e2d78db58df88808740711bd643b32c45ffa7b8a739f00fb467cd7d7</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/commons-digester/commons-digester/2.1/commons-digester-2.1.jar">
+              <sha256sum>e0b2b980a84fc6533c5ce291f1917b32c507f62bcad64198fff44368c2196a3d</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/resilience4j/resilience4j-circuitbreaker/1.7.1/resilience4j-circuitbreaker-1.7.1.jar">
+              <sha256sum>05ae08b684e6245b8d88bcb823dfd0a2994052098226bd1e614fb9828e5d13df</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/vavr/vavr/0.10.2/vavr-0.10.2.jar">
+              <sha256sum>1b2ae46cf352627e05b39ac1f1d3bda7b285a8f643cdc7472aea4aa279492e54</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/vavr/vavr-match/0.10.2/vavr-match-0.10.2.jar">
+              <sha256sum>5d7a9515b05e3291194e04e641acf74a9a544c1caa1e2c24f59a1424c6ec8288</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/resilience4j/resilience4j-core/1.7.1/resilience4j-core-1.7.1.jar">
+              <sha256sum>3153a2c96c3e3b31122a7fa8ca8ea1ab0f305bf82d096c291b7416443fff6491</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/resilience4j/resilience4j-micrometer/1.7.1/resilience4j-micrometer-1.7.1.jar">
+              <sha256sum>71d9be0d10026f2223f2afba5b10d5d1a7b569c6433bbc1fd189ca8817d66d60</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api/1.42.1/opentelemetry-api-1.42.1.jar">
+              <sha256sum>6b0f9d067260ea3ed6c3960352b80800b993cb3962fa6fb1b6383cd04c3c0874</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-context/1.42.1/opentelemetry-context-1.42.1.jar">
+              <sha256sum>fc8f47bc94bec89a3dbdbcf631470fb7fd7d3e628b10d43bc376f17ebde4b405</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-semconv/1.30.1-alpha/opentelemetry-semconv-1.30.1-alpha.jar">
+              <sha256sum>aaa73f6c6a3a67cdc07870387383808826d8dae7a84e47cae182b7a88a08e513</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.75.0/grpc-netty-shaded-1.75.0.jar">
+              <sha256sum>d33d47a9720a392512c4e4ceaa17a458a0e3ed6188d17e98d6c4faf0679374d7</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-util/1.75.0/grpc-util-1.75.0.jar">
+              <sha256sum>92b5a1195dad4cbd7c405b01cbd9fd2dbbd548d13d4cfabf9d2d6a37bad4cb81</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-core/1.75.0/grpc-core-1.75.0.jar">
+              <sha256sum>f10cdbe558378494e4ffc6b1bb328b8a137f3201d46c8b24f0154eb9e51191a1</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.11.0/gson-2.11.0.jar">
+              <sha256sum>57928d6e5a6edeb2abd3770a8f95ba44dce45f3b23b7a9dc2b309c581552a78b</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/google/android/annotations/4.1.1.4/annotations-4.1.1.4.jar">
+              <sha256sum>ba734e1e84c09d615af6a09d33034b4f0442f8772dec120efb376d86a565ae15</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-context/1.75.0/grpc-context-1.75.0.jar">
+              <sha256sum>7e1de7847ea621a9ec7cb988a8baa947748d0eaef94bfe457d04d9b57105079f</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/perfmark/perfmark-api/0.27.0/perfmark-api-0.27.0.jar">
+              <sha256sum>c7b478503ec524e55df19b424d46d27c8a68aeb801664fadd4f069b71f52d0f6</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-api/1.75.0/grpc-api-1.75.0.jar">
+              <sha256sum>7f309616691fa655d02512762049ed18bf4ab2b52ced424cab2f527d0bb8e3fc</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf/1.75.0/grpc-protobuf-1.75.0.jar">
+              <sha256sum>f52b53c349b0776815e437636dff3d3844e9b10cbb25be419a786bf3d6f20269</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/google/api/grpc/proto-google-common-protos/2.59.2/proto-google-common-protos-2.59.2.jar">
+              <sha256sum>9407f50aef5d1cb12675c170fa64ee216023eefca49f8f5eac45124f23a6cb29</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf-lite/1.75.0/grpc-protobuf-lite-1.75.0.jar">
+              <sha256sum>60fafc627aa04bcab328dcc9206f0e7aa71d95f1b612774a18272dfe7dc24cf1</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-stub/1.75.0/grpc-stub-1.75.0.jar">
+              <sha256sum>dc98fe18654206948666e6657e13fe301ad0754751f28c6c10961e1e6c457997</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/micrometer/micrometer-registry-prometheus/1.7.12/micrometer-registry-prometheus-1.7.12.jar">
+              <sha256sum>1fd64ca17b7ec6235dae4bb080283dcd7866e929189d82f5ba8a201e41ca9848</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/micrometer/micrometer-core/1.7.12/micrometer-core-1.7.12.jar">
+              <sha256sum>e7137f16fdbb183bf6608403f604036fa53971ca8635947745e8080039ab0533</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar">
+              <sha256sum>9b47fbae444feaac4b7e04f0ea294569e4bc282bc69d8c2ce2ac3f23577281e2</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/latencyutils/LatencyUtils/2.0.3/LatencyUtils-2.0.3.jar">
+              <sha256sum>a32a9ffa06b2f4e01c5360f8f9df7bc5d9454a5d373cd8f361347fa5a57165ec</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/prometheus/simpleclient_common/0.10.0/simpleclient_common-0.10.0.jar">
+              <sha256sum>8f91f079b6d2e45af3a6ff2ad5cb6c039dce602c51d0923790a32482691e50ff</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/prometheus/simpleclient/0.16.0/simpleclient-0.16.0.jar">
+              <sha256sum>22c374f237f7bc4fdb1f0ec2da379c0ba00e69ad2ffe8b6ade543d73062d377f</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/prometheus/simpleclient_tracer_otel/0.16.0/simpleclient_tracer_otel-0.16.0.jar">
+              <sha256sum>a2a84c59bef3796bb7f9c6f2ae8b7de8b905313ef28180ac3de7ff61dd68df3f</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/prometheus/simpleclient_tracer_common/0.16.0/simpleclient_tracer_common-0.16.0.jar">
+              <sha256sum>e84a784ac8e24f182ee62da80b6b5c8140774b75bfa4bf9cc3d3b8390db625f6</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/prometheus/simpleclient_tracer_otel_agent/0.16.0/simpleclient_tracer_otel_agent-0.16.0.jar">
+              <sha256sum>7ad2bb40df74a772d9f5445a3d03579b49d6b37a47d5e90f6cf3f59ecf41ad06</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/prometheus/simpleclient_guava/0.16.0/simpleclient_guava-0.16.0.jar">
+              <sha256sum>49959fe20423803b8958fe35ce6cdcc47e58e2251b191ad53eb7ef6fc46c4ae1</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/javax/activation/javax.activation-api/1.2.0/javax.activation-api-1.2.0.jar">
+              <sha256sum>43fdef0b5b6ceb31b0424b208b930c74ab58fac2ceeb7b3f6fd3aeb8b5ca4393</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/javax/annotation/javax.annotation-api/1.3.2/javax.annotation-api-1.3.2.jar">
+              <sha256sum>e04ba5195bcd555dc95650f7cc614d151e4bcd52d29a10b8aa2197f3ab89ab9b</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/javax/measure/unit-api/1.0/unit-api-1.0.jar">
+              <sha256sum>35da65fdbd3f9c1fe79cfc8399db975fd97660d8a219febfda9fd1a5fc058f10</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/javax/xml/bind/jaxb-api/2.3.1/jaxb-api-2.3.1.jar">
+              <sha256sum>88b955a0df57880a26a74708bc34f74dcaf8ebf4e78843a28b50eae945732b06</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/net/loomchild/segment/2.0.3/segment-2.0.3.jar">
+              <sha256sum>a134be9884ddfa18304c8e437e64aa598d83ccfa439310029e61ea3fdae8b2ce</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.18.0/commons-lang3-3.18.0.jar">
+              <sha256sum>4eeeae8d20c078abb64b015ec158add383ac581571cddc45c68f0c9ae0230720</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-pool2/2.12.0/commons-pool2-2.12.0.jar">
+              <sha256sum>6d3bd18df8410f3e31b031aca582cc109342358a62a2759ebd0c4cdf30d06f8b</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-text/1.12.0/commons-text-1.12.0.jar">
+              <sha256sum>de023257ff166044a56bd1aa9124e843cd05dac5806cc705a9311f3556d5a15f</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-backward-codecs/5.5.5/lucene-backward-codecs-5.5.5.jar">
+              <sha256sum>b62e089f505bc72dd8abb0ad55040604cdd92306e14871d7febcbf947dd9c6e5</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/5.5.5/lucene-core-5.5.5.jar">
+              <sha256sum>8d27a8ab4ee8883282d7713f067e72d1cfde1e88d0f5701a119100ec9e86d7e1</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa/2.1.9/morfologik-fsa-2.1.9.jar">
+              <sha256sum>1bfefce937df14cc94d32a98ce59c33f4d5b6c0eddbb436b6bfe27ff2120a23d</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa-builders/2.1.9/morfologik-fsa-builders-2.1.9.jar">
+              <sha256sum>f418c519b49470c2ec7024086bf210ba370ff158732368005d3b8cef964d3fff</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/carrot2/morfologik-speller/2.1.9/morfologik-speller-2.1.9.jar">
+              <sha256sum>8d2566a216f401380878f25196f84bd351b807b11f18bc71acd1417e04a1ec29</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/carrot2/morfologik-stemming/2.1.9/morfologik-stemming-2.1.9.jar">
+              <sha256sum>6170895b2315b697f4da5630caf57c6c441f1cb419d89d1cb5326b0673293e8a</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/glassfish/jaxb/jaxb-runtime/4.0.5/jaxb-runtime-4.0.5.jar">
+              <sha256sum>485d8940e76373a7f300815ea5504bf5b726c234425ad30971019d133124cca4</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/glassfish/jaxb/jaxb-core/4.0.5/jaxb-core-4.0.5.jar">
+              <sha256sum>ad3fd9bf00de3eda9859f70b6cfb011e2fe9904804e16a2665092888ece0fdca</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/glassfish/jaxb/txw2/4.0.5/txw2-4.0.5.jar">
+              <sha256sum>917355bc451481f30d043b24d123110517966af34383901773882810dca480e5</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/sun/istack/istack-commons-runtime/4.1.2/istack-commons-runtime-4.1.2.jar">
+              <sha256sum>7fd6792361f4dd00f8c56af4a20cecc0066deea4a8f3dec38348af23fc2296ee</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/eclipse/angus/angus-activation/2.0.2/angus-activation-2.0.2.jar">
+              <sha256sum>6dd3bcffc22bce83b07376a0e2e094e4964a3195d4118fb43e380ef35436cc1e</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/it/unimi/dsi/fastutil-core/8.5.14/fastutil-core-8.5.14.jar">
+              <sha256sum>8fb6fe5989a32a74df3158fd8d6b91a4dfc44348772a8654c47dcadd1090a4d8</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/sun/activation/jakarta.activation/1.2.2/jakarta.activation-1.2.2.jar">
+              <sha256sum>02156773e4ae9d048d14a56ad35d644bee9f1052a791d072df3ded3c656e6e1a</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/jakarta/activation/jakarta.activation-api/2.1.3/jakarta.activation-api-2.1.3.jar">
+              <sha256sum>01b176d718a169263e78290691fc479977186bcc6b333487325084d6586f4627</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/jakarta/xml/bind/jakarta.xml.bind-api/2.3.3/jakarta.xml.bind-api-2.3.3.jar">
+              <sha256sum>c04539f472e9a6dd0c7685ea82d677282269ab8e7baca2e14500e381e0c6cec5</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/sun/xml/bind/jaxb-core/2.3.0.1/jaxb-core-2.3.0.1.jar">
+              <sha256sum>d2ecba63615f317a11fb55c6468f6a9480f6411c10951d9881bafd9a9a8d0467</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/sun/xml/bind/jaxb-impl/2.3.3/jaxb-impl-2.3.3.jar">
+              <sha256sum>e5178d0c7948247f75a13c689bf36f4d5d4910a121f712aa3b20ae94377069d8</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/json/json/20240303/json-20240303.jar">
+              <sha256sum>3cf6cd6892e32e2b4c1c39e0f52f5248a2f5b37646fdfbb79a66b46b618414ed</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16.jar">
+              <sha256sum>a12578dde1ba00bd9b816d388a0b879928d00bab3c83c240f7013bf4196c579a</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/tech/units/indriya/1.3/indriya-1.3.jar">
+              <sha256sum>7cbaa6f42e2c8412ef13cd0fb7f81936d64a1c3ea7c4f69cf75bb4e9410cb76b</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/tech/uom/lib/uom-lib-common/1.1/uom-lib-common-1.1.jar">
+              <sha256sum>4add5fbcb7f548b79230ed7e01cb9fd4f9e2524bd1598dbcbfd8150563fe27f7</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar">
+              <sha256sum>33021c9cca70c6292d53ff7dac5d1832d422e986aba52ec998532a5f47f921f8</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/java-diff-utils/java-diff-utils/4.12/java-diff-utils-4.12.jar">
+              <sha256sum>9990a2039778f6b4cc94790141c2868864eacee0620c6c459451121a901cd5b5</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.7.20/languagetool-core-6.7.20.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/carrotsearch/hppc/0.8.2/hppc-0.8.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.18.0/jackson-databind-2.18.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.18.0/jackson-annotations-2.18.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.18.0/jackson-core-2.18.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/gitlab/dumonts/hunspell/2.1.2/hunspell-2.1.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna-platform/5.12.1/jna-platform-5.12.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.12.1/jna-5.12.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/33.3.1-jre/guava-33.3.1-jre.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/failureaccess/1.0.2/failureaccess-1.0.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/listenablefuture/9999.0-empty-to-avoid-conflict-with-guava/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/checkerframework/checker-qual/3.43.0/checker-qual-3.43.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/mojo/animal-sniffer-annotations/1.24/animal-sniffer-annotations-1.24.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.28.0/error_prone_annotations-2.28.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/j2objc/j2objc-annotations/3.0.0/j2objc-annotations-3.0.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java/3.25.8/protobuf-java-3.25.8.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/hankcs/aho-corasick-double-array-trie/1.2.2/aho-corasick-double-array-trie-1.2.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/optimaize/languagedetector/language-detector/0.6/language-detector-0.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/arnx/jsonic/1.2.11/jsonic-1.2.11.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/intellij/annotations/12.0/annotations-12.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/commons-logging/commons-logging/1.3.4/commons-logging-1.3.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/commons-validator/commons-validator/1.9.0/commons-validator-1.9.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/commons-digester/commons-digester/2.1/commons-digester-2.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/resilience4j/resilience4j-circuitbreaker/1.7.1/resilience4j-circuitbreaker-1.7.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/vavr/vavr/0.10.2/vavr-0.10.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/vavr/vavr-match/0.10.2/vavr-match-0.10.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/resilience4j/resilience4j-core/1.7.1/resilience4j-core-1.7.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/resilience4j/resilience4j-micrometer/1.7.1/resilience4j-micrometer-1.7.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api/1.42.1/opentelemetry-api-1.42.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-context/1.42.1/opentelemetry-context-1.42.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-semconv/1.30.1-alpha/opentelemetry-semconv-1.30.1-alpha.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.75.0/grpc-netty-shaded-1.75.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-util/1.75.0/grpc-util-1.75.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-core/1.75.0/grpc-core-1.75.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.11.0/gson-2.11.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/android/annotations/4.1.1.4/annotations-4.1.1.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-context/1.75.0/grpc-context-1.75.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/perfmark/perfmark-api/0.27.0/perfmark-api-0.27.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-api/1.75.0/grpc-api-1.75.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf/1.75.0/grpc-protobuf-1.75.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/api/grpc/proto-google-common-protos/2.59.2/proto-google-common-protos-2.59.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf-lite/1.75.0/grpc-protobuf-lite-1.75.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-stub/1.75.0/grpc-stub-1.75.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/micrometer/micrometer-registry-prometheus/1.7.12/micrometer-registry-prometheus-1.7.12.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/micrometer/micrometer-core/1.7.12/micrometer-core-1.7.12.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/latencyutils/LatencyUtils/2.0.3/LatencyUtils-2.0.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/prometheus/simpleclient_common/0.10.0/simpleclient_common-0.10.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/prometheus/simpleclient/0.16.0/simpleclient-0.16.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/prometheus/simpleclient_tracer_otel/0.16.0/simpleclient_tracer_otel-0.16.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/prometheus/simpleclient_tracer_common/0.16.0/simpleclient_tracer_common-0.16.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/prometheus/simpleclient_tracer_otel_agent/0.16.0/simpleclient_tracer_otel_agent-0.16.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/prometheus/simpleclient_guava/0.16.0/simpleclient_guava-0.16.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/javax/activation/javax.activation-api/1.2.0/javax.activation-api-1.2.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/javax/annotation/javax.annotation-api/1.3.2/javax.annotation-api-1.3.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/javax/measure/unit-api/1.0/unit-api-1.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/javax/xml/bind/jaxb-api/2.3.1/jaxb-api-2.3.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/loomchild/segment/2.0.3/segment-2.0.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.18.0/commons-lang3-3.18.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-pool2/2.12.0/commons-pool2-2.12.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-text/1.12.0/commons-text-1.12.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-backward-codecs/5.5.5/lucene-backward-codecs-5.5.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/5.5.5/lucene-core-5.5.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa/2.1.9/morfologik-fsa-2.1.9.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa-builders/2.1.9/morfologik-fsa-builders-2.1.9.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-speller/2.1.9/morfologik-speller-2.1.9.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-stemming/2.1.9/morfologik-stemming-2.1.9.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jaxb/jaxb-runtime/4.0.5/jaxb-runtime-4.0.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jaxb/jaxb-core/4.0.5/jaxb-core-4.0.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jaxb/txw2/4.0.5/txw2-4.0.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/sun/istack/istack-commons-runtime/4.1.2/istack-commons-runtime-4.1.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/angus/angus-activation/2.0.2/angus-activation-2.0.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/it/unimi/dsi/fastutil-core/8.5.14/fastutil-core-8.5.14.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/sun/activation/jakarta.activation/1.2.2/jakarta.activation-1.2.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/jakarta/activation/jakarta.activation-api/2.1.3/jakarta.activation-api-2.1.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/jakarta/xml/bind/jakarta.xml.bind-api/2.3.3/jakarta.xml.bind-api-2.3.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/sun/xml/bind/jaxb-core/2.3.0.1/jaxb-core-2.3.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/sun/xml/bind/jaxb-impl/2.3.3/jaxb-impl-2.3.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/json/json/20240303/json-20240303.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tech/units/indriya/1.3/indriya-1.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tech/uom/lib/uom-lib-common/1.1/uom-lib-common-1.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/java-diff-utils/java-diff-utils/4.12/java-diff-utils-4.12.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.7.20/languagetool-core-6.7.20-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/carrotsearch/hppc/0.8.2/hppc-0.8.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.18.0/jackson-databind-2.18.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.18.0/jackson-annotations-2.18.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.18.0/jackson-core-2.18.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/gitlab/dumonts/hunspell/2.1.2/hunspell-2.1.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna-platform/5.12.1/jna-platform-5.12.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.12.1/jna-5.12.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/33.3.1-jre/guava-33.3.1-jre-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/failureaccess/1.0.2/failureaccess-1.0.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/checkerframework/checker-qual/3.43.0/checker-qual-3.43.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/mojo/animal-sniffer-annotations/1.24/animal-sniffer-annotations-1.24-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.28.0/error_prone_annotations-2.28.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/j2objc/j2objc-annotations/3.0.0/j2objc-annotations-3.0.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java/3.25.8/protobuf-java-3.25.8-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/hankcs/aho-corasick-double-array-trie/1.2.2/aho-corasick-double-array-trie-1.2.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/optimaize/languagedetector/language-detector/0.6/language-detector-0.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/arnx/jsonic/1.2.11/jsonic-1.2.11-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/intellij/annotations/12.0/annotations-12.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/commons-logging/commons-logging/1.3.4/commons-logging-1.3.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/commons-validator/commons-validator/1.9.0/commons-validator-1.9.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/commons-digester/commons-digester/2.1/commons-digester-2.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/resilience4j/resilience4j-circuitbreaker/1.7.1/resilience4j-circuitbreaker-1.7.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/vavr/vavr/0.10.2/vavr-0.10.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/vavr/vavr-match/0.10.2/vavr-match-0.10.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/resilience4j/resilience4j-core/1.7.1/resilience4j-core-1.7.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/resilience4j/resilience4j-micrometer/1.7.1/resilience4j-micrometer-1.7.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api/1.42.1/opentelemetry-api-1.42.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-context/1.42.1/opentelemetry-context-1.42.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-semconv/1.30.1-alpha/opentelemetry-semconv-1.30.1-alpha-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.75.0/grpc-netty-shaded-1.75.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-util/1.75.0/grpc-util-1.75.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-core/1.75.0/grpc-core-1.75.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.11.0/gson-2.11.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/android/annotations/4.1.1.4/annotations-4.1.1.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-context/1.75.0/grpc-context-1.75.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/perfmark/perfmark-api/0.27.0/perfmark-api-0.27.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-api/1.75.0/grpc-api-1.75.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf/1.75.0/grpc-protobuf-1.75.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/api/grpc/proto-google-common-protos/2.59.2/proto-google-common-protos-2.59.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf-lite/1.75.0/grpc-protobuf-lite-1.75.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-stub/1.75.0/grpc-stub-1.75.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/micrometer/micrometer-registry-prometheus/1.7.12/micrometer-registry-prometheus-1.7.12-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/micrometer/micrometer-core/1.7.12/micrometer-core-1.7.12-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/latencyutils/LatencyUtils/2.0.3/LatencyUtils-2.0.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/prometheus/simpleclient_common/0.10.0/simpleclient_common-0.10.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/prometheus/simpleclient/0.16.0/simpleclient-0.16.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/prometheus/simpleclient_tracer_otel/0.16.0/simpleclient_tracer_otel-0.16.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/prometheus/simpleclient_tracer_common/0.16.0/simpleclient_tracer_common-0.16.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/prometheus/simpleclient_tracer_otel_agent/0.16.0/simpleclient_tracer_otel_agent-0.16.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/prometheus/simpleclient_guava/0.16.0/simpleclient_guava-0.16.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/javax/activation/javax.activation-api/1.2.0/javax.activation-api-1.2.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/javax/annotation/javax.annotation-api/1.3.2/javax.annotation-api-1.3.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/javax/measure/unit-api/1.0/unit-api-1.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/javax/xml/bind/jaxb-api/2.3.1/jaxb-api-2.3.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/loomchild/segment/2.0.3/segment-2.0.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.18.0/commons-lang3-3.18.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-pool2/2.12.0/commons-pool2-2.12.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-text/1.12.0/commons-text-1.12.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-backward-codecs/5.5.5/lucene-backward-codecs-5.5.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/5.5.5/lucene-core-5.5.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa/2.1.9/morfologik-fsa-2.1.9-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa-builders/2.1.9/morfologik-fsa-builders-2.1.9-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-speller/2.1.9/morfologik-speller-2.1.9-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-stemming/2.1.9/morfologik-stemming-2.1.9-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jaxb/jaxb-runtime/4.0.5/jaxb-runtime-4.0.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jaxb/jaxb-core/4.0.5/jaxb-core-4.0.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jaxb/txw2/4.0.5/txw2-4.0.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/sun/istack/istack-commons-runtime/4.1.2/istack-commons-runtime-4.1.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/angus/angus-activation/2.0.2/angus-activation-2.0.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/it/unimi/dsi/fastutil-core/8.5.14/fastutil-core-8.5.14-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/sun/activation/jakarta.activation/1.2.2/jakarta.activation-1.2.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/jakarta/activation/jakarta.activation-api/2.1.3/jakarta.activation-api-2.1.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/jakarta/xml/bind/jakarta.xml.bind-api/2.3.3/jakarta.xml.bind-api-2.3.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/sun/xml/bind/jaxb-core/2.3.0.1/jaxb-core-2.3.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/sun/xml/bind/jaxb-impl/2.3.3/jaxb-impl-2.3.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/json/json/20240303/json-20240303-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tech/units/indriya/1.3/indriya-1.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tech/uom/lib/uom-lib-common/1.1/uom-lib-common-1.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/java-diff-utils/java-diff-utils/4.12/java-diff-utils-4.12-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library name="ai.grazie.nlp.detect.jvm" type="repository">
+        <properties maven-id="ai.grazie.nlp:nlp-detect-jvm:0.8.106">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-detect-jvm/0.8.106/nlp-detect-jvm-0.8.106.jar">
+              <sha256sum>f3cb5e66f1fe7b8dccaf131dcc0d255df7ef274f3dae78aa7334376ec9334925</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.8.106/utils-common-jvm-0.8.106.jar">
+              <sha256sum>b48b28dac51cd06bf617f0c35da8e3d3621dad259e7d058960e81c6cb4939c0f</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.8.106/nlp-common-jvm-0.8.106.jar">
+              <sha256sum>ae5a87215b268e612f209d9c97ced2f525fb6ff00479d2de40bb848658efdd5e</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0.8.106/model-text-jvm-0.8.106.jar">
+              <sha256sum>a0d5b1b818cc5a6e0a917fdeae062ea93b3e2c7c49024e64ca23e8d18172862a</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0.8.106/model-common-jvm-0.8.106.jar">
+              <sha256sum>d81957cdfb1a432c4b3f13c5cdb92091344bc4c5cbe8490ca59792db8fd695d0</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-patterns-jvm/0.8.106/nlp-patterns-jvm-0.8.106.jar">
+              <sha256sum>480b68a94cd5b1f92d90a0aed9deca4305d6bd2d8d7dd293767adc2c011f3a0e</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer-jvm/0.8.106/nlp-tokenizer-jvm-0.8.106.jar">
+              <sha256sum>b7047c7e77fff172e6345dbbd760236a98fea1805a416bcbfc8459dd06a333ee</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0.8.106/nlp-similarity-jvm-0.8.106.jar">
+              <sha256sum>73e9b4213617018350d76b3fa00ec9e073ff3764d691f14790c26163e79b4d58</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0.8.106/nlp-langs-jvm-0.8.106.jar">
+              <sha256sum>def8cafce5889ebd48ca7ebb8685ec2aa1234212c10fe662f06cf8c7c4015ca5</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-multiplatform-jvm/0.8.106/utils-multiplatform-jvm-0.8.106.jar">
+              <sha256sum>bd280d1be432872ab552484dc5f7b6b2a96c1ffe6ceda4f1c55b39d64fefdd80</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
+            <dependency maven-id="org.slf4j:slf4j-api" />
+            <dependency maven-id="it.unimi.dsi:fastutil-core" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-jvm" />
+            <dependency maven-id="org.jetbrains:annotations" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-datetime-jvm" />
+            <dependency maven-id="ai.grazie.model:swagger-annotations-jvm" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-detect-jvm/0.8.106/nlp-detect-jvm-0.8.106.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.8.106/utils-common-jvm-0.8.106.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.8.106/nlp-common-jvm-0.8.106.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0.8.106/model-text-jvm-0.8.106.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0.8.106/model-common-jvm-0.8.106.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-patterns-jvm/0.8.106/nlp-patterns-jvm-0.8.106.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer-jvm/0.8.106/nlp-tokenizer-jvm-0.8.106.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0.8.106/nlp-similarity-jvm-0.8.106.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0.8.106/nlp-langs-jvm-0.8.106.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-multiplatform-jvm/0.8.106/utils-multiplatform-jvm-0.8.106.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-detect-jvm/0.8.106/nlp-detect-jvm-0.8.106-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.8.106/utils-common-jvm-0.8.106-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.8.106/nlp-common-jvm-0.8.106-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0.8.106/model-text-jvm-0.8.106-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0.8.106/model-common-jvm-0.8.106-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-patterns-jvm/0.8.106/nlp-patterns-jvm-0.8.106-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer-jvm/0.8.106/nlp-tokenizer-jvm-0.8.106-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0.8.106/nlp-similarity-jvm-0.8.106-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0.8.106/nlp-langs-jvm-0.8.106-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-multiplatform-jvm/0.8.106/utils-multiplatform-jvm-0.8.106-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.python.grazie" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.grazie" />
+    <orderEntry type="module" module-name="intellij.grazie.core" />
+    <orderEntry type="module" module-name="intellij.grazie.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
+    <orderEntry type="module-library">
+      <library name="ai.grazie.model.ner.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.model:model-ner-jvm:0.8.106">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-ner-jvm/0.8.106/model-ner-jvm-0.8.106.jar">
+              <sha256sum>4a9f9007f4ec5ae089c7870beef2f0bf93c4b66a363b23afce43f3ab3f5b9e19</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-ner-jvm/0.8.106/model-ner-jvm-0.8.106.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-ner-jvm/0.8.106/model-ner-jvm-0.8.106-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ai.grazie.model.tree.jvm" type="repository">
+        <properties maven-id="ai.grazie.model:model-tree-jvm:0.8.106">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-tree-jvm/0.8.106/model-tree-jvm-0.8.106.jar">
+              <sha256sum>6cdc8dba76ff568781832397798f6459ba833c1da90e05eafdf6fabe1cfedd62</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="ai.grazie.nlp:nlp-langs-jvm" />
+            <dependency maven-id="ai.grazie.model:model-text-jvm" />
+            <dependency maven-id="ai.grazie.utils:utils-common-jvm" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-tree-jvm/0.8.106/model-tree-jvm-0.8.106.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-tree-jvm/0.8.106/model-tree-jvm-0.8.106-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ai.grazie.spell.gec.engine.local.jvm" type="repository">
+        <properties maven-id="ai.grazie.spell:gec-spell-engine-local:0.8.106">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.106/gec-spell-engine-local-0.8.106.jar">
+              <sha256sum>4f74845fc575f166771252d771dd2ee38a9e9299e7d038bb3313120bb53a60b0</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-gec-jvm/0.8.106/model-gec-jvm-0.8.106.jar">
+              <sha256sum>71f9805f0cb479b1085fb6dbfac2f40b1f6fdad6ddf742db7c9c148cc195ebed</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0.8.106/nlp-similarity-jvm-0.8.106.jar">
+              <sha256sum>73e9b4213617018350d76b3fa00ec9e073ff3764d691f14790c26163e79b4d58</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-phonetics-jvm/0.8.106/nlp-phonetics-jvm-0.8.106.jar">
+              <sha256sum>0e7835181ef83bf80c0868636d5273517ec58ab9dbe6f83285378d84866d6d5e</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="ai.grazie.utils:utils-common-jvm" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="ai.grazie.model:model-text-jvm" />
+            <dependency maven-id="ai.grazie.nlp:nlp-langs-jvm" />
+            <dependency maven-id="org.jetbrains:annotations" />
+            <dependency maven-id="ai.grazie.nlp:nlp-common-jvm" />
+            <dependency maven-id="ai.grazie.nlp:nlp-patterns-jvm" />
+            <dependency maven-id="ai.grazie.nlp:nlp-tokenizer-jvm" />
+            <dependency maven-id="org.apache.lucene:lucene-analysis-common" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.106/gec-spell-engine-local-0.8.106.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-gec-jvm/0.8.106/model-gec-jvm-0.8.106.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0.8.106/nlp-similarity-jvm-0.8.106.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-phonetics-jvm/0.8.106/nlp-phonetics-jvm-0.8.106.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.106/gec-spell-engine-local-0.8.106-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-gec-jvm/0.8.106/model-gec-jvm-0.8.106-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0.8.106/nlp-similarity-jvm-0.8.106-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-phonetics-jvm/0.8.106/nlp-phonetics-jvm-0.8.106-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
+    <orderEntry type="module" module-name="intellij.platform.vcs" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.stream" scope="TEST" />
+    <orderEntry type="module-library" scope="TEST">
+      <library name="ai.grazie.model.def.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.model:model-def-jvm:0.8.106">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-def-jvm/0.8.106/model-def-jvm-0.8.106.jar">
+              <sha256sum>b7cbf2ac02dd5819f5714b70b6ffa52832e685fb90db6fee9cb61d32b5962e15</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-def-jvm/0.8.106/model-def-jvm-0.8.106.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-def-jvm/0.8.106/model-def-jvm-0.8.106-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library name="ai.grazie.model.swagger.annotations.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.model:swagger-annotations-jvm:0.8.106">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0.8.106/swagger-annotations-jvm-0.8.106.jar">
+              <sha256sum>1690bb907a8a60b2b2ca20f921603a5ec161b4e2c5ff7b71740c8e11745c28b2</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0.8.106/swagger-annotations-jvm-0.8.106.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0.8.106/swagger-annotations-jvm-0.8.106-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+  </component>
+</module>

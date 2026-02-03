@@ -1,0 +1,6 @@
+// CHOSEN_OPTION: FIELD|Add use-site target 'field'
+
+class Test {
+    @field:p.A
+    val foo: String = ""
+}

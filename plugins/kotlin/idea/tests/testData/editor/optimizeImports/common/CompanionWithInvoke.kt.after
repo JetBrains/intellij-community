@@ -1,0 +1,11 @@
+package test
+
+interface WithCompanion {
+    companion object {
+        operator fun invoke() {}
+    }
+}
+
+fun usage() {
+    WithCompanion() // invoke call, no need for import
+}

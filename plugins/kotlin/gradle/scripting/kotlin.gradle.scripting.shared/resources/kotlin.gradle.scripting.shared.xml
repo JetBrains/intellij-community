@@ -1,0 +1,31 @@
+<idea-plugin package="org.jetbrains.kotlin.gradle.scripting.shared">
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.gradle"/>
+    <module name="intellij.kotlin.gradle.tooling"/>
+    <module name="intellij.kotlin.base.scripting.shared"/>
+  </dependencies>
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <projectResolve implementation="org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModelResolver" order="first"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <scriptDiagnosticFixProvider implementation="org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptDiagnosticFixProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <internalFileTemplate name="Kotlin Script Gradle"/>
+    <completion.contributor language="kotlin"
+                            id="KotlinGradleScriptCompletionContributor"
+                            order="first, before KotlinCompletionContributor, before liveTemplates"
+                            implementationClass="org.jetbrains.kotlin.gradle.scripting.shared.completion.KotlinGradleScriptCompletionContributor"/>
+  </extensions>
+
+  <actions resource-bundle="messages.KotlinGradleScriptingBundle">
+    <action id="Kotlin.Gradle.ShowDslLogs" class="org.jetbrains.kotlin.gradle.scripting.shared.actions.ShowKotlinGradleDslLogs"/>
+    <action id="LoadKtGradleConfiguration"
+            class="org.jetbrains.kotlin.gradle.scripting.shared.LoadKtGradleConfigurationAction"
+            icon="org.jetbrains.kotlin.idea.KotlinIcons.LOAD_SCRIPT_CONFIGURATION">
+      <add-to-group group-id="ExternalSystem.ProjectRefreshActionGroup" anchor="first"/>
+    </action>
+  </actions>
+</idea-plugin>

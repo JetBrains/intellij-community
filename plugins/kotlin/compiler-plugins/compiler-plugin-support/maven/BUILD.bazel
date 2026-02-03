@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.kotlin.compilerPlugins.support.maven` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "maven_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "maven",
+  module_name = "intellij.kotlin.compilerPlugins.support.maven",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":maven_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util/jdom",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/maven",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
+    "//plugins/maven",
+    "@lib//:kotlinc-kotlin-jps-common",
+  ]
+)
+### auto-generated section `build intellij.kotlin.compilerPlugins.support.maven` end

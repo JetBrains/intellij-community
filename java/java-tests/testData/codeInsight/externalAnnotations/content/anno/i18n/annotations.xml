@@ -1,0 +1,5 @@
+<root>
+    <item name='i18n'>
+      <annotation name='org.jetbrains.annotations.Nls'/>
+    </item>
+</root>

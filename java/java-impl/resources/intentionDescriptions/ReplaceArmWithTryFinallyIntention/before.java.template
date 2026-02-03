@@ -1,0 +1,10 @@
+import java.io.*;
+
+public class X {
+  void f() {
+    <spot>try</spot> (FileInputStream in = new FileInputStream("in");
+      FileOutputStream out = new FileOutputStream("out")) {
+        doSomethingWithStreams(in, out);
+    } catch (IOException e) {}
+  }
+}

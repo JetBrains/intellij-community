@@ -1,0 +1,21 @@
+JsonFile: n_object_with_single_string.json
+  JsonObject
+    PsiElement({)('{')
+    PsiWhiteSpace(' ')
+    JsonProperty
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"foo"')
+      PsiWhiteSpace(' ')
+      PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"bar"')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    JsonProperty
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"a"')
+      PsiErrorElement:':' expected, got '}'
+        <empty list>
+    PsiWhiteSpace(' ')
+    PsiElement(})('}')

@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.imgscalr.jar
+  modules:
+  - name: intellij.libraries.imgscalr
+    libraries:
+      imgscalr:
+      - name: $MAVEN_REPOSITORY$/org/imgscalr/imgscalr-lib/4/imgscalr-lib-4.jar

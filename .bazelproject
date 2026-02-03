@@ -1,0 +1,14 @@
+# Read more about project view files here:
+# https://www.jetbrains.com/help/idea/bazel-project-view.html
+
+targets:
+  //...
+  @rules_jvm//...
+
+use_jetbrains_test_runner: true
+
+java_source_root_optimization_enable: true
+java_source_root_optimization_patterns:
+  *
+
+run_config_run_with_bazel: false

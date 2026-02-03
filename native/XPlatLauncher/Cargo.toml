@@ -1,0 +1,61 @@
+[package]
+name = "xplat-launcher"
+version = "1.0.0"
+edition = "2021"
+rust-version = "1.82.0"
+publish = false
+build = "build.rs"
+
+[features]
+default = ["cef"]
+cef = []
+
+[profile.release]
+strip = "debuginfo"
+opt-level = "z"
+lto = true
+codegen-units = 1
+
+[dependencies]
+log = { version = "0.4.27", features = ["std"] }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+jni = "0.21.1"
+libloading = "0.8.6"
+anyhow = { version = "1.0.98", features = ["std", "backtrace"] }
+va_list = { version = "0.2.0"}
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = "0.61.1", features = [
+    "Win32_Foundation", "Win32_Globalization", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging",
+    "Win32_System_Console", "Win32_System_LibraryLoader", "Win32_System_Services"
+] }
+
+[target.'cfg(target_family = "unix")'.dependencies]
+libc = "0.2.169"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+core-foundation = "0.10.0"
+
+[target.'cfg(not(any(target_os = "windows", target_os = "macos")))'.dependencies]
+native-dialog = "0.7.0"
+
+[build-dependencies]
+anyhow = { version = "1.0.98", features = ["std", "backtrace"] }
+curl = { version = "0.4.47", features = ["static-curl"] }
+sha1 = "0.10.6"
+winresource = "0.1.20"
+# these crates are used in separate build steps; uncomment them from time to time to check for updates
+#cargo-deny = "0.17.0"
+#cargo-about = "0.6.6"
+
+[package.metadata.winresource]
+CompanyName = "JetBrains s.r.o."
+FileDescription = "IntelliJ Platform Windows Launcher"
+LegalCopyright = "Copyright 2000-2025 JetBrains s.r.o."
+InternalName = "WinLauncher.exe"
+OriginalFilename = "WinLauncher.exe"
+ProductName = "IntelliJ Platform"
+
+[dev-dependencies]
+tempfile = "3.19.1"

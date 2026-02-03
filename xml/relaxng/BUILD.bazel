@@ -1,0 +1,94 @@
+### auto-generated section `build intellij.relaxng` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "relaxng_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "relaxng",
+  module_name = "intellij.relaxng",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":relaxng_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-api:lang",
+    "//platform/lang-core",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/projectModel-api:projectModel",
+    "//xml/impl",
+    "//xml/dom-openapi:dom",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//xml/relaxng/lib:relaxng-rngom-20051226-patched",
+    "@lib//:relaxng-isorelax",
+    "//xml/relaxng/lib:relaxng-trang-core",
+    "@lib//:relaxng-jing",
+    "//platform/util/nanoxml",
+    "//libraries/fastutil",
+    "//platform/indexing-impl",
+    "//platform/core-ui",
+    "//xml/xml-parser:parser",
+    "//xml/xml-psi-api:psi",
+    "//platform/util/jdom",
+    "//platform/core-impl",
+    "//xml/xml-analysis-api:analysis",
+    "//platform/execution",
+  ],
+  runtime_deps = ["//platform/backend"]
+)
+
+jvm_library(
+  name = "relaxng_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [":relaxng"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-api:lang",
+    "//platform/lang-core",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/projectModel-api:projectModel",
+    "//xml/impl",
+    "//xml/dom-openapi:dom",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//xml/relaxng/lib:relaxng-rngom-20051226-patched",
+    "@lib//:relaxng-isorelax",
+    "//xml/relaxng/lib:relaxng-trang-core",
+    "@lib//:relaxng-jing",
+    "//platform/util/nanoxml",
+    "//libraries/fastutil",
+    "//platform/indexing-impl",
+    "//platform/core-ui",
+    "//xml/xml-parser:parser",
+    "//xml/xml-psi-api:psi",
+    "//platform/util/jdom",
+    "//platform/core-impl",
+    "//xml/xml-analysis-api:analysis",
+    "//platform/execution",
+  ]
+)
+### auto-generated section `build intellij.relaxng` end
+
+### auto-generated section `test intellij.relaxng` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "relaxng_test",
+  runtime_deps = [":relaxng_test_lib"]
+)
+### auto-generated section `test intellij.relaxng` end

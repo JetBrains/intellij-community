@@ -1,0 +1,8 @@
+implementation("org.hibernate:hibernate:3.0.5")
+api("org.hibernate:hibernate:3.0.5")
+compileOnly("org.hibernate:hibernate:3.0.5")
+runtimeOnly("org.hibernate:hibernate:3.0.5")
+testImplementation("org.hibernate:hibernate:3.0.5")
+testApi("org.hibernate:hibernate:3.0.5")
+testCompileOnly("org.hibernate:hibernate:3.0.5")
+testRuntimeOnly("org.hibernate:hibernate:3.0.5")

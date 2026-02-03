@@ -1,0 +1,36 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="com.intellij.modules.platform"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <toolWindow id="Modules"
+                anchor="right"
+                factoryClass="com.intellij.devkit.modules.toolwindow.ModulesToolWindowFactory"
+                icon="AllIcons.Nodes.Module"
+                doNotActivateOnStart="true"/>
+    <projectService serviceInterface="com.intellij.devkit.modules.toolwindow.JpsModulesService"
+                    serviceImplementation="com.intellij.devkit.modules.toolwindow.JpsModulesServiceImpl"/>
+    <projectService serviceInterface="com.intellij.devkit.modules.toolwindow.XmlParserService"
+                    serviceImplementation="com.intellij.devkit.modules.toolwindow.XmlParserServiceImpl"/>
+    <projectService serviceInterface="com.intellij.devkit.modules.toolwindow.ModulesTreeModelService"
+                    serviceImplementation="com.intellij.devkit.modules.toolwindow.ModulesTreeModelServiceImpl"/>
+    <projectService serviceInterface="com.intellij.devkit.modules.toolwindow.ModulesTreeReferenceProvider"
+                    serviceImplementation="com.intellij.devkit.modules.toolwindow.ModulesTreeReferenceProvider"/>
+
+    <registryKey key="devkit.modules.toolwindow.enabled" 
+                 defaultValue="false"
+                 description="Enable the Modules tool window in IntelliJ Platform projects"/>
+  </extensions>
+
+  <actions>
+    <group id="ModulesTreePopupMenu" popup="true">
+      <action id="ModulesFindUsages"
+              class="com.intellij.devkit.modules.toolwindow.ModulesFindUsagesAction"
+              text="Find Usages"
+              description="Find usages of the selected module tree node">
+        <keyboard-shortcut keymap="$default" first-keystroke="alt F7"/>
+      </action>
+    </group>
+  </actions>
+</idea-plugin>

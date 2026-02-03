@@ -1,0 +1,62 @@
+### auto-generated section `build intellij.junit.v5.rt.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "junit-v5-rt-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/junit5_rt:junit-v5-rt",
+    "//platform/smRunner",
+  ]
+)
+
+jvm_library(
+  name = "junit-v5-rt-tests_test_lib",
+  module_name = "intellij.junit.v5.rt.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "//plugins/junit5_rt:junit-v5-rt",
+    "//java/testFramework",
+    "//java/execution/impl",
+    "//plugins/junit",
+    "//java/java-tests:tests_test_lib",
+    "//aether-dependency-resolver",
+    "//aether-dependency-resolver:aether-dependency-resolver_test_lib",
+    "//java/compiler/openapi:java-compiler",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/smRunner",
+    "//platform/smRunner:smRunner_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/java-runtime:rt",
+    "@lib//:junit5",
+    "@lib//:junit5Launcher",
+    "//libraries/stream",
+    "//platform/platform-util-io:ide-util-io",
+    "@lib//:junit5Jupiter",
+    "@lib//:junit5Vintage",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/execution",
+  ],
+  runtime_deps = [":junit-v5-rt-tests"]
+)
+### auto-generated section `build intellij.junit.v5.rt.tests` end
+
+### auto-generated section `test intellij.junit.v5.rt.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "junit-v5-rt-tests_test",
+  runtime_deps = [":junit-v5-rt-tests_test_lib"]
+)
+### auto-generated section `test intellij.junit.v5.rt.tests` end

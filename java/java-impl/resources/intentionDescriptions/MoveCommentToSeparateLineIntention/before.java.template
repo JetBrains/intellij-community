@@ -1,0 +1,5 @@
+public class X {
+  void f() {
+    foo();<spot>// comment</spot>
+  }
+}

@@ -1,0 +1,17 @@
+[project]
+name = "root-ws"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10.5"
+dependencies = [
+    "nested-ws-member",
+]
+
+[tool.uv.workspace]
+members = [
+    "root-ws-member",
+]
+
+[tool.uv.sources]
+nested-ws-member = { workspace = true }

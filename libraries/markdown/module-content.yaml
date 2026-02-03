@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.markdown.jar
+  modules:
+  - name: intellij.libraries.markdown
+  library: jetbrains.markdown
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/markdown-jvm/0/markdown-jvm-0.jar

@@ -1,0 +1,149 @@
+### auto-generated section `build intellij.javaFX` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "javaFX_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "javaFX",
+  module_name = "intellij.javaFX",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":javaFX_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-api:lang",
+    "//java/execution/openapi:java-execution",
+    "//java/execution/impl",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/platform-impl:ide-impl",
+    "//platform/ide-core-impl",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+    "//xml/impl",
+    "//java/java-impl:impl",
+    "//java/java-indexing-api:indexing",
+    "//java/openapi:java",
+    "//java/compiler/openapi:java-compiler",
+    "//java/compiler/impl",
+    "//plugins/javaFX/common",
+    "//java/manifest",
+    "//java/idea-ui:ui",
+    "//java/typeMigration",
+    "//platform/util/nanoxml",
+    "//platform/core-ui",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//spellchecker",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//xml/xml-psi-api:psi",
+    "//platform/util/jdom",
+    "//xml/xml-analysis-api:analysis",
+    "//platform/execution",
+  ]
+)
+
+jvm_library(
+  name = "javaFX_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":javaFX"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-api:lang",
+    "//java/execution/openapi:java-execution",
+    "//java/execution/impl",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/platform-impl:ide-impl",
+    "//platform/ide-core-impl",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+    "//xml/impl",
+    "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
+    "//java/java-indexing-api:indexing",
+    "//java/openapi:java",
+    "//java/compiler/openapi:java-compiler",
+    "//java/compiler/impl",
+    "//plugins/javaFX/common",
+    "//java/manifest",
+    "//java/manifest:manifest_test_lib",
+    "//java/idea-ui:ui",
+    "//java/testFramework",
+    "//java/typeMigration",
+    "//java/typeMigration:typeMigration_test_lib",
+    "//platform/util/nanoxml",
+    "//java/java-tests:tests_test_lib",
+    "//platform/core-ui",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//xml/xml-psi-api:psi",
+    "//platform/util/jdom",
+    "//xml/xml-analysis-api:analysis",
+    "//platform/execution",
+  ]
+)
+### auto-generated section `build intellij.javaFX` end
+
+### auto-generated section `test intellij.javaFX` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "javaFX_test",
+  runtime_deps = [":javaFX_test_lib"]
+)
+### auto-generated section `test intellij.javaFX` end
+
+### auto-generated section `build intellij.javaFX.properties` start
+resourcegroup(
+  name = "javaFX-properties_resources",
+  srcs = glob(["properties/resources/**/*"]),
+  strip_prefix = "properties/resources"
+)
+
+jvm_library(
+  name = "javaFX-properties",
+  module_name = "intellij.javaFX.properties",
+  visibility = ["//visibility:public"],
+  srcs = glob(["properties/src/**/*.kt", "properties/src/**/*.java", "properties/src/**/*.form"], allow_empty = True),
+  resources = [":javaFX-properties_resources"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/platform-impl:ide-impl",
+    "//xml/xml-psi-api:psi",
+    "//xml/xml-analysis-api:analysis",
+    "//xml/xml-psi-impl:psi-impl",
+    "//plugins/properties/properties-psi-impl:backend-psi",
+    "//plugins/javaFX",
+    "//platform/analysis-api:analysis",
+    "//libraries/stream",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
+)
+### auto-generated section `build intellij.javaFX.properties` end

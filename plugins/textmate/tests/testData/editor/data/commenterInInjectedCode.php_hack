@@ -1,0 +1,6 @@
+<?
+echo "hi";
+$value = <<<HTML
+<selection><caret><html></selection>
+>>>
+echo "world";

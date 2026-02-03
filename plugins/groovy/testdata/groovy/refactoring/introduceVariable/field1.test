@@ -1,0 +1,12 @@
+class A {
+    def list = {
+        [<all>'asd'<end>, "sdfgsd${"asdf"}"]
+    }
+}
+-----
+class A {
+    def list = {
+        def preved = 'asd'
+        [preved<caret>, "sdfgsd${"asdf"}"]
+    }
+}

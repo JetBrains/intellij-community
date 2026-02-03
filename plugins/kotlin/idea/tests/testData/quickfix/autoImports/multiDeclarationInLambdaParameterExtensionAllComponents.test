@@ -1,0 +1,38 @@
+// FILE: first.before.kt
+// "Import operators 'Some.component1', 'Some.component2'" "true"
+// IGNORE_K1
+// IGNORE_K2
+
+package testing
+
+import some.Some
+
+val test: (Some) -> Unit = { (a, b)<caret> -> }
+//-----------------------
+
+
+// FILE: second.kt
+
+package some
+
+public class Some
+
+operator fun Some.component1() = 1
+operator fun Some.component2() = 3
+//-----------------------
+
+
+// FILE: first.after.kt
+// "Import operators 'Some.component1', 'Some.component2'" "true"
+// IGNORE_K1
+// IGNORE_K2
+
+package testing
+
+import some.Some
+import some.component1
+import some.component2
+
+val test: (Some) -> Unit = { (a, b)<caret> -> }
+//-----------------------
+

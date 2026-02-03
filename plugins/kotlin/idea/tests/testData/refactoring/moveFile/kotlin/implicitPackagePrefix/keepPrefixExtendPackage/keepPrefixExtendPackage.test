@@ -1,0 +1,7 @@
+{
+  "mainFile": "foo/A.kt",
+  "type": "MOVE_FILES",
+  "targetPackage": "implicit.foo.bar",
+  "enabledInK1": "false",
+  "enabledInK2": "true"
+}

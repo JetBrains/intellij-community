@@ -1,0 +1,1 @@
+from nspkg1 import <error descr="Cannot find reference 'not_found' in 'nspkg1'">not_found</error>

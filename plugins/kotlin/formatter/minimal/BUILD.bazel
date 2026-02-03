@@ -1,0 +1,47 @@
+### auto-generated section `build intellij.kotlin.formatter.minimal` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "minimal_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+resourcegroup(
+  name = "minimal_resources_1",
+  srcs = glob(["resources-en/**/*"]),
+  strip_prefix = "resources-en"
+)
+
+jvm_library(
+  name = "minimal",
+  module_name = "intellij.kotlin.formatter.minimal",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [
+    ":minimal_resources",
+    ":minimal_resources_1",
+  ],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/core-impl",
+    "//platform/util",
+    "//platform/code-style-api:codeStyle",
+    "//platform/platform-impl:ide-impl",
+    "//platform/projectModel-api:projectModel",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/lang-impl",
+    "//platform/util/jdom",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/core-ui",
+    "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/lang-api:lang",
+  ],
+  runtime_deps = ["//plugins/kotlin/base/frontend-agnostic"]
+)
+### auto-generated section `build intellij.kotlin.formatter.minimal` end

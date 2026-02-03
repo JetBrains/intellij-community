@@ -1,0 +1,8 @@
+Original text:
+---------------
+fstring = f"test sting: {'''test'''}"
+---------------
+Subtree: Language: Python
+---------------
+fstring = f"test sting: {<reparse>'''te st'''</reparse>}"
+---------------

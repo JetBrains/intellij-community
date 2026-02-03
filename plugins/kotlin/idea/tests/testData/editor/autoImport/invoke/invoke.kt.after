@@ -1,0 +1,8 @@
+package testing
+
+import some.Some
+import some.invoke
+
+fun testing() {
+    Some()("str")
+}

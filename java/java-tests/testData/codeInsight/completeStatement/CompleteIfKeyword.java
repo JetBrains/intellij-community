@@ -1,0 +1,6 @@
+
+class foo {
+    {
+      if<caret>
+    }
+}

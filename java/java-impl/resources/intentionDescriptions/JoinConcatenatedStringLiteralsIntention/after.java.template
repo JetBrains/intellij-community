@@ -1,0 +1,5 @@
+public class X {
+  String f() {
+    return "foobar";
+  }
+}

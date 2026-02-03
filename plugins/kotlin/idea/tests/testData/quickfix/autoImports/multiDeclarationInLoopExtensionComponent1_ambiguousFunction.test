@@ -1,0 +1,64 @@
+// FILE: first.before.kt
+// "Import operator 'Some.component1'" "true"
+// WITH_STDLIB
+// ERROR: Function 'component1()' is ambiguous for this expression: <br>public operator fun Base1.component1(): Int defined in base in file third.kt<br>public operator fun Base2.component1(): Int defined in base in file third.kt
+// IGNORE_K1
+
+package testing
+
+import base.component1
+import some.Some
+import some.component2
+
+
+fun testing(listOfSome: List<Some>) {
+    for ((a, b)<caret> in listOfSome) {}
+}
+//-----------------------
+
+
+// FILE: second.kt
+
+package some
+
+import base.Base1
+import base.Base2
+
+public class Some : Base1, Base2
+
+operator fun Some.component1() = 1
+operator fun Some.component2() = 3
+//-----------------------
+
+// FILE: third.kt
+
+package base
+
+interface Base1
+interface Base2
+
+operator fun Base1.component1(): Int = 10
+operator fun Base2.component1(): Int = 10
+
+//-----------------------
+
+
+// FILE: first.after.kt
+// "Import operator 'Some.component1'" "true"
+// WITH_STDLIB
+// ERROR: Function 'component1()' is ambiguous for this expression: <br>public operator fun Base1.component1(): Int defined in base in file third.kt<br>public operator fun Base2.component1(): Int defined in base in file third.kt
+// IGNORE_K1
+
+package testing
+
+import base.component1
+import some.Some
+import some.component1
+import some.component2
+
+
+fun testing(listOfSome: List<Some>) {
+    for ((a, b)<caret> in listOfSome) {}
+}
+//-----------------------
+

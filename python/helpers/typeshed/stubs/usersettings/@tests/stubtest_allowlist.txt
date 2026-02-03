@@ -1,0 +1,3 @@
+usersettings.Settings.app_id
+usersettings.Settings.settings_directory
+usersettings.Settings.settings_file

@@ -1,0 +1,8 @@
+function ('function')
+WHITE_SPACE (' ')
+word ('a')
+WHITE_SPACE (' ')
+{ ('{')
+\n ('\n')
+} ('}')
+function ('function')

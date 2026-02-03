@@ -1,0 +1,2 @@
+unique_name=foo
+commonizer_target=(ios_arm64, ios_x64)

@@ -1,0 +1,46 @@
+### auto-generated section `build intellij.kotlin.compilerPlugins.serialization` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_kotlin-compilerPlugins-serialization",
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "kotlin-compilerPlugins-serialization_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-compilerPlugins-serialization",
+  module_name = "intellij.kotlin.compilerPlugins.serialization",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-compilerPlugins-serialization_resources"],
+  kotlinc_opts = ":custom_kotlin-compilerPlugins-serialization",
+  deps = [
+    "//plugins/kotlin/code-insight/api",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-k2",
+    "@lib//:kotlinc-kotlinx-serialization-compiler-plugin",
+    "@lib//:kotlinc-kotlin-compiler-fir-provided",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/frontend-independent",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+    "//java/java-psi-api:psi",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/refactoring",
+    "//platform/util",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings",
+  ]
+)
+### auto-generated section `build intellij.kotlin.compilerPlugins.serialization` end

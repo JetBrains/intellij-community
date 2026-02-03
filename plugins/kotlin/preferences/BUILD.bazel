@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.kotlin.preferences` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "preferences_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "preferences",
+  module_name = "intellij.kotlin.preferences",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":preferences_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/swingx",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/plugin-updater",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-ui",
+  ]
+)
+### auto-generated section `build intellij.kotlin.preferences` end

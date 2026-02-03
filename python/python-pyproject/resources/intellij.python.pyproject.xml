@@ -1,0 +1,22 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.python.community"/>
+    <module name="intellij.python.psi.impl"/>
+    <module name="intellij.python.sdk"/>
+    <plugin id="org.toml.lang"/>
+    <module name="intellij.python.common"/>
+  </dependencies>
+
+  <resource-bundle>messages.PyProjectTomlBundle</resource-bundle>
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="true" description="Load project structure from pyproject.toml" key="intellij.python.pyproject.model" restartRequired="true"/>
+    <postStartupActivity implementation="com.intellij.python.pyproject.model.internal.platformBridge.PyProjectSyncActivity"/>
+
+    <statistics.projectUsagesCollector implementation="com.intellij.python.pyproject.statistics.PythonTomlStatsUsagesCollector"/>
+  </extensions>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.python.pyproject.model.tool" interface="com.intellij.python.pyproject.model.spi.Tool"
+                    dynamic="true"/>
+  </extensionPoints>
+
+</idea-plugin>

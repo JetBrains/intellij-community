@@ -1,0 +1,21 @@
+// FILE: first.before.kt
+// "Import" "false"
+// ERROR: Unresolved reference: extendSomehow
+package pack
+
+import second.extendSomehow
+
+class NoCompanionObject
+
+fun extensionCompletionContext() {
+    NoCompanionObject.<caret>extendSomehow()
+}
+//-----------------------
+
+
+// FILE: second.kt
+package second
+
+fun <T> T.extendSomehow() {}
+
+//-----------------------

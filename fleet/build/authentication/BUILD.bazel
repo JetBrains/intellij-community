@@ -1,0 +1,32 @@
+### auto-generated section `build fleet.build.authentication` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_authentication",
+  opt_in = [
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+    "kotlin.ExperimentalStdlibApi",
+  ],
+  x_consistent_data_class_copy_visibility = True,
+  x_context_parameters = True,
+  x_jvm_default = "all-compatibility",
+  x_lambdas = "class"
+)
+
+jvm_library(
+  name = "authentication",
+  module_name = "fleet.build.authentication",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  kotlinc_opts = ":custom_authentication",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:slf4j-api",
+    "@lib//:fleet-io-github-pdvrieze-xmlutil-serialization-jvm",
+    "@lib//:fleet-io-github-pdvrieze-xmlutil-core-jvm",
+  ]
+)
+### auto-generated section `build fleet.build.authentication` end

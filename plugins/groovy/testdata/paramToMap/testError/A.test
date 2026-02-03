@@ -1,0 +1,9 @@
+def foo(Map attrs, aaa, b) {
+  println(attrs.ccc)
+}
+
+foo(1, 2, ccc: 3)
+
+foo(2,4)
+
+foo(0)

@@ -1,0 +1,487 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.idea.fir.codeInsight
+
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.codeInsight.OverrideImplementTest
+import org.jetbrains.kotlin.idea.core.overrideImplement.AbstractGenerateMembersHandler
+import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember
+import org.jetbrains.kotlin.idea.refactoring.isAbstract
+import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch
+import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.test.util.invalidateCaches
+import org.junit.internal.runners.JUnit38ClassRunner
+import org.junit.runner.RunWith
+
+@Suppress("RedundantOverride") // overrides are for easier test debugging
+@RunWith(JUnit38ClassRunner::class)
+internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>(), FirOverrideImplementTestMixIn {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
+
+    override fun collectAndCheckChooserObjectsByClasses(
+        fileNameWithoutExtension: String,
+        handler: AbstractGenerateMembersHandler<KtClassMember>,
+        classOrObject: KtClassOrObject
+    ): Map<KtClassOrObject, Collection<KtClassMember>> {
+        val inheritor = if (classOrObject is KtClass && classOrObject.isAbstract()) {
+            allowAnalysisFromWriteActionInEdt(classOrObject) {
+                DirectKotlinClassInheritorsSearch.search(classOrObject).firstOrNull() as? KtClass
+            }
+        } else {
+            null
+        }
+
+        val klass = inheritor ?: classOrObject
+
+        return mapOf(klass to collectAndCheckChooserObjects(fileNameWithoutExtension, handler, klass))
+    }
+
+    override fun tearDown() {
+        runAll(
+            { project.invalidateCaches() },
+            { super.tearDown() },
+        )
+    }
+
+    // K2 only tests
+
+    fun testImplementFromInterface() {
+        doImplementDirectoryTest(memberToOverride = "foo")
+    }
+
+    fun testContextParameters() {
+        doImplementFileTest()
+    }
+
+    fun testImplementContextFunction() {
+        doImplementFileTest()
+    }
+
+    fun testImplementDeprecatedFunction() {
+        doImplementFileTest()
+    }
+
+    // Shared with K1
+
+    override fun testNoCallToAbstractSuper() {
+        super.testNoCallToAbstractSuper()
+    }
+
+    override fun testNoCallToAbstractSuper2() {
+        super.testNoCallToAbstractSuper2()
+    }
+
+    override fun testAndroidxNotNull() {
+        super.testAndroidxNotNull()
+    }
+
+    override fun testEmptyClassBodyFunctionMethod() {
+        super.testEmptyClassBodyFunctionMethod()
+    }
+
+    override fun testFunctionMethod() {
+        super.testFunctionMethod()
+    }
+
+    override fun testFunctionProperty() {
+        super.testFunctionProperty()
+    }
+
+    override fun testFunctionWithTypeParameters() {
+        super.testFunctionWithTypeParameters()
+    }
+
+    override fun testGenericTypesSeveralMethods() {
+        super.testGenericTypesSeveralMethods()
+    }
+
+    override fun testSuspendOverride() {
+        super.testSuspendOverride()
+    }
+
+    override fun testJavaInterfaceMethod() {
+        super.testJavaInterfaceMethod()
+    }
+
+    override fun testJavaClassWithField() {
+        super.testJavaClassWithField()
+    }
+
+    override fun testJavaInterfaceMethodInCorrectOrder() {
+        super.testJavaInterfaceMethodInCorrectOrder()
+    }
+
+    override fun testJavaInterfaceMethodWithTypeParameters() {
+        super.testJavaInterfaceMethodWithTypeParameters()
+    }
+
+    override fun testJavaParameters() {
+        super.testJavaParameters()
+    }
+
+    override fun testFunctionFromInterfaceInJava() {
+        super.testFunctionFromInterfaceInJava()
+    }
+
+    override fun testGenericMethod() {
+        super.testGenericMethod()
+    }
+
+    override fun testImplementJavaRawSubclass() {
+        super.testImplementJavaRawSubclass()
+    }
+
+    override fun testProperty() {
+        super.testProperty()
+    }
+
+    override fun testPropertyWithGetter() {
+        super.testPropertyWithGetter()
+    }
+
+    override fun testInterfaceGenericImplement() {
+        super.testInterfaceGenericImplement()
+    }
+
+    override fun testDefaultValues() {
+        super.testDefaultValues()
+    }
+
+    override fun testRespectCaretPosition() {
+        super.testRespectCaretPosition()
+    }
+
+    override fun testGenerateMulti() {
+        super.testGenerateMulti()
+    }
+
+    override fun testInterfaceNullableFunction() {
+        super.testInterfaceNullableFunction()
+    }
+
+    override fun testKtij16175() {
+        super.testKtij16175()
+    }
+
+    override fun testOverrideUnitFunction() {
+        super.testOverrideUnitFunction()
+    }
+
+    override fun testOverrideNonUnitFunction() {
+        super.testOverrideNonUnitFunction()
+    }
+
+    override fun testOverrideFunctionProperty() {
+        super.testOverrideFunctionProperty()
+    }
+
+    override fun testOverrideFunctionPropertyWithoutBody() {
+        super.testOverrideFunctionPropertyWithoutBody()
+    }
+
+    override fun testOverridePrimitiveProperty() {
+        super.testOverridePrimitiveProperty()
+    }
+
+    override fun testOverrideGenericFunction() {
+        super.testOverrideGenericFunction()
+    }
+
+    override fun testMultiOverride() {
+        super.testMultiOverride()
+    }
+
+    override fun testDelegatedMembers() {
+        super.testDelegatedMembers()
+    }
+
+    override fun testOverrideExplicitFunction() {
+        super.testOverrideExplicitFunction()
+    }
+
+    override fun testOverrideExtensionFunction() {
+        super.testOverrideExtensionFunction()
+    }
+
+    override fun testOverrideExtensionProperty() {
+        super.testOverrideExtensionProperty()
+    }
+
+    override fun testOverrideMutableExtensionProperty() {
+        super.testOverrideMutableExtensionProperty()
+    }
+
+    override fun testComplexMultiOverride() {
+        super.testComplexMultiOverride()
+    }
+
+    override fun testOverrideRespectCaretPosition() {
+        super.testOverrideRespectCaretPosition()
+    }
+
+    override fun testOverrideJavaMethod() {
+        super.testOverrideJavaMethod()
+    }
+
+    override fun testJavaMethodWithPackageVisibility() {
+        super.testJavaMethodWithPackageVisibility()
+    }
+
+    override fun testJavaMethodWithPackageVisibilityFromOtherPackage() {
+        super.testJavaMethodWithPackageVisibilityFromOtherPackage()
+    }
+
+    override fun testJavaMethodWithPackageProtectedVisibility() {
+        super.testJavaMethodWithPackageProtectedVisibility()
+    }
+
+    override fun testPrivateJavaMethod() {
+        super.testPrivateJavaMethod()
+    }
+
+    override fun testImplementSamAdapters() {
+        super.testImplementSamAdapters()
+    }
+
+    override fun testOverrideFromFunctionPosition() {
+        super.testOverrideFromFunctionPosition()
+    }
+
+    override fun testOverrideFromClassName() {
+        super.testOverrideFromClassName()
+    }
+
+    override fun testOverrideFromLBrace() {
+        super.testOverrideFromLBrace()
+    }
+
+    override fun testOverrideSamAdapters() {
+        super.testOverrideSamAdapters()
+    }
+
+    override fun testSameTypeName() {
+        super.testSameTypeName()
+    }
+
+    override fun testPropagationKJK() {
+        super.testPropagationKJK()
+    }
+
+    override fun testMultipleSupers() {
+        super.testMultipleSupers()
+    }
+
+    override fun testNoAnyMembersInInterface() {
+        super.testNoAnyMembersInInterface()
+    }
+
+    override fun testNoAnyMembersInAnnotation() {
+        super.testNoAnyMembersInAnnotation()
+    }
+
+    override fun testNoAnyMembersInValueClass() {
+        super.testNoAnyMembersInValueClass()
+    }
+
+    override fun testNoAnyMembersInValueClassWithGenerics() {
+        super.testNoAnyMembersInValueClassWithGenerics()
+    }
+
+    override fun testLocalClass() {
+        super.testLocalClass()
+    }
+
+    override fun testStarProjections() {
+        super.testStarProjections()
+    }
+
+    override fun testEscapeIdentifiers() {
+        super.testEscapeIdentifiers()
+    }
+
+    override fun testValueClass() {
+        super.testValueClass()
+    }
+
+    override fun testLongPackageName() {
+        super.testLongPackageName()
+    }
+
+    override fun testVarArgs() {
+        super.testVarArgs()
+    }
+
+    override fun testSuspendFun() {
+        super.testSuspendFun()
+    }
+
+    override fun testDoNotOverrideFinal() {
+        super.testDoNotOverrideFinal()
+    }
+
+    override fun testSuperPreference() {
+        super.testSuperPreference()
+    }
+
+    override fun testAmbiguousSuper() {
+        super.testAmbiguousSuper()
+    }
+
+    override fun testImplementFunctionType() {
+        super.testImplementFunctionType()
+    }
+
+    override fun testQualifySuperType() {
+        super.testQualifySuperType()
+    }
+
+    override fun testGenericSuperClass() {
+        super.testGenericSuperClass()
+    }
+
+    override fun testDuplicatedAnyMembersBug() {
+        super.testDuplicatedAnyMembersBug()
+    }
+
+    override fun testEqualsInInterface() {
+        super.testEqualsInInterface()
+    }
+
+    override fun testCopyKDoc() {
+        super.testCopyKDoc()
+    }
+
+    override fun testConvertJavaDoc() {
+        super.testConvertJavaDoc()
+    }
+
+    override fun testPlatformTypes() {
+        super.testPlatformTypes()
+    }
+
+    override fun testPlatformCollectionTypes() {
+        super.testPlatformCollectionTypes()
+    }
+
+    override fun testNullableJavaType() {
+        super.testNullableJavaType()
+    }
+
+    override fun testJavaxNonnullJavaType() {
+        super.testJavaxNonnullJavaType()
+    }
+
+    override fun testNullableKotlinType() {
+        super.testNullableKotlinType()
+    }
+
+    override fun testAbstractAndNonAbstractInheritedFromInterface() {
+        super.testAbstractAndNonAbstractInheritedFromInterface()
+    }
+
+    override fun testTypeAliasNotExpanded() {
+        super.testTypeAliasNotExpanded()
+    }
+
+    override fun testDataClassEquals() {
+        super.testDataClassEquals()
+    }
+
+    override fun testCopyExperimental() {
+        super.testCopyExperimental()
+    }
+
+    override fun testDropAnnotations() {
+        super.testDropAnnotations()
+    }
+
+    override fun testCopyAnnotationsAllowedByExtension() {
+        super.testCopyAnnotationsAllowedByExtension()
+    }
+
+    override fun testUnresolvedType() {
+        super.testUnresolvedType()
+    }
+
+    override fun testUnresolvedType2() {
+        super.testUnresolvedType()
+    }
+
+    override fun testImplementFromClassName() {
+        super.testImplementFromClassName()
+    }
+
+    override fun testImplementFromClassName2() {
+        super.testImplementFromClassName2()
+    }
+
+    override fun testImplementFromClassName3() {
+        super.testImplementFromClassName3()
+    }
+
+    override fun testImplementFromClassName4() {
+        super.testImplementFromClassName4()
+    }
+
+    override fun testImplementFromClassName5() {
+        super.testImplementFromClassName5()
+    }
+
+    override fun testImplementFromClassName6() {
+        super.testImplementFromClassName6()
+    }
+
+    override fun testEnumClass() {
+        super.testEnumClass()
+    }
+
+    override fun testEnumClass2() {
+        super.testEnumClass2()
+    }
+
+    override fun testEnumClass3() {
+        super.testEnumClass3()
+    }
+
+    override fun testEnumClass4() {
+        super.testEnumClass4()
+    }
+
+    override fun testEnumEntry() {
+        super.testEnumEntry()
+    }
+
+    override fun testOverrideExternalFunction() {
+        super.testOverrideExternalFunction()
+    }
+
+    override fun testImplementWithComment() {
+        super.testImplementWithComment()
+    }
+
+    override fun testImplementWithComment2() {
+        super.testImplementWithComment2()
+    }
+
+    override fun testImplementWithComment3() {
+        super.testImplementWithComment3()
+    }
+
+    override fun testImplementWithComment4() {
+        super.testImplementWithComment4()
+    }
+
+    override fun testGenericClass() {
+        super.testGenericClass()
+    }
+
+    override fun testDoNotRenderRedundantModifiers() {
+        super.testDoNotRenderRedundantModifiers()
+    }
+}
+

@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.kotlin.compilerPlugins.support` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "kotlin-compilerPlugins-support",
+  module_name = "intellij.kotlin.compilerPlugins.support",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/core-api:core",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/jps",
+    "//platform/lang-api:lang",
+    "//platform/external-system-api:externalSystem",
+    "//plugins/kotlin/base/compiler-configuration",
+  ]
+)
+### auto-generated section `build intellij.kotlin.compilerPlugins.support` end

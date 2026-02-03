@@ -1,0 +1,40 @@
+def get_jvm_flags(flags):
+    return [
+        # Memory
+        # "-XX:+UseZGC",
+        # "-XX:+ZGenerational",
+        "-Xms4g",
+        "-Xmx20g",
+        # IJ PSI cache
+        "-XX:SoftRefLRUPolicyMSPerMB=50",
+        # Code Cache
+        "-XX:NonProfiledCodeHeapSize=512m",
+        "-XX:ProfiledCodeHeapSize=512m",
+        "-XX:ReservedCodeCacheSize=2048m",
+        # Prevent JVM logging warnings and errors to stdout because it breaks the protocol between Bazel and the worker process
+        "-XX:+DisplayVMOutputToStderr",
+        "-Xlog:disable",
+        "-Xlog:all=warning:stderr:uptime,level,tags",
+        # Headless
+        "-Djava.awt.headless=true",
+        "-Dapple.awt.UIElement=true",
+        # IJ PHM
+        "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
+        "--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED",
+        "--add-opens=java.base/java.util.concurrent.locks=ALL-UNNAMED",
+        "--add-opens=java.base/java.nio=ALL-UNNAMED",
+        # Allow querying OS-specific error message for hardlinks-related error detection on Windows
+        "--add-opens=java.base/sun.nio.fs=ALL-UNNAMED",
+        # Apache Arrow, but we already opened java.nio for PHM
+        # "--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED",
+        # kotlin compiler
+        "-Dkotlin.environment.keepalive=true",
+        # temporarily disabled to fix build on Windows, JBR-9260
+        "-Djbr.java.io.use.nio=false",
+        # https://github.com/netty/netty/issues/11532
+        "-Dio.netty.tryReflectionSetAccessible=true",
+        # see TargetConfigurationDigestProperty.KOTLIN_VERSION - we invalidate cache if kotlinc version changed
+        "-Dkotlin.jps.skip.cache.version.check=true",
+        # Set UTF-8 by default as per https://openjdk.org/jeps/400
+        "-Dfile.encoding=UTF-8",
+    ] + flags

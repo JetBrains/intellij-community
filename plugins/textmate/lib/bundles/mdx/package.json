@@ -1,0 +1,273 @@
+{
+  "name": "vscode-mdx",
+  "version": "1.8.9",
+  "description": "Language support for MDX",
+  "license": "MIT",
+  "contributes": {
+    "breakpoints": [
+      {
+        "language": "mdx"
+      }
+    ],
+    "configuration": [
+      {
+        "title": "MDX",
+        "properties": {
+          "mdx.server.enable": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable experimental IntelliSense support for MDX files."
+          },
+          "mdx.trace.server.verbosity": {
+            "enum": [
+              "off",
+              "messages",
+              "compact",
+              "verbose"
+            ],
+            "default": "off",
+            "description": "Trace MDX language server requests in the output console."
+          },
+          "mdx.trace.server.format": {
+            "enum": [
+              "text",
+              "json"
+            ],
+            "default": "text",
+            "description": "How to format traced MDX language server requests."
+          },
+          "mdx.validate.validateReferences": {
+            "enum": [
+              "ignore",
+              "hint",
+              "warning",
+              "error"
+            ],
+            "default": "ignore",
+            "markdownDescription": "Diagnostic level for invalid reference links, e.g. `[text][no-such-ref]`."
+          },
+          "mdx.validate.validateFragmentLinks": {
+            "enum": [
+              "ignore",
+              "hint",
+              "warning",
+              "error"
+            ],
+            "default": "ignore",
+            "markdownDescription": "Diagnostic level for fragments links to headers in the current file that don’t exist, e.g. `[text](#no-such-header)`."
+          },
+          "mdx.validate.validateFileLinks": {
+            "enum": [
+              "ignore",
+              "hint",
+              "warning",
+              "error"
+            ],
+            "default": "ignore",
+            "markdownDescription": "Diagnostic level for links to local files that don’t exist, e.g. `[text](./no-such-file.png)`."
+          },
+          "mdx.validate.validateMarkdownFileLinkFragments": {
+            "enum": [
+              "ignore",
+              "hint",
+              "warning",
+              "error"
+            ],
+            "default": "ignore",
+            "markdownDescription": "Diagnostic level for the fragment part of links to other local markdown files , e.g. `[text](./file.md#no-such-header)`."
+          },
+          "mdx.validate.validateUnusedLinkDefinitions": {
+            "enum": [
+              "ignore",
+              "hint",
+              "warning",
+              "error"
+            ],
+            "default": "ignore",
+            "markdownDescription": "Diagnostic level for link definitions that aren’t used anywhere. `[never-used]: http://example.com`."
+          },
+          "mdx.validate.validateDuplicateLinkDefinitions": {
+            "enum": [
+              "ignore",
+              "hint",
+              "warning",
+              "error"
+            ],
+            "default": "ignore",
+            "markdownDescription": "Diagnostic level for duplicate link definitions."
+          },
+          "mdx.validate.ignoreLinks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "markdownDescription": "Glob of links that should not be validated."
+          }
+        }
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "mdx.toggleEmphasis",
+        "key": "ctrl+i",
+        "mac": "cmd+i",
+        "when": "editorTextFocus && !editorReadonly && editorLangId == mdx"
+      },
+      {
+        "command": "mdx.toggleDelete",
+        "key": "alt+shift+5",
+        "mac": "cmd+shift+x",
+        "when": "editorTextFocus && !editorReadonly && editorLangId == mdx"
+      },
+      {
+        "command": "mdx.toggleStrong",
+        "key": "ctrl+b",
+        "mac": "cmd+b",
+        "when": "editorTextFocus && !editorReadonly && editorLangId == mdx"
+      }
+    ],
+    "languages": [
+      {
+        "id": "mdx",
+        "aliases": [
+          "MDX"
+        ],
+        "extensions": [
+          ".mdx"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "dark": "./assets/file-icon.svg",
+          "light": "./assets/file-icon.svg"
+        }
+      }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": [
+          "tsconfig.json",
+          "tsconfig.*.json",
+          "tsconfig-*.json",
+          "jsconfig.json",
+          "jsconfig.*.json"
+        ],
+        "url": "./tsconfig.schema.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "mdx.toggleDelete",
+        "title": "Toggle Delete",
+        "category": "MDX"
+      },
+      {
+        "command": "mdx.toggleEmphasis",
+        "title": "Toggle Emphasis",
+        "category": "MDX"
+      },
+      {
+        "command": "mdx.toggleInlineCode",
+        "title": "Toggle Inline Code",
+        "category": "MDX"
+      },
+      {
+        "command": "mdx.toggleStrong",
+        "title": "Toggle Strong",
+        "category": "MDX"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "mdx.toggleDelete",
+          "when": "editorTextFocus && !editorReadonly && editorLangId == mdx",
+          "group": "1_modification"
+        },
+        {
+          "command": "mdx.toggleEmphasis",
+          "when": "editorTextFocus && !editorReadonly && editorLangId == mdx",
+          "group": "1_modification"
+        },
+        {
+          "command": "mdx.toggleInlineCode",
+          "when": "editorTextFocus && !editorReadonly && editorLangId == mdx",
+          "group": "1_modification"
+        },
+        {
+          "command": "mdx.toggleStrong",
+          "when": "editorTextFocus && !editorReadonly && editorLangId == mdx",
+          "group": "1_modification"
+        }
+      ]
+    },
+    "grammars": [
+      {
+        "language": "mdx",
+        "scopeName": "source.mdx",
+        "path": "./syntaxes/source.mdx.tmLanguage",
+        "#1": "note: the below list maps TextMate scopes to VS Code Language IDs (<https://code.visualstudio.com/docs/languages/identifiers>), which does not affect syntax highlighting, but affects for example how comments work.",
+        "#2": "note: `graphql`, `kotlin`, `toml` have no names in that list, but do work with the most popular extension.",
+        "#3": "note: we map to JSX-enabled flavors of `js` and `ts`",
+        "#4": "note: I have no clue how to test `vbnet` (visual basic), I cannot find extensions",
+        "embeddedLanguages": {
+          "meta.embedded.c": "c",
+          "meta.embedded.cpp": "cpp",
+          "meta.embedded.cs": "csharp",
+          "meta.embedded.css": "css",
+          "meta.embedded.diff": "diff",
+          "meta.embedded.go": "go",
+          "meta.embedded.graphql": "graphql",
+          "meta.embedded.html": "html",
+          "meta.embedded.ini": "ini",
+          "meta.embedded.java": "java",
+          "meta.embedded.js": "javascriptreact",
+          "meta.embedded.json": "json",
+          "meta.embedded.kotlin": "kotlin",
+          "meta.embedded.less": "less",
+          "meta.embedded.lua": "lua",
+          "meta.embedded.makefile": "makefile",
+          "meta.embedded.md": "markdown",
+          "meta.embedded.mdx": "mdx",
+          "meta.embedded.objc": "objective-c",
+          "meta.embedded.perl": "perl",
+          "meta.embedded.php": "php",
+          "meta.embedded.python": "python",
+          "meta.embedded.r": "r",
+          "meta.embedded.ruby": "ruby",
+          "meta.embedded.rust": "rust",
+          "meta.embedded.scss": "scss",
+          "meta.embedded.shell": "shellscript",
+          "meta.embedded.sql": "sql",
+          "meta.embedded.svg": "xml",
+          "meta.embedded.swift": "swift",
+          "meta.embedded.toml": "toml",
+          "meta.embedded.ts": "typescriptreact",
+          "meta.embedded.tsx": "typescriptreact",
+          "meta.embedded.vbnet": "vb",
+          "meta.embedded.xml": "xml",
+          "meta.embedded.yaml": "yaml"
+        }
+      },
+      {
+        "scopeName": "source.markdown.mdx.codeblock",
+        "path": "./syntaxes/mdx.markdown.tmLanguage.json",
+        "injectTo": [
+          "text.html.markdown"
+        ],
+        "embeddedLanguages": {
+          "meta.embedded.block.mdx": "mdx"
+        }
+      }
+    ],
+    "typescriptServerPlugins": [
+      {
+        "name": "@mdx-js/typescript-plugin",
+        "enableForWorkspaceTypeScriptVersions": true,
+        "configNamespace": "typescript",
+        "languages": [
+          "mdx"
+        ]
+      }
+    ]
+  }
+}

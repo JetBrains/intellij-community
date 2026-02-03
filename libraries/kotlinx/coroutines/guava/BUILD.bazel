@@ -1,0 +1,22 @@
+### auto-generated section `build intellij.libraries.kotlinx.coroutines.guava` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "guava_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "guava",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":guava_resources"],
+  exports = ["@lib//:kotlinx-coroutines-guava"],
+  runtime_deps = [
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/guava",
+    "@lib//:kotlinx-coroutines-guava",
+  ]
+)
+### auto-generated section `build intellij.libraries.kotlinx.coroutines.guava` end

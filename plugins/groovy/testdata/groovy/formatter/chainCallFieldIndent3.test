@@ -1,0 +1,9 @@
+a.copy()
+.f
+.copy()
+.f
+-----
+a.copy()
+ .f
+ .copy()
+ .f

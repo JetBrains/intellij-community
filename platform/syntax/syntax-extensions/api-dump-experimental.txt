@@ -1,0 +1,21 @@
+*f:com.intellij.platform.syntax.extensions.ExtensionPointKey
+- equals(java.lang.Object):Z
+- f:getName():java.lang.String
+- hashCode():I
+*f:com.intellij.platform.syntax.extensions.ExtensionPointKeyKt
+- *sf:ExtensionPointKey(java.lang.String):com.intellij.platform.syntax.extensions.ExtensionPointKey
+*:com.intellij.platform.syntax.extensions.ExtensionRegistry
+- com.intellij.platform.syntax.extensions.ExtensionSupport
+- a:registerExtension(com.intellij.platform.syntax.extensions.ExtensionPointKey,java.lang.Object):V
+- a:registerLanguageExtension(com.intellij.platform.syntax.extensions.ExtensionPointKey,java.lang.Object,com.intellij.platform.syntax.SyntaxLanguage):V
+- a:unregisterExtension(com.intellij.platform.syntax.extensions.ExtensionPointKey,java.lang.Object):V
+- a:unregisterLanguageExtension(com.intellij.platform.syntax.extensions.ExtensionPointKey,com.intellij.platform.syntax.SyntaxLanguage):V
+*:com.intellij.platform.syntax.extensions.ExtensionSupport
+- a:getExtensions(com.intellij.platform.syntax.extensions.ExtensionPointKey):java.util.List
+- a:getLanguageExtensions(com.intellij.platform.syntax.extensions.ExtensionPointKey,com.intellij.platform.syntax.SyntaxLanguage):java.util.List
+*f:com.intellij.platform.syntax.extensions.ExtensionSupportKt
+- sf:buildExtensionSupport(kotlin.jvm.functions.Function1):com.intellij.platform.syntax.extensions.ExtensionSupport
+- *sf:currentExtensionRegistry():com.intellij.platform.syntax.extensions.ExtensionRegistry
+- *sf:currentExtensionSupport():com.intellij.platform.syntax.extensions.ExtensionSupport
+- sf:performWithExtensionSupport(com.intellij.platform.syntax.extensions.ExtensionSupport,kotlin.jvm.functions.Function1):java.lang.Object
+*:com.intellij.platform.syntax.extensions.StaticExtensionSupport

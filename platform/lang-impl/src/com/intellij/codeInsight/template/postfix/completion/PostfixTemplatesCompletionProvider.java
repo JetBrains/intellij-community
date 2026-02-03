@@ -1,0 +1,113 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.template.postfix.completion;
+
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProvider;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.command.CommandCompletionFactory;
+import com.intellij.codeInsight.completion.command.CommandCompletionService;
+import com.intellij.codeInsight.template.CustomTemplateCallback;
+import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
+import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
+import com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.patterns.StandardPatterns;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.codeInsight.template.postfix.completion.PostfixTemplateCompletionContributor.getPostfixLiveTemplate;
+
+final class PostfixTemplatesCompletionProvider extends CompletionProvider<CompletionParameters> {
+  @Override
+  protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
+    Editor editor = parameters.getEditor();
+    boolean showAsSeparateGroup = PostfixTemplatesSettings.getInstance().isShowAsSeparateGroup();
+    if (!isCompletionEnabled(parameters) ||
+        LiveTemplateCompletionContributor.shouldShowAllTemplates() && !showAsSeparateGroup ||
+        editor.getCaretModel().getCaretCount() != 1) {
+      // disabled or covered with com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
+      return;
+    }
+
+    PsiFile originalFile = parameters.getOriginalFile();
+    PostfixLiveTemplate postfixLiveTemplate = getPostfixLiveTemplate(originalFile, editor);
+    if (postfixLiveTemplate != null) {
+      PrefixMatcher matcher = result.getPrefixMatcher();
+      if (!showAsSeparateGroup) {
+        matcher = new MyPrefixMatcher(matcher.getPrefix());
+      }
+      else {
+        Project project = editor.getProject();
+        if (project != null) {
+          CommandCompletionService completionService = project.getService(CommandCompletionService.class);
+          CommandCompletionFactory completionServiceFactory = completionService.getFactory(parameters.getPosition().getLanguage());
+          if (completionServiceFactory != null) {
+            char suffix = completionServiceFactory.suffix();
+            matcher = new MyGroupPrefixMatcher(matcher.getPrefix(), suffix);
+          }
+        }
+      }
+      postfixLiveTemplate.addCompletions(parameters, result.withPrefixMatcher(matcher));
+      String possibleKey = postfixLiveTemplate.computeTemplateKeyWithoutContextChecking(new CustomTemplateCallback(editor, originalFile));
+      if (possibleKey != null) {
+        result = result.withPrefixMatcher(possibleKey);
+        result.restartCompletionOnPrefixChange(
+          StandardPatterns.string().oneOf(postfixLiveTemplate.getAllTemplateKeys(originalFile, parameters.getOffset())));
+      }
+    }
+  }
+
+  private static boolean isCompletionEnabled(@NotNull CompletionParameters parameters) {
+    ProgressManager.checkCanceled();
+    if (!parameters.isAutoPopup() && !PostfixTemplatesSettings.getInstance().isShowAsSeparateGroup()) {
+      return false;
+    }
+
+    PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
+    if (!settings.isPostfixTemplatesEnabled() || !settings.isTemplatesCompletionEnabled()) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private static final class MyGroupPrefixMatcher extends PrefixMatcher {
+    private final char myPreviousFilter;
+
+    private MyGroupPrefixMatcher(String prefix, char previousFilter) {
+      super(prefix);
+      myPreviousFilter = previousFilter;
+    }
+
+    @Override
+    public boolean prefixMatches(@NotNull String name) {
+      return name.startsWith(myPrefix) ||
+             (myPreviousFilter + name).startsWith(myPrefix);
+    }
+
+    @Override
+    public @NotNull PrefixMatcher cloneWithPrefix(@NotNull String prefix) {
+      return new MyGroupPrefixMatcher(prefix, myPreviousFilter);
+    }
+  }
+
+  private static final class MyPrefixMatcher extends PrefixMatcher {
+    private MyPrefixMatcher(String prefix) {
+      super(prefix);
+    }
+
+    @Override
+    public boolean prefixMatches(@NotNull String name) {
+      return name.equalsIgnoreCase(myPrefix);
+    }
+
+    @Override
+    public @NotNull PrefixMatcher cloneWithPrefix(@NotNull String prefix) {
+      return new MyPrefixMatcher(prefix);
+    }
+  }
+}

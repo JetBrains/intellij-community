@@ -1,0 +1,7 @@
+class AugmentedAssignment {
+    public static String x() {
+        String text;
+        text = "" + "something";
+        return text;
+    }
+}

@@ -1,0 +1,127 @@
+### auto-generated section `build intellij.java.i18n` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "java-i18n_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "java-i18n",
+  module_name = "intellij.java.i18n",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":java-i18n_resources"],
+  deps = [
+    "//java/java-indexing-api:indexing",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/foldings",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-api:lang",
+    "//java/openapi:java",
+    "//platform/projectModel-api:projectModel",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/refactoring",
+    "//platform/usageView-impl",
+    "//plugins/properties:properties-backend",
+    "//platform/platform-impl:ide-impl",
+    "//platform/ide-core-impl",
+    "//platform/lang-impl",
+    "//platform/lang-core",
+    "//xml/impl",
+    "//java/java-impl:impl",
+    "//platform/usageView",
+    "//java/jsp-base-openapi:jsp-base",
+    "//java/jsp-openapi:jsp",
+    "//plugins/properties/properties-psi-api:psi",
+    "//plugins/properties/properties-psi-impl:backend-psi",
+    "//jvm/jvm-analysis-api:analysis",
+    "//libraries/stream",
+    "//platform/core-ui",
+    "//libraries/icu4j",
+    "//libraries/fastutil",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//platform/util/jdom",
+    "//xml/xml-psi-api:psi",
+  ],
+  exports = [
+    "//plugins/properties:properties-backend",
+    "//java/java-impl:impl",
+  ]
+)
+
+jvm_library(
+  name = "java-i18n_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":java-i18n"],
+  deps = [
+    "//java/java-indexing-api:indexing",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/foldings",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-api:lang",
+    "//java/openapi:java",
+    "//platform/projectModel-api:projectModel",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/refactoring",
+    "//platform/usageView-impl",
+    "//plugins/properties:properties-backend",
+    "//platform/platform-impl:ide-impl",
+    "//platform/ide-core-impl",
+    "//platform/lang-impl",
+    "//platform/lang-core",
+    "//xml/impl",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src/test:grazie-tests_test_lib",
+    "//plugins/grazie/src:core",
+    "//plugins/grazie",
+    "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/usageView",
+    "//java/jsp-base-openapi:jsp-base",
+    "//java/jsp-openapi:jsp",
+    "//java/testFramework",
+    "//plugins/properties/properties-psi-api:psi",
+    "//plugins/properties/properties-psi-impl:backend-psi",
+    "//jvm/jvm-analysis-api:analysis",
+    "//libraries/stream",
+    "//platform/core-ui",
+    "//libraries/icu4j",
+    "//libraries/fastutil",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//platform/util/jdom",
+    "//xml/xml-psi-api:psi",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+  ],
+  exports = [
+    "//plugins/properties:properties-backend",
+    "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.java.i18n` end
+
+### auto-generated section `test intellij.java.i18n` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "java-i18n_test",
+  runtime_deps = [":java-i18n_test_lib"]
+)
+### auto-generated section `test intellij.java.i18n` end

@@ -1,0 +1,16 @@
+<component name="libraryTable">
+  <library name="android.tools.analytics.library.testing" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.android.tools.analytics-library:testing:31.5.0-alpha08">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/android/tools/analytics-library/testing/31.5.0-alpha08/testing-31.5.0-alpha08.jar">
+          <sha256sum>a000df0643439bfc1a41cc35098491dcb5733766e629ecbed2d68adb473f8420</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/analytics-library/testing/31.5.0-alpha08/testing-31.5.0-alpha08.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

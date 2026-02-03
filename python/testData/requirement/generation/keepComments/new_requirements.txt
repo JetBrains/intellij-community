@@ -1,0 +1,5 @@
+# This is a comment in requirements file
+# One more
+Django==3.0.0
+# And another
+numpy==1.18.1

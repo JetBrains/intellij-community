@@ -1,0 +1,7 @@
+public class CompositeAssignmentCast {
+    public static int foo() {
+        int d;
+        d = (int) (4 * 1.5);
+        return d;
+    }
+}

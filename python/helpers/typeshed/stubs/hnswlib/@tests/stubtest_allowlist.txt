@@ -1,0 +1,3 @@
+# The metaclass of Index is pybind11_builtins.pybind11_type. Since pybind11 is not a
+# runtime dependency of hnswlib, we exclude Index from stubtest checks.
+hnswlib.Index

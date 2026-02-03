@@ -1,0 +1,42 @@
+### auto-generated section `build fleet.util.logging.slf4j` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_slf4j",
+  x_consistent_data_class_copy_visibility = True,
+  x_context_parameters = True,
+  x_jvm_default = "all-compatibility",
+  x_lambdas = "class"
+)
+
+resourcegroup(
+  name = "slf4j_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+resourcegroup(
+  name = "slf4j_resources_1",
+  srcs = glob(["resourcesJvmMain/**/*"]),
+  strip_prefix = "resourcesJvmMain"
+)
+
+jvm_library(
+  name = "slf4j",
+  module_name = "fleet.util.logging.slf4j",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  resources = [
+    ":slf4j_resources",
+    ":slf4j_resources_1",
+  ],
+  kotlinc_opts = ":custom_slf4j",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:slf4j-api",
+    "//fleet/util/logging/api",
+  ],
+  exports = ["@lib//:slf4j-api"]
+)
+### auto-generated section `build fleet.util.logging.slf4j` end

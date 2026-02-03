@@ -1,0 +1,17 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="org.jetbrains.kotlin"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij.cce">
+    <!--<completionEvaluationVisitor implementation="com.intellij.cce.visitor.KotlinCompletionEvaluationVisitor"/>-->
+    <completionEvaluationVisitor implementation="com.intellij.cce.kotlin.visitor.KotlinMultiLineEvaluationVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.kotlin.visitor.KotlinTextCompletionEvaluationVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.kotlin.visitor.KotlinCompletionContextEvaluationVisitor"/>
+    <lineCompletionVisitorFactory implementation="com.intellij.cce.kotlin.visitor.KotlinLineCompletionVisitorFactory"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.kotlin.visitor.KotlinDocGenerationVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.kotlin.visitor.KotlinRenameVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.kotlin.visitor.KotlinCodeGenerationVisitor"/>
+    <callGraphBuilder implementation="com.intellij.evaluationPlugin.languages.kotlin.callGraphs.KotlinCallGraphBuilder"/>
+  </extensions>
+</idea-plugin>

@@ -1,0 +1,2 @@
+version = "3.2.6"
+upstream_repository = "https://github.com/ibmdb/python-ibmdb"

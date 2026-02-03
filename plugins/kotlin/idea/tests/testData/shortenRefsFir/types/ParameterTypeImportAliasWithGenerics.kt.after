@@ -1,0 +1,7 @@
+package test
+
+import dependency.T as BAR
+
+class OtherClass
+
+fun foo(p: BAR<OtherClass>) {}

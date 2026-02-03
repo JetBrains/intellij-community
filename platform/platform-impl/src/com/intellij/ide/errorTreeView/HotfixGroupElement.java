@@ -1,0 +1,109 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.errorTreeView;
+
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.CustomizeColoredTreeCellRenderer;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.Consumer;
+import com.intellij.util.ui.MutableErrorTreeView;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+
+import javax.swing.*;
+
+@ApiStatus.Internal
+public final class HotfixGroupElement extends GroupingElement {
+
+  private final Consumer<? super HotfixGate> myHotfix;
+  private final @Nls String myFixDescription;
+  private final MutableErrorTreeView myView;
+  private boolean myInProgress;
+  private final CustomizeColoredTreeCellRenderer myLeftTreeCellRenderer;
+  private final CustomizeColoredTreeCellRenderer myRightTreeCellRenderer;
+
+  public HotfixGroupElement(final String name, final Object data, final VirtualFile file, final Consumer<? super HotfixGate> hotfix,
+                            final @Nls String fixDescription, final MutableErrorTreeView view) {
+    super(name, data, file);
+    myHotfix = hotfix;
+    myFixDescription = fixDescription;
+    myView = view;
+    myLeftTreeCellRenderer = new CustomizeColoredTreeCellRenderer() {
+      @Override
+      public void customizeCellRenderer(SimpleColoredComponent renderer,
+                                        JTree tree,
+                                        Object value,
+                                        boolean selected,
+                                        boolean expanded,
+                                        boolean leaf,
+                                        int row,
+                                        boolean hasFocus) {
+        renderer.setIcon(AllIcons.General.Error);
+
+        final String[] text = getText();
+        final String errorText = ((text != null) && (text.length > 0)) ? text[0] : "";
+        renderer.append(IdeBundle.message("error.tree.view.cell.error", errorText), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
+    };
+    myRightTreeCellRenderer = new MyRightRenderer();
+  }
+
+  private final class MyRightRenderer extends CustomizeColoredTreeCellRenderer {
+    private final HotfixGroupElement.MyRunner myRunner;
+
+    MyRightRenderer() {
+      myRunner = new MyRunner();
+    }
+
+    @Override
+    public void customizeCellRenderer(SimpleColoredComponent renderer,
+                                      JTree tree,
+                                      Object value,
+                                      boolean selected,
+                                      boolean expanded,
+                                      boolean leaf,
+                                      int row,
+                                      boolean hasFocus) {
+      renderer.append(" ");
+      if (myInProgress) {
+        renderer.append(IdeBundle.message("error.tree.view.fixing"), SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
+      } else {
+        renderer.append(
+          IdeBundle.message("error.tree.view.fix.description", myFixDescription), SimpleTextAttributes.LINK_BOLD_ATTRIBUTES, myRunner
+        );
+      }
+    }
+
+    @Override
+    public Object getTag() {
+      return myRunner;
+    }
+  }
+
+  // we can inherit from HaveTooltip here
+  @Override
+  public CustomizeColoredTreeCellRenderer getLeftSelfRenderer() {
+    return myLeftTreeCellRenderer;
+  }
+
+  @Override
+  public CustomizeColoredTreeCellRenderer getRightSelfRenderer() {
+    return myRightTreeCellRenderer;
+  }
+
+  private final class MyRunner implements Runnable {
+    private MyRunner() {
+    }
+
+    // todo name can be an ID
+    @Override
+    public void run() {
+      myInProgress = true;
+      myView.reload();
+      final String name = getName();
+      myHotfix.consume(new HotfixGate(name, myView));
+    }
+  }
+}

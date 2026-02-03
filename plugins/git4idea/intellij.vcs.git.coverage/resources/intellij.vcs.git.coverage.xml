@@ -1,0 +1,16 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.vcs.log"/>
+    <module name="intellij.platform.vcs.log.graph.impl"/>
+    <module name="intellij.platform.coverage"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <coverageModifiedFilesFilterFactory implementation="com.intellij.vcs.git.coverage.GitModifiedFilesFilterFactory"/>
+    <registryKey key="coverage.filter.based.on.feature.branch"
+                 defaultValue="true"
+                 description="Show only files modified in the current feature branch in the coverage view"/>
+    <registryKey key="coverage.git.log.commit.search.depth"
+                 defaultValue="100"
+                 description="Coverage filter's maximum search depth in git log"/>
+  </extensions>
+</idea-plugin>

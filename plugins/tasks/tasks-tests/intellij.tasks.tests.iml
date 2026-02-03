@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tasks" />
+    <orderEntry type="module" module-name="intellij.tasks.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tasks.java" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tasks.compatibility" />
+    <orderEntry type="module" module-name="intellij.platform.vcs" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
+    <orderEntry type="module" module-name="intellij.libraries.xml.rpc" />
+    <orderEntry type="module" module-name="intellij.spellchecker" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.debugger" />
+    <orderEntry type="module" module-name="intellij.xslt.debugger" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.gson" />
+    <orderEntry type="module" module-name="intellij.tasks.jira" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.vcs.git" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.vcs.hg" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.tasks" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.tasks.impl" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="easymock" level="project" />
+    <orderEntry type="library" scope="TEST" name="Objenesis" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.http.client" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.stream" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.bookmarks" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.vcs.git.shared" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl.shared" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tasks.trac" scope="TEST" />
+  </component>
+</module>

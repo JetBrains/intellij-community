@@ -1,0 +1,7 @@
+// K1_ACTION: "Safe delete 'myOwnProperty97'" "true"
+// K2_ACTION: "Safe delete parameter 'myOwnProperty97'" "true"
+class UnusedPropertyAsConstructorParameter(val <caret>myOwnProperty97: String)
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.SafeDeleteFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.highlighting.SafeDeleteFix
+// IGNORE_K2

@@ -1,0 +1,104 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.jetbrains.python.psi.impl;
+
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.impl.references.PyOperatorReference;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.PyStructuralType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.PyUnionType;
+import com.jetbrains.python.psi.types.PyUnsafeUnionType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+
+public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExpression {
+
+  public PyBinaryExpressionImpl(ASTNode astNode) {
+    super(astNode);
+  }
+
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyBinaryExpression(this);
+  }
+
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    PyExpression left = getLeftExpression();
+    PyExpression right = getRightExpression();
+    if (left == child.getPsi() && right != null) {
+      replace(right);
+    }
+    else if (right == child.getPsi() && left != null) {
+      replace(left);
+    }
+    else {
+      throw new IncorrectOperationException("Element " + child.getPsi() + " is neither left expression or right expression");
+    }
+  }
+
+  @Override
+  public @NotNull PsiPolyVariantReference getReference() {
+    return getReference(PyResolveContext.defaultContext(TypeEvalContext.codeInsightFallback(getProject())));
+  }
+
+  @Override
+  public @NotNull PsiPolyVariantReference getReference(@NotNull PyResolveContext context) {
+    return new PyOperatorReference(this, context);
+  }
+
+  @Override
+  public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+    if (isOperator(PyNames.AND) || isOperator(PyNames.OR)) {
+      final PyExpression left = getLeftExpression();
+      PyType leftType = left != null ? context.getType(left) : null;
+      final PyExpression right = getRightExpression();
+      final PyType rightType = right != null ? context.getType(right) : null;
+      if (leftType == null && rightType == null) {
+        return null;
+      }
+      if (isOperator(PyNames.OR)) {
+        // TODO: also exclude Literal[False, 0, ""]
+        leftType = Ref.deref(PyTypeAssertionEvaluator.createAssertionType(
+          leftType, PyBuiltinCache.getInstance(this).getNoneType(), false, true, context));
+      }
+      return PyUnionType.union(leftType, rightType);
+    }
+    final String referencedName = getReferencedName();
+    if (PyNames.CONTAINS.equals(referencedName)) {
+      return PyBuiltinCache.getInstance(this).getBoolType();
+    }
+    PyType callResultType = PyCallExpressionHelper.getCallType(this, context, key);
+    if (callResultType == null) {
+      if (referencedName != null && PyNames.COMPARISON_OPERATORS.contains(referencedName)) {
+        // we don't know if it was explicit or not, so we form an unsafe union of Any and bool
+        // TODO: when { explicit Any -> Any, Unknown -> UnsafeUnion[bool | Any] }
+        return PyUnsafeUnionType.unsafeUnion(null, PyBuiltinCache.getInstance(this).getBoolType());
+      }
+      return null;
+    }
+    boolean bothOperandsAreKnown = operandIsKnown(getLeftExpression(), context) && operandIsKnown(getRightExpression(), context);
+    // TODO requires weak union. See PyTypeCheckerInspectionTest#testBinaryExpressionWithUnknownOperand
+    return bothOperandsAreKnown ? callResultType : PyUnionType.createWeakType(callResultType);
+  }
+
+  private static boolean operandIsKnown(@Nullable PyExpression operand, @NotNull TypeEvalContext context) {
+    if (operand == null) return false;
+
+    final PyType operandType = context.getType(operand);
+    if (operandType instanceof PyStructuralType || PyTypeChecker.isUnknown(operandType, context)) return false;
+
+    return true;
+  }
+}

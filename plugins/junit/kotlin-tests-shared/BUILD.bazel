@@ -1,0 +1,59 @@
+### auto-generated section `build intellij.junit.kotlin.tests.shared` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "kotlin-tests-shared",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//plugins/kotlin/plugin/common",
+    "//plugins/junit/testFramework",
+    "//platform/testFramework/junit5",
+    "//plugins/junit/java-tests",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-tests-shared_test_lib",
+  module_name = "intellij.junit.kotlin.tests.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//plugins/kotlin/plugin/common",
+    "//java/testFramework",
+    "//plugins/junit/testFramework",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//jvm/jvm-analysis-testFramework:analysis-testFramework",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/junit/java-tests:java-tests_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+  ],
+  exports = [
+    "//plugins/kotlin/plugin/common",
+    "//plugins/junit/testFramework",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//plugins/junit/java-tests:java-tests_test_lib",
+  ],
+  runtime_deps = [":kotlin-tests-shared"]
+)
+### auto-generated section `build intellij.junit.kotlin.tests.shared` end
+
+### auto-generated section `test intellij.junit.kotlin.tests.shared` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "kotlin-tests-shared_test",
+  runtime_deps = [":kotlin-tests-shared_test_lib"]
+)
+### auto-generated section `test intellij.junit.kotlin.tests.shared` end

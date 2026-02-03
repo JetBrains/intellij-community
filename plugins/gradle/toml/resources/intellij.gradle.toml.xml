@@ -1,0 +1,11 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.gradle.completion"/>
+    <module name="intellij.toml.core"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <completion.contributor language="TOML"
+                            id="KotlinGradleTomlCompletionContributor"
+                            implementationClass="com.intellij.gradle.toml.GradleTomlCompletionContributor"/>
+  </extensions>
+</idea-plugin>

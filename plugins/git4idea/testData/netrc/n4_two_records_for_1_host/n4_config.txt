@@ -1,0 +1,4 @@
+machine bitbucket.org
+ login john
+machine bitbucket.org
+ password pass

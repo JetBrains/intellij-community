@@ -1,0 +1,12 @@
+PsiJavaFile:ModuleImport.java
+  PsiImportList
+    PsiImportModuleStatement
+      PsiKeyword:import('import')
+      PsiWhiteSpace(' ')
+      PsiKeyword:module('module')
+      PsiWhiteSpace(' ')
+      PsiJavaModuleReference
+        PsiIdentifier:java('java')
+        PsiJavaToken:DOT('.')
+        PsiIdentifier:sql('sql')
+      PsiJavaToken:SEMICOLON(';')

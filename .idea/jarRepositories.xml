@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RemoteRepositoriesConfiguration">
+    <remote-repository>
+      <option name="id" value="central-proxy" />
+      <option name="name" value="Maven Central repository" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="intellij-dependencies" />
+      <option name="name" value="IntelliJ Dependencies" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="3e981f81-9991-429f-bed8-5e9b000571d9" />
+      <option name="name" value="3e981f81-9991-429f-bed8-5e9b000571d9" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="kotlin-ide-plugin-deps" />
+      <option name="name" value="kotlin-ide-plugin-deps" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="GraziePlatform" />
+      <option name="name" value="GraziePlatform" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="kpm" />
+      <option name="name" value="kpm" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="86ec9d3a-2b8e-4273-8498-49095616f989" />
+      <option name="name" value="86ec9d3a-2b8e-4273-8498-49095616f989" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ki/maven" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="8f9cf434-9624-468e-8d58-d8cf1473736c" />
+      <option name="name" value="8f9cf434-9624-468e-8d58-d8cf1473736c" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/compose/dev" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="amper-jetbrains-team-public" />
+      <option name="name" value="amper-jetbrains-team-public" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="f0c20409-60ba-4339-b0a8-73b570911f33" />
+      <option name="name" value="f0c20409-60ba-4339-b0a8-73b570911f33" />
+      <option name="url" value="https://packages.jetbrains.team/maven/p/kt/bootstrap" />
+    </remote-repository>
+  </component>
+</project>

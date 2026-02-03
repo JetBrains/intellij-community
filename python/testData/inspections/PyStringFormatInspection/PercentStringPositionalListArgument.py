@@ -1,0 +1,1 @@
+"%s%s" % <warning descr="Too few arguments for format string">[1, 2, 3]</warning>

@@ -1,0 +1,100 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.remoteServer.impl.configuration.deployment;
+
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactPointer;
+import com.intellij.packaging.elements.ArtifactRootElement;
+import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.remoteServer.configuration.deployment.ArtifactDeploymentSource;
+import com.intellij.remoteServer.configuration.deployment.DeploymentSourceType;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.Icon;
+import java.io.File;
+
+public class ArtifactDeploymentSourceImpl implements ArtifactDeploymentSource {
+  private final ArtifactPointer myPointer;
+
+  public ArtifactDeploymentSourceImpl(@NotNull ArtifactPointer pointer) {
+    myPointer = pointer;
+  }
+
+  @Override
+  public @NotNull ArtifactPointer getArtifactPointer() {
+    return myPointer;
+  }
+
+  @Override
+  public Artifact getArtifact() {
+    return myPointer.getArtifact();
+  }
+
+  @Override
+  public boolean isBuildNeeded() {
+    return true;
+  }
+
+  @Override
+  public File getFile() {
+    final String path = getFilePath();
+    return path != null ? new File(path) : null;
+  }
+
+  @Override
+  public String getFilePath() {
+    final Artifact artifact = getArtifact();
+    if (artifact != null) {
+      String outputPath = artifact.getOutputPath();
+      if (outputPath != null) {
+        final CompositePackagingElement<?> rootElement = artifact.getRootElement();
+        if (!(rootElement instanceof ArtifactRootElement<?>)) {
+          outputPath += "/" + rootElement.getName();
+        }
+        return FileUtil.toSystemDependentName(outputPath);
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public @NotNull String getPresentableName() {
+    return myPointer.getArtifactName();
+  }
+
+  @Override
+  public Icon getIcon() {
+    final Artifact artifact = getArtifact();
+    return artifact != null ? artifact.getArtifactType().getIcon() : null;
+  }
+
+  @Override
+  public boolean isValid() {
+    return getArtifact() != null;
+  }
+
+  @Override
+  public boolean isArchive() {
+    Artifact artifact = getArtifact();
+    return artifact != null && !(artifact.getRootElement() instanceof ArtifactRootElement<?>);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof ArtifactDeploymentSourceImpl)) return false;
+
+    return myPointer.equals(((ArtifactDeploymentSourceImpl)o).myPointer);
+
+  }
+
+  @Override
+  public int hashCode() {
+    return myPointer.hashCode();
+  }
+
+  @Override
+  public @NotNull DeploymentSourceType<?> getType() {
+    return DeploymentSourceType.EP_NAME.findExtension(ArtifactDeploymentSourceType.class);
+  }
+}

@@ -1,0 +1,249 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.svn.mergeinfo;
+
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.PairProcessor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnPropertyKeys;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.history.LogEntry;
+import org.jetbrains.idea.svn.history.LogEntryPath;
+import org.jetbrains.idea.svn.history.LogHierarchyNode;
+import org.jetbrains.idea.svn.history.SvnChangeList;
+import org.jetbrains.idea.svn.integrate.MergeContext;
+import org.jetbrains.idea.svn.properties.PropertyConsumer;
+import org.jetbrains.idea.svn.properties.PropertyData;
+
+import java.io.File;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeMap;
+
+import static com.intellij.openapi.util.io.FileUtil.getRelativePath;
+import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
+import static com.intellij.openapi.util.text.StringUtil.toUpperCase;
+import static com.intellij.util.containers.ContainerUtil.exists;
+import static com.intellij.util.containers.ContainerUtil.find;
+import static com.intellij.util.containers.ContainerUtil.or;
+import static java.util.Collections.reverseOrder;
+import static org.jetbrains.idea.svn.SvnUtil.ensureStartSlash;
+
+public class OneShotMergeInfoHelper implements MergeChecker {
+
+  private final @NotNull MergeContext myMergeContext;
+  private final @NotNull Map<Long, Collection<String>> myPartiallyMerged;
+  // subpath [file] (local) to (subpathURL - merged FROM - to ranges list)
+  private final @NotNull NavigableMap<String, Map<String, MergeRangeList>> myMergeInfoMap;
+  private final @NotNull Object myMergeInfoLock;
+
+  public OneShotMergeInfoHelper(@NotNull MergeContext mergeContext) {
+    myMergeContext = mergeContext;
+    myPartiallyMerged = new HashMap<>();
+    myMergeInfoLock = new Object();
+    myMergeInfoMap = new TreeMap<>(reverseOrder());
+  }
+
+  @Override
+  public void prepare() throws VcsException {
+    Depth depth = Depth.allOrEmpty(myMergeContext.getVcs().getSvnConfiguration().isCheckNestedForQuickMerge());
+    File file = myMergeContext.getWcInfo().getRootInfo().getIoFile();
+
+    myMergeContext.getVcs().getFactory(file).createPropertyClient()
+      .getProperty(Target.on(file), SvnPropertyKeys.MERGE_INFO, Revision.WORKING, depth, createPropertyHandler());
+  }
+
+  @Override
+  public @Nullable Collection<String> getNotMergedPaths(@NotNull SvnChangeList changeList) {
+    return myPartiallyMerged.get(changeList.getNumber());
+  }
+
+  @Override
+  public @NotNull MergeCheckResult checkList(@NotNull SvnChangeList changeList) {
+    Set<String> notMergedPaths = new HashSet<>();
+    boolean hasMergedPaths = false;
+
+    for (String path : changeList.getAffectedPaths()) {
+      //noinspection EnumSwitchStatementWhichMissesCases
+      switch (checkPath(path, changeList.getNumber())) {
+        case MERGED -> hasMergedPaths = true;
+        case NOT_MERGED -> notMergedPaths.add(path);
+      }
+    }
+
+    if (hasMergedPaths && !notMergedPaths.isEmpty()) {
+      myPartiallyMerged.put(changeList.getNumber(), notMergedPaths);
+    }
+
+    return notMergedPaths.isEmpty()
+           ? hasMergedPaths ? MergeCheckResult.MERGED : MergeCheckResult.NOT_EXISTS
+           : MergeCheckResult.NOT_MERGED;
+  }
+
+  public @NotNull MergeCheckResult checkPath(@NotNull String repositoryRelativePath, long revisionNumber) {
+    MergeCheckResult result = MergeCheckResult.NOT_EXISTS;
+    String sourceRelativePath = Url.getRelative(myMergeContext.getRepositoryRelativeSourcePath(), ensureStartSlash(repositoryRelativePath));
+
+    // TODO: SVNPathUtil.getRelativePath() is @NotNull - probably we need to check also isEmpty() here?
+    if (sourceRelativePath != null) {
+      InfoProcessor processor = new InfoProcessor(sourceRelativePath, myMergeContext.getRepositoryRelativeSourcePath(), revisionNumber);
+      String key = toKey(sourceRelativePath);
+
+      synchronized (myMergeInfoLock) {
+        Map<String, MergeRangeList> mergeInfo = myMergeInfoMap.get(key);
+        if (mergeInfo != null) {
+          processor.process(key, mergeInfo);
+        }
+        else {
+          for (Map.Entry<String, Map<String, MergeRangeList>> entry : myMergeInfoMap.tailMap(key).entrySet()) {
+            if (isUnder(entry.getKey(), key) && processor.process(entry.getKey(), entry.getValue())) {
+              break;
+            }
+          }
+        }
+      }
+
+      result = MergeCheckResult.getInstance(processor.isMerged());
+    }
+
+    return result;
+  }
+
+  private static boolean isUnder(@NotNull String parentUrl, @NotNull String childUrl) {
+    return ".".equals(parentUrl) || Url.isAncestor(ensureStartSlash(parentUrl), ensureStartSlash(childUrl));
+  }
+
+  private static class InfoProcessor implements PairProcessor<String, Map<String, MergeRangeList>> {
+
+    private final @NotNull String myRepositoryRelativeSourcePath;
+    private boolean myIsMerged;
+    private final @NotNull String mySourceRelativePath;
+    private final long myRevisionNumber;
+
+    InfoProcessor(@NotNull String sourceRelativePath, @NotNull String repositoryRelativeSourcePath, long revisionNumber) {
+      mySourceRelativePath = sourceRelativePath;
+      myRevisionNumber = revisionNumber;
+      myRepositoryRelativeSourcePath = ensureStartSlash(repositoryRelativeSourcePath);
+    }
+
+    public boolean isMerged() {
+      return myIsMerged;
+    }
+
+    // TODO: Try to unify with BranchInfo.processMergeinfoProperty()
+    @Override
+    public boolean process(@NotNull String workingCopyRelativePath, @NotNull Map<String, MergeRangeList> mergedPathsMap) {
+      boolean processed = false;
+      boolean isCurrentPath = workingCopyRelativePath.equals(mySourceRelativePath);
+
+      if (mergedPathsMap.isEmpty()) {
+        myIsMerged = false;
+        processed = true;
+      }
+      else {
+        String mergedPathAffectingSourcePath =
+          find(mergedPathsMap.keySet(), path -> Url.isAncestor(myRepositoryRelativeSourcePath, ensureStartSlash(path)));
+
+        if (mergedPathAffectingSourcePath != null) {
+          MergeRangeList mergeRangeList = mergedPathsMap.get(mergedPathAffectingSourcePath);
+
+          processed = true;
+          myIsMerged =
+            exists(mergeRangeList.getRanges(), range -> range.contains(myRevisionNumber) && (range.isInheritable() || isCurrentPath));
+        }
+      }
+
+      return processed;
+    }
+  }
+
+  private @NotNull PropertyConsumer createPropertyHandler() {
+    return new PropertyConsumer() {
+      @Override
+      public void handleProperty(@NotNull File path, @NotNull PropertyData property) throws SvnBindException {
+        String workingCopyRelativePath = getWorkingCopyRelativePath(path);
+        Map<String, MergeRangeList> mergeInfo = MergeRangeList.parseMergeInfo(property.getValue().toString());
+
+        synchronized (myMergeInfoLock) {
+          myMergeInfoMap.put(toKey(workingCopyRelativePath), mergeInfo);
+        }
+      }
+    };
+  }
+
+  private @NotNull String getWorkingCopyRelativePath(@NotNull File file) {
+    return toSystemIndependentName(Objects.requireNonNull(getRelativePath(myMergeContext.getWcInfo().getRootInfo().getIoFile(), file)));
+  }
+
+  private static @NotNull String toKey(@NotNull String path) {
+    return SystemInfo.isFileSystemCaseSensitive ? path : toUpperCase(path);
+  }
+
+  // true if errors found
+  public boolean checkListForPaths(@NotNull LogHierarchyNode node) {
+    // TODO: Such filtering logic is not clear enough so far (and probably not correct for all cases - for instance when we perform merge
+    // TODO: from branch1 to branch2 and have revision which contain merge changes from branch3 to branch1.
+    // TODO: In this case paths of child log entries will not contain neither urls from branch1 nor from branch2 - and checkEntry() method
+    // TODO: will return true => so such revision will not be used (and displayed) further.
+
+    // TODO: Why do we check entries recursively - we have a revision - set of changes in the "merge from" branch? Why do we need to check
+    // TODO: where they came from - we want avoid some circular merges or what? Does subversion itself perform such checks or not?
+    boolean isLocalChange = or(node.getChildren(), this::checkForSubtree);
+
+    return isLocalChange ||
+           checkForEntry(node.getMe(), myMergeContext.getRepositoryRelativeWorkingCopyPath(),
+                         myMergeContext.getRepositoryRelativeSourcePath());
+  }
+
+  /**
+   * TODO: Why checkForEntry() from checkListForPaths() and checkForSubtree() are called with swapped parameters.
+   */
+  // true if errors found
+  private boolean checkForSubtree(@NotNull LogHierarchyNode tree) {
+    LinkedList<LogHierarchyNode> queue = new LinkedList<>();
+    queue.addLast(tree);
+
+    while (!queue.isEmpty()) {
+      LogHierarchyNode element = queue.removeFirst();
+      ProgressManager.checkCanceled();
+
+      if (checkForEntry(element.getMe(), myMergeContext.getRepositoryRelativeSourcePath(),
+                        myMergeContext.getRepositoryRelativeWorkingCopyPath())) {
+        return true;
+      }
+      queue.addAll(element.getChildren());
+    }
+    return false;
+  }
+
+  // true if errors found
+  // checks if either some changed path is in current branch => treat as local change
+  // or if no changed paths in current branch, checks if at least one path in "merge from" branch
+  // NOTE: this fails for "merge-source" log entries from other branches - when all changed paths are from some
+  // third branch - this logic treats such log entry as local.
+  private static boolean checkForEntry(@NotNull LogEntry entry, @NotNull String localURL, @NotNull String relativeBranch) {
+    boolean atLeastOneUnderBranch = false;
+
+    for (LogEntryPath path : entry.getChangedPaths().values()) {
+      if (Url.isAncestor(localURL, path.getPath())) {
+        return true;
+      }
+      if (!atLeastOneUnderBranch && Url.isAncestor(relativeBranch, path.getPath())) {
+        atLeastOneUnderBranch = true;
+      }
+    }
+    return !atLeastOneUnderBranch;
+  }
+}

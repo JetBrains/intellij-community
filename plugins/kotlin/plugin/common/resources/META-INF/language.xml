@@ -1,0 +1,34 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <lang.braceMatcher language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinPairedBraceMatcher"/>
+
+    <lang.commenter language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinCommenter"/>
+
+    <inspection.basicVisitor class="org.jetbrains.kotlin.psi.KtVisitorVoid"/>
+    <inspection.basicVisitor class="org.jetbrains.kotlin.psi.KtVisitor"/>
+
+    <importBlockRangeProvider implementation="org.jetbrains.kotlin.idea.KotlinImportBlockRangeProvider"/>
+
+    <itemPresentationProvider
+            implementationClass="org.jetbrains.kotlin.idea.presentation.KtFunctionPresenter"
+            forClass="org.jetbrains.kotlin.psi.KtFunction"/>
+    <itemPresentationProvider
+            implementationClass="org.jetbrains.kotlin.idea.presentation.KtDefaultDeclarationPresenter"
+            forClass="org.jetbrains.kotlin.psi.KtClass"/>
+    <itemPresentationProvider
+            implementationClass="org.jetbrains.kotlin.idea.presentation.KtDefaultDeclarationPresenter"
+            forClass="org.jetbrains.kotlin.psi.KtObjectDeclaration"/>
+    <itemPresentationProvider
+            implementationClass="org.jetbrains.kotlin.idea.presentation.KtDefaultDeclarationPresenter"
+            forClass="org.jetbrains.kotlin.psi.KtProperty"/>
+    <itemPresentationProvider
+            implementationClass="org.jetbrains.kotlin.idea.presentation.KtDefaultDeclarationPresenter"
+            forClass="org.jetbrains.kotlin.psi.KtParameter"/>
+    <itemPresentationProvider
+            implementationClass="org.jetbrains.kotlin.idea.presentation.KtDefaultDeclarationPresenter"
+            forClass="org.jetbrains.kotlin.psi.KtTypeAlias"/>
+    <itemPresentationProvider
+            implementationClass="org.jetbrains.kotlin.idea.presentation.KtJvmNameAnnotationPresenter"
+            forClass="org.jetbrains.kotlin.psi.KtAnnotationEntry"/>
+  </extensions>
+</idea-plugin>

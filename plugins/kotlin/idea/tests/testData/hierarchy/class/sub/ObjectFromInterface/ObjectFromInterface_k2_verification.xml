@@ -1,0 +1,10 @@
+<node text="A ()" base="true">
+  <node text="B ()"/>
+  <node text="C (MyClass)"/>
+  <node text="D (MyClass.foo)"/>
+  <node text="E (bar)"/>
+  <node text="F ()"/>
+  <node text="main.kt (&lt;anonymous&gt;)"/>
+  <node text="main.kt (&lt;anonymous&gt;)"/>
+  <node text="main.kt (x)"/>
+</node>

@@ -1,0 +1,65 @@
+### auto-generated section `build kotlin.code-insight.intentions.shared` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_kotlin-code-insight-intentions-shared",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+  ],
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "kotlin-code-insight-intentions-shared_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-code-insight-intentions-shared",
+  module_name = "kotlin.code-insight.intentions.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-code-insight-intentions-shared_resources"],
+  kotlinc_opts = ":custom_kotlin-code-insight-intentions-shared",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlin/reflect",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "//libraries/guava",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/code-insight/api",
+    "//plugins/kotlin/code-insight/utils",
+    "//plugins/kotlin/code-insight/descriptions",
+    "//plugins/kotlin/formatter",
+    "//platform/core-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/lang-api:lang",
+    "//java/java-psi-api:psi",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+    "//platform/lang-impl",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//java/openapi:java",
+    "//plugins/kotlin/base/analysis",
+    "//platform/core-ui",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/facet",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//java/java-psi-impl:psi-impl",
+  ]
+)
+### auto-generated section `build kotlin.code-insight.intentions.shared` end

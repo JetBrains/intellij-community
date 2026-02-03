@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>decorated.py</file>
+    <line>28</line>
+    <description>This decorator will not receive the callable it may expect; the previously called decorator 'classmethod' returns a special object</description>
+  </problem>
+  <problem>
+    <file>decorated.py</file>
+    <line>33</line>
+    <description>This decorator will not receive the callable it may expect; the previously called decorator 'staticmethod' returns a special object</description>
+  </problem>
+  <problem>
+    <file>decorated.py</file>
+    <line>38</line>
+    <description>This decorator will not receive the callable it may expect; the previously called decorator 'staticmethod' returns a special object</description>
+  </problem>
+  <problem>
+    <file>decorated.py</file>
+    <line>43</line>
+    <description>This decorator will not receive the callable it may expect; the previously called decorator 'classmethod' returns a special object</description>
+  </problem>
+  <problem>
+    <file>decorated.py</file>
+    <line>50</line>
+    <description>This decorator will not receive the callable it may expect; the previously called decorator 'classmethod' returns a special object</description>
+  </problem>
+  <problem>
+    <file>decorated.py</file>
+    <line>61</line>
+    <description>This decorator will not receive the callable it may expect; the previously called decorator 'classmethod' returns a special object</description>
+  </problem>
+</problems>

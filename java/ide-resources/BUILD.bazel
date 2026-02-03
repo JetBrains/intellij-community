@@ -1,0 +1,16 @@
+### auto-generated section `build intellij.java.ide.resources` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "ide-resources_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ide-resources",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":ide-resources_resources"]
+)
+### auto-generated section `build intellij.java.ide.resources` end

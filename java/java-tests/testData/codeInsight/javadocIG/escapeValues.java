@@ -1,0 +1,5 @@
+/**
+ * \W \n
+ */
+class Pattern {
+}

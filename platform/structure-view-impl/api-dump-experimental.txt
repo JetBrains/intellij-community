@@ -1,0 +1,43 @@
+*:com.intellij.ide.structureView.logical.LogicalStructureElementsProvider
+- *sf:Companion:com.intellij.ide.structureView.logical.LogicalStructureElementsProvider$Companion
+- a:getElements(java.lang.Object):java.util.List
+- isApplicable(java.lang.Object):Z
+*f:com.intellij.ide.structureView.logical.LogicalStructureElementsProvider$Companion
+- f:getProviders(java.lang.Object):kotlin.sequences.Sequence
+*:com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider
+- *sf:Companion:com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider$Companion
+- a:getModelClass():java.lang.Class
+- a:getTreeElement(java.lang.Object):com.intellij.ide.structureView.StructureViewTreeElement
+*f:com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider$Companion
+- f:getTreeElement(java.lang.Object):com.intellij.ide.structureView.StructureViewTreeElement
+*:com.intellij.ide.structureView.logical.model.ExtendedLogicalObject
+- canRepresentPsiElement(com.intellij.psi.PsiElement):Z
+- isTargetToExternalElement():Z
+- isTheSameParent(java.lang.Object):Z
+*:com.intellij.ide.structureView.logical.model.LogicalContainer
+- a:getElements():java.util.List
+*a:com.intellij.ide.structureView.logical.model.LogicalModelPresentationProvider
+- com.intellij.ide.presentation.PresentationProvider
+- *sf:Companion:com.intellij.ide.structureView.logical.model.LogicalModelPresentationProvider$Companion
+- <init>():V
+- getColoredText(java.lang.Object):java.util.List
+- getTooltipText(java.lang.Object):java.lang.String
+- handleClick(java.lang.Object,I):java.util.concurrent.CompletableFuture
+- isAutoExpand(java.lang.Object):Z
+*f:com.intellij.ide.structureView.logical.model.LogicalModelPresentationProvider$Companion
+- f:getForObject(java.lang.Object):com.intellij.ide.structureView.logical.model.LogicalModelPresentationProvider
+*:com.intellij.ide.structureView.logical.model.LogicalPsiDescription
+- a:getSuitableElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- isAskChildren():Z
+*f:com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
+- *sf:Companion:com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel$Companion
+- equals(java.lang.Object):Z
+- f:getChildren():java.util.List
+- f:getLogicalPsiDescriptions():java.util.Set
+- f:getModel():java.lang.Object
+- f:getParent():com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
+- f:getProject():com.intellij.openapi.project.Project
+- f:hasChildren():Z
+- hashCode():I
+*f:com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel$Companion
+- f:getInstance(com.intellij.openapi.project.Project,java.lang.Object):com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel

@@ -1,0 +1,21 @@
+<idea-plugin <error descr="Package attribute usage is discouraged and deprecated, content modules should be packaged into separate jars under `lib/modules/`. Refer to attribute documentation for details.">package="<error descr="Cannot resolve package INVALID_VALUE">INVALID_VALUE</error>"</error>>
+  <id>com.intellij.myPlugin</id>
+  <vendor>JetBrains</vendor>
+  <version>1.0</version>
+
+  <depends>com.intellij.modules.os.windows</depends>
+  <depends>com.intellij.modules.os.mac</depends>
+
+  <depends>com.intellij.modules.vcs</depends>
+  <depends>com.intellij.custom</depends>
+  <depends><error descr="Cannot resolve plugin 'com.intellij.xxx' in dependencies (Reference: Plugin Dependencies)">com.intellij.xxx</error></depends>
+
+
+  <depends <warning descr="Superfluous declaration">optional="false"</warning>>com.intellij.custom3</depends>
+  <error descr="Must specify 'config-file'"><depends optional="true">com.intellij.custom4</depends></error>
+
+  <depends config-file="<error descr="Cannot resolve file 'INVALID_VALUE'">INVALID_VALUE</error>">com.intellij.custom2</depends>
+
+  <error descr="Duplicate dependency configuration file 'optional.xml'"><depends config-file="optional.xml">com.intellij.duplicated</depends></error>
+  <error descr="Duplicate dependency configuration file 'optional.xml'"><depends config-file="optional.xml" optional="true">com.intellij.duplicated</depends></error>
+</idea-plugin>

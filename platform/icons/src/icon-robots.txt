@@ -1,0 +1,2 @@
+deprecated: icon.png; use ProductIcons.getInstance().getProductIcon() instead
+skip: mac/text.png

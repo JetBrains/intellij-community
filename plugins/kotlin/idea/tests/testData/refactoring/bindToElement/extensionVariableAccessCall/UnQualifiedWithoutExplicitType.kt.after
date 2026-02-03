@@ -1,0 +1,12 @@
+// BIND_TO test.barFoo
+package test
+
+import test.barFoo
+
+fun foo() {
+    0.<caret>barFoo()
+}
+
+val fooBar = fun Any.(): Unit {}
+
+val barFoo = fun Any.(): Unit {}

@@ -1,0 +1,88 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.gradle.toolingExtension.impl.telemetry;
+
+import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext;
+import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanBuilder;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Scope;
+import io.opentelemetry.context.propagation.TextMapPropagator;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+public final class GradleOpenTelemetry {
+
+  private static final @NotNull String INSTRUMENTATION_NAME = "GradleDaemon";
+  private final @NotNull Tracer myTracer;
+  private final @NotNull Scope myScope;
+
+  public GradleOpenTelemetry() {
+    OpenTelemetry telemetry = GlobalOpenTelemetry.get();
+    myTracer = telemetry.getTracer(INSTRUMENTATION_NAME);
+    myScope = extractScope(telemetry);
+  }
+
+  public static <T> T callWithSpan(@NotNull String spanName, @NotNull Function<Span, T> fn) {
+    return withOpenTelemetry(telemetry -> {
+      return telemetry.callWithSpan(spanName, (ignore) -> {}, fn);
+    });
+  }
+
+  public static void runWithSpan(@NotNull String spanName, @NotNull Consumer<Span> consumer) {
+    callWithSpan(spanName, span -> {
+      consumer.accept(span);
+      return null;
+    });
+  }
+
+  public void shutdown() {
+    myScope.close();
+  }
+
+  private <T> T callWithSpan(
+    @NotNull String spanName,
+    @NotNull Consumer<SpanBuilder> configurator,
+    @NotNull Function<Span, T> fn
+  ) {
+    SpanBuilder spanBuilder = myTracer.spanBuilder(spanName);
+    configurator.accept(spanBuilder);
+    Span span = spanBuilder.startSpan();
+    try (Scope ignore = span.makeCurrent()) {
+      return fn.apply(span);
+    }
+    catch (Exception e) {
+      span.recordException(e);
+      span.setStatus(StatusCode.ERROR);
+      throw e;
+    }
+    finally {
+      span.end();
+    }
+  }
+
+  private static @NotNull Scope extractScope(@NotNull OpenTelemetry telemetry) {
+    TextMapPropagator propagator = telemetry.getPropagators()
+      .getTextMapPropagator();
+    return TelemetryContext.fromJvmProperties()
+      .extract(propagator)
+      .makeCurrent();
+  }
+
+  private static <T> T withOpenTelemetry(
+    @NotNull Function<GradleOpenTelemetry, T> action
+  ) {
+    GradleOpenTelemetry telemetry = new GradleOpenTelemetry();
+    try {
+      return action.apply(telemetry);
+    }
+    catch (Throwable exception) {
+      telemetry.shutdown();
+      throw exception;
+    }
+  }
+}

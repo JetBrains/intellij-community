@@ -1,0 +1,8 @@
+<time>: Executing ':cleanIosSimulatorArm64Test :iosSimulatorArm64Test --tests "IosTest.test in iosTest - failure"'…
+<time>: Execution finished ':cleanIosSimulatorArm64Test :iosSimulatorArm64Test --tests "IosTest.test in iosTest - failure"'.
+
+
+com.intellij.openapi.externalSystem.model.ExternalSystemException: There were failing tests. See the report at: file:
+org.gradle.api.internal.exceptions.MarkedVerificationException: There were failing tests. See the report at: file:
+
+<exitCode: 1>

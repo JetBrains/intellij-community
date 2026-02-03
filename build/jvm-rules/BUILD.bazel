@@ -1,0 +1,400 @@
+load("//:jvm.bzl", "jvm_import", "jvm_provided_library", "kt_javac_options", "kt_kotlinc_options")
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag", "int_flag")
+load("@protobuf//bazel/toolchains:proto_lang_toolchain.bzl", "proto_lang_toolchain")
+load("@rules_java//java:defs.bzl", "java_import")
+load("@rules_kotlin//kotlin:core.bzl", _kt_kotlinc_options = "kt_kotlinc_options")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_filegroup", "pkg_files", "strip_prefix")
+load("@rules_pkg//pkg:pkg.bzl", "pkg_zip")
+
+# See https://github.com/aspect-build/toolchains_protoc (this has been already upstreamed to @protobuf, but it's not yet released)
+proto_lang_toolchain(
+    name = "protoc_java_toolchain",
+    command_line = "--java_out=%s",
+    progress_message = "Generating Java proto_library %{label}",
+    toolchain_type = "@protobuf//bazel/private:java_toolchain_type",
+)
+
+jvm_import(
+  name = "protobuf_java",
+  jar = "@protobuf-java_http//file",
+  source_jar = "@protobuf-java-sources_http//file",
+  visibility = ["//visibility:public"],
+)
+
+_kt_kotlinc_options(
+    name = "rules_jvm_bootstrap_kotlinc_options",
+    include_stdlibs = "none",
+    jvm_target = "21",
+    visibility = ["//visibility:public"],
+    x_jdk_release = "21",
+)
+
+# --@rules_jvm//:trace
+bool_flag(
+    name = "trace",
+    build_setting_default = False,
+)
+
+# used by _jvm_builder_launcher attribute in jvm_library rule
+exports_files(
+    ["rules/impl/MemoryLauncher.java"],
+    visibility = ["//visibility:private"],
+)
+
+# --@rules_jvm//:koltin_inc_threshold=100
+int_flag(
+    name = "koltin_inc_threshold",
+    build_setting_default = -1,
+)
+
+int_flag(
+    name = "java_inc_threshold",
+    build_setting_default = -1,
+)
+
+jvm_import(
+    name = "annotations_import",
+    jar = "@annotations_http//file",
+    source_jar = "@annotations-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "asm-all_import",
+    jar = "@asm-all_http//file",
+    source_jar = "@asm-all-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "caffeine_import",
+    jar = "@caffeine_http//file",
+    source_jar = "@caffeine-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "h2-mvstore_import",
+    jar = "@h2-mvstore_http//file",
+    source_jar = "@h2-mvstore-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "hash4j_import",
+    jar = "@hash4j_http//file",
+    source_jar = "@hash4j-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "intellij-deps-fastutil_import",
+    jar = "@intellij-deps-fastutil_http//file",
+    source_jar = "@intellij-deps-fastutil-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "jackson-core_import",
+    jar = "@jackson-core_http//file",
+    source_jar = "@jackson-core-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "javax-annotation-api_import",
+    jar = "@javax_annotation-api_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "jps-javac-extension_import",
+    jar = "@jps-javac-extension_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-compiler_import",
+    jar = "@kotlin-compiler-embeddable_http//file",
+    source_jar = "@kotlin-compiler-embeddable_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-compose-compiler-plugin-embeddable_import",
+    jar = "@kotlin-compose-compiler-plugin-embeddable_http//file",
+    source_jar = "@kotlin-compose-compiler-plugin-embeddable-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-metadata-jvm_import",
+    jar = "@kotlin-metadata-jvm_http//file",
+    source_jar = "@kotlin-metadata-jvm-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-reflect_import",
+    jar = "@kotlin-reflect_http//file",
+    source_jar = "@kotlin-reflect-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-serialization-compiler-plugin-embeddable_import",
+    jar = "@kotlin-serialization-compiler-plugin-embeddable_http//file",
+    source_jar = "@kotlin-serialization-compiler-plugin-embeddable-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-stdlib_import",
+    jar = "@kotlin-stdlib_http//file",
+    source_jar = "@kotlin-stdlib-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlinx-coroutines-core_import",
+    jar = "@kotlinx-coroutines-core-jvm_http//file",
+    source_jar = "@kotlinx-coroutines-core-jvm-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "netty-buffer_import",
+    jar = "@netty-buffer_http//file",
+    source_jar = "@netty-buffer-sources_http//file",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        ":netty-common_import",
+    ],
+)
+
+jvm_import(
+    name = "netty-codec-jps",
+    jar = "@netty-codec-jps_http//file",
+    visibility = [
+        "//jps-builders-6:__subpackages__",
+    ],
+)
+
+jvm_import(
+    name = "netty-common_import",
+    jar = "@netty-common_http//file",
+    source_jar = "@netty-common-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "netty-transport-jps_import",
+    jar = "@netty-transport-jps_http//file",
+    visibility = [
+        "//jps-builders-6:__subpackages__",
+    ],
+)
+
+jvm_import(
+    name = "opentelemetry-api_import",
+    jar = "@opentelemetry-api_http//file",
+    source_jar = "@opentelemetry-api-sources_http//file",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        ":opentelemetry-context_import",
+        ":opentelemetry-sdk-common_import",
+        ":opentelemetry-sdk-extension-autoconfigure-spi_import",
+        ":opentelemetry-sdk-logs_import",
+        ":opentelemetry-sdk-metrics_import",
+        ":opentelemetry-sdk-trace_import",
+        ":opentelemetry-sdk_import",
+    ],
+)
+
+jvm_import(
+    name = "opentelemetry-context_import",
+    jar = "@opentelemetry-context_http//file",
+    source_jar = "@opentelemetry-context-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-exporter-common_import",
+    jar = "@opentelemetry-exporter-common_http//file",
+    source_jar = "@opentelemetry-exporter-common-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-exporter-logging-otlp_import",
+    jar = "@opentelemetry-exporter-logging-otlp_http//file",
+    source_jar = "@opentelemetry-exporter-logging-otlp-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-exporter-otlp_import",
+    jar = "@opentelemetry-exporter-otlp_http//file",
+    source_jar = "@opentelemetry-exporter-otlp-sources_http//file",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        ":opentelemetry-exporter-common_import",
+        ":opentelemetry-exporter-otlp-common_import",
+        ":opentelemetry-exporter-sender-jdk_import",
+        ":opentelemetry-sdk-extension-autoconfigure-spi_import",
+    ],
+)
+
+jvm_import(
+    name = "opentelemetry-exporter-otlp-common_import",
+    jar = "@opentelemetry-exporter-otlp-common_http//file",
+    source_jar = "@opentelemetry-exporter-otlp-common-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-exporter-sender-jdk_import",
+    jar = "@opentelemetry-exporter-sender-jdk_http//file",
+    source_jar = "@opentelemetry-exporter-sender-jdk-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-sdk_import",
+    jar = "@opentelemetry-sdk_http//file",
+    source_jar = "@opentelemetry-sdk-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-sdk-common_import",
+    jar = "@opentelemetry-sdk-common_http//file",
+    source_jar = "@opentelemetry-sdk-common-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-sdk-extension-autoconfigure-spi_import",
+    jar = "@opentelemetry-sdk-extension-autoconfigure-spi_http//file",
+    source_jar = "@opentelemetry-sdk-extension-autoconfigure-spi-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-sdk-logs_import",
+    jar = "@opentelemetry-sdk-logs_http//file",
+    source_jar = "@opentelemetry-sdk-logs-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-sdk-metrics_import",
+    jar = "@opentelemetry-sdk-metrics_http//file",
+    source_jar = "@opentelemetry-sdk-metrics-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-sdk-trace_import",
+    jar = "@opentelemetry-sdk-trace_http//file",
+    source_jar = "@opentelemetry-sdk-trace-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-semconv_import",
+    jar = "@opentelemetry-semconv_http//file",
+    source_jar = "@opentelemetry-semconv-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "protobuf-java_import",
+    jar = "@protobuf-java_http//file",
+    source_jar = "@protobuf-java-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "qdox_import",
+    jar = "@qdox_http//file",
+    source_jar = "@qdox-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+  name = "junit4",
+  exports = [
+    ":junit-junit-4_13_2_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "org_opentest4j-opentest4j-1_3_0_http_import",
+  jar = "@org_opentest4j-opentest4j-1_3_0_http//file",
+)
+
+jvm_import(
+  name = "junit-junit-4_13_2_http_import",
+  jar = "@junit-junit-4_13_2_http//file",
+)
+
+kt_javac_options(
+    name = "default-javac-opts-value",
+    visibility = ["//visibility:public"],
+)
+
+kt_kotlinc_options(
+    name = "default-kotlinc-opts-value",
+    visibility = ["//visibility:public"],
+)
+
+label_flag(
+    name = "default-javac-opts",
+    build_setting_default = ":default-javac-opts-value",
+    visibility = ["//visibility:public"],
+)
+
+label_flag(
+    name = "default-kotlinc-opts",
+    build_setting_default = ":default-kotlinc-opts-value",
+    visibility = ["//visibility:public"],
+)
+
+label_flag(
+    name = "jvm-builder",
+    build_setting_default = "//jvm-inc-builder:jvm-inc-builder_deploy.jar",
+    visibility = ["//visibility:public"],
+)
+
+label_flag(
+    name = "jvm-builder-jvm_flags",
+    build_setting_default = "//jvm-inc-builder:jvm-inc-builder-jvm_flags",
+    visibility = ["//visibility:public"],
+)
+
+pkg_files(
+  name = "rules_to_zip",
+  srcs = glob(["rules/**/*"]),
+  strip_prefix = strip_prefix.from_pkg(),
+)
+
+pkg_zip(
+    name = "rules_jvm_zip",
+    srcs = glob([
+      "*.bzl",
+      "*.bazel",
+      "*.bazel.lock",
+    ]) + [
+      ":rules_to_zip",
+       "//dependency-graph:files_to_zip",
+       "//jps-builders-6:files_to_zip",
+       "//jvm-inc-builder:files_to_zip",
+       "//rules/impl/platforms:files_to_zip",
+       "//worker-framework:files_to_zip",
+       "//zip:files_to_zip",
+    ],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,83 @@
+# =========
+# Temporary
+# =========
+
+# Added in Python 3.9.14
+# (Remove once 3.9.14 becomes available for GitHub Actions)
+sys.set_int_max_str_digits
+sys.get_int_max_str_digits
+
+# Incompatible changes introduced in Python 3.9.17
+# (Remove once 3.9.17 becomes available for GitHub Actions)
+shutil.unpack_archive
+tarfile.AbsoluteLinkError
+tarfile.AbsolutePathError
+tarfile.FilterError
+tarfile.LinkOutsideDestinationError
+tarfile.OutsideDestinationError
+tarfile.SpecialFileError
+tarfile.TarFile.extract
+tarfile.TarFile.extractall
+tarfile.TarInfo.replace
+tarfile.data_filter
+tarfile.fully_trusted_filter
+tarfile.tar_filter
+
+# Incompatible changes introduced in Python 3.9.19
+# (Remove once 3.9.19 becomes available for GitHub Actions)
+pyexpat.XMLParserType.GetReparseDeferralEnabled
+pyexpat.XMLParserType.SetReparseDeferralEnabled
+xml.etree.ElementTree.XMLParser.flush
+xml.etree.ElementTree.XMLPullParser.flush
+xml.etree.cElementTree.XMLParser.flush
+xml.etree.cElementTree.XMLPullParser.flush
+xml.parsers.expat.XMLParserType.GetReparseDeferralEnabled
+xml.parsers.expat.XMLParserType.SetReparseDeferralEnabled
+xml.sax.expatreader.ExpatParser.flush
+zipfile.ZipInfo.__slots__
+
+# Incompatible changes introduced in Python 3.9.20
+# (Remove once 3.9.20 becomes available for GitHub Actions)
+email._header_value_parser.NLSET
+email._header_value_parser.SPECIALSNL
+email.errors.HeaderWriteError
+email.utils.getaddresses
+email.utils.parseaddr
+
+# Incompatible changes introduced in Python 3.9.22
+# (Remove once 3.9.22 becomes available for GitHub Actions)
+email._header_value_parser.get_encoded_word
+
+# Incompatible changes introduced in Python 3.9.23
+# (Remove once 3.9.23 becomes available for GitHub Actions)
+genericpath.__all__
+genericpath.ALLOW_MISSING
+(ntpath.__all__)?
+(ntpath.ALLOW_MISSING)?
+(ntpath.realpath)?
+(os.path.__all__)?
+(os.path.ALLOW_MISSING)?
+(os.path.realpath)?
+(posixpath.__all__)?
+(posixpath.ALLOW_MISSING)?
+(posixpath.realpath)?
+tarfile.LinkFallbackError
+tarfile.TarFile._extract_member
+tarfile.TarFile.makelink_with_filter
+html.parser.HTMLParser.set_cdata_mode # parameter `escapable`
+email._header_value_parser.make_quoted_pairs
+
+# Parameter `scripting` added in Python 3.9.25
+# (Remove once 3.9.25 becomes available for GitHub Actions)
+html.parser.HTMLParser.__init__
+
+
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; <= 3.12
+# =============================================================
+
+# Doesn't exist on macos:
+_msi
+msilib(.[a-z]+)?
+ossaudiodev
+spwd

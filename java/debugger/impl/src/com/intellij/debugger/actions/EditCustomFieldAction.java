@@ -1,0 +1,53 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.debugger.actions;
+
+import com.intellij.debugger.JvmDebuggerUtils;
+import com.intellij.debugger.engine.JavaValue;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.ui.impl.watch.UserExpressionDescriptorImpl;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
+import com.intellij.debugger.ui.tree.render.CustomFieldInplaceEditor;
+import com.intellij.debugger.ui.tree.render.EnumerationChildrenRenderer;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+
+public class EditCustomFieldAction extends XDebuggerTreeActionBase {
+  @Override
+  protected void perform(@NotNull XValueNodeImpl node, @NotNull String nodeName, @NotNull AnActionEvent e) {
+    ValueDescriptorImpl descriptor = JvmDebuggerUtils.getDescriptorFromNode(node, e);
+    if (descriptor == null) return;
+    EnumerationChildrenRenderer enumerationChildrenRenderer = getParentEnumerationRenderer(descriptor);
+    DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
+    if (enumerationChildrenRenderer != null) {
+      new CustomFieldInplaceEditor(node, (UserExpressionDescriptorImpl)descriptor, enumerationChildrenRenderer, debuggerContext).show();
+    }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(final @NotNull AnActionEvent e) {
+    boolean enabled = false;
+    List<JavaValue> values = ViewAsGroup.getSelectedValues(e);
+    if (values.size() == 1) {
+      enabled = getParentEnumerationRenderer(values.get(0).getDescriptor()) != null;
+    }
+    e.getPresentation().setEnabledAndVisible(enabled);
+  }
+
+  static @Nullable EnumerationChildrenRenderer getParentEnumerationRenderer(ValueDescriptorImpl descriptor) {
+    if (descriptor instanceof UserExpressionDescriptorImpl) {
+      return EnumerationChildrenRenderer.getCurrent(((UserExpressionDescriptorImpl)descriptor).getParentDescriptor());
+    }
+    return null;
+  }
+}

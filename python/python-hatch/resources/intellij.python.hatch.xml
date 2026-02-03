@@ -1,0 +1,23 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.python.community"/>
+    <module name="intellij.python.community.execService"/>
+    <module name="intellij.python.sdk"/>
+    <module name="intellij.python.sdk.ui"/>
+    <module name="intellij.python.pyproject"/>
+    <module name="intellij.python.common"/>
+    <module name="intellij.python.community.execService.python"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="Pythonid">
+    <evoTreeElementProvider id="HatchEvoProvider"
+                            order="after CondaEvoProvider"
+                            implementation="com.intellij.python.hatch.sdk.evolution.HatchSelectSdkProvider"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij.python.pyproject.model">
+    <tool implementation="com.intellij.python.hatch.impl.HatchTool"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <python.common.toolToIconMapper implementation="com.intellij.python.hatch.impl.HatchIdMapper"/>
+  </extensions>
+</idea-plugin>

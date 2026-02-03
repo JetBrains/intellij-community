@@ -1,0 +1,6 @@
+import kotlin.math.cosh
+
+// WITH_STDLIB
+fun test(x: Double) {
+    cosh(x)
+}

@@ -1,0 +1,11 @@
+print(/ /)
+print(/ $x /)
+
+print($/ /$)
+print($/ $x /$)
+-----
+print(/ /)
+print(/ $x /)
+
+print($/ /$)
+print($/ $x /$)

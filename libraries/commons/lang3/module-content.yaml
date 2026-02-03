@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.commons.lang3.jar
+  modules:
+  - name: intellij.libraries.commons.lang3
+  library: commons-lang3
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3/commons-lang3-3.jar

@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.blockmap.jar
+  modules:
+  - name: intellij.libraries.blockmap
+    libraries:
+      blockmap:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/blockmap/1/blockmap-1.jar

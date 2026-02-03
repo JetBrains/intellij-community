@@ -1,0 +1,1326 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.psi.impl.source.codeStyle;
+
+import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
+import com.intellij.codeInspection.dataFlow.ContractReturnValue;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.dataFlow.MethodContract;
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.LiteralNameSuggester;
+import com.intellij.openapi.util.text.PastParticiple;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaRelease;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayAccessExpression;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDisjunctionType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiFunctionalExpression;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWildcardType;
+import com.intellij.psi.SyntaxTraverser;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.codeStyle.ReferenceAdjuster;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.CheckUtil;
+import com.intellij.psi.impl.search.MethodDeepestSuperSearcher;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.jsp.jspJava.JspxImportList;
+import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
+import com.intellij.psi.statistics.JavaStatisticsManager;
+import com.intellij.psi.util.FileTypeUtils;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.BitUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.NameUtilCore;
+import com.intellij.util.text.UniqueNameGenerator;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.beans.Introspector;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Predicate;
+
+public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
+  private static final Logger LOG = Logger.getInstance(JavaCodeStyleManagerImpl.class);
+
+  private static final @NonNls String IMPL_SUFFIX = "Impl";
+  private static final @NonNls String GET_PREFIX = "get";
+  private static final @NonNls String IS_PREFIX = "is";
+  private static final @NonNls String FIND_PREFIX = "find";
+  private static final @NonNls String CREATE_PREFIX = "create";
+  private static final @NonNls String SET_PREFIX = "set";
+  private static final @NonNls String AS_PREFIX = "as";
+  private static final @NonNls String TO_PREFIX = "to";
+
+  private static final @NonNls String[] ourPrepositions = {
+    "as", "at", "by", "down", "for", "from", "in", "into", "of", "on", "onto", "out", "over",
+    "per", "to", "up", "upon", "via", "with"};
+
+  private static final @NonNls String[] ourCommonTypeSuffixes = {"Entity"};
+
+  private final Project myProject;
+
+  public JavaCodeStyleManagerImpl(Project project) {
+    myProject = project;
+  }
+
+  @Override
+  public @NotNull PsiElement shortenClassReferences(@NotNull PsiElement element) throws IncorrectOperationException {
+    return shortenClassReferences(element, 0);
+  }
+
+  @Override
+  public @NotNull PsiElement shortenClassReferences(@NotNull PsiElement element, int flags) throws IncorrectOperationException {
+    CheckUtil.checkWritable(element);
+    if (!SourceTreeToPsiMap.hasTreeElement(element)) return element;
+
+    final boolean addImports = !BitUtil.isSet(flags, DO_NOT_ADD_IMPORTS);
+    final boolean incompleteCode = BitUtil.isSet(flags, INCOMPLETE_CODE);
+
+    final ReferenceAdjuster adjuster = ReferenceAdjuster.Extension.getReferenceAdjuster(element.getLanguage());
+    if (adjuster == null) return element;
+    final ASTNode reference = adjuster.process(element.getNode(), addImports, incompleteCode, myProject);
+    return SourceTreeToPsiMap.treeToPsiNotNull(reference);
+  }
+
+  @Override
+  public void shortenClassReferences(@NotNull PsiElement element, int startOffset, int endOffset) throws IncorrectOperationException {
+    CheckUtil.checkWritable(element);
+    if (SourceTreeToPsiMap.hasTreeElement(element)) {
+      final ReferenceAdjuster adjuster = ReferenceAdjuster.Extension.getReferenceAdjuster(element.getLanguage());
+      if (adjuster != null) {
+        adjuster.processRange(element.getNode(), startOffset, endOffset, myProject);
+      }
+    }
+  }
+
+  @Override
+  public @NotNull PsiElement qualifyClassReferences(@NotNull PsiElement element) {
+    final ReferenceAdjuster adjuster = ReferenceAdjuster.Extension.getReferenceAdjuster(element.getLanguage());
+    if (adjuster != null) {
+      final ASTNode reference = adjuster.process(element.getNode(), false, false, true, true);
+      return SourceTreeToPsiMap.treeToPsiNotNull(reference);
+    }
+    return element;
+  }
+
+  @Override
+  public void optimizeImports(@NotNull PsiFile file) throws IncorrectOperationException {
+    CheckUtil.checkWritable(file);
+    if (file instanceof PsiJavaFile javaFile && CodeStyle.isFormattingEnabled(file)) {
+      PsiImportList newList = prepareOptimizeImportsResult(javaFile);
+      if (newList != null) {
+        final PsiImportList importList = javaFile.getImportList();
+        if (importList instanceof JspxImportList) {
+          importList.replace(newList);
+        }
+        else if (importList != null) {
+          importList.getParent().addRangeAfter(newList.getParent().getFirstChild(), newList.getParent().getLastChild(), importList);
+          importList.delete();
+        }
+      }
+    }
+  }
+
+  @Override
+  public PsiImportList prepareOptimizeImportsResult(@NotNull PsiJavaFile file) {
+    return new ImportHelper(JavaCodeStyleSettings.getInstance(file)).prepareOptimizeImportsResult(file);
+  }
+
+  @Override
+  public boolean hasConflictingOnDemandImport(@NotNull PsiJavaFile file, @NotNull PsiClass psiClass, @NotNull String referenceName) {
+    return ImportHelper.hasConflictingOnStaticDemandImport(file, psiClass, referenceName);
+  }
+
+  @Override
+  public boolean isStaticAutoImportName(@Nullable String fqn) {
+    return fqn != null && JavaProjectCodeInsightSettings.getSettings(myProject).isStaticAutoImportName(fqn);
+  }
+
+  @Override
+  public boolean addImport(@NotNull PsiJavaFile file, @NotNull PsiClass refClass) {
+    return new ImportHelper(JavaCodeStyleSettings.getInstance(file)).addImport(file, refClass);
+  }
+
+  @Override
+  public void removeRedundantImports(@NotNull PsiJavaFile file) throws IncorrectOperationException {
+    final Collection<PsiImportStatementBase> redundant = findRedundantImports(file);
+    if (redundant == null) return;
+
+    for (PsiImportStatementBase importStatement : redundant) {
+      final PsiJavaCodeReferenceElement ref = importStatement.getImportReference();
+      //Do not remove non-resolving refs
+      if (ref == null || ref.resolve() == null) continue;
+
+      importStatement.delete();
+    }
+  }
+
+  @Override
+  public @Nullable Collection<PsiImportStatementBase> findRedundantImports(@NotNull PsiJavaFile file) {
+    final PsiImportList importList = file.getImportList();
+    if (importList == null) return null;
+    final PsiImportStatementBase[] imports = importList.getAllImportStatements();
+    if (imports.length == 0) return null;
+
+    Set<PsiImportStatementBase> allImports = ContainerUtil.newHashSet(imports);
+    final Collection<PsiImportStatementBase> redundant;
+    if (FileTypeUtils.isInServerPageFile(file)) {
+      // remove only duplicate imports
+      redundant = new ReferenceOpenHashSet<>();
+      ContainerUtil.addAll(redundant, imports);
+      redundant.removeAll(allImports);
+      for (PsiImportStatementBase importStatement : imports) {
+        if (importStatement instanceof JspxImportStatement && importStatement.isForeignFileImport()) {
+          redundant.remove(importStatement);
+        }
+      }
+    }
+    else {
+      redundant = allImports;
+      final List<PsiFile> roots = file.getViewProvider().getAllFiles();
+      for (PsiElement root : roots) {
+        root.accept(new JavaRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
+            if (!reference.isQualified()) {
+              final JavaResolveResult resolveResult = reference.advancedResolve(false);
+              if (!inTheSamePackage(file, resolveResult.getElement())
+                  && resolveResult.getCurrentFileResolveScope() instanceof PsiImportStatementBase importStatementBase) {
+                redundant.remove(importStatementBase);
+              }
+            }
+            super.visitReferenceElement(reference);
+          }
+
+          private static boolean inTheSamePackage(PsiJavaFile file, PsiElement element) {
+            if (element instanceof PsiClass aClass && aClass.getContainingClass() == null) {
+              return element.getContainingFile() instanceof PsiClassOwner owner
+                     && Comparing.strEqual(file.getPackageName(), owner.getPackageName());
+            }
+            return false;
+          }
+        });
+      }
+    }
+    return redundant;
+  }
+
+  @Override
+  public int findEntryIndex(@NotNull PsiImportStatementBase statement) {
+    return new ImportHelper(JavaCodeStyleSettings.getInstance(statement.getContainingFile())).findEntryIndex(statement);
+  }
+
+  @Override
+  public @Nullable String suggestCompiledParameterName(@NotNull PsiType type) {
+    // avoid hang due to nice name evaluation that uses indices for resolve (IDEA-116803)
+    Collection<String> result = doSuggestParameterNamesByTypeWithoutIndex(type);
+    return ContainerUtil.getFirstItem(getSuggestionsByNames(result, VariableKind.PARAMETER, true, null));
+  }
+
+  @Override
+  public @NotNull SuggestedNameInfo suggestVariableName(@NotNull VariableKind kind,
+                                                        @Nullable String propertyName,
+                                                        @Nullable PsiExpression expr,
+                                                        @Nullable PsiType type,
+                                                        boolean correctKeywords) {
+    if (expr != null && type == null) {
+      type = expr.getType();
+    }
+
+    Set<String> names = new LinkedHashSet<>();
+    if (propertyName != null) {
+      String[] namesByName = ArrayUtilRt.toStringArray(getSuggestionsByName(propertyName, kind, correctKeywords, expr));
+      sortVariableNameSuggestions(namesByName, kind, propertyName, null);
+      ContainerUtil.addAll(names, namesByName);
+    }
+
+    final NamesByExprInfo namesByExpr;
+    if (expr != null) {
+      namesByExpr = suggestVariableNameByExpression(expr, kind);
+      String[] suggestions = ArrayUtilRt.toStringArray(getSuggestionsByNames(namesByExpr.names, kind, correctKeywords, expr));
+      if (namesByExpr.propertyName != null) {
+        sortVariableNameSuggestions(suggestions, kind, namesByExpr.propertyName, null);
+      }
+      ContainerUtil.addAll(names, suggestions);
+    }
+    else {
+      namesByExpr = null;
+    }
+
+    if (type != null) {
+      String[] namesByType = suggestVariableNameByType(type, kind, correctKeywords, expr);
+      sortVariableNameSuggestions(namesByType, kind, null, type);
+      ContainerUtil.addAll(names, namesByType);
+    }
+
+    final String _propertyName;
+    if (propertyName != null) {
+      _propertyName = propertyName;
+    }
+    else {
+      _propertyName = namesByExpr != null ? namesByExpr.propertyName : null;
+    }
+
+    filterOutBadNames(names);
+    addNamesFromStatistics(names, kind, _propertyName, type);
+
+    String[] namesArray = ArrayUtilRt.toStringArray(names);
+    sortVariableNameSuggestions(namesArray, kind, _propertyName, type);
+
+    final String _type = type == null ? null : type.getCanonicalText();
+    return new SuggestedNameInfo(namesArray) {
+      @Override
+      public void nameChosen(String name) {
+        if (_propertyName != null || _type != null) {
+          JavaStatisticsManager.incVariableNameUseCount(name, kind, _propertyName, _type);
+        }
+      }
+    };
+  }
+
+  private static void filterOutBadNames(Set<String> names) {
+    names.remove("of");
+    names.remove("to");
+  }
+
+  private static void addNamesFromStatistics(@NotNull Set<? super String> names,
+                                             @NotNull VariableKind variableKind,
+                                             @Nullable String propertyName,
+                                             @Nullable PsiType type) {
+    String[] allNames = JavaStatisticsManager.getAllVariableNamesUsed(variableKind, propertyName, type);
+
+    int maxFrequency = 0;
+    for (String name : allNames) {
+      int count = JavaStatisticsManager.getVariableNameUseCount(name, variableKind, propertyName, type);
+      maxFrequency = Math.max(maxFrequency, count);
+    }
+
+    int frequencyLimit = Math.max(5, maxFrequency / 2);
+
+    for (String name : allNames) {
+      if (names.contains(name)) {
+        continue;
+      }
+      int count = JavaStatisticsManager.getVariableNameUseCount(name, variableKind, propertyName, type);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("new name:" + name + " count:" + count);
+        LOG.debug("frequencyLimit:" + frequencyLimit);
+      }
+      if (count >= frequencyLimit) {
+        names.add(name);
+      }
+    }
+
+    if (propertyName != null && type != null) {
+      addNamesFromStatistics(names, variableKind, propertyName, null);
+      addNamesFromStatistics(names, variableKind, null, type);
+    }
+  }
+
+  private String @NotNull [] suggestVariableNameByType(@NotNull PsiType type,
+                                                       @NotNull VariableKind variableKind,
+                                                       boolean correctKeywords,
+                                                       @Nullable PsiElement context) {
+    Collection<String> byTypeNames = doSuggestNamesByType(type, variableKind);
+    return ArrayUtilRt.toStringArray(getSuggestionsByNames(byTypeNames, variableKind, correctKeywords, context));
+  }
+
+  private @NotNull Collection<String> doSuggestParameterNamesByTypeWithoutIndex(@NotNull PsiType type) {
+    String fromTypeMap = suggestNameFromTypeMap(type, VariableKind.PARAMETER, type.getCanonicalText());
+    if (fromTypeMap != null) return Collections.singletonList(fromTypeMap);
+
+    return suggestNamesFromTypeName(type, VariableKind.PARAMETER, getTypeNameWithoutIndex(type.getDeepComponentType()));
+  }
+
+  private @NotNull Collection<String> doSuggestNamesByType(@NotNull PsiType type, @NotNull VariableKind variableKind) {
+    String fromTypeMap = suggestNameFromTypeMap(type, variableKind, getLongTypeName(type));
+    if (fromTypeMap != null && type instanceof PsiPrimitiveType) {
+      return Collections.singletonList(fromTypeMap);
+    }
+    final Collection<String> suggestions = new LinkedHashSet<>();
+    if (fromTypeMap != null) {
+      suggestions.add(fromTypeMap);
+    }
+
+    List<String> fromTypeName = suggestNamesFromTypeName(type, variableKind, getTypeName(type));
+    if (!(type instanceof PsiClassType classType)) {
+      suggestions.addAll(fromTypeName);
+      return suggestions;
+    }
+
+    suggestNamesForCollectionInheritors(classType, suggestions);
+    suggestFromOptionalContent(variableKind, classType, suggestions);
+    suggestNamesFromGenericParameters(classType, suggestions);
+    suggestions.addAll(fromTypeName);
+    suggestNamesFromHierarchy(classType, suggestions);
+    return suggestions;
+  }
+
+  private @Nullable String suggestNameFromTypeMap(@NotNull PsiType type,
+                                                  @NotNull VariableKind variableKind,
+                                                  @Nullable String longTypeName) {
+    if (longTypeName != null) {
+      if (type.equals(PsiTypes.nullType())) {
+        longTypeName = CommonClassNames.JAVA_LANG_OBJECT;
+      }
+      String name = nameByType(longTypeName, variableKind);
+      if (name != null && isIdentifier(name, null)) {
+        return type instanceof PsiArrayType ? StringUtil.pluralize(name) : name;
+      }
+    }
+    return null;
+  }
+
+  private static @Nullable String nameByType(@NotNull String longTypeName, @NotNull VariableKind kind) {
+    if (kind == VariableKind.PARAMETER) {
+      return switch (longTypeName) {
+        case "int", "boolean", "byte", "char", "long" -> longTypeName.substring(0, 1);
+        case "double", "float" -> "v";
+        case "short" -> "i";
+        case CommonClassNames.JAVA_LANG_OBJECT -> "o";
+        case CommonClassNames.JAVA_LANG_STRING -> "s";
+        case CommonClassNames.JAVA_LANG_VOID -> "unused";
+        default -> null;
+      };
+    }
+    if (kind == VariableKind.LOCAL_VARIABLE) {
+      return switch (longTypeName) {
+        case "int", "boolean", "byte", "char", "long" -> longTypeName.substring(0, 1);
+        case "double", "float", CommonClassNames.JAVA_LANG_DOUBLE, CommonClassNames.JAVA_LANG_FLOAT -> "v";
+        case "short", CommonClassNames.JAVA_LANG_SHORT, CommonClassNames.JAVA_LANG_INTEGER -> "i";
+        case CommonClassNames.JAVA_LANG_LONG -> "l";
+        case CommonClassNames.JAVA_LANG_BOOLEAN, CommonClassNames.JAVA_LANG_BYTE -> "b";
+        case CommonClassNames.JAVA_LANG_CHARACTER -> "c";
+        case CommonClassNames.JAVA_LANG_OBJECT -> "o";
+        case CommonClassNames.JAVA_LANG_STRING -> "s";
+        case CommonClassNames.JAVA_LANG_VOID -> "unused";
+        default -> null;
+      };
+    }
+    return null;
+  }
+
+  private void suggestFromOptionalContent(@NotNull VariableKind variableKind,
+                                          @NotNull PsiClassType classType,
+                                          @NotNull Collection<? super String> suggestions) {
+    final PsiType optionalContent = extractOptionalContent(classType);
+    if (optionalContent == null) return;
+
+    final Collection<String> contentSuggestions = doSuggestNamesByType(optionalContent, variableKind);
+    suggestions.addAll(contentSuggestions);
+    for (String s : contentSuggestions) {
+      suggestions.add("optional" + StringUtil.capitalize(s));
+    }
+  }
+
+  private static @NotNull List<String> suggestNamesFromTypeName(@NotNull PsiType type,
+                                                                @NotNull VariableKind variableKind,
+                                                                @Nullable String typeName) {
+    if (typeName == null) return Collections.emptyList();
+
+    typeName = normalizeTypeName(typeName);
+    String result = type instanceof PsiArrayType ? StringUtil.pluralize(typeName) : typeName;
+    if (variableKind == VariableKind.PARAMETER && type instanceof PsiClassType && typeName.endsWith("Exception")) {
+      return Arrays.asList("e", result);
+    }
+    for (String suffix : ourCommonTypeSuffixes) {
+      if (result.length() > suffix.length() && result.endsWith(suffix)) {
+        return Arrays.asList(result, result.substring(0, result.length() - suffix.length()));
+      }
+    }
+    return Collections.singletonList(result);
+  }
+
+  private static @Nullable PsiType extractOptionalContent(@NotNull PsiClassType classType) {
+    final PsiClass resolved = classType.resolve();
+    if (resolved != null && CommonClassNames.JAVA_UTIL_OPTIONAL.equals(resolved.getQualifiedName())) {
+      if (classType.getParameterCount() == 1) {
+        return classType.getParameters()[0];
+      }
+    }
+    return null;
+  }
+
+  private static void suggestNamesFromHierarchy(@NotNull PsiClassType type, @NotNull Collection<? super String> suggestions) {
+    final PsiClass resolved = type.resolve();
+    if (resolved == null || resolved.getContainingClass() == null) return;
+
+    InheritanceUtil.processSupers(resolved, false, superClass -> {
+      if (PsiTreeUtil.isAncestor(superClass, resolved, true)) {
+        suggestions.add(superClass.getName());
+      }
+      return false;
+    });
+  }
+
+  private static void suggestNamesFromGenericParameters(@NotNull PsiClassType type, @NotNull Collection<? super String> suggestions) {
+    PsiType[] parameters = type.getParameters();
+    if (parameters.length == 0) return;
+
+    StringBuilder fullNameBuilder = new StringBuilder();
+    for (PsiType parameter : parameters) {
+      if (parameter instanceof PsiClassType) {
+        final String typeName = normalizeTypeName(getTypeName(parameter));
+        if (typeName != null) {
+          fullNameBuilder.append(typeName);
+        }
+      }
+    }
+    String baseName = normalizeTypeName(getTypeName(type));
+    if (baseName != null) {
+      fullNameBuilder.append(baseName);
+      suggestions.add(fullNameBuilder.toString());
+    }
+  }
+
+  private static void suggestNamesForCollectionInheritors(@NotNull PsiClassType type, @NotNull Collection<? super String> suggestions) {
+    PsiType componentType = PsiUtil.extractIterableTypeParameter(type, false);
+    if (componentType == null || componentType.equals(type)) {
+      return;
+    }
+    String typeName = normalizeTypeName(getTypeName(componentType));
+    if (typeName != null) {
+      suggestions.add(StringUtil.pluralize(typeName));
+    }
+  }
+
+  private static String normalizeTypeName(@Nullable String typeName) {
+    if (typeName == null) {
+      return null;
+    }
+    if (typeName.endsWith(IMPL_SUFFIX) && typeName.length() > IMPL_SUFFIX.length()) {
+      return typeName.substring(0, typeName.length() - IMPL_SUFFIX.length());
+    }
+    return typeName;
+  }
+
+  private static @Nullable String getTypeNameWithoutIndex(@NotNull PsiType type) {
+    type = type.getDeepComponentType();
+    return type instanceof PsiClassType classType 
+           ? classType.getClassName() 
+           : type instanceof PsiPrimitiveType 
+             ? type.getPresentableText()
+             : null;
+  }
+
+  public static @Nullable String getTypeName(@NotNull PsiType type) {
+    type = type.getDeepComponentType();
+    if (type instanceof PsiClassType classType) {
+      final String className = classType.getClassName();
+      if (className != null) return className;
+      final PsiClass aClass = classType.resolve();
+      return aClass instanceof PsiAnonymousClass anonymous ? anonymous.getBaseClassType().getClassName() : null;
+    }
+    else if (type instanceof PsiPrimitiveType) {
+      return type.getPresentableText();
+    }
+    else if (type instanceof PsiWildcardType wildcardType) {
+      return getTypeName(wildcardType.getExtendsBound());
+    }
+    else if (type instanceof PsiIntersectionType intersectionType) {
+      return getTypeName(intersectionType.getRepresentative());
+    }
+    else if (type instanceof PsiCapturedWildcardType wildcardType) {
+      return getTypeName(wildcardType.getWildcard());
+    }
+    else if (type instanceof PsiDisjunctionType disjunctionType) {
+      return getTypeName(disjunctionType.getLeastUpperBound());
+    }
+    else {
+      return null;
+    }
+  }
+
+  private static @Nullable String getLongTypeName(@NotNull PsiType type) {
+    if (type instanceof PsiClassType classType) {
+      PsiClass aClass = classType.resolve();
+      if (aClass == null) {
+        return null;
+      }
+      else if (aClass instanceof PsiAnonymousClass anonymousClass) {
+        PsiClass baseClass = anonymousClass.getBaseClassType().resolve();
+        return baseClass != null ? baseClass.getQualifiedName() : null;
+      }
+      else {
+        return aClass.getQualifiedName();
+      }
+    }
+    else if (type instanceof PsiArrayType arrayType) {
+      return getLongTypeName(arrayType.getComponentType()) + "[]";
+    }
+    else if (type instanceof PsiPrimitiveType) {
+      return type.getPresentableText();
+    }
+    else if (type instanceof PsiWildcardType wildcardType) {
+      final PsiType bound = wildcardType.getBound();
+      return bound != null ? getLongTypeName(bound) : CommonClassNames.JAVA_LANG_OBJECT;
+    }
+    else if (type instanceof PsiCapturedWildcardType wildcardType) {
+      final PsiType bound = wildcardType.getWildcard().getBound();
+      return bound != null ? getLongTypeName(bound) : CommonClassNames.JAVA_LANG_OBJECT;
+    }
+    else if (type instanceof PsiIntersectionType intersectionType) {
+      return getLongTypeName(intersectionType.getRepresentative());
+    }
+    else if (type instanceof PsiDisjunctionType disjunctionType) {
+      return getLongTypeName(disjunctionType.getLeastUpperBound());
+    }
+    else {
+      return null;
+    }
+  }
+
+  private static final class NamesByExprInfo {
+    static final NamesByExprInfo EMPTY = new NamesByExprInfo(null, Collections.emptyList());
+
+    private final String propertyName;
+    private final Collection<String> names;
+
+    private NamesByExprInfo(@Nullable String propertyName, @NotNull Collection<String> names) {
+      this.propertyName = propertyName;
+      this.names = names;
+    }
+
+    private NamesByExprInfo(@NotNull String propertyName) {
+      this(propertyName, Collections.singletonList(propertyName));
+    }
+
+    private NamesByExprInfo(@Nullable String propertyName, String @NotNull ... names) {
+      this(propertyName, propertyName == null ? Arrays.asList(names) : ContainerUtil.prepend(Arrays.asList(names), propertyName));
+    }
+  }
+
+  private @NotNull NamesByExprInfo suggestVariableNameByExpression(@NotNull PsiExpression expr, @Nullable VariableKind variableKind) {
+    List<String> fromLiteral = ExpressionUtils.nonStructuralChildren(expr)
+      .map(e -> e instanceof PsiLiteralExpression literal && literal.getValue() instanceof String str ? str : null)
+      .filter(Objects::nonNull)
+      .flatMap(literal -> LiteralNameSuggester.literalNames(literal).stream())
+      .distinct()
+      .toList();
+    final LinkedHashSet<String> names = new LinkedHashSet<>(fromLiteral);
+    ContainerUtil.addIfNotNull(names, suggestVariableNameFromConstant(expr, variableKind));
+    ContainerUtil.addIfNotNull(names, suggestVariableNameFromLiterals(expr));
+
+    NamesByExprInfo byExpr = suggestVariableNameByExpressionOnly(expr, variableKind, false);
+    NamesByExprInfo byExprPlace = suggestVariableNameByExpressionPlace(expr, variableKind);
+    NamesByExprInfo byExprAllMethods = suggestVariableNameByExpressionOnly(expr, variableKind, true);
+
+    names.addAll(byExpr.names);
+    names.addAll(byExprPlace.names);
+
+    PsiType type = expr.getType();
+    if (type != null && variableKind != null) {
+      names.addAll(doSuggestNamesByType(type, variableKind));
+    }
+    names.addAll(byExprAllMethods.names);
+
+    String propertyName = byExpr.propertyName != null ? byExpr.propertyName : byExprPlace.propertyName;
+    return new NamesByExprInfo(propertyName, names);
+  }
+
+  private static @Nullable String suggestVariableNameFromConstant(@NotNull PsiExpression expr, @Nullable VariableKind kind) {
+    if (kind == null || kind == VariableKind.LOCAL_VARIABLE) {
+      return null;
+    }
+    PsiExpression expression = PsiUtil.skipParenthesizedExprDown(expr);
+    if (expression instanceof PsiReferenceExpression referenceExpression &&
+        referenceExpression.resolve() instanceof PsiEnumConstant enumConstant) {
+      return normalizeTypeName(getTypeName(enumConstant.getType()));
+    }
+    return null;
+  }
+
+  private static @Nullable String suggestVariableNameFromLiterals(@NotNull PsiExpression expr) {
+    String text = findLiteralText(expr);
+    if (text == null) return null;
+    return expr.getType() instanceof PsiArrayType ? StringUtil.pluralize(text) : text;
+  }
+
+  private static boolean isNameSupplier(String text) {
+    if (!StringUtil.isQuotedString(text)) return false;
+    String stringPresentation = StringUtil.unquoteString(text);
+    String[] words = stringPresentation.split(" ");
+    if (words.length > 5) return false;
+    return ContainerUtil.and(words, StringUtil::isJavaIdentifier);
+  }
+
+  private static @Nullable String findLiteralText(@NotNull PsiExpression expr) {
+    final PsiLiteralExpression[] literals = SyntaxTraverser.psiTraverser(expr)
+      .filter(PsiLiteralExpression.class)
+      .filter(lit -> isNameSupplier(lit.getText()))
+      .filter(lit -> {
+        final PsiElement exprList = lit.getParent();
+        if (!(exprList instanceof PsiExpressionList)) return false;
+        final PsiElement call = exprList.getParent();
+        //TODO: exclude or not getA().getB("name").getC(); or getA(getB("name").getC()); It works fine for now in the most cases
+        return call instanceof PsiNewExpression || call instanceof PsiMethodCallExpression;
+      })
+      .toArray(new PsiLiteralExpression[0]);
+
+    if (literals.length == 1) {
+      return StringUtil.unquoteString(literals[0].getText()).replace(' ', '_');
+    }
+    return null;
+  }
+
+  private @NotNull NamesByExprInfo suggestVariableNameByExpressionOnly(@NotNull PsiExpression expr,
+                                                                       @Nullable VariableKind variableKind,
+                                                                       boolean useAllMethodNames) {
+    if (expr instanceof PsiMethodCallExpression call) {
+      List<? extends MethodContract> contracts = DumbService.isDumb(call.getProject()) ? 
+                                                 List.of() : JavaMethodContractUtil.getMethodCallContracts(call);
+      ContractReturnValue returnValue = JavaMethodContractUtil.getNonFailingReturnValue(contracts);
+      if (returnValue instanceof ContractReturnValue.ParameterReturnValue parameter) {
+        int number = parameter.getParameterNumber();
+        PsiExpression[] args = call.getArgumentList().getExpressions();
+        if (args.length > number) {
+          return suggestVariableNameByExpressionOnly(args[number], variableKind, useAllMethodNames);
+        }
+      }
+      PsiReferenceExpression methodExpr = call.getMethodExpression();
+      String methodName = methodExpr.getReferenceName();
+      if (methodName != null) {
+        if ("of".equals(methodName) || "ofNullable".equals(methodName)) {
+          if (isJavaUtilMethodCall(call)) {
+            PsiExpression[] expressions = call.getArgumentList().getExpressions();
+            if (expressions.length > 0) {
+              return suggestVariableNameByExpressionOnly(expressions[0], variableKind, useAllMethodNames);
+            }
+          }
+        }
+        if ("map".equals(methodName) || "flatMap".equals(methodName) || "filter".equals(methodName)) {
+          if (isJavaUtilMethodCall(call)) {
+            return NamesByExprInfo.EMPTY;
+          }
+        }
+
+        List<@NotNull String> words = NameUtilCore.nameToWordList(methodName);
+        if (!words.isEmpty()) {
+          final String firstWord = words.getFirst();
+          if (GET_PREFIX.equals(firstWord)
+              || IS_PREFIX.equals(firstWord)
+              || FIND_PREFIX.equals(firstWord)
+              || CREATE_PREFIX.equals(firstWord)
+              || AS_PREFIX.equals(firstWord)
+              || TO_PREFIX.equals(firstWord)) {
+            if (words.size() > 1) {
+              final String propertyName = methodName.substring(firstWord.length());
+              final PsiExpression qualifierExpression = methodExpr.getQualifierExpression();
+              if (qualifierExpression instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiVariable) {
+                String name = ref.getReferenceName() + StringUtil.capitalize(propertyName);
+                return new NamesByExprInfo(propertyName, name);
+              }
+              return new NamesByExprInfo(propertyName);
+            }
+          }
+          else if (words.size() == 1 || useAllMethodNames) {
+            if (Registry.is("add.past.participle.to.suggested.names") && !"equals".equals(firstWord) && !"valueOf".equals(methodName)) {
+              String pastParticiple = PastParticiple.pastParticiple(firstWord);
+              String name = StreamEx.of(words).mapFirst(__ -> pastParticiple).joining();
+              return new NamesByExprInfo(methodName, pastParticiple, name);
+            }
+            else {
+              return new NamesByExprInfo(methodName);
+            }
+          }
+        }
+      }
+    }
+    else if (expr instanceof PsiReferenceExpression ref) {
+      String propertyName = getPropertyName(ref, true);
+      if (propertyName != null) {
+        return new NamesByExprInfo(propertyName);
+      }
+    }
+    else if (expr instanceof PsiArrayAccessExpression accessExpression) {
+      NamesByExprInfo info = suggestVariableNameByExpressionOnly(accessExpression.getArrayExpression(), variableKind, useAllMethodNames);
+
+      String singular = info.propertyName == null ? null : StringUtil.unpluralize(info.propertyName);
+      if (singular != null) {
+        return new NamesByExprInfo(singular, ContainerUtil.mapNotNull(info.names, StringUtil::unpluralize));
+      }
+    }
+    else if (expr instanceof PsiLiteralExpression literalExpression && variableKind == VariableKind.STATIC_FINAL_FIELD) {
+      final Object value = literalExpression.getValue();
+      if (value instanceof String stringValue) {
+        String[] names = getSuggestionsByValue(stringValue);
+        if (names.length > 0) {
+          return new NamesByExprInfo(null, constantValueToConstantName(names));
+        }
+      }
+    }
+    else if (expr instanceof PsiParenthesizedExpression parenthesizedExpression) {
+      final PsiExpression expression = parenthesizedExpression.getExpression();
+      if (expression != null) {
+        return suggestVariableNameByExpressionOnly(expression, variableKind, useAllMethodNames);
+      }
+    }
+    else if (expr instanceof PsiTypeCastExpression expression) {
+      final PsiExpression operand = expression.getOperand();
+      if (operand != null) {
+        return suggestVariableNameByExpressionOnly(operand, variableKind, useAllMethodNames);
+      }
+    }
+    else if (expr instanceof PsiLiteralExpression) {
+      final String text = StringUtil.unquoteString(expr.getText());
+      if (isIdentifier(text, expr)) {
+        return new NamesByExprInfo(text);
+      }
+    }
+    else if (expr instanceof PsiFunctionalExpression expression && variableKind != null) {
+      final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
+      if (functionalInterfaceType != null) {
+        return new NamesByExprInfo(null, doSuggestNamesByType(functionalInterfaceType, variableKind));
+      }
+    }
+
+    return NamesByExprInfo.EMPTY;
+  }
+
+  private static boolean isJavaUtilMethodCall(@NotNull PsiMethodCallExpression expr) {
+    PsiMethod method = expr.resolveMethod();
+    if (method == null) return false;
+
+    return isJavaUtilMethod(method) ||
+           !MethodDeepestSuperSearcher.processDeepestSuperMethods(method, method1 -> !isJavaUtilMethod(method1));
+  }
+
+  private static boolean isJavaUtilMethod(@NotNull PsiMethod method) {
+    String name = PsiUtil.getMemberQualifiedName(method);
+    return name != null && name.startsWith("java.util.");
+  }
+
+  private @Nullable String getPropertyName(@NotNull PsiReferenceExpression expression) {
+    return getPropertyName(expression, false);
+  }
+
+  private @Nullable String getPropertyName(@NotNull PsiReferenceExpression expression, boolean skipUnresolved) {
+    String propertyName = expression.getReferenceName();
+    if (propertyName == null) return null;
+
+    PsiElement refElement = expression.resolve();
+    if (refElement instanceof PsiVariable variable) {
+      return variableNameToPropertyName(propertyName, getVariableKind(variable));
+    }
+    else if (refElement == null && skipUnresolved) {
+      return null;
+    }
+    else {
+      return propertyName;
+    }
+  }
+
+  private static @NotNull String constantValueToConstantName(String @NotNull [] names) {
+    return String.join("_", names);
+  }
+
+  private static String @NotNull [] getSuggestionsByValue(@NotNull String stringValue) {
+    List<String> result = new ArrayList<>();
+    StringBuilder currentWord = new StringBuilder();
+
+    boolean prevIsUpperCase = false;
+
+    for (int i = 0; i < stringValue.length(); i++) {
+      final char c = stringValue.charAt(i);
+      if (Character.isUpperCase(c)) {
+        if (!currentWord.isEmpty() && !prevIsUpperCase) {
+          result.add(currentWord.toString());
+          currentWord = new StringBuilder();
+        }
+        currentWord.append(c);
+      }
+      else if (Character.isLowerCase(c)) {
+        currentWord.append(Character.toUpperCase(c));
+      }
+      else if (Character.isJavaIdentifierPart(c) && c != '_') {
+        if (Character.isJavaIdentifierStart(c) || !currentWord.isEmpty() || !result.isEmpty()) {
+          currentWord.append(c);
+        }
+      }
+      else {
+        if (!currentWord.isEmpty()) {
+          result.add(currentWord.toString());
+          currentWord = new StringBuilder();
+        }
+      }
+
+      prevIsUpperCase = Character.isUpperCase(c);
+    }
+
+    if (!currentWord.isEmpty()) {
+      result.add(currentWord.toString());
+    }
+    return ArrayUtilRt.toStringArray(result);
+  }
+
+  private @NotNull NamesByExprInfo suggestVariableNameByExpressionPlace(@NotNull PsiExpression expr, @Nullable VariableKind variableKind) {
+    if (expr.getParent() instanceof PsiExpressionList list) {
+      PsiElement listParent = list.getParent();
+      PsiSubstitutor subst = PsiSubstitutor.EMPTY;
+      PsiMethod method = null;
+      if (listParent instanceof PsiMethodCallExpression call) {
+        final JavaResolveResult resolveResult = call.getMethodExpression().advancedResolve(false);
+        method = (PsiMethod)resolveResult.getElement();
+        subst = resolveResult.getSubstitutor();
+      }
+      else {
+        if (listParent instanceof PsiAnonymousClass) {
+          listParent = listParent.getParent();
+        }
+        if (listParent instanceof PsiNewExpression newExpression) {
+          method = newExpression.resolveConstructor();
+        }
+      }
+
+      if (method != null) {
+        PsiParameter parameter = MethodCallUtils.getParameterForArgument(expr);
+        if (parameter != null) {
+          String name = parameter.getName();
+          if (TypeConversionUtil.areTypesAssignmentCompatible(subst.substitute(parameter.getType()), expr)) {
+            name = variableNameToPropertyName(name, VariableKind.PARAMETER);
+            if (list.getExpressionCount() == 1) {
+              final String methodName = method.getName();
+              List<@NotNull String> words = NameUtilCore.nameToWordList(methodName);
+              if (!words.isEmpty()) {
+                final String firstWord = words.getFirst();
+                if (SET_PREFIX.equals(firstWord)) {
+                  final String propertyName = methodName.substring(firstWord.length());
+                  return new NamesByExprInfo(name, propertyName);
+                }
+              }
+            }
+            return new NamesByExprInfo(name);
+          }
+        }
+      }
+    }
+    else if (expr.getParent() instanceof PsiAssignmentExpression assignmentExpression) {
+      if (expr == assignmentExpression.getRExpression()) {
+        final PsiExpression leftExpression = assignmentExpression.getLExpression();
+        if (leftExpression instanceof PsiReferenceExpression ref) {
+          String name = getPropertyName(ref);
+          if (name != null) {
+            return new NamesByExprInfo(name);
+          }
+        }
+      }
+    }
+    //skip places where name for this local variable is calculated, otherwise grab the name
+    else if (expr.getParent() instanceof PsiLocalVariable variable && variableKind != VariableKind.LOCAL_VARIABLE) {
+      String propertyName = variableNameToPropertyName(variable.getName(), getVariableKind(variable));
+      return new NamesByExprInfo(propertyName);
+    }
+
+    return NamesByExprInfo.EMPTY;
+  }
+
+  @Override
+  public @NotNull String variableNameToPropertyName(@NotNull String name, @NotNull VariableKind variableKind) {
+    if (variableKind == VariableKind.STATIC_FINAL_FIELD || variableKind == VariableKind.STATIC_FIELD && name.contains("_")) {
+      StringBuilder buffer = new StringBuilder();
+      for (int i = 0; i < name.length(); i++) {
+        char c = name.charAt(i);
+        if (c != '_') {
+          if (Character.isLowerCase(c)) {
+            return variableNameToPropertyNameInner(name, variableKind);
+          }
+
+          buffer.append(Character.toLowerCase(c));
+          continue;
+        }
+        //noinspection AssignmentToForLoopParameter
+        i++;
+        if (i < name.length()) {
+          c = name.charAt(i);
+          buffer.append(c);
+        }
+      }
+      return buffer.toString();
+    }
+
+    return variableNameToPropertyNameInner(name, variableKind);
+  }
+
+  private @NotNull String variableNameToPropertyNameInner(@NotNull String name, @NotNull VariableKind variableKind) {
+    String prefix = getPrefixByVariableKind(variableKind);
+    String suffix = getSuffixByVariableKind(variableKind);
+    boolean doDecapitalize = false;
+
+    int pLength = prefix.length();
+    if (pLength > 0 && name.startsWith(prefix) && name.length() > pLength &&
+        // check it's not just a long camel word that happens to begin with the specified prefix
+        (!Character.isLetter(prefix.charAt(pLength - 1)) || Character.isUpperCase(name.charAt(pLength)))) {
+      name = name.substring(pLength);
+      doDecapitalize = true;
+    }
+
+    if (name.endsWith(suffix) && name.length() > suffix.length()) {
+      name = name.substring(0, name.length() - suffix.length());
+      doDecapitalize = true;
+    }
+
+    if (doDecapitalize) {
+      name = Introspector.decapitalize(name);
+    }
+
+    return name;
+  }
+
+  @Override
+  public @NotNull String propertyNameToVariableName(@NotNull String propertyName, @NotNull VariableKind variableKind) {
+    if (variableKind == VariableKind.STATIC_FINAL_FIELD) {
+      List<@NotNull String> words = NameUtilCore.nameToWordList(propertyName);
+      return StringUtil.join(words, StringUtil::toUpperCase, "_");
+    }
+
+    String prefix = getPrefixByVariableKind(variableKind);
+    String name = propertyName;
+    if (!name.isEmpty() && !prefix.isEmpty() && !StringUtil.endsWithChar(prefix, '_')) {
+      name = Character.toUpperCase(name.charAt(0)) + name.substring(1);
+    }
+    name = prefix + name + getSuffixByVariableKind(variableKind);
+    name = changeIfNotIdentifier(name, null);
+    return name;
+  }
+
+  private @NotNull Collection<String> getSuggestionsByNames(@NotNull Iterable<String> names,
+                                                            @NotNull VariableKind kind,
+                                                            boolean correctKeywords,
+                                                            @Nullable PsiElement context) {
+    final Collection<String> suggestions = new LinkedHashSet<>();
+    for (String name : names) {
+      suggestions.addAll(getSuggestionsByName(name, kind, correctKeywords, context));
+    }
+    return suggestions;
+  }
+
+  private @NotNull Collection<String> getSuggestionsByName(@NotNull String name,
+                                                           @NotNull VariableKind variableKind,
+                                                           boolean correctKeywords,
+                                                           @Nullable PsiElement context) {
+    if (!StringUtil.isJavaIdentifier(name)) return List.of();
+    boolean upperCaseStyle = variableKind == VariableKind.STATIC_FINAL_FIELD;
+    boolean preferLongerNames = getJavaSettings().PREFER_LONGER_NAMES;
+    String prefix = getPrefixByVariableKind(variableKind);
+    String suffix = getSuffixByVariableKind(variableKind);
+
+    List<String> answer = new ArrayList<>();
+    for (String suggestion : NameUtil.getSuggestionsByName(name, prefix, suffix, upperCaseStyle, preferLongerNames, false)) {
+      answer.add(correctKeywords ? changeIfNotIdentifier(suggestion, context) : suggestion);
+    }
+
+    String wordByPreposition = getWordByPreposition(name, prefix, suffix, upperCaseStyle);
+    if (wordByPreposition != null && (!correctKeywords || isIdentifier(wordByPreposition, context))) {
+      answer.add(wordByPreposition);
+    }
+    if (name.equals("hashCode")) {
+      answer.add("hash");
+    }
+    return answer;
+  }
+
+  private static String getWordByPreposition(@NotNull String name, String prefix, String suffix, boolean upperCaseStyle) {
+    List<@NotNull String> words = NameUtil.splitNameIntoWordList(name);
+    for (int i = 1; i < words.size(); i++) {
+      for (String preposition : ourPrepositions) {
+        if (preposition.equalsIgnoreCase(words.get(i))) {
+          String mainWord = words.get(i - 1);
+          if (upperCaseStyle) {
+            mainWord = StringUtil.toUpperCase(mainWord);
+          }
+          else {
+            mainWord = prefix.isEmpty() || StringUtil.endsWithChar(prefix, '_')
+                       ? StringUtil.toLowerCase(mainWord) 
+                       : StringUtil.capitalize(mainWord);
+          }
+          return prefix + mainWord + suffix;
+        }
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public @NotNull String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, boolean lookForward) {
+    return suggestUniqueVariableName(baseName, place, lookForward, Set.of());
+  }
+
+  @Override
+  public @NotNull String suggestUniqueVariableName(@NotNull String baseName,
+                                                   PsiElement place,
+                                                   boolean lookForward,
+                                                   @NotNull Set<String> skipNames) {
+    Predicate<PsiVariable> canBeReused = v -> place instanceof PsiParameter p && !PsiTreeUtil.isAncestor(p.getDeclarationScope(), v, false);
+    return suggestUniqueVariableName(baseName, place, lookForward, false, canBeReused, v -> !skipNames.contains(v));
+  }
+
+
+  @Override
+  public @NotNull String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, Predicate<? super PsiVariable> canBeReused) {
+    return suggestUniqueVariableName(baseName, place, true, false, canBeReused, null);
+  }
+
+  @Override
+  public @NotNull SuggestedNameInfo suggestUniqueVariableName(@NotNull SuggestedNameInfo baseNameInfo,
+                                                              PsiElement place,
+                                                              boolean ignorePlaceName,
+                                                              boolean lookForward) {
+    final String[] names = baseNameInfo.names;
+    final LinkedHashSet<String> uniqueNames = new LinkedHashSet<>(names.length);
+    for (String name : names) {
+      if (ignorePlaceName && place instanceof PsiNamedElement element && Comparing.strEqual(element.getName(), name)) {
+        uniqueNames.add(name);
+        continue;
+      }
+      String unique = suggestUniqueVariableName(name, place, lookForward);
+      if (!unique.equals(name)) {
+        String withShadowing = suggestUniqueVariableName(name, place, lookForward, place instanceof PsiParameter, v -> false, null);
+        if (withShadowing.equals(name)) {
+          uniqueNames.add(name);
+        }
+      }
+      uniqueNames.add(unique);
+    }
+
+    return new SuggestedNameInfo(ArrayUtilRt.toStringArray(uniqueNames)) {
+      @Override
+      public void nameChosen(String name) {
+        baseNameInfo.nameChosen(name);
+      }
+    };
+  }
+
+  private static @NotNull String suggestUniqueVariableName(@NotNull String baseName,
+                                                           PsiElement place,
+                                                           boolean lookForward,
+                                                           boolean allowShadowing,
+                                                           Predicate<? super PsiVariable> canBeReused,
+                                                           @Nullable Predicate<String> additionalValidator) {
+    PsiElement scope = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class, PsiCodeBlock.class, PsiMethod.class);
+    return UniqueNameGenerator.generateUniqueNameOneBased(
+      baseName, name -> (additionalValidator == null || additionalValidator.test(name)) &&
+                        !hasConflictingVariable(place, name, allowShadowing) &&
+                        (!lookForward || !hasConflictingVariableAfterwards(scope, name, canBeReused)));
+  }
+
+  private static boolean hasConflictingVariable(@Nullable PsiElement place, @NotNull String name, boolean allowShadowing) {
+    if (place == null) {
+      return false;
+    }
+    PsiResolveHelper helper = JavaPsiFacade.getInstance(place.getProject()).getResolveHelper();
+    PsiVariable existingVariable = helper.resolveAccessibleReferencedVariable(name, place);
+    if (existingVariable == null) return false;
+
+    return !allowShadowing ||
+           !(existingVariable instanceof PsiField) ||
+           PsiTreeUtil.getNonStrictParentOfType(place, PsiMethod.class) == null;
+  }
+
+  private static boolean hasConflictingVariableAfterwards(@Nullable PsiElement scope,
+                                                          @NotNull String name,
+                                                          @NotNull Predicate<? super PsiVariable> canBeReused) {
+    PsiElement run = scope;
+    class Visitor extends JavaRecursiveElementWalkingVisitor {
+      boolean hasConflict = false;
+
+      @Override
+      public void visitClass(@NotNull PsiClass aClass) {}
+
+      @Override
+      public void visitVariable(@NotNull PsiVariable variable) {
+        if (name.equals(variable.getName()) && !canBeReused.test(variable)) {
+          hasConflict = true;
+          stopWalking();
+        }
+        super.visitVariable(variable);
+      }
+    }
+    Visitor visitor = new Visitor();
+    while (run != null) {
+      run.accept(visitor);
+      if (visitor.hasConflict) return true;
+      run = run.getNextSibling();
+      if (scope instanceof PsiMethod || scope instanceof PsiForeachStatement) {//do not check next member for param name conflict
+        break;
+      }
+    }
+    return false;
+  }
+
+  private static void sortVariableNameSuggestions(String @NotNull [] names,
+                                                  @NotNull VariableKind variableKind,
+                                                  @Nullable String propertyName,
+                                                  @Nullable PsiType type) {
+    if (names.length <= 1) {
+      return;
+    }
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("sorting names:" + variableKind);
+      if (propertyName != null) {
+        LOG.debug("propertyName:" + propertyName);
+      }
+      if (type != null) {
+        LOG.debug("type:" + type);
+      }
+      for (String name : names) {
+        int count = JavaStatisticsManager.getVariableNameUseCount(name, variableKind, propertyName, type);
+        LOG.debug(name + " : " + count);
+      }
+    }
+
+    Comparator<String> comparator = (s1, s2) -> {
+      int count1 = JavaStatisticsManager.getVariableNameUseCount(s1, variableKind, propertyName, type);
+      int count2 = JavaStatisticsManager.getVariableNameUseCount(s2, variableKind, propertyName, type);
+      return count2 - count1;
+    };
+    Arrays.sort(names, comparator);
+  }
+
+  @Override
+  public @NotNull String getPrefixByVariableKind(@NotNull VariableKind variableKind) {
+    return switch (variableKind) {
+      case FIELD -> getJavaSettings().FIELD_NAME_PREFIX;
+      case STATIC_FIELD -> getJavaSettings().STATIC_FIELD_NAME_PREFIX;
+      case PARAMETER -> getJavaSettings().PARAMETER_NAME_PREFIX;
+      case LOCAL_VARIABLE -> getJavaSettings().LOCAL_VARIABLE_NAME_PREFIX;
+      case STATIC_FINAL_FIELD -> "";
+    };
+  }
+
+  @Override
+  public @NotNull String getSuffixByVariableKind(@NotNull VariableKind variableKind) {
+    return switch (variableKind) {
+      case FIELD -> getJavaSettings().FIELD_NAME_SUFFIX;
+      case STATIC_FIELD -> getJavaSettings().STATIC_FIELD_NAME_SUFFIX;
+      case PARAMETER -> getJavaSettings().PARAMETER_NAME_SUFFIX;
+      case LOCAL_VARIABLE -> getJavaSettings().LOCAL_VARIABLE_NAME_SUFFIX;
+      case STATIC_FINAL_FIELD -> "";
+    };
+  }
+
+  @Override
+  public @NotNull Collection<String> suggestSemanticNames(@NotNull PsiExpression expression) {
+    return suggestVariableNameByExpression(expression, null).names;
+  }
+
+  @Override
+  public @NotNull Collection<String> suggestSemanticNames(@NotNull PsiExpression expression, @NotNull VariableKind kind) {
+    return suggestVariableNameByExpression(expression, kind).names;
+  }
+
+  private @NotNull Collection<String> suggestSemanticNamesByType(@Nullable PsiType type, @NotNull VariableKind kind) {
+    return type == null ? Collections.emptyList() : doSuggestNamesByType(type, kind);
+  }
+
+  @Override
+  public @NotNull SuggestedNameInfo suggestNames(@NotNull Collection<String> semanticNames,
+                                                 @NotNull VariableKind kind,
+                                                 @Nullable PsiType type) {
+    final Iterable<String> allSemanticNames = ContainerUtil.concat(
+      semanticNames,
+      suggestSemanticNamesByType(type, kind)
+    );
+
+    final Set<String> suggestions = new LinkedHashSet<>(getSuggestionsByNames(allSemanticNames, kind, true, null));
+    final String propertyName = ContainerUtil.getFirstItem(semanticNames);
+    addNamesFromStatistics(suggestions, kind, propertyName, type);
+
+    String[] namesArray = ArrayUtilRt.toStringArray(suggestions);
+    sortVariableNameSuggestions(namesArray, kind, propertyName, type);
+    return new SuggestedNameInfo(namesArray) {
+      @Override
+      public void nameChosen(String name) {
+        if (type == null || !type.isValid()) return;
+        JavaStatisticsManager.incVariableNameUseCount(name, kind, propertyName, type);
+      }
+    };
+  }
+
+  private @NonNls @NotNull String changeIfNotIdentifier(@NotNull String name, @Nullable PsiElement context) {
+    if (!isIdentifier(name, context)) {
+      String propertyName = StringUtil.fixVariableNameDerivedFromPropertyName(name);
+      if (isIdentifier(propertyName, context)) {
+        return propertyName;
+      }
+    }
+    return name;
+  }
+
+  private boolean isIdentifier(@NotNull String name, @Nullable PsiElement context) {
+    LanguageLevel languageLevel = context != null ? PsiUtil.getLanguageLevel(context) : JavaRelease.getHighest();
+    return PsiNameHelper.getInstance(myProject).isIdentifier(name, languageLevel);
+  }
+
+  private @NotNull JavaCodeStyleSettings getJavaSettings() {
+    return CodeStyle.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class);
+  }
+}

@@ -1,0 +1,33 @@
+### auto-generated section `build intellij.platform.buildData` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_buildData",
+  opt_in = [
+    "kotlin.RequiresOptIn",
+    "kotlinx.serialization.ExperimentalSerializationApi",
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+  ]
+)
+
+resourcegroup(
+  name = "buildData_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "buildData",
+  module_name = "intellij.platform.buildData",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":buildData_resources"],
+  kotlinc_opts = ":custom_buildData",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/serialization/core",
+    "@lib//:jetbrains-annotations",
+  ]
+)
+### auto-generated section `build intellij.platform.buildData` end

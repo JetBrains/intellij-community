@@ -1,0 +1,34 @@
+### auto-generated section `build intellij.python.community.interpreters` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "interpreters_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "interpreters",
+  module_name = "intellij.python.community.interpreters",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":interpreters_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//python/services/shared",
+    "@lib//:jetbrains-annotations",
+    "//platform/extensions",
+    "//python/python-sdk:sdk",
+    "//python/python-psi-impl:psi-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/diagnostic",
+    "//python/python-exec-service/execService.python",
+    "//python/python-exec-service:community-execService",
+    "//python/python-parser:parser",
+    "//python/openapi:community",
+    "//platform/core-api:core",
+    "//platform/eel-provider",
+  ]
+)
+### auto-generated section `build intellij.python.community.interpreters` end

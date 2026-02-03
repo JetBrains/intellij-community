@@ -1,0 +1,20 @@
+- name: dist.all/lib/intellij.libraries.compose.runtime.desktop.jar
+  modules:
+  - name: intellij.libraries.compose.runtime.desktop
+    libraries:
+      androidx.compose.runtime.desktop:
+      - name: $MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-desktop/1/runtime-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/androidx/collection/collection-jvm/1/collection-jvm-1.jar
+      - name: $MAVEN_REPOSITORY$/androidx/annotation/annotation-jvm/1/annotation-jvm-1.jar
+      - name: $MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-annotation-jvm/1/runtime-annotation-jvm-1.jar
+      androidx.compose.runtime.saveable.desktop:
+      - name: $MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-saveable-desktop/1/runtime-saveable-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/androidx/savedstate/savedstate-compose-desktop/1/savedstate-compose-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/androidx/savedstate/savedstate-desktop/1/savedstate-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-runtime-compose-desktop/2/lifecycle-runtime-compose-desktop-2.jar
+      - name: $MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-runtime-desktop/2/lifecycle-runtime-desktop-2.jar
+      - name: $MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-common-jvm/2/lifecycle-common-jvm-2.jar
+      - name: $MAVEN_REPOSITORY$/androidx/arch/core/core-common/2/core-common-2.jar
+      - name: $MAVEN_REPOSITORY$/androidx/annotation/annotation/1/annotation-1.jar
+      androidx.compose.runtime.retain.desktop:
+      - name: $MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-retain-desktop/1/runtime-retain-desktop-1.jar

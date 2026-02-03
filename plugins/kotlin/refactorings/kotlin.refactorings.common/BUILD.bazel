@@ -1,0 +1,59 @@
+### auto-generated section `build kotlin.refactorings.common` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_kotlin-refactorings-common",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+  ],
+  x_context_parameters = True
+)
+
+jvm_library(
+  name = "kotlin-refactorings-common",
+  module_name = "kotlin.refactorings.common",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-refactorings-common",
+  deps = [
+    "//java/java-indexing-api:indexing",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/foldings",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//plugins/kotlin/base/psi",
+    "//platform/editor-ui-ex:editor-ex",
+    "//plugins/kotlin/base/util",
+    "//java/java-psi-api:psi",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/ide-core-impl",
+    "//platform/lang-impl",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//java/openapi:java",
+    "//platform/platform-impl:ide-impl",
+    "//platform/usageView",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/core-ui",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/kdoc",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/code-insight/utils",
+    "//libraries/guava",
+    "//plugins/kotlin/kotlin.searching/base",
+    "//plugins/kotlin/formatter",
+  ],
+  runtime_deps = ["//plugins/kotlin/base/frontend-agnostic"]
+)
+### auto-generated section `build kotlin.refactorings.common` end

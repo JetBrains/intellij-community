@@ -1,0 +1,27 @@
+{
+  "name": "log",
+  "version": "1.0.0",
+  "description": "%description%",
+  "license": "MIT",
+  "contributes": {
+    "languages": [
+      {
+        "id": "log",
+        "extensions": [
+          ".log",
+          "*.log.?"
+        ],
+        "aliases": [
+          "Log"
+        ]
+      }
+    ],
+    "grammars": [
+      {
+        "language": "log",
+        "scopeName": "text.log",
+        "path": "./syntaxes/log.tmLanguage.json"
+      }
+    ]
+  }
+}

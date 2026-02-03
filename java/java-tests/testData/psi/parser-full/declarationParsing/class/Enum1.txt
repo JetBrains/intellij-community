@@ -1,0 +1,20 @@
+PsiJavaFile:Enum1.java
+  PsiImportList
+    <empty list>
+  PsiClass:OurEnum
+    PsiModifierList:public
+      PsiKeyword:public('public')
+    PsiWhiteSpace(' ')
+    PsiKeyword:enum('enum')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:OurEnum('OurEnum')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace('\n')
+    PsiJavaToken:RBRACE('}')

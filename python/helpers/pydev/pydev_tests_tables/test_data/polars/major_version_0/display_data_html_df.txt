@@ -1,0 +1,8 @@
+<div><style>
+.dataframe > thead > tr > th,
+.dataframe > tbody > tr > td {
+  text-align: right;
+  white-space: pre-wrap;
+}
+</style>
+<small>shape: (3, 7)</small><table border="1" class="dataframe"><thead><tr><th>int_col</th><th>float_col</th><th>bool_col</th><th>str_col</th><th>date_col</th><th>datetime_col</th><th>categorical_col</th></tr><tr><td>i64</td><td>f64</td><td>bool</td><td>str</td><td>date</td><td>datetime[μs]</td><td>str</td></tr></thead><tbody><tr><td>1</td><td>1.0</td><td>true</td><td>&quot;one&quot;</td><td>2022-01-01</td><td>2022-01-01 12:00:00</td><td>&quot;A&quot;</td></tr><tr><td>2</td><td>2.0</td><td>false</td><td>&quot;two&quot;</td><td>2022-01-02</td><td>2022-01-02 12:00:00</td><td>&quot;B&quot;</td></tr><tr><td>3</td><td>3.0</td><td>true</td><td>&quot;three&quot;</td><td>2022-01-03</td><td>2022-01-03 12:00:00</td><td>&quot;A&quot;</td></tr></tbody></table></div>

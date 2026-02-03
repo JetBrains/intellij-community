@@ -1,0 +1,8 @@
+# =======
+# >= 3.12
+# =======
+
+# Undocumented internal method, not really for public consumption.
+# (Hard to add types for unless we add stubs for the undocumented _overlapped module...)
+asyncio.IocpProactor.finish_socket_func
+asyncio.windows_events.IocpProactor.finish_socket_func

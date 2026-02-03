@@ -1,0 +1,29 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.sdk.uv
+
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.community.impl.uv.common.UV_UI_INFO
+import com.intellij.python.community.services.systemPython.SystemPythonProvider
+import com.jetbrains.python.PyToolUIInfo
+import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
+import com.jetbrains.python.sdk.uv.impl.hasUvExecutable
+import java.nio.file.Path
+
+internal class UvSystemPythonProvider : SystemPythonProvider {
+  override suspend fun findSystemPythons(eelApi: EelApi): PyResult<Set<PythonBinary>> {
+    if (eelApi != localEel || !hasUvExecutable()) {
+      // TODO: support for remote execution
+      return Result.success(emptySet())
+    }
+
+    val uv = createUvLowLevel(Path.of(".")).getOr { return it }
+    return uv.listUvPythons()
+  }
+
+  override val uiCustomization: PyToolUIInfo = UV_UI_INFO
+}
+

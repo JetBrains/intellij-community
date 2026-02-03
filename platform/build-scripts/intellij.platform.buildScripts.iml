@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="kotlin-language" name="Kotlin">
+      <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
+        <compilerSettings>
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=kotlin.RequiresOptIn -opt-in=kotlinx.serialization.ExperimentalSerializationApi -opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
+        </compilerSettings>
+        <compilerArguments>
+          <stringArguments>
+            <stringArg name="jvmTarget" arg="21" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
+          </stringArguments>
+          <arrayArguments>
+            <arrayArg name="pluginClasspaths">
+              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
+            </arrayArg>
+            <arrayArg name="pluginOptions" />
+          </arrayArguments>
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.cli" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.compress" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" />
+    <orderEntry type="module" module-name="intellij.tools.jps.build.standalone" />
+    <orderEntry type="library" name="opentelemetry" level="project" />
+    <orderEntry type="library" name="opentelemetry-semconv" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
+    <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
+    <orderEntry type="module" module-name="intellij.platform.runtime.repository" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.core" />
+    <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.jr.objects" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
+    <orderEntry type="module" module-name="intellij.libraries.gson" />
+    <orderEntry type="module" module-name="intellij.libraries.protobuf" />
+    <orderEntry type="module" module-name="intellij.devkit.jps" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.jps" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
+    <orderEntry type="module" module-name="intellij.idea.community.build.dependencies" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
+    <orderEntry type="library" name="json-schema-validator" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
+    <orderEntry type="module" module-name="intellij.platform.util.zip" />
+    <orderEntry type="module" module-name="intellij.platform.runtime.product" />
+    <orderEntry type="library" name="okhttp" level="project" />
+    <orderEntry type="library" name="zstd-jni" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
+    <orderEntry type="library" name="opentelemetry-extension-kotlin" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.blockmap" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.io" />
+    <orderEntry type="module" module-name="intellij.libraries.bouncy.castle.provider" />
+    <orderEntry type="module-library">
+      <library name="jetbrains.format.ripper" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.jetbrains.format-ripper:format-ripper:1.2.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.2.0/format-ripper-1.2.0.jar">
+              <sha256sum>7b47cc1b48092566eaf82c8cd6210151661423b755dc578613000cac90464eef</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.2.0/format-ripper-1.2.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.2.0/format-ripper-1.2.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="jackson-datatype-joda" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.http.client" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.slf4j" />
+    <orderEntry type="library" name="slf4j-api" level="project" />
+    <orderEntry type="module-library">
+      <library name="jetbrains.apple.notary.api.kotlin.client" type="repository">
+        <properties maven-id="org.jetbrains:apple-notary-api-kotlin-client:2.0.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/apple-notary-api-kotlin-client/2.0.1/apple-notary-api-kotlin-client-2.0.1.jar">
+              <sha256sum>46aa057f38b1cb2ac89d7e4b6357570b82bfd8e2b4d062ab40b09db3290d1c26</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-s3/1.12.431/aws-java-sdk-s3-1.12.431.jar">
+              <sha256sum>45b24b098dcaec230fde72b4e0568dab464cf7d8afd8b83fb9ac628778c67df9</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-kms/1.12.431/aws-java-sdk-kms-1.12.431.jar">
+              <sha256sum>ffc62a11ad6a454d150a28c66c98e0300186faa53ec34d1c58c7dc5e2f7a3011</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-core/1.12.431/aws-java-sdk-core-1.12.431.jar">
+              <sha256sum>e17a93342d623ecd58449b6142db53c5ec9d1fb7a6a40d6266e56ed796e06fdf</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/amazonaws/jmespath-java/1.12.431/jmespath-java-1.12.431.jar">
+              <sha256sum>238630e244b369b57238bb35e9a23382be65771b04a0f36d85df07b61b4ae2b9</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/auth0/java-jwt/4.3.0/java-jwt-4.3.0.jar">
+              <sha256sum>25a2353a1789870d960c0a9d8878a62eb1873116a2299d74f278451697676a67</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="io.ktor:ktor-client-core-jvm" />
+            <dependency maven-id="io.ktor:ktor-client-logging-jvm" />
+            <dependency maven-id="io.ktor:ktor-client-content-negotiation-jvm" />
+            <dependency maven-id="io.ktor:ktor-serialization-kotlinx-json-jvm" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="commons-logging:commons-logging" />
+            <dependency maven-id="commons-codec:commons-codec" />
+            <dependency maven-id="org.apache.httpcomponents:httpclient" />
+            <dependency maven-id="software.amazon.ion:ion-java" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-databind" />
+            <dependency maven-id="com.fasterxml.jackson.dataformat:jackson-dataformat-cbor" />
+            <dependency maven-id="joda-time:joda-time" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/apple-notary-api-kotlin-client/2.0.1/apple-notary-api-kotlin-client-2.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-s3/1.12.431/aws-java-sdk-s3-1.12.431.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-kms/1.12.431/aws-java-sdk-kms-1.12.431.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-core/1.12.431/aws-java-sdk-core-1.12.431.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/jmespath-java/1.12.431/jmespath-java-1.12.431.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/auth0/java-jwt/4.3.0/java-jwt-4.3.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/apple-notary-api-kotlin-client/2.0.1/apple-notary-api-kotlin-client-2.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-s3/1.12.431/aws-java-sdk-s3-1.12.431-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-kms/1.12.431/aws-java-sdk-kms-1.12.431-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-core/1.12.431/aws-java-sdk-core-1.12.431-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/jmespath-java/1.12.431/jmespath-java-1.12.431-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/auth0/java-jwt/4.3.0/java-jwt-4.3.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="intellij-plugin-structure" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="jaxb-api" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="jaxb-runtime" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.javax.activation" scope="RUNTIME" />
+    <orderEntry type="library" name="tcServiceMessages" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.jsoup" />
+    <orderEntry type="module" module-name="intellij.libraries.asm" />
+    <orderEntry type="module-library">
+      <library name="spdx.tools.java" type="repository">
+        <properties maven-id="org.spdx:tools-java:1.1.8">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/spdx/tools-java/1.1.8/tools-java-1.1.8.jar">
+              <sha256sum>deaca39f9ae12879f061c946d72641240e731dc9df0059d9b69472f43accb4a5</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/spdx/java-spdx-library/1.1.10/java-spdx-library-1.1.10.jar">
+              <sha256sum>ef116816a4d221933d34d9f113fd47f6780bca2b0c826545081d742f4e7178fb</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/spdx/spdx-jackson-store/1.1.9/spdx-jackson-store-1.1.9.jar">
+              <sha256sum>f2fee72e08fd510479ac93e7e33694bdbc465b32a56896bf1ab8a8dfba366f18</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.15.0/jackson-dataformat-xml-2.15.0.jar">
+              <sha256sum>e3137c89b08d0c3d9f7dfeae11d5b941b310f5f7bfdea90063f29c0b3b1f6807</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.slf4j:slf4j-api" />
+            <dependency maven-id="org.apache.commons:commons-lang3" />
+            <dependency maven-id="org.jsoup:jsoup" />
+            <dependency maven-id="com.google.code.gson:gson" />
+            <dependency maven-id="com.google.code.findbugs:jsr305" />
+            <dependency maven-id="org.spdx:spdx-rdf-store" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-databind" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-core" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-annotations" />
+            <dependency maven-id="org.codehaus.woodstox:stax2-api" />
+            <dependency maven-id="com.fasterxml.woodstox:woodstox-core" />
+            <dependency maven-id="com.fasterxml.jackson.dataformat:jackson-dataformat-yaml" />
+            <dependency maven-id="org.json:json" />
+            <dependency maven-id="org.apache.ws.xmlschema:xmlschema-core" />
+            <dependency maven-id="org.spdx:spdx-spreadsheet-store" />
+            <dependency maven-id="org.spdx:spdx-tagvalue-store" />
+            <dependency maven-id="com.github.java-json-tools:json-schema-validator" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/spdx/tools-java/1.1.8/tools-java-1.1.8.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/spdx/java-spdx-library/1.1.10/java-spdx-library-1.1.10.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/spdx/spdx-jackson-store/1.1.9/spdx-jackson-store-1.1.9.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.15.0/jackson-dataformat-xml-2.15.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/spdx/tools-java/1.1.8/tools-java-1.1.8-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/spdx/java-spdx-library/1.1.10/java-spdx-library-1.1.10-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/spdx/spdx-jackson-store/1.1.9/spdx-jackson-store-1.1.9-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.15.0/jackson-dataformat-xml-2.15.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.hash4j" />
+    <orderEntry type="module" module-name="intellij.libraries.jbr" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.protobuf" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.dataformat.yaml" />
+    <orderEntry type="module" module-name="intellij.libraries.ion" />
+    <orderEntry type="module" module-name="intellij.platform.buildData" />
+    <orderEntry type="module" module-name="intellij.platform.boot" />
+    <orderEntry type="module" module-name="intellij.platform.ijent.community.buildConstants" />
+    <orderEntry type="module" module-name="intellij.devkit.runtimeModuleRepository.generator" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" />
+    <orderEntry type="module" module-name="intellij.libraries.snakeyaml" scope="RUNTIME" />
+    <orderEntry type="library" name="netty-tcnative-boringssl" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="module" module-name="intellij.idea.community.build.zip" />
+    <orderEntry type="library" name="com.jetbrains.fus.reporting.api" level="project" />
+    <orderEntry type="library" name="com.jetbrains.fus.reporting.ap.validation.all" level="project" />
+    <orderEntry type="module-library">
+      <library name="netty" type="repository">
+        <properties maven-id="io.netty:netty-all:4.2.0.RC2">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-all/4.2.0.RC2/netty-all-4.2.0.RC2.jar">
+              <sha256sum>4a12af2ac8345bfc7e0987ad8748787de033a9e27357cace7f45c7d40be522e0</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.2.0.RC2/netty-buffer-4.2.0.RC2.jar">
+              <sha256sum>74d953cec00048b892112f9602fc7b1113ea55337dc1ede32e449efcb2b231c7</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-base/4.2.0.RC2/netty-codec-base-4.2.0.RC2.jar">
+              <sha256sum>f39581a55f89fb0586373e237e1e4a9d5e2fe3b94167c7a6762552651e5a6038</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec/4.2.0.RC2/netty-codec-4.2.0.RC2.jar">
+              <sha256sum>b94f2d169acd04e8a41f1082e8f522529be1f5a10515473de9fb8d259afbfc77</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-http/4.2.0.RC2/netty-codec-http-4.2.0.RC2.jar">
+              <sha256sum>a44d21dff0254e4f4f9ceb7870e8b27a403d7f1d6325ab03ae6c045302957761</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-http2/4.2.0.RC2/netty-codec-http2-4.2.0.RC2.jar">
+              <sha256sum>c542657efd81b268535fb77e1866c8234c5a22de416ecbd8aea0e06e2c1588de</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-common/4.2.0.RC2/netty-common-4.2.0.RC2.jar">
+              <sha256sum>cc65afe17daf2f9380d3c64460f5b10ec279f98b9461fbf0ccf62b3cb3ee6c37</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-handler/4.2.0.RC2/netty-handler-4.2.0.RC2.jar">
+              <sha256sum>3f1912b14a2fdd7ad2ef0bda9eeb1ae544c463857081d7dd69f9aa2b7137de6e</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-unix-common/4.2.0.RC2/netty-transport-native-unix-common-4.2.0.RC2.jar">
+              <sha256sum>dfc1db2a05dafeba40987a76591004cc72d4a27062d874961fadc5059900f65d</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-handler-ssl-ocsp/4.2.0.RC2/netty-handler-ssl-ocsp-4.2.0.RC2.jar">
+              <sha256sum>c1d3051facf0297a3d7e15078a2c94f3650b6beddd398f21c591d098fd549922</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-resolver/4.2.0.RC2/netty-resolver-4.2.0.RC2.jar">
+              <sha256sum>10fa70357cbfd55f52d64cf4bb4011e01ced0e0e5dea0bac77f73908cef676ff</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport/4.2.0.RC2/netty-transport-4.2.0.RC2.jar">
+              <sha256sum>9c86cf3a130237b059f5ef89661a4fbe715f5e8bce9626a6aded95a1c3775a47</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-pkitesting/4.2.0.RC2/netty-pkitesting-4.2.0.RC2.jar">
+              <sha256sum>6d3fbdf60229ee2baafaa850bf46115923109c73d6d1b0fefdcce5a12ddd43e8</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/bouncycastle/bcpkix-jdk18on/1.79/bcpkix-jdk18on-1.79.jar">
+              <sha256sum>3639a24ddf9ba4b7eba0659b44770e91eba816421888e571f285aadefe532cd6</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/bouncycastle/bcutil-jdk18on/1.79/bcutil-jdk18on-1.79.jar">
+              <sha256sum>c70b88ada58938cbc2f005d40329054078bcfa1149e6ffc03e9242eb6ab21836</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/bouncycastle/bcprov-jdk18on/1.79/bcprov-jdk18on-1.79.jar">
+              <sha256sum>0d81ecc3124536b539bce9aa3fe9621b7f84c9cee371b635a5b31c78b79ab1da</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-classes-epoll/4.2.0.RC2/netty-transport-classes-epoll-4.2.0.RC2.jar">
+              <sha256sum>b28e39a15989b29683ccbc360d27cdb71fa992c16e50f2b331278a68267d110a</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-classes-kqueue/4.2.0.RC2/netty-transport-classes-kqueue-4.2.0.RC2.jar">
+              <sha256sum>15c46096b22d0fc833c09ce85d002cc8e171c9f1741030663899a6315997d5bd</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.RC2/netty-transport-native-epoll-4.2.0.RC2-linux-x86_64.jar">
+              <sha256sum>d57f64acefa1cebc8b18f1add825f4d965bb495a340eee69b9d626d54e161a24</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.RC2/netty-transport-native-epoll-4.2.0.RC2-linux-aarch_64.jar">
+              <sha256sum>9ff603349365d28397dc239097cab0ceca3b27cacd13fb5f1afda8d4d7388194</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.RC2/netty-transport-native-epoll-4.2.0.RC2-linux-riscv64.jar">
+              <sha256sum>c9fb752bd54bf2dae1e4330d2446202fdfb28e6a7f933248886de13d4b2f6959</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-kqueue/4.2.0.RC2/netty-transport-native-kqueue-4.2.0.RC2-osx-x86_64.jar">
+              <sha256sum>2c80194e02e8f2424be3eb18be4514ece9fcaec79cb11a7d2f0dbe92fe86e283</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-kqueue/4.2.0.RC2/netty-transport-native-kqueue-4.2.0.RC2-osx-aarch_64.jar">
+              <sha256sum>d942f12645bf694c5083e40d7ec2f1d03b897ceccb0d0acd9d1178bf4f72092d</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="io.netty:netty-codec-dns" />
+            <dependency maven-id="io.netty:netty-codec-haproxy" />
+            <dependency maven-id="io.netty:netty-codec-compression" />
+            <dependency maven-id="io.netty:netty-codec-memcache" />
+            <dependency maven-id="io.netty:netty-codec-mqtt" />
+            <dependency maven-id="io.netty:netty-codec-redis" />
+            <dependency maven-id="io.netty:netty-codec-smtp" />
+            <dependency maven-id="io.netty:netty-codec-socks" />
+            <dependency maven-id="io.netty:netty-codec-stomp" />
+            <dependency maven-id="io.netty:netty-codec-xml" />
+            <dependency maven-id="io.netty:netty-codec-protobuf" />
+            <dependency maven-id="com.google.protobuf:protobuf-java" />
+            <dependency maven-id="com.google.protobuf.nano:protobuf-javanano" />
+            <dependency maven-id="io.netty:netty-codec-marshalling" />
+            <dependency maven-id="org.jboss.marshalling:jboss-marshalling" />
+            <dependency maven-id="io.netty:netty-handler-proxy" />
+            <dependency maven-id="io.netty:netty-resolver-dns" />
+            <dependency maven-id="io.netty:netty-transport-rxtx" />
+            <dependency maven-id="io.netty:netty-transport-sctp" />
+            <dependency maven-id="io.netty:netty-transport-udt" />
+            <dependency maven-id="io.netty:netty-resolver-dns-classes-macos" />
+            <dependency maven-id="io.netty:netty-transport-classes-io_uring" />
+            <dependency maven-id="io.netty:netty-transport-native-io_uring" />
+            <dependency maven-id="io.netty:netty-resolver-dns-native-macos" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-all/4.2.0.RC2/netty-all-4.2.0.RC2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.2.0.RC2/netty-buffer-4.2.0.RC2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-base/4.2.0.RC2/netty-codec-base-4.2.0.RC2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec/4.2.0.RC2/netty-codec-4.2.0.RC2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-http/4.2.0.RC2/netty-codec-http-4.2.0.RC2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-http2/4.2.0.RC2/netty-codec-http2-4.2.0.RC2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.2.0.RC2/netty-common-4.2.0.RC2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-handler/4.2.0.RC2/netty-handler-4.2.0.RC2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-unix-common/4.2.0.RC2/netty-transport-native-unix-common-4.2.0.RC2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-handler-ssl-ocsp/4.2.0.RC2/netty-handler-ssl-ocsp-4.2.0.RC2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-resolver/4.2.0.RC2/netty-resolver-4.2.0.RC2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport/4.2.0.RC2/netty-transport-4.2.0.RC2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-pkitesting/4.2.0.RC2/netty-pkitesting-4.2.0.RC2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcpkix-jdk18on/1.79/bcpkix-jdk18on-1.79.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcutil-jdk18on/1.79/bcutil-jdk18on-1.79.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcprov-jdk18on/1.79/bcprov-jdk18on-1.79.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-classes-epoll/4.2.0.RC2/netty-transport-classes-epoll-4.2.0.RC2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-classes-kqueue/4.2.0.RC2/netty-transport-classes-kqueue-4.2.0.RC2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.RC2/netty-transport-native-epoll-4.2.0.RC2-linux-x86_64.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.RC2/netty-transport-native-epoll-4.2.0.RC2-linux-aarch_64.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.RC2/netty-transport-native-epoll-4.2.0.RC2-linux-riscv64.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-kqueue/4.2.0.RC2/netty-transport-native-kqueue-4.2.0.RC2-osx-x86_64.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-kqueue/4.2.0.RC2/netty-transport-native-kqueue-4.2.0.RC2-osx-aarch_64.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.2.0.RC2/netty-buffer-4.2.0.RC2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-base/4.2.0.RC2/netty-codec-base-4.2.0.RC2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec/4.2.0.RC2/netty-codec-4.2.0.RC2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-http/4.2.0.RC2/netty-codec-http-4.2.0.RC2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-http2/4.2.0.RC2/netty-codec-http2-4.2.0.RC2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.2.0.RC2/netty-common-4.2.0.RC2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-handler/4.2.0.RC2/netty-handler-4.2.0.RC2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-unix-common/4.2.0.RC2/netty-transport-native-unix-common-4.2.0.RC2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-handler-ssl-ocsp/4.2.0.RC2/netty-handler-ssl-ocsp-4.2.0.RC2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-resolver/4.2.0.RC2/netty-resolver-4.2.0.RC2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport/4.2.0.RC2/netty-transport-4.2.0.RC2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-pkitesting/4.2.0.RC2/netty-pkitesting-4.2.0.RC2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcpkix-jdk18on/1.79/bcpkix-jdk18on-1.79-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcutil-jdk18on/1.79/bcutil-jdk18on-1.79-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcprov-jdk18on/1.79/bcprov-jdk18on-1.79-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-classes-epoll/4.2.0.RC2/netty-transport-classes-epoll-4.2.0.RC2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-classes-kqueue/4.2.0.RC2/netty-transport-classes-kqueue-4.2.0.RC2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.RC2/netty-transport-native-epoll-4.2.0.RC2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.RC2/netty-transport-native-epoll-4.2.0.RC2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.RC2/netty-transport-native-epoll-4.2.0.RC2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-kqueue/4.2.0.RC2/netty-transport-native-kqueue-4.2.0.RC2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-kqueue/4.2.0.RC2/netty-transport-native-kqueue-4.2.0.RC2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="jetbrains.intellij.deps.coverage.reporter" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps:intellij-coverage-reporter:1.0.766">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-reporter/1.0.766/intellij-coverage-reporter-1.0.766.jar">
+              <sha256sum>25393a60c2f7552955e7f5719a73b044cec83e05a62a3b0b1c75ad3e6953275b</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1.0.25/coverage-report-1.0.25.jar">
+              <sha256sum>8627281c15b1b5347ca618d0dbc2090aa92a096a867c1d030198a51efcc33bfe</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/freemarker/freemarker/2.3.32/freemarker-2.3.32.jar">
+              <sha256sum>04d65ec1bde6cea20e3495d5e78ef96ab774d9936434861d3254bd88e7e94f92</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.766/intellij-coverage-agent-1.0.766.jar">
+              <sha256sum>52f66c83318dcacb879f2a07fe448eccd1313b077809190810c83aa4b875611c</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains:annotations" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-reporter/1.0.766/intellij-coverage-reporter-1.0.766.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1.0.25/coverage-report-1.0.25.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/freemarker/freemarker/2.3.32/freemarker-2.3.32.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.766/intellij-coverage-agent-1.0.766.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-reporter/1.0.766/intellij-coverage-reporter-1.0.766-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1.0.25/coverage-report-1.0.25-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/freemarker/freemarker/2.3.32/freemarker-2.3.32-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.766/intellij-coverage-agent-1.0.766-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
+    <orderEntry type="module" module-name="intellij.platform.plugins.parser.impl" />
+    <orderEntry type="module" module-name="intellij.libraries.maven.resolver.provider" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.api" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.productDsl" exported="" />
+  </component>
+</module>

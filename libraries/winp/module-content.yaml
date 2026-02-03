@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.winp.jar
+  modules:
+  - name: intellij.libraries.winp
+    libraries:
+      winp:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/winp/winp/1/winp-1.jar

@@ -1,0 +1,11 @@
+// FIX: Replace 'it' with explicit parameter
+// IGNORE_K1
+
+class Foo {
+    fun test() {
+        "".let {
+            "".let { it<caret> }
+            it
+        }
+    }
+}

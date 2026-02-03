@@ -1,0 +1,66 @@
+*:com.intellij.xdebugger.XAlternativeSourceHandler
+- a:getAlternativePosition(com.intellij.xdebugger.frame.XStackFrame):com.intellij.xdebugger.XSourcePosition
+- a:getAlternativeSourceKindState():kotlinx.coroutines.flow.StateFlow
+- a:isAlternativeSourceKindPreferred(com.intellij.xdebugger.frame.XSuspendContext):Z
+a:com.intellij.xdebugger.XDebugProcess
+- *:dependsOnPlugin(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
+- *:getAlternativeSourceHandler():com.intellij.xdebugger.XAlternativeSourceHandler
+- *:getDropFrameHandler():com.intellij.xdebugger.frame.XDropFrameHandler
+*:com.intellij.xdebugger.XDebugSessionBuilder
+- a:contentToReuse(com.intellij.execution.ui.RunContentDescriptor):com.intellij.xdebugger.XDebugSessionBuilder
+- a:environment(com.intellij.execution.runners.ExecutionEnvironment):com.intellij.xdebugger.XDebugSessionBuilder
+- a:icon(javax.swing.Icon):com.intellij.xdebugger.XDebugSessionBuilder
+- a:sessionName(java.lang.String):com.intellij.xdebugger.XDebugSessionBuilder
+- a:showTab(Z):com.intellij.xdebugger.XDebugSessionBuilder
+- a:showToolWindowOnSuspendOnly(Z):com.intellij.xdebugger.XDebugSessionBuilder
+- a:startSession():com.intellij.xdebugger.XSessionStartedResult
+com.intellij.xdebugger.XDebugSessionListener
+- java.util.EventListener
+- *:stackFrameChanged(Z):V
+*:com.intellij.xdebugger.XSessionStartedResult
+- a:getRunContentDescriptor():com.intellij.execution.ui.RunContentDescriptor
+- a:getSession():com.intellij.xdebugger.XDebugSession
+*:com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler
+- *sf:Companion:com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler$Companion
+- a:areInlineBreakpointsDisabled(com.intellij.openapi.vfs.VirtualFile):Z
+*f:com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler$Companion
+- f:getEP():com.intellij.openapi.extensions.ExtensionPointName
+a:com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+- *:isEvaluateExpressionFieldEnabled():Z
+*:com.intellij.xdebugger.frame.XDropFrameHandler
+- canDrop(com.intellij.xdebugger.frame.XStackFrame):Z
+- canDropFrame(com.intellij.xdebugger.frame.XStackFrame):com.intellij.util.ThreeState
+- canDropFrameAsync(com.intellij.xdebugger.frame.XStackFrame):java.util.concurrent.CompletableFuture
+- a:drop(com.intellij.xdebugger.frame.XStackFrame):V
+a:com.intellij.xdebugger.frame.XExecutionStack
+- *sf:SELECTED_STACKS:com.intellij.openapi.actionSystem.DataKey
+a:com.intellij.xdebugger.frame.XStackFrame
+- com.intellij.xdebugger.frame.XValueContainer
+- *:customizePresentation():kotlinx.coroutines.flow.Flow
+*f:com.intellij.xdebugger.frame.XStackFrameUiPresentationContainer
+- com.intellij.ui.ColoredTextContainer
+- <init>():V
+- append(com.intellij.ui.ColoredText):V
+- append(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
+- append(java.lang.String,com.intellij.ui.SimpleTextAttributes,java.lang.Object):V
+- f:copy():com.intellij.xdebugger.frame.XStackFrameUiPresentationContainer
+- f:customizePresentation(com.intellij.ui.ColoredTextContainer):V
+- f:getFragments():java.util.List
+- f:getIcon():javax.swing.Icon
+- f:getTooltipText():java.lang.String
+- setIcon(javax.swing.Icon):V
+- setToolTipText(java.lang.String):V
+*:com.intellij.xdebugger.frame.XValueTextModificationPreparator
+- a:convertToStringLiteral(java.lang.String):java.lang.String
+*:com.intellij.xdebugger.frame.XValueTextModificationPreparatorProvider
+- a:getTextValuePreparator(com.intellij.xdebugger.frame.XValue):com.intellij.xdebugger.frame.XValueTextModificationPreparator
+*:com.intellij.xdebugger.hotswap.HotSwapInDebugSessionEnabler
+- a:createProvider(com.intellij.xdebugger.XDebugProcess):com.intellij.xdebugger.hotswap.HotSwapProvider
+*:com.intellij.xdebugger.ui.TextValueVisualizer
+- detectFileType(java.lang.String):com.intellij.openapi.fileTypes.FileType
+- a:visualize(java.lang.String):java.util.List
+*:com.intellij.xdebugger.ui.VisualizedContentTab
+- a:createComponent(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):javax.swing.JComponent
+- a:getId():java.lang.String
+- a:getName():java.lang.String
+- onShown(com.intellij.openapi.project.Project,Z):V

@@ -1,0 +1,33 @@
+### auto-generated section `build fleet.lsp.protocol` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_lsp.protocol",
+  opt_in = [
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+    "kotlinx.serialization.ExperimentalSerializationApi",
+    "kotlin.concurrent.atomics.ExperimentalAtomicApi",
+  ],
+  x_consistent_data_class_copy_visibility = True,
+  x_context_parameters = True,
+  x_lambdas = "class"
+)
+
+jvm_library(
+  name = "lsp.protocol",
+  module_name = "fleet.lsp.protocol",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  kotlinc_opts = ":custom_lsp.protocol",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//fleet/util/core",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlinx-io-core",
+  ]
+)
+### auto-generated section `build fleet.lsp.protocol` end

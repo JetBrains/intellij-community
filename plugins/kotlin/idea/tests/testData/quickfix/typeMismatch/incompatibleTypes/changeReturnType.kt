@@ -1,0 +1,11 @@
+// "Change return type of called function 'foo' to 'Int'" "true"
+// WITH_STDLIB
+fun test(i: Int) {
+    when (i) {
+        <caret>foo() -> {}
+    }
+}
+
+fun foo(): String = TODO()
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForCalled
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

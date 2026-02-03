@@ -1,0 +1,4 @@
+def foo = ["abc<caret>
+-----
+def foo = ["abc"]
+<caret>

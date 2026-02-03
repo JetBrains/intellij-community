@@ -1,0 +1,14 @@
+<!--
+  This file contains only v2 dependencies.
+  All new extensions, actions, services, extension points, etc. should go to intellij.platform.debugger.impl.backend.content.xml
+-->
+<idea-plugin visibility="internal" package="com.intellij.platform.debugger.impl.backend" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <dependencies>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.execution.impl.backend"/>
+    <module name="intellij.platform.debugger.impl.shared"/>
+    <module name="intellij.platform.debugger.impl.rpc"/>
+  </dependencies>
+
+  <xi:include href="intellij.platform.debugger.impl.backend.content.xml"/>
+</idea-plugin>

@@ -1,0 +1,5 @@
+<optional-element xmlns="urn:test:simple.rng">
+  <b>
+    <c />
+  </b>
+</optional-element>

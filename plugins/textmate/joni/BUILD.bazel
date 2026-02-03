@@ -1,0 +1,47 @@
+### auto-generated section `build intellij.textmate.joni` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "joni_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "joni",
+  module_name = "intellij.textmate.joni",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":joni_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/textmate/core",
+    "@lib//:joni",
+    "@lib//:slf4j-api",
+  ]
+)
+
+jvm_library(
+  name = "joni_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  associates = [":joni"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/textmate/core",
+    "@lib//:joni",
+    "@lib//:slf4j-api",
+    "//plugins/textmate/core/tests:tests_test_lib",
+    "@lib//:junit5",
+  ]
+)
+### auto-generated section `build intellij.textmate.joni` end
+
+### auto-generated section `test intellij.textmate.joni` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "joni_test",
+  runtime_deps = [":joni_test_lib"]
+)
+### auto-generated section `test intellij.textmate.joni` end

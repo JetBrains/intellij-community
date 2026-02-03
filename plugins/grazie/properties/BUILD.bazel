@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.grazie.properties` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "properties_resources",
+  srcs = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "properties",
+  module_name = "intellij.grazie.properties",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
+  resources = [":properties_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/grazie/src:core",
+    "//plugins/properties:properties-backend",
+    "//plugins/properties/properties-psi-api:psi",
+    "//plugins/properties/properties-common:properties",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/util-ex",
+  ]
+)
+### auto-generated section `build intellij.grazie.properties` end

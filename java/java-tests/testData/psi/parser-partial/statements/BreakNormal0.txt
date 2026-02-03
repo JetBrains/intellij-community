@@ -1,0 +1,4 @@
+PsiJavaFile:BreakNormal0.java
+  PsiBreakStatement
+    PsiKeyword:break('break')
+    PsiJavaToken:SEMICOLON(';')

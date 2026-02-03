@@ -1,0 +1,41 @@
+### auto-generated section `build intellij.java.debugger.impl.shared` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "shared_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "shared",
+  module_name = "intellij.java.debugger.impl.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":shared_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/util/jdom",
+    "//platform/projectModel-api:projectModel",
+    "//platform/xdebugger-api:debugger",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/kernel/shared:kernel",
+    "//platform/core-ui",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//platform/platform-impl/rpc",
+    "//platform/execution",
+    "//platform/execution-impl",
+    "//java/java-frontback-impl:frontback-impl",
+    "//platform/util/coroutines",
+    "//platform/xdebugger-impl/rpc",
+    "//platform/xdebugger-impl/shared",
+    "//platform/project/shared:project",
+  ]
+)
+### auto-generated section `build intellij.java.debugger.impl.shared` end

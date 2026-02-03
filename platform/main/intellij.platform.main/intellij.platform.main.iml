@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$" />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.bootstrap" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.clouds" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.execution.dashboard" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.execution.serviceView" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.kernel" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.kernel.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.ide.ui.inspector" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.inline.completion" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.bookmarks" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.todo" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.find" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.settings.local" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.rpc" />
+    <orderEntry type="module" module-name="intellij.platform.rpc.topics" />
+    <orderEntry type="module" module-name="intellij.platform.pluginManager.shared" />
+  </component>
+</module>

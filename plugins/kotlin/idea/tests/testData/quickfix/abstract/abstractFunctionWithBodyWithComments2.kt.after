@@ -1,0 +1,8 @@
+// "Remove function body" "true"
+abstract class A() {
+    /*1*/
+    abstract fun foo()  // 3
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveFunctionBodyFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveFunctionBodyFix

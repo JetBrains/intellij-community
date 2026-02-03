@@ -1,0 +1,4 @@
+foo("asda<caret>asdas")
+-----
+foo("asda" +
+    "<caret>asdas")

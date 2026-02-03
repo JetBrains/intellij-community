@@ -1,0 +1,9 @@
+// "Replace with 'arrayOf'" "true"
+annotation class Ann(val x: IntArray)
+
+fun test() {
+    Ann([1, <caret>2, 3])
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertCollectionLiteralToIntArrayOfFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertCollectionLiteralToIntArrayOfFix

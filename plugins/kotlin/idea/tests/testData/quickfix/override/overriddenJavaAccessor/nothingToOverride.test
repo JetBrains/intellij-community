@@ -1,0 +1,10 @@
+// FILE: test.before.kt
+// "Make override accessor function 'name'" "false"
+package apples
+
+enum class MyEnum {
+    ENTRY1, ENTRY2 {
+        <caret>override val someProperty: Int = 42
+    };
+}
+// IGNORE_K1

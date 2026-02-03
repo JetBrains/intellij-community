@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.xtext.xbase.jar
+  modules:
+  - name: intellij.libraries.xtext.xbase
+  library: xtext-xbase
+  files:
+  - name: $MAVEN_REPOSITORY$/org/eclipse/xtext/org.eclipse.xtext.xbase.lib/2/org.eclipse.xtext.xbase.lib-2.jar

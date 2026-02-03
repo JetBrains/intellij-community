@@ -1,0 +1,54 @@
+### auto-generated section `build intellij.tools.ide.starter` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_ide-starter",
+  opt_in = ["kotlin.time.ExperimentalTime"]
+)
+
+resourcegroup(
+  name = "ide-starter_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ide-starter",
+  module_name = "intellij.tools.ide.starter",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ide-starter_resources"],
+  kotlinc_opts = ":custom_ide-starter",
+  deps = [
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlin/reflect",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/http-client",
+    "//platform/core-api:core",
+    "//platform/platform-impl:ide-impl",
+    "//platform/eel",
+    "@lib//:gradle",
+    "@lib//:kodein-di-jvm",
+    "@lib//:tools-ide-starter-rauschig-jarchivelib",
+    "@lib//:qodana-sarif",
+    "//platform/lang-impl",
+    "//plugins/performanceTesting/commands-model:tools-ide-performanceTesting-commands",
+    "@lib//:jetbrains-annotations",
+    "@lib//:tools-ide-starter-github-stephenc-monte-screen-recorder",
+    "@lib//:io-qameta-allure-java-commons",
+    "//tools/intellij.tools.ide.util.common:ide-util-common",
+    "//plugins/performanceTesting/event-bus:tools-ide-starter-bus",
+    "@lib//:opentelemetry",
+    "@lib//:github-oshi-core",
+    "//platform/runtime/repository",
+  ],
+  exports = [
+    "//plugins/performanceTesting/commands-model:tools-ide-performanceTesting-commands",
+    "//plugins/performanceTesting/event-bus:tools-ide-starter-bus",
+  ]
+)
+### auto-generated section `build intellij.tools.ide.starter` end

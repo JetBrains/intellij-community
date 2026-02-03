@@ -1,0 +1,9 @@
+Types:
+PsiField:myField : byte
+PsiReferenceExpression:myField : byte
+
+Conversions:
+p -> $
+
+New expression type changes:
+Fails:

@@ -1,0 +1,1 @@
+public @Copyright(treatedAsValue) class TimeTravel {}

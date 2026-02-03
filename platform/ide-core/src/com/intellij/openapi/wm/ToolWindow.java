@@ -1,0 +1,265 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.wm;
+
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.BusyObject;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import java.awt.Rectangle;
+import java.awt.event.InputEvent;
+import java.util.List;
+import java.util.function.Supplier;
+
+/**
+ * Tool windows expose UI for specific functionality, like "Project" or "Favorites".
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/tool-windows.html">Tool Windows in the IntelliJ Platform Plugin SDK</a>
+ * @see #getContentManager() getContentManager, to add new tabs to the toolwindow
+ * @see ToolWindowEP
+ */
+public interface ToolWindow extends BusyObject {
+  Key<Boolean> SHOW_CONTENT_ICON = new Key<>("ContentIcon");
+  Key<Boolean> SHOW_CONTENT_TAB_LABEL_TEXT = new Key<>("ContentTabLabelText");
+
+  @NonNls @NotNull String getId();
+
+  /**
+   * @throws IllegalStateException if a tool window isn't installed.
+   */
+  boolean isActive();
+
+  /**
+   * @param runnable A command to execute right after the window gets activated. The call is asynchronous since it may require animation.
+   * @throws IllegalStateException if the tool window isn't installed.
+   */
+  @RequiresEdt
+  default void activate(@Nullable Runnable runnable) {
+    activate(runnable, true, true);
+  }
+
+  default void activate(@Nullable Runnable runnable, boolean autoFocusContents) {
+    activate(runnable, autoFocusContents, true);
+  }
+
+  void activate(@Nullable Runnable runnable, boolean autoFocusContents, boolean forced);
+
+  /**
+   * @return whether the tool window is visible or not.
+   * @throws IllegalStateException if a tool window isn't installed.
+   */
+  boolean isVisible();
+
+  /**
+   * @param runnable A command to execute right after the window shows up. The call is asynchronous since it may require animation.
+   * @throws IllegalStateException if a tool window isn't installed.
+   */
+  void show(@Nullable Runnable runnable);
+
+  default void show() {
+    show(null);
+  }
+
+  /**
+   * Hides a tool window.
+   * If the window is active, then the method deactivates it.
+   * Does nothing if a tool window isn't visible.
+   *
+   * @param runnable A command to execute right after the window hides. The call is asynchronous since it may require animation.
+   * @throws IllegalStateException if a tool window isn't installed.
+   */
+  void hide(@Nullable Runnable runnable);
+
+  default void hide() {
+    hide(null);
+  }
+
+  /**
+   * @throws IllegalStateException if a tool window isn't installed.
+   */
+  @NotNull ToolWindowAnchor getAnchor();
+
+  /**
+   * @throws IllegalStateException if a tool window isn't installed.
+   */
+  void setAnchor(@NotNull ToolWindowAnchor anchor, @Nullable Runnable runnable);
+
+  /**
+   * @throws IllegalStateException if a tool window isn't installed.
+   */
+  boolean isSplitMode();
+
+  /**
+   * There are four base {@link ToolWindowAnchor anchors} for Tool Window: TOP, LEFT, BOTTOM, RIGHT.
+   * For each anchor, there are two groups tool windows - not split and split for better organizing.
+   * For example, you can see two actions in Move To group: Left Top and Left Bottom.
+   * 'Left' here is anchor or side where the button is located,
+   * 'Top' and 'Bottom' are two subsets of buttons (not split and split).
+   *
+   * @throws IllegalStateException if a tool window isn't installed.
+   * @see ToolWindowAnchor
+   */
+  void setSplitMode(boolean split, @Nullable Runnable runnable);
+
+  /**
+   * @throws IllegalStateException if a tool window isn't installed.
+   */
+  boolean isAutoHide();
+
+  void setAutoHide(boolean value);
+
+  /**
+   * @throws IllegalStateException if a tool window isn't installed.
+   */
+  @NotNull ToolWindowType getType();
+
+  /**
+   * @throws IllegalStateException if a tool window isn't installed.
+   */
+  void setType(@NotNull ToolWindowType type, @Nullable Runnable runnable);
+
+  /**
+   * @return Window icon. Returns {@code null} if a window has no icon.
+   */
+  @Nullable Icon getIcon();
+
+  /**
+   * Sets new window icon.
+   */
+  void setIcon(@NotNull Icon icon);
+
+  /**
+   * @return Window title. Returns {@code null} if a window has no title.
+   */
+  @NlsContexts.TabTitle @Nullable String getTitle();
+
+  /**
+   * Sets new window title.
+   */
+  void setTitle(@NlsContexts.TabTitle String title);
+
+  /**
+   * @return Window stripe button text.
+   */
+  @NlsContexts.TabTitle @NotNull String getStripeTitle();
+
+  @ApiStatus.Internal
+  @NotNull Supplier<@NlsContexts.TabTitle String> getStripeTitleProvider();
+
+  /**
+   * Sets new window stripe button text.
+   */
+  void setStripeTitle(@NlsContexts.TabTitle @NotNull String title);
+
+  void setStripeTitleProvider(@NotNull Supplier<@NlsContexts.TabTitle @NotNull String> title);
+
+  @ApiStatus.Internal
+  default @Nullable Supplier<@NlsContexts.TabTitle String> getStripeShortTitleProvider() {
+    return null;
+  }
+
+  default void setStripeShortTitleProvider(@NotNull Supplier<@NlsContexts.TabTitle @NotNull String> title) {
+  }
+
+  /**
+   * @return Whether the window is available or not.
+   */
+  boolean isAvailable();
+
+  /**
+   * Sets whether the tool window available or not.
+   * The term "available" means that tool window can be shown, and it has a button on the tool window bar.
+   *
+   * @throws IllegalStateException if a tool window isn't installed.
+   */
+  void setAvailable(boolean value, @Nullable Runnable runnable);
+
+  void setAvailable(boolean value);
+
+  void setContentUiType(@NotNull ToolWindowContentUiType type, @Nullable Runnable runnable);
+
+  void setDefaultContentUiType(@NotNull ToolWindowContentUiType type);
+
+  @NotNull ToolWindowContentUiType getContentUiType();
+
+  void installWatcher(ContentManager contentManager);
+
+  /**
+   * Callers should not add new components into hierarchy using this method. Use {@link #getContentManager()}.
+   *
+   * @return component which represents window content.
+   */
+  @NotNull JComponent getComponent();
+
+  @NotNull ContentManager getContentManager();
+
+  @Nullable ContentManager getContentManagerIfCreated();
+
+  void addContentManagerListener(@NotNull ContentManagerListener listener);
+
+  void setDefaultState(@Nullable ToolWindowAnchor anchor, @Nullable ToolWindowType type, @Nullable Rectangle floatingBounds);
+
+  /**
+   * If {@link com.intellij.openapi.wm.ex.ToolWindowEx#getEmptyText()} is a default one and {@link ToolWindowEP#canCloseContents} is true,
+   * regardless of this settings tool window will be hidden.
+   * <p>
+   * If a tool window doesn't have content, it will be hidden and removed from the stripe bar.
+   */
+  void setToHideOnEmptyContent(boolean hideOnEmpty);
+
+  /**
+   * @param value if {@code false} stripe button should be hidden.
+   */
+  void setShowStripeButton(boolean value);
+
+  boolean isShowStripeButton();
+
+  boolean isDisposed();
+
+  void showContentPopup(@NotNull InputEvent inputEvent);
+
+  @NotNull Disposable getDisposable();
+
+  default void setHelpId(@NotNull @NonNls String helpId) {
+  }
+
+  default String getHelpId() {
+    return null;
+  }
+
+  /**
+   * Delete tool window.
+   */
+  void remove();
+
+  void setTitleActions(@NotNull List<? extends AnAction> actions);
+
+  void setAdditionalGearActions(@Nullable ActionGroup additionalGearActions);
+
+  @NotNull Project getProject();
+
+  /**
+   * @return whether the user can be able to split the tool window pane into separate views with tool window tabs.
+   * For example, using drag and drop functionality or Split Right/Left actions.
+   * Useful for tool windows that can contain several contents, for example, Run and Terminal.
+   */
+  @ApiStatus.Experimental
+  default boolean canSplitTabs() {
+    return false;
+  }
+
+  @ApiStatus.Experimental
+  default void setTabsSplittingAllowed(boolean allowed) { }
+}

@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.platform.icons` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "icons_resources",
+  srcs = glob(["compatibilityResources/**/*"]),
+  strip_prefix = "compatibilityResources"
+)
+
+resourcegroup(
+  name = "icons_resources_1",
+  srcs = glob(["src/**/*"]),
+  strip_prefix = "src"
+)
+
+jvm_library(
+  name = "icons",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [
+    ":icons_resources",
+    ":icons_resources_1",
+  ]
+)
+### auto-generated section `build intellij.platform.icons` end

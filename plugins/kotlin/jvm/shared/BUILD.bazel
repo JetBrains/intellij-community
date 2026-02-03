@@ -1,0 +1,92 @@
+### auto-generated section `build kotlin.jvm.shared` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_shared",
+  opt_in = [
+    "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+    "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+  ]
+)
+
+resourcegroup(
+  name = "shared_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "shared",
+  module_name = "kotlin.jvm.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":shared_resources"],
+  kotlinc_opts = ":custom_shared",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/lvcs-api:lvcs",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/jdom",
+    "//libraries/gson",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/project-model",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
+    "//plugins/kotlin/base/compiler-configuration-ui:kotlin-base-compilerConfiguration-ui",
+    "//plugins/kotlin/base/statistics",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/frontend-independent",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/vcs-api:vcs",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/inspections",
+    "//plugins/kotlin/formatter",
+    "//plugins/kotlin/run-configurations/jvm",
+    "//platform/external-system-api:externalSystem",
+    "//java/idea-ui:ui",
+    "//platform/boot",
+    "//platform/diff-impl",
+    "//platform/vcs-impl",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/lvcs-impl",
+    "//java/java-psi-impl:psi-impl",
+    "//java/execution/impl",
+    "//java/compiler/impl",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//plugins/kotlin/base/util",
+    "//platform/core-ui",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/code-insight/api",
+    "//plugins/kotlin/kotlin.ide",
+    "//plugins/kotlin/jsr223",
+    "//platform/util/coroutines",
+    "//platform/core-api:core",
+    "@lib//:kotlinc-analysis-api",
+    "//libraries/asm",
+    "//platform/ide-core-impl",
+    "//platform/ide-core",
+    "//platform/util",
+    "//platform/editor-ui-api:editor-ui",
+    "//plugins/kotlin/base/scripting/scripting.shared",
+    "//platform/execution",
+  ]
+)
+### auto-generated section `build kotlin.jvm.shared` end

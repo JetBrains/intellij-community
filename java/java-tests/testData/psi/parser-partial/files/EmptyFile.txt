@@ -1,0 +1,3 @@
+PsiJavaFile:EmptyFile.java
+  PsiImportList
+    <empty list>

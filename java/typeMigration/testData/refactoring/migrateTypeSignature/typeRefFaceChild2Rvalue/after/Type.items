@@ -1,0 +1,15 @@
+Types:
+PsiField:myField : FaceChild
+PsiParameter:pfp : FaceChild
+PsiReferenceExpression:myField : FaceChild
+PsiReferenceExpression:myField : FaceChild
+PsiReferenceExpression:myField : FaceChild
+PsiReferenceExpression:myField : FaceChild
+PsiReferenceExpression:pfp : FaceChild
+
+Conversions:
+pcc -> $
+pcp -> $
+
+New expression type changes:
+Fails:

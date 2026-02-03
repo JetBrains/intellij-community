@@ -1,0 +1,362 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.structuralsearch.inspection;
+
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.profile.codeInspection.ui.CustomInspectionActions;
+import com.intellij.profile.codeInspection.ui.InspectionMetaDataDialog;
+import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
+import com.intellij.structuralsearch.plugin.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBList;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+public final class StructuralSearchFakeInspection extends LocalInspectionTool {
+  private Configuration myMainConfiguration;
+  private final @NotNull List<Configuration> myConfigurations;
+
+  public StructuralSearchFakeInspection(@NotNull Collection<@NotNull Configuration> configurations) {
+    if (configurations.isEmpty()) throw new IllegalArgumentException();
+
+    myConfigurations = new SmartList<>(configurations);
+    myConfigurations.sort(Comparator.comparingInt(Configuration::getOrder));
+    final int size = myConfigurations.size();
+    for (int i = 0; i < size; i++) {
+      final Configuration configuration = myConfigurations.get(i);
+      if (configuration.getOrder() != i) {
+        configuration.setOrder(i); // fix corruption
+      }
+    }
+    myMainConfiguration = myConfigurations.get(0);
+  }
+
+  @Override
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getDisplayName() {
+    return myMainConfiguration.getName();
+  }
+
+  @Override
+  public @NotNull String getShortName() {
+    return myMainConfiguration.getUuid();
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  public boolean isCleanup() {
+    return isCleanupAllowed() && myMainConfiguration.isCleanup();
+  }
+
+  private boolean isCleanupAllowed() {
+    return ContainerUtil.exists(myConfigurations, c -> c instanceof ReplaceConfiguration);
+  }
+
+  @Override
+  public @NotNull String getID() {
+    final HighlightDisplayKey key = HighlightDisplayKey.find(getShortName());
+    if (key != null) {
+      return key.getID(); // to avoid using a new suppress id before it is registered.
+    }
+    final String suppressId = myMainConfiguration.getSuppressId();
+    return !StringUtil.isEmpty(suppressId) ? suppressId : SSBasedInspection.SHORT_NAME;
+  }
+
+  @Override
+  public @NotNull String getAlternativeID() {
+    return SSBasedInspection.SHORT_NAME;
+  }
+
+  @Override
+  public @NotNull String getMainToolId() {
+    return SSBasedInspection.SHORT_NAME;
+  }
+
+  @Override
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getGroupDisplayName() {
+    return SSRBundle.message("structural.search.group.name");
+  }
+
+  @Override
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String @NotNull [] getGroupPath() {
+    return InspectionProfileUtil.getGroup();
+  }
+
+  @Override
+  public @NotNull String getStaticDescription() {
+    final String description = myMainConfiguration.getDescription();
+    if (StringUtil.isEmpty(description)) {
+      return SSRBundle.message("no.description.message");
+    }
+    return description;
+  }
+
+  public @NotNull List<Configuration> getConfigurations() {
+    return Collections.unmodifiableList(myConfigurations);
+  }
+
+  @Override
+  public @NotNull JComponent createOptionsPanel() {
+    final MyListModel model = new MyListModel();
+    final JButton button = new JButton(SSRBundle.message("edit.metadata.button"));
+    button.addActionListener(__ -> performEditMetaData(button));
+
+    final JList<Configuration> list = new JBList<>(model) {
+      @Override
+      protected String itemToText(int index, Configuration value) {
+        return ConfigurationUtil.toXml(value);
+      }
+    };
+    list.setCellRenderer(new ConfigurationCellRenderer());
+    final JPanel listPanel = ToolbarDecorator.createDecorator(list)
+      .setAddAction(b -> performAdd(list, b))
+      .setAddActionName(SSRBundle.message("add.pattern.action"))
+      .setRemoveAction(b -> performRemove(list))
+      .setRemoveActionUpdater(e -> list.getSelectedValuesList().size() < list.getModel().getSize())
+      .setEditAction(b -> performEdit(list))
+      .setMoveUpAction(b -> performMove(list, true))
+      .setMoveDownAction(b -> performMove(list, false))
+      .createPanel();
+
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
+        performEdit(list);
+        return true;
+      }
+    }.installOn(list);
+
+    final JPanel panel = new FormBuilder()
+      .addComponent(button)
+      .addLabeledComponentFillVertically(SSRBundle.message("templates.title"), listPanel)
+      .getPanel();
+    panel.setBorder(JBUI.Borders.emptyTop(10));
+    return panel;
+  }
+
+  private void performEditMetaData(@NotNull Component context) {
+    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(context));
+    final InspectionProfileModifiableModel profile = InspectionProfileUtil.getInspectionProfile(context);
+    if (profile == null) {
+      return;
+    }
+    final SSBasedInspection inspection = SSBasedInspection.getStructuralSearchInspection(profile);
+    final InspectionMetaDataDialog dialog = inspection.createMetaDataDialog(project, profile.getDisplayName(), myMainConfiguration);
+    if (isCleanupAllowed()) {
+      dialog.showCleanupOption(myMainConfiguration.isCleanup());
+    }
+    if (!dialog.showAndGet()) {
+      return;
+    }
+    final String name = dialog.getName();
+    for (Configuration c : myConfigurations) {
+      c.setName(name);
+    }
+    myMainConfiguration.setDescription(dialog.getDescription());
+    myMainConfiguration.setProblemDescriptor(dialog.getProblemDescriptor());
+    myMainConfiguration.setSuppressId(dialog.getSuppressId());
+    myMainConfiguration.setCleanup(dialog.isCleanup());
+    inspection.removeConfigurationsWithUuid(myMainConfiguration.getUuid());
+    inspection.addConfigurations(myConfigurations);
+    profile.setModified(true);
+    CustomInspectionActions.fireProfileChanged(profile);
+  }
+
+  private void performMove(@NotNull JList<Configuration> list, boolean up) {
+    final MyListModel model = (MyListModel)list.getModel();
+    final Comparator<Configuration> c = Comparator.comparingInt(Configuration::getOrder);
+    final List<Configuration> values = ContainerUtil.sorted(list.getSelectedValuesList(),
+    up ? c : c.reversed());
+    final int[] indices = new int[values.size()];
+    for (int i = 0, size = values.size(); i < size; i++) {
+      final Configuration value = values.get(i);
+      final int order = value.getOrder();
+      model.swap(order, order + (up ? -1 : +1));
+      indices[i] = value.getOrder();
+    }
+    myMainConfiguration = moveMetaData(myMainConfiguration, myConfigurations.get(0));
+    list.setSelectedIndices(indices);
+    list.scrollRectToVisible(list.getCellBounds(indices[0], indices[indices.length - 1]));
+    model.fireContentsChanged(list);
+    saveChangesToProfile(list);
+  }
+
+  private static @NotNull Configuration moveMetaData(@NotNull Configuration source, @NotNull Configuration target) {
+    if (source == target) return source;
+    target.setDescription(source.getDescription());
+    target.setSuppressId(source.getSuppressId());
+    target.setProblemDescriptor(source.getProblemDescriptor());
+    target.setCleanup(source.isCleanup());
+    source.setDescription(null);
+    source.setSuppressId(null);
+    source.setProblemDescriptor(null);
+    return target;
+  }
+
+  private void performAdd(@NotNull JList<Configuration> list, @NotNull AnActionButton b) {
+    final AnAction[] children = new AnAction[]{new AddTemplateAction(list, false), new AddTemplateAction(list, true)};
+    final RelativePoint point = b.getPreferredPopupPoint();
+    JBPopupFactory.getInstance().createActionGroupPopup(null, new DefaultActionGroup(children),
+                                                        DataManager.getInstance().getDataContext(b.getContextComponent()),
+                                                        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true).show(point);
+  }
+
+  private void performRemove(@NotNull JList<Configuration> list) {
+    boolean metaData = false;
+    for (Configuration configuration : list.getSelectedValuesList()) {
+      if (configuration.getOrder() == 0) {
+        metaData = true;
+      }
+      myConfigurations.remove(configuration);
+    }
+    if (metaData) {
+      myMainConfiguration = moveMetaData(myMainConfiguration, myConfigurations.get(0));
+    }
+    final int size = myConfigurations.size();
+    for (int i = 0; i < size; i++){
+      myConfigurations.get(i).setOrder(i);
+    }
+    final int maxIndex = list.getMaxSelectionIndex();
+    if (maxIndex != list.getMinSelectionIndex()) {
+      list.setSelectedIndex(maxIndex);
+    }
+    ((MyListModel)list.getModel()).fireContentsChanged(list);
+    if (list.getSelectedIndex() >= size) {
+      list.setSelectedIndex(size - 1);
+    }
+    final int index = list.getSelectedIndex();
+    list.scrollRectToVisible(list.getCellBounds(index, index));
+    saveChangesToProfile(list);
+  }
+
+  private void performEdit(@NotNull JList<Configuration> list) {
+    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(list));
+    if (project == null) return;
+    final int index = list.getSelectedIndex();
+    if (index < 0) return;
+    final Configuration configuration = myConfigurations.get(index);
+    if (configuration == null) return;
+    final SearchContext searchContext = new SearchContext(project);
+    final StructuralSearchDialog dialog = new StructuralSearchDialog(searchContext, !(configuration instanceof SearchConfiguration), true);
+    dialog.loadConfiguration(configuration);
+    if (!dialog.showAndGet()) return;
+    final Configuration newConfiguration = dialog.getConfiguration();
+    if (configuration.getOrder() == 0) {
+      myMainConfiguration = newConfiguration;
+    }
+    myConfigurations.set(index, newConfiguration);
+    ((MyListModel)list.getModel()).fireContentsChanged(list);
+    saveChangesToProfile(list);
+  }
+
+  private void saveChangesToProfile(@NotNull JList<Configuration> list) {
+    final InspectionProfileModifiableModel profile = InspectionProfileUtil.getInspectionProfile(list);
+    if (profile == null) return;
+    final SSBasedInspection inspection = SSBasedInspection.getStructuralSearchInspection(profile);
+    inspection.removeConfigurationsWithUuid(myMainConfiguration.getUuid());
+    inspection.addConfigurations(myConfigurations);
+    profile.setModified(true);
+  }
+
+  private final class AddTemplateAction extends DumbAwareAction {
+    private final @NotNull JList<Configuration> myList;
+    private final boolean myReplace;
+
+    private AddTemplateAction(@NotNull JList<Configuration> list, boolean replace) {
+      super(replace
+            ? SSRBundle.message("SSRInspection.add.replace.template.button")
+            : SSRBundle.message("SSRInspection.add.search.template.button"));
+      myList = list;
+      myReplace = replace;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      final Project project = e.getData(CommonDataKeys.PROJECT);
+      assert project != null;
+      final SearchContext context = new SearchContext(project);
+      final StructuralSearchDialog dialog = new StructuralSearchDialog(context, myReplace, true);
+      if (!dialog.showAndGet()) return;
+      final Configuration configuration = dialog.getConfiguration();
+      configuration.setUuid(myMainConfiguration.getUuid());
+      configuration.setName(myMainConfiguration.getName());
+      configuration.setDescription(null);
+      configuration.setSuppressId(null);
+      configuration.setProblemDescriptor(null);
+      final MyListModel model = (MyListModel)myList.getModel();
+      final int size = model.getSize();
+      configuration.setOrder(size);
+
+      final InspectionProfileModifiableModel profile = InspectionProfileUtil.getInspectionProfile(myList);
+      if (profile == null) return;
+      if (SSBasedInspection.getStructuralSearchInspection(profile).addConfiguration(configuration)) {
+        myConfigurations.add(configuration);
+        model.fireContentsChanged(myList);
+        myList.setSelectedIndex(size);
+        myList.scrollRectToVisible(myList.getCellBounds(size, size));
+        profile.setModified(true);
+      }
+      else {
+        final int index = myConfigurations.indexOf(configuration);
+        if (index >= 0) {
+          myList.setSelectedIndex(index);
+        }
+      }
+    }
+  }
+
+  private class MyListModel extends AbstractListModel<Configuration> {
+    @Override
+    public int getSize() {
+      return myConfigurations.size();
+    }
+
+    @Override
+    public Configuration getElementAt(int index) {
+      return myConfigurations.get(index);
+    }
+
+    public void fireContentsChanged(Object source) {
+      fireContentsChanged(source, -1, -1);
+    }
+
+    public void swap(int first, int second) {
+      if (second == -1) return;
+      final Configuration one = myConfigurations.get(first);
+      final Configuration two = myConfigurations.get(second);
+      final int order = one.getOrder();
+      one.setOrder(two.getOrder());
+      two.setOrder(order);
+      myConfigurations.set(second, one);
+      myConfigurations.set(first, two);
+    }
+  }
+}

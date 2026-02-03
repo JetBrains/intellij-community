@@ -1,0 +1,53 @@
+### auto-generated section `build intellij.kotlin.codeInsight.base` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_kotlin-codeInsight-base",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+  ],
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "kotlin-codeInsight-base_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-codeInsight-base",
+  module_name = "intellij.kotlin.codeInsight.base",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-codeInsight-base_resources"],
+  kotlinc_opts = ":custom_kotlin-codeInsight-base",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fir",
+    "@lib//:kotlinc-kotlin-compiler-ir",
+    "@lib//:kotlinc-analysis-api",
+    "//platform/core-api:core",
+    "//platform/execution-impl",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/psi",
+    "//platform/util",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+    "//plugins/kotlin/base/code-insight",
+    "//platform/core-impl",
+    "//platform/indexing-api:indexing",
+    "//java/java-psi-api:psi",
+    "//plugins/kotlin/base/facet",
+  ]
+)
+### auto-generated section `build intellij.kotlin.codeInsight.base` end

@@ -1,0 +1,150 @@
+Done in the merge (started from the PyCharm version and bringing in things from PyDev):
+
+- Added modules which were unused in PyCharm but are used in PyDev.
+
+- execfile was upgraded to the PyDev version (it had errors with BOM in utf-8).
+
+- pydevd_file_utils: automatically doing normcase.
+
+- pyded: multiprocessing supporting 2 approaches (use new connection/use same connection).
+
+- pydev_monkey: fixes from PyDev to properly deal with windows command lines.
+
+- Private variables (name-mangled) are now evaluated (so they can be hovered).
+
+- Exceptions raised from lines with a #@IgnoreException are ignored.
+
+- Fixed exception changing variable in django debugging.
+
+- Made debugging with Django breakpoints a bit faster.
+
+- Exceptions separated by caught/uncaught, so, it's no longer needed to check
+    an additional attribute to check it.
+
+- When exception is thrown evaluating breakpoint condition, the debugger will stop
+    (can be configured in main_debugger.suspend_on_breakpoint_exception).
+
+- #@DontTrace comments can be used on methods so that they are ignored when stepping
+    in (needs UI for CMD_ENABLE_DONT_TRACE).
+
+- Code which stops tracing inside python properties integrated (CMD_SET_PROPERTY_TRACE).
+
+- Find Referrers integrated.
+
+- Using same facade for IPython integration.
+
+- When the code is interrupted, the buffer in the python side is cleared.
+
+- GEvent debugging: improved PyDev not to use the threading module (uses the thread
+    primitives directly), so, gevent debugging can work even if pydevd is used for
+    remote debugging.
+    
+    Also, the gevent debugging should probably be closer to the stackless debugging,
+    where we actually show the live stackless threads -- so, we should show the live
+    gevent greenlets -- which the current version doesn't do (future work).
+    
+- Supporting Jython 2.2 onwards (note: CPython only tested with 2.7/3.3)
+
+- When there are big sets/tuples/lists/dicts, the items won't be all shown so that the
+    debugger speed doesn't suffer (the user should use the console if he wants to see
+    those items in this case). The limit was set to show up to 300 items (pydevd_resolver.MAX_ITEMS_TO_HANDLE)
+
+- Monkey-patching qt (QThread/QRunnable) to enable the debugger to work. 
+    Notes:
+        - It must be imported before the user actually runs its code (as the definitions of QThread/QRunnable
+        are monkey-patched), so, for the remote debugger to work, pydevd must be imported at the start of
+        the program, even if pydevd.settrace will only be used later on. 
+
+Things to be fixed in PyCharm:
+--------------------------------
+
+1. CMD_VERSION now should receive that it wants breakpoints by ID (and it
+    should give a breakpoint id which should be used to remove it later
+    when setting a breakpoint).
+
+2. Setting breakpoint: the func_name is not being properly passed from PyCharm
+    (and as such, PyCharm debugging is slower than it should be).
+
+    Note that it works passing 'None', but the func_name should be given when possible.
+
+    I.e.:
+
+    class MyClass(object):
+        def __init__(self):
+            print('here') # Break here: '__init__' as func_name
+            print(a)
+
+        def bar(self):
+            print('bar') # Break here: 'bar' as func_name
+
+3. Note (may not need to change anything):
+    Removed support for removing breakpoint without knowing its type (i.e.:
+    remove breakpoint tried to remove a breakpoint if the type wasn't
+    python-line nor django-line, now, it'll give an exception).
+
+4. break_on_exceptions_thrown_in_same_context / ignore_exceptions_thrown_in_lines_with_ignore_exception
+
+    These are currently set in the bulk operation to add exceptions, but
+    it does make sense to create a separate command for that (but it's only
+    worth doing it when/if PyCharm gets an UI to add it).
+
+5. UI to ignore exception from additional places (not only from #@IgnoreException code-comments)
+    i.e.: UI for CMD_IGNORE_THROWN_EXCEPTION_AT.
+
+6. UI to show the current exception (i.e.: deal with CMD_SEND_CURR_EXCEPTION_TRACE and
+    CMD_SEND_CURR_EXCEPTION_TRACE_PROCEEDED in the client side).
+
+7. When an exception is detected on a breakpoint condition evaluation, we'll send
+    a CMD_GET_BREAKPOINT_EXCEPTION (which should be handled by PyCharm to show some
+    UI notification).
+
+8. The CMD_ENABLE_DONT_TRACE must be sent from the UI to skip methods which have
+    an #@DontTrace above it.
+
+9. The CMD_SET_PROPERTY_TRACE must be sent from the UI to skip setter/getter/deleter
+    python properties.
+
+10. Integrate find referrers UI in PyCharm. In the backend it uses a CMD_RUN_CUSTOM_OPERATION with:
+    from pydevd_referrers import get_referrer_info
+    get_referrer_info
+
+11. CMD_RELOAD_CODE has to be integrated (when a file changes it should be issued
+    for 'hot' auto-reload of the code -- note that it's not needed if the
+    user already has some sort of auto-reload builtin -- i.e.: django without the noreload option).
+
+12. Console Completions: See: pydev_ipython_console_011.PyDevFrontEnd.getCompletions
+    Now we're completing as they come from the IPython backend (i.e.: not stripping %
+    for magic commands).
+
+13. In PyDev, interrupt can be used to clear the current buffer (whereas in PyCharm it's only
+    possible to activate it to stop the execution of a command) -- note that this is only a
+    client-side limitation.
+
+14. Console GUI event loop can have some UI integrated.
+    Note that the user can enable it manually (i.e.: by writing something as "%gui qt"
+    the qt backend is integrated, but it's possible to call 'enableGui' with the
+    backend to use from PyCharm too -- in PyDev this is an option with the possible backends).
+
+
+Things to be fixed in PyDev:
+--------------------------------
+
+.Provide UI for 'smart step into' (later)
+
+. Check what to do with 'message' from xml (later)
+
+. Deal with sendSignatureCallTrace (later)
+
+. Set IPYTHONENABLE to False/True to use IPython console (later)
+
+
+Manual test:
+---------------
+
+* Support for IPython GUI event loop in console
+* Django template debugging
+* Gevent debugging
+* Smart step into
+* Collection of type information of arguments in debug mode
+* Ability to stop tracing
+* Ability to run debugger and console on remote interpreter

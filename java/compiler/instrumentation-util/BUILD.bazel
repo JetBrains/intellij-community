@@ -1,0 +1,19 @@
+### auto-generated section `build intellij.java.compiler.instrumentationUtil` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "instrumentation-util_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "instrumentation-util",
+  module_name = "intellij.java.compiler.instrumentationUtil",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":instrumentation-util_resources"],
+  kotlinc_opts = "@community//:k8",
+  deps = ["//libraries/asm"]
+)
+### auto-generated section `build intellij.java.compiler.instrumentationUtil` end

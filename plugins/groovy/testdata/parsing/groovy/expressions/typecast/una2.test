@@ -1,0 +1,19 @@
+(double [][] ) 3
+-----
+Groovy script
+  Typecast expression
+    PsiElement(()('(')
+    Array type
+      Array type
+        Built in type
+          PsiElement(double)('double')
+        PsiWhiteSpace(' ')
+        PsiElement([)('[')
+        PsiElement(])(']')
+      PsiElement([)('[')
+      PsiElement(])(']')
+    PsiWhiteSpace(' ')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Literal
+      PsiElement(Integer)('3')

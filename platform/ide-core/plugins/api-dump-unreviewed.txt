@@ -1,0 +1,5 @@
+com.intellij.ide.plugins.PluginInfoProvider
+- s:getInstance():com.intellij.ide.plugins.PluginInfoProvider
+- a:loadCachedPlugins():java.util.Set
+- loadPlugins():java.util.concurrent.Future
+- a:loadPlugins(com.intellij.openapi.progress.ProgressIndicator):java.util.concurrent.Future

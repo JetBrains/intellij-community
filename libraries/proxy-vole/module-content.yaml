@@ -1,0 +1,7 @@
+- name: dist.all/lib/intellij.libraries.proxy.vole.jar
+  modules:
+  - name: intellij.libraries.proxy.vole
+  library: proxy-vole
+  files:
+  - name: $MAVEN_REPOSITORY$/org/bidib/com/github/markusbernhardt/proxy-vole/1/proxy-vole-1.jar
+  - name: $MAVEN_REPOSITORY$/org/javadelight/delight-rhino-sandbox/0/delight-rhino-sandbox-0.jar

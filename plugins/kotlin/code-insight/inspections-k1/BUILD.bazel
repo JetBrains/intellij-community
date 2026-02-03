@@ -1,0 +1,52 @@
+### auto-generated section `build kotlin.code-insight.inspections.k1` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_kotlin-code-insight-inspections-k1",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
+
+resourcegroup(
+  name = "kotlin-code-insight-inspections-k1_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-code-insight-inspections-k1",
+  module_name = "kotlin.code-insight.inspections.k1",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-code-insight-inspections-k1_resources"],
+  kotlinc_opts = ":custom_kotlin-code-insight-inspections-k1",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/formatter",
+    "//plugins/kotlin/code-insight/api",
+    "//plugins/kotlin/code-insight/utils",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+    "//platform/core-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/lang-api:lang",
+    "//java/java-psi-api:psi",
+    "//java/java-analysis-impl:analysis-impl",
+    "//platform/lang-impl",
+    "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/core",
+  ]
+)
+### auto-generated section `build kotlin.code-insight.inspections.k1` end

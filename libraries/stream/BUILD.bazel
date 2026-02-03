@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.stream` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "stream_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "stream",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":stream_resources"],
+  exports = ["@lib//:libraries-stream-_stream_ex"],
+  runtime_deps = ["@lib//:libraries-stream-_stream_ex"]
+)
+### auto-generated section `build intellij.libraries.stream` end

@@ -1,0 +1,160 @@
+f:com.intellij.tools.apiDump.testData.ClassWithApiExperimentalCompanion
+f:com.intellij.tools.apiDump.testData.ClassWithApiInternalCompanion
+e:com.intellij.tools.apiDump.testData.JAbstractEnum
+- java.lang.Enum
+- sf:A:com.intellij.tools.apiDump.testData.JAbstractEnum
+- pa:protectedAbstractMethod():V
+- a:publicAbstractMethod():V
+- s:valueOf(java.lang.String):com.intellij.tools.apiDump.testData.JAbstractEnum
+- s:values():com.intellij.tools.apiDump.testData.JAbstractEnum[]
+@:com.intellij.tools.apiDump.testData.JAnnotation
+- java.lang.annotation.Annotation
+e:com.intellij.tools.apiDump.testData.JEnum
+- java.lang.Enum
+- sf:ONE:com.intellij.tools.apiDump.testData.JEnum
+- sf:THREE:com.intellij.tools.apiDump.testData.JEnum
+- sf:TWO:com.intellij.tools.apiDump.testData.JEnum
+- s:valueOf(java.lang.String):com.intellij.tools.apiDump.testData.JEnum
+- s:values():com.intellij.tools.apiDump.testData.JEnum[]
+c:com.intellij.tools.apiDump.testData.JInners
+- anonymousClass:java.lang.Object
+- <init>():V
+- ownerMethod():V
+pc:com.intellij.tools.apiDump.testData.JInners$ProtectedClass
+- p:<init>():V
+pc:com.intellij.tools.apiDump.testData.JInners$ProtectedClass$ProtectedClassD
+- p:<init>():V
+c:com.intellij.tools.apiDump.testData.JInners$ProtectedClass$PublicClass
+- <init>():V
+c:com.intellij.tools.apiDump.testData.JInners$PublicClass
+- <init>():V
+pc:com.intellij.tools.apiDump.testData.JInners$PublicClass$ProtectedClass
+- p:<init>():V
+c:com.intellij.tools.apiDump.testData.JInners$PublicClass$PublicClassD
+- <init>():V
+a:com.intellij.tools.apiDump.testData.JPublicAbstractClass
+- <init>():V
+- pa:protectedAbstractMethod():V
+- a:publicAbstractMethod():V
+c:com.intellij.tools.apiDump.testData.JPublicClass
+- booleanField:Z
+- byteField:B
+- charField:C
+- doubleField:D
+- f:finalField:java.lang.Object
+- floatField:F
+- intField:I
+- longField:J
+- p:protectedField:java.lang.Object
+- publicField:java.lang.Object
+- shortField:S
+- p:<init>(B):V
+- <init>(Z):V
+- pf:protectedFinalMethod():V
+- p:protectedMethod():V
+- psf:protectedStaticFinalMethod():V
+- ps:protectedStaticMethod():V
+- f:publicFinalMethod():V
+- publicMethod():V
+- sf:publicStaticFinalMethod():V
+- s:publicStaticMethod():V
+c:com.intellij.tools.apiDump.testData.JPublicClassInternalInterface
+- <init>():V
+c:com.intellij.tools.apiDump.testData.JPublicClassInternalSuper
+- <init>():V
+- clone():com.intellij.tools.apiDump.testData.JPublicClassInternalSuper
+f:com.intellij.tools.apiDump.testData.JPublicFinalClass
+- <init>():V
+com.intellij.tools.apiDump.testData.JPublicInterface
+f:com.intellij.tools.apiDump.testData.JRecord
+- java.lang.Record
+- <init>(I,I):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- x():I
+- y():I
+f:com.intellij.tools.apiDump.testData.KtConstructorAccessors
+f:com.intellij.tools.apiDump.testData.KtConstructorAccessors$Accessor
+f:com.intellij.tools.apiDump.testData.KtConstructorAccessors$AccessorWithLastInt
+- b:<init>(java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+f:com.intellij.tools.apiDump.testData.KtConstructorAccessors$AccessorWithOnlyInt
+f:com.intellij.tools.apiDump.testData.KtConstructorAccessors$AccessorWithParam
+f:com.intellij.tools.apiDump.testData.KtConstructorAccessors$DefaultConstructorParameters
+- <init>():V
+- <init>(java.lang.String):V
+- b:<init>(java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+f:com.intellij.tools.apiDump.testData.KtFieldAnnotations
+- f:getApiExperimentalPropertySetter():java.lang.Object
+- f:getApiInternalPropertySetter():java.lang.Object
+f:com.intellij.tools.apiDump.testData.KtPublicClass
+f:com.intellij.tools.apiDump.testData.KtPublicClass$PublicClass
+f:com.intellij.tools.apiDump.testData.defaultParameters.KtChildClass
+- com.intellij.tools.apiDump.testData.defaultParameters.KtMiddleClass
+- <init>():V
+- function(I,I,I):V
+- genericFunction(I,D,I):java.lang.Double
+com.intellij.tools.apiDump.testData.defaultParameters.KtInterface
+- a:function(I,I,I):V
+- bs:function$default(com.intellij.tools.apiDump.testData.defaultParameters.KtInterface,I,I,I,I,java.lang.Object):V
+- a:genericFunction(I,java.lang.Object,I):java.lang.Object
+- bs:genericFunction$default(com.intellij.tools.apiDump.testData.defaultParameters.KtInterface,I,java.lang.Object,I,I,java.lang.Object):java.lang.Object
+a:com.intellij.tools.apiDump.testData.defaultParameters.KtMiddleClass
+- com.intellij.tools.apiDump.testData.defaultParameters.KtInterface
+- <init>():V
+f:com.intellij.tools.apiDump.testData.defaultParameters.KtTestKt
+- sf:function(I,I,I):V
+- bs:function$default(I,I,I,I,java.lang.Object):V
+c:com.intellij.tools.apiDump.testData.generics.JGenericChildClass
+- com.intellij.tools.apiDump.testData.generics.JGenericMiddleClass
+- <init>():V
+- acceptingAT(java.lang.Double[]):V
+- acceptingLT(java.util.List):V
+- acceptingT(java.lang.Double):V
+- returningAT():java.lang.Double[]
+- returningLT():java.lang.Iterable
+- returningT():java.lang.Double
+com.intellij.tools.apiDump.testData.generics.JGenericInterface
+- a:acceptingAT(java.lang.Object[]):V
+- a:acceptingLT(java.util.List):V
+- a:acceptingT(java.lang.Object):V
+- a:returningAT():java.lang.Object[]
+- a:returningLT():java.lang.Iterable
+- a:returningT():java.lang.Object
+a:com.intellij.tools.apiDump.testData.generics.JGenericMiddleClass
+- com.intellij.tools.apiDump.testData.generics.JGenericInterface
+- <init>():V
+- acceptingAT(java.lang.Number[]):V
+- acceptingLT(java.util.List):V
+- a:acceptingT(java.lang.Number):V
+- returningAT():java.lang.Number[]
+- returningLT():java.lang.Iterable
+- returningT():java.lang.Number
+f:com.intellij.tools.apiDump.testData.generics2.JChildClasses
+c:com.intellij.tools.apiDump.testData.generics2.JChildClasses$JChildClassFromMiddleWithAbstractOverride
+- com.intellij.tools.apiDump.testData.generics2.JGenericMiddleClassWithAbstractOverride
+- <init>():V
+- genericMethod(java.lang.Double):java.lang.Double
+c:com.intellij.tools.apiDump.testData.generics2.JChildClasses$JChildClassFromMiddleWithOverride
+- com.intellij.tools.apiDump.testData.generics2.JGenericMiddleClassWithOverride
+- <init>():V
+c:com.intellij.tools.apiDump.testData.generics2.JChildClasses$JChildClassFromMiddleWithoutOverride
+- com.intellij.tools.apiDump.testData.generics2.JGenericMiddleClass
+- <init>():V
+- genericMethod(java.lang.Double):java.lang.Double
+c:com.intellij.tools.apiDump.testData.generics2.JChildClasses$JChildClassWithOverrideFromMiddleWithOverride
+- com.intellij.tools.apiDump.testData.generics2.JGenericMiddleClassWithOverride
+- <init>():V
+- genericMethod(java.lang.Double):java.lang.Double
+com.intellij.tools.apiDump.testData.generics2.JGenericInterface
+- a:genericMethod(java.lang.Object):java.lang.Object
+a:com.intellij.tools.apiDump.testData.generics2.JGenericMiddleClass
+- com.intellij.tools.apiDump.testData.generics2.JGenericInterface
+- <init>():V
+a:com.intellij.tools.apiDump.testData.generics2.JGenericMiddleClassWithAbstractOverride
+- com.intellij.tools.apiDump.testData.generics2.JGenericInterface
+- <init>():V
+- a:genericMethod(java.lang.Number):java.lang.Number
+a:com.intellij.tools.apiDump.testData.generics2.JGenericMiddleClassWithOverride
+- com.intellij.tools.apiDump.testData.generics2.JGenericInterface
+- <init>():V
+- genericMethod(java.lang.Number):java.lang.Number

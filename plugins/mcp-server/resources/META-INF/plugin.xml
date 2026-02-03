@@ -1,0 +1,83 @@
+<idea-plugin package="com.intellij.mcpserver" allow-bundled-update="true">
+  <name>MCP Server</name>
+  <id>com.intellij.mcpServer</id>
+  <category>AI-Powered</category>
+  <description><![CDATA[
+    MCP (Model Context Protocol) Server for IntelliJ IDEs
+    This plugin integrates the MCP server into IntelliJ-based IDEs, enabling seamless communication between Large Language Models (LLMs)
+    and your development environment. It provides tools for interacting with the IDE, including:
+    <ul>
+      <li>Reading the current file</li>
+      <li>Executing terminal commands</li>
+      <li>Setting breakpoints</li>
+      <li>Searching project files</li>
+      <li>And more</li>
+    </ul>
+  ]]></description>
+  <vendor>JetBrains</vendor>
+
+  <depends config-file="mcpServer-terminal.xml" optional="true">org.jetbrains.plugins.terminal</depends>
+  <depends config-file="mcpServer-vcs.xml" optional="true">Git4Idea</depends>
+
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.io"/>
+    <module name="intellij.libraries.ktor.client"/>
+    <module name="intellij.libraries.ktor.io"/>
+    <module name="intellij.libraries.ktor.network.tls"/>
+    <module name="intellij.libraries.ktor.client.cio"/>
+  </dependencies>
+  <!--suppress PluginXmlValidity -->
+  <content namespace="jetbrains">
+    <!-- The implicit main module of the plugin depends on internal modules (intellij.libraries.ktor.client, intellij.libraries.ktor.io, intellij.libraries.kotlinx.io), so it's required to set the namespace for it
+         todo: extract elements and dependencies to an explicit content module (see IJPL-212351) -->
+  </content>
+
+  <extensionPoints>
+    <extensionPoint name="mcpToolsProvider" interface="com.intellij.mcpserver.McpToolsProvider" dynamic="true" />
+    <extensionPoint name="mcpToolset" interface="com.intellij.mcpserver.McpToolset" dynamic="true" />
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <statistics.counterUsagesCollector implementationClass="com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector$McpToolNameValidator"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.mcpserver.statistics.McpServerApplicationUsagesCollector"/>
+
+    <appStarter id="mcpServer" implementation="com.intellij.mcpserver.McpServerHeadlessStarter"/>
+    <postStartupActivity implementation="com.intellij.mcpserver.impl.McpServerService$MyProjectListener" />
+    <postStartupActivity implementation="com.intellij.mcpserver.impl.McpClientDetectionActivity" />
+    <notificationGroup id="MCP Server" displayType="BALLOON" bundle="messages.McpServerBundle" key="notification.group.mcp.server"
+      notificationIds="mcp.client.detected;mcp.client.autoconfigured;mcp.client.error.autoconfigured;mcp.client.wrong.port.detected"/>
+
+    <mcpServer.mcpToolsProvider implementation="com.intellij.mcpserver.impl.ReflectionToolsProvider" />
+
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.ExecutionToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.AnalysisToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.FileToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.FormattingToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.TextToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.CodeInsightToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.RefactoringToolset" />
+
+    <registryKey defaultValue="false"
+                 description="Detect MCP clients to suggest enable MCP server on project startup"
+                 key="mcp.server.detect.mcp.clients"/>
+    <registryKey defaultValue="true"
+                 description="Whether to return output schema and structured output from tools"
+                 key="mcp.server.structured.tool.output"/>
+    <registryKey defaultValue="false"
+                 description="Support legacy MCP server name"
+                 key="mcp.server.write.legacy.key"/>
+    <registryKey defaultValue="true"
+                 description="Enable OT tracer for MCP tool calls"
+                 key="mcp.server.ot.trace"/>
+
+    <applicationConfigurable
+      instance="com.intellij.mcpserver.settings.McpServerSettingsConfigurable"
+      id="com.intellij.mcpserver.settings"
+      key="mcp.server.configurable.name"
+      bundle="messages.McpServerBundle"
+      dynamic="true"
+      parentId="tools"/>
+
+  </extensions>
+</idea-plugin>

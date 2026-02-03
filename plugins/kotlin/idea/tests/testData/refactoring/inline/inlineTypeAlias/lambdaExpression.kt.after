@@ -1,0 +1,5 @@
+val r1 = Runnable {} // (1)
+val r2 = object : Runnable { // (2)
+    override fun run() {}
+}
+// IGNORE_K2

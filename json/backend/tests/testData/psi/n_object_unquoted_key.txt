@@ -1,0 +1,11 @@
+JsonFile: n_object_unquoted_key.json
+  JsonObject
+    PsiElement({)('{')
+    JsonProperty
+      JsonReferenceExpression
+        PsiElement(IDENTIFIER)('a')
+      PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"b"')
+    PsiElement(})('}')

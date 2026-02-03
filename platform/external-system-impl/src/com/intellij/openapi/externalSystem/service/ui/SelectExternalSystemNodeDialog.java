@@ -1,0 +1,155 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.externalSystem.service.ui;
+
+import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
+import com.intellij.openapi.externalSystem.view.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.ui.treeStructure.SimpleTree;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import javax.swing.tree.TreeSelectionModel;
+import java.awt.event.InputEvent;
+import java.util.Collection;
+import java.util.List;
+import java.util.function.Predicate;
+
+/**
+ * @author Vladislav.Soroka
+ */
+@ApiStatus.Internal
+public class SelectExternalSystemNodeDialog extends DialogWrapper {
+  private final @NotNull SimpleTree myTree;
+  private final @Nullable Predicate<? super SimpleNode> mySelector;
+  protected @Nullable Boolean groupTasks;
+  protected @Nullable Boolean useTasksNode;
+
+  public SelectExternalSystemNodeDialog(@NotNull ProjectSystemId systemId,
+                                        @NotNull Project project,
+                                        @NotNull @NlsContexts.DialogTitle String title,
+                                        Class<? extends ExternalSystemNode<?>> nodeClass,
+                                        @Nullable Predicate<? super SimpleNode> selector) {
+    //noinspection unchecked
+    this(systemId, project, title, new Class[]{nodeClass}, selector);
+  }
+
+  public SelectExternalSystemNodeDialog(@NotNull ProjectSystemId systemId,
+                                        @NotNull Project project,
+                                        @NotNull @NlsContexts.DialogTitle String title,
+                                        final Class<? extends ExternalSystemNode<?>>[] nodeClasses,
+                                        @Nullable Predicate<? super SimpleNode> selector) {
+    super(project, false);
+    mySelector = selector;
+    setTitle(title);
+
+    myTree = new SimpleTree();
+    myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+
+    ExternalProjectsView projectsView = ExternalProjectsManagerImpl.getInstance(project).getExternalProjectsView(systemId);
+    if (projectsView == null) {
+      ToolWindow toolWindow = ExternalToolWindowManager.getToolWindow(project, systemId);
+      if (toolWindow instanceof ToolWindowEx) {
+        projectsView = new ExternalProjectsViewImpl(getDisposable(), project, (ToolWindowEx)toolWindow, systemId);
+      }
+    }
+    if(projectsView != null) {
+      final ExternalProjectsStructure treeStructure = new ExternalProjectsStructure(project, myTree) {
+        @Override
+        protected Class<? extends ExternalSystemNode<?>>[] getVisibleNodesClasses() {
+          return nodeClasses;
+        }
+
+        @Override
+        public @NotNull Object getRootElement() {
+          Object rootElement = super.getRootElement();
+          return customizeProjectsTreeRoot(rootElement);
+        }
+      };
+      Disposer.register(myDisposable, treeStructure);
+      treeStructure.init(new ExternalProjectsViewAdapter(projectsView) {
+        @Override
+        public @NotNull ExternalProjectsStructure getStructure() {
+          return treeStructure;
+        }
+
+        @Override
+        public void updateUpTo(ExternalSystemNode node) {
+          treeStructure.updateUpTo(node);
+        }
+
+        @Override
+        public boolean getGroupTasks() {
+          return groupTasks != null ? groupTasks : super.getGroupTasks();
+        }
+
+        @Override
+        public boolean useTasksNode() {
+          return useTasksNode != null ? useTasksNode : super.useTasksNode();
+        }
+
+        @Override
+        public void handleDoubleClickOrEnter(@NotNull ExternalSystemNode node, @Nullable String actionId, InputEvent inputEvent) {
+          SelectExternalSystemNodeDialog.this.handleDoubleClickOrEnter(node, actionId, inputEvent);
+        }
+      });
+
+      final Collection<ExternalProjectInfo> projectsData =
+        ProjectDataManager.getInstance().getExternalProjectsData(project, systemId);
+
+      final List<DataNode<ProjectData>> dataNodes =
+        ContainerUtil.mapNotNull(projectsData, info -> info.getExternalProjectStructure());
+      treeStructure.updateProjects(dataNodes);
+      TreeUtil.expandAll(myTree);
+
+      if (mySelector != null) {
+        TreeUtil.promiseSelect(myTree, path -> {
+          SimpleNode node = TreeUtil.getLastUserObject(SimpleNode.class, path);
+          return node != null && mySelector.test(node) ? TreeVisitor.Action.INTERRUPT : TreeVisitor.Action.CONTINUE;
+        });
+      }
+    }
+
+    init();
+  }
+
+  protected Object customizeProjectsTreeRoot(Object rootElement) {
+    return rootElement;
+  }
+
+  @Override
+  public @Nullable JComponent getPreferredFocusedComponent() {
+    return myTree;
+  }
+
+  protected void handleDoubleClickOrEnter(@NotNull ExternalSystemNode<?> node, @Nullable String actionId, InputEvent inputEvent) {
+  }
+
+  protected SimpleNode getSelectedNode() {
+    return myTree.getNodeFor(myTree.getSelectionPath());
+  }
+
+  @Override
+  protected @Nullable JComponent createCenterPanel() {
+    final JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
+    pane.setPreferredSize(JBUI.size(320, 400));
+    return pane;
+  }
+}

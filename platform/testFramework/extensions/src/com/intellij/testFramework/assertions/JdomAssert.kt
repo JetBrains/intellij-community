@@ -1,0 +1,77 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.testFramework.assertions
+
+import com.intellij.configurationStore.deserialize
+import com.intellij.configurationStore.serialize
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
+import org.assertj.core.api.AbstractAssert
+import org.assertj.core.internal.Objects
+import org.intellij.lang.annotations.Language
+import org.jdom.Element
+import java.nio.file.Files
+import java.nio.file.Path
+
+class JdomAssert(actual: Element?) : AbstractAssert<JdomAssert, Element?>(actual, JdomAssert::class.java) {
+  fun isEmpty(): JdomAssert {
+    isNotNull
+
+    if (!JDOMUtil.isEmpty(actual)) {
+      failWithMessage("Expected to be empty but was\n${JDOMUtil.writeElement(actual!!)}")
+    }
+
+    return this
+  }
+
+  fun isEqualTo(file: Path): JdomAssert {
+    isNotNull
+
+    val expected = JDOMUtil.load(file)
+    if (!JDOMUtil.areElementsEqual(actual, expected)) {
+      throw FileComparisonFailedError(null, StringUtilRt.convertLineSeparators(Files.readString(file)), JDOMUtil.writeElement(actual!!), file.toString())
+    }
+    return this
+  }
+
+  fun isEqualTo(element: Element?): JdomAssert {
+    if (actual == element) {
+      return this
+    }
+
+    isNotNull
+
+    if (!JDOMUtil.areElementsEqual(actual, element)) {
+      isEqualTo(JDOMUtil.writeElement(element!!))
+    }
+    return this
+  }
+
+  fun isEqualTo(@Language("xml") expected: String): JdomAssert {
+    isNotNull
+
+    Objects.instance().assertEqual(
+      info,
+      JDOMUtil.writeElement(actual!!),
+      expected.trimIndent().removePrefix("""<?xml version="1.0" encoding="UTF-8"?>""").trimStart())
+
+    return this
+  }
+}
+
+fun <T : Any> doSerializerTest(@Language("XML") expectedText: String, bean: T): T {
+  // test deserializer
+  val expectedTrimmed = expectedText.trimIndent()
+  val element = assertSerializer(bean, expectedTrimmed)
+
+  // test deserializer
+  val o = (element ?: Element("state")).deserialize(bean.javaClass)
+  assertSerializer(o, expectedTrimmed, "Deserialization failure")
+  return o
+}
+
+private fun assertSerializer(bean: Any, expected: String, description: String = "Serialization failure"): Element? {
+  val element = serialize(bean)
+  Assertions.assertThat(element?.let { JDOMUtil.writeElement(element).trim() }).`as`(description).isEqualTo(expected)
+  return element
+}

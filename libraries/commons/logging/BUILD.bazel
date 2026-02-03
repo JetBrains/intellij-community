@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.commons.logging` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "logging_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "logging",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":logging_resources"],
+  exports = ["@lib//:libraries-commons-logging-commons-logging"],
+  runtime_deps = ["@lib//:libraries-commons-logging-commons-logging"]
+)
+### auto-generated section `build intellij.libraries.commons.logging` end

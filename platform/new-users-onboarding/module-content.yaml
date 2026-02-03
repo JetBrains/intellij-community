@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.ide.newUsersOnboarding.jar
+  modules:
+  - name: intellij.platform.ide.newUsersOnboarding

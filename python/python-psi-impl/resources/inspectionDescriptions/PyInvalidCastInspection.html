@@ -1,0 +1,37 @@
+<html>
+<body>
+<p>Reports <code>typing.cast</code> calls where the source and target types are unrelated.</p>
+<p>An error is reported when neither the source type is a subtype of the target, nor the target type is a subtype of the source.
+  Such casts often indicate a logical error, as an instance of one type cannot be assumed to be an instance of the other,
+  and <code>typing.cast</code> does not dynamically validate the type.</p>
+
+<p>This check applies even to types that could theoretically have a common descendant.
+  For example, it will flag a cast between two sibling classes <code>Left</code> and <code>Right</code> that both inherit from
+  <code>Top</code>,
+  because there is no direct inheritance relationship between them.</p>
+
+<p><b>Example:</b></p>
+<pre><code>
+from typing import cast
+
+# Non-overlapping types — likely a mistake
+<b>cast(int, "a")</b>          # 'str' -> 'int'
+<b>cast(list[int], ["a"])</b>  # 'list[str]' -> 'list[int]'
+
+# Recommended explicit escape hatch is to use a "double cast"
+cast(int, <b>cast(object, "a")</b>)  # ok
+
+# Legitimate overlapping cases
+cast(int, object())    # a valid down cast
+cast(object, 1)        # a valid up cast
+
+# While the following is an invalid cast, as <code>list</code> is invariant. It's not currently supported by this inspection
+int_list = [1, 2, 3]
+cast(list[object], int_list)
+</code></pre>
+<!-- tooltip end -->
+<p>The inspection relies on static type information; when a type is unknown, no warning is reported.
+
+  Variance of generic types is not yet considered.</p>
+</body>
+</html>

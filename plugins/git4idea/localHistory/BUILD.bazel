@@ -1,0 +1,16 @@
+### auto-generated section `build intellij.vcs.git.localHistory` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "localHistory_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "localHistory",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":localHistory_resources"]
+)
+### auto-generated section `build intellij.vcs.git.localHistory` end

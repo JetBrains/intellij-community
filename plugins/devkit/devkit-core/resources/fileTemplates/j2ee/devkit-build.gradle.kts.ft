@@ -1,0 +1,104 @@
+plugins {
+    id("java")
+    id("org.jetbrains.kotlin.jvm") version "${context.getBomProperty("kotlin.version")}"
+    id("org.jetbrains.intellij.platform") version "${context.getBomProperty("gradle.intellij.version")}"
+#if ($context.hasLibrary("compose"))
+    id("org.jetbrains.kotlin.plugin.compose") version "${context.getBomProperty("kotlin.version")}"
+#end
+}
+
+group = "${context.group}"
+version = "${context.version}"
+
+repositories {
+    mavenCentral()
+    intellijPlatform {
+        defaultRepositories()
+    }
+}
+
+// Read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
+dependencies {
+    intellijPlatform {
+        intellijIdea("${context.getBomProperty("intellij.version")}")
+        testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform)
+
+#if ($context.hasLibraries())
+        // Add plugin dependencies for compilation here:
+#end
+
+#if ($context.hasLibrary("compose"))
+        composeUI()
+#end
+
+#if ($context.hasLibrary("java"))
+        bundledPlugin("com.intellij.java")
+#end
+#if ($context.hasLibrary("kotlin"))
+        bundledPlugin("org.jetbrains.kotlin")
+#end
+#if ($context.hasLibrary("javascript"))
+        bundledPlugin("JavaScript")
+#end
+#if ($context.hasLibrary("json"))
+        bundledPlugin("com.intellij.modules.json")
+#end
+#if ($context.hasLibrary("yaml"))
+        bundledPlugin("org.jetbrains.plugins.yaml")
+#end
+#if ($context.hasLibrary("properties"))
+    bundledPlugin("com.intellij.properties")
+#end
+#if ($context.hasLibrary("markdown"))
+        bundledPlugin("org.intellij.plugins.markdown")
+#end
+#if ($context.hasLibrary("python"))
+        compatiblePlugin("PythonCore")
+#end
+#if ($context.hasLibrary("go"))
+        compatiblePlugin("org.jetbrains.plugins.go")
+#end
+#if ($context.hasLibrary("php"))
+        compatiblePlugin("com.jetbrains.php")
+#end
+#if ($context.hasLibrary("ruby"))
+        compatiblePlugin("org.jetbrains.plugins.ruby")
+#end
+#if ($context.hasLibrary("rust"))
+        compatiblePlugin("com.jetbrains.rust")
+#end
+#if ($context.hasLibrary("database"))
+        bundledPlugin("com.intellij.database")
+#end
+#if (!$context.hasLibraries())
+        // Add plugin dependencies for compilation here, example:
+        // bundledPlugin("com.intellij.java")
+#end
+    }
+}
+
+intellijPlatform {
+    pluginConfiguration {
+        ideaVersion {
+            sinceBuild = "${context.getBomProperty("intellij.since.build")}"
+        }
+
+        changeNotes = """
+            Initial version
+        """.trimIndent()
+    }
+}
+
+tasks {
+    // Set the JVM compatibility versions
+    withType<JavaCompile> {
+        sourceCompatibility = "${context.getBomProperty("java.version")}"
+        targetCompatibility = "${context.getBomProperty("java.version")}"
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+    }
+}

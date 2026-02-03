@@ -1,0 +1,6 @@
+println(
+    when {
+        b -> x
+        else -> y
+    }
+)

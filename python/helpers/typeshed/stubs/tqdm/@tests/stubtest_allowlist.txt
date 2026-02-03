@@ -1,0 +1,6 @@
+# Cannot import in stubtest
+tqdm.__main__
+
+# TODO: Reenable when tensorflow supports Python 3.13 and is added to the
+# stubtest dependencies in METADATA.toml.
+tqdm.keras

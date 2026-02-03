@@ -1,0 +1,55 @@
+### auto-generated section `build kotlin.base.injection` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_kotlin-base-injection",
+  opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"],
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "kotlin-base-injection_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_provided_library(
+  name = "plugins_IntelliLang_backend_provided",
+  lib = "//plugins/IntelliLang/backend"
+)
+
+jvm_library(
+  name = "kotlin-base-injection",
+  module_name = "kotlin.base.injection",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-base-injection_resources"],
+  kotlinc_opts = ":custom_kotlin-base-injection",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//libraries/guava",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//platform/core-impl",
+    "//platform/lang-impl",
+    "//platform/util-ex",
+    "//java/java-psi-api:psi",
+    "//platform/code-style-api:codeStyle",
+    "@lib//:jetbrains-annotations",
+    "//plugins/IntelliLang:langInjection",
+    "//plugins/kotlin/base/project-structure",
+    "//java/langInjection",
+    "//plugins/kotlin/base/psi",
+    "@lib//:kotlinc-analysis-api",
+    "//plugins/kotlin/base/analysis",
+    ":plugins_IntelliLang_backend_provided",
+  ]
+)
+### auto-generated section `build kotlin.base.injection` end

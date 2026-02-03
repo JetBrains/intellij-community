@@ -1,0 +1,22 @@
+### auto-generated section `build intellij.space.java.jps` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "java-jps_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "java-jps",
+  module_name = "intellij.space.java.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":java-jps_resources"],
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "//platform/util",
+    "//jps/jps-builders:build",
+  ]
+)
+### auto-generated section `build intellij.space.java.jps` end

@@ -1,0 +1,7 @@
+fun interface FunInterface {
+    // INFO: {"checked": "true", "toAbstract": "true"}
+    fun foo(): String
+}
+
+interface I : FunInterface {
+}

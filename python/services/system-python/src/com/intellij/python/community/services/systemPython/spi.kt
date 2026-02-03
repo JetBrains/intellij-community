@@ -1,0 +1,25 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.community.services.systemPython
+
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.platform.eel.EelApi
+import com.intellij.python.community.services.systemPython.SystemPythonProvider.Companion.EP
+import com.jetbrains.python.PyToolUIInfo
+import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.errorProcessing.PyResult
+
+/**
+ * Register [EP] to [findSystemPythons]
+ */
+interface SystemPythonProvider {
+  companion object {
+    val EP: ExtensionPointName<SystemPythonProvider> = ExtensionPointName<SystemPythonProvider>("Pythonid.systemPythonProvider")
+  }
+
+  /**
+   * You can optionally customize how your pythons are displayed
+   */
+  val uiCustomization: PyToolUIInfo? get() = null
+
+  suspend fun findSystemPythons(eelApi: EelApi): PyResult<Set<PythonBinary>>
+}

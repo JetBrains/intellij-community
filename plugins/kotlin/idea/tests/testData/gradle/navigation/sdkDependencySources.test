@@ -1,0 +1,13 @@
+// FILE: build.gradle.kts
+// "EXPECTED-NAVIGATION-SUBSTRING": "An abstract representation of file and directory pathnames."
+import java.io.File
+
+plugins {
+    id("org.jetbrains.kotlin.multiplatform") version "1.9.23"
+}
+
+val file = Fi<caret>le("something")
+
+repositories {
+    mavenCentral()
+}

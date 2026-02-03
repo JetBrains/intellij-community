@@ -1,0 +1,19 @@
+// "Replace with 'newFun()'" "true"
+
+class C {
+    @Deprecated("", ReplaceWith("newFun()"))
+    fun oldFun() {
+        newFun()
+    }
+}
+
+fun newFun(){}
+
+fun foo() {
+    getC().<caret>oldFun()
+}
+
+fun getC(): C = C()
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

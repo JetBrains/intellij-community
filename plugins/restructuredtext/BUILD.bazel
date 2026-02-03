@@ -1,0 +1,77 @@
+### auto-generated section `build intellij.restructuredtext` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
+
+resourcegroup(
+  name = "restructuredtext_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+resourcegroup(
+  name = "restructuredtext_test_resources",
+  srcs = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
+jvm_provided_library(
+  name = "platform_lang-impl_provided",
+  lib = "//platform/lang-impl"
+)
+
+jvm_provided_library(
+  name = "platform_execution-impl_provided",
+  lib = "//platform/execution-impl"
+)
+
+jvm_provided_library(
+  name = "platform_core-ui_provided",
+  lib = "//platform/core-ui"
+)
+
+jvm_provided_library(
+  name = "spellchecker_provided",
+  lib = "//spellchecker"
+)
+
+jvm_library(
+  name = "restructuredtext",
+  module_name = "intellij.restructuredtext",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":restructuredtext_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//libraries/guava",
+    "//platform/projectModel-api:projectModel",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/platform-impl:ide-impl",
+    "//platform/indexing-impl",
+    "//libraries/jsoup",
+    "//platform/util/jdom",
+    "//libraries/jcef",
+    "//platform/indexing-api:indexing",
+    "//platform/core-impl",
+    ":platform_lang-impl_provided",
+    ":platform_execution-impl_provided",
+    ":platform_core-ui_provided",
+    ":spellchecker_provided",
+  ]
+)
+
+jvm_library(
+  name = "restructuredtext_test_lib",
+  module_name = "intellij.restructuredtext",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":restructuredtext_test_resources"],
+  runtime_deps = [
+    ":restructuredtext",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+  ]
+)
+### auto-generated section `build intellij.restructuredtext` end

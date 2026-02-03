@@ -1,0 +1,5 @@
+fun m() {
+    "string".let {
+        print(it)
+    }
+}

@@ -1,0 +1,35 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.python.community"/>
+    <module name="intellij.python.community.helpersLocator"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="Pythonid.execService.targetEnvironmentRequestHandler"
+                    interface="com.intellij.python.community.execService.spi.TargetEnvironmentRequestHandler"
+                    dynamic="true"/>
+
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="Pythonid">
+    <execService.targetEnvironmentRequestHandler
+      implementation="com.intellij.python.community.execService.impl.processLaunchers.DefaultTargetEnvironmentRequestHandler"
+      order="last"
+    />
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="2"
+                 description="How many heavy processes to execute concurrently"
+                 key="python.execService.limit.heavy" restartRequired="true"/>
+
+    <registryKey defaultValue="10"
+                 description="How many medium processes to execute concurrently"
+                 key="python.execService.limit.medium" restartRequired="true"/>
+
+    <registryKey defaultValue="100"
+                 description="How many light processes to execute concurrently"
+                 key="python.execService.limit.light" restartRequired="true"/>
+  </extensions>
+
+</idea-plugin>

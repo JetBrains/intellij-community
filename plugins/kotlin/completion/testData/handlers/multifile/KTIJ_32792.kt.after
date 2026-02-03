@@ -1,0 +1,10 @@
+// IGNORE_K1
+package bar
+
+import foo.Foo
+import foo.component1
+import foo.component2
+
+fun bar() {
+    Foo().let { (foo, bar) -> <caret> }
+}

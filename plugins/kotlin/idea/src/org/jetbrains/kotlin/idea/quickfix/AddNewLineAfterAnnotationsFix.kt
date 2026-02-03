@@ -1,0 +1,32 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+package org.jetbrains.kotlin.idea.quickfix
+
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.util.createIntentionForFirstParentOfType
+import org.jetbrains.kotlin.psi.KtAnnotatedExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtPsiFactory
+
+@K1Deprecation
+class AddNewLineAfterAnnotationsFix(element: KtAnnotatedExpression) : KotlinQuickFixAction<KtAnnotatedExpression>(element) {
+    override fun getText(): String = KotlinBundle.message("fix.add.new.line.after.annotations")
+    override fun getFamilyName(): String = text
+
+    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
+        val element = element ?: return
+        val baseExpression = element.baseExpression ?: return
+        val annotationsText = element.text.substring(0, baseExpression.startOffsetInParent)
+        val newExpression = KtPsiFactory(project).createBlock(annotationsText + "\n" + baseExpression.text).statements[0]
+        element.replace(newExpression)
+    }
+
+    companion object Factory : KotlinSingleIntentionActionFactory() {
+        override fun createAction(diagnostic: Diagnostic): KotlinQuickFixAction<KtAnnotatedExpression>? = diagnostic.createIntentionForFirstParentOfType(::AddNewLineAfterAnnotationsFix)
+    }
+}

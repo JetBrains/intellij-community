@@ -1,0 +1,12 @@
+interface I
+
+object O : I
+
+fun foo(): I = <caret>
+
+// EXIST: { lookupString: "O", itemText: "O", tailText: " (<root>)" }
+// EXIST: foo
+// EXIST: object
+// NOTHING_ELSE
+
+// IGNORE_K2

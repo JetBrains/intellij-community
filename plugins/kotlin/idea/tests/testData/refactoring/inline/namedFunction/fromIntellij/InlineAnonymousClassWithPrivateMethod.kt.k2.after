@@ -1,0 +1,20 @@
+object Foo {
+
+    fun bar(runnable: Runnable) {
+        runnable.run()
+    }
+}
+
+internal object Bar {
+    @JvmStatic fun main(args: Array<String>) {
+        Foo.bar(object : Runnable {
+            override fun run() {
+                doRun()
+            }
+
+            private fun doRun() {
+                // Woo-hoo
+            }
+        })
+    }
+}

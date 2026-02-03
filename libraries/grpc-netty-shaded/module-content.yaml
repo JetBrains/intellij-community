@@ -1,0 +1,7 @@
+- name: dist.all/lib/intellij.libraries.grpc.netty.shaded.jar
+  modules:
+  - name: intellij.libraries.grpc.netty.shaded
+  library: grpc-netty-shaded
+  files:
+  - name: $MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1/grpc-netty-shaded-1.jar
+  - name: $MAVEN_REPOSITORY$/io/grpc/grpc-util/1/grpc-util-1.jar

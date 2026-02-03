@@ -1,0 +1,10 @@
+fun interface FunInterface {
+    // INFO: {"checked": "true", "toAbstract": "false"}
+    val bar: Int
+        get() = 42
+
+    fun foo(): String
+}
+
+interface I : FunInterface {
+}

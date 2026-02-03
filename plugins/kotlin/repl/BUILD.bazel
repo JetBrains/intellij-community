@@ -1,0 +1,68 @@
+### auto-generated section `build kotlin.repl` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_repl",
+  opt_in = [
+    "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
+
+resourcegroup(
+  name = "repl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "repl",
+  module_name = "kotlin.repl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":repl_resources"],
+  kotlinc_opts = ":custom_repl",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-script-runtime",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "@lib//:kotlinc-kotlin-scripting-common",
+    "@lib//:kotlinc-kotlin-scripting-jvm",
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/kotlin/base/util",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/facet",
+    "//platform/editor-ui-ex:editor-ex",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/idea",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+    "//java/compiler/openapi:java-compiler",
+    "//java/execution/openapi:java-execution",
+    "//platform/core-ui",
+    "//java/execution/impl",
+    "//platform/execution-impl",
+    "//plugins/kotlin/jsr223",
+    "//plugins/kotlin/base/scripting/scripting.k1",
+    "//platform/execution",
+    "//platform/lang-api:lang",
+  ]
+)
+### auto-generated section `build kotlin.repl` end

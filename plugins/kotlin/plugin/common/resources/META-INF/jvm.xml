@@ -1,0 +1,20 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <scratch.creationHelper language="kotlin"
+                            implementationClass="org.jetbrains.kotlin.idea.jvm.shared.scratch.KotlinScratchFileCreationHelper"/>
+
+    <registryKey
+            key="repo.with.kotlin.versions.url"
+            description="URL of a JSON file with Kotlin versions"
+            defaultValue="https://central.sonatype.com/solrsearch/select?q=g:org.jetbrains.kotlin+AND+a:kotlin-stdlib&amp;core=gav&amp;rows=20&amp;wt=json&amp;sort=v+desc"
+            restartRequired="false"/>
+
+    <registryKey key="kotlin.not.configured.show.notification"
+                 defaultValue="true"
+                 description="Show notification about Kotlin missing configuration"/>
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.configuration.KotlinSetupEnvironmentNotificationProvider"/>
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <newFileHook implementation="org.jetbrains.kotlin.idea.configuration.NewKotlinFileConfigurationHook"/>
+  </extensions>
+</idea-plugin>

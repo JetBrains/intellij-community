@@ -1,0 +1,15 @@
+<html>
+<body>
+Reports destructuring declarations in short form and suggests converting them to the full form with explicit property names. Applies for data classes.
+<p><b>Example:</b></p>
+<pre><code>
+  data class Person(val firstName: String, val lastName: String)
+  val (first, lastName) = person
+</code></pre>
+<p>The quick-fix converts to full form destructuring:</p>
+<pre><code>
+  (val first = firstName, val lastName) = person
+</code></pre>
+<p>This form makes the mapping between variables and properties explicit.</p>
+</body>
+</html>

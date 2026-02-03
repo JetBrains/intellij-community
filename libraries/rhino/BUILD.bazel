@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.rhino` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "rhino_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "rhino",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":rhino_resources"],
+  exports = ["@lib//:libraries-rhino-rhino"],
+  runtime_deps = ["@lib//:libraries-rhino-rhino"]
+)
+### auto-generated section `build intellij.libraries.rhino` end

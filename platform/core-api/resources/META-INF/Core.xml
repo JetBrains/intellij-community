@@ -1,0 +1,55 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="Core.analyzer.xml"/>
+
+  <extensionPoints>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="applicationService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="projectService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
+    <extensionPoint name="vfs.asyncListener" interface="com.intellij.openapi.vfs.AsyncFileListener" dynamic="true"/>
+    <extensionPoint name="vfs.asyncListenerBackgroundable" interface="com.intellij.openapi.vfs.AsyncFileListener" dynamic="true"/>
+
+    <!-- only bundled plugin can define initProjectActivity -->
+    <extensionPoint name="initProjectActivity" interface="com.intellij.openapi.startup.InitProjectActivity" dynamic="false"/>
+    <extensionPoint name="postStartupActivity" interface="com.intellij.openapi.startup.ProjectActivity" dynamic="true"/>
+    <extensionPoint name="backgroundPostStartupActivity" interface="com.intellij.openapi.startup.ProjectActivity" dynamic="true"/>
+    <extensionPoint name="requiredForSmartModeStartupActivity" interface="com.intellij.openapi.startup.StartupActivity$RequiredForSmartMode" dynamic="true"/>
+
+    <!-- only bundled plugin can define initProjectGeneratorActivity -->
+    <extensionPoint name="initProjectGeneratorActivity" interface="com.intellij.openapi.project.InitProjectGeneratorActivity" dynamic="false"/>
+
+    <extensionPoint name="multiverse.codeInsightContextPresentationProvider" interface="com.intellij.codeInsight.multiverse.CodeInsightContextPresentationProvider" dynamic="true"/>
+
+    <extensionPoint name="fileTypeDetector" interface="com.intellij.openapi.fileTypes.FileTypeRegistry$FileTypeDetector" dynamic="true"/>
+    <extensionPoint name="editorFactoryDocumentListener" interface="com.intellij.openapi.editor.event.DocumentListener" dynamic="true"/>
+    <extensionPoint name="multiHostInjector" interface="com.intellij.lang.injection.MultiHostInjector" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint name="languageInjectionContributor" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.injection.general.LanguageInjectionContributor"/>
+    </extensionPoint>
+    <extensionPoint name="languageInjectionPerformer" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.injection.general.LanguageInjectionPerformer"/>
+    </extensionPoint>
+    <extensionPoint name="writingAccessProvider" area="IDEA_PROJECT" interface="com.intellij.openapi.vfs.WritingAccessProvider" dynamic="true"/>
+    <extensionPoint name="fileVisibilityProvider" area="IDEA_PROJECT" interface="com.intellij.openapi.vfs.FileVisibilityProvider" dynamic="true"/>
+    <extensionPoint name="virtualFilePreCloseCheck" interface="com.intellij.openapi.vfs.VirtualFilePreCloseCheck" dynamic="true"/>
+    <extensionPoint name="lang.elementManipulator" beanClass="com.intellij.openapi.util.ClassExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.psi.ElementManipulator"/>
+    </extensionPoint>
+    <!--suppress PluginXmlValidity -->
+
+    <extensionPoint name="pom.declarationSearcher" interface="com.intellij.pom.PomDeclarationSearcher" dynamic="true"/>
+    <extensionPoint name="iconLayerProvider" interface="com.intellij.ide.IconLayerProvider" dynamic="true"/>
+    <extensionPoint name="lang.fileViewProviderFactory" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.psi.FileViewProviderFactory"/>
+    </extensionPoint>
+    <extensionPoint name="fileIconProvider" interface="com.intellij.ide.FileIconProvider" dynamic="true"/>
+    <extensionPoint name="fileIconPatcher" interface="com.intellij.ide.FileIconPatcher" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.util.messages.MessageBusFactory"
+                        serviceImplementation="com.intellij.util.messages.impl.MessageBusFactoryImpl"/>
+    <applicationService serviceImplementation="com.intellij.ide.debug.ApplicationStateDebugSupport" preload="true"/>
+  </extensions>
+</idea-plugin>

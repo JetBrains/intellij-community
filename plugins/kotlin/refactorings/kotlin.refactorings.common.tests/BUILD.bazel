@@ -1,0 +1,58 @@
+### auto-generated section `build kotlin.refactorings.common.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "kotlin-refactorings-common-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//java/openapi:java",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//libraries/kotlin/reflect",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/test-framework",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-refactorings-common-tests_test_lib",
+  module_name = "kotlin.refactorings.common.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "//java/java-indexing-api:indexing",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/refactoring",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/openapi:java",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//libraries/kotlin/reflect",
+    "//java/testFramework",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/test-framework",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+  ],
+  runtime_deps = [":kotlin-refactorings-common-tests"]
+)
+### auto-generated section `build kotlin.refactorings.common.tests` end
+
+### auto-generated section `test kotlin.refactorings.common.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "kotlin-refactorings-common-tests_test",
+  runtime_deps = [":kotlin-refactorings-common-tests_test_lib"]
+)
+### auto-generated section `test kotlin.refactorings.common.tests` end

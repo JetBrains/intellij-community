@@ -1,0 +1,2 @@
+Ab<caret>Dabra<caret>Hum<caret>ump Hu<caret>mp
+<caret>

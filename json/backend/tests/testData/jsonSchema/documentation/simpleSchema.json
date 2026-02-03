@@ -1,0 +1,10 @@
+{
+  "properties": {
+    "my_property": {
+      "description": "my property description 1"
+    },
+    "my_property2": {
+      "description": "my property description 2"
+    }
+  }
+}

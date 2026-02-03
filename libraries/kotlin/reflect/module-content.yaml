@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlin.reflect.jar
+  modules:
+  - name: intellij.libraries.kotlin.reflect
+  library: kotlin-reflect
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/2/kotlin-reflect-2.jar

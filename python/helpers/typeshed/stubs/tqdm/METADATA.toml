@@ -1,0 +1,10 @@
+version = "4.67.*"
+upstream_repository = "https://github.com/tqdm/tqdm"
+requires = ["types-requests"]
+
+[tool.stubtest]
+extras = ["slack", "telegram"]
+# Add `"tensorflow"` to this list when there's a tensorflow release supporting
+# Python 3.13: https://github.com/tensorflow/tensorflow/issues/78774.
+# Also remove tqdm.keras from @tests/stubtest_allowlist.txt.
+stubtest_requirements = ["dask", "pandas", "rich"]

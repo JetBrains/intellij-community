@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.platform.ijent.community.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "testFramework_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "testFramework",
+  module_name = "intellij.platform.ijent.community.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":testFramework_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/core-api:core",
+    "//platform/eel-impl",
+    "//platform/eel-provider",
+    "//platform/platform-impl:ide-impl",
+    "//platform/testFramework",
+    "//platform/util/coroutines",
+    "//platform/platform-impl/eel:ide-impl-wsl",
+    "//platform/execution",
+  ]
+)
+### auto-generated section `build intellij.platform.ijent.community.testFramework` end

@@ -1,0 +1,10 @@
+// "Convert expression to 'Collection' by inserting '.toList()'" "true"
+// WITH_STDLIB
+
+fun foo(a: Array<String>) {
+    bar(a.toList()<caret>)
+}
+
+fun bar(a: Collection<String>) {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertCollectionFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertCollectionFix

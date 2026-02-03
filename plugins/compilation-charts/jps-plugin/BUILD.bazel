@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.compilation.charts.jps` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "compilation-charts-jps_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "compilation-charts-jps",
+  module_name = "intellij.compilation.charts.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":compilation-charts-jps_resources"],
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "//jps/jps-builders:build",
+    "//platform/util",
+    "//libraries/gson",
+    "//jps/model-api:model",
+  ]
+)
+### auto-generated section `build intellij.compilation.charts.jps` end

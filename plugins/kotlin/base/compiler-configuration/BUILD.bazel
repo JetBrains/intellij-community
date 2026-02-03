@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.kotlin.base.compilerConfiguration` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "compiler-configuration",
+  module_name = "intellij.kotlin.base.compilerConfiguration",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//platform/util/jdom",
+    "//platform/core-api:core",
+    "//platform/projectModel-impl",
+  ]
+)
+### auto-generated section `build intellij.kotlin.base.compilerConfiguration` end

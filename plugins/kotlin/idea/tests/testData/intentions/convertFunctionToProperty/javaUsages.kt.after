@@ -1,0 +1,5 @@
+// PRIORITY: LOW
+package test
+
+val foo<caret>: Boolean
+    get() = true

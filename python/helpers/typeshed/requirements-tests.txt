@@ -1,0 +1,23 @@
+# Type checkers that we test our stubs against. These should always
+# be pinned to a specific version to make failure reproducible.
+mypy==1.19.1
+pyright==1.1.408
+
+# Libraries used by our various scripts.
+aiohttp==3.13.3
+grpcio-tools>=1.76.0 # For grpc_tools.protoc
+mypy-protobuf==4.0.0
+packaging==25.0
+pathspec>=1.0.3
+pre-commit
+# Required by create_baseline_stubs.py. Must match .pre-commit-config.yaml.
+ruff==0.14.10
+stubdefaulter==0.1.0
+termcolor>=2.3
+tomli==2.3.0; python_version < "3.11"
+tomlkit==0.13.3
+typing_extensions>=4.15.0rc1
+uv==0.9.22
+
+# Utilities for typeshed infrastructure scripts.
+ts_utils @ file:lib

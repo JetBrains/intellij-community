@@ -1,0 +1,41 @@
+### auto-generated section `build intellij.python.community.aliasProvider` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "aliasProvider_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "aliasProvider",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":aliasProvider_resources"],
+  runtime_deps = [
+    "//python/python-parser:parser",
+    "//python/python-ast:ast",
+    "//python/python-syntax-core:syntax-core",
+    "//python/python-syntax:syntax",
+    "//python/python-psi-api:psi",
+    "//python/python-psi-impl:psi-impl",
+    "//python/python-sdk:sdk",
+    "//python/python-sdk-ui:sdk-ui",
+    "//python/python-pyproject:pyproject",
+    "//python/python-core-impl:community-core-impl",
+    "//python/impl.helperLocator:community-helpersLocator",
+    "//python/openapi:community",
+    "//python:python-community-impl",
+    "//python/python-exec-service:community-execService",
+    "//python/python-exec-service/execService.python",
+    "//python/installer",
+    "//python:python-pydev",
+    "//python/python-venv:venv",
+    "//python/python-hatch:hatch",
+    "//python/services/internal-impl:python-community-services-internal-impl",
+    "//python/services/shared",
+    "//python/services/system-python",
+    "//python/interpreters",
+  ]
+)
+### auto-generated section `build intellij.python.community.aliasProvider` end

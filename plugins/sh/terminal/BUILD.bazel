@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.sh.terminal` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "terminal_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "terminal",
+  module_name = "intellij.sh.terminal",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":terminal_resources"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/terminal",
+    "//platform/platform-api:ide",
+    "//platform/execution-impl",
+    "//platform/core-ui",
+    "//libraries/jediterm-ui",
+    "//plugins/sh/core",
+    "//libraries/jediterm-core",
+  ],
+  runtime_deps = ["//platform/backend"]
+)
+### auto-generated section `build intellij.sh.terminal` end

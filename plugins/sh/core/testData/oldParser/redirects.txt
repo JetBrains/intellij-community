@@ -1,0 +1,111 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    GENERIC_COMMAND_DIRECTIVE
+      REDIRECTION
+        PsiElement(>)('>')
+        PsiWhiteSpace(' ')
+        PsiElement(word)('OUT')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('echo')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(>)('>')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('OUT')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    GENERIC_COMMAND_DIRECTIVE
+      REDIRECTION
+        NUMBER
+          PsiElement(int)('2')
+        PsiElement(>)('>')
+        PsiElement(word)('OUT')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('echo')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          NUMBER
+            PsiElement(int)('2')
+          PsiElement(>)('>')
+          PsiElement(word)('OUT')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)(':')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(>)('>')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('OUT')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    GENERIC_COMMAND_DIRECTIVE
+      REDIRECTION
+        PsiElement(&>)('&>')
+        PsiWhiteSpace(' ')
+        PsiElement(word)('OUT')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    COMMAND
+      SUBSHELL_COMMAND
+        PsiElement(()('(')
+        COMPOUND_LIST
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('echo')
+        PsiElement())(')')
+      PsiWhiteSpace(' ')
+      REDIRECTION
+        NUMBER
+          PsiElement(int)('2')
+        PsiElement(>)('>')
+        PsiElement(word)('OUT')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('exec')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          NUMBER
+            PsiElement(int)('9')
+          PsiWhiteSpace(' ')
+          PsiElement(<&)('<&')
+          PsiWhiteSpace(' ')
+          NUMBER
+            PsiElement(int)('0')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(<)('<')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('/etc/fstab')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    INCLUDE_COMMAND
+      INCLUDE_DIRECTIVE
+        PsiElement(word)('.')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('x')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(>&)('>&')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('/dev/null')

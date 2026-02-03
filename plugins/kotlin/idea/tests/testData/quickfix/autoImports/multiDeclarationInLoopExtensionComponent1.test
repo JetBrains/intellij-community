@@ -1,0 +1,45 @@
+// FILE: first.before.kt
+// "Import operator 'Some.component1'" "true"
+// WITH_STDLIB
+// ERROR: Destructuring declaration initializer of type Some must have a 'component1()' function
+// IGNORE_K1
+
+package testing
+
+import some.Some
+import some.component2
+
+fun testing(listOfSome: List<Some>) {
+    for ((a, b)<caret> in listOfSome) {}
+}
+//-----------------------
+
+
+// FILE: second.kt
+
+package some
+
+public class Some
+
+operator fun Some.component1() = 1
+operator fun Some.component2() = 3
+//-----------------------
+
+
+// FILE: first.after.kt
+// "Import operator 'Some.component1'" "true"
+// WITH_STDLIB
+// ERROR: Destructuring declaration initializer of type Some must have a 'component1()' function
+// IGNORE_K1
+
+package testing
+
+import some.Some
+import some.component1
+import some.component2
+
+fun testing(listOfSome: List<Some>) {
+    for ((a, b)<caret> in listOfSome) {}
+}
+//-----------------------
+

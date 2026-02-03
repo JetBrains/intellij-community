@@ -1,0 +1,6 @@
+JsonFile: n_array_just_comma.json
+  JsonArray
+    PsiElement([)('[')
+    PsiErrorElement:<value> expected, got ','
+      PsiElement(,)(',')
+    PsiElement(])(']')

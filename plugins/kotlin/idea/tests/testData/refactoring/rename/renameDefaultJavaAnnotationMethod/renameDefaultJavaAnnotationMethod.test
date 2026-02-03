@@ -1,0 +1,7 @@
+{
+  "type": "MARKED_ELEMENT",
+  "mainFile": "test/JAnn.java",
+  "newName": "valueNew",
+  "withRuntime": "true",
+  "enabledInK2": true
+}

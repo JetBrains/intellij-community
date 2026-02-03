@@ -1,0 +1,11 @@
+   bar(new Runnable() {
+       void run() {
+
+       }
+       })
+-----
+bar(new Runnable() {
+  void run() {
+
+  }
+})

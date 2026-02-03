@@ -1,0 +1,121 @@
+### auto-generated section `build intellij.searchEverywhereMl.ranking.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "core_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "core",
+  module_name = "intellij.searchEverywhereMl.ranking.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":core_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/lang-api:lang",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//libraries/caffeine",
+    "//platform/core-impl",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/usageView",
+    "//platform/statistics",
+    "//platform/ml-impl",
+    "//platform/platform-impl/internal",
+    "//platform/core-ui",
+    "//platform/execution-impl",
+    "//json/backend",
+    "@lib//:search_everywhere_ml-ranking-core-find-action-model",
+    "@lib//:search_everywhere_ml-ranking-core-find-action-model-experimental",
+    "@lib//:search_everywhere_ml-ranking-core-find-file-model",
+    "@lib//:search_everywhere_ml-ranking-core-find-file-model-experimental",
+    "@lib//:search_everywhere_ml-ranking-core-find-classes-model",
+    "@lib//:search_everywhere_ml-ranking-core-find-classes-model-experimental",
+    "@lib//:search_everywhere_ml-ranking-core-find-all-model-experimental",
+    "@lib//:search_everywhere_ml-ranking-core-find-ec-model-experimental",
+    "//plugins/search-everywhere-ml/ranking/ext",
+    "//plugins/search-everywhere-ml",
+    "//platform/execution",
+  ],
+  exports = ["//platform/statistics"]
+)
+
+jvm_library(
+  name = "core_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [":core"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core",
+    "//platform/lang-api:lang",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//libraries/caffeine",
+    "//platform/core-impl",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/lang-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/usageView",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/ml-impl",
+    "//platform/ml-impl:ml-impl_test_lib",
+    "//platform/platform-impl/internal",
+    "//platform/core-ui",
+    "//platform/execution-impl",
+    "//json/backend",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:search_everywhere_ml-ranking-core-find-action-model",
+    "@lib//:search_everywhere_ml-ranking-core-find-action-model-experimental",
+    "@lib//:search_everywhere_ml-ranking-core-find-file-model",
+    "@lib//:search_everywhere_ml-ranking-core-find-file-model-experimental",
+    "@lib//:search_everywhere_ml-ranking-core-find-classes-model",
+    "@lib//:search_everywhere_ml-ranking-core-find-classes-model-experimental",
+    "@lib//:search_everywhere_ml-ranking-core-find-all-model-experimental",
+    "@lib//:search_everywhere_ml-ranking-core-find-ec-model-experimental",
+    "//plugins/search-everywhere-ml/ranking/ext",
+    "//plugins/search-everywhere-ml",
+    "//plugins/search-everywhere-ml:search-everywhere-ml_test_lib",
+    "//platform/bookmarks",
+    "//platform/statistics/testFramework",
+    "//platform/execution",
+  ],
+  exports = [
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+  ]
+)
+### auto-generated section `build intellij.searchEverywhereMl.ranking.core` end
+
+### auto-generated section `test intellij.searchEverywhereMl.ranking.core` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "core_test",
+  runtime_deps = [":core_test_lib"]
+)
+### auto-generated section `test intellij.searchEverywhereMl.ranking.core` end

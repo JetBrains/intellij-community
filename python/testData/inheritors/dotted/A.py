@@ -1,0 +1,3 @@
+class A(object):
+  pass
+  

@@ -1,0 +1,4 @@
+class Foo {
+    var foo: Int
+        get() = 0;<caret> set(value) {}
+}

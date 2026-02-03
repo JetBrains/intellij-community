@@ -1,0 +1,9 @@
+""" abc \"""
+-----
+Groovy script
+  Compound Gstring
+    PsiElement(Gstring begin)('"""')
+    GrStringContentImpl(STRING_CONTENT)
+      PsiElement(Gstring content)(' abc \"""')
+    PsiErrorElement:Gstring end expected
+      <empty list>

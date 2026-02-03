@@ -1,0 +1,7 @@
+// AFTER-WARNING: Parameter 't' is never used
+
+fun <T> foo(t: T) {
+    bar<_>(t)
+}
+
+fun <T> bar(t: T): Int = 1

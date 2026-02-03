@@ -1,0 +1,180 @@
+{
+  "version": 2,
+  "seed": 42,
+  "groups": [
+    {
+      "number": 7,
+      "description": "Standard completion",
+      "useMLRanking": false,
+      "showArrows": false,
+      "calculateFeatures": true
+    },
+    {
+      "number": 8,
+      "description": "Default ML model without arrows",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
+    },
+    {
+      "number": 11,
+      "description": "Default ML model with arrows",
+      "useMLRanking": true,
+      "showArrows": true,
+      "calculateFeatures": true
+    },
+    {
+      "number": 12,
+      "description": "Standard completion without calculation features",
+      "useMLRanking": false,
+      "showArrows": false,
+      "calculateFeatures": false
+    },
+    {
+      "number": 13,
+      "description": "First experimental model",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
+    },
+    {
+      "number": 14,
+      "description": "Second experimental model",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
+    },
+    {
+      "number": 17,
+      "description": "Completion performance (early lookup & MLRanking)",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
+    },
+    {
+      "number": 18,
+      "description": "Completion performance (early lookup)",
+      "useMLRanking": false,
+      "showArrows": false,
+      "calculateFeatures": true
+    },
+    {
+      "number": 19,
+      "description": "Completion performance",
+      "useMLRanking": false,
+      "showArrows": false,
+      "calculateFeatures": true
+    },
+    {
+      "number": 22,
+      "description": "Full Line - Llama 1536ctx",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
+    }
+  ],
+  "languages": [
+    {
+      "id": "java",
+      "experimentBucketsCount": 4,
+      "includeGroups": [28, 38, 22, 24],
+      "shouldLogElementFeatures": false
+    },
+    {
+      "id": "python",
+      "experimentBucketsCount": 4,
+      "includeGroups": [28, 38, 22, 24],
+      "shouldLogElementFeatures": true
+    },
+    {
+      "id": "kotlin",
+      "experimentBucketsCount": 4,
+      "includeGroups": [28, 38, 22, 24],
+      "shouldLogElementFeatures": true
+    },
+    {
+      "id": "scala",
+      "experimentBucketsCount": 4,
+      "includeGroups": [ 7, 8, 12, 13 ],
+      "shouldLogElementFeatures": true
+    },
+    {
+      "id": "php",
+      "experimentBucketsCount": 4,
+      "includeGroups": [28, 39, 38, 35],
+      "shouldLogElementFeatures": false
+    },
+    {
+      "id": "javascript",
+      "experimentBucketsCount": 2,
+      "includeGroups": [31, 40],
+      "shouldLogElementFeatures": true
+    },
+    {
+      "id": "ruby",
+      "experimentBucketsCount": 1,
+      "includeGroups": [38],
+      "shouldLogElementFeatures": true
+    },
+    {
+      "id": "go",
+      "experimentBucketsCount": 2,
+      "includeGroups": [28, 38],
+      "shouldLogElementFeatures": true
+    },
+    {
+      "id": "rust",
+      "experimentBucketsCount": 4,
+      "includeGroups": [8, 42, 43, 41],
+      "shouldLogElementFeatures": true
+    },
+    {
+      "id": "swift",
+      "experimentBucketsCount": 4,
+      "includeGroups": [7, 8, 12, 13],
+      "shouldLogElementFeatures": true
+    },
+    {
+      "id": "mysql",
+      "experimentBucketsCount": 4,
+      "includeGroups": [7, 8, 12, 2],
+      "shouldLogElementFeatures": false
+    },
+    {
+      "id": "C#",
+      "experimentBucketsCount": 2,
+      "includeGroups": [22, 28],
+      "shouldLogElementFeatures": false
+    },
+    {
+      "id": "objectivec",
+      "experimentBucketsCount": 4,
+      "includeGroups": [7, 8, 12, 2],
+      "shouldLogElementFeatures": false
+    },
+    {
+      "id": "C++",
+      "experimentBucketsCount": 2,
+      "includeGroups": [22, 28],
+      "shouldLogElementFeatures": false
+    },
+    {
+      "id": "html",
+      "experimentBucketsCount": 8,
+      "includeGroups": [7, 7, 12, 12, 13, 13, 2, 2],
+      "shouldLogElementFeatures": false
+    },
+    {
+      "id": "css",
+      "experimentBucketsCount": 2,
+      "includeGroups": [31, 40],
+      "shouldLogElementFeatures": true
+    },
+    {
+      "id": "shell script",
+      "experimentBucketsCount": 4,
+      "includeGroups": [7, 12, 13, 2],
+      "shouldLogElementFeatures": true
+    }
+  ]
+}

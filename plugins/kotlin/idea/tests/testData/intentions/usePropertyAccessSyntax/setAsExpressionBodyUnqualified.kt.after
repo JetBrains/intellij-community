@@ -1,0 +1,6 @@
+// WITH_STDLIB
+class C: Thread() {
+    fun foo(n: String) {
+        name = n
+    }
+}

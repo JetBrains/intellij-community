@@ -1,0 +1,9 @@
+- name: lib/modules/intellij.platform.images.copyright.jar
+  contentModules:
+  - name: intellij.platform.images.copyright
+- name: lib/modules/intellij.platform.images.xdebugger.jar
+  contentModules:
+  - name: intellij.platform.images.xdebugger
+- name: lib/platform-images.jar
+  modules:
+  - name: intellij.platform.images

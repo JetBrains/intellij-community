@@ -1,0 +1,31 @@
+### auto-generated section `build intellij.execution.process.elevation` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "execution-process-elevation_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "execution-process-elevation",
+  module_name = "intellij.execution.process.elevation",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":execution-process-elevation_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/execution-process-mediator/client",
+    "//platform/execution-process-mediator/daemon",
+    "//platform/execution-process-mediator/common",
+    "//platform/core-api:core",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core-impl",
+    "@lib//:jna",
+    "//platform/projectModel-api:projectModel",
+    "//libraries/grpc",
+  ]
+)
+### auto-generated section `build intellij.execution.process.elevation` end

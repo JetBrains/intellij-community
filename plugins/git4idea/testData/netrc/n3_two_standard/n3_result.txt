@@ -1,0 +1,2 @@
+bitbucket.org john pass
+github.com bob pswd

@@ -1,0 +1,33 @@
+{
+  "images": {
+    "expui": {
+      "build": {
+        "mavenChildrenProjects.svg": "images/childrenProjects.svg",
+        "mavenLoadChanges.svg": "images/mavenLoadChanges.svg",
+        "mavenModule.svg": "images/modulesClosed.svg",
+        "mavenParentProjects.svg": "images/parentProject.svg",
+        "mavenPlugin.svg": "images/mavenPlugin.svg",
+        "mavenGoal.svg": "images/executeMavenGoal.svg",
+        "mavenPluginGoal.svg": [
+          "images/pluginGoal.svg",
+          "images/mavenRepoRemote.svg"
+        ],
+        "mavenProfiles.svg": [
+          "images/profilesClosed.svg",
+          "images/mavenRepoFolder.svg"
+        ],
+        "mavenProject.svg": [
+          "images/mavenProject.svg",
+          "images/mavenRepoLocal.svg"
+        ],
+        "updateFolders.svg": "images/updateFolders.svg"
+      },
+      "fileTypes": {
+        "mavenIgnored.svg": "images/mavenIgnored.svg"
+      },
+      "toolwindow": {
+        "maven.svg": "images/toolWindowMaven.svg"
+      }
+    }
+  }
+}

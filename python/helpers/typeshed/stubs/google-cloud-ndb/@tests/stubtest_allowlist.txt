@@ -1,0 +1,4 @@
+# inconsistency of signatures between stub and implementation (cls vs self)
+google.cloud.ndb.ModelAdapter.__new__
+google.cloud.ndb.metadata.EntityGroup.__new__
+google.cloud.ndb.model.ModelAdapter.__new__

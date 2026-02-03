@@ -1,0 +1,19 @@
+// "Replace ',' with '||' in when" "true"
+// ERROR: Expected condition of type Boolean
+// ERROR: Expected condition of type Boolean
+// K2_AFTER_ERROR: Condition of type 'Boolean' expected.
+// K2_AFTER_ERROR: Condition of type 'Boolean' expected.
+fun test(i: Int, j: Int) {
+    var b = false
+    when {
+        i == 0 -> { /* code 1 */ }
+        i > 0 || j > 0 -> { /* code 2 */ }
+        j == 0 -> { /* code 3 */ }
+        i < 0 || j < 0 || j > i -> { /* code 4 */ }
+        in 1..2 -> { /* code 5 */ }
+        is Int -> { /* code 6 */ }
+        else -> { /* other code */ }
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CommaInWhenConditionWithoutArgumentFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CommaInWhenConditionWithoutArgumentFix

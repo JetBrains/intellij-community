@@ -1,0 +1,66 @@
+### auto-generated section `build kotlin.j2k.k1.new.post-processing` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_k1.new.post-processing",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ],
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "k1.new.post-processing_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "k1.new.post-processing",
+  module_name = "kotlin.j2k.k1.new.post-processing",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":k1.new.post-processing_resources"],
+  kotlinc_opts = ":custom_k1.new.post-processing",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:vavr",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-analysis-api",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/core-impl",
+    "//platform/refactoring",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/base/fe10/code-insight",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/j2k/shared",
+    "//plugins/kotlin/j2k/k1.new",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+    "//plugins/kotlin/idea",
+    "//platform/lang-impl",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//java/java-psi-api:psi",
+    "//java/java-indexing-api:indexing",
+    "//plugins/kotlin/code-insight/api",
+    "//plugins/kotlin/code-insight/utils",
+    "//plugins/kotlin/code-insight/intentions-shared:kotlin-code-insight-intentions-shared",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+    "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
+  ]
+)
+### auto-generated section `build kotlin.j2k.k1.new.post-processing` end

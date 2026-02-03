@@ -1,0 +1,10 @@
+// WITH_STDLIB
+fun test(b: Boolean): Int? {
+    <caret>if (b) {
+        return 1
+    } else {
+        return getNull()
+    }
+}
+
+private fun getNull(): Nothing? = null

@@ -1,0 +1,105 @@
+f:org.jetbrains.jewel.ui.component.ComboBoxKt
+- *bsf:ComboBox-8u0NR3k(kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,org.jetbrains.jewel.ui.component.PopupManager,androidx.compose.runtime.Composer,I,I,I):V
+- *sf:ComboBox-PlcyrME(kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,F,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,org.jetbrains.jewel.ui.component.PopupManager,androidx.compose.runtime.Composer,I,I,I):V
+f:org.jetbrains.jewel.ui.component.DropdownKt
+- *sf:Dropdown(androidx.compose.ui.Modifier,Z,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.Outline,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.DropdownStyle,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
+*f:org.jetbrains.jewel.ui.component.DropdownState
+- org.jetbrains.jewel.foundation.state.FocusableComponentState
+- *sf:Companion:org.jetbrains.jewel.ui.component.DropdownState$Companion
+- bsf:box-impl(J):org.jetbrains.jewel.ui.component.DropdownState
+- s:constructor-impl(J):J
+- sf:copy-17HSnUM(J,Z,Z,Z,Z,Z):J
+- bs:copy-17HSnUM$default(J,Z,Z,Z,Z,Z,I,java.lang.Object):J
+- equals(java.lang.Object):Z
+- s:equals-impl(J,java.lang.Object):Z
+- sf:equals-impl0(J,J):Z
+- f:getState-s-VKNKU():J
+- hashCode():I
+- s:hashCode-impl(J):I
+- isActive():Z
+- s:isActive-impl(J):Z
+- isEnabled():Z
+- s:isEnabled-impl(J):Z
+- isFocused():Z
+- s:isFocused-impl(J):Z
+- isHovered():Z
+- s:isHovered-impl(J):Z
+- isPressed():Z
+- s:isPressed-impl(J):Z
+- s:toString-impl(J):java.lang.String
+- bf:unbox-impl():J
+*f:org.jetbrains.jewel.ui.component.DropdownState$Companion
+- f:of-17HSnUM(Z,Z,Z,Z,Z):J
+- bs:of-17HSnUM$default(org.jetbrains.jewel.ui.component.DropdownState$Companion,Z,Z,Z,Z,Z,I,java.lang.Object):J
+*f:org.jetbrains.jewel.ui.component.FixedCursorPoint
+- androidx.compose.foundation.TooltipPlacement
+- sf:$stable:I
+- b:<init>(J,androidx.compose.ui.Alignment,F,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- positionProvider-9KIMszo(J,androidx.compose.runtime.Composer,I):androidx.compose.ui.window.PopupPositionProvider
+f:org.jetbrains.jewel.ui.component.LazyTreeKt
+- *sf:LazyTree(org.jetbrains.jewel.foundation.lazy.tree.Tree,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1,org.jetbrains.jewel.foundation.lazy.tree.TreeState,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.ui.component.styling.LazyTreeStyle,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function4,androidx.compose.runtime.Composer,I,I):V
+- *bsf:LazyTree(org.jetbrains.jewel.foundation.lazy.tree.Tree,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1,org.jetbrains.jewel.foundation.lazy.tree.TreeState,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.ui.component.styling.LazyTreeStyle,kotlin.jvm.functions.Function4,androidx.compose.runtime.Composer,I,I):V
+f:org.jetbrains.jewel.ui.component.ListComboBoxKt
+- *sf:ListComboBox-pglpRAY(java.util.List,I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,F,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,kotlin.jvm.functions.Function1,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,kotlin.jvm.functions.Function5,androidx.compose.runtime.Composer,I,I,I):V
+- *bsf:ListComboBox-xKBSf-U(java.util.List,I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,kotlin.jvm.functions.Function1,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,kotlin.jvm.functions.Function5,androidx.compose.runtime.Composer,I,I,I):V
+*:org.jetbrains.jewel.ui.component.NodeSearchMatchState
+- a:getMatchResult():org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult
+- a:getStyle():org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
+f:org.jetbrains.jewel.ui.component.SpeedSearchAreaKt
+- *sf:ProvideSearchMatchState(org.jetbrains.jewel.ui.component.SpeedSearchState,java.lang.String,org.jetbrains.jewel.ui.component.styling.SearchMatchStyle,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):V
+- *sf:SpeedSearchArea(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle,org.jetbrains.jewel.ui.component.styling.TextFieldStyle,androidx.compose.ui.text.TextStyle,org.jetbrains.jewel.ui.component.styling.SearchMatchStyle,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
+- *sf:getLocalNodeSearchMatchState():androidx.compose.runtime.ProvidableCompositionLocal
+*:org.jetbrains.jewel.ui.component.SpeedSearchScope
+- androidx.compose.foundation.layout.BoxScope
+- a:getInteractionSource():androidx.compose.foundation.interaction.MutableInteractionSource
+- a:getSearchMatchStyle():org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
+- a:getSpeedSearchState():org.jetbrains.jewel.ui.component.SpeedSearchState
+- a:processKeyEvent-ZmokQxo(java.lang.Object):Z
+*:org.jetbrains.jewel.ui.component.SpeedSearchState
+- a:attach(kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.CoroutineDispatcher,kotlin.coroutines.Continuation):java.lang.Object
+- bs:attach$default(org.jetbrains.jewel.ui.component.SpeedSearchState,kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.CoroutineDispatcher,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- a:clearSearch():Z
+- a:getHasMatches():Z
+- a:getMatchingIndexes():java.util.List
+- a:getPosition():androidx.compose.ui.Alignment$Vertical
+- a:getSearchText():java.lang.String
+- a:hideSearch():Z
+- a:isVisible():Z
+- a:matchResultForText(java.lang.String):org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult
+- a:setPosition(androidx.compose.ui.Alignment$Vertical):V
+f:org.jetbrains.jewel.ui.component.TabStripKt
+- *bsf:TabStrip(java.util.List,org.jetbrains.jewel.ui.component.styling.TabStyle,androidx.compose.ui.Modifier,Z,androidx.compose.runtime.Composer,I,I):V
+f:org.jetbrains.jewel.ui.component.TextAreaKt
+- *sf:TextArea(androidx.compose.ui.text.input.TextFieldValue,kotlin.jvm.functions.Function1,androidx.compose.ui.Modifier,Z,Z,kotlin.jvm.functions.Function2,Z,org.jetbrains.jewel.ui.Outline,androidx.compose.ui.text.input.VisualTransformation,androidx.compose.foundation.text.KeyboardOptions,androidx.compose.foundation.text.KeyboardActions,I,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.TextAreaStyle,androidx.compose.ui.text.TextStyle,androidx.compose.foundation.interaction.MutableInteractionSource,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I,I):V
+f:org.jetbrains.jewel.ui.component.TextFieldKt
+- *sf:TextField(androidx.compose.ui.text.input.TextFieldValue,kotlin.jvm.functions.Function1,androidx.compose.ui.Modifier,Z,Z,org.jetbrains.jewel.ui.Outline,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,Z,androidx.compose.ui.text.input.VisualTransformation,androidx.compose.foundation.text.KeyboardOptions,androidx.compose.foundation.text.KeyboardActions,kotlin.jvm.functions.Function1,org.jetbrains.jewel.ui.component.styling.TextFieldStyle,androidx.compose.ui.text.TextStyle,androidx.compose.foundation.interaction.MutableInteractionSource,androidx.compose.runtime.Composer,I,I,I):V
+f:org.jetbrains.jewel.ui.component.TooltipKt
+- *sf:rememberPopupPositionProviderAtFixedPosition-7KAyTs4(J,J,androidx.compose.ui.Alignment,F,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.window.PopupPositionProvider
+f:org.jetbrains.jewel.ui.component.TypographyKt
+- *sf:computeLineHeightPx(java.awt.Font):I
+f:org.jetbrains.jewel.ui.component.search.HighlightKt
+- *sf:highlightSpeedSearchMatches(androidx.compose.ui.Modifier,androidx.compose.ui.text.TextLayoutResult,org.jetbrains.jewel.ui.component.NodeSearchMatchState,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.Modifier
+- *sf:highlightTextSearch(java.lang.CharSequence,org.jetbrains.jewel.ui.component.NodeSearchMatchState,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.text.AnnotatedString
+f:org.jetbrains.jewel.ui.component.search.SpeedSearchableComboBoxKt
+- *sf:SpeedSearchableComboBox-C3xArm8(org.jetbrains.jewel.ui.component.SpeedSearchScope,java.util.List,I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,F,F,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,kotlin.jvm.functions.Function1,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,kotlinx.coroutines.CoroutineDispatcher,kotlin.jvm.functions.Function5,androidx.compose.runtime.Composer,I,I,I):V
+- *sf:SpeedSearchableComboBox-MCfSvGQ(org.jetbrains.jewel.ui.component.SpeedSearchScope,java.util.List,I,kotlin.jvm.functions.Function1,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,Z,org.jetbrains.jewel.ui.Outline,F,F,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function1,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,kotlinx.coroutines.CoroutineDispatcher,androidx.compose.runtime.Composer,I,I,I):V
+f:org.jetbrains.jewel.ui.component.search.SpeedSearchableLazyColumnKt
+- *sf:SpeedSearchableLazyColumn(org.jetbrains.jewel.ui.component.SpeedSearchScope,androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.SelectionMode,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,androidx.compose.foundation.layout.PaddingValues,Z,kotlin.jvm.functions.Function1,androidx.compose.foundation.layout.Arrangement$Vertical,androidx.compose.ui.Alignment$Horizontal,androidx.compose.foundation.gestures.FlingBehavior,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions,kotlinx.coroutines.CoroutineDispatcher,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I,I):V
+*:org.jetbrains.jewel.ui.component.search.SpeedSearchableLazyColumnScope
+- a:item(java.lang.Object,kotlin.jvm.functions.Function0,java.lang.Object,Z,kotlin.jvm.functions.Function3):V
+- bs:item$default(org.jetbrains.jewel.ui.component.search.SpeedSearchableLazyColumnScope,java.lang.Object,kotlin.jvm.functions.Function0,java.lang.Object,Z,kotlin.jvm.functions.Function3,I,java.lang.Object):V
+- a:items(java.util.List,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function4):V
+- bs:items$default(org.jetbrains.jewel.ui.component.search.SpeedSearchableLazyColumnScope,java.util.List,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function4,I,java.lang.Object):V
+- a:stickyHeader(java.lang.Object,kotlin.jvm.functions.Function0,java.lang.Object,Z,kotlin.jvm.functions.Function3):V
+- bs:stickyHeader$default(org.jetbrains.jewel.ui.component.search.SpeedSearchableLazyColumnScope,java.lang.Object,kotlin.jvm.functions.Function0,java.lang.Object,Z,kotlin.jvm.functions.Function3,I,java.lang.Object):V
+f:org.jetbrains.jewel.ui.component.search.SpeedSearchableTreeKt
+- *sf:SpeedSearchableTree(org.jetbrains.jewel.ui.component.SpeedSearchScope,org.jetbrains.jewel.foundation.lazy.tree.Tree,kotlin.jvm.functions.Function1,androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.tree.TreeState,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.ui.component.styling.LazyTreeStyle,kotlinx.coroutines.CoroutineDispatcher,kotlin.jvm.functions.Function4,androidx.compose.runtime.Composer,I,I,I):V
+f:org.jetbrains.jewel.ui.component.styling.IconButtonStylingKt
+- *sf:getLocalTransparentIconButtonStyle():androidx.compose.runtime.ProvidableCompositionLocal
+*f:org.jetbrains.jewel.ui.painter.hints.EmbeddedToInlineCssStyleSvgPatchHint
+- org.jetbrains.jewel.ui.painter.PainterSvgPatchHint
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.ui.painter.hints.EmbeddedToInlineCssStyleSvgPatchHint
+- patch(org.jetbrains.jewel.ui.painter.PainterProviderScope,org.w3c.dom.Element):V
+f:org.jetbrains.jewel.ui.theme.JewelThemeKt
+- *sf:getTransparentIconButtonStyle(org.jetbrains.jewel.foundation.theme.JewelTheme$Companion,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.ui.component.styling.IconButtonStyle

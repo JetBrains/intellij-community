@@ -1,0 +1,4 @@
+// AFTER-WARNING: Variable 's' is never used
+fun foo() {
+    val s<selection>: String</selection><caret> = "Hello"
+}

@@ -1,0 +1,3 @@
+<error descr="Python version 3.13 does not support a 'T' prefix"><warning descr="Python versions 2.7, 3.7, 3.8, 3.9, 3.10, 3.11, 3.12 do not support a 'T' prefix">t</warning></error>"template string"
+<error descr="Python version 3.13 does not support a 'TR' prefix"><warning descr="Python versions 2.7, 3.7, 3.8, 3.9, 3.10, 3.11, 3.12 do not support a 'TR' prefix">tr</warning></error>"template string"
+<error descr="Python version 3.13 does not support a 'T' prefix"><warning descr="Python versions 2.7, 3.7, 3.8, 3.9, 3.10, 3.11, 3.12 do not support a 'T' prefix">t</warning></error>'template string'

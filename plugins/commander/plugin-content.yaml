@@ -1,0 +1,3 @@
+- name: lib/commander.jar
+  modules:
+  - name: intellij.commander

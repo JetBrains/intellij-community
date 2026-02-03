@@ -1,0 +1,3 @@
+for(String s : Arrays.asList("one", "two", "three")) {
+  System.out.println(s);
+}

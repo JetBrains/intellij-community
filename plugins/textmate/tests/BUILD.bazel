@@ -1,0 +1,58 @@
+### auto-generated section `build intellij.textmate.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "intellij.textmate.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//plugins/textmate/core",
+    "//plugins/textmate/joni",
+    "//plugins/textmate/joni:joni_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "@lib//:junit5",
+    "@lib//:kotlin-test",
+    "//libraries/kotlinx/coroutines/test",
+    "//platform/util",
+    "//platform/util/xmlDom",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/coroutines/core",
+    "//plugins/textmate",
+    "//platform/core-api:core",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/textmate/plugin",
+    "//plugins/textmate/backend",
+    "//plugins/textmate/core/tests:tests_test_lib",
+    "@lib//:kotlin-test-junit5",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build intellij.textmate.tests` end
+
+### auto-generated section `test intellij.textmate.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test intellij.textmate.tests` end

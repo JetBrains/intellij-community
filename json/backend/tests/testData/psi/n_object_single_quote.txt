@@ -1,0 +1,10 @@
+JsonFile: n_object_single_quote.json
+  JsonObject
+    PsiElement({)('{')
+    JsonProperty
+      JsonStringLiteral
+        PsiElement(SINGLE_QUOTED_STRING)(''a'')
+      PsiElement(:)(':')
+      JsonNumberLiteral
+        PsiElement(NUMBER)('0')
+    PsiElement(})('}')

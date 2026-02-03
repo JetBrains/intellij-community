@@ -1,0 +1,165 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.psi.impl.compiled;
+
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.PsiRecordHeader;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiRecordComponentStub;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+public final class ClsRecordComponentImpl extends ClsRepositoryPsiElement<PsiRecordComponentStub> implements PsiRecordComponent {
+  private final NotNullLazyValue<PsiTypeElement> myType;
+
+  public ClsRecordComponentImpl(@NotNull PsiRecordComponentStub stub) {
+    super(stub);
+    myType = NotNullLazyValue.atomicLazy(() -> new ClsTypeElementImpl(this, getStub().getType()));
+  }
+
+  @Override
+  public PsiIdentifier getNameIdentifier() {
+    return null;
+  }
+
+  @Override
+  public @NotNull String getName() {
+    return getStub().getName();
+  }
+
+  @Override
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+    throw cannotModifyException(this);
+  }
+
+  @Override
+  public @NotNull PsiTypeElement getTypeElement() {
+    return myType.getValue();
+  }
+
+  @Override
+  public @NotNull PsiType getType() {
+    return getTypeElement().getType();
+  }
+
+  @Override
+  public @NotNull PsiModifierList getModifierList() {
+    final StubElement<PsiModifierList> child =
+      (StubElement<PsiModifierList>)getStub().findChildStubByElementType(JavaStubElementTypes.MODIFIER_LIST);
+    assert child != null;
+    return child.getPsi();
+  }
+
+  @Override
+  public boolean hasModifierProperty(@NotNull String name) {
+    return getModifierList().hasModifierProperty(name);
+  }
+
+  @Override
+  public PsiExpression getInitializer() {
+    return null;
+  }
+
+  @Override
+  public boolean hasInitializer() {
+    return false;
+  }
+
+  @Override
+  public Object computeConstantValue() {
+    return null;
+  }
+
+  @Override
+  public void normalizeDeclaration() throws IncorrectOperationException {
+  }
+
+  @Override
+  public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
+    PsiAnnotation[] annotations = getModifierList().getAnnotations();
+    for (PsiAnnotation annotation : annotations) {
+      appendText(annotation, indentLevel, buffer);
+      buffer.append(' ');
+    }
+    appendText(getTypeElement(), indentLevel, buffer, " ");
+    buffer.append(getName());
+  }
+
+  @Override
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+    setMirrorCheckingType(element, null);
+
+    PsiParameter mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
+    setMirror(getModifierList(), mirror.getModifierList());
+    setMirror(getTypeElement(), mirror.getTypeElement());
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitRecordComponent(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
+
+  @Override
+  public boolean isVarArgs() {
+    return getStub().isVararg();
+  }
+
+  @Override
+  public @NotNull SearchScope getUseScope() {
+    return new LocalSearchScope(getParent());
+  }
+
+  @Override
+  public @NotNull PsiElement getNavigationElement() {
+    PsiClass clsClass = getContainingClass();
+    if (clsClass != null) {
+      PsiClass psiClass = ObjectUtils.tryCast(clsClass.getNavigationElement(), PsiClass.class);
+      if (psiClass != null && psiClass != clsClass) {
+        PsiRecordComponent[] clsComponents = clsClass.getRecordComponents();
+        int index = ArrayUtil.indexOf(clsComponents, this);
+        if (index >= 0) {
+          PsiRecordComponent[] psiComponents = psiClass.getRecordComponents();
+          if (psiComponents.length == clsComponents.length) {
+            return psiComponents[index];
+          }
+        }
+      }
+    }
+    return this;
+  }
+
+  @Override
+  public String toString() {
+    return "PsiRecordComponent:" + getName();
+  }
+
+  @Override
+  public @Nullable PsiClass getContainingClass() {
+    PsiElement parent = getParent();
+    return parent instanceof PsiRecordHeader ? ((PsiRecordHeader)parent).getContainingClass() : null;
+  }
+}

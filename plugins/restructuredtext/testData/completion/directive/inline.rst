@@ -1,0 +1,4 @@
+
+Some text::
+
+  .. no<caret>

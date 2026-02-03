@@ -1,0 +1,23 @@
+<?xml version="1.0"  encoding="UTF-8"?>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" visibility="public">
+  <dependencies>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.core.impl"/>
+
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.spellchecker"/>
+    <module name="intellij.platform.core.ui"/>
+
+    <module name="intellij.platform.backend"/>
+    <plugin id="com.intellij.modules.java-capable"/>
+  </dependencies>
+
+  <xi:include href="/META-INF/ManifestSupport.xml"/>
+
+</idea-plugin>

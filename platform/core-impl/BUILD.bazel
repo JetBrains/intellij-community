@@ -1,0 +1,41 @@
+### auto-generated section `build intellij.platform.core.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "core-impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "core-impl",
+  module_name = "intellij.platform.core.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":core-impl_resources"],
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "//platform/core-api:core",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/util/jdom",
+    "//libraries/fastutil",
+    "//platform/util-class-loader:util-classLoader",
+    "//libraries/aalto-xml",
+    "//platform/util/xmlDom",
+    "//libraries/automaton",
+    "//libraries/guava",
+    "//platform/util/diff",
+    "//platform/diagnostic",
+    "//platform/util",
+    "//platform/diagnostic/telemetry",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/util/coroutines",
+    "//platform/plugins/parser/impl",
+    "//platform/syntax/syntax-api:syntax",
+    "//platform/eel",
+  ],
+  exports = ["@lib//:kotlin-stdlib"]
+)
+### auto-generated section `build intellij.platform.core.impl` end

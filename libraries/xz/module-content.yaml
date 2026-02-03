@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.xz.jar
+  modules:
+  - name: intellij.libraries.xz
+  library: xz
+  files:
+  - name: $MAVEN_REPOSITORY$/org/tukaani/xz/1/xz-1.jar

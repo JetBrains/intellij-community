@@ -1,0 +1,10 @@
+sample:
+  document:
+    hierrarchy:
+      plain: FooBar
+      singleQuote: 'FooBar'
+      doubleQuote: "FooBar"
+      literal: |
+        FooBar
+      folded: >
+        FooBar

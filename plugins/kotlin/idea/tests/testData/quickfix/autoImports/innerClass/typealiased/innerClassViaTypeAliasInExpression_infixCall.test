@@ -1,0 +1,18 @@
+// FILE: first.before.kt
+// "Import" "false"
+// IGNORE_K1
+
+package test
+
+class Outer {
+    inner class Inner
+}
+
+fun usage(f: Outer) {
+    f <caret>InnerTypeAlias 100
+}
+
+// FILE: second.kt
+package some
+
+typealias InnerTypeAlias = test.Outer.Inner

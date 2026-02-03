@@ -1,0 +1,230 @@
+<root>
+    <item name='org.apache.velocity.runtime.parser.JJTParserState JJTParserState()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.JJTParserState boolean nodeCreated()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.JJTParserState int nodeArity()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.JJTParserState void clearNodeScope(org.apache.velocity.runtime.parser.node.Node) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.JJTParserState void closeNodeScope(org.apache.velocity.runtime.parser.node.Node, int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.JJTParserState void openNodeScope(org.apache.velocity.runtime.parser.node.Node) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.ParseException java.lang.String add_escapes(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.ParseException java.lang.String add_escapes(java.lang.String) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.Parser Parser(org.apache.velocity.runtime.RuntimeServices) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.Parser java.lang.String escapedDirective(java.lang.String) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.Parser org.apache.velocity.runtime.parser.ParseException generateParseException()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.Parser org.apache.velocity.runtime.parser.node.SimpleNode Directive()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.Parser org.apache.velocity.runtime.parser.node.SimpleNode parse(java.io.Reader, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.Parser org.apache.velocity.runtime.parser.node.SimpleNode process()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.Parser void disable_tracing()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.Parser void enable_tracing()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.Parser.JJCalls JJCalls()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.Parser.LookaheadSuccess LookaheadSuccess()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.ParserConstants tokenImage'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.ParserTreeConstants jjtNodeName'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.TemplateParseException int getColumnNumber()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.TemplateParseException int getLineNumber()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.TemplateParseException java.lang.String getMessage()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.TemplateParseException java.lang.String getTemplateName()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.TemplateParseException void appendTemplateInfo(java.lang.StringBuffer) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.Token Token()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.Token java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.Token org.apache.velocity.runtime.parser.Token newToken(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.TokenMgrError TokenMgrError()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.TokenMgrError TokenMgrError(boolean, int, int, int, java.lang.String, char, int) 4'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.TokenMgrError TokenMgrError(java.lang.String, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.TokenMgrError java.lang.String LexicalError(boolean, int, int, int, java.lang.String, char)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.TokenMgrError java.lang.String LexicalError(boolean, int, int, int, java.lang.String, char) 4'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.TokenMgrError java.lang.String addEscapes(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.TokenMgrError java.lang.String addEscapes(java.lang.String) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.VelocityCharStream VelocityCharStream(java.io.InputStream, int, int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.VelocityCharStream VelocityCharStream(java.io.InputStream, int, int, int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.VelocityCharStream VelocityCharStream(java.io.Reader, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.VelocityCharStream VelocityCharStream(java.io.Reader, int, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.VelocityCharStream char[] GetSuffix(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.VelocityCharStream int getBeginColumn()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.VelocityCharStream int getBeginLine()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.VelocityCharStream int getColumn()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.VelocityCharStream int getEndColumn()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.VelocityCharStream int getEndLine()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.VelocityCharStream int getLine()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.VelocityCharStream java.lang.String GetImage()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.VelocityCharStream void Done()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.VelocityCharStream void ReInit(java.io.InputStream, int, int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.VelocityCharStream void ReInit(java.io.InputStream, int, int, int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.VelocityCharStream void ReInit(java.io.Reader, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.VelocityCharStream void ReInit(java.io.Reader, int, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.VelocityCharStream void backup(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+</root>

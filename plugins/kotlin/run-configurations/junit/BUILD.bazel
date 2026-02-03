@@ -1,0 +1,41 @@
+### auto-generated section `build intellij.kotlin.runConfigurations.junit` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "junit_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "junit",
+  module_name = "intellij.kotlin.runConfigurations.junit",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":junit_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//java/java-indexing-api:indexing",
+    "//platform/core-api:core",
+    "//platform/execution-impl",
+    "//platform/execution",
+    "//platform/indexing-api:indexing",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
+    "//platform/smRunner",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/run-configurations/jvm",
+    "//platform/lang-api:lang",
+    "//java/execution/impl",
+    "//java/java-analysis-impl:analysis-impl",
+    "//plugins/junit",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+    "//plugins/kotlin/base/plugin",
+  ]
+)
+### auto-generated section `build intellij.kotlin.runConfigurations.junit` end

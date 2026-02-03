@@ -1,0 +1,6 @@
+import kotlin.math.asin
+
+// WITH_STDLIB
+fun test(x: Double) {
+    asin(x)
+}

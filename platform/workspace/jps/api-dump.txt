@@ -1,0 +1,1381 @@
+com.intellij.java.workspace.entities.ArchivePackagingElementEntity
+- com.intellij.java.workspace.entities.CompositePackagingElementEntity
+- sf:Companion:com.intellij.java.workspace.entities.ArchivePackagingElementEntity$Companion
+- s:create(java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ArchivePackagingElementEntity$Builder
+- s:create(java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArchivePackagingElementEntity$Builder
+- a:getFileName():java.lang.String
+com.intellij.java.workspace.entities.ArchivePackagingElementEntity$Builder
+- com.intellij.java.workspace.entities.ArchivePackagingElementEntityBuilder
+f:com.intellij.java.workspace.entities.ArchivePackagingElementEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ArchivePackagingElementEntity$Builder
+- f:create(java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArchivePackagingElementEntity$Builder
+- bs:create$default(com.intellij.java.workspace.entities.ArchivePackagingElementEntity$Companion,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.ArchivePackagingElementEntity$Builder
+com.intellij.java.workspace.entities.ArchivePackagingElementEntityBuilder
+- com.intellij.java.workspace.entities.CompositePackagingElementEntity$Builder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getArtifact():com.intellij.java.workspace.entities.ArtifactEntityBuilder
+- a:getChildren():java.util.List
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getFileName():java.lang.String
+- a:getParentEntity():com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
+- a:setArtifact(com.intellij.java.workspace.entities.ArtifactEntityBuilder):V
+- a:setChildren(java.util.List):V
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setFileName(java.lang.String):V
+- a:setParentEntity(com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder):V
+f:com.intellij.java.workspace.entities.ArchivePackagingElementEntityModifications
+- sf:createArchivePackagingElementEntity(java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ArchivePackagingElementEntityBuilder
+- sf:createArchivePackagingElementEntity(java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArchivePackagingElementEntityBuilder
+- bs:createArchivePackagingElementEntity$default(java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.ArchivePackagingElementEntityBuilder
+- sf:modifyArchivePackagingElementEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.ArchivePackagingElementEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArchivePackagingElementEntity
+com.intellij.java.workspace.entities.ArtifactEntity
+- com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+- sf:Companion:com.intellij.java.workspace.entities.ArtifactEntity$Companion
+- s:create(java.lang.String,java.lang.String,Z,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ArtifactEntity$Builder
+- s:create(java.lang.String,java.lang.String,Z,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactEntity$Builder
+- a:getArtifactOutputPackagingElement():com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity
+- a:getArtifactType():java.lang.String
+- a:getCustomProperties():java.util.List
+- a:getIncludeInProjectBuild():Z
+- a:getName():java.lang.String
+- a:getOutputUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:getRootElement():com.intellij.java.workspace.entities.CompositePackagingElementEntity
+- getSymbolicId():com.intellij.java.workspace.entities.ArtifactId
+com.intellij.java.workspace.entities.ArtifactEntity$Builder
+- com.intellij.java.workspace.entities.ArtifactEntityBuilder
+- getArtifactOutputPackagingElement():com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity$Builder
+- getRootElement():com.intellij.java.workspace.entities.CompositePackagingElementEntity$Builder
+- setArtifactOutputPackagingElement(com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity$Builder):V
+- setRootElement(com.intellij.java.workspace.entities.CompositePackagingElementEntity$Builder):V
+f:com.intellij.java.workspace.entities.ArtifactEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(java.lang.String,java.lang.String,Z,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ArtifactEntity$Builder
+- f:create(java.lang.String,java.lang.String,Z,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactEntity$Builder
+- bs:create$default(com.intellij.java.workspace.entities.ArtifactEntity$Companion,java.lang.String,java.lang.String,Z,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.ArtifactEntity$Builder
+com.intellij.java.workspace.entities.ArtifactEntityBuilder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getArtifactOutputPackagingElement():com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntityBuilder
+- a:getArtifactType():java.lang.String
+- a:getCustomProperties():java.util.List
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getIncludeInProjectBuild():Z
+- a:getName():java.lang.String
+- a:getOutputUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:getRootElement():com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
+- a:setArtifactOutputPackagingElement(com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntityBuilder):V
+- a:setArtifactType(java.lang.String):V
+- a:setCustomProperties(java.util.List):V
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setIncludeInProjectBuild(Z):V
+- a:setName(java.lang.String):V
+- a:setOutputUrl(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
+- a:setRootElement(com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder):V
+f:com.intellij.java.workspace.entities.ArtifactEntityModifications
+- sf:createArtifactEntity(java.lang.String,java.lang.String,Z,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ArtifactEntityBuilder
+- sf:createArtifactEntity(java.lang.String,java.lang.String,Z,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactEntityBuilder
+- bs:createArtifactEntity$default(java.lang.String,java.lang.String,Z,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.ArtifactEntityBuilder
+- sf:modifyArtifactEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.ArtifactEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactEntity
+f:com.intellij.java.workspace.entities.ArtifactId
+- com.intellij.platform.workspace.storage.SymbolicEntityId
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.java.workspace.entities.ArtifactId
+- bs:copy$default(com.intellij.java.workspace.entities.ArtifactId,java.lang.String,I,java.lang.Object):com.intellij.java.workspace.entities.ArtifactId
+- equals(java.lang.Object):Z
+- f:getName():java.lang.String
+- getPresentableName():java.lang.String
+- hashCode():I
+f:com.intellij.java.workspace.entities.ArtifactKt
+- sf:getArtifactEntity(com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity$Builder):com.intellij.java.workspace.entities.ArtifactEntity$Builder
+- sf:getArtifactEntity(com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity):com.intellij.java.workspace.entities.ArtifactEntity
+- sf:modifyArchivePackagingElementEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.ArchivePackagingElementEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArchivePackagingElementEntity
+- sf:modifyArtifactEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.ArtifactEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactEntity
+- sf:modifyArtifactOutputPackagingElementEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity
+- sf:modifyArtifactPropertiesEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.ArtifactPropertiesEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactPropertiesEntity
+- sf:modifyArtifactRootElementEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.ArtifactRootElementEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactRootElementEntity
+- sf:modifyArtifactsOrderEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.ArtifactsOrderEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactsOrderEntity
+- sf:modifyCustomPackagingElementEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.CustomPackagingElementEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.CustomPackagingElementEntity
+- sf:modifyDirectoryCopyPackagingElementEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity
+- sf:modifyDirectoryPackagingElementEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.DirectoryPackagingElementEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.DirectoryPackagingElementEntity
+- sf:modifyExtractedDirectoryPackagingElementEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity
+- sf:modifyFileCopyPackagingElementEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.FileCopyPackagingElementEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.FileCopyPackagingElementEntity
+- sf:modifyLibraryFilesPackagingElementEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity
+- sf:modifyModuleOutputPackagingElementEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity
+- sf:modifyModuleSourcePackagingElementEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntity
+- sf:modifyModuleTestOutputPackagingElementEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntity
+- sf:setArtifactEntity(com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity$Builder,com.intellij.java.workspace.entities.ArtifactEntity$Builder):V
+com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity
+- com.intellij.java.workspace.entities.PackagingElementEntity
+- sf:Companion:com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity$Companion
+- s:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity$Builder
+- s:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity$Builder
+- a:getArtifact():com.intellij.java.workspace.entities.ArtifactId
+com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity$Builder
+- com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntityBuilder
+f:com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity$Builder
+- f:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity$Builder
+- bs:create$default(com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity$Companion,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity$Builder
+com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntityBuilder
+- com.intellij.java.workspace.entities.PackagingElementEntity$Builder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getArtifact():com.intellij.java.workspace.entities.ArtifactId
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getParentEntity():com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
+- a:setArtifact(com.intellij.java.workspace.entities.ArtifactId):V
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setParentEntity(com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder):V
+f:com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntityModifications
+- sf:createArtifactOutputPackagingElementEntity(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntityBuilder
+- sf:createArtifactOutputPackagingElementEntity(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntityBuilder
+- bs:createArtifactOutputPackagingElementEntity$default(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntityBuilder
+- sf:getArtifactEntity(com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntityBuilder):com.intellij.java.workspace.entities.ArtifactEntityBuilder
+- sf:modifyArtifactOutputPackagingElementEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity
+- sf:setArtifactEntity(com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntityBuilder,com.intellij.java.workspace.entities.ArtifactEntityBuilder):V
+com.intellij.java.workspace.entities.ArtifactPropertiesEntity
+- com.intellij.platform.workspace.storage.WorkspaceEntity
+- sf:Companion:com.intellij.java.workspace.entities.ArtifactPropertiesEntity$Companion
+- s:create(java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ArtifactPropertiesEntity$Builder
+- s:create(java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactPropertiesEntity$Builder
+- a:getArtifact():com.intellij.java.workspace.entities.ArtifactEntity
+- a:getPropertiesXmlTag():java.lang.String
+- a:getProviderType():java.lang.String
+com.intellij.java.workspace.entities.ArtifactPropertiesEntity$Builder
+- com.intellij.java.workspace.entities.ArtifactPropertiesEntityBuilder
+- getArtifact():com.intellij.java.workspace.entities.ArtifactEntity$Builder
+- setArtifact(com.intellij.java.workspace.entities.ArtifactEntity$Builder):V
+f:com.intellij.java.workspace.entities.ArtifactPropertiesEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ArtifactPropertiesEntity$Builder
+- f:create(java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactPropertiesEntity$Builder
+- bs:create$default(com.intellij.java.workspace.entities.ArtifactPropertiesEntity$Companion,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.ArtifactPropertiesEntity$Builder
+com.intellij.java.workspace.entities.ArtifactPropertiesEntityBuilder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getArtifact():com.intellij.java.workspace.entities.ArtifactEntityBuilder
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getPropertiesXmlTag():java.lang.String
+- a:getProviderType():java.lang.String
+- a:setArtifact(com.intellij.java.workspace.entities.ArtifactEntityBuilder):V
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setPropertiesXmlTag(java.lang.String):V
+- a:setProviderType(java.lang.String):V
+f:com.intellij.java.workspace.entities.ArtifactPropertiesEntityModifications
+- sf:createArtifactPropertiesEntity(java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ArtifactPropertiesEntityBuilder
+- sf:createArtifactPropertiesEntity(java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactPropertiesEntityBuilder
+- bs:createArtifactPropertiesEntity$default(java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.ArtifactPropertiesEntityBuilder
+- sf:modifyArtifactPropertiesEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.ArtifactPropertiesEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactPropertiesEntity
+com.intellij.java.workspace.entities.ArtifactRootElementEntity
+- com.intellij.java.workspace.entities.CompositePackagingElementEntity
+- sf:Companion:com.intellij.java.workspace.entities.ArtifactRootElementEntity$Companion
+- s:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ArtifactRootElementEntity$Builder
+- s:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactRootElementEntity$Builder
+com.intellij.java.workspace.entities.ArtifactRootElementEntity$Builder
+- com.intellij.java.workspace.entities.ArtifactRootElementEntityBuilder
+f:com.intellij.java.workspace.entities.ArtifactRootElementEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ArtifactRootElementEntity$Builder
+- f:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactRootElementEntity$Builder
+- bs:create$default(com.intellij.java.workspace.entities.ArtifactRootElementEntity$Companion,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.ArtifactRootElementEntity$Builder
+com.intellij.java.workspace.entities.ArtifactRootElementEntityBuilder
+- com.intellij.java.workspace.entities.CompositePackagingElementEntity$Builder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getArtifact():com.intellij.java.workspace.entities.ArtifactEntityBuilder
+- a:getChildren():java.util.List
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getParentEntity():com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
+- a:setArtifact(com.intellij.java.workspace.entities.ArtifactEntityBuilder):V
+- a:setChildren(java.util.List):V
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setParentEntity(com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder):V
+f:com.intellij.java.workspace.entities.ArtifactRootElementEntityModifications
+- sf:createArtifactRootElementEntity(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ArtifactRootElementEntityBuilder
+- sf:createArtifactRootElementEntity(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactRootElementEntityBuilder
+- bs:createArtifactRootElementEntity$default(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.ArtifactRootElementEntityBuilder
+- sf:modifyArtifactRootElementEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.ArtifactRootElementEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactRootElementEntity
+com.intellij.java.workspace.entities.ArtifactsOrderEntity
+- com.intellij.platform.workspace.storage.WorkspaceEntity
+- sf:Companion:com.intellij.java.workspace.entities.ArtifactsOrderEntity$Companion
+- s:create(java.util.List,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ArtifactsOrderEntity$Builder
+- s:create(java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactsOrderEntity$Builder
+- a:getOrderOfArtifacts():java.util.List
+com.intellij.java.workspace.entities.ArtifactsOrderEntity$Builder
+- com.intellij.java.workspace.entities.ArtifactsOrderEntityBuilder
+f:com.intellij.java.workspace.entities.ArtifactsOrderEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(java.util.List,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ArtifactsOrderEntity$Builder
+- f:create(java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactsOrderEntity$Builder
+- bs:create$default(com.intellij.java.workspace.entities.ArtifactsOrderEntity$Companion,java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.ArtifactsOrderEntity$Builder
+com.intellij.java.workspace.entities.ArtifactsOrderEntityBuilder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getOrderOfArtifacts():java.util.List
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setOrderOfArtifacts(java.util.List):V
+f:com.intellij.java.workspace.entities.ArtifactsOrderEntityModifications
+- sf:createArtifactsOrderEntity(java.util.List,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ArtifactsOrderEntityBuilder
+- sf:createArtifactsOrderEntity(java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactsOrderEntityBuilder
+- bs:createArtifactsOrderEntity$default(java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.ArtifactsOrderEntityBuilder
+- sf:modifyArtifactsOrderEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.ArtifactsOrderEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactsOrderEntity
+com.intellij.java.workspace.entities.CompositePackagingElementEntity
+- com.intellij.java.workspace.entities.PackagingElementEntity
+- sf:Companion:com.intellij.java.workspace.entities.CompositePackagingElementEntity$Companion
+- s:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.CompositePackagingElementEntity$Builder
+- s:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.CompositePackagingElementEntity$Builder
+- a:getArtifact():com.intellij.java.workspace.entities.ArtifactEntity
+- a:getChildren():java.util.List
+com.intellij.java.workspace.entities.CompositePackagingElementEntity$Builder
+- com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
+- getArtifact():com.intellij.java.workspace.entities.ArtifactEntity$Builder
+- setArtifact(com.intellij.java.workspace.entities.ArtifactEntity$Builder):V
+f:com.intellij.java.workspace.entities.CompositePackagingElementEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.CompositePackagingElementEntity$Builder
+- f:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.CompositePackagingElementEntity$Builder
+- bs:create$default(com.intellij.java.workspace.entities.CompositePackagingElementEntity$Companion,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.CompositePackagingElementEntity$Builder
+com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
+- com.intellij.java.workspace.entities.PackagingElementEntity$Builder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getArtifact():com.intellij.java.workspace.entities.ArtifactEntityBuilder
+- a:getChildren():java.util.List
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getParentEntity():com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
+- a:setArtifact(com.intellij.java.workspace.entities.ArtifactEntityBuilder):V
+- a:setChildren(java.util.List):V
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setParentEntity(com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder):V
+com.intellij.java.workspace.entities.CustomPackagingElementEntity
+- com.intellij.java.workspace.entities.CompositePackagingElementEntity
+- sf:Companion:com.intellij.java.workspace.entities.CustomPackagingElementEntity$Companion
+- s:create(java.lang.String,java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.CustomPackagingElementEntity$Builder
+- s:create(java.lang.String,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.CustomPackagingElementEntity$Builder
+- a:getPropertiesXmlTag():java.lang.String
+- a:getTypeId():java.lang.String
+com.intellij.java.workspace.entities.CustomPackagingElementEntity$Builder
+- com.intellij.java.workspace.entities.CustomPackagingElementEntityBuilder
+f:com.intellij.java.workspace.entities.CustomPackagingElementEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(java.lang.String,java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.CustomPackagingElementEntity$Builder
+- f:create(java.lang.String,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.CustomPackagingElementEntity$Builder
+- bs:create$default(com.intellij.java.workspace.entities.CustomPackagingElementEntity$Companion,java.lang.String,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.CustomPackagingElementEntity$Builder
+com.intellij.java.workspace.entities.CustomPackagingElementEntityBuilder
+- com.intellij.java.workspace.entities.CompositePackagingElementEntity$Builder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getArtifact():com.intellij.java.workspace.entities.ArtifactEntityBuilder
+- a:getChildren():java.util.List
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getParentEntity():com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
+- a:getPropertiesXmlTag():java.lang.String
+- a:getTypeId():java.lang.String
+- a:setArtifact(com.intellij.java.workspace.entities.ArtifactEntityBuilder):V
+- a:setChildren(java.util.List):V
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setParentEntity(com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder):V
+- a:setPropertiesXmlTag(java.lang.String):V
+- a:setTypeId(java.lang.String):V
+f:com.intellij.java.workspace.entities.CustomPackagingElementEntityModifications
+- sf:createCustomPackagingElementEntity(java.lang.String,java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.CustomPackagingElementEntityBuilder
+- sf:createCustomPackagingElementEntity(java.lang.String,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.CustomPackagingElementEntityBuilder
+- bs:createCustomPackagingElementEntity$default(java.lang.String,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.CustomPackagingElementEntityBuilder
+- sf:modifyCustomPackagingElementEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.CustomPackagingElementEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.CustomPackagingElementEntity
+com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity
+- com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity
+- sf:Companion:com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity$Companion
+- s:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity$Builder
+- s:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity$Builder
+com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity$Builder
+- com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntityBuilder
+f:com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity$Builder
+- f:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity$Builder
+- bs:create$default(com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity$Companion,com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity$Builder
+com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntityBuilder
+- com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity$Builder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getFilePath():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:getParentEntity():com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setFilePath(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
+- a:setParentEntity(com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder):V
+f:com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntityModifications
+- sf:createDirectoryCopyPackagingElementEntity(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntityBuilder
+- sf:createDirectoryCopyPackagingElementEntity(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntityBuilder
+- bs:createDirectoryCopyPackagingElementEntity$default(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntityBuilder
+- sf:modifyDirectoryCopyPackagingElementEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity
+com.intellij.java.workspace.entities.DirectoryPackagingElementEntity
+- com.intellij.java.workspace.entities.CompositePackagingElementEntity
+- sf:Companion:com.intellij.java.workspace.entities.DirectoryPackagingElementEntity$Companion
+- s:create(java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.DirectoryPackagingElementEntity$Builder
+- s:create(java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.DirectoryPackagingElementEntity$Builder
+- a:getDirectoryName():java.lang.String
+com.intellij.java.workspace.entities.DirectoryPackagingElementEntity$Builder
+- com.intellij.java.workspace.entities.DirectoryPackagingElementEntityBuilder
+f:com.intellij.java.workspace.entities.DirectoryPackagingElementEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.DirectoryPackagingElementEntity$Builder
+- f:create(java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.DirectoryPackagingElementEntity$Builder
+- bs:create$default(com.intellij.java.workspace.entities.DirectoryPackagingElementEntity$Companion,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.DirectoryPackagingElementEntity$Builder
+com.intellij.java.workspace.entities.DirectoryPackagingElementEntityBuilder
+- com.intellij.java.workspace.entities.CompositePackagingElementEntity$Builder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getArtifact():com.intellij.java.workspace.entities.ArtifactEntityBuilder
+- a:getChildren():java.util.List
+- a:getDirectoryName():java.lang.String
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getParentEntity():com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
+- a:setArtifact(com.intellij.java.workspace.entities.ArtifactEntityBuilder):V
+- a:setChildren(java.util.List):V
+- a:setDirectoryName(java.lang.String):V
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setParentEntity(com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder):V
+f:com.intellij.java.workspace.entities.DirectoryPackagingElementEntityModifications
+- sf:createDirectoryPackagingElementEntity(java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.DirectoryPackagingElementEntityBuilder
+- sf:createDirectoryPackagingElementEntity(java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.DirectoryPackagingElementEntityBuilder
+- bs:createDirectoryPackagingElementEntity$default(java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.DirectoryPackagingElementEntityBuilder
+- sf:modifyDirectoryPackagingElementEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.DirectoryPackagingElementEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.DirectoryPackagingElementEntity
+com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity
+- com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity
+- sf:Companion:com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity$Companion
+- s:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity$Builder
+- s:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity$Builder
+- a:getPathInArchive():java.lang.String
+com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity$Builder
+- com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntityBuilder
+f:com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity$Builder
+- f:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity$Builder
+- bs:create$default(com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity$Companion,com.intellij.platform.workspace.storage.url.VirtualFileUrl,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity$Builder
+com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntityBuilder
+- com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity$Builder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getFilePath():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:getParentEntity():com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
+- a:getPathInArchive():java.lang.String
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setFilePath(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
+- a:setParentEntity(com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder):V
+- a:setPathInArchive(java.lang.String):V
+f:com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntityModifications
+- sf:createExtractedDirectoryPackagingElementEntity(com.intellij.platform.workspace.storage.url.VirtualFileUrl,java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntityBuilder
+- sf:createExtractedDirectoryPackagingElementEntity(com.intellij.platform.workspace.storage.url.VirtualFileUrl,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntityBuilder
+- bs:createExtractedDirectoryPackagingElementEntity$default(com.intellij.platform.workspace.storage.url.VirtualFileUrl,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntityBuilder
+- sf:modifyExtractedDirectoryPackagingElementEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity
+com.intellij.java.workspace.entities.FileCopyPackagingElementEntity
+- com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity
+- sf:Companion:com.intellij.java.workspace.entities.FileCopyPackagingElementEntity$Companion
+- s:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.FileCopyPackagingElementEntity$Builder
+- s:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.FileCopyPackagingElementEntity$Builder
+- a:getRenamedOutputFileName():java.lang.String
+com.intellij.java.workspace.entities.FileCopyPackagingElementEntity$Builder
+- com.intellij.java.workspace.entities.FileCopyPackagingElementEntityBuilder
+f:com.intellij.java.workspace.entities.FileCopyPackagingElementEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.FileCopyPackagingElementEntity$Builder
+- f:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.FileCopyPackagingElementEntity$Builder
+- bs:create$default(com.intellij.java.workspace.entities.FileCopyPackagingElementEntity$Companion,com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.FileCopyPackagingElementEntity$Builder
+com.intellij.java.workspace.entities.FileCopyPackagingElementEntityBuilder
+- com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity$Builder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getFilePath():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:getParentEntity():com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
+- a:getRenamedOutputFileName():java.lang.String
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setFilePath(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
+- a:setParentEntity(com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder):V
+- a:setRenamedOutputFileName(java.lang.String):V
+f:com.intellij.java.workspace.entities.FileCopyPackagingElementEntityModifications
+- sf:createFileCopyPackagingElementEntity(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.FileCopyPackagingElementEntityBuilder
+- sf:createFileCopyPackagingElementEntity(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.FileCopyPackagingElementEntityBuilder
+- bs:createFileCopyPackagingElementEntity$default(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.FileCopyPackagingElementEntityBuilder
+- sf:modifyFileCopyPackagingElementEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.FileCopyPackagingElementEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.FileCopyPackagingElementEntity
+com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity
+- com.intellij.java.workspace.entities.PackagingElementEntity
+- sf:Companion:com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity$Companion
+- s:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity$Builder
+- s:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity$Builder
+- a:getFilePath():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity$Builder
+- com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntityBuilder
+f:com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity$Builder
+- f:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity$Builder
+- bs:create$default(com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity$Companion,com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity$Builder
+com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntityBuilder
+- com.intellij.java.workspace.entities.PackagingElementEntity$Builder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getFilePath():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:getParentEntity():com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setFilePath(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
+- a:setParentEntity(com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder):V
+com.intellij.java.workspace.entities.JavaModuleSettingsEntity
+- com.intellij.platform.workspace.storage.WorkspaceEntity
+- sf:Companion:com.intellij.java.workspace.entities.JavaModuleSettingsEntity$Companion
+- s:create(Z,Z,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.JavaModuleSettingsEntity$Builder
+- s:create(Z,Z,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaModuleSettingsEntity$Builder
+- a:getCompilerOutput():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:getCompilerOutputForTests():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:getExcludeOutput():Z
+- a:getInheritedCompilerOutput():Z
+- a:getLanguageLevelId():java.lang.String
+- getManifestAttributes():java.util.Map
+- a:getModule():com.intellij.platform.workspace.jps.entities.ModuleEntity
+com.intellij.java.workspace.entities.JavaModuleSettingsEntity$Builder
+- com.intellij.java.workspace.entities.JavaModuleSettingsEntityBuilder
+- getModule():com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder
+- setModule(com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder):V
+f:com.intellij.java.workspace.entities.JavaModuleSettingsEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(Z,Z,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.JavaModuleSettingsEntity$Builder
+- f:create(Z,Z,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaModuleSettingsEntity$Builder
+- bs:create$default(com.intellij.java.workspace.entities.JavaModuleSettingsEntity$Companion,Z,Z,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.JavaModuleSettingsEntity$Builder
+com.intellij.java.workspace.entities.JavaModuleSettingsEntityBuilder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getCompilerOutput():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:getCompilerOutputForTests():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getExcludeOutput():Z
+- a:getInheritedCompilerOutput():Z
+- a:getLanguageLevelId():java.lang.String
+- a:getManifestAttributes():java.util.Map
+- a:getModule():com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
+- a:setCompilerOutput(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
+- a:setCompilerOutputForTests(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setExcludeOutput(Z):V
+- a:setInheritedCompilerOutput(Z):V
+- a:setLanguageLevelId(java.lang.String):V
+- a:setManifestAttributes(java.util.Map):V
+- a:setModule(com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder):V
+f:com.intellij.java.workspace.entities.JavaModuleSettingsEntityModifications
+- sf:createJavaModuleSettingsEntity(Z,Z,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.JavaModuleSettingsEntityBuilder
+- sf:createJavaModuleSettingsEntity(Z,Z,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaModuleSettingsEntityBuilder
+- bs:createJavaModuleSettingsEntity$default(Z,Z,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.JavaModuleSettingsEntityBuilder
+- sf:getJavaSettings(com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder):com.intellij.java.workspace.entities.JavaModuleSettingsEntityBuilder
+- sf:modifyJavaModuleSettingsEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.JavaModuleSettingsEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaModuleSettingsEntity
+- sf:setJavaSettings(com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder,com.intellij.java.workspace.entities.JavaModuleSettingsEntityBuilder):V
+f:com.intellij.java.workspace.entities.JavaModuleSettingsKt
+- sf:getJavaSettings(com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder):com.intellij.java.workspace.entities.JavaModuleSettingsEntity$Builder
+- sf:getJavaSettings(com.intellij.platform.workspace.jps.entities.ModuleEntity):com.intellij.java.workspace.entities.JavaModuleSettingsEntity
+- sf:modifyJavaModuleSettingsEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.JavaModuleSettingsEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaModuleSettingsEntity
+- sf:setJavaSettings(com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder,com.intellij.java.workspace.entities.JavaModuleSettingsEntity$Builder):V
+com.intellij.java.workspace.entities.JavaProjectSettingsEntity
+- com.intellij.platform.workspace.storage.WorkspaceEntity
+- sf:Companion:com.intellij.java.workspace.entities.JavaProjectSettingsEntity$Companion
+- s:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.JavaProjectSettingsEntity$Builder
+- s:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaProjectSettingsEntity$Builder
+- a:getCompilerOutput():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:getLanguageLevelDefault():java.lang.Boolean
+- a:getLanguageLevelId():java.lang.String
+- a:getProjectSettings():com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
+com.intellij.java.workspace.entities.JavaProjectSettingsEntity$Builder
+- com.intellij.java.workspace.entities.JavaProjectSettingsEntityBuilder
+- getProjectSettings():com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Builder
+- setProjectSettings(com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Builder):V
+f:com.intellij.java.workspace.entities.JavaProjectSettingsEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.JavaProjectSettingsEntity$Builder
+- f:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaProjectSettingsEntity$Builder
+- bs:create$default(com.intellij.java.workspace.entities.JavaProjectSettingsEntity$Companion,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.JavaProjectSettingsEntity$Builder
+com.intellij.java.workspace.entities.JavaProjectSettingsEntityBuilder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getCompilerOutput():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getLanguageLevelDefault():java.lang.Boolean
+- a:getLanguageLevelId():java.lang.String
+- a:getProjectSettings():com.intellij.platform.workspace.jps.entities.ProjectSettingsEntityBuilder
+- a:setCompilerOutput(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setLanguageLevelDefault(java.lang.Boolean):V
+- a:setLanguageLevelId(java.lang.String):V
+- a:setProjectSettings(com.intellij.platform.workspace.jps.entities.ProjectSettingsEntityBuilder):V
+f:com.intellij.java.workspace.entities.JavaProjectSettingsEntityKt
+- sf:getJavaProjectSettings(com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Builder):com.intellij.java.workspace.entities.JavaProjectSettingsEntity$Builder
+- sf:getJavaProjectSettings(com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity):com.intellij.java.workspace.entities.JavaProjectSettingsEntity
+- sf:modifyJavaProjectSettingsEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.JavaProjectSettingsEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaProjectSettingsEntity
+- sf:setJavaProjectSettings(com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Builder,com.intellij.java.workspace.entities.JavaProjectSettingsEntity$Builder):V
+f:com.intellij.java.workspace.entities.JavaProjectSettingsEntityModifications
+- sf:createJavaProjectSettingsEntity(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.JavaProjectSettingsEntityBuilder
+- sf:createJavaProjectSettingsEntity(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaProjectSettingsEntityBuilder
+- bs:createJavaProjectSettingsEntity$default(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.JavaProjectSettingsEntityBuilder
+- sf:getJavaProjectSettings(com.intellij.platform.workspace.jps.entities.ProjectSettingsEntityBuilder):com.intellij.java.workspace.entities.JavaProjectSettingsEntityBuilder
+- sf:modifyJavaProjectSettingsEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.JavaProjectSettingsEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaProjectSettingsEntity
+- sf:setJavaProjectSettings(com.intellij.platform.workspace.jps.entities.ProjectSettingsEntityBuilder,com.intellij.java.workspace.entities.JavaProjectSettingsEntityBuilder):V
+com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity
+- com.intellij.platform.workspace.storage.WorkspaceEntity
+- sf:Companion:com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity$Companion
+- s:create(Z,java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity$Builder
+- s:create(Z,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity$Builder
+- a:getGenerated():Z
+- a:getRelativeOutputPath():java.lang.String
+- a:getSourceRoot():com.intellij.platform.workspace.jps.entities.SourceRootEntity
+com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity$Builder
+- com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntityBuilder
+- getSourceRoot():com.intellij.platform.workspace.jps.entities.SourceRootEntity$Builder
+- setSourceRoot(com.intellij.platform.workspace.jps.entities.SourceRootEntity$Builder):V
+f:com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(Z,java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity$Builder
+- f:create(Z,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity$Builder
+- bs:create$default(com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity$Companion,Z,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity$Builder
+com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntityBuilder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getGenerated():Z
+- a:getRelativeOutputPath():java.lang.String
+- a:getSourceRoot():com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setGenerated(Z):V
+- a:setRelativeOutputPath(java.lang.String):V
+- a:setSourceRoot(com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder):V
+f:com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntityModifications
+- sf:createJavaResourceRootPropertiesEntity(Z,java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntityBuilder
+- sf:createJavaResourceRootPropertiesEntity(Z,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntityBuilder
+- bs:createJavaResourceRootPropertiesEntity$default(Z,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntityBuilder
+- sf:getJavaResourceRoots(com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder):java.util.List
+- sf:modifyJavaResourceRootPropertiesEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity
+- sf:setJavaResourceRoots(com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder,java.util.List):V
+f:com.intellij.java.workspace.entities.JavaRootsKt
+- sf:asJavaResourceRoot(com.intellij.platform.workspace.jps.entities.SourceRootEntity):com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity
+- sf:asJavaResourceRoot(com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder):com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntityBuilder
+- sf:asJavaSourceRoot(com.intellij.platform.workspace.jps.entities.SourceRootEntity$Builder):com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity$Builder
+- sf:asJavaSourceRoot(com.intellij.platform.workspace.jps.entities.SourceRootEntity):com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
+- sf:asJavaSourceRoot(com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder):com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntityBuilder
+- sf:getJavaResourceRoots(com.intellij.platform.workspace.jps.entities.SourceRootEntity$Builder):java.util.List
+- sf:getJavaResourceRoots(com.intellij.platform.workspace.jps.entities.SourceRootEntity):java.util.List
+- sf:getJavaSourceRoots(com.intellij.platform.workspace.jps.entities.SourceRootEntity$Builder):java.util.List
+- sf:getJavaSourceRoots(com.intellij.platform.workspace.jps.entities.SourceRootEntity):java.util.List
+- sf:modifyJavaResourceRootPropertiesEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity
+- sf:modifyJavaSourceRootPropertiesEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
+- sf:setJavaResourceRoots(com.intellij.platform.workspace.jps.entities.SourceRootEntity$Builder,java.util.List):V
+- sf:setJavaSourceRoots(com.intellij.platform.workspace.jps.entities.SourceRootEntity$Builder,java.util.List):V
+com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
+- com.intellij.platform.workspace.storage.WorkspaceEntity
+- sf:Companion:com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity$Companion
+- s:create(Z,java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity$Builder
+- s:create(Z,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity$Builder
+- a:getGenerated():Z
+- a:getPackagePrefix():java.lang.String
+- a:getSourceRoot():com.intellij.platform.workspace.jps.entities.SourceRootEntity
+com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity$Builder
+- com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntityBuilder
+- getSourceRoot():com.intellij.platform.workspace.jps.entities.SourceRootEntity$Builder
+- setSourceRoot(com.intellij.platform.workspace.jps.entities.SourceRootEntity$Builder):V
+f:com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(Z,java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity$Builder
+- f:create(Z,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity$Builder
+- bs:create$default(com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity$Companion,Z,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity$Builder
+com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntityBuilder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getGenerated():Z
+- a:getPackagePrefix():java.lang.String
+- a:getSourceRoot():com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setGenerated(Z):V
+- a:setPackagePrefix(java.lang.String):V
+- a:setSourceRoot(com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder):V
+f:com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntityModifications
+- sf:createJavaSourceRootPropertiesEntity(Z,java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntityBuilder
+- sf:createJavaSourceRootPropertiesEntity(Z,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntityBuilder
+- bs:createJavaSourceRootPropertiesEntity$default(Z,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntityBuilder
+- sf:getJavaSourceRoots(com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder):java.util.List
+- sf:modifyJavaSourceRootPropertiesEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
+- sf:setJavaSourceRoots(com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder,java.util.List):V
+com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity
+- com.intellij.java.workspace.entities.PackagingElementEntity
+- sf:Companion:com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity$Companion
+- s:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity$Builder
+- s:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity$Builder
+- a:getLibrary():com.intellij.platform.workspace.jps.entities.LibraryId
+com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity$Builder
+- com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntityBuilder
+f:com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity$Builder
+- f:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity$Builder
+- bs:create$default(com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity$Companion,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity$Builder
+com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntityBuilder
+- com.intellij.java.workspace.entities.PackagingElementEntity$Builder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getLibrary():com.intellij.platform.workspace.jps.entities.LibraryId
+- a:getParentEntity():com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setLibrary(com.intellij.platform.workspace.jps.entities.LibraryId):V
+- a:setParentEntity(com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder):V
+f:com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntityModifications
+- sf:createLibraryFilesPackagingElementEntity(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntityBuilder
+- sf:createLibraryFilesPackagingElementEntity(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntityBuilder
+- bs:createLibraryFilesPackagingElementEntity$default(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntityBuilder
+- sf:modifyLibraryFilesPackagingElementEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity
+com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity
+- com.intellij.java.workspace.entities.PackagingElementEntity
+- sf:Companion:com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity$Companion
+- s:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity$Builder
+- s:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity$Builder
+- a:getModule():com.intellij.platform.workspace.jps.entities.ModuleId
+com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity$Builder
+- com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntityBuilder
+f:com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity$Builder
+- f:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity$Builder
+- bs:create$default(com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity$Companion,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity$Builder
+com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntityBuilder
+- com.intellij.java.workspace.entities.PackagingElementEntity$Builder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getModule():com.intellij.platform.workspace.jps.entities.ModuleId
+- a:getParentEntity():com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setModule(com.intellij.platform.workspace.jps.entities.ModuleId):V
+- a:setParentEntity(com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder):V
+f:com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntityModifications
+- sf:createModuleOutputPackagingElementEntity(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntityBuilder
+- sf:createModuleOutputPackagingElementEntity(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntityBuilder
+- bs:createModuleOutputPackagingElementEntity$default(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntityBuilder
+- sf:modifyModuleOutputPackagingElementEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity
+com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntity
+- com.intellij.java.workspace.entities.PackagingElementEntity
+- sf:Companion:com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntity$Companion
+- s:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntity$Builder
+- s:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntity$Builder
+- a:getModule():com.intellij.platform.workspace.jps.entities.ModuleId
+com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntity$Builder
+- com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntityBuilder
+f:com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntity$Builder
+- f:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntity$Builder
+- bs:create$default(com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntity$Companion,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntity$Builder
+com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntityBuilder
+- com.intellij.java.workspace.entities.PackagingElementEntity$Builder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getModule():com.intellij.platform.workspace.jps.entities.ModuleId
+- a:getParentEntity():com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setModule(com.intellij.platform.workspace.jps.entities.ModuleId):V
+- a:setParentEntity(com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder):V
+f:com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntityModifications
+- sf:createModuleSourcePackagingElementEntity(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntityBuilder
+- sf:createModuleSourcePackagingElementEntity(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntityBuilder
+- bs:createModuleSourcePackagingElementEntity$default(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntityBuilder
+- sf:modifyModuleSourcePackagingElementEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntity
+com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntity
+- com.intellij.java.workspace.entities.PackagingElementEntity
+- sf:Companion:com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntity$Companion
+- s:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntity$Builder
+- s:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntity$Builder
+- a:getModule():com.intellij.platform.workspace.jps.entities.ModuleId
+com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntity$Builder
+- com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntityBuilder
+f:com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntity$Builder
+- f:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntity$Builder
+- bs:create$default(com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntity$Companion,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntity$Builder
+com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntityBuilder
+- com.intellij.java.workspace.entities.PackagingElementEntity$Builder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getModule():com.intellij.platform.workspace.jps.entities.ModuleId
+- a:getParentEntity():com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setModule(com.intellij.platform.workspace.jps.entities.ModuleId):V
+- a:setParentEntity(com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder):V
+f:com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntityModifications
+- sf:createModuleTestOutputPackagingElementEntity(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntityBuilder
+- sf:createModuleTestOutputPackagingElementEntity(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntityBuilder
+- bs:createModuleTestOutputPackagingElementEntity$default(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntityBuilder
+- sf:modifyModuleTestOutputPackagingElementEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntity,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntity
+com.intellij.java.workspace.entities.PackagingElementEntity
+- com.intellij.platform.workspace.storage.WorkspaceEntity
+- sf:Companion:com.intellij.java.workspace.entities.PackagingElementEntity$Companion
+- s:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.PackagingElementEntity$Builder
+- s:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.PackagingElementEntity$Builder
+- a:getParentEntity():com.intellij.java.workspace.entities.CompositePackagingElementEntity
+com.intellij.java.workspace.entities.PackagingElementEntity$Builder
+- com.intellij.java.workspace.entities.PackagingElementEntityBuilder
+- getParentEntity():com.intellij.java.workspace.entities.CompositePackagingElementEntity$Builder
+- setParentEntity(com.intellij.java.workspace.entities.CompositePackagingElementEntity$Builder):V
+f:com.intellij.java.workspace.entities.PackagingElementEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.java.workspace.entities.PackagingElementEntity$Builder
+- f:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.PackagingElementEntity$Builder
+- bs:create$default(com.intellij.java.workspace.entities.PackagingElementEntity$Companion,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.PackagingElementEntity$Builder
+com.intellij.java.workspace.entities.PackagingElementEntityBuilder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getParentEntity():com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setParentEntity(com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder):V
+com.intellij.platform.workspace.jps.CustomModuleEntitySource
+- com.intellij.platform.workspace.storage.EntitySource
+- a:getInternalSource():com.intellij.platform.workspace.jps.JpsFileEntitySource
+f:com.intellij.platform.workspace.jps.JpsEntitySourceFactory
+- sf:INSTANCE:com.intellij.platform.workspace.jps.JpsEntitySourceFactory
+- f:createJpsEntitySourceForArtifact(com.intellij.platform.workspace.jps.JpsProjectConfigLocation):com.intellij.platform.workspace.jps.JpsFileEntitySource
+- f:createJpsEntitySourceForProjectLibrary(com.intellij.platform.workspace.jps.JpsProjectConfigLocation):com.intellij.platform.workspace.jps.JpsFileEntitySource
+com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
+- a:getOriginalSource():com.intellij.platform.workspace.jps.JpsFileEntitySource
+a:com.intellij.platform.workspace.jps.JpsFileEntitySource
+- com.intellij.platform.workspace.storage.EntitySource
+f:com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
+- com.intellij.platform.workspace.jps.JpsFileEntitySource
+- com.intellij.platform.workspace.storage.EntitySource
+- <init>(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
+- f:component1():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- f:copy(com.intellij.platform.workspace.storage.url.VirtualFileUrl):com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
+- bs:copy$default(com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource,com.intellij.platform.workspace.storage.url.VirtualFileUrl,I,java.lang.Object):com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
+- equals(java.lang.Object):Z
+- f:getFile():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- hashCode():I
+f:com.intellij.platform.workspace.jps.JpsImportedEntitySource
+- com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
+- com.intellij.platform.workspace.storage.EntitySource
+- <init>(com.intellij.platform.workspace.jps.JpsFileEntitySource,java.lang.String,Z):V
+- f:component1():com.intellij.platform.workspace.jps.JpsFileEntitySource
+- f:component2():java.lang.String
+- f:component3():Z
+- f:copy(com.intellij.platform.workspace.jps.JpsFileEntitySource,java.lang.String,Z):com.intellij.platform.workspace.jps.JpsImportedEntitySource
+- bs:copy$default(com.intellij.platform.workspace.jps.JpsImportedEntitySource,com.intellij.platform.workspace.jps.JpsFileEntitySource,java.lang.String,Z,I,java.lang.Object):com.intellij.platform.workspace.jps.JpsImportedEntitySource
+- equals(java.lang.Object):Z
+- f:getExternalSystemId():java.lang.String
+- f:getInternalFile():com.intellij.platform.workspace.jps.JpsFileEntitySource
+- getOriginalSource():com.intellij.platform.workspace.jps.JpsFileEntitySource
+- f:getStoredExternally():Z
+- getVirtualFileUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- hashCode():I
+a:com.intellij.platform.workspace.jps.JpsProjectConfigLocation
+- a:getBaseDirectoryUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- f:getBaseDirectoryUrlString():java.lang.String
+- a:getProjectFilePath():java.lang.String
+f:com.intellij.platform.workspace.jps.JpsProjectConfigLocation$DirectoryBased
+- com.intellij.platform.workspace.jps.JpsProjectConfigLocation
+- <init>(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
+- f:component1():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- f:component2():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- f:copy(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.url.VirtualFileUrl):com.intellij.platform.workspace.jps.JpsProjectConfigLocation$DirectoryBased
+- bs:copy$default(com.intellij.platform.workspace.jps.JpsProjectConfigLocation$DirectoryBased,com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.url.VirtualFileUrl,I,java.lang.Object):com.intellij.platform.workspace.jps.JpsProjectConfigLocation$DirectoryBased
+- equals(java.lang.Object):Z
+- getBaseDirectoryUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- f:getIdeaFolder():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- f:getProjectDir():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- getProjectFilePath():java.lang.String
+- hashCode():I
+f:com.intellij.platform.workspace.jps.JpsProjectConfigLocation$FileBased
+- com.intellij.platform.workspace.jps.JpsProjectConfigLocation
+- <init>(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
+- f:component1():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- f:component2():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- f:copy(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.url.VirtualFileUrl):com.intellij.platform.workspace.jps.JpsProjectConfigLocation$FileBased
+- bs:copy$default(com.intellij.platform.workspace.jps.JpsProjectConfigLocation$FileBased,com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.url.VirtualFileUrl,I,java.lang.Object):com.intellij.platform.workspace.jps.JpsProjectConfigLocation$FileBased
+- equals(java.lang.Object):Z
+- getBaseDirectoryUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- f:getIprFile():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- f:getIprFileParent():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- getProjectFilePath():java.lang.String
+- hashCode():I
+a:com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
+- com.intellij.platform.workspace.jps.JpsFileEntitySource
+- a:getProjectLocation():com.intellij.platform.workspace.jps.JpsProjectConfigLocation
+f:com.intellij.platform.workspace.jps.JpsProjectFileEntitySource$ExactFile
+- com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
+- <init>(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.jps.JpsProjectConfigLocation):V
+- f:component1():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- f:component2():com.intellij.platform.workspace.jps.JpsProjectConfigLocation
+- f:copy(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.jps.JpsProjectConfigLocation):com.intellij.platform.workspace.jps.JpsProjectFileEntitySource$ExactFile
+- bs:copy$default(com.intellij.platform.workspace.jps.JpsProjectFileEntitySource$ExactFile,com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.jps.JpsProjectConfigLocation,I,java.lang.Object):com.intellij.platform.workspace.jps.JpsProjectFileEntitySource$ExactFile
+- equals(java.lang.Object):Z
+- f:getFile():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- getProjectLocation():com.intellij.platform.workspace.jps.JpsProjectConfigLocation
+- getVirtualFileUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- hashCode():I
+f:com.intellij.platform.workspace.jps.JpsProjectFileEntitySource$FileInDirectory
+- com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
+- sf:Companion:com.intellij.platform.workspace.jps.JpsProjectFileEntitySource$FileInDirectory$Companion
+- <init>(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.jps.JpsProjectConfigLocation):V
+- f:component1():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- f:component2():com.intellij.platform.workspace.jps.JpsProjectConfigLocation
+- f:copy(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.jps.JpsProjectConfigLocation):com.intellij.platform.workspace.jps.JpsProjectFileEntitySource$FileInDirectory
+- bs:copy$default(com.intellij.platform.workspace.jps.JpsProjectFileEntitySource$FileInDirectory,com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.jps.JpsProjectConfigLocation,I,java.lang.Object):com.intellij.platform.workspace.jps.JpsProjectFileEntitySource$FileInDirectory
+- equals(java.lang.Object):Z
+- f:getDirectory():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- f:getFileNameId():I
+- getProjectLocation():com.intellij.platform.workspace.jps.JpsProjectConfigLocation
+- getVirtualFileUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- hashCode():I
+f:com.intellij.platform.workspace.jps.JpsProjectFileEntitySource$FileInDirectory$Companion
+f:com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
+- com.intellij.platform.workspace.storage.EntitySource
+- sf:INSTANCE:com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
+com.intellij.platform.workspace.jps.entities.ContentRootEntity
+- com.intellij.platform.workspace.storage.WorkspaceEntity
+- sf:Companion:com.intellij.platform.workspace.jps.entities.ContentRootEntity$Companion
+- s:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,java.util.List,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.ContentRootEntity$Builder
+- s:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ContentRootEntity$Builder
+- a:getExcludedPatterns():java.util.List
+- a:getExcludedUrls():java.util.List
+- a:getModule():com.intellij.platform.workspace.jps.entities.ModuleEntity
+- a:getSourceRoots():java.util.List
+- a:getUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+com.intellij.platform.workspace.jps.entities.ContentRootEntity$Builder
+- com.intellij.platform.workspace.jps.entities.ContentRootEntityBuilder
+- getModule():com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder
+- setModule(com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder):V
+f:com.intellij.platform.workspace.jps.entities.ContentRootEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,java.util.List,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.ContentRootEntity$Builder
+- f:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ContentRootEntity$Builder
+- bs:create$default(com.intellij.platform.workspace.jps.entities.ContentRootEntity$Companion,com.intellij.platform.workspace.storage.url.VirtualFileUrl,java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.ContentRootEntity$Builder
+com.intellij.platform.workspace.jps.entities.ContentRootEntityBuilder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getExcludedPatterns():java.util.List
+- a:getExcludedUrls():java.util.List
+- a:getModule():com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
+- a:getSourceRoots():java.util.List
+- a:getUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setExcludedPatterns(java.util.List):V
+- a:setExcludedUrls(java.util.List):V
+- a:setModule(com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder):V
+- a:setSourceRoots(java.util.List):V
+- a:setUrl(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
+f:com.intellij.platform.workspace.jps.entities.ContentRootEntityModifications
+- sf:createContentRootEntity(com.intellij.platform.workspace.storage.url.VirtualFileUrl,java.util.List,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.ContentRootEntityBuilder
+- sf:createContentRootEntity(com.intellij.platform.workspace.storage.url.VirtualFileUrl,java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ContentRootEntityBuilder
+- bs:createContentRootEntity$default(com.intellij.platform.workspace.storage.url.VirtualFileUrl,java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.ContentRootEntityBuilder
+- sf:modifyContentRootEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.ContentRootEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ContentRootEntity
+f:com.intellij.platform.workspace.jps.entities.DependenciesKt
+- sf:getLibrary(com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity):com.intellij.platform.workspace.jps.entities.LibraryEntity
+- sf:modifyLibraryEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.LibraryEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.LibraryEntity
+e:com.intellij.platform.workspace.jps.entities.DependencyScope
+- java.lang.Enum
+- sf:COMPILE:com.intellij.platform.workspace.jps.entities.DependencyScope
+- sf:PROVIDED:com.intellij.platform.workspace.jps.entities.DependencyScope
+- sf:RUNTIME:com.intellij.platform.workspace.jps.entities.DependencyScope
+- sf:TEST:com.intellij.platform.workspace.jps.entities.DependencyScope
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.workspace.jps.entities.DependencyScope
+- s:values():com.intellij.platform.workspace.jps.entities.DependencyScope[]
+f:com.intellij.platform.workspace.jps.entities.ExcludeKt
+- sf:getContentRoot(com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity$Builder):com.intellij.platform.workspace.jps.entities.ContentRootEntity$Builder
+- sf:getLibrary(com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity$Builder):com.intellij.platform.workspace.jps.entities.LibraryEntity$Builder
+- sf:modifyExcludeUrlEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
+- sf:setContentRoot(com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity$Builder,com.intellij.platform.workspace.jps.entities.ContentRootEntity$Builder):V
+- sf:setLibrary(com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity$Builder,com.intellij.platform.workspace.jps.entities.LibraryEntity$Builder):V
+com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
+- com.intellij.platform.workspace.storage.WorkspaceEntity
+- sf:Companion:com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity$Companion
+- s:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity$Builder
+- s:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity$Builder
+- a:getUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity$Builder
+- com.intellij.platform.workspace.jps.entities.ExcludeUrlEntityBuilder
+f:com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity$Builder
+- f:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity$Builder
+- bs:create$default(com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity$Companion,com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity$Builder
+com.intellij.platform.workspace.jps.entities.ExcludeUrlEntityBuilder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setUrl(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
+f:com.intellij.platform.workspace.jps.entities.ExcludeUrlEntityModifications
+- sf:createExcludeUrlEntity(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.ExcludeUrlEntityBuilder
+- sf:createExcludeUrlEntity(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ExcludeUrlEntityBuilder
+- bs:createExcludeUrlEntity$default(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.ExcludeUrlEntityBuilder
+- sf:getContentRoot(com.intellij.platform.workspace.jps.entities.ExcludeUrlEntityBuilder):com.intellij.platform.workspace.jps.entities.ContentRootEntityBuilder
+- sf:getLibrary(com.intellij.platform.workspace.jps.entities.ExcludeUrlEntityBuilder):com.intellij.platform.workspace.jps.entities.LibraryEntityBuilder
+- sf:modifyExcludeUrlEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
+- sf:setContentRoot(com.intellij.platform.workspace.jps.entities.ExcludeUrlEntityBuilder,com.intellij.platform.workspace.jps.entities.ContentRootEntityBuilder):V
+- sf:setLibrary(com.intellij.platform.workspace.jps.entities.ExcludeUrlEntityBuilder,com.intellij.platform.workspace.jps.entities.LibraryEntityBuilder):V
+f:com.intellij.platform.workspace.jps.entities.ExtensionsKt
+- sf:collectTransitivelyDependentModules(com.intellij.platform.workspace.jps.entities.ModuleEntity,com.intellij.platform.workspace.storage.EntityStorage):java.util.Set
+- sf:getModuleLibraries(com.intellij.platform.workspace.jps.entities.ModuleEntity,com.intellij.platform.workspace.storage.EntityStorage):kotlin.sequences.Sequence
+- sf:getProjectLibraries(com.intellij.platform.workspace.storage.EntityStorage):kotlin.sequences.Sequence
+- sf:getSourceRoots(com.intellij.platform.workspace.jps.entities.ModuleEntity):java.util.List
+com.intellij.platform.workspace.jps.entities.FacetEntity
+- com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity
+- sf:Companion:com.intellij.platform.workspace.jps.entities.FacetEntity$Companion
+- s:create(com.intellij.platform.workspace.jps.entities.ModuleId,java.lang.String,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.FacetEntity$Builder
+- s:create(com.intellij.platform.workspace.jps.entities.ModuleId,java.lang.String,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.FacetEntity$Builder
+- s:create(java.lang.String,com.intellij.platform.workspace.jps.entities.ModuleId,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.FacetEntity$Builder
+- s:create(java.lang.String,com.intellij.platform.workspace.jps.entities.ModuleId,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.FacetEntity$Builder
+- a:getConfigurationXmlTag():java.lang.String
+- a:getModule():com.intellij.platform.workspace.jps.entities.ModuleEntity
+- getSymbolicId():com.intellij.platform.workspace.jps.entities.FacetId
+- a:getTypeId():com.intellij.platform.workspace.jps.entities.FacetEntityTypeId
+- a:getUnderlyingFacet():com.intellij.platform.workspace.jps.entities.FacetEntity
+com.intellij.platform.workspace.jps.entities.FacetEntity$Builder
+- com.intellij.platform.workspace.jps.entities.FacetEntityBuilder
+- getModule():com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder
+- getUnderlyingFacet():com.intellij.platform.workspace.jps.entities.FacetEntity$Builder
+- setModule(com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder):V
+- setUnderlyingFacet(com.intellij.platform.workspace.jps.entities.FacetEntity$Builder):V
+f:com.intellij.platform.workspace.jps.entities.FacetEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(com.intellij.platform.workspace.jps.entities.ModuleId,java.lang.String,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.FacetEntity$Builder
+- f:create(com.intellij.platform.workspace.jps.entities.ModuleId,java.lang.String,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.FacetEntity$Builder
+- f:create(java.lang.String,com.intellij.platform.workspace.jps.entities.ModuleId,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.FacetEntity$Builder
+- f:create(java.lang.String,com.intellij.platform.workspace.jps.entities.ModuleId,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.FacetEntity$Builder
+- bs:create$default(com.intellij.platform.workspace.jps.entities.FacetEntity$Companion,com.intellij.platform.workspace.jps.entities.ModuleId,java.lang.String,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.FacetEntity$Builder
+- bs:create$default(com.intellij.platform.workspace.jps.entities.FacetEntity$Companion,java.lang.String,com.intellij.platform.workspace.jps.entities.ModuleId,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.FacetEntity$Builder
+com.intellij.platform.workspace.jps.entities.FacetEntityBuilder
+- com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity$Builder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getConfigurationXmlTag():java.lang.String
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getModule():com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
+- a:getModuleId():com.intellij.platform.workspace.jps.entities.ModuleId
+- a:getName():java.lang.String
+- a:getTypeId():com.intellij.platform.workspace.jps.entities.FacetEntityTypeId
+- a:getUnderlyingFacet():com.intellij.platform.workspace.jps.entities.FacetEntityBuilder
+- a:setConfigurationXmlTag(java.lang.String):V
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setModule(com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder):V
+- a:setModuleId(com.intellij.platform.workspace.jps.entities.ModuleId):V
+- a:setName(java.lang.String):V
+- a:setTypeId(com.intellij.platform.workspace.jps.entities.FacetEntityTypeId):V
+- a:setUnderlyingFacet(com.intellij.platform.workspace.jps.entities.FacetEntityBuilder):V
+f:com.intellij.platform.workspace.jps.entities.FacetEntityModifications
+- sf:createFacetEntity(com.intellij.platform.workspace.jps.entities.ModuleId,java.lang.String,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.FacetEntityBuilder
+- sf:createFacetEntity(com.intellij.platform.workspace.jps.entities.ModuleId,java.lang.String,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.FacetEntityBuilder
+- bs:createFacetEntity$default(com.intellij.platform.workspace.jps.entities.ModuleId,java.lang.String,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.FacetEntityBuilder
+- sf:getChildrenFacets(com.intellij.platform.workspace.jps.entities.FacetEntityBuilder):java.util.List
+- sf:modifyFacetEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.FacetEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.FacetEntity
+- sf:setChildrenFacets(com.intellij.platform.workspace.jps.entities.FacetEntityBuilder,java.util.List):V
+f:com.intellij.platform.workspace.jps.entities.FacetEntityTypeId
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.platform.workspace.jps.entities.FacetEntityTypeId
+- bs:copy$default(com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,java.lang.String,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.FacetEntityTypeId
+- equals(java.lang.Object):Z
+- f:getName():java.lang.String
+- hashCode():I
+f:com.intellij.platform.workspace.jps.entities.FacetId
+- com.intellij.platform.workspace.storage.SymbolicEntityId
+- <init>(java.lang.String,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.jps.entities.ModuleId):V
+- f:component1():java.lang.String
+- f:component2():com.intellij.platform.workspace.jps.entities.FacetEntityTypeId
+- f:component3():com.intellij.platform.workspace.jps.entities.ModuleId
+- f:copy(java.lang.String,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.jps.entities.ModuleId):com.intellij.platform.workspace.jps.entities.FacetId
+- bs:copy$default(com.intellij.platform.workspace.jps.entities.FacetId,java.lang.String,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.jps.entities.ModuleId,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.FacetId
+- equals(java.lang.Object):Z
+- f:getName():java.lang.String
+- f:getParentId():com.intellij.platform.workspace.jps.entities.ModuleId
+- getPresentableName():java.lang.String
+- f:getType():com.intellij.platform.workspace.jps.entities.FacetEntityTypeId
+- hashCode():I
+f:com.intellij.platform.workspace.jps.entities.FacetKt
+- sf:getChildrenFacets(com.intellij.platform.workspace.jps.entities.FacetEntity$Builder):java.util.List
+- sf:getChildrenFacets(com.intellij.platform.workspace.jps.entities.FacetEntity):java.util.List
+- sf:modifyFacetEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.FacetEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.FacetEntity
+- sf:setChildrenFacets(com.intellij.platform.workspace.jps.entities.FacetEntity$Builder,java.util.List):V
+f:com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
+- com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
+- sf:INSTANCE:com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
+f:com.intellij.platform.workspace.jps.entities.LibraryDependency
+- com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
+- <init>(com.intellij.platform.workspace.jps.entities.LibraryId,Z,com.intellij.platform.workspace.jps.entities.DependencyScope):V
+- f:component1():com.intellij.platform.workspace.jps.entities.LibraryId
+- f:component2():Z
+- f:component3():com.intellij.platform.workspace.jps.entities.DependencyScope
+- f:copy(com.intellij.platform.workspace.jps.entities.LibraryId,Z,com.intellij.platform.workspace.jps.entities.DependencyScope):com.intellij.platform.workspace.jps.entities.LibraryDependency
+- bs:copy$default(com.intellij.platform.workspace.jps.entities.LibraryDependency,com.intellij.platform.workspace.jps.entities.LibraryId,Z,com.intellij.platform.workspace.jps.entities.DependencyScope,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.LibraryDependency
+- equals(java.lang.Object):Z
+- f:getExported():Z
+- f:getLibrary():com.intellij.platform.workspace.jps.entities.LibraryId
+- f:getScope():com.intellij.platform.workspace.jps.entities.DependencyScope
+- hashCode():I
+com.intellij.platform.workspace.jps.entities.LibraryEntity
+- com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+- sf:Companion:com.intellij.platform.workspace.jps.entities.LibraryEntity$Companion
+- s:create(java.lang.String,com.intellij.platform.workspace.jps.entities.LibraryTableId,java.util.List,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.LibraryEntity$Builder
+- s:create(java.lang.String,com.intellij.platform.workspace.jps.entities.LibraryTableId,java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.LibraryEntity$Builder
+- a:getExcludedRoots():java.util.List
+- a:getName():java.lang.String
+- a:getRoots():java.util.List
+- getSymbolicId():com.intellij.platform.workspace.jps.entities.LibraryId
+- a:getTableId():com.intellij.platform.workspace.jps.entities.LibraryTableId
+- a:getTypeId():com.intellij.platform.workspace.jps.entities.LibraryTypeId
+com.intellij.platform.workspace.jps.entities.LibraryEntity$Builder
+- com.intellij.platform.workspace.jps.entities.LibraryEntityBuilder
+f:com.intellij.platform.workspace.jps.entities.LibraryEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(java.lang.String,com.intellij.platform.workspace.jps.entities.LibraryTableId,java.util.List,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.LibraryEntity$Builder
+- f:create(java.lang.String,com.intellij.platform.workspace.jps.entities.LibraryTableId,java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.LibraryEntity$Builder
+- bs:create$default(com.intellij.platform.workspace.jps.entities.LibraryEntity$Companion,java.lang.String,com.intellij.platform.workspace.jps.entities.LibraryTableId,java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.LibraryEntity$Builder
+com.intellij.platform.workspace.jps.entities.LibraryEntityBuilder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getExcludedRoots():java.util.List
+- a:getName():java.lang.String
+- a:getRoots():java.util.List
+- a:getTableId():com.intellij.platform.workspace.jps.entities.LibraryTableId
+- a:getTypeId():com.intellij.platform.workspace.jps.entities.LibraryTypeId
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setExcludedRoots(java.util.List):V
+- a:setName(java.lang.String):V
+- a:setRoots(java.util.List):V
+- a:setTableId(com.intellij.platform.workspace.jps.entities.LibraryTableId):V
+- a:setTypeId(com.intellij.platform.workspace.jps.entities.LibraryTypeId):V
+f:com.intellij.platform.workspace.jps.entities.LibraryEntityModifications
+- sf:createLibraryEntity(java.lang.String,com.intellij.platform.workspace.jps.entities.LibraryTableId,java.util.List,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.LibraryEntityBuilder
+- sf:createLibraryEntity(java.lang.String,com.intellij.platform.workspace.jps.entities.LibraryTableId,java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.LibraryEntityBuilder
+- bs:createLibraryEntity$default(java.lang.String,com.intellij.platform.workspace.jps.entities.LibraryTableId,java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.LibraryEntityBuilder
+- sf:modifyLibraryEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.LibraryEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.LibraryEntity
+f:com.intellij.platform.workspace.jps.entities.LibraryId
+- com.intellij.platform.workspace.storage.SymbolicEntityId
+- <init>(java.lang.String,com.intellij.platform.workspace.jps.entities.LibraryTableId):V
+- f:component1():java.lang.String
+- f:component2():com.intellij.platform.workspace.jps.entities.LibraryTableId
+- f:copy(java.lang.String,com.intellij.platform.workspace.jps.entities.LibraryTableId):com.intellij.platform.workspace.jps.entities.LibraryId
+- bs:copy$default(com.intellij.platform.workspace.jps.entities.LibraryId,java.lang.String,com.intellij.platform.workspace.jps.entities.LibraryTableId,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.LibraryId
+- equals(java.lang.Object):Z
+- f:getName():java.lang.String
+- getPresentableName():java.lang.String
+- f:getTableId():com.intellij.platform.workspace.jps.entities.LibraryTableId
+- hashCode():I
+f:com.intellij.platform.workspace.jps.entities.LibraryRoot
+- java.io.Serializable
+- <init>(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.jps.entities.LibraryRootTypeId,com.intellij.platform.workspace.jps.entities.LibraryRoot$InclusionOptions):V
+- b:<init>(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.jps.entities.LibraryRootTypeId,com.intellij.platform.workspace.jps.entities.LibraryRoot$InclusionOptions,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- f:component2():com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
+- f:component3():com.intellij.platform.workspace.jps.entities.LibraryRoot$InclusionOptions
+- f:copy(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.jps.entities.LibraryRootTypeId,com.intellij.platform.workspace.jps.entities.LibraryRoot$InclusionOptions):com.intellij.platform.workspace.jps.entities.LibraryRoot
+- bs:copy$default(com.intellij.platform.workspace.jps.entities.LibraryRoot,com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.jps.entities.LibraryRootTypeId,com.intellij.platform.workspace.jps.entities.LibraryRoot$InclusionOptions,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.LibraryRoot
+- equals(java.lang.Object):Z
+- f:getInclusionOptions():com.intellij.platform.workspace.jps.entities.LibraryRoot$InclusionOptions
+- f:getType():com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
+- f:getUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- hashCode():I
+e:com.intellij.platform.workspace.jps.entities.LibraryRoot$InclusionOptions
+- java.lang.Enum
+- sf:ARCHIVES_UNDER_ROOT:com.intellij.platform.workspace.jps.entities.LibraryRoot$InclusionOptions
+- sf:ARCHIVES_UNDER_ROOT_RECURSIVELY:com.intellij.platform.workspace.jps.entities.LibraryRoot$InclusionOptions
+- sf:ROOT_ITSELF:com.intellij.platform.workspace.jps.entities.LibraryRoot$InclusionOptions
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.workspace.jps.entities.LibraryRoot$InclusionOptions
+- s:values():com.intellij.platform.workspace.jps.entities.LibraryRoot$InclusionOptions[]
+f:com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
+- java.io.Serializable
+- sf:Companion:com.intellij.platform.workspace.jps.entities.LibraryRootTypeId$Companion
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
+- bs:copy$default(com.intellij.platform.workspace.jps.entities.LibraryRootTypeId,java.lang.String,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
+- equals(java.lang.Object):Z
+- f:getName():java.lang.String
+- hashCode():I
+f:com.intellij.platform.workspace.jps.entities.LibraryRootTypeId$Companion
+- f:getCOMPILED():com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
+- f:getSOURCES():com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
+a:com.intellij.platform.workspace.jps.entities.LibraryTableId
+- java.io.Serializable
+- a:getLevel():java.lang.String
+f:com.intellij.platform.workspace.jps.entities.LibraryTableId$GlobalLibraryTableId
+- com.intellij.platform.workspace.jps.entities.LibraryTableId
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.platform.workspace.jps.entities.LibraryTableId$GlobalLibraryTableId
+- bs:copy$default(com.intellij.platform.workspace.jps.entities.LibraryTableId$GlobalLibraryTableId,java.lang.String,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.LibraryTableId$GlobalLibraryTableId
+- equals(java.lang.Object):Z
+- getLevel():java.lang.String
+- hashCode():I
+f:com.intellij.platform.workspace.jps.entities.LibraryTableId$ModuleLibraryTableId
+- com.intellij.platform.workspace.jps.entities.LibraryTableId
+- <init>(com.intellij.platform.workspace.jps.entities.ModuleId):V
+- f:component1():com.intellij.platform.workspace.jps.entities.ModuleId
+- f:copy(com.intellij.platform.workspace.jps.entities.ModuleId):com.intellij.platform.workspace.jps.entities.LibraryTableId$ModuleLibraryTableId
+- bs:copy$default(com.intellij.platform.workspace.jps.entities.LibraryTableId$ModuleLibraryTableId,com.intellij.platform.workspace.jps.entities.ModuleId,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.LibraryTableId$ModuleLibraryTableId
+- equals(java.lang.Object):Z
+- getLevel():java.lang.String
+- f:getModuleId():com.intellij.platform.workspace.jps.entities.ModuleId
+- hashCode():I
+f:com.intellij.platform.workspace.jps.entities.LibraryTableId$ProjectLibraryTableId
+- com.intellij.platform.workspace.jps.entities.LibraryTableId
+- sf:INSTANCE:com.intellij.platform.workspace.jps.entities.LibraryTableId$ProjectLibraryTableId
+- getLevel():java.lang.String
+f:com.intellij.platform.workspace.jps.entities.LibraryTypeId
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.platform.workspace.jps.entities.LibraryTypeId
+- bs:copy$default(com.intellij.platform.workspace.jps.entities.LibraryTypeId,java.lang.String,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.LibraryTypeId
+- equals(java.lang.Object):Z
+- f:getName():java.lang.String
+- hashCode():I
+f:com.intellij.platform.workspace.jps.entities.ModuleDependency
+- com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
+- <init>(com.intellij.platform.workspace.jps.entities.ModuleId,Z,com.intellij.platform.workspace.jps.entities.DependencyScope,Z):V
+- f:component1():com.intellij.platform.workspace.jps.entities.ModuleId
+- f:component2():Z
+- f:component3():com.intellij.platform.workspace.jps.entities.DependencyScope
+- f:component4():Z
+- f:copy(com.intellij.platform.workspace.jps.entities.ModuleId,Z,com.intellij.platform.workspace.jps.entities.DependencyScope,Z):com.intellij.platform.workspace.jps.entities.ModuleDependency
+- bs:copy$default(com.intellij.platform.workspace.jps.entities.ModuleDependency,com.intellij.platform.workspace.jps.entities.ModuleId,Z,com.intellij.platform.workspace.jps.entities.DependencyScope,Z,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.ModuleDependency
+- equals(java.lang.Object):Z
+- f:getExported():Z
+- f:getModule():com.intellij.platform.workspace.jps.entities.ModuleId
+- f:getProductionOnTest():Z
+- f:getScope():com.intellij.platform.workspace.jps.entities.DependencyScope
+- hashCode():I
+a:com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
+- java.io.Serializable
+com.intellij.platform.workspace.jps.entities.ModuleEntity
+- com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+- sf:Companion:com.intellij.platform.workspace.jps.entities.ModuleEntity$Companion
+- s:create(java.lang.String,java.util.List,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder
+- s:create(java.lang.String,java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder
+- a:getContentRoots():java.util.List
+- a:getDependencies():java.util.List
+- a:getFacets():java.util.List
+- a:getName():java.lang.String
+- getSymbolicId():com.intellij.platform.workspace.jps.entities.ModuleId
+- a:getType():com.intellij.platform.workspace.jps.entities.ModuleTypeId
+com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder
+- com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
+f:com.intellij.platform.workspace.jps.entities.ModuleEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(java.lang.String,java.util.List,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder
+- f:create(java.lang.String,java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder
+- bs:create$default(com.intellij.platform.workspace.jps.entities.ModuleEntity$Companion,java.lang.String,java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder
+f:com.intellij.platform.workspace.jps.entities.ModuleEntityAndExtensions
+- sf:getSdkId(com.intellij.platform.workspace.jps.entities.ModuleEntity):com.intellij.platform.workspace.jps.entities.SdkId
+- sf:getSdkId(com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder):com.intellij.platform.workspace.jps.entities.SdkId
+- sf:getSourceRoots(com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder):java.util.List
+- sf:modifyModuleEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.ModuleEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ModuleEntity
+- sf:setSdkId(com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder,com.intellij.platform.workspace.jps.entities.SdkId):V
+- sf:setSourceRoots(com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder,java.util.List):V
+com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getContentRoots():java.util.List
+- a:getDependencies():java.util.List
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getFacets():java.util.List
+- a:getName():java.lang.String
+- a:getType():com.intellij.platform.workspace.jps.entities.ModuleTypeId
+- a:setContentRoots(java.util.List):V
+- a:setDependencies(java.util.List):V
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setFacets(java.util.List):V
+- a:setName(java.lang.String):V
+- a:setType(com.intellij.platform.workspace.jps.entities.ModuleTypeId):V
+f:com.intellij.platform.workspace.jps.entities.ModuleEntityModifications
+- sf:createModuleEntity(java.lang.String,java.util.List,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
+- sf:createModuleEntity(java.lang.String,java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
+- bs:createModuleEntity$default(java.lang.String,java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
+- sf:getSourceRoots(com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder):java.util.List
+- sf:modifyModuleEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.ModuleEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ModuleEntity
+- sf:setSourceRoots(com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder,java.util.List):V
+f:com.intellij.platform.workspace.jps.entities.ModuleId
+- com.intellij.platform.workspace.storage.SymbolicEntityId
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.platform.workspace.jps.entities.ModuleId
+- bs:copy$default(com.intellij.platform.workspace.jps.entities.ModuleId,java.lang.String,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.ModuleId
+- equals(java.lang.Object):Z
+- f:getName():java.lang.String
+- getPresentableName():java.lang.String
+- hashCode():I
+com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity
+- com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+- sf:Companion:com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity$Companion
+- s:create(com.intellij.platform.workspace.jps.entities.ModuleId,java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity$Builder
+- s:create(com.intellij.platform.workspace.jps.entities.ModuleId,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity$Builder
+- a:getModuleId():com.intellij.platform.workspace.jps.entities.ModuleId
+- a:getName():java.lang.String
+com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity$Builder
+- com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntityBuilder
+f:com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(com.intellij.platform.workspace.jps.entities.ModuleId,java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity$Builder
+- f:create(com.intellij.platform.workspace.jps.entities.ModuleId,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity$Builder
+- bs:create$default(com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity$Companion,com.intellij.platform.workspace.jps.entities.ModuleId,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity$Builder
+com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntityBuilder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getModuleId():com.intellij.platform.workspace.jps.entities.ModuleId
+- a:getName():java.lang.String
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setModuleId(com.intellij.platform.workspace.jps.entities.ModuleId):V
+- a:setName(java.lang.String):V
+f:com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
+- com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
+- sf:INSTANCE:com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
+f:com.intellij.platform.workspace.jps.entities.ModuleTypeId
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.platform.workspace.jps.entities.ModuleTypeId
+- bs:copy$default(com.intellij.platform.workspace.jps.entities.ModuleTypeId,java.lang.String,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.ModuleTypeId
+- equals(java.lang.Object):Z
+- f:getName():java.lang.String
+- hashCode():I
+com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
+- com.intellij.platform.workspace.storage.WorkspaceEntity
+- sf:Companion:com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Companion
+- s:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Builder
+- s:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Builder
+- a:getProjectSdk():com.intellij.platform.workspace.jps.entities.SdkId
+com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Builder
+- com.intellij.platform.workspace.jps.entities.ProjectSettingsEntityBuilder
+f:com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Builder
+- f:create(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Builder
+- bs:create$default(com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Companion,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity$Builder
+com.intellij.platform.workspace.jps.entities.ProjectSettingsEntityBuilder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getProjectSdk():com.intellij.platform.workspace.jps.entities.SdkId
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setProjectSdk(com.intellij.platform.workspace.jps.entities.SdkId):V
+f:com.intellij.platform.workspace.jps.entities.ProjectSettingsEntityKt
+- sf:modifyProjectSettingsEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
+f:com.intellij.platform.workspace.jps.entities.ProjectSettingsEntityModifications
+- sf:createProjectSettingsEntity(com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.ProjectSettingsEntityBuilder
+- sf:createProjectSettingsEntity(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ProjectSettingsEntityBuilder
+- bs:createProjectSettingsEntity$default(com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.ProjectSettingsEntityBuilder
+- sf:modifyProjectSettingsEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
+f:com.intellij.platform.workspace.jps.entities.RootsKt
+- sf:getContentRoot(com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity):com.intellij.platform.workspace.jps.entities.ContentRootEntity
+- sf:modifyContentRootEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.ContentRootEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ContentRootEntity
+- sf:modifySourceRootEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.SourceRootEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.SourceRootEntity
+f:com.intellij.platform.workspace.jps.entities.SdkDependency
+- com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
+- <init>(com.intellij.platform.workspace.jps.entities.SdkId):V
+- f:component1():com.intellij.platform.workspace.jps.entities.SdkId
+- f:copy(com.intellij.platform.workspace.jps.entities.SdkId):com.intellij.platform.workspace.jps.entities.SdkDependency
+- bs:copy$default(com.intellij.platform.workspace.jps.entities.SdkDependency,com.intellij.platform.workspace.jps.entities.SdkId,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.SdkDependency
+- equals(java.lang.Object):Z
+- f:getSdk():com.intellij.platform.workspace.jps.entities.SdkId
+- hashCode():I
+com.intellij.platform.workspace.jps.entities.SdkEntity
+- com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+- sf:Companion:com.intellij.platform.workspace.jps.entities.SdkEntity$Companion
+- s:create(java.lang.String,java.lang.String,java.util.List,java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.SdkEntity$Builder
+- s:create(java.lang.String,java.lang.String,java.util.List,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.SdkEntity$Builder
+- a:getAdditionalData():java.lang.String
+- a:getHomePath():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:getName():java.lang.String
+- a:getRoots():java.util.List
+- getSymbolicId():com.intellij.platform.workspace.jps.entities.SdkId
+- a:getType():java.lang.String
+- a:getVersion():java.lang.String
+com.intellij.platform.workspace.jps.entities.SdkEntity$Builder
+- com.intellij.platform.workspace.jps.entities.SdkEntityBuilder
+f:com.intellij.platform.workspace.jps.entities.SdkEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(java.lang.String,java.lang.String,java.util.List,java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.SdkEntity$Builder
+- f:create(java.lang.String,java.lang.String,java.util.List,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.SdkEntity$Builder
+- bs:create$default(com.intellij.platform.workspace.jps.entities.SdkEntity$Companion,java.lang.String,java.lang.String,java.util.List,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.SdkEntity$Builder
+com.intellij.platform.workspace.jps.entities.SdkEntityBuilder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getAdditionalData():java.lang.String
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getHomePath():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:getName():java.lang.String
+- a:getRoots():java.util.List
+- a:getType():java.lang.String
+- a:getVersion():java.lang.String
+- a:setAdditionalData(java.lang.String):V
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setHomePath(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
+- a:setName(java.lang.String):V
+- a:setRoots(java.util.List):V
+- a:setType(java.lang.String):V
+- a:setVersion(java.lang.String):V
+f:com.intellij.platform.workspace.jps.entities.SdkEntityModifications
+- sf:createSdkEntity(java.lang.String,java.lang.String,java.util.List,java.lang.String,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.SdkEntityBuilder
+- sf:createSdkEntity(java.lang.String,java.lang.String,java.util.List,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.SdkEntityBuilder
+- bs:createSdkEntity$default(java.lang.String,java.lang.String,java.util.List,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.SdkEntityBuilder
+- sf:modifySdkEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.SdkEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.SdkEntity
+f:com.intellij.platform.workspace.jps.entities.SdkId
+- com.intellij.platform.workspace.storage.SymbolicEntityId
+- <init>(java.lang.String,java.lang.String):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:copy(java.lang.String,java.lang.String):com.intellij.platform.workspace.jps.entities.SdkId
+- bs:copy$default(com.intellij.platform.workspace.jps.entities.SdkId,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.SdkId
+- equals(java.lang.Object):Z
+- f:getName():java.lang.String
+- getPresentableName():java.lang.String
+- f:getType():java.lang.String
+- hashCode():I
+f:com.intellij.platform.workspace.jps.entities.SdkKt
+- sf:modifySdkEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.SdkEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.SdkEntity
+f:com.intellij.platform.workspace.jps.entities.SdkRoot
+- java.io.Serializable
+- <init>(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.jps.entities.SdkRootTypeId):V
+- f:component1():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- f:component2():com.intellij.platform.workspace.jps.entities.SdkRootTypeId
+- f:copy(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.jps.entities.SdkRootTypeId):com.intellij.platform.workspace.jps.entities.SdkRoot
+- bs:copy$default(com.intellij.platform.workspace.jps.entities.SdkRoot,com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.jps.entities.SdkRootTypeId,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.SdkRoot
+- equals(java.lang.Object):Z
+- f:getType():com.intellij.platform.workspace.jps.entities.SdkRootTypeId
+- f:getUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- hashCode():I
+f:com.intellij.platform.workspace.jps.entities.SdkRootTypeId
+- java.io.Serializable
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.platform.workspace.jps.entities.SdkRootTypeId
+- bs:copy$default(com.intellij.platform.workspace.jps.entities.SdkRootTypeId,java.lang.String,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.SdkRootTypeId
+- equals(java.lang.Object):Z
+- f:getName():java.lang.String
+- hashCode():I
+com.intellij.platform.workspace.jps.entities.SourceRootEntity
+- com.intellij.platform.workspace.storage.WorkspaceEntity
+- sf:Companion:com.intellij.platform.workspace.jps.entities.SourceRootEntity$Companion
+- s:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.jps.entities.SourceRootTypeId,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.SourceRootEntity$Builder
+- s:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.jps.entities.SourceRootTypeId,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.SourceRootEntity$Builder
+- a:getContentRoot():com.intellij.platform.workspace.jps.entities.ContentRootEntity
+- a:getRootTypeId():com.intellij.platform.workspace.jps.entities.SourceRootTypeId
+- a:getUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+com.intellij.platform.workspace.jps.entities.SourceRootEntity$Builder
+- com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder
+- getContentRoot():com.intellij.platform.workspace.jps.entities.ContentRootEntity$Builder
+- setContentRoot(com.intellij.platform.workspace.jps.entities.ContentRootEntity$Builder):V
+f:com.intellij.platform.workspace.jps.entities.SourceRootEntity$Companion
+- com.intellij.platform.workspace.storage.EntityType
+- f:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.jps.entities.SourceRootTypeId,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.SourceRootEntity$Builder
+- f:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.jps.entities.SourceRootTypeId,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.SourceRootEntity$Builder
+- bs:create$default(com.intellij.platform.workspace.jps.entities.SourceRootEntity$Companion,com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.jps.entities.SourceRootTypeId,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.SourceRootEntity$Builder
+com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder
+- com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getContentRoot():com.intellij.platform.workspace.jps.entities.ContentRootEntityBuilder
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:getRootTypeId():com.intellij.platform.workspace.jps.entities.SourceRootTypeId
+- a:getUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:setContentRoot(com.intellij.platform.workspace.jps.entities.ContentRootEntityBuilder):V
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+- a:setRootTypeId(com.intellij.platform.workspace.jps.entities.SourceRootTypeId):V
+- a:setUrl(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
+f:com.intellij.platform.workspace.jps.entities.SourceRootEntityModifications
+- sf:createSourceRootEntity(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.jps.entities.SourceRootTypeId,com.intellij.platform.workspace.storage.EntitySource):com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder
+- sf:createSourceRootEntity(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.jps.entities.SourceRootTypeId,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder
+- bs:createSourceRootEntity$default(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.jps.entities.SourceRootTypeId,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder
+- sf:modifySourceRootEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.SourceRootEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.SourceRootEntity
+f:com.intellij.platform.workspace.jps.entities.SourceRootTypeId
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.platform.workspace.jps.entities.SourceRootTypeId
+- bs:copy$default(com.intellij.platform.workspace.jps.entities.SourceRootTypeId,java.lang.String,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.SourceRootTypeId
+- equals(java.lang.Object):Z
+- f:getName():java.lang.String
+- hashCode():I

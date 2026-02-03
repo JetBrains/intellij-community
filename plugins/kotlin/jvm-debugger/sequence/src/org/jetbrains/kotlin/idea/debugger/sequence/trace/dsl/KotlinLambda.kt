@@ -1,0 +1,19 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+package org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl
+
+import com.intellij.debugger.streams.core.trace.dsl.CodeBlock
+import com.intellij.debugger.streams.core.trace.dsl.Expression
+import com.intellij.debugger.streams.core.trace.dsl.Lambda
+import com.intellij.debugger.streams.core.trace.dsl.impl.TextExpression
+import org.jetbrains.kotlin.K1Deprecation
+
+@K1Deprecation
+class KotlinLambda(override val variableName: String, override val body: CodeBlock) : Lambda {
+    override fun call(callName: String, vararg args: Expression): Expression = TextExpression("(${toCode()})").call(callName, *args)
+
+    override fun toCode(indent: Int): String =
+        "{ $variableName ->\n".withIndent(indent) +
+                body.toCode(indent + 1) +
+                "}"
+}

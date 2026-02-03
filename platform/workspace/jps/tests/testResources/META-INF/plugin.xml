@@ -1,0 +1,11 @@
+<idea-plugin>
+  <id>com.intellij.workspace.ide.tests</id>
+  <name>com.intellij.workspace.ide.tests</name>
+
+  <depends>com.intellij.modules.platform</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <moduleExtension implementation="com.intellij.workspaceModel.ide.TestModuleExtension"/>
+  </extensions>
+
+</idea-plugin>

@@ -1,0 +1,54 @@
+### auto-generated section `build intellij.kotlin.searching` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_kotlin.searching",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+  ],
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "kotlin.searching_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin.searching",
+  module_name = "intellij.kotlin.searching",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin.searching_resources"],
+  kotlinc_opts = ":custom_kotlin.searching",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//java/java-psi-api:psi",
+    "//java/java-indexing-api:indexing",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/core-api:core",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-impl",
+    "//platform/platform-api:ide",
+    "@lib//:kotlinc-analysis-api",
+    "//platform/usageView-impl",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/project-structure",
+    "//java/java-psi-impl:psi-impl",
+    "//java/java-indexing-impl:indexing-impl",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/kotlin.searching/base",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+    "//plugins/kotlin/base/psi",
+  ],
+  runtime_deps = ["//plugins/kotlin/base/frontend-agnostic"]
+)
+### auto-generated section `build intellij.kotlin.searching` end

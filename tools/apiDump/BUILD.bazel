@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.tools.apiDump` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "apiDump",
+  module_name = "intellij.tools.apiDump",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "//libraries/asm-tools",
+    "@lib//:tools-api_dump-kotlinx-bcv",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "@lib//:kotlin-metadata",
+  ]
+)
+### auto-generated section `build intellij.tools.apiDump` end

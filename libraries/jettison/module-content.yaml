@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.jettison.jar
+  modules:
+  - name: intellij.libraries.jettison
+    libraries:
+      jettison:
+      - name: $MAVEN_REPOSITORY$/org/codehaus/jettison/jettison/1/jettison-1.jar

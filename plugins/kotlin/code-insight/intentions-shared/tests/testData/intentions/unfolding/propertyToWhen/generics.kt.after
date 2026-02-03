@@ -1,0 +1,12 @@
+data class C<T>(val value: T)
+
+fun test(n: Int): C<String>? {
+    val res: C<String>?
+    <caret>when (n) {
+        1 -> res = C("one")
+        2 -> res = C("two")
+        else -> res = null
+    }
+
+    return res
+}

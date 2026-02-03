@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.groovy.copyright` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "copyright_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "copyright",
+  module_name = "intellij.groovy.copyright",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":copyright_resources"],
+  deps = [
+    "//plugins/copyright",
+    "//plugins/groovy/groovy-psi:psi",
+    "//platform/core-api:core",
+    "//java/java-copyright:copyright",
+    "//java/java-psi-api:psi",
+    "//platform/util",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-impl",
+  ]
+)
+### auto-generated section `build intellij.groovy.copyright` end

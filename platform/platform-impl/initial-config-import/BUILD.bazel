@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.platform.ide.initialConfigImport` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "initial-config-import",
+  module_name = "intellij.platform.ide.initialConfigImport",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/util-ex",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/service-container",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//libraries/jackson/jackson",
+    "//platform/statistics",
+    "//platform/core-ui",
+    "//platform/ide-core/plugins",
+    "//platform/platform-util-io-impl:ide-util-io-impl",
+  ]
+)
+### auto-generated section `build intellij.platform.ide.initialConfigImport` end

@@ -1,0 +1,41 @@
+### auto-generated section `build intellij.platform.recentFiles.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "backend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.platform.recentFiles.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend_resources"],
+  deps = [
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//platform/recentFiles/shared:recentFiles",
+    "//platform/kernel/rpc.backend",
+    "//platform/project/shared:project",
+    "//platform/platform-impl:ide-impl",
+    "//platform/util",
+    "//platform/lang-api:lang",
+    "//platform/platform-api:ide",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/core-ui",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-impl",
+    "//platform/util/jdom",
+    "//platform/ide-core-impl",
+    "//platform/kernel/backend",
+    "//platform/statistics",
+    "//platform/platform-impl/rpc",
+    "//platform/backend",
+    "//platform/util/coroutines",
+  ]
+)
+### auto-generated section `build intellij.platform.recentFiles.backend` end

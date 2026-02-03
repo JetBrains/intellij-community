@@ -1,0 +1,73 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="fleet.andel"/>
+    <module name="fleet.util.core"/>
+    <module name="intellij.libraries.aalto.xml"/>
+    <module name="intellij.libraries.asm"/>
+    <module name="intellij.libraries.blockmap"/>
+    <module name="intellij.libraries.bouncy.castle.provider"/>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.classgraph"/>
+    <module name="intellij.libraries.commons.imaging"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.hash4j"/>
+    <module name="intellij.libraries.hdr.histogram"/>
+    <module name="intellij.libraries.http.client"/>
+    <module name="intellij.libraries.icu4j"/>
+    <module name="intellij.libraries.imgscalr"/>
+    <module name="intellij.libraries.jackson"/>
+    <module name="intellij.libraries.jackson.databind"/>
+    <module name="intellij.libraries.jackson.jr.objects"/>
+    <module name="intellij.libraries.jbr"/>
+    <module name="intellij.libraries.jcef"/>
+    <module name="intellij.libraries.jgoodies.common"/>
+    <module name="intellij.libraries.jgoodies.forms"/>
+    <module name="intellij.libraries.jsoup"/>
+    <module name="intellij.libraries.jvm.native.trusted.roots"/>
+    <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.lz4"/>
+    <module name="intellij.libraries.miglayout.swing"/>
+    <module name="intellij.libraries.netty.buffer"/>
+    <module name="intellij.libraries.netty.codec.http"/>
+    <module name="intellij.libraries.oro.matcher"/>
+    <module name="intellij.libraries.protobuf"/>
+    <module name="intellij.libraries.pty4j"/>
+    <module name="intellij.libraries.rd.core"/>
+    <module name="intellij.libraries.stream"/>
+    <module name="intellij.libraries.swingx"/>
+    <module name="intellij.libraries.winp"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.builtInServer"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.eel.impl"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.concurrency"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.locking.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey
+      key="ide.project.frame.auto.fix.size.windows.interval"
+      defaultValue="60"
+      description="The interval between too-small window size checks on Windows and attempts to restore the size. Set to zero to disable"
+    />
+  </extensions>
+</idea-plugin>

@@ -1,0 +1,4 @@
+// WITH_STDLIB
+fun test(list: List<Int>, i: Int) {
+    list.sumOf { 1 + i }
+}

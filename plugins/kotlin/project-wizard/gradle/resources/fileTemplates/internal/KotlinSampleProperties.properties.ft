@@ -1,0 +1,8 @@
+# Enable the build cache to save time by reusing outputs produced by other successful builds.
+# https://docs.gradle.org/current/userguide/build_cache.html
+org.gradle.caching=true
+
+# Enable the configuration cache to reuse the build configuration and enable parallel task execution.
+# (Note that some plugins may not yet be compatible with the configuration cache.)
+# https://docs.gradle.org/current/userguide/configuration_cache.html
+org.gradle.configuration-cache=true

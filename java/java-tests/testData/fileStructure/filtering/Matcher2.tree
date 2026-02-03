@@ -1,0 +1,10 @@
+-Matcher2.java
+ -Matcher2
+  getIcon(): void
+  isControlDown(): void
+  -A
+   getIcon(): Icon
+   isCoin(): boolean
+  -B
+   [getIcon(): Icon]
+   isCoin(): boolean

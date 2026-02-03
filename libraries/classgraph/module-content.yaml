@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.classgraph.jar
+  modules:
+  - name: intellij.libraries.classgraph
+    libraries:
+      classgraph:
+      - name: $MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4/classgraph-4.jar

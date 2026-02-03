@@ -1,0 +1,13 @@
+LineBreakpoint created at smartStepIntoAsyncLambda.kt:10
+LineBreakpoint created at smartStepIntoAsyncLambda.kt:22
+Run Java
+Connected to the target VM
+smartStepIntoAsyncLambda.kt:10
+smartStepIntoAsyncLambda.kt:12
+smartStepIntoAsyncLambda.kt:14
+smartStepIntoAsyncLambda.kt:22
+smartStepIntoAsyncLambda.kt:24
+smartStepIntoAsyncLambda.kt:27
+Disconnected from the target VM
+
+Process finished with exit code 0

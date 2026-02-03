@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.python.copyright` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "copyright_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "copyright",
+  module_name = "intellij.python.copyright",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":copyright_resources"],
+  deps = [
+    "//plugins/copyright",
+    "@lib//:kotlin-stdlib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//python:python-community-impl",
+  ]
+)
+### auto-generated section `build intellij.python.copyright` end

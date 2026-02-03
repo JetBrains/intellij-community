@@ -1,0 +1,8 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.libraries.junit5.pioneer"/>
+    <module name="intellij.python.venv._test"/>
+    <module name="intellij.python.terminal"/>
+    <module name="intellij.python.test.env.junit5"/>
+  </dependencies>
+</idea-plugin>

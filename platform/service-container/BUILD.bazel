@@ -1,0 +1,63 @@
+### auto-generated section `build intellij.platform.serviceContainer` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "service-container_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "service-container",
+  module_name = "intellij.platform.serviceContainer",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":service-container_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/core-impl",
+    "//platform/util-ex",
+    "//platform/projectModel-impl",
+    "//libraries/fastutil",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/instanceContainer",
+    "//platform/diagnostic",
+    "//platform/util/coroutines",
+  ]
+)
+
+jvm_library(
+  name = "service-container_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":service-container"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/core-impl",
+    "//platform/util-ex",
+    "//platform/projectModel-impl",
+    "@lib//:junit4",
+    "@lib//:assert_j",
+    "//libraries/fastutil",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/instanceContainer",
+    "//platform/diagnostic",
+    "//platform/util/coroutines",
+  ]
+)
+### auto-generated section `build intellij.platform.serviceContainer` end
+
+### auto-generated section `test intellij.platform.serviceContainer` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "service-container_test",
+  runtime_deps = [":service-container_test_lib"]
+)
+### auto-generated section `test intellij.platform.serviceContainer` end

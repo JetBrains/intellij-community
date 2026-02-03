@@ -1,0 +1,57 @@
+<idea-plugin visibility="internal" package="com.intellij.platform.ide.nonModalWelcomeScreen">
+  <dependencies>
+    <module name="intellij.platform.compose"/>
+    <module name="intellij.platform.jewel.markdown.ideLafBridgeStyling"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.compose.runtime.desktop"/>
+    <!-- endregion -->
+  </dependencies>
+  <resource-bundle>messages.NonModalWelcomeScreenBundle</resource-bundle>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.platform.ide.welcomeScreenContentProvider"
+                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ide.welcomeScreenFeatureUi"
+                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenFeatureUI" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ide.welcomeScreenRightTabBannerProvider"
+                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabBannerProvider" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.openapi.wm.ex.WelcomeScreenTabService"
+                    serviceImplementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabServiceImpl"
+                    overrides="true"/>
+    <postStartupActivity implementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenProjectActivity"/>
+
+    <noProjectStateHandler implementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenNoProjectStateHandler" order="first"/>
+
+    <actionConfigurationCustomizer implementation="com.intellij.platform.ide.nonModalWelcomeScreen.actions.WelcomeScreenAwareActionsCustomizer" />
+
+    <fileEditorProvider id="settingsWindow" implementation="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabVirtualFileEditorProvider"/>
+    <projectViewPane implementation="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanel"/>
+    <projectViewPaneExtractor implementation="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanelModelExtractor"/>
+
+    <advancedSetting id="welcome.screen.non.modal.enabled" default="true"
+                     groupKey="group.advanced.settings.welcome.screen"
+                     bundle="messages.NonModalWelcomeScreenBundle"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector"/>
+
+    <internalFileTemplate name="Generic Empty File"/>
+  </extensions>
+
+  <actions resource-bundle="messages.NonModalWelcomeScreenBundle">
+    <group id="NonModalWelcomeScreen.LeftTabActions.New">
+      <reference ref="NewProjectOrModuleGroup"/>
+      <separator/>
+    </group>
+    <action id="OpenWelcome" class="com.intellij.platform.ide.nonModalWelcomeScreen.actions.OpenWelcomeScreenAction">
+      <add-to-group group-id="HelpMenu" anchor="first"/>
+    </action>
+    <action id="NonModalWelcomeScreen.LeftTabActions.New.Action" icon="AllIcons.General.Add"
+            class="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftTabActionNew"/>
+    <action id="welcome.screen.left.tab.new.empty.file"
+            class="com.intellij.platform.ide.nonModalWelcomeScreen.actions.CreateEmptyFileAction"
+            icon="AllIcons.FileTypes.Text"/>
+  </actions>
+</idea-plugin>

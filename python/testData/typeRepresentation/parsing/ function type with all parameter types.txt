@@ -1,0 +1,62 @@
+TypeRepresentation:a.pythonTypeRepresentation
+  PyFunctionTypeRepresentation
+    PsiElement(Py:DEF_KEYWORD)('def')
+    PsiWhiteSpace(' ')
+    PyReferenceExpression: test
+      PsiElement(Py:IDENTIFIER)('test')
+      PsiElement(Py:DOT)('.')
+      PsiElement(Py:IDENTIFIER)('f')
+    PyParameterListRepresentation
+      PsiElement(Py:LPAR)('(')
+      PyNamedParameterTypeRepresentation
+        PsiElement(Py:IDENTIFIER)('pos')
+        PsiElement(Py:COLON)(':')
+        PsiWhiteSpace(' ')
+        PyReferenceExpression: int
+          PsiElement(Py:IDENTIFIER)('int')
+      PsiElement(Py:COMMA)(',')
+      PsiWhiteSpace(' ')
+      PySlashParameter
+        PsiElement(Py:DIV)('/')
+      PsiElement(Py:COMMA)(',')
+      PsiWhiteSpace(' ')
+      PyNamedParameterTypeRepresentation
+        PsiElement(Py:IDENTIFIER)('normal')
+        PsiElement(Py:COLON)(':')
+        PsiWhiteSpace(' ')
+        PyReferenceExpression: str
+          PsiElement(Py:IDENTIFIER)('str')
+      PsiElement(Py:COMMA)(',')
+      PsiWhiteSpace(' ')
+      PyStarExpression
+        PsiElement(Py:MULT)('*')
+        PyNamedParameterTypeRepresentation
+          PsiElement(Py:IDENTIFIER)('args')
+          PsiElement(Py:COLON)(':')
+          PsiWhiteSpace(' ')
+          PyReferenceExpression: float
+            PsiElement(Py:IDENTIFIER)('float')
+      PsiElement(Py:COMMA)(',')
+      PsiWhiteSpace(' ')
+      PyNamedParameterTypeRepresentation
+        PsiElement(Py:IDENTIFIER)('kw')
+        PsiElement(Py:COLON)(':')
+        PsiWhiteSpace(' ')
+        PyReferenceExpression: bool
+          PsiElement(Py:IDENTIFIER)('bool')
+      PsiElement(Py:COMMA)(',')
+      PsiWhiteSpace(' ')
+      PyDoubleStarExpression
+        PsiElement(Py:EXP)('**')
+        PyNamedParameterTypeRepresentation
+          PsiElement(Py:IDENTIFIER)('kwargs')
+          PsiElement(Py:COLON)(':')
+          PsiWhiteSpace(' ')
+          PyReferenceExpression: dict
+            PsiElement(Py:IDENTIFIER)('dict')
+      PsiElement(Py:RPAR)(')')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:RARROW)('->')
+    PsiWhiteSpace(' ')
+    PyNoneLiteralExpression
+      PsiElement(Py:NONE_KEYWORD)('None')

@@ -1,0 +1,11 @@
+<html>
+<body>
+Checks that all content modules registered in a plugin descriptor have dedicated IntelliJ IDEA modules.
+<p>
+  The way to register a content module using <code>moduleName/subDescriptorName</code> syntax without extracting a separate IntelliJ IDEA
+  module for it is deprecated now.
+  Each content module should have its own IntelliJ IDEA module to allow checking that dependencies used during compilation are available
+  at runtime.
+</p>
+</body>
+</html>

@@ -1,0 +1,8 @@
+- name: dist.all/lib/intellij.libraries.sshj.jar
+  modules:
+  - name: intellij.libraries.sshj
+    libraries:
+      SSHJ:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sshj/0/sshj-0.jar
+      - name: $MAVEN_REPOSITORY$/com/hierynomus/asn-one/0/asn-one-0.jar
+      - name: $MAVEN_REPOSITORY$/net/i2p/crypto/eddsa/0/eddsa-0.jar

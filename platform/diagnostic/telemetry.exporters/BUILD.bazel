@@ -1,0 +1,43 @@
+### auto-generated section `build intellij.platform.diagnostic.telemetry.exporters` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_telemetry.exporters",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "kotlinx.serialization.ExperimentalSerializationApi",
+  ]
+)
+
+resourcegroup(
+  name = "telemetry.exporters_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "telemetry.exporters",
+  module_name = "intellij.platform.diagnostic.telemetry.exporters",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":telemetry.exporters_resources"],
+  kotlinc_opts = ":custom_telemetry.exporters",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/diagnostic/telemetry",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "@lib//:opentelemetry-exporter-otlp-common",
+    "//platform/util/http",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/util",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/protobuf",
+  ]
+)
+### auto-generated section `build intellij.platform.diagnostic.telemetry.exporters` end

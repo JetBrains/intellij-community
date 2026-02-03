@@ -1,0 +1,19 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    GENERIC_COMMAND_DIRECTIVE
+      LITERAL
+        PsiElement(word)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(&&)('&&')
+    PsiWhiteSpace(' ')
+    GENERIC_COMMAND_DIRECTIVE
+      LITERAL
+        PsiElement(word)('b')
+    PsiWhiteSpace(' ')
+    PsiElement(|)('|')
+    PsiWhiteSpace(' ')
+    GENERIC_COMMAND_DIRECTIVE
+      LITERAL
+        PsiElement(word)('c')
+    PsiWhiteSpace(' ')
+    PsiElement(;)(';')

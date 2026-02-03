@@ -1,0 +1,189 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.jetbrains.python;
+
+import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
+
+import static com.jetbrains.python.PyElementTypes.ASSERT_STATEMENT;
+import static com.jetbrains.python.PyElementTypes.ASSIGNMENT_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.ASSIGNMENT_STATEMENT;
+import static com.jetbrains.python.PyElementTypes.AUG_ASSIGNMENT_STATEMENT;
+import static com.jetbrains.python.PyElementTypes.BINARY_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.BOOL_LITERAL_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.BREAK_STATEMENT;
+import static com.jetbrains.python.PyElementTypes.CALL_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.CASE_CLAUSE;
+import static com.jetbrains.python.PyElementTypes.CLASS_DECLARATION;
+import static com.jetbrains.python.PyElementTypes.CONDITIONAL_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.CONTINUE_STATEMENT;
+import static com.jetbrains.python.PyElementTypes.DEL_STATEMENT;
+import static com.jetbrains.python.PyElementTypes.DICT_COMP_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.DICT_LITERAL_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.DOUBLE_STAR_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.ELLIPSIS_LITERAL_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.EMPTY_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.EXEC_STATEMENT;
+import static com.jetbrains.python.PyElementTypes.EXPRESSION_STATEMENT;
+import static com.jetbrains.python.PyElementTypes.FLOAT_LITERAL_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.FOR_STATEMENT;
+import static com.jetbrains.python.PyElementTypes.FROM_IMPORT_STATEMENT;
+import static com.jetbrains.python.PyElementTypes.FUNCTION_DECLARATION;
+import static com.jetbrains.python.PyElementTypes.GENERATOR_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.GLOBAL_STATEMENT;
+import static com.jetbrains.python.PyElementTypes.IF_STATEMENT;
+import static com.jetbrains.python.PyElementTypes.IMAGINARY_LITERAL_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.IMPORT_STATEMENT;
+import static com.jetbrains.python.PyElementTypes.INTEGER_LITERAL_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.KEYWORD_ARGUMENT_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.KEY_VALUE_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.LAMBDA_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.LIST_COMP_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.LIST_LITERAL_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.MATCH_STATEMENT;
+import static com.jetbrains.python.PyElementTypes.NAMED_PARAMETER;
+import static com.jetbrains.python.PyElementTypes.NONE_LITERAL_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.NONLOCAL_STATEMENT;
+import static com.jetbrains.python.PyElementTypes.PARENTHESIZED_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.PASS_STATEMENT;
+import static com.jetbrains.python.PyElementTypes.PREFIX_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.PRINT_STATEMENT;
+import static com.jetbrains.python.PyElementTypes.RAISE_STATEMENT;
+import static com.jetbrains.python.PyElementTypes.REFERENCE_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.REPR_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.RETURN_STATEMENT;
+import static com.jetbrains.python.PyElementTypes.SET_COMP_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.SET_LITERAL_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.SINGLE_STAR_PARAMETER;
+import static com.jetbrains.python.PyElementTypes.SLASH_PARAMETER;
+import static com.jetbrains.python.PyElementTypes.SLICE_ITEM;
+import static com.jetbrains.python.PyElementTypes.STAR_ARGUMENT_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.STAR_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.STRING_LITERAL_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.SUBSCRIPTION_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.TARGET_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.TRY_EXCEPT_STATEMENT;
+import static com.jetbrains.python.PyElementTypes.TUPLE_EXPRESSION;
+import static com.jetbrains.python.PyElementTypes.TUPLE_PARAMETER;
+import static com.jetbrains.python.PyElementTypes.TYPE_ALIAS_STATEMENT;
+import static com.jetbrains.python.PyElementTypes.TYPE_DECLARATION_STATEMENT;
+import static com.jetbrains.python.PyElementTypes.WHILE_STATEMENT;
+import static com.jetbrains.python.PyElementTypes.WITH_STATEMENT;
+import static com.jetbrains.python.PyElementTypes.YIELD_EXPRESSION;
+import static com.jetbrains.python.PyTokenTypes.AND_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.ASSERT_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.ASYNC_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.AS_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.AWAIT_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.BREAK_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.CASE_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.CLASS_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.CONTINUE_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.DEBUG_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.DEF_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.DEL_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.ELIF_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.ELLIPSIS_LITERAL;
+import static com.jetbrains.python.PyTokenTypes.ELSE_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.EXCEPT_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.EXEC_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.FALSE_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.FINALLY_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.FOR_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.FROM_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.GLOBAL_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.IF_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.IMPORT_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.IN_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.IS_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.LAMBDA_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.MATCH_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.NONE_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.NONLOCAL_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.NOT_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.OR_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.PASS_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.PRINT_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.RAISE_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.RETURN_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.TRUE_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.TRY_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.TYPE_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.WHILE_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.WITH_KEYWORD;
+import static com.jetbrains.python.PyTokenTypes.YIELD_KEYWORD;
+
+public final class PythonTokenSetContributor extends PythonDialectsTokenSetContributorBase {
+  @Override
+  public @NotNull TokenSet getStatementTokens() {
+    return TokenSet.create(EXPRESSION_STATEMENT, ASSIGNMENT_STATEMENT, TYPE_DECLARATION_STATEMENT, AUG_ASSIGNMENT_STATEMENT, 
+                           ASSERT_STATEMENT, BREAK_STATEMENT, CONTINUE_STATEMENT, DEL_STATEMENT, EXEC_STATEMENT, FOR_STATEMENT,
+                           FROM_IMPORT_STATEMENT, GLOBAL_STATEMENT, IMPORT_STATEMENT, IF_STATEMENT, PASS_STATEMENT,
+                           PRINT_STATEMENT, RAISE_STATEMENT, RETURN_STATEMENT, TRY_EXCEPT_STATEMENT, WITH_STATEMENT,
+                           WHILE_STATEMENT, NONLOCAL_STATEMENT, CLASS_DECLARATION, FUNCTION_DECLARATION, MATCH_STATEMENT, CASE_CLAUSE,
+                           TYPE_ALIAS_STATEMENT);
+  }
+
+  @Override
+  public @NotNull TokenSet getExpressionTokens() {
+    return TokenSet.create(EMPTY_EXPRESSION, REFERENCE_EXPRESSION, INTEGER_LITERAL_EXPRESSION, FLOAT_LITERAL_EXPRESSION,
+                           IMAGINARY_LITERAL_EXPRESSION, STRING_LITERAL_EXPRESSION, PARENTHESIZED_EXPRESSION,
+                           SUBSCRIPTION_EXPRESSION, SLICE_ITEM, BINARY_EXPRESSION, PREFIX_EXPRESSION, CALL_EXPRESSION,
+                           LIST_LITERAL_EXPRESSION, TUPLE_EXPRESSION, KEYWORD_ARGUMENT_EXPRESSION, STAR_ARGUMENT_EXPRESSION,
+                           LAMBDA_EXPRESSION, LIST_COMP_EXPRESSION, DICT_LITERAL_EXPRESSION, KEY_VALUE_EXPRESSION,
+                           REPR_EXPRESSION, GENERATOR_EXPRESSION, CONDITIONAL_EXPRESSION, YIELD_EXPRESSION,
+                           TARGET_EXPRESSION, NONE_LITERAL_EXPRESSION, ELLIPSIS_LITERAL_EXPRESSION, BOOL_LITERAL_EXPRESSION,
+                           SET_LITERAL_EXPRESSION, SET_COMP_EXPRESSION, DICT_COMP_EXPRESSION, STAR_EXPRESSION, DOUBLE_STAR_EXPRESSION,
+                           ASSIGNMENT_EXPRESSION);
+  }
+
+  @Override
+  public @NotNull TokenSet getKeywordTokens() {
+    return TokenSet.create(
+      AND_KEYWORD, AS_KEYWORD, ASSERT_KEYWORD, BREAK_KEYWORD, CLASS_KEYWORD,
+      CONTINUE_KEYWORD, DEF_KEYWORD, DEL_KEYWORD, ELIF_KEYWORD, ELSE_KEYWORD,
+      EXCEPT_KEYWORD, EXEC_KEYWORD, FINALLY_KEYWORD, FOR_KEYWORD,
+      FROM_KEYWORD,
+      GLOBAL_KEYWORD, IF_KEYWORD, IMPORT_KEYWORD, IN_KEYWORD, IS_KEYWORD,
+      LAMBDA_KEYWORD, NOT_KEYWORD, OR_KEYWORD, PASS_KEYWORD, PRINT_KEYWORD,
+      RAISE_KEYWORD, RETURN_KEYWORD, TRY_KEYWORD, WITH_KEYWORD, WHILE_KEYWORD,
+      YIELD_KEYWORD,
+      MATCH_KEYWORD, CASE_KEYWORD,
+      NONE_KEYWORD, ELLIPSIS_LITERAL, TRUE_KEYWORD, FALSE_KEYWORD, NONLOCAL_KEYWORD, DEBUG_KEYWORD, ASYNC_KEYWORD, AWAIT_KEYWORD, TYPE_KEYWORD);
+  }
+
+  @Override
+  public @NotNull TokenSet getParameterTokens() {
+    return TokenSet.create(NAMED_PARAMETER, TUPLE_PARAMETER, SINGLE_STAR_PARAMETER, SLASH_PARAMETER);
+  }
+
+  @Override
+  public @NotNull TokenSet getFunctionDeclarationTokens() {
+    return TokenSet.create(FUNCTION_DECLARATION);
+  }
+
+  @Override
+  public @NotNull TokenSet getUnbalancedBracesRecoveryTokens() {
+    // Sync these tokens with Python.flex under the <FSTRING_FRAGMENT> state
+    return TokenSet.create(DEF_KEYWORD, CLASS_KEYWORD, RETURN_KEYWORD, WITH_KEYWORD, WHILE_KEYWORD, BREAK_KEYWORD, CONTINUE_KEYWORD,
+                           RAISE_KEYWORD, TRY_KEYWORD, EXCEPT_KEYWORD, FINALLY_KEYWORD);
+  }
+
+  @Override
+  public @NotNull TokenSet getReferenceExpressionTokens() {
+    return TokenSet.create(REFERENCE_EXPRESSION);
+  }
+}

@@ -1,0 +1,14 @@
+// "Replace with 'absolutePath'" "true"
+import java.io.File
+
+@Deprecated("", ReplaceWith("absolutePath"))
+val File.prop: String
+    get() = absolutePath
+
+fun foo(file: File) {
+    val v = file.absolutePath
+}
+
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

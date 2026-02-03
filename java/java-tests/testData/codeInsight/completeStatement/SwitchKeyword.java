@@ -1,0 +1,6 @@
+
+class foo {
+    {
+        switch<caret>
+    }
+}

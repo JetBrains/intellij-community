@@ -1,0 +1,55 @@
+### auto-generated section `build intellij.xml.dom.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "dom-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//xml/dom-impl",
+    "//xml/impl",
+    "//java/testFramework",
+    "//java/java-psi-impl:psi-impl",
+  ]
+)
+
+jvm_library(
+  name = "dom-tests_test_lib",
+  module_name = "intellij.xml.dom.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/lang-core",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//xml/dom-impl",
+    "//xml/impl",
+    "//java/testFramework",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
+    "@lib//:assert_j",
+    "//java/openapi:java",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//xml/xml-psi-api:psi",
+    "//platform/libraries/cglib",
+    "//xml/xml-analysis-api:analysis",
+  ],
+  runtime_deps = [":dom-tests"]
+)
+### auto-generated section `build intellij.xml.dom.tests` end
+
+### auto-generated section `test intellij.xml.dom.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "dom-tests_test",
+  runtime_deps = [":dom-tests_test_lib"]
+)
+### auto-generated section `test intellij.xml.dom.tests` end

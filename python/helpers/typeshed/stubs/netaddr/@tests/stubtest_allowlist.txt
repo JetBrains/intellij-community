@@ -1,0 +1,4 @@
+netaddr.tests.*
+
+# __getattr__ is not present at runtime but __init__ has `self.__dict__.update(kwargs)`
+netaddr.ip.iana.XMLRecordParser.__getattr__

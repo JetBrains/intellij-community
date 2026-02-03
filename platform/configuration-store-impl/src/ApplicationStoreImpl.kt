@@ -1,0 +1,129 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.configurationStore
+
+import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.PathManager.getSystemDir
+import com.intellij.openapi.components.*
+import com.intellij.openapi.components.impl.stores.stateStore
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.platform.settings.SettingsController
+import com.intellij.platform.workspace.jps.serialization.impl.ApplicationStoreJpsContentReader
+import com.intellij.platform.workspace.jps.serialization.impl.JpsAppFileContentWriter
+import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
+import com.intellij.util.LineSeparator
+import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.VisibleForTesting
+import java.nio.file.Files
+import java.nio.file.Path
+
+@Internal
+const val APP_CONFIG: String = $$"$APP_CONFIG$"
+
+@Internal
+@VisibleForTesting
+@Suppress("NonDefaultConstructor")
+open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWithExtraComponents(), ApplicationStoreJpsContentReader {
+  override val storageManager: StateStorageManagerImpl = ApplicationStateStorageManager(
+    pathMacroManager = app.service<PathMacroManager>(),
+    controller = app.getService(SettingsController::class.java),
+  )
+
+  @Volatile
+  final override var isStoreInitialized: Boolean = false
+    private set
+
+  override val allowSavingWithoutModifications: Boolean
+    get() = true
+
+  override val serviceContainer: ComponentManagerEx
+    get() = app as ComponentManagerEx
+
+  // a number of app components require some state, so we load the default state in test mode
+  override val loadPolicy: StateLoadPolicy
+    get() = if (app.isUnitTestMode) StateLoadPolicy.LOAD_ONLY_DEFAULT else StateLoadPolicy.LOAD
+
+  final override fun setPath(path: Path) {
+    @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+    storageManager.setMacros(java.util.List.of(
+      // app config must be first, because collapseMacros collapse from fist to last, so,
+      // at first we must replace APP_CONFIG because it overlaps ROOT_CONFIG value
+      Macro(APP_CONFIG, path.resolve(PathManager.OPTIONS_DIRECTORY)),
+      Macro(ROOT_CONFIG, path),
+      Macro(StoragePathMacros.CACHE_FILE, getSystemDir().resolve("app-cache.xml"))
+    ))
+    isStoreInitialized = true
+  }
+
+  final override suspend fun doSave(saveResult: SaveResult, forceSavingAllSettings: Boolean) {
+    (app as? ComponentManagerEx)?.getServiceAsyncIfDefined(JpsGlobalModelSynchronizer::class.java)?.saveGlobalEntities()
+
+    coroutineScope {
+      launch {
+        super.doSave(saveResult, forceSavingAllSettings)
+      }
+
+      val projectManager = serviceAsync<ProjectManager>() as ProjectManagerEx
+      @Suppress("TestOnlyProblems")
+      if (projectManager.isDefaultProjectInitialized) {
+        launch {
+          (projectManager.defaultProject.stateStore as ComponentStoreImpl).doSave(saveResult, forceSavingAllSettings)
+        }
+      }
+    }
+  }
+
+  final override fun createContentWriter(): JpsAppFileContentWriter = AppStorageContentWriter(createSaveSessionProducerManager())
+
+  final override fun createContentReader(): JpsFileContentReader = AppStorageContentReader()
+
+  final override fun toString(): String = "app"
+}
+
+@Internal
+@VisibleForTesting
+class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null, controller: SettingsController?)
+  : StateStorageManagerImpl(rootTagName = "application", macroSubstitutor = pathMacroManager?.createTrackingSubstitutor(), componentManager = null, controller = controller)
+{
+  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String = StoragePathMacros.NON_ROAMABLE_FILE
+
+  override val isUseXmlProlog: Boolean
+    get() = false
+
+  override fun providerDataStateChanged(storage: FileBasedStorage, writer: DataWriter?, type: DataStateChanged) {
+    if (storage.fileSpec == "path.macros.xml" || storage.fileSpec == "applicationLibraries.xml") {
+      runCatching {
+        @Suppress("IfThenToElvis")
+        if (writer == null) {
+          Files.deleteIfExists(storage.file)
+        }
+        else {
+          writer.writeTo(file = storage.file, requestor = null, lineSeparator = LineSeparator.LF, useXmlProlog = isUseXmlProlog)
+        }
+      }.getOrLogException(LOG)
+    }
+  }
+
+  override fun normalizeFileSpec(fileSpec: String): String = removeMacroIfStartsWith(path = super.normalizeFileSpec(fileSpec), macro = APP_CONFIG)
+
+  override fun expandMacro(collapsedPath: String): Path {
+    if (collapsedPath[0] == '$') {
+      return super.expandMacro(collapsedPath)
+    }
+    else {
+      // APP_CONFIG is the first macro
+      return macros[0].value.resolve(collapsedPath)
+    }
+  }
+}
+
+internal class ApplicationPathMacroManager : PathMacroManager(null)
+
+@Internal
+fun removeMacroIfStartsWith(path: String, macro: String): String = path.removePrefix("$macro/")

@@ -1,0 +1,23 @@
+c:com.intellij.tasks.CustomTaskProperty
+- <init>():V
+- <init>(java.lang.String,java.lang.String,java.lang.String):V
+- getDisplayName():java.lang.String
+- getIconUrl():java.lang.String
+- getValue():java.lang.String
+a:com.intellij.tasks.Task
+- getCustomProperties():java.util.Map
+- getPropertiesToShowInPreview():java.util.List
+com.intellij.tasks.TaskListener
+- java.util.EventListener
+- a:taskActivated(com.intellij.tasks.LocalTask):V
+- a:taskAdded(com.intellij.tasks.LocalTask):V
+- a:taskDeactivated(com.intellij.tasks.LocalTask):V
+- a:taskRemoved(com.intellij.tasks.LocalTask):V
+a:com.intellij.tasks.context.WorkingContextProvider
+- <init>():V
+- clearContext(com.intellij.openapi.project.Project):V
+- a:getDescription():java.lang.String
+- a:getId():java.lang.String
+- isEnabled():Z
+- a:loadContext(com.intellij.openapi.project.Project,org.jdom.Element):V
+- a:saveContext(com.intellij.openapi.project.Project,org.jdom.Element):V

@@ -1,0 +1,38 @@
+### auto-generated section `build intellij.python.ml.features` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "ml-features_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ml-features",
+  module_name = "intellij.python.ml.features",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ml-features_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/analysis-api:analysis",
+    "//platform/indexing-api:indexing",
+    "//platform/statistics",
+    "//platform/projectModel-api:projectModel",
+    "//platform/ml-logs",
+    "//python/python-psi-impl:psi-impl",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//python:python-community-impl",
+    "//python/python-sdk:sdk",
+    "//platform/util/concurrency",
+    "//platform/core-ui",
+    "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
+    "@lib//:python-ml-features-jetbrains-ml-models-python-imports-ranking-model",
+    "@lib//:jetbrains-mlapi-catboost",
+    "@lib//:jetbrains-mlapi-catboost-shadow-need-slf4j",
+  ]
+)
+### auto-generated section `build intellij.python.ml.features` end

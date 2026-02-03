@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.platform.vcs.dvcs` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "vcs-dvcs_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-dvcs",
+  module_name = "intellij.platform.vcs.dvcs",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":vcs-dvcs_resources"],
+  deps = [
+    "//platform/core-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util-rt",
+    "//platform/core-api:core",
+    "//platform/vcs-api:vcs",
+    "//platform/extensions",
+    "//platform/platform-api:ide",
+    "//platform/vcs-log/api:vcs-log",
+    "@lib//:kotlin-stdlib",
+    "//platform/dvcs-impl/shared",
+  ]
+)
+### auto-generated section `build intellij.platform.vcs.dvcs` end

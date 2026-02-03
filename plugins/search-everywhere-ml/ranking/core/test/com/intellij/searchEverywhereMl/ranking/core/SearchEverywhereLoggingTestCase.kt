@@ -1,0 +1,89 @@
+package com.intellij.searchEverywhereMl.ranking.core
+
+import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchAdapter
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
+import com.intellij.internal.statistic.FUCollectorTestCase
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.searchEverywhereMl.MLSE_RECORDER_ID
+import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.PlatformTestUtil
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
+import java.util.concurrent.CompletableFuture
+import javax.swing.SwingUtilities
+
+
+abstract class SearchEverywhereLoggingTestCase : LightPlatformTestCase() {
+  fun MockSearchEverywhereProvider.runSearchAndCollectLogEvents(testProcedure: SearchEverywhereUI.() -> Unit): List<LogEvent> {
+    val disposables = mutableListOf<Disposable>()
+
+    try {
+      val emptyDisposable = Disposer.newDisposable()
+      disposables.add(emptyDisposable)
+
+      return FUCollectorTestCase.collectLogEvents(MLSE_RECORDER_ID, emptyDisposable, true) {
+        val searchEverywhereUI = this.provide(project)
+        disposables.add(searchEverywhereUI)
+
+        PlatformTestUtil.waitForAlarm(10)  // wait for rebuild list (session started)
+
+        testProcedure(searchEverywhereUI)
+      }
+    }
+    finally {
+      disposables.forEach { Disposer.dispose(it) }
+    }
+  }
+
+  fun SearchEverywhereUI.type(query: CharSequence) = also { searchEverywhereUI ->
+    query.forEach { character ->
+      // We are going to add a listener to search finished, so that every character
+      // is typed right after the list of results gets updated.
+      // Otherwise, we'd typed all characters pretty much at once.
+      val future = CompletableFuture<Unit>()
+      searchEverywhereUI.addSearchListener(object : SearchAdapter() {
+        override fun searchFinished(items: MutableList<Any>) {
+          future.complete(Unit)
+          SwingUtilities.invokeLater { searchEverywhereUI.removeSearchListener(this) }
+        }
+      })
+
+      searchEverywhereUI.searchField.text += character
+      try {
+        PlatformTestUtil.waitForFuture(future)
+      }
+      catch (ex: AssertionError) {
+        thisLogger().debug("Exception was thrown while waiting for typing feedback")
+        thisLogger().debug(ex)
+
+      }
+    }
+  }
+}
+
+fun interface MockSearchEverywhereProvider {
+  fun provide(project: Project): SearchEverywhereUI
+
+  object SingleActionSearchEverywhere : MockSearchEverywhereProvider {
+    override fun provide(project: Project): SearchEverywhereUI {
+      val contributors = listOf(
+        MockSearchEverywhereContributor(ActionSearchEverywhereContributor::class.java.simpleName) { _, _, consumer ->
+          consumer.process("registry")
+        }
+      )
+
+      return SearchEverywhereUI(project, contributors)
+    }
+  }
+}
+
+internal fun <T : Any> ExtensionPointName<T>.maskedWith(extensions: List<T>): Disposable {
+  val disposable = Disposer.newDisposable("ExtensionPointMaskMDisposable for $name")
+  (point as ExtensionPointImpl<T>).maskAll(extensions, disposable, false)
+  return disposable
+}

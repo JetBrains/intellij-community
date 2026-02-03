@@ -1,0 +1,2 @@
+// WITH_STDLIB
+val foo = Short.MAX_VALUE.toShort<caret>()

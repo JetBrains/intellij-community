@@ -1,0 +1,65 @@
+{header}
+    <title>{repo|escape}: graph</title>
+    <link rel="alternate" type="application/atom+xml" href="{url|urlescape}atom-log" title="Atom feed for {repo|escape}"/>
+    <link rel="alternate" type="application/rss+xml" href="{url|urlescape}rss-log" title="RSS feed for {repo|escape}"/>
+</head>
+
+<body>
+<div id="container">
+    <div class="page-header">
+        <h1 class="breadcrumb"><a href="/">Mercurial</a> {pathdef%breadcrumb} / graph</h1>
+
+        {searchform}
+
+        <ul class="page-nav">
+            <li><a href="{url|urlescape}summary{sessionvars%urlparameter}">summary</a></li>
+            <li><a href="{url|urlescape}shortlog{sessionvars%urlparameter}">shortlog</a></li>
+            <li><a href="{url|urlescape}changelog{sessionvars%urlparameter}">changelog</a></li>
+            <li class="current">graph</li>
+            <li><a href="{url|urlescape}tags{sessionvars%urlparameter}">tags</a></li>
+            <li><a href="{url|urlescape}bookmarks{sessionvars%urlparameter}">bookmarks</a></li>
+            <li><a href="{url|urlescape}branches{sessionvars%urlparameter}">branches</a></li>
+            <li><a href="{url|urlescape}file/{symrev}{sessionvars%urlparameter}">files</a></li>
+            {archives%archiveentry}
+            <li><a href="{url|urlescape}help{sessionvars%urlparameter}">help</a></li>
+        </ul>
+    </div>
+
+    <h2 class="no-link no-border">graph</h2>
+
+    <div id="noscript">The revision graph only works with JavaScript-enabled browsers.</div>
+    <div id="wrapper">
+        <canvas id="graph"></canvas>
+        <ul id="graphnodes">{nodes%graphentry}</ul>
+    </div>
+
+    <script{if(nonce, ' nonce="{nonce}"')}>
+    document.getElementById('noscript').style.display = 'none';
+
+    var data = {jsdata|json};
+    var graph = new Graph();
+    graph.scale({bg_height});
+    graph.render(data);
+    </script>
+
+    <div class="page-path">
+        <a href="{url|urlescape}graph/{symrev}{lessvars%urlparameter}">less</a>
+        <a href="{url|urlescape}graph/{symrev}{morevars%urlparameter}">more</a>
+        | {changenav%navgraph}
+    </div>
+
+    <script type="text/javascript"{if(nonce, ' nonce="{nonce}"')}>
+    ajaxScrollInit(
+            '{url|urlescape}graph/%next%{graphvars%urlparameter}',
+            '{nextentry%"{node}"}', <!-- NEXTHASH
+            function (htmlText) \{
+                var m = htmlText.match(/'(\w+)', <!-- NEXTHASH/);
+                return m ? m[1] : null;
+            },
+            '#wrapper',
+            '<div class="%class%" style="text-align: center;">%text%</div>',
+            'graph'
+    );
+    </script>
+
+{footer}

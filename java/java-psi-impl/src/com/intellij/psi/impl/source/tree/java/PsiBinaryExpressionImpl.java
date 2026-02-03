@@ -1,0 +1,175 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.psi.impl.source.tree.java;
+
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.impl.source.resolve.JavaResolveCache;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+
+public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements PsiBinaryExpression {
+  private static final Logger LOG = Logger.getInstance(PsiBinaryExpressionImpl.class);
+
+  public PsiBinaryExpressionImpl() {
+    this(JavaElementType.BINARY_EXPRESSION);
+  }
+  protected PsiBinaryExpressionImpl(@NotNull IElementType elementType) {
+    super(elementType);
+  }
+
+  @Override
+  public @NotNull PsiExpression getLOperand() {
+    return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.LOPERAND);
+  }
+
+  @Override
+  public PsiExpression getROperand() {
+    return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.ROPERAND);
+  }
+
+  @Override
+  public @NotNull PsiJavaToken getOperationSign() {
+    return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.OPERATION_SIGN);
+  }
+
+  @Override
+  public @NotNull IElementType getOperationTokenType() {
+    return getOperationSign().getTokenType();
+  }
+
+  @Override
+  public PsiJavaToken getTokenBeforeOperand(@NotNull PsiExpression operand) {
+    if (operand != getROperand()) return null;
+    return getOperationSign();
+  }
+
+  private static PsiType doGetType(PsiBinaryExpressionImpl param) {
+    PsiExpression lOperand = param.getLOperand();
+    PsiExpression rOperand = param.getROperand();
+    if (rOperand == null) return null;
+    PsiType rType = rOperand.getType();
+    IElementType sign = param.getOperationTokenType();
+    // optimization: if we can calculate type based on right type only
+    PsiType type = TypeConversionUtil.calcTypeForBinaryExpression(null, rType, sign, false);
+    if (type != TypeConversionUtil.NULL_TYPE) return type;
+
+    PsiType lType = lOperand.getType();
+    return TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, sign, true);
+  }
+
+  private static final Function<PsiBinaryExpressionImpl,PsiType> MY_TYPE_EVALUATOR = expression -> doGetType(expression);
+  @Override
+  public PsiType getType() {
+    return JavaResolveCache.getInstance(getProject()).getType(this, MY_TYPE_EVALUATOR);
+  }
+
+  @Override
+  public ASTNode findChildByRole(int role) {
+    LOG.assertTrue(ChildRole.isUnique(role));
+    switch (role) {
+      case ChildRole.LOPERAND:
+        return getFirstChildNode();
+
+      case ChildRole.ROPERAND:
+        return ElementType.EXPRESSION_BIT_SET.contains(getLastChildNode().getElementType()) ? getLastChildNode() : null;
+
+      case ChildRole.OPERATION_SIGN:
+        return findChildByType(OUR_OPERATIONS_BIT_SET);
+
+      default:
+        return null;
+    }
+  }
+
+  @Override
+  public int getChildRole(@NotNull ASTNode child) {
+    LOG.assertTrue(child.getTreeParent() == this);
+    if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
+      if (child == getFirstChildNode()) return ChildRole.LOPERAND;
+      if (child == getLastChildNode()) return ChildRole.ROPERAND;
+      return ChildRoleBase.NONE;
+    }
+    if (OUR_OPERATIONS_BIT_SET.contains(child.getElementType())) {
+      return ChildRole.OPERATION_SIGN;
+    }
+    return ChildRoleBase.NONE;
+  }
+
+  private static final TokenSet OUR_OPERATIONS_BIT_SET =
+    TokenSet.create(JavaTokenType.OROR, JavaTokenType.ANDAND, JavaTokenType.OR, JavaTokenType.XOR, JavaTokenType.AND, JavaTokenType.EQEQ,
+                    JavaTokenType.NE, JavaTokenType.LT, JavaTokenType.GT, JavaTokenType.LE, JavaTokenType.GE, JavaTokenType.LTLT,
+                    JavaTokenType.GTGT, JavaTokenType.GTGTGT, JavaTokenType.PLUS, JavaTokenType.MINUS, JavaTokenType.ASTERISK, JavaTokenType.DIV,
+                    JavaTokenType.PERC);
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitBinaryExpression(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
+
+  @Override
+  public String toString() {
+    return "PsiBinaryExpression:" + getText();
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    return PsiPolyadicExpressionImpl.processDeclarations(this, processor, state, lastParent, place);
+  }
+
+  @Override
+  public PsiExpression @NotNull [] getOperands() {
+    PsiExpression rOperand = getROperand();
+    return rOperand == null ? new PsiExpression[]{getLOperand()} : new PsiExpression[]{getLOperand(), rOperand};
+  }
+
+  @Override
+  public void deleteChildRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
+    checkPersistentElementRemoval(first, last);
+    super.deleteChildRange(first, last);
+  }
+
+  private void checkPersistentElementRemoval(PsiElement first, PsiElement last) {
+    boolean inside = false;
+    for (ASTNode node = getFirstChildNode(); node != null; node = node.getTreeNext()) {
+      if (node.getPsi() == first) {
+        inside = true;
+      }
+      if (inside) {
+        int role = getChildRole(node);
+        if (role == ChildRole.OPERATION_SIGN || role == ChildRole.LOPERAND) {
+          LOG.error("Unable to remove child with role " + role + "(" + node.getElementType() + ")");
+        }
+      }
+      if (node.getPsi() == last) {
+        inside = false;
+      }
+    }
+  }
+}
+

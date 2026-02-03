@@ -1,0 +1,188 @@
+- name: lib/modules/intellij.python.ast.jar
+  contentModules:
+  - name: intellij.python.ast
+- name: lib/modules/intellij.python.common.jar
+  contentModules:
+  - name: intellij.python.common
+- name: lib/modules/intellij.python.community.aliasProvider.jar
+  contentModules:
+  - name: intellij.python.community.aliasProvider
+- name: lib/modules/intellij.python.community.communityOnly.jar
+  contentModules:
+  - name: intellij.python.community.communityOnly
+- name: lib/modules/intellij.python.community.core.impl.jar
+  contentModules:
+  - name: intellij.python.community.core.impl
+- name: lib/modules/intellij.python.community.execService.jar
+  contentModules:
+  - name: intellij.python.community.execService
+- name: lib/modules/intellij.python.community.execService.python.jar
+  contentModules:
+  - name: intellij.python.community.execService.python
+- name: lib/modules/intellij.python.community.helpersLocator.jar
+  contentModules:
+  - name: intellij.python.community.helpersLocator
+- name: lib/modules/intellij.python.community.impl.huggingFace.jar
+  contentModules:
+  - name: intellij.python.community.impl.huggingFace
+- name: lib/modules/intellij.python.community.impl.installer.jar
+  contentModules:
+  - name: intellij.python.community.impl.installer
+- name: lib/modules/intellij.python.community.impl.jar
+  projectLibraries:
+  - name: jsr305
+    files:
+    - name: $MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3/jsr305-3.jar
+    reason: <- intellij.python.community.impl
+  - name: libthrift
+    files:
+    - name: $MAVEN_REPOSITORY$/org/apache/thrift/libthrift/0/libthrift-0.jar
+    reason: <- intellij.python.community.impl
+  contentModules:
+  - name: intellij.python.community.impl
+    libraries:
+      ml-completion-prev-exprs-models:
+      - name: $MAVEN_REPOSITORY$/completion/ml/python/features/ml-completion-prev-exprs-models/1/ml-completion-prev-exprs-models-1.jar
+      completion-ranking-python-with-full-line:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0/completion-ranking-python-with-full-line-0.jar
+- name: lib/modules/intellij.python.community.impl.pipenv.jar
+  contentModules:
+  - name: intellij.python.community.impl.pipenv
+- name: lib/modules/intellij.python.community.impl.poetry.backend.jar
+  contentModules:
+  - name: intellij.python.community.impl.poetry.backend
+- name: lib/modules/intellij.python.community.impl.poetry.common.jar
+  contentModules:
+  - name: intellij.python.community.impl.poetry.common
+- name: lib/modules/intellij.python.community.impl.uv.backend.jar
+  contentModules:
+  - name: intellij.python.community.impl.uv.backend
+- name: lib/modules/intellij.python.community.impl.uv.common.jar
+  contentModules:
+  - name: intellij.python.community.impl.uv.common
+- name: lib/modules/intellij.python.community.interpreters.jar
+  contentModules:
+  - name: intellij.python.community.interpreters
+- name: lib/modules/intellij.python.community.jar
+  contentModules:
+  - name: intellij.python.community
+- name: lib/modules/intellij.python.community.plugin.impl.jar
+  contentModules:
+  - name: intellij.python.community.plugin.impl
+- name: lib/modules/intellij.python.community.plugin.java.jar
+  contentModules:
+  - name: intellij.python.community.plugin.java
+- name: lib/modules/intellij.python.community.plugin.minor.jar
+  contentModules:
+  - name: intellij.python.community.plugin.minor
+- name: lib/modules/intellij.python.community.plugin.minorRider.jar
+  contentModules:
+  - name: intellij.python.community.plugin.minorRider
+- name: lib/modules/intellij.python.community.services.internal.impl.jar
+  contentModules:
+  - name: intellij.python.community.services.internal.impl
+- name: lib/modules/intellij.python.community.services.shared.jar
+  contentModules:
+  - name: intellij.python.community.services.shared
+- name: lib/modules/intellij.python.community.services.systemPython.jar
+  contentModules:
+  - name: intellij.python.community.services.systemPython
+- name: lib/modules/intellij.python.copyright.jar
+  contentModules:
+  - name: intellij.python.copyright
+- name: lib/modules/intellij.python.featuresTrainer.jar
+  contentModules:
+  - name: intellij.python.featuresTrainer
+- name: lib/modules/intellij.python.grazie.jar
+  contentModules:
+  - name: intellij.python.grazie
+- name: lib/modules/intellij.python.hatch.jar
+  contentModules:
+  - name: intellij.python.hatch
+- name: lib/modules/intellij.python.langInjection.jar
+  contentModules:
+  - name: intellij.python.langInjection
+- name: lib/modules/intellij.python.markdown.jar
+  contentModules:
+  - name: intellij.python.markdown
+- name: lib/modules/intellij.python.ml.features.jar
+  projectLibraries:
+  - name: jetbrains.mlapi.catboost
+    files:
+    - name: $MAVEN_REPOSITORY$/com/jetbrains/mlapi/mlapi-catboost/0/mlapi-catboost-0.jar
+    reason: <- intellij.python.ml.features
+  - name: jetbrains.mlapi.catboost.shadow.need.slf4j
+    files:
+    - name: $MAVEN_REPOSITORY$/com/jetbrains/mlapi/catboost-shadow-need-slf4j/1/catboost-shadow-need-slf4j-1.jar
+    reason: <- intellij.python.ml.features
+  contentModules:
+  - name: intellij.python.ml.features
+    libraries:
+      jetbrains.ml.models.python.imports.ranking.model:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/coral-panda-republished-6/python-imports-ranking-model-coral-panda-republished-6.jar
+- name: lib/modules/intellij.python.parser.jar
+  contentModules:
+  - name: intellij.python.parser
+- name: lib/modules/intellij.python.processOutput.impl.jar
+  contentModules:
+  - name: intellij.python.processOutput.impl
+- name: lib/modules/intellij.python.processOutput.jar
+  contentModules:
+  - name: intellij.python.processOutput
+- name: lib/modules/intellij.python.psi.impl.jar
+  contentModules:
+  - name: intellij.python.psi.impl
+- name: lib/modules/intellij.python.psi.jar
+  contentModules:
+  - name: intellij.python.psi
+  library: jetbrains.kotlin.annotations.jvm
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-annotations-jvm/2/kotlin-annotations-jvm-2.jar
+  reason: <- intellij.python.psi
+- name: lib/modules/intellij.python.pydev.jar
+  contentModules:
+  - name: intellij.python.pydev
+- name: lib/modules/intellij.python.pyproject.jar
+  contentModules:
+  - name: intellij.python.pyproject
+  library: tuweni-toml
+  files:
+  - name: $MAVEN_REPOSITORY$/io/consensys/tuweni/tuweni-toml/2/tuweni-toml-2.jar
+  - name: $MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4/antlr4-runtime-4.jar
+  reason: <- intellij.python.pyproject
+- name: lib/modules/intellij.python.sdk.jar
+  contentModules:
+  - name: intellij.python.sdk
+- name: lib/modules/intellij.python.sdk.ui.jar
+  contentModules:
+  - name: intellij.python.sdk.ui
+  library: io.github.z4kn4fein.semver.jvm
+  files:
+  - name: $MAVEN_REPOSITORY$/io/github/z4kn4fein/semver-jvm/2/semver-jvm-2.jar
+  reason: <- intellij.python.sdk.ui
+- name: lib/modules/intellij.python.sdkConfigurator.backend.jar
+  contentModules:
+  - name: intellij.python.sdkConfigurator.backend
+- name: lib/modules/intellij.python.sdkConfigurator.common.jar
+  contentModules:
+  - name: intellij.python.sdkConfigurator.common
+- name: lib/modules/intellij.python.sdkConfigurator.frontend.jar
+  contentModules:
+  - name: intellij.python.sdkConfigurator.frontend
+- name: lib/modules/intellij.python.syntax.core.jar
+  contentModules:
+  - name: intellij.python.syntax.core
+- name: lib/modules/intellij.python.syntax.jar
+  contentModules:
+  - name: intellij.python.syntax
+- name: lib/modules/intellij.python.terminal.jar
+  contentModules:
+  - name: intellij.python.terminal
+- name: lib/modules/intellij.python.venv.jar
+  contentModules:
+  - name: intellij.python.venv
+- name: lib/python-ce.jar
+  modules:
+  - name: intellij.python.community.plugin
+  contentModules:
+  - name: intellij.commandInterface

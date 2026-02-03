@@ -1,0 +1,43 @@
+### auto-generated section `build intellij.kotlin.uast.idea` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_kotlin-uast-idea",
+  opt_in = [
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+    "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-uast-idea",
+  module_name = "intellij.kotlin.uast.idea",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-uast-idea",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-k2",
+    "//plugins/kotlin/uast/uast-kotlin-base",
+    "//platform/util",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/uast/uast-kotlin-idea-base",
+    "//platform/util-ex",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/projectModel-api:projectModel",
+    "//uast/uast-common:uast",
+    "//plugins/kotlin/uast/uast-kotlin-fir:kotlin-uast",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+    "//uast/uast-common-ide:ide",
+  ],
+  runtime_deps = ["//plugins/kotlin/gradle/gradle"]
+)
+### auto-generated section `build intellij.kotlin.uast.idea` end

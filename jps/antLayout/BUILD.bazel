@@ -1,0 +1,19 @@
+### auto-generated section `build intellij.tools.jps.antTasks` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "tools-jps-antTasks_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "tools-jps-antTasks",
+  module_name = "intellij.tools.jps.antTasks",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":tools-jps-antTasks_resources"],
+  kotlinc_opts = "@community//:k8",
+  deps = ["@lib//ant/lib:ant-provided"]
+)
+### auto-generated section `build intellij.tools.jps.antTasks` end

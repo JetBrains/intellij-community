@@ -1,0 +1,215 @@
+<!-- ...................................................................... -->
+<!-- DocBook CALS Table Model V4.5 ........................................ -->
+<!-- File calstblx.mod .................................................... -->
+
+<!-- Copyright 1992-2002 HaL Computer Systems, Inc.,
+     O'Reilly & Associates, Inc., ArborText, Inc., Fujitsu Software
+     Corporation, Norman Walsh, Sun Microsystems, Inc., and the
+     Organization for the Advancement of Structured Information
+     Standards (OASIS).
+
+     This DTD is based on the CALS Table Model
+     PUBLIC "-//USA-DOD//DTD Table Model 951010//EN"
+
+     $Id: calstblx.dtd 6340 2006-10-03 13:23:24Z nwalsh $
+
+     Permission to use, copy, modify and distribute the DocBook DTD
+     and its accompanying documentation for any purpose and without fee
+     is hereby granted in perpetuity, provided that the above copyright
+     notice and this paragraph appear in all copies.  The copyright
+     holders make no representation about the suitability of the DTD for
+     any purpose.  It is provided "as is" without expressed or implied
+     warranty.
+
+     If you modify the DocBook DTD in any way, except for declaring and
+     referencing additional sets of general entities and declaring
+     additional notations, label your DTD as a variant of DocBook.  See
+     the maintenance documentation for more information.
+
+     Please direct all questions, bug reports, or suggestions for
+     changes to the docbook@lists.oasis-open.org mailing list. For more
+     information, see http://www.oasis-open.org/docbook/.
+-->
+
+<!-- ...................................................................... -->
+
+<!-- This module contains the definitions for the CALS Table Model
+     converted to XML. It has been modified slightly for use in the
+     combined HTML/CALS models supported by DocBook V4.5.
+-->
+
+<!-- These definitions are not directly related to the table model, but are
+     used in the default CALS table model and are usually defined elsewhere
+     (and prior to the inclusion of this table module) in a CALS DTD. -->
+
+<!ENTITY % bodyatt "">
+<!ENTITY % secur "">
+
+<!-- no if zero(s),
+                                yes if any other digits value -->
+
+<!ENTITY % yesorno 'CDATA'>
+<!ENTITY % titles  'title?'>
+
+<!-- default for use in entry content -->
+
+<!ENTITY % paracon '#PCDATA'>
+
+<!--
+The parameter entities as defined below provide the CALS table model
+as published (as part of the Example DTD) in MIL-HDBK-28001.
+
+These following declarations provide the CALS-compliant default definitions
+for these entities.  However, these entities can and should be redefined
+(by giving the appropriate parameter entity declaration(s) prior to the
+reference to this Table Model declaration set entity) to fit the needs
+of the current application.
+-->
+
+<!ENTITY % tbl.table.name       "(table|chart)">
+<!ENTITY % tbl.table-titles.mdl "%titles;,">
+<!ENTITY % tbl.table-main.mdl   "(tgroup+|graphic+)">
+<!ENTITY % tbl.table.mdl        "%tbl.table-titles.mdl; %tbl.table-main.mdl;">
+<!ENTITY % tbl.table.att        '
+    tabstyle    CDATA           #IMPLIED
+    tocentry    %yesorno;       #IMPLIED
+    shortentry  %yesorno;       #IMPLIED
+    orient      (port|land)     #IMPLIED
+    pgwide      %yesorno;       #IMPLIED '>
+<!ENTITY % tbl.tgroup.mdl       "colspec*,spanspec*,thead?,tfoot?,tbody">
+<!ENTITY % tbl.tgroup.att       '
+    tgroupstyle CDATA           #IMPLIED '>
+<!ENTITY % tbl.hdft.mdl         "colspec*,row+">
+<!ENTITY % tbl.row.mdl          "(entry|entrytbl)+">
+<!ENTITY % tbl.entrytbl.mdl     "colspec*,spanspec*,thead?,tbody">
+<!ENTITY % tbl.entry.mdl        "(para|warning|caution|note|legend|%paracon;)*">
+
+<!ENTITY % tbl.frame.attval     "top|bottom|topbot|all|sides|none">
+<!ENTITY % tbl.tbody.mdl        "row+">
+
+<!-- =====  Element and attribute declarations follow. =====  -->
+
+<!--doc:A formal table in a document.-->
+<!ELEMENT table %ho; (%tbl.table.mdl;)>
+
+<!ATTLIST table
+        frame           (%tbl.frame.attval;)                    #IMPLIED
+        colsep          %yesorno;                               #IMPLIED
+        rowsep          %yesorno;                               #IMPLIED
+        %tbl.table.att;
+        %bodyatt;
+        %secur;
+>
+
+<!--doc:A wrapper for the main content of a table, or part of a table.-->
+<!ELEMENT tgroup %ho; (%tbl.tgroup.mdl;) >
+
+<!ATTLIST tgroup
+        cols            CDATA                                   #REQUIRED
+        %tbl.tgroup.att;
+        colsep          %yesorno;                               #IMPLIED
+        rowsep          %yesorno;                               #IMPLIED
+        align           (left|right|center|justify|char)        #IMPLIED
+        char            CDATA                                   #IMPLIED
+        charoff         CDATA                                   #IMPLIED
+        %secur;
+>
+
+<!--doc:Specifications for a column in a table.-->
+<!ELEMENT colspec %ho; EMPTY >
+
+<!ATTLIST colspec
+        colnum          CDATA                                   #IMPLIED
+        colname         CDATA                                   #IMPLIED
+        colwidth        CDATA                                   #IMPLIED
+        colsep          %yesorno;                               #IMPLIED
+        rowsep          %yesorno;                               #IMPLIED
+        align           (left|right|center|justify|char)        #IMPLIED
+        char            CDATA                                   #IMPLIED
+        charoff         CDATA                                   #IMPLIED
+>
+
+<!--doc:Formatting information for a spanned column in a table.-->
+<!ELEMENT spanspec %ho; EMPTY >
+
+<!ATTLIST spanspec
+        namest          CDATA                                   #REQUIRED
+        nameend         CDATA                                   #REQUIRED
+        spanname        CDATA                                   #REQUIRED
+        colsep          %yesorno;                               #IMPLIED
+        rowsep          %yesorno;                               #IMPLIED
+        align           (left|right|center|justify|char)        #IMPLIED
+        char            CDATA                                   #IMPLIED
+        charoff         CDATA                                   #IMPLIED
+>
+
+<!--doc:A table header consisting of one or more rows.-->
+<!ELEMENT thead %ho; (%tbl.hdft.mdl;)>
+<!ATTLIST thead
+        valign          (top|middle|bottom)                     #IMPLIED
+        %secur;
+>
+
+<!--doc:A table footer consisting of one or more rows.-->
+<!ELEMENT tfoot %ho; (%tbl.hdft.mdl;)>
+<!ATTLIST tfoot
+        valign          (top|middle|bottom)                     #IMPLIED
+        %secur;
+>
+
+<!--doc:A wrapper for the rows of a table or informal table.-->
+<!ELEMENT tbody %ho; (%tbl.tbody.mdl;)>
+
+<!ATTLIST tbody
+        valign          (top|middle|bottom)                     #IMPLIED
+        %secur;
+>
+
+<!--doc:A row in a table.-->
+<!ELEMENT row %ho; (%tbl.row.mdl;)>
+
+<!ATTLIST row
+        rowsep          %yesorno;                               #IMPLIED
+        valign          (top|middle|bottom)                     #IMPLIED
+        %secur;
+>
+
+<!--doc:A subtable appearing in place of an Entry in a table.-->
+<!ELEMENT entrytbl %ho; (%tbl.entrytbl.mdl;)>
+
+<!ATTLIST entrytbl
+        cols            CDATA                                   #REQUIRED
+        %tbl.tgroup.att;
+        colname         CDATA                                   #IMPLIED
+        spanname        CDATA                                   #IMPLIED
+        namest          CDATA                                   #IMPLIED
+        nameend         CDATA                                   #IMPLIED
+        colsep          %yesorno;                               #IMPLIED
+        rowsep          %yesorno;                               #IMPLIED
+        align           (left|right|center|justify|char)        #IMPLIED
+        char            CDATA                                   #IMPLIED
+        charoff         CDATA                                   #IMPLIED
+        %secur;
+>
+
+<!--doc:A cell in a table.-->
+<!ELEMENT entry %ho; (%tbl.entry.mdl;)*>
+
+<!ATTLIST entry
+        colname         CDATA                                   #IMPLIED
+        namest          CDATA                                   #IMPLIED
+        nameend         CDATA                                   #IMPLIED
+        spanname        CDATA                                   #IMPLIED
+        morerows        CDATA                                   #IMPLIED
+        colsep          %yesorno;                               #IMPLIED
+        rowsep          %yesorno;                               #IMPLIED
+        align           (left|right|center|justify|char)        #IMPLIED
+        char            CDATA                                   #IMPLIED
+        charoff         CDATA                                   #IMPLIED
+        rotate          %yesorno;                               #IMPLIED
+        valign          (top|middle|bottom)                     #IMPLIED
+        %secur;
+>
+
+<!-- End of DocBook CALS Table Model V4.5 ................................. -->
+<!-- ...................................................................... -->

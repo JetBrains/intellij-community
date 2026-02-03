@@ -1,0 +1,1 @@
+"~A~B~C~D~E~lists~dicts~tuples\n0~1.00~foo~NaN~1~True~[1 2]~{'key': 'value'}~['first' 'second']\n1~1.00~bar~NaN~2~False~[3 4]~{'key': 'value'}~['first' 'second']\n2~1.00~baz~NaN~3~True~[5 6]~{'key': 'value'}~['first' 'second']\n3~1.00~qux~NaN~4~False~[7 8]~{'key': 'value'}~['first' 'second']\n"

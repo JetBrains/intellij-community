@@ -1,0 +1,42 @@
+{
+  "projectPath": "../ml-eval/apache-dubbo",
+  "repository": "https://github.com/apache/dubbo",
+  "revision": "1427ed99ae5705b703d048daec273e49858f9455",
+  "outputDir": "bin/ml-eval-code-generation-auto-generated-1-output",
+  "strategy": {
+    "instanceId": "apache__dubbo-e2887e11",
+    "iterations": 1
+  },
+  "fileDataset": {
+    "url": "remote:https://huggingface.co/datasets/JetBrains/eval_plugin/resolve/main/junie-swe/java/java_auto_generated_1.json"
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 400,
+    "filesLimit": 100,
+    "order": "LINEAR",
+    "trainTestSplit": 70,
+    "registry": ""
+  },
+  "reports": {
+    "evaluationTitle": "Default",
+    "defaultMetrics": [
+      "Sessions",
+      "Precision",
+      "SessionsWithoutSyntaxErrorsRatio",
+      "WithoutHighlightErrors",
+      "PreservedAPI",
+      "MeanLatency"
+    ],
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  },
+  "language": "Java",
+  "actions": {
+    "evaluationRoots": [
+      "."
+    ]
+  }
+}

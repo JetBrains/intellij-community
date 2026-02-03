@@ -1,0 +1,4 @@
+*f:com.intellij.util.text.TextRangeUtils
+- sf:splitLineRanges(java.lang.CharSequence):kotlin.sequences.Sequence
+- sf:splitToTextRanges(java.lang.CharSequence,java.lang.String,Z):kotlin.sequences.Sequence
+- bs:splitToTextRanges$default(java.lang.CharSequence,java.lang.String,Z,I,java.lang.Object):kotlin.sequences.Sequence

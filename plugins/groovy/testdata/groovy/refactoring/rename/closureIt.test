@@ -1,0 +1,7 @@
+def c = {
+  <caret>it
+}
+-----
+def c = { newName ->
+    newName
+}

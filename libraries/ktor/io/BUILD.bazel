@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.libraries.ktor.io` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "io_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "io",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":io_resources"],
+  exports = ["@lib//:libraries-ktor-io-ktor-io"],
+  runtime_deps = [
+    "@lib//:libraries-ktor-io-ktor-io",
+    "//libraries/io",
+  ]
+)
+### auto-generated section `build intellij.libraries.ktor.io` end

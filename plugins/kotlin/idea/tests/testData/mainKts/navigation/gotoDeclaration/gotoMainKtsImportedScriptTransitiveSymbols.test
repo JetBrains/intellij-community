@@ -1,0 +1,15 @@
+// EXPECTED_TEXT: println("Hi from sub-imported")
+
+// FILE: gotoImportedScript.main.kts
+@file:Import("imported.main.kts")
+fooFrom<caret>SubImported()
+
+// FILE: imported.main.kts
+@file:Import("sub-imported.kts")
+
+// FILE: sub-imported.kts
+println("Hi from sub-imported")
+
+fun fooFromSubImported() {
+
+}

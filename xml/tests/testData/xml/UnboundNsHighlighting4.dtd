@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!-- Authors: Chris Taylor, Ceki Gulcu. -->
+
+<!-- A configuration element consists of optional renderer
+elements,appender elements, categories and an optional root
+element. -->
+
+<!ELEMENT log4j:configuration (renderer*, appender*,category*,root?)>
+
+<!-- The disable attribute takes a priority value such that all -->
+<!-- logging statements with a prioroty equal or below this value are -->
+<!-- disabled. -->
+
+<!-- The disableOverride attribute allows the user to override any   -->
+<!-- BasicConfigurator.disable invocations made from within the      -->
+<!-- application.                                                    -->
+
+<!-- By default, disableOverride is "null", meaning that we          -->
+<!-- do not touch the disable flag.                                  -->
+
+<!-- Setting the "debug" or "configDebug" attributes enable the printing -->
+<!-- of internal log4j logging statements.                               -->
+<!-- The "debug" and "configDebug" attributes are equivalent altough     -->
+<!-- the latter is deprecated and should no longer be used.              -->
+<!-- By default, debug and configDebug attributes are "null", meaning    -->
+<!-- that we not touch internal log4j logging settings.                  -->
+
+
+<!ATTLIST log4j:configuration
+  xmlns:log4j              CDATA #FIXED "http://jakarta.apache.org/log4j/"
+  disable                  (debug|info|warn|error|fatal|null)  "null"
+  disableOverride          (true|false|null)  "null"
+  debug                    (true|false|null)  "null"
+  configDebug              (true|false|null)  "null"
+>
+
+
+<!-- DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED -->
+<!-- WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING   -->
+<!-- DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED -->
+
+<!-- Use "log4j:configuration" above instead of the "configuration" -->
+<!-- element. -->
+
+<!-- DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED -->
+<!-- WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING   -->
+<!-- DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED -->
+
+<!ELEMENT configuration (renderer*, appender*,category*,root?)>
+<!ATTLIST configuration
+  disable                  (debug|info|warn|error|fatal|null)  "null"
+  disableOverride          (true|false|null)  "null"
+  configDebug              (true|false|null)  "null"
+>
+
+
+<!-- renderer elements allow the user to customize the conversion of  -->
+<!-- message objects to String.                                       -->
+
+<!ELEMENT renderer EMPTY>
+<!ATTLIST renderer
+  renderedClass  CDATA #REQUIRED
+  renderingClass CDATA #REQUIRED
+>
+
+<!-- Appenders must have a name and a class. -->
+<!-- Appenders may contain an error handler, a layout, optional parameters -->
+<!-- and filters. They may also reference (or include) other appenders. -->
+<!ELEMENT appender (errorHandler?, param*, layout?, filter*, appender-ref*)>
+<!ATTLIST appender
+  name 		ID 	#REQUIRED
+  class 	CDATA	#REQUIRED
+>
+
+<!ELEMENT layout (param*)>
+<!ATTLIST layout
+  class		CDATA	#REQUIRED
+>
+
+
+
+<!ELEMENT filter (param*)>
+<!ATTLIST filter
+  class		CDATA	#REQUIRED
+>
+
+
+<!-- ErrorHandlers can be of any class. They can admit any number of -->
+<!-- parameters. -->
+
+<!ELEMENT errorHandler (param*)>
+<!ATTLIST errorHandler
+   class        CDATA   #REQUIRED
+>
+
+
+
+<!ELEMENT param EMPTY>
+<!ATTLIST param
+  name		CDATA   #REQUIRED
+  value		CDATA	#REQUIRED
+>
+
+<!-- The priority class is org.apache.log4j.Priority by default -->
+<!ELEMENT priority (param*)>
+<!ATTLIST priority
+  class   CDATA	#IMPLIED
+  value	  CDATA #REQUIRED
+>
+
+<!-- If no priority element is specified, then the configurator MUST not -->
+<!-- touch the priority of the named category. -->
+<!ELEMENT category (param*, priority?, appender-ref*)>
+<!ATTLIST category
+  class         CDATA   #IMPLIED
+  name		CDATA	#REQUIRED
+  additivity	(true|false) "true"
+>
+
+<!ELEMENT appender-ref EMPTY>
+<!ATTLIST appender-ref
+  ref IDREF #REQUIRED
+>
+
+<!-- If no priority element is specified, then the configurator MUST not -->
+<!-- touch the priority of root. -->
+<!-- The root category always exists and cannot be subclassed. -->
+<!ELEMENT root (param*, priority?, appender-ref*)>
+
+
+
+<!-- ==================================================================== -->
+<!--                       A logging event                                -->
+<!-- ==================================================================== -->
+<!ELEMENT log4j:eventSet (log4j:event*)>
+<!ATTLIST log4j:eventSet
+  includesLocationInfo   (true|false) "true"
+>
+
+
+
+<!ELEMENT log4j:event (log4j:message, log4j:NDC?, log4j:throwable?,
+                       log4j:locationInfo?) >
+
+<!-- The timestamp format is application dependent. -->
+<!ATTLIST log4j:event
+    category   CDATA #REQUIRED
+    priority   CDATA #REQUIRED
+    thread     CDATA #REQUIRED
+    timestamp  CDATA #REQUIRED
+>
+
+<!ELEMENT log4j:message (#PCDATA)>
+<!ELEMENT log4j:NDC (#PCDATA)>
+
+<!ELEMENT log4j:throwable (#PCDATA)>
+
+<!ELEMENT log4j:locationInfo EMPTY>
+<!ATTLIST log4j:locationInfo
+  class  CDATA	#REQUIRED
+  method CDATA	#REQUIRED
+  file   CDATA	#REQUIRED
+  line   CDATA	#REQUIRED
+>

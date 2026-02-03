@@ -1,0 +1,65 @@
+### auto-generated section `build intellij.sh.copyright` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "copyright_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "copyright",
+  module_name = "intellij.sh.copyright",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":copyright_resources"],
+  deps = [
+    "//plugins/copyright",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//plugins/sh/core",
+    "//platform/core-impl",
+  ],
+  runtime_deps = ["//platform/backend"]
+)
+### auto-generated section `build intellij.sh.copyright` end
+
+### auto-generated section `build intellij.sh.copyright.tests` start
+jvm_library(
+  name = "copyright-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/sh/plugin:plugin-main",
+    "//platform/projectModel-impl",
+  ]
+)
+
+jvm_library(
+  name = "copyright-tests_test_lib",
+  module_name = "intellij.sh.copyright.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/sh/plugin:plugin-main",
+    "//plugins/copyright",
+    "//plugins/copyright:copyright_test_lib",
+    "//platform/projectModel-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+  ],
+  runtime_deps = [":copyright-tests"]
+)
+### auto-generated section `build intellij.sh.copyright.tests` end
+
+### auto-generated section `test intellij.sh.copyright.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "copyright-tests_test",
+  runtime_deps = [":copyright-tests_test_lib"]
+)
+### auto-generated section `test intellij.sh.copyright.tests` end

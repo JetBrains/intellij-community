@@ -1,0 +1,12 @@
+<html>
+<body>
+<p>Reports unnecessary calls to typing.cast when the expression already has the specified target type.</p>
+<p><b>Example:</b></p>
+<pre><code>
+from typing import cast
+
+a: int
+b = <b>cast(int, a)</b>  # Unnecessary, a is already int
+</code></pre>
+</body>
+</html>

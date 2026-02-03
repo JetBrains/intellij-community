@@ -1,0 +1,7 @@
+// RENAME: member
+// NEW_NAME: is
+fun `is`() {}
+
+fun main(args: Array<String>) {
+    `is`()
+}

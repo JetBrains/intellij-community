@@ -1,0 +1,23 @@
+<component name="libraryTable">
+  <library name="joni" type="repository">
+    <properties maven-id="org.jruby.joni:joni:2.2.3">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.2.3/joni-2.2.3.jar">
+          <sha256sum>7ea54221f5f91deff2e860fe986eefe208b59fa04300e54c505c5c0c08d55e9a</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.61/jcodings-1.0.61.jar">
+          <sha256sum>3238c68a2f86cec53cc184ad26df8352db87bb22a419bd17fb4acdfbb0bc40f0</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.2.3/joni-2.2.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.61/jcodings-1.0.61.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.2.3/joni-2.2.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.61/jcodings-1.0.61-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

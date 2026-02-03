@@ -1,0 +1,9 @@
+{
+  "id": "https://localhost:1234/baseSchema",
+  "definitions": {
+    "baseEnum": {
+      "type": "string",
+      "enum": ["one", "two"]
+    }
+  }
+}

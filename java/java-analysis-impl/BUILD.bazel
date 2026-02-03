@@ -1,0 +1,70 @@
+### auto-generated section `build intellij.java.analysis.impl` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_analysis-impl",
+  x_explicit_api_mode = "strict"
+)
+
+resourcegroup(
+  name = "analysis-impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "analysis-impl",
+  module_name = "intellij.java.analysis.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":analysis-impl_resources"],
+  kotlinc_opts = ":custom_analysis-impl",
+  deps = [
+    "//java/java-indexing-api:indexing",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-impl",
+    "//java/java-indexing-impl:indexing-impl",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//java/java-analysis-api:analysis",
+    "//resources-en:java-resources-en",
+    "//xml/xml-psi-api:psi",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/platform-api:ide",
+    "//libraries/asm",
+    "//libraries/stream",
+    "@lib//:kotlin-stdlib",
+    "//java/openapi:java",
+    "//platform/util:util-ui",
+    "//libraries/fastutil",
+    "//platform/workspace/storage",
+    "//libraries/icu4j",
+    "//platform/util/jdom",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//java/java-frontback-impl:frontback-impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "//java/codeserver/highlighting",
+    "//java/codeserver/core",
+    "//platform/refactoring",
+    "//xml/xml-analysis-api:analysis",
+    "//libraries/jsoup",
+  ],
+  exports = [
+    "//platform/analysis-impl",
+    "//java/java-indexing-impl:indexing-impl",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/projectModel-impl",
+    "//java/java-analysis-api:analysis",
+    "//java/java-frontback-impl:frontback-impl",
+  ]
+)
+### auto-generated section `build intellij.java.analysis.impl` end

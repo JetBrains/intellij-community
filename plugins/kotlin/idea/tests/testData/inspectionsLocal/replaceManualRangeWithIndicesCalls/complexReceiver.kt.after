@@ -1,0 +1,7 @@
+// WITH_STDLIB
+class Person(val name: String)
+fun getName(person: Person) {
+    for (element in person.name) {
+        println(element)
+    }
+}

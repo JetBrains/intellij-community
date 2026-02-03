@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.externalSystem.dependencyUpdater.jar
+  modules:
+  - name: intellij.platform.externalSystem.dependencyUpdater

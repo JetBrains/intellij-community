@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.platform.images.xdebugger` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "xdebugger_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "xdebugger",
+  module_name = "intellij.platform.images.xdebugger",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":xdebugger_resources"],
+  deps = [
+    "//images",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/xdebugger-impl/frontend",
+    "//platform/ide-core",
+  ]
+)
+### auto-generated section `build intellij.platform.images.xdebugger` end

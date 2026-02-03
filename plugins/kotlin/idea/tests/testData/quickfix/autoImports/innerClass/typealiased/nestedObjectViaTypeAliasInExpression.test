@@ -1,0 +1,18 @@
+// FILE: first.before.kt
+// "Import" "false"
+// IGNORE_K1
+
+package test
+
+class Outer {
+    object NestedObject
+}
+
+fun usage(f: Outer) {
+    f.<caret>NestedObjectAlias
+}
+
+// FILE: second.kt
+package some
+
+typealias NestedObjectAlias = test.Outer.NestedObject

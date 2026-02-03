@@ -1,0 +1,51 @@
+### auto-generated section `build intellij.repository.search` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_repository-search",
+  opt_in = [
+    "kotlinx.serialization.InternalSerializationApi",
+    "kotlinx.serialization.ExperimentalSerializationApi",
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+  ]
+)
+
+resourcegroup(
+  name = "repository-search_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "repository-search",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":repository-search_resources"],
+  exports = ["@lib//:package-search-api-client"],
+  runtime_deps = [
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/core-impl",
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/maven-model",
+    "//platform/statistics",
+    "//libraries/gson",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util-ex",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/concurrency",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/coroutines/slf4j",
+    "//libraries/io",
+    "//libraries/ktor/client",
+    "@lib//:package-search-api-client",
+    "//libraries/kotlinx/document-store-mvstore:libraries-kotlinx-document-store-mvstore",
+    "//libraries/mvstore",
+    "//platform/eel",
+  ]
+)
+### auto-generated section `build intellij.repository.search` end

@@ -1,0 +1,92 @@
+### auto-generated section `build intellij.html.tools` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "html-tools_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "html-tools",
+  module_name = "intellij.html.tools",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":html-tools_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/lang-api:lang",
+    "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/refactoring",
+    "//xml/impl",
+    "//platform/polySymbols",
+    "//platform/lang-impl",
+    "//images",
+    "//platform/platform-impl:ide-impl",
+    "//xml/xml-parser:parser",
+    "//platform/indexing-impl",
+    "//xml/xml-psi-api:psi",
+    "//platform/core-ui",
+    "//xml/xml-analysis-api:analysis",
+  ]
+)
+### auto-generated section `build intellij.html.tools` end
+
+### auto-generated section `build intellij.html.tools.tests` start
+jvm_library(
+  name = "html-tools-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/htmltools:html-tools",
+    "//xml/impl",
+    "//platform/core-ui",
+  ]
+)
+
+jvm_library(
+  name = "html-tools-tests_test_lib",
+  module_name = "intellij.html.tools.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  deps = [
+    "//plugins/htmltools:html-tools",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//xml/impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
+    "//xml/xml-psi-api:psi",
+    "//xml/tests:tests_test_lib",
+    "//platform/core-ui",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/analysis-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//xml/xml-parser:parser",
+    "//platform/refactoring",
+    "//platform/core-impl",
+    "//xml/xml-analysis-api:analysis",
+  ],
+  runtime_deps = [":html-tools-tests"]
+)
+### auto-generated section `build intellij.html.tools.tests` end
+
+### auto-generated section `test intellij.html.tools.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "html-tools-tests_test",
+  runtime_deps = [":html-tools-tests_test_lib"]
+)
+### auto-generated section `test intellij.html.tools.tests` end

@@ -1,0 +1,117 @@
+<idea-plugin visibility="internal">
+  <!--Customization code for Community Pycharm only. Promotes PyCharm Prof.-->
+
+  <dependencies>
+    <plugin id="com.intellij.modules.python"/>
+    <module name="intellij.pycharm.community.ide.impl"/>
+  </dependencies>
+
+  <actions resource-bundle="messages.PyCharmCommunityCustomizationBundle">
+    <action class="com.intellij.pycharm.community.ide.impl.promotion.PromoDataFrameAction"
+            id="PromoDataFrameAction"
+            icon="AllIcons.Ultimate.PycharmLock"/>
+
+    <action class="com.intellij.pycharm.community.ide.impl.promotion.PromoDockerAction"
+            id="PromoDockerAction"
+            icon="AllIcons.Ultimate.PycharmLock"/>
+
+    <action class="com.intellij.pycharm.community.ide.impl.promotion.PromoEndpointsAction"
+            id="PromoEndpointsAction"
+            icon="AllIcons.Ultimate.PycharmLock"/>
+
+    <action class="com.intellij.pycharm.community.ide.impl.promotion.PromoPlotsAction"
+            id="PromoPlotsAction"
+            icon="AllIcons.Ultimate.PycharmLock"/>
+
+    <action class="com.intellij.pycharm.community.ide.impl.promotion.PreviewJupyterNotebookFile"
+            id="PromoPreviewJupyterNotebook"
+            icon="AllIcons.Ultimate.PycharmLock"/>
+
+    <action id="PromoNewJupyterNotebook" class="com.intellij.pycharm.community.ide.impl.promotion.NewJupyterNotebookFile"
+            icon="AllIcons.Ultimate.PycharmLock">
+      <add-to-group group-id="NewGroup" anchor="last"/>
+    </action>
+    <action id="PromoNewJavaScriptFile" class="com.intellij.pycharm.community.ide.impl.promotion.NewJavaScriptFile"
+            icon="AllIcons.Ultimate.PycharmLock">
+      <add-to-group group-id="NewGroup" anchor="last"/>
+    </action>
+    <action id="PromoNewTypeScriptFile" class="com.intellij.pycharm.community.ide.impl.promotion.NewTypeScriptFile"
+            icon="AllIcons.Ultimate.PycharmLock">
+      <add-to-group group-id="NewGroup" anchor="last"/>
+    </action>
+    <action id="PromoNewSqlFile" class="com.intellij.pycharm.community.ide.impl.promotion.NewSqlFile"
+            icon="AllIcons.Ultimate.PycharmLock">
+      <add-to-group group-id="NewGroup" anchor="last"/>
+    </action>
+
+    <!--For test only TODO delete later-->
+    <action class="com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.actions.ShowPyCommunityToUnifiedTooltipAction"
+            id="ShowPyCommunityToUnifiedTooltipAction"
+            internal="true"/>
+    <action class="com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.actions.ShowPyCommunityToUnifiedPromoDialogAction"
+            id="ShowPyCommunityToUnifiedPromoDialogAction"
+            internal="true"/>
+    <action class="com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.actions.ResetCommunityToUnifiedPromoStateAction"
+            id="ResetCommunityToUnifiedPromoStateAction"
+            internal="true"/>
+
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <directoryProjectGenerator implementation="com.intellij.pycharm.community.ide.impl.promotion.DjangoPromoProjectGenerator"/>
+    <directoryProjectGenerator implementation="com.intellij.pycharm.community.ide.impl.promotion.JavaScriptPromoProjectGenerator"/>
+
+    <applicationConfigurable id="promo.database"
+                             groupId="tools"
+                             provider="com.intellij.pycharm.community.ide.impl.promotion.PromoDatabaseConfigurableProvider"
+                             bundle="messages.FeaturePromoBundle"
+                             key="promo.configurable.database"/>
+    <applicationConfigurable id="promo.javascript"
+                             groupId="language"
+                             provider="com.intellij.pycharm.community.ide.impl.promotion.PromoJSConfigurableProvider"
+                             bundle="messages.FeaturePromoBundle"
+                             key="promo.configurable.javascript"/>
+    <applicationConfigurable id="promo.typescript"
+                             groupId="language"
+                             provider="com.intellij.pycharm.community.ide.impl.promotion.PromoTSConfigurableProvider"
+                             bundle="messages.FeaturePromoBundle"
+                             key="promo.configurable.typescript"/>
+
+    <applicationConfigurable id="promo.django"
+                             groupId="language"
+                             provider="com.intellij.pycharm.community.ide.impl.promotion.PromoDjangoConfigurableProvider"
+                             bundle="messages.PyCharmCommunityCustomizationBundle"
+                             key="promo.configurable.django"/>
+    <applicationConfigurable id="promo.remoteSsh"
+                             groupId="tools"
+                             provider="com.intellij.pycharm.community.ide.impl.promotion.PromoRemoteSshConfigurableProvider"
+                             bundle="messages.PyCharmCommunityCustomizationBundle"
+                             key="promo.configurable.remoteSsh"/>
+    <applicationConfigurable id="promo.jupyter"
+                             groupId="language"
+                             provider="com.intellij.pycharm.community.ide.impl.promotion.PromoJupyterConfigurableProvider"
+                             bundle="messages.PyCharmCommunityCustomizationBundle"
+                             key="promo.configurable.jupyter"/>
+
+    <startPagePromoter
+      implementation="com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.PyCommunityToUnifiedWelcomeScreenBanner"/>
+    <postStartupActivity
+      implementation="com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.PyCommunityToUnifiedShowPromoActivity"/>
+    <!--TODO delete later-->
+    <registryKey key="py.promo.remind.later.interval.seconds"
+                 defaultValue="259200"
+                 description="PyCharm promo remind-later fallback delay in seconds"/>
+    <registryKey key="py.community.to.unified.test.ignore.release.channel"
+                 defaultValue="false"
+                 description="Ignores Release Channel requirement for promo mock update"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.pycharm.community.ide.impl.promotion.PyCharmPromoCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.statistics.PyCommunityUnifiedPromoFusCollector"/>
+  </extensions>
+
+  <applicationListeners>
+    <listener
+      class="com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.statistics.PyCommunityUpdateReadyNotificationListener"
+      topic="com.intellij.notification.Notifications"/>
+  </applicationListeners>
+</idea-plugin>

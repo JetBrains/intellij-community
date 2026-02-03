@@ -1,0 +1,574 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.editor.impl.view
+
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.CustomFoldRegion
+import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.VisualPosition
+import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.util.registry.Registry
+import java.awt.Graphics2D
+import java.awt.RenderingHints
+import java.awt.geom.Point2D
+import java.awt.geom.Rectangle2D
+import kotlin.math.abs
+
+private const val EPSILON: Double = 1e-2
+
+private enum class CornerType {
+  Rounded, Straight, InvertedRounded,
+}
+
+private data class SelectionRectangle(
+  val topLeft: Point2D,
+  val bottomRight: Point2D,
+)
+
+private data class CaretSelection(
+  val editor: EditorImpl,
+  val start: VisualPosition,
+  val end: VisualPosition,
+) {
+  fun contains(pos: Double): Boolean {
+    val (startPos, endPos) = Pair(
+      editor.visualPositionToPoint2D(start),
+      editor.visualPositionToPoint2D(end)
+    )
+
+    return pos in (startPos.x - EPSILON..endPos.x + EPSILON)
+  }
+}
+
+private operator fun VisualPosition.compareTo(other: VisualPosition): Int =
+  compareValuesBy(this, other, { it.line }, { it.column })
+
+private fun max(a: VisualPosition, b: VisualPosition): VisualPosition =
+  if (a > b) a else b
+
+private fun min(a: VisualPosition, b: VisualPosition): VisualPosition =
+  if (a < b) a else b
+
+private data class CaretLineSelections(
+  private val editor: EditorImpl,
+  private val line: Int,
+  private val selections: List<CaretSelection>,
+) {
+  private fun trimToLine(selection: CaretSelection): CaretSelection {
+    val columnEnd = EditorUtil.getLastVisualLineColumnNumber(editor, line)
+    return CaretSelection(
+      editor,
+      max(selection.start, VisualPosition(line, 0, selection.start.leansRight)),
+      min(selection.end, VisualPosition(line, columnEnd, selection.end.leansRight))
+    )
+  }
+
+  operator fun get(index: Int): CaretSelection = trimToLine(selections[index])
+
+  fun hasSelectionEnd(left: Boolean, pos: Double): Boolean {
+    if (selections.isEmpty()) return false
+
+    var (lo, hi) = Pair(0, selections.size)
+    while (lo + 1 != hi) {
+      val mid = (lo + hi) / 2
+
+      val boundary = editor.visualPositionToPoint2D(if (left) this[mid].start else this[mid].end)
+      if (boundary.x <= pos + EPSILON) lo = mid else hi = mid
+    }
+
+    return abs(editor.visualPositionToPoint2D(if (left) this[lo].start else this[lo].end).x - pos) < EPSILON
+  }
+
+  fun selectionContaining(pos: Double): CaretSelection? {
+    if (selections.isEmpty()) return null
+
+    var (lo, hi) = Pair(0, selections.size)
+    while (lo + 1 != hi) {
+      val mid = (lo + hi) / 2
+      val selection = this[mid]
+
+      val (start, end) = Pair(
+        editor.visualPositionToPoint2D(selection.start),
+        editor.visualPositionToPoint2D(selection.end)
+      )
+
+      if (end.x < pos - EPSILON) lo = mid // [_, end] visualPosition
+      else if (start.x > pos + EPSILON) hi = mid // visualPosition [start, _]
+      else return selection
+    }
+
+    return this[lo].takeIf { it.contains(pos) }
+  }
+
+  fun containsPosition(pos: Double): Boolean {
+    return selectionContaining(pos) != null
+  }
+}
+
+internal class SelectionLinePainter(
+  private val graphics: Graphics2D,
+  private val lineHeight: Int,
+  private val yShift: Int,
+  private val editor: EditorImpl,
+) {
+  private val radius = lineHeight / 6.0
+  private val selectionBg = editor.colorsScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR)
+
+  private val caretSelections by lazy {
+    editor.caretModel.allCarets.map { caret ->
+      val end = caret.selectionEndPosition.let {
+        if (it.column != 0) it
+        else {
+          val columnNumber = runCatching {
+            EditorUtil.getLastVisualLineColumnNumber(editor, it.line - 1)
+          }
+          if (columnNumber.isFailure) it else
+          VisualPosition(
+            it.line - 1,
+            EditorUtil.getLastVisualLineColumnNumber(editor, it.line - 1),
+          )
+        }
+      }
+      CaretSelection(editor, caret.selectionStartPosition, end)
+    }.sortedWith(compareBy<CaretSelection> { it.start.line }.thenBy { it.start.column })
+  }
+
+  private val allCarets by lazy { editor.caretModel.allCarets }
+
+  fun isCFRInSelection(cfr: CustomFoldRegion): Boolean = allCarets.any {
+    it.selectionStart <= cfr.startOffset && cfr.endOffset <= it.selectionEnd
+  }
+
+  private fun isBlockInlayInSelection(block: Inlay<*>) = allCarets.any {
+    it.selectionStart <= block.offset && block.offset <= it.selectionEnd
+  }
+
+  private val customFoldRegions by lazy {
+    val foldingModel = editor.foldingModel
+    val regions = foldingModel.fetchTopLevel() ?: emptyArray()
+
+    regions.filterIsInstance<CustomFoldRegion>().filter { isCFRInSelection(it) }
+  }
+
+  private fun caretSelectionsForLine(line: Int): CaretLineSelections {
+    if (caretSelections.isEmpty()) return CaretLineSelections(editor, line, emptyList())
+
+    val lower = caretSelections.binarySearch { if (it.end.line < line) -1 else 1 }.let { -it - 1 }
+    val upper = caretSelections.binarySearch { if (it.start.line <= line) -1 else 1 }.let { -it - 1 }
+
+    return CaretLineSelections(editor, line, caretSelections.subList(lower, upper))
+  }
+
+  private fun yToVisualLine(y: Int): Int {
+    return editor.yToVisualLine(y - yShift)
+  }
+
+  private fun customFoldRegionsFor(visualLine: Int): List<CustomFoldRegion> {
+    return customFoldRegions.filter { cfr ->
+      val startLine = editor.offsetToVisualLine(cfr.startOffset)
+      val endLine = editor.offsetToVisualLine(cfr.endOffset)
+      visualLine in startLine..endLine
+    }
+  }
+
+  private fun blockInlayAbove(visualLine: Int): Inlay<*>? =
+    editor.inlayModel.getBlockElementsForVisualLine(visualLine, true).lastOrNull()
+      ?: editor.inlayModel.getBlockElementsForVisualLine(visualLine - 1, false).lastOrNull()
+
+  private fun selectedBlockInlayAbove(visualLine: Int): Inlay<*>? =
+    blockInlayAbove(visualLine)?.takeIf { isBlockInlayInSelection(it) }
+
+  private fun blockInlayBelow(visualLine: Int): Inlay<*>? =
+    editor.inlayModel.getBlockElementsForVisualLine(visualLine, false).firstOrNull()
+      ?: editor.inlayModel.getBlockElementsForVisualLine(visualLine + 1, true).lastOrNull()
+
+  private fun selectedBlockInlayBelow(visualLine: Int): Inlay<*>? =
+    blockInlayBelow(visualLine)?.takeIf { isBlockInlayInSelection(it) }
+
+  private fun hasCFREnd(cfr: List<CustomFoldRegion>, x: Double, left: Boolean): Boolean {
+    return cfr.any {
+      val startX = editor.offsetToXY(it.startOffset).x.toDouble()
+      val endX = startX + it.widthInPixels
+
+      val pos = if (left) startX else endX
+      abs(pos - x) < EPSILON
+    }
+  }
+
+  private fun hasSelectionEndAboveLine(visualLine: Int, x: Double, left: Boolean, checkBlockInlays: Boolean = true): Boolean {
+    if (visualLine <= 0) return false
+
+    customFoldRegionsFor(visualLine - 1).let {
+      if (it.isNotEmpty()) return hasCFREnd(it, x, left)
+    }
+
+    if (checkBlockInlays) {
+      selectedBlockInlayAbove(visualLine - 1)?.bounds2D?.let {
+        val endX = if (left) it.x else it.x + it.width
+        return abs(endX - x) < EPSILON
+      }
+    }
+
+    return caretSelectionsForLine(visualLine - 1).hasSelectionEnd(left, x)
+  }
+
+  private fun hasSelectionEndAbove(p: Point2D, left: Boolean, checkBlockInlays: Boolean = true): Boolean =
+    hasSelectionEndAboveLine(yToVisualLine(p.y.toInt()), p.x, left, checkBlockInlays)
+
+  private fun hasSelectionEndBelowLine(visualLine: Int, x: Double, left: Boolean, checkBlockInlays: Boolean = true): Boolean {
+    if (visualLine >= editor.view.visibleLineCount) return false
+
+    customFoldRegionsFor(visualLine).let {
+      if (it.isNotEmpty()) return hasCFREnd(it, x, left)
+    }
+
+    if (checkBlockInlays) {
+      selectedBlockInlayBelow(visualLine - 1)?.bounds2D?.let {
+        val endX = if (left) it.x else it.x + it.width
+        return abs(endX - x) < EPSILON
+      }
+    }
+
+    return caretSelectionsForLine(visualLine).hasSelectionEnd(left, x)
+  }
+
+  /// HACK: we substract lineHeight and add 1 to get the next line because just running `yToVisualLine` will return the previous one
+  /// if there are any inlays below this one so we jump to the beginning of the current line and add 1
+  private fun hasSelectionEndBelow(p: Point2D, left: Boolean, checkBlockInlays: Boolean = true): Boolean =
+    hasSelectionEndBelowLine(yToVisualLine(p.y.toInt() - lineHeight) + 1, p.x, left, checkBlockInlays)
+
+  private fun hasSelectionAboveLine(visualLine: Int, x: Double, checkBlockInlays: Boolean = true): Boolean {
+    if (visualLine <= 0) return false
+
+    customFoldRegionsFor(visualLine - 1).let {
+      if (it.isNotEmpty()) return it.any { cfr ->
+        val startX = editor.offsetToXY(cfr.startOffset).x.toDouble()
+        x in (startX - EPSILON..startX + cfr.widthInPixels + EPSILON)
+      }
+    }
+
+    if (checkBlockInlays) {
+      selectedBlockInlayAbove(visualLine)?.bounds2D?.let {
+        return x in (it.x - EPSILON..it.x + it.width + EPSILON)
+      }
+    }
+
+    return caretSelectionsForLine(visualLine - 1).containsPosition(x)
+  }
+
+  private fun hasSelectionAbove(p: Point2D, checkBlockInlays: Boolean = true): Boolean =
+    hasSelectionAboveLine(yToVisualLine(p.y.toInt()), p.x, checkBlockInlays)
+
+  private fun hasSelectionBelowLine(visualLine: Int, x: Double, checkBlockInlays: Boolean = true): Boolean {
+    customFoldRegionsFor(visualLine).let {
+      if (it.isNotEmpty()) return it.any { cfr ->
+        val startX = editor.offsetToXY(cfr.startOffset).x.toDouble()
+        x in (startX - EPSILON..startX + cfr.widthInPixels + EPSILON)
+      }
+    }
+
+    if (checkBlockInlays) {
+      selectedBlockInlayBelow(visualLine - 1)?.bounds2D?.let {
+        return x in (it.x - EPSILON..it.x + it.width + EPSILON)
+      }
+    }
+
+    return caretSelectionsForLine(visualLine).containsPosition(x)
+  }
+
+  /// HACK: see `hasSelectionEndBelow`
+  private fun hasSelectionBelow(p: Point2D, checkBlockInlays: Boolean = true): Boolean =
+    hasSelectionBelowLine(yToVisualLine(p.y.toInt() - lineHeight) + 1, p.x, checkBlockInlays)
+
+  private fun isSelectionLeftBound(block: SelectionRectangle): Boolean {
+    val visualLine = yToVisualLine(block.topLeft.y.toInt())
+    return customFoldRegionsFor(visualLine).isNotEmpty() || caretSelectionsForLine(visualLine).hasSelectionEnd(true, block.topLeft.x)
+  }
+
+  private fun isSelectionRightBound(block: SelectionRectangle): Boolean {
+    val visualLine = yToVisualLine(block.topLeft.y.toInt())
+    return customFoldRegionsFor(visualLine).isNotEmpty() || caretSelectionsForLine(visualLine).hasSelectionEnd(false, block.bottomRight.x)
+  }
+
+  fun isInSelection(x: Float, y: Int, width: Float): Boolean {
+    val line = yToVisualLine(y)
+
+    val selection = caretSelectionsForLine(line).selectionContaining(x.toDouble()) ?: return false
+    return selection.contains((x + width).toDouble())
+  }
+
+  private fun paintRoundedBlock(block: SelectionRectangle, cornerTypes: Array<CornerType>, lineExtensionWidth: Double) {
+    val (topLeftType, topRightType, bottomRightType, bottomLeftType) = cornerTypes
+
+    val path = java.awt.geom.Path2D.Double()
+    val leftExtensionWidth = if (editor.isRightAligned) lineExtensionWidth else 0.0
+    val rightExtensionWidth = if (editor.isRightAligned) 0.0 else lineExtensionWidth
+
+    val visualTopLeft = Point2D.Double(block.topLeft.x - leftExtensionWidth, block.topLeft.y)
+
+    path.moveTo(visualTopLeft.x, visualTopLeft.y + radius)
+    when (topLeftType) {
+      CornerType.Straight -> {
+        path.lineTo(visualTopLeft.x, visualTopLeft.y)
+        path.lineTo(visualTopLeft.x + radius, visualTopLeft.y)
+      }
+      CornerType.InvertedRounded -> {
+        path.quadTo(visualTopLeft.x, visualTopLeft.y, visualTopLeft.x - radius, visualTopLeft.y)
+        path.lineTo(visualTopLeft.x + radius, visualTopLeft.y)
+      }
+      CornerType.Rounded -> {
+        path.quadTo(visualTopLeft.x, visualTopLeft.y, visualTopLeft.x + radius, visualTopLeft.y)
+      }
+    }
+
+    val topRight = Point2D.Double(block.bottomRight.x, block.topLeft.y)
+    val visualTopRight = Point2D.Double(topRight.x + rightExtensionWidth, topRight.y)
+
+    path.lineTo(visualTopRight.x - radius, topRight.y)
+    when (topRightType) {
+      CornerType.Straight -> {
+        path.lineTo(visualTopRight.x, topRight.y)
+        path.lineTo(visualTopRight.x, topRight.y + radius)
+      }
+      CornerType.InvertedRounded -> {
+        path.lineTo(visualTopRight.x, topRight.y)
+        path.lineTo(visualTopRight.x, topRight.y + radius)
+        path.quadTo(visualTopRight.x, topRight.y, visualTopRight.x + radius, topRight.y)
+        path.lineTo(visualTopRight.x, topRight.y)
+        path.lineTo(visualTopRight.x, topRight.y + radius)
+      }
+      CornerType.Rounded -> {
+        path.quadTo(visualTopRight.x, topRight.y, visualTopRight.x, topRight.y + radius)
+      }
+    }
+
+    val visualBottomRight = Point2D.Double(block.bottomRight.x + rightExtensionWidth, block.bottomRight.y)
+
+    path.lineTo(visualBottomRight.x, block.bottomRight.y - radius)
+    when (bottomRightType) {
+      CornerType.Straight -> {
+        path.lineTo(visualBottomRight.x, block.bottomRight.y)
+        path.lineTo(visualBottomRight.x - radius, block.bottomRight.y)
+      }
+      CornerType.InvertedRounded -> {
+        path.quadTo(visualBottomRight.x, block.bottomRight.y, visualBottomRight.x + radius, block.bottomRight.y)
+        path.lineTo(visualBottomRight.x - radius, block.bottomRight.y)
+      }
+      CornerType.Rounded -> {
+        path.quadTo(visualBottomRight.x, block.bottomRight.y, visualBottomRight.x - radius, block.bottomRight.y)
+      }
+    }
+
+    val visualBottomLeft = Point2D.Double(block.topLeft.x - leftExtensionWidth, block.bottomRight.y)
+
+    path.lineTo(visualBottomLeft.x + radius, block.bottomRight.y)
+    when (bottomLeftType) {
+      CornerType.Straight -> {
+        path.lineTo(visualBottomLeft.x, visualBottomLeft.y)
+        path.lineTo(visualBottomLeft.x, visualBottomLeft.y - radius)
+      }
+      CornerType.InvertedRounded -> {
+        path.lineTo(visualBottomLeft.x, visualBottomLeft.y)
+        path.lineTo(visualBottomLeft.x, visualBottomLeft.y - radius)
+        path.quadTo(visualBottomLeft.x, visualBottomLeft.y, visualBottomLeft.x - radius, visualBottomLeft.y)
+        path.lineTo(visualBottomLeft.x, visualBottomLeft.y)
+        path.lineTo(visualBottomLeft.x, visualBottomLeft.y - radius)
+      }
+      CornerType.Rounded -> {
+        path.quadTo(visualBottomLeft.x, visualBottomLeft.y, visualBottomLeft.x, visualBottomLeft.y - radius)
+      }
+    }
+
+    path.lineTo(visualTopLeft.x, visualTopLeft.y + radius)
+    path.closePath()
+
+    val oldAA = graphics.getRenderingHint(RenderingHints.KEY_ANTIALIASING)
+    graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+
+    graphics.color = selectionBg
+    graphics.fill(path)
+
+    if (oldAA != null) {
+      graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAA)
+    }
+    else {
+      graphics.renderingHints.remove(RenderingHints.KEY_ANTIALIASING)
+    }
+  }
+
+  private fun paintRoundedSelection(block: SelectionRectangle) {
+    val (leftBound, rightBound) = Pair(isSelectionLeftBound(block), isSelectionRightBound(block))
+
+    val topLeftType = when {
+      !leftBound || hasSelectionEndAbove(block.topLeft, true) -> CornerType.Straight
+      hasSelectionAbove(block.topLeft) -> CornerType.InvertedRounded
+      else -> CornerType.Rounded
+    }
+
+    val topRight = Point2D.Double(block.bottomRight.x, block.topLeft.y)
+    val topRightType = when {
+      !rightBound || hasSelectionEndAbove(topRight, false) -> CornerType.Straight
+      hasSelectionAbove(topRight) -> CornerType.InvertedRounded
+      else -> CornerType.Rounded
+    }
+
+    val bottomRightType = when {
+      !rightBound || hasSelectionEndBelow(block.bottomRight, false) -> CornerType.Straight
+      hasSelectionBelow(block.bottomRight) -> CornerType.InvertedRounded
+      else -> CornerType.Rounded
+    }
+
+    val bottomLeft = Point2D.Double(block.topLeft.x, block.bottomRight.y)
+    val bottomLeftType = when {
+      !leftBound || hasSelectionEndBelow(bottomLeft, true) -> CornerType.Straight
+      hasSelectionBelow(bottomLeft) -> CornerType.InvertedRounded
+      else -> CornerType.Rounded
+    }
+
+    paintRoundedBlock(block, arrayOf(topLeftType, topRightType, bottomRightType, bottomLeftType), lineExtensionWidth)
+  }
+
+  private val Inlay<*>.bounds2D: Rectangle2D get() = bounds?.let {
+    Rectangle2D.Double(it.x.toDouble(), it.y.toDouble() + yShift, it.width.toDouble(), it.height.toDouble())
+  } ?: throw IllegalStateException("Inlay should not be folded")
+
+  private fun cornerTypesForFirstBlockInlay(bottomVisualLine: Int, inlay: Inlay<*>): Pair<CornerType, CornerType> {
+    val bounds = inlay.bounds2D
+
+    val (startX, endX) = Pair(bounds.x, bounds.x + bounds.width)
+
+    val topLeftType = when {
+      hasSelectionEndAboveLine(bottomVisualLine, startX, true, checkBlockInlays = false) -> CornerType.Straight
+      hasSelectionAboveLine(bottomVisualLine, startX, checkBlockInlays = false) -> CornerType.InvertedRounded
+      else -> CornerType.Rounded
+    }
+
+    val topRightType = when {
+      hasSelectionEndAboveLine(bottomVisualLine, endX, false, checkBlockInlays = false) -> CornerType.Straight
+      hasSelectionAboveLine(bottomVisualLine, endX, checkBlockInlays = false) -> CornerType.InvertedRounded
+      else -> CornerType.Rounded
+    }
+
+    return Pair(topLeftType, topRightType)
+  }
+
+  private fun cornerTypesForLastBlockInlay(bottomVisualLine: Int, inlay: Inlay<*>): Pair<CornerType, CornerType> {
+    val bounds = inlay.bounds2D
+
+    val (startX, endX) = Pair(bounds.x, bounds.x + bounds.width)
+
+    val bottomLeftType = when {
+      hasSelectionEndBelowLine(bottomVisualLine, startX, true, checkBlockInlays = false) -> CornerType.Straight
+      hasSelectionBelowLine(bottomVisualLine, startX, checkBlockInlays = false) -> CornerType.InvertedRounded
+      else -> CornerType.Rounded
+    }
+
+    val bottomRightType = when {
+      hasSelectionEndBelowLine(bottomVisualLine, endX, false, checkBlockInlays = false) -> CornerType.Straight
+      hasSelectionBelowLine(bottomVisualLine, endX, checkBlockInlays = false) -> CornerType.InvertedRounded
+      else -> CornerType.Rounded
+    }
+
+    return Pair(bottomLeftType, bottomRightType)
+  }
+
+  fun paintAllBlockInlaysAbove(bottomVisualLine: Int, lineExtensionWidth: Double) {
+    val belowBlockInlays = editor.inlayModel.getBlockElementsForVisualLine(bottomVisualLine - 1, false)
+    val aboveBlockInlays = editor.inlayModel.getBlockElementsForVisualLine(bottomVisualLine, true)
+
+    val allInlays = belowBlockInlays + aboveBlockInlays
+    assert(allInlays.isNotEmpty()) { "There should be at least one block inlay" }
+
+    val (firstInlay, lastInlay) = allInlays.run { Pair(first(), last()) }
+    val (firstTopLeftType, firstTopRightType) = cornerTypesForFirstBlockInlay(bottomVisualLine, firstInlay)
+    val (lastBottomLeftType, lastBottomRightType) = cornerTypesForLastBlockInlay(bottomVisualLine, lastInlay)
+
+    val cornerTypesFor = { bounds: Rectangle2D, otherBounds: Rectangle2D ->
+      val leftType = when {
+        abs(bounds.x - otherBounds.x) < EPSILON -> CornerType.Straight
+        bounds.x in (otherBounds.x - EPSILON..otherBounds.x + otherBounds.width + EPSILON) -> CornerType.InvertedRounded
+        else -> CornerType.Rounded
+      }
+
+      val rightX = bounds.x + bounds.width
+      val rightType = when {
+        abs(rightX - otherBounds.x - otherBounds.width) < EPSILON -> CornerType.Straight
+        rightX in (otherBounds.x - EPSILON..otherBounds.x + otherBounds.width + EPSILON) -> CornerType.InvertedRounded
+        else -> CornerType.Rounded
+      }
+
+      Pair(leftType, rightType)
+    }
+
+    for ((idx, inlay) in allInlays.withIndex()) {
+      val bounds = inlay.bounds2D
+
+      val (topLeftType, topRightType) = when (idx) {
+        0 -> firstTopLeftType to firstTopRightType
+        else -> cornerTypesFor(bounds, allInlays[idx - 1].bounds2D)
+      }
+
+      val (bottomLeftType, bottomRightType) = when (idx) {
+        allInlays.lastIndex -> lastBottomLeftType to lastBottomRightType
+        else -> cornerTypesFor(bounds, allInlays[idx + 1].bounds2D)
+      }
+
+      val block = SelectionRectangle(
+        topLeft = Point2D.Double(bounds.x, bounds.y),
+        bottomRight = Point2D.Double(bounds.x + bounds.width, bounds.y + bounds.height),
+      )
+
+      paintRoundedBlock(
+        block,
+        arrayOf(topLeftType, topRightType, bottomRightType, bottomLeftType),
+        lineExtensionWidth
+      )
+    }
+  }
+
+  private fun paint(rect: Rectangle2D) {
+    if (Registry.`is`("editor.disable.new.selection")) {
+      LOG.error("Using the new selection painting is disabled but SelectionLinePainter.paint was called, proceeding with caution")
+      EditorPainter.fillRectExact(
+        graphics,
+        rect,
+        selectionBg
+      )
+      return
+    }
+
+    val selectionRect = SelectionRectangle(
+      topLeft = Point2D.Double(rect.x, rect.y),
+      bottomRight = Point2D.Double(rect.x + rect.width, rect.y + rect.height),
+    )
+    paintRoundedSelection(selectionRect)
+  }
+
+  private var currentRect: Rectangle2D? = null
+  private var lineExtensionWidth: Double = 0.0
+
+  fun flush() {
+    currentRect?.let { paint(it) }
+    currentRect = null
+    lineExtensionWidth = 0.0
+  }
+
+  fun extendLine(width: Double) {
+    lineExtensionWidth += width
+  }
+
+  fun paintSelection(rect: Rectangle2D) {
+    currentRect?.let { if (abs(it.y - rect.y) > EPSILON) flush() }
+
+    val intersects = currentRect?.run { x + width + EPSILON >= rect.x } ?: false
+    if (!intersects) {
+      currentRect?.let { paint(it) }
+      currentRect = null
+    }
+
+    currentRect = currentRect?.createUnion(rect) ?: rect
+  }
+}
+
+private val LOG = logger<SelectionLinePainter>()

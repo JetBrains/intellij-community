@@ -1,0 +1,69 @@
+### auto-generated section `build intellij.platform.uast.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//uast/uast-common:uast",
+    "//uast/uast-java-ide:java-uast-ide",
+    "//uast/testFramework",
+  ],
+  runtime_deps = [
+    "//uast/uast-common:uast",
+    "@lib//:kotlin-stdlib",
+    "@lib//:junit4",
+    "//platform/core-impl",
+    "//uast/uast-java-ide:java-uast-ide",
+    "//java/java-runtime:rt",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/testFramework",
+    "//java/java-tests:tests",
+    "//java/testFramework",
+    "//platform/vcs-impl",
+  ]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "intellij.platform.uast.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
+    "//uast/uast-common:uast",
+    "@lib//:kotlin-stdlib",
+    "@lib//:junit4",
+    "//platform/core-impl",
+    "//uast/uast-java-ide:java-uast-ide",
+    "//java/java-runtime:rt",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//uast/testFramework",
+    "//java/testFramework",
+    "//platform/vcs-impl",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+  ],
+  exports = [
+    "//uast/uast-common:uast",
+    "//uast/uast-java-ide:java-uast-ide",
+    "//uast/testFramework",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build intellij.platform.uast.tests` end
+
+### auto-generated section `test intellij.platform.uast.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test intellij.platform.uast.tests` end

@@ -1,0 +1,5 @@
+def func():
+    """
+    Args:
+        <caret>  
+    """

@@ -1,0 +1,9 @@
+// My: to be implemented
+// DISABLE_ERRORS
+
+package my
+
+import other.Another
+import other.Other
+
+actual class My : Other<Another>()

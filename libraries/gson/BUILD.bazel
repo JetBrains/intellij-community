@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.gson` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "gson_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "gson",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":gson_resources"],
+  exports = ["@lib//:gson"],
+  runtime_deps = ["@lib//:gson"]
+)
+### auto-generated section `build intellij.libraries.gson` end

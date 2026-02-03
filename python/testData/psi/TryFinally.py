@@ -1,0 +1,4 @@
+try:
+  x
+finally:
+  z

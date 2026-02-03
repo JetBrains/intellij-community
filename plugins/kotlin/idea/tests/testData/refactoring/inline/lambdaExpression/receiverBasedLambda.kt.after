@@ -1,0 +1,10 @@
+inline fun <T> A.bar(t: T, noinline assertionCreator: E<T>.() -> Unit) = 1
+
+fun test(){
+    A().bar("a") { }
+}
+
+class A
+class E<T>
+
+// IGNORE_K1

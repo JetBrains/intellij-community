@@ -1,0 +1,116 @@
+### auto-generated section `build intellij.xpath` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "xpath_resources",
+  srcs = glob(["xpath-lang/resources/**/*"]),
+  strip_prefix = "xpath-lang/resources"
+)
+
+resourcegroup(
+  name = "xpath_test_resources",
+  srcs = glob(["xpath-lang/testData/**/*"]),
+  strip_prefix = "xpath-lang/testData"
+)
+
+jvm_library(
+  name = "xpath",
+  module_name = "intellij.xpath",
+  visibility = ["//visibility:public"],
+  srcs = glob(["xpath-lang/src/**/*.kt", "xpath-lang/src/**/*.java", "xpath-lang/src/**/*.form", "xpath-view/src/**/*.kt", "xpath-view/src/**/*.java", "xpath-view/src/**/*.form", "xpath-lang/gen/**/*.kt", "xpath-lang/gen/**/*.java"], allow_empty = True),
+  resources = [":xpath_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/platform-impl/concurrency",
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//platform/refactoring",
+    "//platform/indexing-impl",
+    "//platform/lang-impl",
+    "//platform/usageView",
+    "//xml/xml-parser:parser",
+    "//xml/impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "//RegExpSupport:regexp",
+    "//xml/xml-psi-api:psi",
+    "//plugins/xpath/xslt-rt:rt",
+    "//libraries/jaxen",
+    "//platform/util/nanoxml",
+    "//libraries/fastutil",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/jdom",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
+  ],
+  runtime_deps = ["//xml/dom-impl"]
+)
+
+jvm_library(
+  name = "xpath_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["xpath-lang/test/**/*.kt", "xpath-lang/test/**/*.java", "xpath-lang/test/**/*.form"], allow_empty = True),
+  resources = [":xpath_test_resources"],
+  associates = [":xpath"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//xml/xml-analysis-api:analysis",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/platform-impl/concurrency",
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//platform/refactoring",
+    "//platform/indexing-impl",
+    "//platform/lang-impl",
+    "//platform/usageView",
+    "//xml/xml-parser:parser",
+    "//xml/impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "//RegExpSupport:regexp",
+    "//RegExpSupport:regexp_test_lib",
+    "//xml/xml-psi-api:psi",
+    "//plugins/xpath/xslt-rt:rt",
+    "//libraries/jaxen",
+    "@lib//:junit4",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/util/nanoxml",
+    "//libraries/fastutil",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/jdom",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
+)
+### auto-generated section `build intellij.xpath` end
+
+### auto-generated section `test intellij.xpath` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "xpath_test",
+  runtime_deps = [":xpath_test_lib"]
+)
+### auto-generated section `test intellij.xpath` end

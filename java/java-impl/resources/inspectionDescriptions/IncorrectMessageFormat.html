@@ -1,0 +1,32 @@
+<!-- Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<html>
+<body>
+Reports incorrect message format patterns or incorrect indexes of placeholders
+<p>The following errors are reported:</p>
+<ul>
+  <li>Unparsed or negative index</li>
+  <li>Unclosed brace</li>
+  <li>Unpaired quote. In this case, a part of a pattern may not be used</li>
+  <li>Probably incorrect number of quotes</li>
+  <li>Incorrect lower bound of nested choice patterns</li>
+  <li>Incorrect indexes of placeholders. In this case, a placeholder may not be substituted or an argument may not be used</li>
+</ul>
+<p>Examples:</p>
+<pre><code>
+  MessageFormat.format("{wrong}", 1); // incorrect index
+  MessageFormat.format("{0", 1); // Unmatched brace
+  MessageFormat.format("'{0}", 1); // Unpaired quote
+  MessageFormat.format("It''''s {0}", 1); // "It''s" will be printed, instead of "It's"
+  MessageFormat.format("{0}", 1, 2); // The argument with index '1' is not used in the pattern
+</code></pre>
+<!-- tooltip end -->
+<p>
+  Use the <b>Custom MessageFormat methods</b> table
+  to specify method calls that should have their arguments checked as MessageFormat patterns.
+  The table contains pairs of fully qualified class name and method name regular expression
+  to match the containing class and name of the method calls.
+  Class names also match subclasses.
+</p>
+<p><small>New in 2023.2</small>
+</body>
+</html>

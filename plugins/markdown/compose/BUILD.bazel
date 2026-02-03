@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.markdown.compose.preview` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "compose-preview_resources",
+  srcs = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "compose-preview",
+  module_name = "intellij.markdown.compose.preview",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
+  resources = [":compose-preview_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/editor-ui-api:editor-ui",
+    "//plugins/markdown/core:markdown",
+    "//libraries/compose-foundation-desktop",
+    "//platform/core-api:core",
+    "//platform/util:util-ui",
+    "//platform/platform-api:ide",
+    "//libraries/coil",
+    "//platform/compose",
+    "//platform/compose/markdown",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
+### auto-generated section `build intellij.markdown.compose.preview` end

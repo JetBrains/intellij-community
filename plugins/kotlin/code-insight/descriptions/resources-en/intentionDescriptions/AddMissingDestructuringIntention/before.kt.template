@@ -1,0 +1,5 @@
+data class User(val name: String, val age: Int, val email: String)
+
+fun check(user: User) {
+    val (name, age) = user
+}

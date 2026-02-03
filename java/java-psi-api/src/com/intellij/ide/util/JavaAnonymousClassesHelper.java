@@ -1,0 +1,82 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.util;
+
+import com.intellij.openapi.util.Key;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.ParameterizedCachedValueProvider;
+import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * @author Konstantin Bulenkov
+ */
+public final class JavaAnonymousClassesHelper {
+  private static final Key<ParameterizedCachedValue<Map<PsiAnonymousClass, String>, PsiClass>> ANONYMOUS_CLASS_NAME = Key.create("ANONYMOUS_CLASS_NAME");
+  private static final AnonClassProvider ANON_CLASS_PROVIDER = new AnonClassProvider();
+
+  public static @Nullable String getName(@NotNull PsiAnonymousClass cls) {
+    final PsiClass upper = PsiTreeUtil.getParentOfType(cls, PsiClass.class);
+    if (upper == null) {
+      return null;
+    }
+    ParameterizedCachedValue<Map<PsiAnonymousClass, String>, PsiClass> value = upper.getUserData(ANONYMOUS_CLASS_NAME);
+    if (value == null) {
+      value = CachedValuesManager.getManager(upper.getProject()).createParameterizedCachedValue(ANON_CLASS_PROVIDER, false);
+      upper.putUserData(ANONYMOUS_CLASS_NAME, value);
+    }
+    return value.getValue(upper).get(cls);
+  }
+
+  private static final class AnonClassProvider implements ParameterizedCachedValueProvider<Map<PsiAnonymousClass, String>, PsiClass> {
+    @Override
+    public CachedValueProvider.Result<Map<PsiAnonymousClass, String>> compute(final PsiClass upper) {
+      final Map<PsiAnonymousClass, String> map = new HashMap<>();
+      upper.accept(new JavaRecursiveElementWalkingVisitor() {
+        int index;
+
+        @Override
+        public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
+          if (upper == aClass) {
+            super.visitAnonymousClass(aClass);
+            return;
+          }
+          final PsiExpressionList arguments = aClass.getArgumentList();
+          if (arguments != null) {
+            for (PsiExpression expression : arguments.getExpressions()) {
+              expression.acceptChildren(new JavaRecursiveElementVisitor() {
+                @Override
+                public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
+                  index++;
+                  map.put(aClass, "$" + index);
+                }
+              });
+            }
+          }
+
+          index++;
+          map.put(aClass, "$" + index);
+        }
+
+        @Override
+        public void visitClass(@NotNull PsiClass aClass) {
+          if (aClass == upper) {
+            super.visitClass(aClass);
+          }
+        }
+      });
+      return CachedValueProvider.Result.create(map, upper);
+    }
+  }
+}

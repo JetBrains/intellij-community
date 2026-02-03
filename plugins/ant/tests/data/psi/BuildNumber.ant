@@ -1,0 +1,4 @@
+<project default="A">
+  <buildnumber/>
+  <target name="A"/>
+</project>

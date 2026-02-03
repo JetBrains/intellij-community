@@ -1,0 +1,6 @@
+JsonFile: y_array_null.json
+  JsonArray
+    PsiElement([)('[')
+    JsonNullLiteral
+      PsiElement(null)('null')
+    PsiElement(])(']')

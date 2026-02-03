@@ -1,0 +1,8 @@
+// WITH_STDLIB
+// AFTER-WARNING: The expression is unused
+private fun <caret>f(s: String?) {
+    when (s) {
+        null -> ""
+        else -> s.substring(1)
+    }
+}

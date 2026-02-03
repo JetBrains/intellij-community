@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.netty.codec.compression.jar
+  modules:
+  - name: intellij.libraries.netty.codec.compression
+    libraries:
+      netty-codec-compression:
+      - name: $MAVEN_REPOSITORY$/io/netty/netty-codec-compression/4/netty-codec-compression-4.jar

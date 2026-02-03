@@ -1,0 +1,19 @@
+fragment repository on Repository {
+  ...nodeInfo
+  owner {
+    ...repositoryOwnerName
+  }
+  nameWithOwner
+  viewerPermission
+
+  mergeCommitAllowed
+  squashMergeAllowed
+  rebaseMergeAllowed
+
+  defaultBranchRef {
+    ...gitRefName
+  }
+  isFork
+  url
+  sshUrl
+}

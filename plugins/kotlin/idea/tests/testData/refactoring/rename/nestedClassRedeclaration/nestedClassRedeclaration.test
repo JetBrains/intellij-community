@@ -1,0 +1,8 @@
+{
+  "type": "MARKED_ELEMENT",
+  "mainFile": "test/test.kt",
+  "newName": "Foo",
+  "withRuntime": "true",
+  "hint": "Class 'Foo' is already declared in class 'A'",
+  "enabledInK2": "true"
+}

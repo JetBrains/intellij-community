@@ -1,0 +1,33 @@
+### auto-generated section `build fleet.util.serialization` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_serialization",
+  opt_in = ["kotlin.concurrent.atomics.ExperimentalAtomicApi"],
+  x_consistent_data_class_copy_visibility = True,
+  x_lambdas = "class"
+)
+
+resourcegroup(
+  name = "serialization_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "serialization",
+  module_name = "fleet.util.serialization",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  resources = [":serialization_resources"],
+  kotlinc_opts = ":custom_serialization",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//fleet/multiplatform.shims",
+    "@lib//:kotlinx-collections-immutable",
+  ]
+)
+### auto-generated section `build fleet.util.serialization` end

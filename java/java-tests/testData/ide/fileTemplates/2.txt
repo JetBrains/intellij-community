@@ -1,0 +1,5 @@
+// ${NAME}.java
+// $Author$
+// Created on $DATE by $USER
+package $PACKAGE_NAME;
+public class $NAME { }

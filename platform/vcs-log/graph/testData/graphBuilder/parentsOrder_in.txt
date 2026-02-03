@@ -1,0 +1,6 @@
+a66|-ffff a aa
+aa|-f ffff ff
+ffff|-ff
+ff|-
+a|-
+f|-

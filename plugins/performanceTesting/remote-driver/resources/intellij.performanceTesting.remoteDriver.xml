@@ -1,0 +1,22 @@
+<idea-plugin visibility="internal" package="com.jetbrains.performancePlugin.remotedriver">
+  <extensionPoints>
+    <extensionPoint interface="com.jetbrains.performancePlugin.remotedriver.xpath.XpathDataModelExtension"
+                    qualifiedName="com.jetbrains.performancePlugin.remotedriver.xpathDataModelExtension" dynamic="true"/>
+    <extensionPoint interface="com.jetbrains.performancePlugin.remotedriver.dataextractor.TextExtractorExtension"
+                    qualifiedName="com.jetbrains.performancePlugin.remotedriver.textExtractorExtension" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="expose.ui.hierarchy.url"
+                 defaultValue="false"
+                 restartRequired="true"
+                 description="Enables UI components hierarchy URL"/>
+
+    <httpRequestHandler implementation="com.jetbrains.performancePlugin.remotedriver.webservice.UiHierarchyWebService"/>
+
+  </extensions>
+
+  <extensions defaultExtensionNs="com.jetbrains.performancePlugin">
+    <remotedriver.xpathDataModelExtension implementation="com.jetbrains.performancePlugin.remotedriver.RemoteDriverDataModelExtension"/>
+  </extensions>
+</idea-plugin>

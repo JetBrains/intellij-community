@@ -1,0 +1,47 @@
+### auto-generated section `build intellij.python.sdkConfigurator.frontend` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_frontend",
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "frontend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "frontend",
+  module_name = "intellij.python.sdkConfigurator.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":frontend_resources"],
+  kotlinc_opts = ":custom_frontend",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//python/python-sdk-configurator/common",
+    "//platform/remote-topics/shared:rpc-topics",
+    "//platform/core-api:core",
+    "//platform/kernel/rpc",
+    "//platform/extensions",
+    "//platform/util",
+    "//platform/project/shared:project",
+    "//fleet/rpc",
+    "//platform/platform-api:ide",
+    "//libraries/compose-runtime-desktop",
+    "//platform/jewel/ui",
+    "//platform/jewel/ide-laf-bridge",
+    "//platform/compose",
+    "//libraries/skiko",
+    "//libraries/compose-foundation-desktop",
+    "//platform/jewel/foundation",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//python/common",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
+### auto-generated section `build intellij.python.sdkConfigurator.frontend` end

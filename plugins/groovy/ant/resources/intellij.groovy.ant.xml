@@ -1,0 +1,8 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="AntSupport"/>
+  </dependencies>
+  <extensions defaultExtensionNs="org.intellij.groovy">
+    <membersContributor implementation="com.intellij.groovy.ant.GantMemberContributor"/>
+  </extensions>
+</idea-plugin>

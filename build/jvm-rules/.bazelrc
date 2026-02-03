@@ -1,0 +1,81 @@
+# https://bazel.build/docs/bazel-and-java#hermetic-testing
+# The code is compiled for, executed, and tested on this JVM.
+build --java_language_version=21
+build --java_runtime_version=remotejdk_21
+
+# https://bazel.build/docs/bazel-and-java#config-build-tools-java
+# A second pair of JDK and JVM used to build and execute tools, which are used in the build process, but are not in the build results.
+# That JDK and JVM are controlled using --tool_java_language_version and --tool_java_runtime_version
+build --tool_java_language_version=21
+# Java runtime the tools should use
+build --tool_java_runtime_version=remotejdk_21
+
+common --@rules_jvm//:koltin_inc_threshold=0 --@rules_jvm//:java_inc_threshold=0
+
+# make sure you don't need to open file to read compilation errors
+common --experimental_ui_max_stdouterr_bytes=-1
+
+# disable deprecated WORKSPACE support
+common --noenable_workspace
+
+# rules_kotlin Compiling Kotlin on Windows appears to require --legacy_external_runfiles https://github.com/bazelbuild/rules_kotlin/issues/1309
+# Otherwise it fails with
+# LAUNCHER ERROR: Rlocation failed on _main/external/rules_kotlin++rules_kotlin_extensions+com_github_jetbrains_kotlin_git/lib/annotations-13.0.jar, path doesn't exist in MANIFEST file
+# also see
+# https://github.com/bazelbuild/rules_kotlin/issues/1300
+common --legacy_external_runfiles
+
+# Without it it fails in Windows Sandbox with:
+# ERROR: C:/users/wdagutilityaccount/desktop/bazel/BUILD.bazel:24:15: JdepsMerge //:jps_to_bazel-lib { jdeps: 1 } failed: Worker process did not return a WorkResponse:
+# ---8<---8<--- Start of log, file at C:/users/wdagutilityaccount/_bazel_wdagutilityaccount/ilgdy3ge/bazel-workers/worker-7-JdepsMerge.log ---8<---8<---
+# LAUNCHER ERROR: Rlocation failed on rules_kotlin++rules_kotlin_extensions+com_github_jetbrains_kotlin_git/lib/annotations-13.0.jar, path doesn't exist in MANIFEST file
+# ---8<---8<--- End of log ---8<---8<---
+# also see
+# https://github.com/bazelbuild/rules_kotlin/issues/1309
+# https://github.com/bazelbuild/rules_kotlin/issues/1300
+#
+# jdeps is used to check that there are no unused dependencies for target
+# which is we don't need for generator
+build --@rules_kotlin//kotlin/settings:jvm_emit_jdeps=False
+
+test --test_verbose_timeout_warnings --test_output=all --test_summary=detailed --test_timeout=60,300,900,14400
+
+# https://www.buildbuddy.io/blog/debugging-slow-bazel-builds/
+common --nolegacy_important_outputs --remote_build_event_upload=minimal --remote_cache_async --remote_cache_compression
+
+common --symlink_prefix=/
+common --incompatible_enable_proto_toolchain_resolution
+
+# Do not depend on external environment
+build --action_env BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
+
+# Remote-caches related
+#common:remotecache --remote_cache=https://packages.jetbrains.team/files/p/ij/intellij-bazel-cache
+common --remote_upload_local_results=false
+common:ci --remote_upload_local_results=true
+
+# More debug on CI
+common:ci --announce_rc
+
+# TeamCity-specific options
+common:teamcity --show_progress_rate_limit=30
+
+# A workaround for https://github.com/bazelbuild/rules_kotlin/issues/1352
+common --repo_env=ANDROID_HOME=
+
+# See https://github.com/aspect-build/toolchains_protoc (this has been already upstreamed to @protobuf, but it's not yet released)
+common --incompatible_enable_proto_toolchain_resolution
+
+# Ensure that we don't accidentally build protobuf or gRPC
+common --per_file_copt=external/.*protobuf.*@--PROTOBUF_WAS_NOT_SUPPOSED_TO_BE_BUILT
+common --host_per_file_copt=external/.*protobuf.*@--PROTOBUF_WAS_NOT_SUPPOSED_TO_BE_BUILT
+common --per_file_copt=external/.*grpc.*@--GRPC_WAS_NOT_SUPPOSED_TO_BE_BUILT
+common --host_per_file_copt=external/.*grpc.*@--GRPC_WAS_NOT_SUPPOSED_TO_BE_BUILT
+
+# need to use Python from rules_python in rules_pkg in pkg_zip target
+common --@rules_python//python/config_settings:bootstrap_impl=script
+
+try-import %workspace%/../../../build/remote_cache.bazelrc
+
+# Enable remote downloader config w/ allowed hosts and caching proxies
+common --downloader_config=../../build/bazel_downloader.cfg

@@ -1,0 +1,38 @@
+### auto-generated section `build intellij.platform.indexing.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "indexing-impl",
+  module_name = "intellij.platform.indexing.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/stream",
+    "//libraries/fastutil",
+    "//platform/util/jdom",
+    "//platform/statistics",
+    "//libraries/hdr-histogram",
+    "//platform/diagnostic/telemetry",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//libraries/guava",
+    "//platform/workspace/jps",
+    "//platform/diagnostic",
+    "//libraries/caffeine",
+    "//platform/util/nanoxml",
+    "//libraries/aalto-xml",
+    "//platform/util/xmlDom",
+    "//platform/workspace/storage",
+    "//platform/util/storages",
+    "//platform/util",
+  ]
+)
+### auto-generated section `build intellij.platform.indexing.impl` end

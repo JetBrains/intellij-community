@@ -1,0 +1,36 @@
+### auto-generated section `build intellij.groovy.uast.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "uast-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "uast-tests_test_lib",
+  module_name = "intellij.groovy.uast.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "//java/openapi:java",
+    "//platform/core-api:core",
+    "//platform/lang-api:lang",
+    "//plugins/groovy/groovy-psi:psi",
+    "//uast/testFramework",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/testFramework",
+  ],
+  runtime_deps = [":uast-tests"]
+)
+### auto-generated section `build intellij.groovy.uast.tests` end
+
+### auto-generated section `test intellij.groovy.uast.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "uast-tests_test",
+  runtime_deps = [":uast-tests_test_lib"]
+)
+### auto-generated section `test intellij.groovy.uast.tests` end

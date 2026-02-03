@@ -1,0 +1,45 @@
+### auto-generated section `build intellij.platform.threadDumpParser` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "threadDumpParser",
+  module_name = "intellij.platform.threadDumpParser",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//platform/platform-impl:ide-impl",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+  ]
+)
+
+jvm_library(
+  name = "threadDumpParser_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":threadDumpParser"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//platform/platform-impl:ide-impl",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "@lib//:junit4",
+  ]
+)
+### auto-generated section `build intellij.platform.threadDumpParser` end
+
+### auto-generated section `test intellij.platform.threadDumpParser` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "threadDumpParser_test",
+  runtime_deps = [":threadDumpParser_test_lib"]
+)
+### auto-generated section `test intellij.platform.threadDumpParser` end

@@ -1,0 +1,1 @@
+deprecated: toolWindowFavorites.svg; to be removed without replacement

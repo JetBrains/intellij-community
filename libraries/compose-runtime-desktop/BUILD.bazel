@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.libraries.compose.runtime.desktop` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "compose-runtime-desktop_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "compose-runtime-desktop",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":compose-runtime-desktop_resources"],
+  exports = [
+    "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-desktop",
+    "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-saveable-desktop",
+    "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-retain-desktop",
+  ],
+  runtime_deps = [
+    "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-desktop",
+    "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-saveable-desktop",
+    "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-retain-desktop",
+    "//libraries/jspecify",
+  ]
+)
+### auto-generated section `build intellij.libraries.compose.runtime.desktop` end

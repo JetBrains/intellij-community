@@ -1,0 +1,11 @@
+<idea-plugin package="org.jetbrains.plugins.terminal.sh">
+  <dependencies>
+    <module name="intellij.sh.core"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <shellOccurrencesHighlightingSuppressor implementation="org.jetbrains.plugins.terminal.sh.prompt.TerminalPromptHighlightingSuppressor"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.terminal.block.shellSupport.TerminalShLangService"
+                        serviceImplementation="org.jetbrains.plugins.terminal.sh.prompt.TerminalShLangServiceImpl"/>
+  </extensions>
+</idea-plugin>

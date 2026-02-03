@@ -1,0 +1,20 @@
+{
+  "groups": [
+    {
+      "id": "dictionary.test.group",
+      "builds": [
+        {
+          "from": "191.4811"
+        }
+      ],
+      "rules": {
+        "event_id": [
+          "{enum:NODE_AAA|NODE_BBB|NODE_CCC}"
+        ],
+        "event_data": {
+          "dictionary_value": ["{dictionary#test_simple_dictionary.ndjson}"]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+// "Replace with 'newFun(p)'" "true"
+// WITH_STDLIB
+
+@Deprecated("", ReplaceWith("newFun(p)"))
+fun oldFun(vararg p: Double){
+    newFun(p)
+}
+
+fun newFun(p: DoubleArray){}
+
+fun foo() {
+    <caret>newFun(doubleArrayOf(1.0, 2.0))
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

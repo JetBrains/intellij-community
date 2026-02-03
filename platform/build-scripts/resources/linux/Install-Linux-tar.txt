@@ -1,0 +1,27 @@
+@@product_full@@
+
+INSTALLATION INSTRUCTIONS
+===============================================================================
+
+  1. Unpack the @@product_full@@ distribution archive that you downloaded
+     where you wish to install the program. We will refer to this
+     location as your {installation home}.
+
+  2. To start the application, open a console, cd into "{installation home}/bin" and type:
+
+       ./@@product@@
+
+     This will initialize various configuration files in the configuration directory:
+     ~/.config/@@product_vendor@@/@@system_selector@@.
+
+  3. [OPTIONAL] Add @@product_full@@ to the system menu using the 'Tools | Create Desktop Entry'
+     menu action (also available in the "Options Menu" on the welcome screen).
+
+  4. [OPTIONAL] Add "{installation home}/bin" to your PATH environment
+     variable so that you can start @@product_full@@ from any directory.
+
+Discover step-by-step tutorials, helpful hints, and useful videos in 'Help | Getting Started'.
+
+Enjoy!
+
+-@@product_full@@ Development Team

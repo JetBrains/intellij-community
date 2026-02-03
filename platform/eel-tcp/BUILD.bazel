@@ -1,0 +1,37 @@
+### auto-generated section `build intellij.platform.eel.tcp` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "eel-tcp_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "eel-tcp",
+  module_name = "intellij.platform.eel.tcp",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":eel-tcp_resources"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:kotlin-stdlib",
+    "//platform/eel-provider",
+    "//platform/eel",
+    "//platform/eel-impl",
+    "//platform/ijent",
+    "//platform/ijent/impl",
+    "//platform/util-ex",
+    "//platform/util",
+    "//platform/util/coroutines",
+    "//platform/core-api:core",
+    "//platform/core-nio-fs",
+    "//platform/platform-impl:ide-impl",
+    "//platform/ide-core-impl",
+    "//platform/platform-api:ide",
+    "//platform/core-ui",
+    "//platform/projectModel-api:projectModel",
+  ]
+)
+### auto-generated section `build intellij.platform.eel.tcp` end

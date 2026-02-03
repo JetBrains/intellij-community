@@ -1,0 +1,8 @@
+def cl = {
+    print ('foo<caret>\n')
+}
+-----
+def cl = {
+    print ('foo' +
+        '<caret>\n')
+}

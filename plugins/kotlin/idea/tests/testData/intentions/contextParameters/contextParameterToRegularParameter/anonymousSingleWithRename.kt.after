@@ -1,0 +1,12 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// NEW_NAME: param
+
+fun foo(param: String) {
+    with(param) {
+        bar()
+    }
+}
+
+context(c: String)
+fun bar() {
+}

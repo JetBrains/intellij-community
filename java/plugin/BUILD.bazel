@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.java.plugin` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "plugin_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "plugin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":plugin_resources"],
+  runtime_deps = [
+    "//java/java-syntax:syntax",
+    "//java/java-frontback-psi-api:frontback-psi",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-impl:psi-impl",
+    "//java/java-frontback-impl:frontback-impl",
+    "//java/debugger/shared",
+    "//java/execution/shared",
+  ]
+)
+### auto-generated section `build intellij.java.plugin` end

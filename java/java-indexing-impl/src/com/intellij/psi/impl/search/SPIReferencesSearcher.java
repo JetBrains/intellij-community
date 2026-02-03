@@ -1,0 +1,68 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.psi.impl.search;
+
+import com.intellij.lang.spi.SPILanguage;
+import com.intellij.openapi.application.QueryExecutorBase;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.ClassUtil;
+import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
+
+public final class SPIReferencesSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+  public SPIReferencesSearcher() {
+    super(true);
+  }
+
+  @Override
+  public void processQuery(final @NotNull ReferencesSearch.SearchParameters p, final @NotNull Processor<? super PsiReference> consumer) {
+    final PsiElement element = p.getElementToSearch();
+    if (!element.isValid()) return;
+
+    final SearchScope scope = p.getEffectiveSearchScope();
+    if (!(scope instanceof GlobalSearchScope)) return;
+
+    if (element instanceof PsiClass aClass) {
+      final String jvmClassName = ClassUtil.getJVMClassName(aClass);
+
+      if (jvmClassName == null) return;
+      final PsiFile[] files = FilenameIndex.getFilesByName(aClass.getProject(), jvmClassName, (GlobalSearchScope)scope);
+      for (PsiFile file : files) {
+        if (file.getLanguage() == SPILanguage.INSTANCE) {
+          final PsiReference reference = file.getReference();
+          if (reference != null) {
+            consumer.process(reference);
+          }
+        }
+      }
+    }
+    else if (element instanceof PsiPackage) {
+      final String qualifiedName = ((PsiPackage)element).getQualifiedName();
+      final Project project = element.getProject();
+      final String[] filenames = FilenameIndex.getAllFilenames(project);
+      for (final String filename : filenames) {
+        if (filename.startsWith(qualifiedName + ".")) {
+          final PsiFile[] files = FilenameIndex.getFilesByName(project, filename, (GlobalSearchScope)scope);
+          for (PsiFile file : files) {
+            if (file.getLanguage() == SPILanguage.INSTANCE) {
+              final PsiReference[] references = file.getReferences();
+              for (final PsiReference reference : references) {
+                if (reference.getCanonicalText().equals(qualifiedName)) {
+                  consumer.process(reference);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

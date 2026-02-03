@@ -1,0 +1,20 @@
+<component name="libraryTable">
+  <library name="fleet:io.ktor.client.cio" type="repository">
+    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-cio-jvm:3.3.2">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-cio-jvm/3.3.2/ktor-client-cio-jvm-3.3.2.jar">
+          <sha256sum>e16cb28d9a1bf0a33bc12f69ee0af3338f5303e6e3aa011534a7a5adb9030a33</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-cio-jvm/3.3.2/ktor-client-cio-jvm-3.3.2.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-cio-jvm/3.3.2/ktor-client-cio-jvm-3.3.2-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-cio-jvm/3.3.2/ktor-client-cio-jvm-3.3.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

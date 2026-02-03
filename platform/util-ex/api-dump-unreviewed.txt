@@ -1,0 +1,140 @@
+f:com.intellij.credentialStore.OneTimeString
+- com.intellij.util.text.CharArrayCharSequence
+- <init>(java.lang.String):V
+- <init>(C[]):V
+- <init>(C[],I):V
+- <init>(C[],I,I):V
+- <init>(C[],I,I,Z):V
+- b:<init>(C[],I,I,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:appendTo(java.lang.StringBuilder):V
+- f:clone(Z,Z):com.intellij.credentialStore.OneTimeString
+- equals(java.lang.Object):Z
+- f:toByteArray():B[]
+- f:toByteArray(Z):B[]
+- bs:toByteArray$default(com.intellij.credentialStore.OneTimeString,Z,I,java.lang.Object):B[]
+- f:toCharArray():C[]
+- f:toCharArray(Z):C[]
+- bs:toCharArray$default(com.intellij.credentialStore.OneTimeString,Z,I,java.lang.Object):C[]
+- f:toString(Z):java.lang.String
+- bs:toString$default(com.intellij.credentialStore.OneTimeString,Z,I,java.lang.Object):java.lang.String
+f:com.intellij.credentialStore.OneTimeStringKt
+- sf:OneTimeString(B[]):com.intellij.credentialStore.OneTimeString
+- sf:OneTimeString(B[],I):com.intellij.credentialStore.OneTimeString
+- sf:OneTimeString(B[],I,I):com.intellij.credentialStore.OneTimeString
+- sf:OneTimeString(B[],I,I,Z):com.intellij.credentialStore.OneTimeString
+- bs:OneTimeString$default(B[],I,I,Z,I,java.lang.Object):com.intellij.credentialStore.OneTimeString
+f:com.intellij.openapi.application.PathManagerEx
+- sf:getAppSystemDir():java.nio.file.Path
+f:com.intellij.openapi.util.ExtensionsKt
+- sf:component1(com.intellij.openapi.util.Pair):java.lang.Object
+- sf:component2(com.intellij.openapi.util.Pair):java.lang.Object
+- sf:toNotNull(com.intellij.openapi.util.Pair):kotlin.Pair
+- sf:use(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):java.lang.Object
+f:com.intellij.util.ErrorKt
+- sf:throwIfNotEmpty(java.util.List):V
+f:com.intellij.util.FieldAccessor
+- <init>(java.lang.Class,java.lang.String):V
+- <init>(java.lang.Class,java.lang.String,java.lang.Class):V
+- b:<init>(java.lang.Class,java.lang.String,java.lang.Class,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:get(java.lang.Object):java.lang.Object
+- f:isAvailable():Z
+- f:set(java.lang.Object,java.lang.Object):V
+f:com.intellij.util.JdomKt
+- sf:addOptionTag(org.jdom.Element,java.lang.String,java.lang.String):V
+- sf:addOptionTag(org.jdom.Element,java.lang.String,java.lang.String,java.lang.String):V
+- bs:addOptionTag$default(org.jdom.Element,java.lang.String,java.lang.String,java.lang.String,I,java.lang.Object):V
+- sf:getOrCreate(org.jdom.Element,java.lang.String):org.jdom.Element
+- sf:loadDocumentAndKeepBoundaryWhitespace(java.io.InputStream):org.jdom.Document
+- sf:loadElementAndKeepBoundaryWhitespace(java.io.InputStream):org.jdom.Element
+- sf:loadElementAndKeepBoundaryWhitespace(java.lang.CharSequence):org.jdom.Element
+- sf:toBufferExposingByteArray(org.jdom.Element,com.intellij.util.LineSeparator):com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+- bs:toBufferExposingByteArray$default(org.jdom.Element,com.intellij.util.LineSeparator,I,java.lang.Object):com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+- sf:toByteArray(org.jdom.Element):B[]
+f:com.intellij.util.LazyKt
+- sf:lazyPub(kotlin.jvm.functions.Function0):kotlin.Lazy
+- sf:lazyUnsafe(kotlin.jvm.functions.Function0):kotlin.Lazy
+- sf:recursionSafeLazy(java.lang.Object,kotlin.jvm.functions.Function0):kotlin.Lazy
+- bs:recursionSafeLazy$default(java.lang.Object,kotlin.jvm.functions.Function0,I,java.lang.Object):kotlin.Lazy
+- sf:suspendingLazy(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2):com.intellij.util.SuspendingLazy
+- bs:suspendingLazy$default(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,I,java.lang.Object):com.intellij.util.SuspendingLazy
+f:com.intellij.util.ResettableLazyKt
+- sf:resettableLazy(kotlin.jvm.functions.Function0):com.intellij.util.ResettableLazy
+f:com.intellij.util.ResourceUtil
+- s:getResource(java.lang.Class,java.lang.String,java.lang.String):java.net.URL
+- s:getResource(java.lang.ClassLoader,java.lang.String,java.lang.String):java.net.URL
+- s:getResourceAsBytes(java.lang.String,java.lang.ClassLoader):B[]
+- s:getResourceAsBytes(java.lang.String,java.lang.ClassLoader,Z):B[]
+- s:getResourceAsBytesSafely(java.lang.String,java.lang.ClassLoader):B[]
+- s:getResourceAsStream(java.lang.ClassLoader,java.lang.String,java.lang.String):java.io.InputStream
+- s:loadText(java.io.InputStream):java.lang.String
+- s:loadText(java.net.URL):java.lang.String
+com.intellij.util.SuspendingLazy
+- a:getInitialized():java.lang.Object
+- a:getValue(kotlin.coroutines.Continuation):java.lang.Object
+- a:isInitialized():Z
+c:com.intellij.util.containers.HashMap
+- java.util.HashMap
+- <init>():V
+- <init>(I):V
+- <init>(java.util.Map):V
+- clear():V
+c:com.intellij.util.containers.HashSet
+- java.util.HashSet
+- <init>():V
+- <init>(I):V
+- <init>(java.util.Collection):V
+- clear():V
+f:com.intellij.util.containers.LookbackSequenceKt
+- sf:withPrevious(kotlin.sequences.Sequence):kotlin.sequences.Sequence
+f:com.intellij.util.containers.hash.HashMap
+- java.util.HashMap
+- <init>():V
+- <init>(I):V
+- <init>(I,F):V
+f:com.intellij.util.io.CloseableUtil
+- sf:runClosingOnFailure(java.lang.AutoCloseable,kotlin.jvm.functions.Function1):java.lang.Object
+f:com.intellij.util.io.HttpSecurityUtil
+- sf:AUTHORIZATION_HEADER_NAME:java.lang.String
+- sf:INSTANCE:com.intellij.util.io.HttpSecurityUtil
+- sf:createBasicAuthHeaderValue(java.lang.String,C[]):java.lang.String
+- sf:createBearerAuthHeaderValue(java.lang.String):java.lang.String
+f:com.intellij.util.io.Ksuid
+- sf:MAX_ENCODED_LENGTH:I
+- <init>():V
+- s:generate():java.lang.String
+- s:generateCustom(I,java.util.Random):java.nio.ByteBuffer
+f:com.intellij.util.io.PathKt
+- sf:basicAttributesIfExists(java.nio.file.Path):java.nio.file.attribute.BasicFileAttributes
+- sf:copy(java.nio.file.Path,java.nio.file.Path):java.nio.file.Path
+- sf:copyRecursively(java.nio.file.Path,java.nio.file.Path):V
+- sf:createDirectories(java.nio.file.Path):java.nio.file.Path
+- sf:createFile(java.nio.file.Path):java.nio.file.Path
+- sf:createParentDirectories(java.nio.file.Path):java.nio.file.Path
+- sf:delete(java.nio.file.Path):V
+- sf:delete(java.nio.file.Path,Z):V
+- bs:delete$default(java.nio.file.Path,Z,I,java.lang.Object):V
+- sf:deleteWithParentsIfEmpty(java.nio.file.Path,java.nio.file.Path,Z):Z
+- bs:deleteWithParentsIfEmpty$default(java.nio.file.Path,java.nio.file.Path,Z,I,java.lang.Object):Z
+- sf:directoryStreamIfExists(java.nio.file.Path,kotlin.jvm.functions.Function1):java.lang.Object
+- sf:directoryStreamIfExists(java.nio.file.Path,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):java.lang.Object
+- sf:exists(java.nio.file.Path):Z
+- sf:fileSizeSafe(java.nio.file.Path,J):J
+- bs:fileSizeSafe$default(java.nio.file.Path,J,I,java.lang.Object):J
+- sf:generateRandomPath(java.nio.file.Path):java.nio.file.Path
+- sf:getSystemIndependentPath(java.nio.file.Path):java.lang.String
+- sf:inputStream(java.nio.file.Path):java.io.InputStream
+- sf:inputStreamIfExists(java.nio.file.Path):java.io.InputStream
+- sf:isAncestor(java.nio.file.Path,java.nio.file.Path):Z
+- sf:isDirectory(java.nio.file.Path):Z
+- sf:isFile(java.nio.file.Path):Z
+- sf:makeFilter(kotlin.jvm.functions.Function1):java.nio.file.DirectoryStream$Filter
+- sf:move(java.nio.file.Path,java.nio.file.Path):java.nio.file.Path
+- sf:readChars(java.nio.file.Path):java.lang.CharSequence
+- sf:readText(java.nio.file.Path):java.lang.String
+- sf:safeOutputStream(java.nio.file.Path):java.io.OutputStream
+- sf:write(java.nio.file.Path,java.lang.CharSequence):java.nio.file.Path
+- sf:write(java.nio.file.Path,java.lang.CharSequence,java.nio.charset.Charset):java.nio.file.Path
+- sf:write(java.nio.file.Path,java.lang.CharSequence,java.nio.charset.Charset,Z):java.nio.file.Path
+- sf:write(java.nio.file.Path,B[]):java.nio.file.Path
+- sf:write(java.nio.file.Path,B[],I,I):java.nio.file.Path
+- bs:write$default(java.nio.file.Path,java.lang.CharSequence,java.nio.charset.Charset,Z,I,java.lang.Object):java.nio.file.Path

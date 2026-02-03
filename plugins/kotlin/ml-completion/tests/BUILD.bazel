@@ -1,0 +1,38 @@
+### auto-generated section `build intellij.kotlin.completion.ml.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/kotlin/plugin/k1",
+    "@lib//:kotlin-stdlib",
+    "//plugins/kotlin/ml-completion:completion-ml",
+    "//platform/platform-impl/internal",
+  ]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "intellij.kotlin.completion.ml.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:junit4",
+    "//plugins/kotlin/ml-completion:completion-ml",
+    "//platform/platform-impl/internal",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build intellij.kotlin.completion.ml.tests` end
+
+### auto-generated section `test intellij.kotlin.completion.ml.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test intellij.kotlin.completion.ml.tests` end

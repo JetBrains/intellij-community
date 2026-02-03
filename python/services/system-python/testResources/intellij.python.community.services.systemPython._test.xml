@@ -1,0 +1,8 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.python.community.services.systemPython"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationInitializedListener implementation="com.intellij.python.junit5Tests.env.systemPython.impl.SystemPythonRootsFixer"/>
+  </extensions>
+</idea-plugin>

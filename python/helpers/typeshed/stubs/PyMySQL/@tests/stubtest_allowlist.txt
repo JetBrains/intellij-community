@@ -1,0 +1,3 @@
+# DictCursorMixin changes method types of inherited classes, but doesn't contain much at runtime
+pymysql.cursors.DictCursorMixin.__iter__
+pymysql.cursors.DictCursorMixin.fetch[a-z]*

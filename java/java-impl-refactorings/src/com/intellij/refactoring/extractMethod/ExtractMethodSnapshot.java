@@ -1,0 +1,132 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.refactoring.extractMethod;
+
+import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.SmartTypePointer;
+import com.intellij.psi.SmartTypePointerManager;
+import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+public class ExtractMethodSnapshot {
+  public static final Key<ExtractMethodSnapshot> SNAPSHOT_KEY = Key.create("ExtractMethodSnapshot");
+
+  public final Project myProject;
+  public final String myMethodName;
+  public final boolean myStatic;
+  public final boolean myIsChainedConstructor;
+  public final String myMethodVisibility;
+  public final Nullability myNullability;
+  public final @Nullable SmartTypePointer myReturnType;
+  public final @NotNull List<SmartPsiElementPointer<PsiVariable>> myOutputVariables;
+  public final @Nullable SmartPsiElementPointer<PsiVariable> myOutputVariable;
+  public final @Nullable SmartPsiElementPointer<PsiVariable> myArtificialOutputVariable;
+  public final @NotNull List<VariableDataSnapshot> myVariableDatum;
+  public final boolean myFoldable;
+  public final @Nullable SmartPsiElementPointer<PsiClass> myTargetClass;
+
+  public ExtractMethodSnapshot(@NotNull ExtractMethodProcessor from) {
+    myProject = from.getProject();
+    myMethodName = from.myMethodName;
+    myStatic = from.myStatic;
+    myIsChainedConstructor = from.myIsChainedConstructor;
+    myMethodVisibility = from.myMethodVisibility;
+    myNullability = from.myNullability;
+
+    SmartTypePointerManager typePointerManager = SmartTypePointerManager.getInstance(myProject);
+    myReturnType = typePointerManager.createSmartTypePointer(from.myReturnType);
+
+    SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
+    myOutputVariables = ContainerUtil.map(from.myOutputVariables, smartPointerManager::createSmartPsiElementPointer);
+    myOutputVariable = ContainerUtil.getFirstItem(myOutputVariables);
+    myArtificialOutputVariable = from.myArtificialOutputVariable != null
+                                 ? smartPointerManager.createSmartPsiElementPointer(from.myArtificialOutputVariable) : null;
+
+    myVariableDatum = ContainerUtil.map(from.myVariableDatum, data -> new VariableDataSnapshot(data, myProject));
+    myFoldable = from.myInputVariables.isFoldable();
+
+    myTargetClass = from.myTargetClass != null ? smartPointerManager.createSmartPsiElementPointer(from.myTargetClass) : null;
+  }
+
+  public ExtractMethodSnapshot(@NotNull ExtractMethodSnapshot from, PsiElement @NotNull [] pattern, PsiElement @NotNull [] copy) {
+    myProject = from.myProject;
+    myMethodName = from.myMethodName;
+    myStatic = from.myStatic;
+    myIsChainedConstructor = from.myIsChainedConstructor;
+    myMethodVisibility = from.myMethodVisibility;
+    myNullability = from.myNullability;
+
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(from.myProject);
+    PsiElement copyContext = copy[copy.length - 1];
+    PsiType fromReturnType = from.myReturnType != null ? from.myReturnType.getType() : null;
+    PsiType copyReturnType = fromReturnType != null ? factory.createTypeFromText(fromReturnType.getCanonicalText(), copyContext) : null;
+    myReturnType = copyReturnType != null ? SmartTypePointerManager.getInstance(from.myProject)
+                                                                   .createSmartTypePointer(copyReturnType) : null;
+
+    Map<PsiVariable, PsiVariable> variableMap = new HashMap<>();
+    ParametrizedDuplicates.collectCopyMapping(pattern, copy,
+                                              unused -> false, (unused1, unused2) -> { },
+                                              variableMap::put);
+
+    SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
+    myOutputVariables = StreamEx.of(from.myOutputVariables)
+                                .map(e -> e.getElement())
+                                .nonNull()
+                                .map(variableMap::get)
+                                .nonNull()
+                                .map(smartPointerManager::createSmartPsiElementPointer).toList();
+    myOutputVariable = ContainerUtil.getFirstItem(myOutputVariables);
+
+    myArtificialOutputVariable = Optional.ofNullable(from.myArtificialOutputVariable)
+                                         .map(SmartPsiElementPointer::getElement)
+                                         .map(variableMap::get)
+                                         .map(smartPointerManager::createSmartPsiElementPointer)
+                                         .orElse(null);
+
+    myVariableDatum = new ArrayList<>();
+    for (VariableDataSnapshot fromData: from.myVariableDatum) {
+      PsiVariable copyVariable = variableMap.get(fromData.getVariable());
+      PsiType fromType = fromData.getType();
+      PsiType copyType = fromType != null ? factory.createTypeFromText(fromType.getCanonicalText(), copyContext) : null;
+      VariableDataSnapshot copyData =
+        new VariableDataSnapshot(copyVariable, copyType, fromData.name, fromData.originalName, fromData.passAsParameter, from.myProject);
+      myVariableDatum.add(copyData);
+    }
+
+    myFoldable = from.myFoldable;
+
+    myTargetClass = Optional.ofNullable(from.getTargetClass())
+                            .map(PsiElement::getTextRange)
+                            .map(range -> findTargetClassInRange(copy[0].getContainingFile(), range))
+                            .map(smartPointerManager::createSmartPsiElementPointer)
+                            .orElse(null);
+  }
+
+  private static @Nullable PsiClass findTargetClassInRange(@Nullable PsiFile file, @NotNull TextRange range) {
+    return file != null ? CodeInsightUtil.findElementInRange(file, range.getStartOffset(), range.getEndOffset(), PsiClass.class) : null;
+  }
+
+  public @Nullable PsiClass getTargetClass() {
+    return myTargetClass != null ? myTargetClass.getElement() : null;
+  }
+}

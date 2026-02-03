@@ -1,0 +1,1 @@
+myStr = 'Why<caret> couldn\'t we get along?'

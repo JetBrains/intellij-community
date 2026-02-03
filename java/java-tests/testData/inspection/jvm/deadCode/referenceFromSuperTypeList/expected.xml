@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem><!-- TODO false positive -->
+    <file>A.kt</file>
+    <line>9</line>
+    <entry_point TYPE="class" FQNAME="YYY.Companion" />
+    <description>Class is never used.</description>
+  </problem>
+
+  <problem>
+    <file>A.kt</file>
+    <line>11</line>
+    <highlighted_element>const val T = &quot;T&quot;</highlighted_element>
+    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+    <description>Field is never used.</description>
+  </problem>
+</problems>

@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.execution.process.mediator.daemon` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "daemon_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "daemon",
+  module_name = "intellij.execution.process.mediator.daemon",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":daemon_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:jetbrains-annotations",
+    "//libraries/guava",
+    "//libraries/protobuf",
+    "@lib//:jna",
+    "//platform/execution-process-mediator/common",
+    "//libraries/grpc",
+    "//libraries/grpc-netty-shaded",
+  ]
+)
+### auto-generated section `build intellij.execution.process.mediator.daemon` end

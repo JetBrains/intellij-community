@@ -1,0 +1,55 @@
+<idea-plugin package="org.jetbrains.kotlin.gradle.scripting.k2">
+  <dependencies>
+    <module name="kotlin.gradle.scripting.shared"/>
+    <module name="kotlin.gradle.gradle-java"/>
+    <module name="intellij.kotlin.base.scripting"/>
+    <module name="intellij.kotlin.base.scripting.shared"/>
+    <plugin id="org.jetbrains.plugins.gradle"/>
+    <module name="intellij.kotlin.gradle.tooling"/>
+  </dependencies>
+
+  <projectListeners>
+    <listener
+            class="org.jetbrains.kotlin.gradle.scripting.k2.ProjectGradleSettingsListener"
+            topic="org.jetbrains.plugins.gradle.settings.GradleSettingsListener"/>
+  </projectListeners>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <syncExtension implementation="org.jetbrains.kotlin.gradle.scripting.k2.importing.KotlinDslScriptSyncExtension"/>
+    <syncContributor implementation="org.jetbrains.kotlin.gradle.scripting.k2.importing.KotlinDslBaseScriptSyncContributor"/>
+    <syncContributor implementation="org.jetbrains.kotlin.gradle.scripting.k2.importing.KotlinDslScriptSyncContributor"/>
+    <dslInspectionProvider language="kotlin"
+                           implementationClass="org.jetbrains.kotlin.gradle.scripting.k2.inspections.KotlinGradleDslInspectionProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="org.jetbrains.kotlin.gradle.scripting.shared.roots.AbstractGradleBuildRootDataSerializer"
+                    serviceImplementation="org.jetbrains.kotlin.gradle.scripting.k2.roots.GradleBuildRootDataSerializer"/>
+
+    <projectService serviceInterface="org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator"
+                    serviceImplementation="org.jetbrains.kotlin.gradle.scripting.k2.roots.GradleBuildRootsLocatorImpl"/>
+    <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.gradle.scripting.k2.importing.KotlinDslSyncListener"/>
+
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptNotificationProvider"/>
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.gradle.scripting.k2.OpenAdvancedSettingsNotificationProvider"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.gradle.scripting.k2.inspections.KotlinOptionsToCompilerOptionsInspection"
+                     shortName="KotlinOptionsToCompilerOptions"
+                     groupPathKey="group.path.kotlin.migration"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.gradle"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin" editorAttributes="DEPRECATED_ATTRIBUTES"
+                     key="inspection.kotlin.options.to.compiler.options.display.name" bundle="messages.KotlinBundle"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <kotlinScriptFilter implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleKotlinScriptProcessingFilter"/>
+    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.gradle.scripting.k2.definition.GradleScriptDefinitionsSource"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.gradle.scripting.k2.GradleKotlinScriptEntityProvider$GradleWorkspaceModelListener"
+              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
+  </projectListeners>
+</idea-plugin>

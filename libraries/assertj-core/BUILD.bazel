@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.assertj.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "assertj-core_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "assertj-core",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":assertj-core_resources"],
+  exports = ["@lib//:assert_j"],
+  runtime_deps = ["@lib//:assert_j"]
+)
+### auto-generated section `build intellij.libraries.assertj.core` end

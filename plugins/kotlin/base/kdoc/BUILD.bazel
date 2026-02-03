@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.kotlin.base.kdoc` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "kdoc",
+  module_name = "intellij.kotlin.base.kdoc",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/core-api:core",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//platform/util",
+    "//platform/core-impl",
+  ]
+)
+### auto-generated section `build intellij.kotlin.base.kdoc` end

@@ -1,0 +1,3 @@
+- name: lib/html-tools.jar
+  modules:
+  - name: intellij.html.tools

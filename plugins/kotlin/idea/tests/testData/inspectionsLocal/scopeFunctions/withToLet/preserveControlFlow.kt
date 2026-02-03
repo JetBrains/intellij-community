@@ -1,0 +1,20 @@
+// WITH_STDLIB
+// FIX: Convert to 'let'
+// IGNORE_K1
+class User(val name: String) {
+    fun riskyOperation(): String {
+        if (name.isEmpty()) throw IllegalStateException("Invalid user")
+        return name.uppercase()
+    }
+}
+
+fun processUser(user: User): String {
+    return <caret>with(user) {
+        try {
+            val result = riskyOperation()
+            "Success: $result"
+        } catch (e: Exception) {
+            "Failed: $name"
+        }
+    }
+}

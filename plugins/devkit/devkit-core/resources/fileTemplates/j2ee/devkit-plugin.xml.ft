@@ -1,0 +1,90 @@
+<!-- Plugin Configuration File: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <!-- Unique identifier of the plugin. It should be FQN, cannot be changed between the plugin versions. -->
+    <id>${context.group}.${context.artifact}</id>
+
+    <!-- Public plugin name should be written in Title Case.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-name -->
+    <name>${context.getProperty("pluginTitle")}</name>
+
+    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+    <vendor url="https://www.yourcompany.com">YourCompany</vendor>
+
+    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-description -->
+    <description><![CDATA[
+        Enter short description for your plugin here.<br>
+        <em>most HTML tags may be used</em>
+    ]]></description>
+
+    <!-- Product and plugin compatibility requirements.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+#if (!$context.hasLibraries())
+    <depends>com.intellij.modules.platform</depends>
+#end
+#if ($context.hasLibrary("compose"))
+    <depends>com.intellij.modules.compose</depends>
+#end
+#if ($context.hasLibrary("lsp"))
+    <depends>com.intellij.modules.lsp</depends>
+#end
+
+#if ($context.hasLibrary("java"))
+    <depends>com.intellij.java</depends>
+#end
+#if ($context.hasLibrary("kotlin"))
+    <depends>org.jetbrains.kotlin</depends>
+#end
+#if ($context.hasLibrary("javascript"))
+    <depends>JavaScript</depends>
+#end
+#if ($context.hasLibrary("json"))
+    <depends>com.intellij.modules.json</depends>
+#end
+#if ($context.hasLibrary("yaml"))
+    <depends>org.jetbrains.plugins.yaml</depends>
+#end
+#if ($context.hasLibrary("xml"))
+    <depends>com.intellij.modules.xml</depends>
+#end
+#if ($context.hasLibrary("properties"))
+    <depends>com.intellij.properties</depends>
+#end
+#if ($context.hasLibrary("markdown"))
+    <depends>org.intellij.plugins.markdown</depends>
+#end
+#if ($context.hasLibrary("python"))
+    <depends>PythonCore</depends>
+#end
+#if ($context.hasLibrary("go"))
+    <depends>org.jetbrains.plugins.go</depends>
+#end
+#if ($context.hasLibrary("php"))
+    <depends>com.jetbrains.php</depends>
+#end
+#if ($context.hasLibrary("ruby"))
+    <depends>org.jetbrains.plugins.ruby</depends>
+#end
+#if ($context.hasLibrary("rust"))
+    <depends>com.jetbrains.rust</depends>
+#end
+#if ($context.hasLibrary("database"))
+    <depends>com.intellij.database</depends>
+#end
+#if ($context.includeExamples)
+    <resource-bundle>messages.MyMessageBundle</resource-bundle>
+#end
+    <!-- Extensions defined by the plugin.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+    <extensions defaultExtensionNs="com.intellij">
+#if ($context.includeExamples)
+        <toolWindow id="MyToolWindow" factoryClass="${context.rootPackage}.MyToolWindowFactory"
+                    icon="AllIcons.Toolwindows.ToolWindowPalette"/>
+#end
+    </extensions>
+#if ($context.hasLibrary("kotlin"))
+    <extensions defaultExtensionNs="org.jetbrains.kotlin">
+        <supportsKotlinPluginMode supportsK2="true" />
+    </extensions>
+#end
+</idea-plugin>

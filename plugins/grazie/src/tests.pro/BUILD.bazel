@@ -1,0 +1,85 @@
+### auto-generated section `build intellij.grazie.tests.pro` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "tests.pro_test_resources",
+  srcs = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
+jvm_library(
+  name = "tests.pro",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/rd/core",
+    "//python/pluginCore:community-plugin",
+    "//plugins/kotlin:kotlin-plugin-community-main",
+    "//plugins/grazie",
+    "//plugins/grazie/src:core",
+    "@lib//:grazie-tests-pro-ai-grazie-model-ner-jvm",
+    "@lib//:grazie-tests-pro-ai-grazie-model-tree-jvm",
+    "@lib//:grazie-tests-pro-ai-grazie-spell-gec-engine-local-jvm",
+    "//platform/analysis-impl",
+  ]
+)
+
+jvm_library(
+  name = "tests.pro_test_lib",
+  module_name = "intellij.grazie.tests.pro",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":tests.pro_test_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//libraries/rd/core",
+    "//plugins/markdown/core:markdown",
+    "//java/plugin",
+    "//platform/collaboration-tools",
+    "//platform/collaboration-tools:collaboration-tools_test_lib",
+    "@lib//:grazie-tests-pro-jetbrains-intellij-deps-languagetool-language-de",
+    "@lib//:grazie-tests-pro-jetbrains-intellij-deps-languagetool-language-el",
+    "@lib//:grazie-tests-pro-jetbrains-intellij-deps-languagetool-language-uk",
+    "@lib//:grazie-tests-pro-jetbrains-intellij-deps-languagetool-language-ru",
+    "@lib//:grazie-tests-pro-jetbrains-intellij-deps-languagetool-core",
+    "@lib//:grazie-tests-pro-ai-grazie-nlp-detect-jvm",
+    "//python/python-grazie:grazie",
+    "//plugins/grazie",
+    "//plugins/grazie/src:core",
+    "//plugins/grazie/src/test:grazie-tests_test_lib",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//platform/analysis-api:analysis",
+    "//platform/core-impl",
+    "@lib//:grazie-tests-pro-ai-grazie-model-ner-jvm",
+    "@lib//:grazie-tests-pro-ai-grazie-model-tree-jvm",
+    "@lib//:grazie-tests-pro-ai-grazie-spell-gec-engine-local-jvm",
+    "//platform/analysis-impl",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-impl",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//libraries/stream",
+    "@lib//:grazie-tests-pro-ai-grazie-model-def-jvm",
+    "@lib//:grazie-tests-pro-ai-grazie-model-swagger-annotations-jvm",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+  ],
+  runtime_deps = [":tests.pro"]
+)
+### auto-generated section `build intellij.grazie.tests.pro` end
+
+### auto-generated section `test intellij.grazie.tests.pro` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests.pro_test",
+  runtime_deps = [":tests.pro_test_lib"]
+)
+### auto-generated section `test intellij.grazie.tests.pro` end

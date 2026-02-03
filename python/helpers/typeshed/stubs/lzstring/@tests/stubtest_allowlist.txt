@@ -1,0 +1,6 @@
+# Internal implementation details that are intentionally missing from stub
+lzstring.keyStrBase64
+lzstring.keyStrUriSafe
+lzstring.baseReverseDic
+lzstring.Object
+lzstring.getBaseValue

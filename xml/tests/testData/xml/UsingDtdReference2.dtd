@@ -1,0 +1,3 @@
+<!ELEMENT root (entry+)>
+
+<!ELEMENT entry (#PCDATA)>

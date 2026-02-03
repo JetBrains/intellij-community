@@ -1,0 +1,31 @@
+PyFile:TypeParameterListInTypeAliasStatementRecoveryNotClosedRightBracketAfterDefault.py
+  PyTypeAliasStatement
+    PsiElement(Py:TYPE_KEYWORD)('type')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IDENTIFIER)('MyType')
+    PyTypeParameterList
+      PsiElement(Py:LBRACKET)('[')
+      PyTypeParameter
+        PsiElement(Py:IDENTIFIER)('T')
+        PsiWhiteSpace(' ')
+        PsiElement(Py:EQ)('=')
+        PsiWhiteSpace(' ')
+        PySubscriptionExpression
+          PyReferenceExpression: list
+            PsiElement(Py:IDENTIFIER)('list')
+          PsiElement(Py:LBRACKET)('[')
+          PyReferenceExpression: T
+            PsiElement(Py:IDENTIFIER)('T')
+          PsiElement(Py:RBRACKET)(']')
+      PsiErrorElement:',' or ']' expected
+        <empty list>
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PySubscriptionExpression
+      PyReferenceExpression: list
+        PsiElement(Py:IDENTIFIER)('list')
+      PsiElement(Py:LBRACKET)('[')
+      PyReferenceExpression: T
+        PsiElement(Py:IDENTIFIER)('T')
+      PsiElement(Py:RBRACKET)(']')

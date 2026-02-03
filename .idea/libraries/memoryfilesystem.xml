@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="memoryfilesystem" type="repository">
+    <properties maven-id="com.github.marschall:memoryfilesystem:2.8.2">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/github/marschall/memoryfilesystem/2.8.2/memoryfilesystem-2.8.2.jar">
+          <sha256sum>8b94840d71ad0caa36b3309425b2d23084bc8788ce84d71f2d805b0fc84d1f5a</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/marschall/memoryfilesystem/2.8.2/memoryfilesystem-2.8.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/marschall/memoryfilesystem/2.8.2/memoryfilesystem-2.8.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

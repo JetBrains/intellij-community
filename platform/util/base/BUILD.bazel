@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.platform.util.base` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "base",
+  module_name = "intellij.platform.util.base",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//platform/util-rt",
+    "//libraries/fastutil",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/debug",
+    "//platform/util/base/multiplatform",
+  ],
+  exports = ["//platform/util/base/multiplatform"]
+)
+### auto-generated section `build intellij.platform.util.base` end

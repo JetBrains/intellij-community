@@ -1,0 +1,30 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.hash4j"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.pty4j"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.ide.core"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.platform.eel.provider.LocalWindowsEelApi"
+                        serviceImplementation="com.intellij.platform.eel.impl.local.LocalWindowsEelApiImpl"/>
+    <applicationService serviceInterface="com.intellij.platform.eel.provider.LocalPosixEelApi"
+                        serviceImplementation="com.intellij.platform.eel.impl.local.LocalPosixEelApiImpl"/>
+
+    <applicationService serviceInterface="com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend$InitializationService"
+                        serviceImplementation="com.intellij.platform.eel.impl.fs.EelMultiRoutingFileSystemBackendInitializationService"/>
+    <registryKey
+      description="Using incremental walking transfer for IJent"
+      key="ijent.incremental.walking.transfer"
+      restartRequired="false"
+      defaultValue="true"/>
+  </extensions>
+  <extensionPoints>
+    <extensionPoint name="multiRoutingFileSystemBackend" interface="com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend"
+                    dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

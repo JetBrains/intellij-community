@@ -1,0 +1,6 @@
+{
+
+  "a": <warning descr="Incompatible types.
+ Required: boolean. Actual: integer.">5</warning>
+}
+

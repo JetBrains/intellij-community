@@ -1,0 +1,12 @@
+import kotlin.reflect.KClass
+
+class SimpleClass
+
+fun findClasses() {
+    val classloader = Alias::class.java.classLoader
+    val obj = klass(classloader)
+}
+
+private fun klass(classloader: ClassLoader?): KClass<out Any>? = classloader?.loadClass("")?.kotlin
+
+// IGNORE_K1

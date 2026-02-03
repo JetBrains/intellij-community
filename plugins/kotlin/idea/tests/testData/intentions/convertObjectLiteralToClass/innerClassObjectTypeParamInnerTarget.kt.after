@@ -1,0 +1,10 @@
+class Foo<T> {
+    inner class B { // TARGET_BLOCK:
+        val iter = TIterable<T>()
+
+        inner class TIterable<caret><T> : Iterable<T> {
+            override fun iterator(): Iterator<T> = throw MyNotImplementedError()
+        }
+    }
+}
+class MyNotImplementedError : RuntimeException()

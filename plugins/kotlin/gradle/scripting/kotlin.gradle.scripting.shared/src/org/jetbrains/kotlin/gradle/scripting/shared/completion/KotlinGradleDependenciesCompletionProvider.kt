@@ -1,0 +1,218 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.gradle.scripting.shared.completion
+
+import com.intellij.codeInsight.completion.BaseCompletionLookupArranger
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionProvider
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionUtil
+import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.gradle.completion.FullStringInsertHandler
+import com.intellij.gradle.completion.GRADLE_DEPENDENCY_COMPLETION
+import com.intellij.gradle.completion.GradleDependencyCompletionMatcher
+import com.intellij.gradle.completion.getCompletionContext
+import com.intellij.gradle.completion.removeDummySuffix
+import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.FacetEntity
+import com.intellij.platform.workspace.storage.entities
+import com.intellij.util.ProcessingContext
+import kotlinx.coroutines.flow.flowOf
+import org.jetbrains.idea.completion.api.DependencyArtifactCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyCompletionResult
+import org.jetbrains.idea.completion.api.DependencyCompletionService
+import org.jetbrains.idea.completion.api.DependencyGroupCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyVersionCompletionRequest
+import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
+
+private val exclude = setOf(
+    "exclude",
+)
+
+internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<CompletionParameters>() {
+    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+        if (!useDependencyCompletionService()) {
+            return
+        }
+
+        if (parameters.isAndroidProject()) {
+            return
+        }
+
+        val positionElement = parameters.position
+        when {
+            // server-side completion only
+            // dependencies { juni<caret> }
+            //positionElement.isOnTheTopLevelOfScriptBlock(DEPENDENCIES) ->
+            //    suggestDependencyCompletions(result, parameters, DependencyConfigurationInsertHandler, TopLevelLookupStringProvider)
+
+            // dependencies { implementation(...) { exclude("<caret>") } }
+            positionElement.isDependencyArgument(exclude) ->
+                suggestCoordinateCompletions(
+                    result,
+                    parameters,
+                    positionElement.getGroupPrefix(),
+                    positionElement.getExcludeArtifactPrefix(),
+                    ""
+                )
+
+            // dependencies { implementation("juni<caret>", "juni", "") }
+            positionElement.isPositionalOrNamedDependencyArgument() ->
+                suggestCoordinateCompletions(
+                    result,
+                    parameters,
+                    positionElement.getGroupPrefix(),
+                    positionElement.getArtifactPrefix(),
+                    positionElement.getVersionPrefix()
+                )
+
+            // dependencies { implementation("juni<caret>") }
+            positionElement.isSingleDependencyArgument() ->
+                suggestDependencyCompletions(result, parameters, FullStringInsertHandler, SimpleLookupStringProvider)
+        }
+    }
+
+    private fun filterResultsFromOtherContributors(result: CompletionResultSet, parameters: CompletionParameters) {
+        result.runRemainingContributors(parameters) { _ ->
+            // don't call other contributors
+            result.stopHere()
+        }
+    }
+
+    private fun suggestDependencyCompletions(
+        result: CompletionResultSet,
+        parameters: CompletionParameters,
+        insertHandler: InsertHandler<LookupElement>,
+        lookupStringProvider: (DependencyCompletionResult) -> String
+    ) {
+        filterResultsFromOtherContributors(result, parameters)
+
+        val documentText = parameters.editor.document.text
+        val offset = parameters.offset
+        val startOffset = getDependencyCompletionStartOffset(documentText, offset)
+        val text = documentText.substring(startOffset, offset)
+
+        val completionService = service<DependencyCompletionService>()
+        val request = DependencyCompletionRequest(text, parameters.getCompletionContext())
+
+        val resultSet = result.withPrefixMatcher(GradleDependencyCompletionMatcher(text))
+
+        runBlockingCancellable {
+            completionService.suggestCompletions(request)
+                .collect { item ->
+                    val lookupString = lookupStringProvider(item)
+                    val lookupElement = LookupElementBuilder
+                        .create(lookupString, lookupString)
+                        .withPresentableText(lookupString)
+                        .withInsertHandler(insertHandler)
+                    lookupElement.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
+                    lookupElement.putUserData(GRADLE_DEPENDENCY_COMPLETION, true)
+
+                    resultSet.addElement(lookupElement)
+                }
+        }
+    }
+
+
+    private fun suggestCoordinateCompletions(
+        result: CompletionResultSet,
+        parameters: CompletionParameters,
+        group: String,
+        artifact: String,
+        version: String
+    ) {
+        filterResultsFromOtherContributors(result, parameters)
+
+        val dummyText = parameters.position.parent.text
+        val text = removeDummySuffix(dummyText)
+        val completionService = service<DependencyCompletionService>()
+        val completionContext = parameters.getCompletionContext()
+        val itemFlow = when {
+            group.isBeingCompleted() -> completionService.suggestGroupCompletions(
+                DependencyGroupCompletionRequest(
+                    text,
+                    artifact,
+                    completionContext
+                )
+            )
+
+            artifact.isBeingCompleted() -> completionService.suggestArtifactCompletions(
+                DependencyArtifactCompletionRequest(
+                    group,
+                    text,
+                    completionContext
+                )
+            )
+
+            version.isBeingCompleted() -> completionService.suggestVersionCompletions(
+                DependencyVersionCompletionRequest(
+                    group,
+                    artifact,
+                    text,
+                    completionContext
+                )
+            )
+
+            else -> flowOf()
+        }
+
+        runBlockingCancellable {
+            itemFlow.collect { item ->
+                val lookupElement = LookupElementBuilder.create(item, item)
+                    .withPresentableText(item)
+                    .withInsertHandler(FullStringInsertHandler)
+                lookupElement.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
+                lookupElement.putUserData(GRADLE_DEPENDENCY_COMPLETION, true)
+                result.addElement(lookupElement)
+            }
+        }
+    }
+
+    private fun String.isBeingCompleted(): Boolean = this.contains(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)
+
+    private fun CompletionParameters.isAndroidProject(): Boolean {
+        val snapshot = this.originalFile.manager.project.workspaceModel.currentSnapshot
+        return snapshot.entities<FacetEntity>().any { it.name == "Android" }
+    }
+}
+
+/*private object TopLevelLookupStringProvider : (DependencyCompletionResult) -> String {
+    override fun invoke(it: DependencyCompletionResult): String {
+        val scope = it.scope
+        if (!scope.isNullOrEmpty() && scope.contains(":")) {
+            val items = scope.split(":")
+            val configurationName = items[0]
+            val dependencyNotation = items[1]
+            if (configurationName in configurationNames && dependencyNotation in dependencyNotations)
+                return "$configurationName($dependencyNotation(\"${it.groupId}:${it.artifactId}:${it.version}\"))"
+        }
+        val configurationName = if (scope in configurationNames) scope else defaultConfigurationName
+        return "$configurationName(\"${it.groupId}:${it.artifactId}:${it.version}\")"
+    }
+}*/
+
+private object SimpleLookupStringProvider : (DependencyCompletionResult) -> String {
+    override fun invoke(it: DependencyCompletionResult): String {
+        return "${it.groupId}:${it.artifactId}:${it.version}"
+    }
+}
+
+private object DependencyConfigurationInsertHandler : InsertHandler<LookupElement> {
+    override fun handleInsert(context: InsertionContext, item: LookupElement) {
+        context.commitDocument()
+
+        val text = context.document.text
+
+        val endOffset = getDependencyCompletionEndOffset(text, context.tailOffset)
+        context.document.deleteString(context.tailOffset, endOffset)
+
+        val startOffset = getDependencyCompletionStartOffset(text, context.startOffset)
+        context.document.deleteString(startOffset, context.startOffset)
+    }
+}
+

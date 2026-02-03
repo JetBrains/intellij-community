@@ -1,0 +1,16 @@
+<html>
+<body>
+Reports functions with <code>= { ... }</code> and inferred return type.
+<p><b>Example:</b></p>
+<pre><code>
+  fun sum(a: Int, b: Int) = { a + b } // The return type of this function is '() -> Int'.
+</code></pre>
+<p>There are several quick fixes. After applying them:</p>
+<pre><code>
+    fun sum(a: Int, b: Int) = a + b // Remove braces
+    fun sum(a: Int, b: Int): () -> Int = { a + b } // Specify return type explicitly
+    fun sum(a: Int, b: Int) = run { a + b } // Convert to run { ... }
+    fun sum(a: Int, b: Int) = { -> a + b } // Specify explicit lambda signature
+</code></pre>
+</body>
+</html>

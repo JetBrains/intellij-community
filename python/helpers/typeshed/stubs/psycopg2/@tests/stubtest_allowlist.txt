@@ -1,0 +1,2 @@
+psycopg2.pool.AbstractConnectionPool.(closeall|getconn|putconn)
+psycopg2.(_psycopg|extensions).connection.async  # async is a reserved keyword

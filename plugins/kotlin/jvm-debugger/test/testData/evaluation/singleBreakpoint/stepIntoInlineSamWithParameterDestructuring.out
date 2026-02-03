@@ -1,0 +1,12 @@
+LineBreakpoint created at stepIntoInlineSamWithParameterDestructuring.kt:17
+Run Java
+Connected to the target VM
+stepIntoInlineSamWithParameterDestructuring.kt:17
+stepIntoInlineSamWithParameterDestructuring.kt:21
+KotlinStackFrame (stepIntoInlineSamWithParameterDestructuring.kt:21)
+    JavaValue[local] c: int = 1
+    JavaValue[local] d: int = 1
+    JavaValue[local] i: int = 1
+Disconnected from the target VM
+
+Process finished with exit code 0

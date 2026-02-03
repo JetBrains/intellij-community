@@ -1,0 +1,1 @@
+print(b'foo')

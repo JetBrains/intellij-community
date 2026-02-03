@@ -1,0 +1,104 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+    <id>com.intellij.myPlugin</id>
+    <vendor>JetBrains</vendor>
+    <version>1.0</version>
+    <extensionPoints>
+        <extensionPoint name="foo.bar" interface="java.util.List"/>
+        <extensionPoint name="ext" interface="java.lang.Runnable"/>
+        <extensionPoint name="deprecatedEP" interface="foo.MyDeprecatedEP"/>
+        <extensionPoint name="deprecatedForRemovalEP" interface="foo.MyDeprecatedForRemovalEP"/>
+        <extensionPoint name="deprecatedBeanClassEP" beanClass="foo.MyDeprecatedEP"/>
+        <extensionPoint name="classLevelPropertyEP" beanClass="foo.ClassLevelProperty"/>
+
+        <!-- hardcoded deprecated EP names -->
+        <extensionPoint qualifiedName="com.intellij.definitionsSearch" interface="java.lang.Runnable"/>
+        <!-- define replacement for 'com.intellij.definitionsSearch' -->
+        <extensionPoint qualifiedName="com.intellij.definitionsScopedSearch" interface="java.lang.Runnable"/>
+        <extensionPoint qualifiedName="com.intellij.dom.fileDescription" interface="java.lang.Runnable"/>
+
+        <extensionPoint qualifiedName="com.intellij.exportable" interface="java.lang.Runnable"/>
+        <extensionPoint qualifiedName="com.intellij.completion.contributor" beanClass="com.intellij.codeInsight.completion.CompletionContributorEP" dynamic="true">
+          <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionContributor"/>
+        </extensionPoint>
+
+        <extensionPoint name="experimentalApiEP" interface="foo.MyExperimentalEP"
+                        dynamic="true"/>
+        <extensionPoint name="scheduledForRemovalApiEP" beanClass="foo.MyScheduledForRemovalEP"
+                        dynamic="true"/>
+        <extensionPoint name="internalApiEP" interface="foo.MyInternalEP"
+                        dynamic="true"/>
+        <extensionPoint name="obsoleteApiEP" interface="foo.MyObsoleteEP"
+                        dynamic="true"/>
+
+        <extensionPoint name="intentionAction"
+                        beanClass="com.intellij.codeInsight.intention.IntentionActionBean">
+          <with tag="className" implements="com.intellij.codeInsight.intention.IntentionAction"/>
+        </extensionPoint>
+    </extensionPoints>
+
+    <depends>com.intellij.custom</depends>
+    <depends config-file="../ExtensionsHighlighting-via-depends.xml">com.myplugin.depends</depends>
+
+    <xi:include href="ExtensionsHighlighting-included.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+
+    <extensions defaultExtensionNs="com.intellij">
+        <<error descr="'implementation' attribute should be defined">myPlugin.ext</error>/>
+
+        <<error descr="'className' child tag should be defined">myPlugin.intentionAction</error>/>
+
+        <myPlugin.ext implementation="<error descr="Interface is not allowed">java.lang.Runnable</error>"/>
+        <myPlugin.ext implementation="<error descr="'java.util.concurrent.TimeUnit' is not assignable to 'java.lang.Runnable'"><error descr="Abstract class is not allowed"><error descr="Enum is not allowed">java.util.concurrent.TimeUnit</error></error></error>"/>
+        <myPlugin.ext implementation="<error descr="'java.lang.String' is not assignable to 'java.lang.Runnable'">java.lang.String</error>"/>
+
+        <<error descr="Deprecated extension point 'com.intellij.myPlugin.deprecatedEP'">myPlugin.deprecatedEP</error> implementation="foo.MyDeprecatedEPImpl" order="<error descr="Invalid 'order' attribute value">INVALID_VALUE</error>"/>
+        <<error descr="Deprecated extension point 'com.intellij.myPlugin.deprecatedBeanClassEP'">myPlugin.deprecatedBeanClassEP</error>/>
+
+        <<error descr="Deprecated extension point 'com.intellij.definitionsSearch', use 'com.intellij.definitionsScopedSearch' instead">definitionsSearch</error> implementation="foo.MyRunnable"/>
+
+        <!-- no replacement EP 'com.intellij.dom.fileMetaData' defined -->
+        <dom.fileDescription implementation="foo.MyRunnable"/>
+
+        <!-- no replacement EP to suggest -->
+        <<error descr="Deprecated extension point 'com.intellij.exportable'">exportable</error> implementation="foo.MyRunnable"/>
+
+        <<error descr="Marked for removal extension point 'com.intellij.myPlugin.deprecatedForRemovalEP'">myPlugin.deprecatedForRemovalEP</error> implementation="foo.MyDeprecatedForRemovalEPImpl"/>
+
+        <<error descr="Marked for removal extension point 'com.intellij.myPlugin.scheduledForRemovalApiEP' in version 'removeVersion'">myPlugin.scheduledForRemovalApiEP</error> <error descr="Marked for removal attribute 'scheduledForRemovalAttribute'">scheduledForRemovalAttribute="DoNotUse"</error>/>
+
+        <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Experimental. Such API may be changed or removed in future IDE versions causing compatibility problems."><myPlugin.experimentalApiEP implementation="foo.MyExperimentalEP" <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Experimental. Such API may be changed or removed in future IDE versions causing compatibility problems.">experimentalAttribute="java.lang.String"</warning>/></warning>
+
+        <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Internal. Such API should not be used outside of IntelliJ IDEA project."><myPlugin.internalApiEP implementation="foo.MyInternalEP" <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Internal. Such API should not be used outside of IntelliJ IDEA project.">internalAttribute="DoNotUse"</warning>/></warning>
+
+        <error descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Obsolete. Such API should not be used in new code."><myPlugin.obsoleteApiEP implementation="foo.MyObsoleteEP" <error descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Obsolete. Such API should not be used in new code.">obsoleteAttribute="DoNotUse"</error>/></error>
+
+        <myPlugin.classLevelPropertyEP classLevel="value" customAttributeName="42"/>
+
+        <myService serviceImplementation="foo.<error descr="Cannot resolve class 'MyInvalid'">MyInvalid</error>" canBeEmptyString="nonEmpty"/>
+
+        <myService serviceImplementation="foo.MyRunnable" os="mac" canBeEmptyString="nonEmpty"/>
+
+        <myService serviceImplementation="foo.MyRunnable" canBeEmptyString="nonEmpty" timeUnit="seconds" integerNullable="<error descr="Cannot convert empty string to target class 'java.lang.Integer'"></error>" intPropertyForClass="42" forClass="true"/>
+        <myService serviceImplementation="foo.MyRunnable" canBeEmptyString="nonEmpty" timeUnit="<error descr="Cannot resolve 'INVALID_VALUE' in java.util.concurrent.TimeUnit">INVALID_VALUE</error>"
+                   integerNullable="<error descr="Cannot convert string 'INVALID_VALUE' to target class 'java.lang.Integer'">INVALID_VALUE</error>"
+                   intPropertyForClass="<error descr="Cannot convert string 'INVALID_VALUE' to target class 'java.lang.Integer'">INVALID_VALUE</error>"
+                   forClass="<error descr="Cannot resolve symbol 'INVALID_VALUE'">INVALID_VALUE</error>"
+                   class="<error descr="Cannot resolve symbol 'INVALID_VALUE'">INVALID_VALUE</error>"
+                   myClassName="<error descr="Cannot resolve symbol 'INVALID_VALUE'">INVALID_VALUE</error>"
+        />
+
+        <myService serviceImplementation="foo.MyRunnable"
+                   canBeEmptyString=""/>
+
+        <myPlugin.foo.bar implementation="java.util.ArrayList" os="<error descr="Unknown enum value 'INVALID_VALUE'">INVALID_VALUE</error>"/>
+        <completion.contributor language=""/>
+        <custom.custom/>
+        <indirect.indirect/>
+
+
+        <<error descr="Cannot resolve extension point 'com.intellij.custom.error' in dependencies (Reference: Plugin Dependencies)">custom.error</error>
+                <error descr="Attribute customAttribute is not allowed here">customAttribute</error>=""/>
+
+        <<error descr="Missing dependency declaration for using extension point 'com.intellij.notincluded.notInDependencies'">notincluded.notInDependencies</error>/>
+    </extensions>
+</idea-plugin>

@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.platform.duplicates.analysis` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "duplicates-analysis_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "duplicates-analysis",
+  module_name = "intellij.platform.duplicates.analysis",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":duplicates-analysis_resources"],
+  deps = [
+    "//platform/analysis-impl",
+    "//platform/core-api:core",
+    "//platform/extensions",
+    "//platform/util",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//libraries/fastutil",
+    "//platform/util/jdom",
+    "//platform/core-impl",
+  ]
+)
+### auto-generated section `build intellij.platform.duplicates.analysis` end

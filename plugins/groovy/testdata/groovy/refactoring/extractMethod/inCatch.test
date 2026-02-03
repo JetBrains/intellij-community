@@ -1,0 +1,13 @@
+try{}
+catch(Exception e) {
+  <begin>print e<end>
+}
+-----
+try{}
+catch(Exception e) {
+    testMethod(e)
+}
+
+private testMethod(Exception e) {
+    print e
+}

@@ -1,0 +1,110 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.refactoring.inline;
+
+import com.intellij.lang.refactoring.InlineHandler;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
+
+/**
+ * @author Max Medvedev
+ */
+public class GrVariableInliner implements InlineHandler.Inliner {
+  private static final Logger LOG = Logger.getInstance(GrVariableInliner.class);
+
+  private final GrExpression myTempExpr;
+
+  public GrVariableInliner(GrVariable variable, InlineHandler.Settings settings) {
+    GrExpression initializer;
+    if (settings instanceof InlineLocalVarSettings) {
+      initializer = ((InlineLocalVarSettings)settings).getInitializer();
+    }
+    else {
+      initializer = variable.getInitializerGroovy();
+      LOG.assertTrue(initializer != null);
+    }
+
+    myTempExpr = GrIntroduceHandlerBase.insertExplicitCastIfNeeded(variable, initializer);
+
+  }
+
+  @Override
+  public @Nullable MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced) {
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    GrExpression expr = (GrExpression)reference.getElement();
+    if (expr.getParent() instanceof GrAssignmentExpression parent) {
+      if (expr.equals(parent.getLValue())) {
+        conflicts.putValue(expr, GroovyRefactoringBundle.message("local.variable.is.lvalue"));
+      }
+    }
+
+    if ((referenced instanceof GrAccessorMethod || referenced instanceof GrField) && expr instanceof GrReferenceExpression) {
+      final GroovyResolveResult resolveResult = ((GrReferenceExpression)expr).advancedResolve();
+      if (resolveResult.getElement() instanceof GrAccessorMethod && !resolveResult.isInvokedOnProperty()) {
+        final PsiElement parent = expr.getParent();
+        if (!(parent instanceof GrCall && parent instanceof GrExpression)) {
+          conflicts.putValue(expr, GroovyRefactoringBundle.message("reference.to.accessor.0.is.used", CommonRefactoringUtil.htmlEmphasize(PsiFormatUtil.formatMethod(
+            (GrAccessorMethod)resolveResult.getElement(), PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_TYPE))));
+        }
+      }
+    }
+
+    return conflicts;
+  }
+
+  @Override
+  public void inlineUsage(final @NotNull UsageInfo usage, final @NotNull PsiElement referenced) {
+    inlineReference(usage, referenced, myTempExpr);
+  }
+
+  static void inlineReference(UsageInfo usage, PsiElement referenced, GrExpression initializer) {
+    if (initializer == null) return;
+
+    GrExpression exprToBeReplaced = (GrExpression)usage.getElement();
+    if (exprToBeReplaced == null) return;
+
+    if ((referenced instanceof GrAccessorMethod || referenced instanceof GrField) && exprToBeReplaced instanceof GrReferenceExpression) {
+      final GroovyResolveResult resolveResult = ((GrReferenceExpression)exprToBeReplaced).advancedResolve();
+      if (resolveResult.getElement() instanceof GrAccessorMethod && !resolveResult.isInvokedOnProperty()) {
+        final PsiElement parent = exprToBeReplaced.getParent();
+        if (parent instanceof GrCall && parent instanceof GrExpression) {
+          exprToBeReplaced = (GrExpression)parent;
+        }
+        else {
+          return;
+        }
+      }
+    }
+
+    GrExpression newExpr = exprToBeReplaced.replaceWithExpression((GrExpression)initializer.copy(), true);
+    final Project project = usage.getProject();
+    JavaCodeStyleManager.getInstance(project).shortenClassReferences(newExpr);
+    Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+    GroovyRefactoringUtil.highlightOccurrences(project, editor, new PsiElement[]{newExpr});
+    WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+  }
+}

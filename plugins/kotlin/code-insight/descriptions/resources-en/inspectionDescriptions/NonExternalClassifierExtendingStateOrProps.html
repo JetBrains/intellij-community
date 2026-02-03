@@ -1,0 +1,23 @@
+<!-- Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<html>
+<body>
+<p>
+  Reports classes, interfaces, and objects that extend React Props or State types but are not marked as <code>external</code> in Kotlin/JS projects.
+</p>
+<p>
+  React component types should be external interfaces to properly interoperate with the JavaScript runtime.
+</p>
+<p><b>Example:</b></p>
+<pre><code>interface MyProps : Props { // Warning: should be external interface
+    var title: String
+}
+
+class MyState : State { // Warning: should be external interface
+    var count: Int = 0
+}</code></pre>
+<p><b>After the quick-fix is applied:</b></p>
+<pre><code>external interface MyProps : Props {
+    var title: String
+}</code></pre>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+  "inspections": [
+    {
+      "id": "MarkdownOutdatedTableOfContents",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "MarkdownUnresolvedLinkLabel",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MarkdownNoTableBorders",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MarkdownIncorrectlyNumberedListItem",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MarkdownUnresolvedHeaderReference",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MarkdownLinkDestinationWithSpaces",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MarkdownIncorrectTableFormatting",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MarkdownUnresolvedFileReference",
+      "codeQualityCategory": "Sanity"
+    }
+  ]
+}

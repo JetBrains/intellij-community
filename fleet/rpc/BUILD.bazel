@@ -1,0 +1,44 @@
+### auto-generated section `build fleet.rpc` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_rpc",
+  opt_in = [
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+    "kotlin.ExperimentalStdlibApi",
+    "kotlin.concurrent.atomics.ExperimentalAtomicApi",
+  ],
+  x_consistent_data_class_copy_visibility = True,
+  x_jvm_default = "all-compatibility",
+  x_lambdas = "class"
+)
+
+resourcegroup(
+  name = "rpc_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "rpc",
+  module_name = "fleet.rpc",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  resources = [":rpc_resources"],
+  kotlinc_opts = ":custom_rpc",
+  exported_compiler_plugins = ["@community//fleet/compiler-plugins/rpc:rpc-plugin"],
+  deps = [
+    "//fleet/reporting/api",
+    "//fleet/reporting/shared",
+    "//fleet/multiplatform.shims",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-datetime-jvm",
+    "//fleet/util/core",
+  ]
+)
+### auto-generated section `build fleet.rpc` end

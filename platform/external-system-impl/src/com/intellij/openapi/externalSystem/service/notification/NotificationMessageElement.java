@@ -1,0 +1,183 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.externalSystem.service.notification;
+
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.errorTreeView.*;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.Navigatable;
+import com.intellij.ui.CustomizeColoredTreeCellRenderer;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.LoadingNode;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import com.intellij.util.ui.tree.WideSelectionTreeUI;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
+import javax.swing.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.StyleSheet;
+import java.awt.*;
+
+import static com.intellij.util.ui.EmptyIcon.ICON_16;
+
+/**
+ * @author Vladislav.Soroka
+ */
+@ApiStatus.Internal
+public class NotificationMessageElement extends NavigatableMessageElement {
+  public static final String MSG_STYLE = "messageStyle";
+  public static final String LINK_STYLE = "linkStyle";
+
+  private final @NotNull CustomizeColoredTreeCellRenderer myLeftTreeCellRenderer;
+  private final @NotNull CustomizeColoredTreeCellRenderer myRightTreeCellRenderer;
+
+  public NotificationMessageElement(final @NotNull ErrorTreeElementKind kind,
+                                    @Nullable GroupingElement parent,
+                                    String[] message,
+                                    @NotNull Navigatable navigatable,
+                                    String exportText,
+                                    String rendererTextPrefix) {
+    super(kind, parent, message, navigatable, exportText, rendererTextPrefix);
+    myLeftTreeCellRenderer = new CustomizeColoredTreeCellRenderer() {
+      @Override
+      public void customizeCellRenderer(SimpleColoredComponent renderer,
+                                        JTree tree,
+                                        Object value,
+                                        boolean selected,
+                                        boolean expanded,
+                                        boolean leaf,
+                                        int row,
+                                        boolean hasFocus) {
+        renderer.setIcon(getIcon(kind));
+        renderer.setFont(tree.getFont());
+        renderer.append(NewErrorTreeRenderer.calcPrefix(NotificationMessageElement.this));
+      }
+
+      private static @NotNull Icon getIcon(@NotNull ErrorTreeElementKind kind) {
+        return switch (kind) {
+          case INFO -> AllIcons.General.Information;
+          case ERROR -> AllIcons.General.Error;
+          case WARNING -> AllIcons.General.Warning;
+          case NOTE -> AllIcons.General.Tip;
+          case GENERIC -> ICON_16;
+        };
+      }
+    };
+
+    myRightTreeCellRenderer = new MyCustomizeColoredTreeCellRendererReplacement();
+  }
+
+  @Override
+  public @Nullable CustomizeColoredTreeCellRenderer getRightSelfRenderer() {
+    return myRightTreeCellRenderer;
+  }
+
+  @Override
+  public @Nullable CustomizeColoredTreeCellRenderer getLeftSelfRenderer() {
+    return myLeftTreeCellRenderer;
+  }
+
+  protected JEditorPane installJep(@NotNull JEditorPane myEditorPane) {
+    String message = StringUtil.join(this.getText(), "<br>");
+    myEditorPane.setEditable(false);
+    myEditorPane.setOpaque(false);
+    myEditorPane.setEditorKit(HTMLEditorKitBuilder.simple());
+    myEditorPane.setHighlighter(null);
+
+    final StyleSheet styleSheet = ((HTMLDocument)myEditorPane.getDocument()).getStyleSheet();
+    final Style style = styleSheet.addStyle(MSG_STYLE, null);
+    styleSheet.addStyle(LINK_STYLE, style);
+    myEditorPane.setText(message);
+
+    return myEditorPane;
+  }
+
+  protected void updateStyle(@NotNull JEditorPane editorPane, @Nullable JTree tree, Object value, boolean selected, boolean hasFocus) {
+    final HTMLDocument htmlDocument = (HTMLDocument)editorPane.getDocument();
+    final Style style = htmlDocument.getStyleSheet().getStyle(MSG_STYLE);
+    if (value instanceof LoadingNode) {
+      StyleConstants.setForeground(style, JBColor.GRAY);
+    }
+    else {
+      StyleConstants.setForeground(style, UIUtil.getTreeForeground(selected, hasFocus));
+    }
+
+    if (tree != null && WideSelectionTreeUI.isWideSelection(tree)) {
+      editorPane.setOpaque(false);
+    }
+    else {
+      editorPane.setOpaque(selected && hasFocus);
+    }
+
+    htmlDocument.setCharacterAttributes(0, htmlDocument.getLength(), style, false);
+  }
+
+  private final class MyCustomizeColoredTreeCellRendererReplacement extends CustomizeColoredTreeCellRendererReplacement {
+    private final @NotNull JEditorPane myEditorPane;
+
+    private MyCustomizeColoredTreeCellRendererReplacement() {
+      myEditorPane = installJep(new MyEditorPane());
+    }
+
+    @Override
+    public Component getTreeCellRendererComponent(JTree tree,
+                                                  Object value,
+                                                  boolean selected,
+                                                  boolean expanded,
+                                                  boolean leaf,
+                                                  int row,
+                                                  boolean hasFocus) {
+      updateStyle(myEditorPane, tree, value, selected, hasFocus);
+      return myEditorPane;
+    }
+
+    /**
+     * Specialization of {@link JEditorPane} that exposes a simple label
+     * as its accessibility model. This is required because exposing
+     * a full text editor accessibility model for an error message
+     * that eventually ends up in a tree view node makes the user
+     * experience confusing for visually impaired users.
+     */
+    private static class MyEditorPane extends JEditorPane {
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+          return new AccessibleMyEditorPane();
+        }
+        return accessibleContext;
+      }
+
+      protected class AccessibleMyEditorPane extends AccessibleJComponent {
+        @Override
+        public AccessibleRole getAccessibleRole() {
+          return AccessibleRole.LABEL;
+        }
+
+        @Override
+        public String getAccessibleName() {
+          try {
+            Document document = MyEditorPane.this.getDocument();
+            String result = document.getText(0, document.getLength());
+            @NlsSafe String resultWithPunctuation =
+              AccessibleContextUtil.replaceLineSeparatorsWithPunctuation(result);
+            return resultWithPunctuation;
+          }
+          catch (BadLocationException e) {
+            return super.getAccessibleName();
+          }
+        }
+      }
+    }
+  }
+}

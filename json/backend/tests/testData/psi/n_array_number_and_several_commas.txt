@@ -1,0 +1,9 @@
+JsonFile: n_array_number_and_several_commas.json
+  JsonArray
+    PsiElement([)('[')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1')
+    PsiElement(,)(',')
+    PsiErrorElement:',' unexpected
+      PsiElement(,)(',')
+    PsiElement(])(']')

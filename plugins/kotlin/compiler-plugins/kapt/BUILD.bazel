@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.kotlin.compilerPlugins.kapt` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "kapt_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kapt",
+  module_name = "intellij.kotlin.compilerPlugins.kapt",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kapt_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/gradle/gradle-java",
+    "//plugins/kotlin/gradle/gradle-tooling/impl",
+    "//platform/lang-api:lang",
+    "//plugins/gradle:gradle-common",
+  ]
+)
+### auto-generated section `build intellij.kotlin.compilerPlugins.kapt` end

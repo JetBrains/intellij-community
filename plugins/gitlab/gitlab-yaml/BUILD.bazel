@@ -1,0 +1,57 @@
+### auto-generated section `build intellij.vcs.gitlab.yaml` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "vcs-gitlab-yaml_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-gitlab-yaml",
+  module_name = "intellij.vcs.gitlab.yaml",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":vcs-gitlab-yaml_resources"],
+  deps = [
+    "//plugins/gitlab/gitlab-core:vcs-gitlab",
+    "//plugins/yaml/backend",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/base",
+    "//plugins/yaml",
+    "//platform/analysis-impl",
+  ]
+)
+
+jvm_library(
+  name = "vcs-gitlab-yaml_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":vcs-gitlab-yaml"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//plugins/gitlab/gitlab-core:vcs-gitlab",
+    "//plugins/gitlab/gitlab-core:vcs-gitlab_test_lib",
+    "//plugins/yaml/backend",
+    "//plugins/yaml/backend:backend_test_lib",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/base",
+    "//plugins/yaml",
+    "//plugins/yaml:yaml_test_lib",
+    "//platform/analysis-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//json/backend/tests:tests_test_lib",
+  ]
+)
+### auto-generated section `build intellij.vcs.gitlab.yaml` end
+
+### auto-generated section `test intellij.vcs.gitlab.yaml` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "vcs-gitlab-yaml_test",
+  runtime_deps = [":vcs-gitlab-yaml_test_lib"]
+)
+### auto-generated section `test intellij.vcs.gitlab.yaml` end

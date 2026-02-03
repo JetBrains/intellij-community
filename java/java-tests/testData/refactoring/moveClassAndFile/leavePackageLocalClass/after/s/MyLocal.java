@@ -1,0 +1,3 @@
+package s;
+
+class MyLocal{}

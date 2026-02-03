@@ -1,0 +1,11 @@
+// WITH_COROUTINES
+// PROBLEM: Usage of 'map { it.await() }' on 'Collection<Deferred>' instead of single 'awaitAll()'
+package test
+
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.awaitAll
+
+suspend fun takeWithCustomParam(asyncList: List<Deferred<String>>) {
+    val results = asyncList.awaitAll()
+    println(results)
+}

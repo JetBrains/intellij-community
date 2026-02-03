@@ -1,0 +1,53 @@
+<idea-plugin visibility="public">
+  <module value="org.intellij.intelliLang"/>
+
+  <dependencies>
+    <module name="intellij.regexp"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.intellij.intelliLang.languageSupport"
+                    interface="org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport" dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.intelliLang.injectionConfig"
+                    beanClass="org.intellij.plugins.intelliLang.LanguageInjectionConfigBean" dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.intelliLang.fallbackInjectorSuppressor"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass"
+            implements="org.intellij.plugins.intelliLang.inject.FallbackInjectorSuppressor"/>
+    </extensionPoint>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <intentionAction>
+      <className>org.intellij.plugins.intelliLang.inject.EditInjectionSettingsAction</className>
+      <bundleName>messages.LangBundle</bundleName>
+      <categoryKey>intention.category.language.injection</categoryKey>
+      <language/>
+    </intentionAction>
+
+    <highlightErrorFilter implementation="org.intellij.plugins.intelliLang.inject.FrankensteinErrorFilter"/>
+    <daemon.highlightInfoFilter implementation="org.intellij.plugins.intelliLang.inject.FrankensteinErrorFilter"/>
+
+    <applicationService serviceInterface="com.intellij.psi.impl.source.tree.injected.FallbackInjectionPerformer"
+                        serviceImplementation="org.intellij.plugins.intelliLang.inject.DefaultLanguageInjectionPerformer"/>
+
+    <languageInjectionContributor id="TemporaryPlacesInjector"
+                                  implementationClass="org.intellij.plugins.intelliLang.inject.TemporaryPlacesInjector" language=""
+                                  order="before CommentLanguageInjector"/>
+    <languageInjectionContributor id="CommentLanguageInjector"
+                                  implementationClass="org.intellij.plugins.intelliLang.inject.CommentLanguageInjector"
+                                  order="before Default" language=""/>
+    <languageInjectionContributor id="Default" implementationClass="org.intellij.plugins.intelliLang.inject.DefaultLanguageInjector"
+                                  order="last" language=""/>
+
+    <applicationService serviceInterface="org.intellij.plugins.intelliLang.Configuration"
+                        serviceImplementation="org.intellij.plugins.intelliLang.Configuration$App"/>
+    <projectService serviceInterface="org.intellij.plugins.intelliLang.Configuration"
+                    serviceImplementation="org.intellij.plugins.intelliLang.Configuration$Prj"/>
+
+    <registryKey key="org.intellij.intelliLang.comment.completion" defaultValue="true"
+                 description="Enables completion of 'language=' in comments"/>
+  </extensions>
+
+</idea-plugin>

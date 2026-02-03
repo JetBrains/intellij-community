@@ -1,0 +1,4 @@
+"preved ${closure}<caret> medved"
+-----
+"preved ${closure}" +
+    "<caret> medved"

@@ -1,0 +1,7 @@
+JsonFile: n_structure_array_with_unclosed_string.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"asd]')
+    PsiErrorElement:',' or ']' expected
+      <empty list>

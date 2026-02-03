@@ -1,0 +1,238 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.build.output;
+
+import com.intellij.build.FilePosition;
+import com.intellij.build.events.BuildEvent;
+import com.intellij.build.events.BuildEventsNls;
+import com.intellij.build.events.MessageEvent;
+import com.intellij.build.events.impl.FileMessageEventImpl;
+import com.intellij.build.events.impl.MessageEventImpl;
+import com.intellij.lang.LangBundle;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
+import kotlin.text.StringsKt;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.io.IOError;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+/**
+ * Parses javac's output.
+ */
+public final class JavacOutputParser implements BuildOutputParser {
+  private static final @NotNull Supplier<@BuildEventsNls.Title String> COMPILER_MESSAGES_GROUP =
+    LangBundle.messagePointer("build.event.title.compiler");
+
+  private static final char COLON = ':';
+  private static final @NonNls String WARNING_PREFIX = "warning:"; // default value
+  private static final @NonNls String NOTE_PREFIX = "note:";
+  private static final @NonNls String ERROR_PREFIX = "error:";
+  private final String[] myFileExtensions;
+
+  public JavacOutputParser() {
+    this("java");
+  }
+
+  public JavacOutputParser(String @NotNull ... fileExtensions) {
+    myFileExtensions = fileExtensions;
+  }
+
+  @Override
+  public boolean parse(@NlsSafe @NotNull String line,
+                       @NotNull BuildOutputInstantReader reader,
+                       @NotNull Consumer<? super BuildEvent> messageConsumer) {
+    int colonIndex1 = line.indexOf(COLON);
+    if (colonIndex1 == 1) { // drive letter
+      colonIndex1 = line.indexOf(COLON, colonIndex1 + 1);
+    }
+
+    if (colonIndex1 >= 0) { // looks like found something like a file path.
+      @NlsSafe String part1 = line.substring(0, colonIndex1).trim();
+      if (part1.equalsIgnoreCase("error") /* jikes */ || part1.equalsIgnoreCase("Caused by")) {
+        // +1 so we don't include the colon
+        String text = line.substring(colonIndex1 + 1).trim();
+        messageConsumer
+          .accept(new MessageEventImpl(reader.getParentEventId(), MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP.get(), text, line));
+        return true;
+      }
+      if (part1.equalsIgnoreCase("warning")) {
+        // +1 so we don't include the colon
+        String text = line.substring(colonIndex1 + 1).trim();
+        messageConsumer
+          .accept(new MessageEventImpl(reader.getParentEventId(), MessageEvent.Kind.WARNING, COMPILER_MESSAGES_GROUP.get(), text, line));
+        return true;
+      }
+      if (part1.equalsIgnoreCase("javac")) {
+        messageConsumer
+          .accept(new MessageEventImpl(reader.getParentEventId(), MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP.get(), line, line));
+        return true;
+      }
+      if (part1.equalsIgnoreCase("Note")) {
+        String message = line.substring(colonIndex1 + 1).trim();
+        int javaFileExtensionIndex = message.indexOf(".java");
+        if (javaFileExtensionIndex > 0) {
+          File file = new File(message.substring(0, javaFileExtensionIndex + ".java".length()));
+          if (isFileSafely(file)) {
+            message = message.substring(javaFileExtensionIndex + ".java".length() + 1);
+            String detailedMessage = amendNextInfoLinesIfNeeded(file.getPath() + ":\n" + message, reader);
+            messageConsumer
+              .accept(new FileMessageEventImpl(reader.getParentEventId(), MessageEvent.Kind.INFO, COMPILER_MESSAGES_GROUP.get(),
+                                               message, detailedMessage,
+                                               new FilePosition(file, 0, 0)));
+            return true;
+          }
+        }
+      }
+
+      int colonIndex2 = line.indexOf(COLON, colonIndex1 + 1);
+      if (colonIndex2 >= 0) {
+        File file = new File(part1);
+        if (!isFileSafely(file)) {
+          // the part one is not a file path.
+          return false;
+        }
+        try {
+          int lineNumber = Integer.parseInt(line.substring(colonIndex1 + 1, colonIndex2).trim()); // 1-based.
+          String text = line.substring(colonIndex2 + 1).trim();
+          MessageEvent.Kind kind = MessageEvent.Kind.ERROR;
+
+          if (StringUtil.startsWithIgnoreCase(text, WARNING_PREFIX)) {
+            text = text.substring(WARNING_PREFIX.length()).trim();
+            kind = MessageEvent.Kind.WARNING;
+          }
+          else if (StringUtil.startsWithIgnoreCase(text, NOTE_PREFIX)) {
+            text = text.substring(NOTE_PREFIX.length()).trim();
+            kind = MessageEvent.Kind.INFO;
+          }
+          else if (StringUtil.startsWithIgnoreCase(text, ERROR_PREFIX)) {
+            text = text.substring(ERROR_PREFIX.length()).trim();
+            kind = MessageEvent.Kind.ERROR;
+          }
+
+          // Only slurp up line pointer (^) information if this is required source files
+          if (!isRelatedFile(file)) {
+            return false;
+          }
+
+          BuildOutputCollector outputCollector = new BuildOutputCollector(reader);
+          List<String> messageList = new ArrayList<>();
+          messageList.add(text);
+          int column; // 0-based.
+          String prevLine = null;
+          do {
+            String nextLine = outputCollector.readLine();
+            if (nextLine == null) {
+              return false;
+            }
+            if (nextLine.trim().equals("^")) {
+              column = nextLine.indexOf('^');
+              String messageEnd = outputCollector.readLine();
+
+              while (isMessageEnd(messageEnd)) {
+                messageList.add(messageEnd.trim());
+                messageEnd = outputCollector.readLine();
+              }
+
+              if (messageEnd != null) {
+                outputCollector.pushBack();
+              }
+              break;
+            }
+            if (prevLine != null) {
+              messageList.add(prevLine);
+            }
+            prevLine = nextLine;
+          }
+          while (true);
+
+          if (column >= 0) {
+            String message = StringUtil.join(convertMessages(messageList), "\n");
+            String detailedMessage = StringsKt.trimIndent(line + "\n" + outputCollector.getOutput()); //NON-NLS
+            messageConsumer.accept(new FileMessageEventImpl(reader.getParentEventId(), kind, COMPILER_MESSAGES_GROUP.get(),
+                                                            message, detailedMessage, new FilePosition(file, lineNumber - 1, column)));
+            return true;
+          }
+        }
+        catch (NumberFormatException ignored) {
+        }
+      }
+    }
+
+    if (line.endsWith("java.lang.OutOfMemoryError")) {
+      messageConsumer.accept(new MessageEventImpl(reader.getParentEventId(), MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP.get(),
+                                                  LangBundle.message("build.event.message.out.memory"), line));
+      return true;
+    }
+
+    return false;
+  }
+
+  private static boolean isFileSafely(@NotNull File file) {
+    try {
+      return file.isFile();
+    }
+    catch (IOError e) {
+      // e.g. "java.io.IOException: Unable to get working directory of drive 'W'"
+      return false;
+    }
+  }
+
+  private boolean isRelatedFile(File file) {
+    String filePath = file.getPath();
+    return ContainerUtil.exists(myFileExtensions, extension -> FileUtilRt.extensionEquals(filePath, extension));
+  }
+
+  private static @NlsSafe String amendNextInfoLinesIfNeeded(String str, BuildOutputInstantReader reader) {
+    StringBuilder builder = new StringBuilder(str);
+    String nextLine = reader.readLine();
+    while (nextLine != null) {
+      if (nextLine.startsWith("Note: ")) {
+        int index = nextLine.indexOf(".java");
+        if (index < 0) {
+          builder.append("\n").append(nextLine.substring("Note: ".length()));
+          nextLine = reader.readLine();
+          continue;
+        }
+      }
+      reader.pushBack();
+      break;
+    }
+    return builder.toString();
+  }
+
+  @Contract("null -> false")
+  private static boolean isMessageEnd(@Nullable String line) {
+    return line != null && !line.isEmpty() && Character.isWhitespace(line.charAt(0));
+  }
+
+  private static @NotNull List<String> convertMessages(@NotNull List<String> messages) {
+    if (messages.size() <= 1) {
+      return messages;
+    }
+    final String line0 = messages.get(0);
+    final String line1 = messages.get(1);
+    final int colonIndex = line1.indexOf(':');
+    if (colonIndex > 0) {
+      @NonNls String part1 = line1.substring(0, colonIndex).trim();
+      // jikes
+      if ("symbol".equals(part1)) {
+        String symbol = line1.substring(colonIndex + 1).trim();
+        messages.remove(1);
+        if (messages.size() >= 2) {
+          messages.remove(1);
+        }
+        messages.set(0, line0 + " " + symbol);
+      }
+    }
+    return messages;
+  }
+}

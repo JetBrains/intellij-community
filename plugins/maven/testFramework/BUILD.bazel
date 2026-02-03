@@ -1,0 +1,46 @@
+### auto-generated section `build intellij.maven.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "testFramework",
+  module_name = "intellij.maven.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/refactoring",
+    "//platform/testFramework",
+    "//plugins/maven",
+    "@lib//:maven-test_framework-io-takari-maven-wrapper",
+    "//platform/util/jdom",
+    "//plugins/repository-search",
+    "//java/java-runtime:rt",
+    "//java/java-impl:impl",
+    "//platform/usageView",
+    "//java/testFramework",
+    "//platform/projectModel-api:projectModel",
+    "//platform/core-api:core",
+    "//xml/xml-psi-api:psi",
+    "//platform/backend/observation",
+    "//platform/backend/workspace",
+    "//platform/workspace/storage",
+    "//libraries/bouncy-castle-provider",
+    "//platform/testFramework/eelJava",
+    "//platform/eel-provider",
+    "//platform/util/progress",
+    "//xml/xml-analysis-api:analysis",
+    "//xml/xml-analysis-impl:analysis-impl",
+    "//platform/execution",
+    "//java/testFramework/backend",
+    "//plugins/repository-search/common",
+  ]
+)
+### auto-generated section `build intellij.maven.testFramework` end

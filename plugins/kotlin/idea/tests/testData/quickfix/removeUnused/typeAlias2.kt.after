@@ -1,0 +1,9 @@
+// "Safe delete 'Other'" "true"
+
+enum class MyEnum {
+    HELLO,
+    WORLD
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.SafeDeleteFix
+// IGNORE_K2

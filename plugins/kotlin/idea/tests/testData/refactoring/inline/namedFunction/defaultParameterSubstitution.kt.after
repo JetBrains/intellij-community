@@ -1,0 +1,5 @@
+fun newFun(p1: String, p2: String, p3: String?, p4: String, p5: Int) {}
+
+fun foo() {
+    newFun("a", 0.toString(), null, "a", 0)
+}

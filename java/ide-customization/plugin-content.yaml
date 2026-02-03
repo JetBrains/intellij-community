@@ -1,0 +1,6 @@
+- name: lib/java-ide-customization.jar
+  modules:
+  - name: intellij.java.ide.customization
+- name: lib/modules/intellij.java.ide.customization.training.jar
+  contentModules:
+  - name: intellij.java.ide.customization.training

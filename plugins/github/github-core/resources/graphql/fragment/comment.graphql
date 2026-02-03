@@ -1,0 +1,9 @@
+fragment comment on Comment {
+  ...nodeInfo
+  author {
+    ...actor
+  }
+  body
+  createdAt
+  ...reactions
+}

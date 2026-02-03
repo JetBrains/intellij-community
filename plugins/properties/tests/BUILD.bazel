@@ -1,0 +1,68 @@
+### auto-generated section `build intellij.properties.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["//plugins/properties:properties-backend"]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "intellij.properties.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/diff-api:diff",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-api:lang",
+    "//platform/platform-api:ide",
+    "//platform/lang-core",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/util/diff",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
+    "//java/openapi:java",
+    "//xml/impl",
+    "//plugins/properties:properties-backend",
+    "//java/testFramework",
+    "//platform/platform-tests:tests_test_lib",
+    "//platform/boot",
+    "//platform/core-ui",
+    "//plugins/properties/properties-psi-impl:backend-psi",
+    "@lib//:assert_j",
+    "//platform/structuralsearch:structuralSearch-tests_test_lib",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/diff-impl",
+    "//xml/xml-psi-api:psi",
+    "//libraries/fastutil",
+    "@lib//:jet_check",
+  ],
+  exports = ["//plugins/properties:properties-backend"],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build intellij.properties.tests` end
+
+### auto-generated section `test intellij.properties.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test intellij.properties.tests` end

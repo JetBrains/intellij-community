@@ -1,0 +1,13 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="com.intellij.properties"/>
+    <module name="intellij.properties.backend"/>
+    <module name="intellij.properties.backend.psi"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij.grazie">
+    <textExtractor language="Properties" implementationClass="com.intellij.grazie.ide.language.properties.PropertyTextExtractor"/>
+    <problemFilter language="Properties" implementationClass="com.intellij.grazie.ide.language.properties.PropertyProblemFilter"/>
+    <problemFilter language="Properties" implementationClass="com.intellij.grazie.text.CodeProblemFilter$InPlainText"/>
+  </extensions>
+</idea-plugin>

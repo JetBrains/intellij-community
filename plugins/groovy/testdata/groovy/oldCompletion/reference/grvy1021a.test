@@ -1,0 +1,10 @@
+class First {
+
+    def foo() {
+        new jav<caret>
+    }
+
+}
+-----
+java
+javax

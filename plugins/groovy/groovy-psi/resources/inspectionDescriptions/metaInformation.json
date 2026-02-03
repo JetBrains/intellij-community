@@ -1,0 +1,540 @@
+{
+  "inspections": [
+    {
+      "id": "GroovyConstantNamingConvention",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyMapPutCanBeKeyedAccess",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyDoubleCheckedLocking",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyNonShortCircuitBoolean",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "JavaStylePropertiesInvocation",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyTrivialConditional",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GrFinalVariableAccess",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "ChangeToOperator",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyResultOfAssignmentUsed",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyContinue",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyUnsynchronizedMethodOverridesSynchronizedMethod",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NewGroovyClassNamingConvention",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ClashingGetters",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovySwitchStatementWithNoDefault",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyListGetCanBeKeyedAccess",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyNestedConditional",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyEmptyStatementBody",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyLabeledStatement",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyAssignmentToForLoopParameter",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyImplicitNullArgumentCall",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyConditionalWithIdenticalBranches",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GrAnnotationReferencingUnknownIdentifiers",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "GrUnnecessaryDefModifier",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GrPOJO",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyConditionalCanBeElvis",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SecondUnsafeCall",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GrPackage",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovySystemRunFinalizersOnExit",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GrUnnecessaryPublicModifier",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyUnusedIncOrDec",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyEmptyCatchBlock",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyVariableNotAssigned",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyMethodWithMoreThanThreeNegations",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GrNamedVariantLabels",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyNegatedConditional",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovySillyAssignment",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GrUnnecessarySealedModifier",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyMissingReturnStatement",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyUnusedAssignment",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "GroovySynchronizationOnVariableInitializedWithLiteral",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyContinueOrBreakFromFinallyBlock",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyAssignmentToMethodParameter",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyStaticMethodNamingConvention",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyTrivialIf",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyDivideByZero",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GrUnnecessarySemicolon",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ChangeToMethod",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnnecessaryQualifiedReference",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GrSwitchExhaustivenessCheck",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyAssignabilityCheck",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyUntypedAccess",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "GroovyResultOfObjectAllocationIgnored",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovySynchronizationOnThis",
+      "codeQualityCategory": "Security"
+    },
+    {
+      "id": "GroovyNestedSynchronizedStatement",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyGStringKey",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyVariableCanBeFinal",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyWaitCallNotInLoop",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyUnnecessaryReturn",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GrUnnecessaryAlias",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyMultipleReturnPointsPerMethod",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GrUnnecessaryFinalModifier",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyUnreachableStatement",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyInstanceVariableNamingConvention",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyParameterNamingConvention",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyPointlessBoolean",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyEmptyTryBlock",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ClashingTraitMethods",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyDoubleNegation",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyIfStatementWithTooManyBranches",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyConditionalCanBeConditionalCall",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyInfiniteRecursion",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyUnnecessaryContinue",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyNotifyWhileNotSynchronized",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyEmptyFinallyBlock",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyLoopStatementThatDoesntLoop",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyListSetCanBeKeyedAccess",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyAccessibility",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "GroovyFallthrough",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyLocalVariableNamingConvention",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "DelegatesTo",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyThrowFromFinallyBlock",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyMapGetCanBeKeyedAccess",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyNestedAssignment",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovySynchronizedMethod",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyNegatedIf",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "NewInstanceOfSingleton",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GrReassignedInClosureLocalVar",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyMethodParameterCount",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyAssignmentCanBeOperatorAssignment",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyWaitWhileNotSynchronized",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyOverlyLongMethod",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyOverlyComplexBooleanExpression",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyOverlyNestedMethod",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyWhileLoopSpinsOnField",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "GroovyNestedSwitch",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyRangeTypeCheck",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyBusyWait",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "GroovyOctalInteger",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyResultOfIncrementOrDecrementUsed",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovySynchronizationOnNonFinalField",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyPointlessArithmetic",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyDocCheck",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyUnusedCatchParameter",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyInstanceMethodNamingConvention",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyDuplicateSwitchBranch",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyConditional",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyReturnFromFinallyBlock",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyConstructorNamedArguments",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GrUnnecessaryNonSealedModifier",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GrStringStyleViolation",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyStaticVariableNamingConvention",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyInfiniteLoopStatement",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GrPermitsClause",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyOverlyComplexMethod",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "TypeCustomizer",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GrEqualsBetweenInconvertibleTypes",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyEmptySyncBlock",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyUnusedDeclaration",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyReturnFromClosureCanBeImplicit",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyInArgumentCheck",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyIfStatementWithIdenticalBranches",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SingletonConstructor",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyPublicFieldAccessedInSynchronizedContext",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyUncheckedAssignmentOfMemberOfRawType",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyAccessToStaticFieldLockedOnInstance",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GrUnresolvedAccess",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "GroovyOverlyComplexArithmeticExpression",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyUnconditionalWait",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GrDeprecatedAPIUsage",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyThreadStopSuspendResume",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GrMethodMayBeStatic",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyBreak",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "GroovyConstantConditional",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyConstantIfStatement",
+      "codeQualityCategory": "Reliability"
+    }
+  ]
+}

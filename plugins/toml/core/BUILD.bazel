@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.toml.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "core_resources",
+  srcs = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "core",
+  module_name = "intellij.toml.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/gen/**/*.kt", "src/gen/**/*.java", "src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
+  resources = [":core_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/code-style-impl:codeStyle-impl",
+    "@lib//:kotlin-stdlib",
+    "//platform/lang-api:lang",
+  ]
+)
+### auto-generated section `build intellij.toml.core` end

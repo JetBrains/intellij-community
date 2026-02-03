@@ -1,0 +1,32 @@
+### auto-generated section `build intellij.kotlin.base.psi` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "psi_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "psi",
+  module_name = "intellij.kotlin.base.psi",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":psi_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//libraries/guava",
+    "//platform/core-api:core",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//platform/util",
+    "//platform/core-impl",
+    "//platform/util-ex",
+    "//java/java-psi-api:psi",
+    "//platform/code-style-api:codeStyle",
+    "//platform/lang-impl",
+    "//platform/lang-api:lang",
+  ]
+)
+### auto-generated section `build intellij.kotlin.base.psi` end

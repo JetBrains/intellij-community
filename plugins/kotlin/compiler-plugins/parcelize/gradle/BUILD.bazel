@@ -1,0 +1,27 @@
+### auto-generated section `build kotlin.compiler-plugins.parcelize.gradle` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "gradle_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "gradle",
+  module_name = "kotlin.compiler-plugins.parcelize.gradle",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":gradle_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//plugins/kotlin/gradle/gradle-tooling/impl",
+    "//platform/util",
+    "//plugins/kotlin/compiler-plugins/parcelize/common",
+    "//platform/object-serializer:objectSerializer-annotations",
+    "//plugins/gradle:gradle-common",
+  ]
+)
+### auto-generated section `build kotlin.compiler-plugins.parcelize.gradle` end

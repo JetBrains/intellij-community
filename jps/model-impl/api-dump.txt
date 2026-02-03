@@ -1,0 +1,54 @@
+c:com.intellij.openapi.fileTypes.WildcardFileNameMatcher
+- com.intellij.openapi.fileTypes.FileNameMatcher
+- <init>(java.lang.String):V
+- acceptsCharSequence(java.lang.CharSequence):Z
+- equals(java.lang.Object):Z
+- getPattern():java.lang.String
+- getPresentableString():java.lang.String
+- hashCode():I
+a:org.jetbrains.jps.model.artifact.impl.elements.JpsCompositePackagingElementBase
+- org.jetbrains.jps.model.ex.JpsCompositeElementBase
+- org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement
+- p:<init>():V
+- p:<init>(org.jetbrains.jps.model.artifact.impl.elements.JpsCompositePackagingElementBase):V
+- addChild(org.jetbrains.jps.model.artifact.elements.JpsPackagingElement):org.jetbrains.jps.model.artifact.elements.JpsPackagingElement
+- getChildren():java.util.List
+- removeChild(org.jetbrains.jps.model.artifact.elements.JpsPackagingElement):V
+a:org.jetbrains.jps.model.artifact.impl.elements.JpsModuleOutputPackagingElementBase
+- org.jetbrains.jps.model.ex.JpsCompositeElementBase
+- org.jetbrains.jps.model.artifact.elements.JpsModuleOutputPackagingElement
+- <init>(org.jetbrains.jps.model.artifact.impl.elements.JpsModuleOutputPackagingElementBase):V
+- <init>(org.jetbrains.jps.model.module.JpsModuleReference):V
+- createCopy():org.jetbrains.jps.model.artifact.impl.elements.JpsModuleOutputPackagingElementBase
+- getModuleReference():org.jetbrains.jps.model.module.JpsModuleReference
+- getOutputUrl():java.lang.String
+- pa:getOutputUrl(org.jetbrains.jps.model.module.JpsModule):java.lang.String
+a:org.jetbrains.jps.model.impl.JpsNamedElementReferenceBase
+- org.jetbrains.jps.model.ex.JpsCompositeElementBase
+- org.jetbrains.jps.model.JpsElementReference
+- pf:myElementName:java.lang.String
+- p:<init>(java.lang.String,org.jetbrains.jps.model.JpsElementReference):V
+- p:<init>(org.jetbrains.jps.model.impl.JpsNamedElementReferenceBase):V
+- asExternal(org.jetbrains.jps.model.JpsModel):org.jetbrains.jps.model.JpsElementReference
+- p:getCollection(org.jetbrains.jps.model.JpsCompositeElement):org.jetbrains.jps.model.JpsElementCollection
+- p:getNamedElementCollection(org.jetbrains.jps.model.JpsCompositeElement):org.jetbrains.jps.model.JpsNamedElementCollection
+- getParentReference():org.jetbrains.jps.model.JpsElementReference
+- resolve():org.jetbrains.jps.model.JpsNamedElement
+- pa:resolve(org.jetbrains.jps.model.JpsNamedElement):org.jetbrains.jps.model.JpsNamedElement
+f:org.jetbrains.jps.model.java.impl.JavaSdkUtil
+- s:getJdkClassesRoots(java.nio.file.Path,Z):java.util.List
+a:org.jetbrains.jps.model.java.impl.JpsJavaDependenciesEnumerationHandler
+- <init>():V
+- s:createHandlers(java.util.Collection):java.util.List
+- isProductionOnTestsDependency(org.jetbrains.jps.model.module.JpsDependencyElement):Z
+- shouldAddRuntimeDependenciesToTestCompilationClasspath():Z
+- shouldIncludeTestsFromDependentModulesToTestClasspath():Z
+- shouldProcessDependenciesRecursively():Z
+- s:shouldProcessDependenciesRecursively(java.util.List):Z
+a:org.jetbrains.jps.model.java.impl.JpsJavaDependenciesEnumerationHandler$Factory
+- <init>():V
+- a:createHandler(java.util.Collection):org.jetbrains.jps.model.java.impl.JpsJavaDependenciesEnumerationHandler
+f:org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl
+- org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
+- <init>(java.lang.String):V
+- <init>(org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile):V

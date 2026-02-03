@@ -1,0 +1,66 @@
+### auto-generated section `build intellij.platform.ide.internal` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "internal_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "internal",
+  module_name = "intellij.platform.ide.internal",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":internal_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/core-impl",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//jps/model-serialization",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/ui.jcef",
+    "//platform/platform-impl/bootstrap",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl/ui",
+    "//platform/core-ui",
+    "//platform/statistics",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/analysis-impl",
+    "//platform/util/progress",
+    "//libraries/jcef",
+    "//platform/lang-api:lang",
+    "//platform/backend/workspace",
+    "//platform/workspace/jps",
+    "//platform/jbr",
+    "//platform/ide-core-impl",
+    "//platform/util/coroutines",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/statistics/uploader",
+    "//platform/util/jdom",
+    "//platform/service-container",
+    "//libraries/guava",
+    "//libraries/miglayout-swing",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/fastutil",
+    "//libraries/hash4j",
+    "//libraries/gson",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlin/reflect",
+    "@lib//:jna",
+    "//platform/workspace/storage",
+    "//platform/platform-impl/concurrency",
+    "//platform/platform-impl/update-checker",
+    "//libraries/jbr",
+    "//platform/projectModel-impl",
+    "//platform/execution",
+    "//platform/kernel/rpc",
+  ]
+)
+### auto-generated section `build intellij.platform.ide.internal` end

@@ -1,0 +1,6 @@
+public class X {
+  int myParameter;
+  void f(int parameter) {
+    myParameter = parameter;
+  }
+}

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.libraries.hamcrest" scope="RUNTIME" />
+    <orderEntry type="module-library" exported="">
+      <library name="github.seregamorph.hamcrest.more.matchers" type="repository">
+        <properties maven-id="com.github.seregamorph:hamcrest-more-matchers:0.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/github/seregamorph/hamcrest-more-matchers/0.1/hamcrest-more-matchers-0.1.jar">
+              <sha256sum>0b39c30f73a84dc50181a10e0d66e9543d6ef1b561c207b7fba6944e64dc22b3</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.hamcrest:hamcrest-core" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/seregamorph/hamcrest-more-matchers/0.1/hamcrest-more-matchers-0.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/seregamorph/hamcrest-more-matchers/0.1/hamcrest-more-matchers-0.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

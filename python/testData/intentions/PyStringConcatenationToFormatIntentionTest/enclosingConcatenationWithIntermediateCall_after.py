@@ -1,0 +1,1 @@
+string = ascii("foobar") + "baz"

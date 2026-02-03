@@ -1,0 +1,21 @@
+<component name="libraryTable">
+  <library name="icu4j" type="repository">
+    <properties maven-id="com.ibm.icu:icu4j:77.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/ibm/icu/icu4j/77.1/icu4j-77.1.jar">
+          <sha256sum>b3640b9f416a4411fd33c59abbeea8fd57d024c23e1819bf9673220a97499fe3</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <ANNOTATIONS>
+      <root url="file://$PROJECT_DIR$/lib/annotations/icu4j" />
+    </ANNOTATIONS>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/ibm/icu/icu4j/77.1/icu4j-77.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/ibm/icu/icu4j/77.1/icu4j-77.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

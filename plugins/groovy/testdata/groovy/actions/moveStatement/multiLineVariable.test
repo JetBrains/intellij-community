@@ -1,0 +1,11 @@
+println 'a'
+ou<caret>ter = {
+    println 'a'
+    println 'b' //aa
+}
+-----
+ou<caret>ter = {
+    println 'a'
+    println 'b' //aa
+}
+println 'a'

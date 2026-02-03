@@ -1,0 +1,4 @@
+<node text="B.foo()  ()" base="true">
+  <node text="A.blabla()  ()"/>
+  <node text="Anonymous in B() in B.run()  ()"/>
+</node>

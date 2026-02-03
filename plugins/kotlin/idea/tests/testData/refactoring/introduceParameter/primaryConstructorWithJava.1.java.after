@@ -1,0 +1,5 @@
+class Baz extends Bar {
+    Baz() {
+        super();
+    }
+}

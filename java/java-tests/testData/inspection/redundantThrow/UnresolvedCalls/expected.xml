@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Foo.java</file>
+    <line>12</line>
+    <description>The declared exception &lt;code&gt;IOException&lt;/code&gt; is never thrown</description>
+  </problem>
+  <problem>
+    <file>Foo.java</file>
+    <line>16</line>
+    <description>The declared exception &lt;code&gt;IOException&lt;/code&gt; is never thrown</description>
+  </problem>
+</problems>
+

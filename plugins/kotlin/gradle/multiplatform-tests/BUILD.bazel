@@ -1,0 +1,81 @@
+### auto-generated section `build intellij.kotlin.gradle.multiplatformTests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "multiplatform-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/gradle/java",
+    "//plugins/kotlin/gradle/gradle-tooling/impl",
+    "//plugins/kotlin/gradle/gradle",
+    "//plugins/kotlin/compiler-plugins/lombok/gradle",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlin-tooling-core",
+    "//plugins/kotlin/base/project-model",
+    "//android/android-plugin:plugin",
+    "//plugins/kotlin/gradle/gradle-java/tests.shared",
+  ]
+)
+
+jvm_library(
+  name = "multiplatform-tests_test_lib",
+  module_name = "intellij.kotlin.gradle.multiplatformTests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:junit4",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/facet",
+    "//java/testFramework",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//platform/external-system-impl:externalSystem-tests_test_lib",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/gradle/java",
+    "//plugins/gradle:gradle-tests_test_lib",
+    "//plugins/kotlin/gradle/gradle-tooling/impl",
+    "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
+    "//plugins/kotlin/gradle/gradle",
+    "//android/android:core",
+    "//plugins/kotlin/compiler-plugins/lombok/gradle",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlin-tooling-core",
+    "@lib//:kotlin-test",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:kotlin-test-junit",
+    "//plugins/kotlin/base/project-model",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//android/android-plugin:plugin",
+    "//android/android-plugin:plugin_test_lib",
+    "//plugins/kotlin/base/indices",
+    "//plugins/gradle/java:java-tests_test_lib",
+    "//plugins/kotlin/gradle/gradle-java/tests.shared",
+    "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
+  ],
+  runtime_deps = [":multiplatform-tests"]
+)
+### auto-generated section `build intellij.kotlin.gradle.multiplatformTests` end
+
+### auto-generated section `test intellij.kotlin.gradle.multiplatformTests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "multiplatform-tests_test",
+  runtime_deps = [":multiplatform-tests_test_lib"]
+)
+### auto-generated section `test intellij.kotlin.gradle.multiplatformTests` end

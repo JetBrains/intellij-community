@@ -1,0 +1,4 @@
+Exception e
+throw e.to<caret>
+-----
+toString

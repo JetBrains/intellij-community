@@ -1,0 +1,19 @@
+<root>
+  <item name='javax.lang.model.AnnotatedConstruct A getAnnotation(java.lang.Class&lt;A&gt;)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='javax.lang.model.AnnotatedConstruct A getAnnotation(java.lang.Class&lt;A&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='javax.lang.model.AnnotatedConstruct A[] getAnnotationsByType(java.lang.Class&lt;A&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item name='javax.lang.model.AnnotatedConstruct A[] getAnnotationsByType(java.lang.Class&lt;A&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='javax.lang.model.AnnotatedConstruct java.util.List&lt;? extends javax.lang.model.element.AnnotationMirror&gt; getAnnotationMirrors()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+</root>

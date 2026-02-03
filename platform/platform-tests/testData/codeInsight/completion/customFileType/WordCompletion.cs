@@ -1,0 +1,2 @@
+whiwhiwhi
+  whi<caret>

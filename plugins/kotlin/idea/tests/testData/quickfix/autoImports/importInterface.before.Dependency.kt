@@ -1,0 +1,3 @@
+package importInterface.data
+
+interface TestInterface

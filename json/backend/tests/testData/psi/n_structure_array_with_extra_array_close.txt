@@ -1,0 +1,8 @@
+JsonFile: n_structure_array_with_extra_array_close.json
+  JsonArray
+    PsiElement([)('[')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1')
+    PsiElement(])(']')
+  PsiErrorElement:<value> expected, got ']'
+    PsiElement(])(']')

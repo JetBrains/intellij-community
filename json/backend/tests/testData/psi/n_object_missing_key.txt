@@ -1,0 +1,9 @@
+JsonFile: n_object_missing_key.json
+  JsonObject
+    PsiElement({)('{')
+    PsiErrorElement:<property> expected, got ':'
+      PsiElement(:)(':')
+  JsonStringLiteral
+    PsiElement(DOUBLE_QUOTED_STRING)('"b"')
+  PsiErrorElement:<value> expected, got '}'
+    PsiElement(})('}')

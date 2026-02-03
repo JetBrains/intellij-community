@@ -1,0 +1,17 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.find"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.find.backend.FindRemoteApiProvider"/>
+
+    <registryKey key="find.in.files.split.actions"
+                 defaultValue="true"
+                 description="Enables the 'Find in Files' implementation, optimized to support both remote development workflows and monolithic setups."
+                 restartRequired="true"/>
+  </extensions>
+</idea-plugin>

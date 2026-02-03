@@ -1,0 +1,39 @@
+### auto-generated section `build intellij.evaluationPlugin.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "core_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "core",
+  module_name = "intellij.evaluationPlugin.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":core_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/gson",
+    "//libraries/commons/compress",
+    "//libraries/kotlinx/html",
+    "//libraries/commons/lang3",
+    "//libraries/commons/text",
+    "//platform/core-api:core",
+    "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector",
+    "//libraries/jackson/databind",
+    "//platform/statistics",
+    "//platform/util",
+    "//platform/extensions",
+    "//platform/statistics/uploader",
+    "//platform/util-ex",
+    "//platform/projectModel-api:projectModel",
+    "//tools/intellij.tools.ide.util.common:ide-util-common",
+    "//platform/diagnostic/telemetry-impl",
+    "@lib//:opentelemetry",
+    "//platform/diagnostic/telemetry",
+  ],
+  runtime_deps = ["//platform/backend"]
+)
+### auto-generated section `build intellij.evaluationPlugin.core` end

@@ -1,0 +1,43 @@
+### auto-generated section `build intellij.xslt.debugger` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "xslt-debugger_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "xslt-debugger",
+  module_name = "intellij.xslt.debugger",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":xslt-debugger_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/lang-core",
+    "//platform/core-impl",
+    "//platform/projectModel-api:projectModel",
+    "//xml/xml-psi-api:psi",
+    "//plugins/xpath",
+    "//plugins/xslt-debugger/engine:xslt-debugger-rt",
+    "//platform/lang-api:lang",
+    "//xml/xml-parser:parser",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/xdebugger-api:debugger",
+    "//platform/indexing-impl",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//xml/impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/util/nanoxml",
+    "//libraries/fastutil",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/execution",
+  ]
+)
+### auto-generated section `build intellij.xslt.debugger` end

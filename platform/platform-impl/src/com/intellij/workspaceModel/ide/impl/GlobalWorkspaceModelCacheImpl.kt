@@ -1,0 +1,134 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.workspaceModel.ide.impl
+
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
+import com.intellij.platform.util.coroutines.forEachConcurrent
+import com.intellij.platform.workspace.jps.serialization.impl.ApplicationLevelUrlRelativizer
+import com.intellij.platform.workspace.storage.InternalEnvironmentName
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.impl.isConsistent
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.debounce
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration.Companion.seconds
+
+@OptIn(FlowPreview::class)
+internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : GlobalWorkspaceModelCache {
+  private val saveRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val cacheFiles: ConcurrentHashMap<String, Path> = ConcurrentHashMap()
+
+  override fun cacheFile(environmentName: InternalEnvironmentName): Path {
+    return cacheFiles[environmentName.name]
+           ?: throw IllegalArgumentException("Global workspace storage with id $environmentName must be registered with `registerCachePartition` before it can be loaded")
+  }
+
+  private lateinit var virtualFileUrlManager: VirtualFileUrlManager
+
+  private val urlRelativizer =
+    if (Registry.`is`("ide.workspace.model.store.relative.paths.in.cache", false)) {
+      ApplicationLevelUrlRelativizer(insideIdeProcess = true)
+    } else {
+      null
+    }
+
+  private val cacheSerializer by lazy {
+    if (!::virtualFileUrlManager.isInitialized) {
+      throw UninitializedPropertyAccessException("VirtualFileUrlManager was not initialized. Please call `GlobalWorkspaceModelCache.setVirtualFileUrlManager` before any other methods.")
+    }
+    WorkspaceModelCacheSerializer(virtualFileUrlManager, urlRelativizer)
+  }
+
+  init {
+    LOG.debug("Global Model Cache")
+
+    coroutineScope.launch {
+      saveRequests
+        .debounce(1.seconds)
+        .collect {
+          doCacheSaving()
+        }
+    }
+  }
+
+  override fun scheduleCacheSave() {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return
+    }
+
+    LOG.debug("Schedule global cache update")
+    check(saveRequests.tryEmit(Unit))
+  }
+
+  override suspend fun saveCacheNow() {
+    doCacheSaving()
+  }
+
+  override fun invalidateCaches() {
+    Companion.invalidateCaches()
+  }
+
+  private suspend fun doCacheSaving() {
+    cacheFiles.entries.forEachConcurrent { (id, cacheFile) ->
+      val storage = GlobalWorkspaceModel.getInstanceByEnvironmentNameAsync(InternalEnvironmentName.of(id)).currentSnapshot
+      if (!storage.isConsistent) {
+        invalidateCaches()
+      }
+
+      withContext(Dispatchers.IO) {
+        if (!cachesInvalidated.get()) {
+          cacheSerializer.saveCacheToFile(storage, cacheFile)
+        }
+        else {
+          Files.deleteIfExists(cacheFile)
+        }
+      }
+    }
+  }
+
+  override fun loadCache(environmentName: InternalEnvironmentName): MutableEntityStorage? {
+    if (ApplicationManager.getApplication().isUnitTestMode &&
+        !System.getProperty("ide.tests.permit.global.workspace.model.serialization", "false").toBoolean()) {
+      return null
+    }
+    val cacheFile = cacheFile(environmentName)
+    return cacheSerializer.loadCacheFromFile(cacheFile, invalidateCachesMarkerFile, invalidateCachesMarkerFile)
+  }
+
+  override fun setVirtualFileUrlManager(vfuManager: VirtualFileUrlManager) {
+    virtualFileUrlManager = vfuManager
+  }
+
+  override fun registerCachePartition(environmentName: InternalEnvironmentName) {
+    val cacheSuffix = if (environmentName == InternalEnvironmentName.Local) {
+      "$DATA_DIR_NAME/cache.data"
+    }
+    else {
+      "$DATA_DIR_NAME/${environmentName.name}/cache.data"
+    }
+    val path = PathManager.getSystemDir().resolve(cacheSuffix)
+    cacheFiles[environmentName.name] = path
+  }
+
+  companion object {
+    private val LOG = logger<GlobalWorkspaceModelCacheImpl>()
+    internal const val DATA_DIR_NAME: String = "global-model-cache"
+
+    private val cachesInvalidated = AtomicBoolean(false)
+    private val invalidateCachesMarkerFile by lazy { PathManager.getSystemDir().resolve("$DATA_DIR_NAME/.invalidate") }
+
+    internal fun invalidateCaches() {
+      LOG.info("Invalidating global caches by creating $invalidateCachesMarkerFile")
+      invalidateCaches(cachesInvalidated, invalidateCachesMarkerFile)
+    }
+  }
+}

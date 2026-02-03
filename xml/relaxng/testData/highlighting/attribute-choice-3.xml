@@ -1,0 +1,2 @@
+<attribute-choice xmlns="urn:test:simple.rng" type="<error descr="Wrong attribute value">c</error>">
+</attribute-choice>

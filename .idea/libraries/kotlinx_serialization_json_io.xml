@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="kotlinx-serialization-json-io" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-io-jvm:1.9.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-json-io-jvm/1.9.0/kotlinx-serialization-json-io-jvm-1.9.0.jar">
+          <sha256sum>98abb132b03e11b80318d45350ec9ebbb5453d26505e81331bf2eea7143b6fbe</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-json-io-jvm/1.9.0/kotlinx-serialization-json-io-jvm-1.9.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-json-io-jvm/1.9.0/kotlinx-serialization-json-io-jvm-1.9.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

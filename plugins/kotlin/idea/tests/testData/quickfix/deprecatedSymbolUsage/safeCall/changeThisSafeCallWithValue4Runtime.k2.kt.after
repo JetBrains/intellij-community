@@ -1,0 +1,19 @@
+// "Replace with 'c1.newFun(this, c2)'" "true"
+// WITH_STDLIB
+
+class X(val c: Char) {
+    @Deprecated("", ReplaceWith("c1.newFun(this, c2)"))
+    fun oldFun(c1: Char, c2: Char): Char = c1.newFun(this, c2)
+}
+
+fun Char.newFun(x: X, c: Char): Char = this
+
+fun foo(s: String, t: X) {
+    val chars = s.filter {
+        (X('a') + X('b'))?.let { x -> it.newFun(x, t.c) } != 'a'
+    }
+}
+
+operator fun X.plus(x: X): X? = null
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

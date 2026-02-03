@@ -1,0 +1,79 @@
+### auto-generated section `build intellij.devkit.workspaceModel.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/devkit",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/workspace/jps/tests",
+    "@lib//:workspace-model-codegen",
+    "//plugins/kotlin/tests-common:common-tests",
+    "//libraries/rd/core",
+    "//libraries/rd/framework",
+    "//platform/util/jdom",
+    "//plugins/editorconfig:editorconfig-plugin",
+  ]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "intellij.devkit.workspaceModel.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:junit5",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/testFramework",
+    "//java/openapi:java",
+    "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
+    "//platform/workspace/storage",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/kotlin/formatter",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/workspace/jps",
+    "//platform/workspace/jps/tests",
+    "//platform/workspace/jps/tests:tests_test_lib",
+    "@lib//:workspace-model-codegen",
+    "//platform/backend/workspace",
+    "//plugins/kotlin/base/facet",
+    "@lib//:kotlinc-kotlin-jps-common-provided",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//plugins/kotlin/tests-common:common-tests",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//libraries/rd/core",
+    "//libraries/rd/framework",
+    "//platform/util/jdom",
+    "@lib//:kotlinc-kotlin-scripting-common",
+    "//plugins/editorconfig/backend",
+    "//plugins/editorconfig/backend:backend_test_lib",
+    "//plugins/editorconfig:editorconfig-plugin",
+    "@lib//:studio-platform",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build intellij.devkit.workspaceModel.tests` end
+
+### auto-generated section `test intellij.devkit.workspaceModel.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test intellij.devkit.workspaceModel.tests` end

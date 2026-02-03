@@ -1,0 +1,5 @@
+root = true
+
+[*]
+
+charset = latin1

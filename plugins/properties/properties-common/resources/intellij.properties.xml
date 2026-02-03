@@ -1,0 +1,29 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.properties.psi"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="Properties" language="Properties" extensions="properties" fieldName="INSTANCE"
+              implementationClass="com.intellij.lang.properties.PropertiesFileType"/>
+    <lang.parserDefinition language="Properties" implementationClass="com.intellij.lang.properties.parsing.PropertiesParserDefinition"/>
+    <stubElementTypeHolder class="com.intellij.lang.properties.parsing.PropertiesElementTypes"/>
+
+    <virtualFileCustomDataConsumer implementation="com.intellij.lang.properties.PropertiesCodeStyleSettingsCustomDataSynchronizer"/>
+    <lang.formatter language="Properties" implementationClass="com.intellij.lang.properties.formatting.PropertiesFormattingModelBuilder"/>
+
+    <lang.syntaxHighlighter language="Properties" implementationClass="com.intellij.lang.properties.PropertiesHighlighterImpl"/>
+    <lang.commenter language="Properties" implementationClass="com.intellij.lang.properties.PropertiesCommenter"/>
+
+    <applicationService serviceInterface="com.intellij.lang.properties.PropertiesUtilService" open="true"
+                        serviceImplementation="com.intellij.lang.properties.PropertiesUtilService$Empty"/>
+
+    <lang.foldingBuilder language="Properties" implementationClass="com.intellij.lang.properties.editor.PropertiesFoldingBuilder"/>
+    <langCodeStyleSettingsProvider implementation="com.intellij.lang.properties.codeStyle.PropertiesLanguageCodeStyleSettingsProvider"/>
+    <lang.ast.factory language="Properties" implementationClass="com.intellij.lang.properties.psi.impl.PropertiesASTFactory"/>
+    <enterHandlerDelegate implementation="com.intellij.lang.properties.EnterInPropertiesFileHandler" id="EnterInPropertiesFileHandler"/>
+    <renameInputValidator implementation="com.intellij.lang.properties.rename.PropertyKeyRenameInputValidator"/>
+
+    <stripTrailingSpacesFilterFactory implementation="com.intellij.lang.properties.formatting.PropertiesStripTrailingSpacesFilterFactory"/>
+  </extensions>
+</idea-plugin>

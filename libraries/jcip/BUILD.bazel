@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.jcip` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "jcip_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jcip",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":jcip_resources"],
+  exports = ["@lib//:libraries-jcip-jcip"],
+  runtime_deps = ["@lib//:libraries-jcip-jcip"]
+)
+### auto-generated section `build intellij.libraries.jcip` end

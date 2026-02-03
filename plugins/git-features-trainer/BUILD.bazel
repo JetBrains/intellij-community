@@ -1,0 +1,89 @@
+### auto-generated section `build intellij.vcs.git.featuresTrainer` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "vcs-git-featuresTrainer_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-git-featuresTrainer",
+  module_name = "intellij.vcs.git.featuresTrainer",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":vcs-git-featuresTrainer_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:git-learning-project",
+    "//plugins/ide-features-trainer:featuresTrainer",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/dvcs-impl:vcs-dvcs-impl",
+    "//platform/core-ui",
+    "//platform/diff-impl",
+    "//platform/code-style-api:codeStyle",
+    "//platform/vcs-impl",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-log/impl",
+    "//platform/vcs-log/api:vcs-log",
+    "//plugins/git4idea:vcs-git",
+    "//plugins/git4idea/shared",
+    "//platform/lang-impl",
+    "//platform/dvcs-impl/shared",
+    "//platform/vcs-impl/shared",
+  ]
+)
+
+jvm_library(
+  name = "vcs-git-featuresTrainer_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":vcs-git-featuresTrainer"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:git-learning-project",
+    "//plugins/ide-features-trainer:featuresTrainer",
+    "//plugins/ide-features-trainer:featuresTrainer_test_lib",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/dvcs-impl:vcs-dvcs-impl",
+    "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
+    "//platform/core-ui",
+    "//platform/diff-impl",
+    "//platform/code-style-api:codeStyle",
+    "//platform/vcs-impl",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-log/impl",
+    "//platform/vcs-log/impl:impl_test_lib",
+    "//platform/vcs-log/api:vcs-log",
+    "//plugins/git4idea:vcs-git",
+    "//plugins/git4idea:vcs-git_test_lib",
+    "//plugins/git4idea/shared",
+    "//platform/lang-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/dvcs-impl/shared",
+    "//platform/vcs-impl/shared",
+    "//platform/vcs-impl/shared:shared_test_lib",
+  ]
+)
+### auto-generated section `build intellij.vcs.git.featuresTrainer` end
+
+### auto-generated section `test intellij.vcs.git.featuresTrainer` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "vcs-git-featuresTrainer_test",
+  runtime_deps = [":vcs-git-featuresTrainer_test_lib"]
+)
+### auto-generated section `test intellij.vcs.git.featuresTrainer` end

@@ -1,0 +1,6 @@
+// "Remove constructor call" "true"
+
+interface Base
+class Derived : Base()<caret>
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveNoConstructorFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveNoConstructorFix

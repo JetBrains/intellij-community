@@ -1,0 +1,21 @@
+// FILE: settings.gradle.kts
+// "NO-EXPECTED-SUGGESTIONS"
+rootProject.name = "GradleKotlinFixture"
+
+pluginManagement {
+    repositories {
+        mavenCentral()
+    }
+}
+
+rrrrrrrr<caret>
+
+// FILE: build.gradle.kts
+plugins {
+    id("java")
+}
+
+repositories {
+    mavenCentral()
+}
+

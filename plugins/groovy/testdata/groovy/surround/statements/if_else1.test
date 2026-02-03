@@ -1,0 +1,6 @@
+<selection>a = b</selection>
+-----
+if () {
+    a = b
+} else {
+}

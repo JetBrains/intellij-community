@@ -1,0 +1,18 @@
+// "Import extension function 'Companion.foobar'" "true"
+package p
+
+open class T1 {
+    companion object
+    fun T1.Companion.foobar() {}
+}
+
+open class T2 : T1()
+open class T3 : T2()
+object TObject : T3()
+
+fun usage() {
+    T1.<caret>foobar()
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFix

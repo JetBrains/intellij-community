@@ -1,0 +1,35 @@
+### auto-generated section `build intellij.platform.util.ex` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "util-ex_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "util-ex",
+  module_name = "intellij.platform.util.ex",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":util-ex_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlin/reflect",
+    "//platform/util",
+    "//platform/util/jdom",
+    "//libraries/jcip",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/fastutil",
+    "//libraries/netty/buffer",
+    "//libraries/caffeine",
+    "//platform/util/base",
+    "//platform/util-class-loader:util-classLoader",
+    "//libraries/lz4",
+    "//platform/diagnostic",
+    "//platform/util/coroutines",
+    "//libraries/mvstore",
+    "//libraries/jbr",
+  ]
+)
+### auto-generated section `build intellij.platform.util.ex` end

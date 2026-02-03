@@ -1,0 +1,73 @@
+### auto-generated section `build intellij.completionMlRankingModels` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "completion-ml-ranking-models_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "completion-ml-ranking-models",
+  module_name = "intellij.completionMlRankingModels",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":completion-ml-ranking-models_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/completion-ml-ranking",
+    "//platform/core-api:core",
+    "//platform/platform-impl/internal",
+    "@lib//:completion_ml_ranking_models-completion-ranking-java-exp",
+    "@lib//:completion_ml_ranking_models-completion-ranking-java-exp2",
+    "@lib//:completion_ml_ranking_models-completion-ranking-kotlin-exp",
+    "@lib//:completion_ml_ranking_models-completion-ranking-scala-exp",
+    "@lib//:completion_ml_ranking_models-completion-ranking-rust-exp",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:completion_ml_ranking_models-completion-ranking-python-exp",
+    "@lib//:completion_ml_ranking_models-completion-ranking-php-exp",
+    "@lib//:completion_ml_ranking_models-completion-ranking-ruby-exp",
+    "@lib//:completion_ml_ranking_models-completion-ranking-go-exp",
+    "@lib//:completion_ml_ranking_models-completion-ranking-js-exp",
+    "@lib//:completion_ml_ranking_models-completion-ranking-typescript-exp",
+    "@lib//:completion_ml_ranking_models-completion-ranking-dart-exp",
+    "@lib//:completion_ml_ranking_models-completion-ranking-swift-exp",
+    "@lib//:completion_ml_ranking_models-completion-ranking-cpp-exp",
+    "@lib//:completion_ml_ranking_models-completion-ranking-html-exp",
+    "@lib//:completion_ml_ranking_models-completion-ranking-css-exp",
+    "@lib//:completion_ml_ranking_models-completion-ranking-sh-exp",
+  ]
+)
+### auto-generated section `build intellij.completionMlRankingModels` end
+
+### auto-generated section `build intellij.completionMlRankingModels.tests` start
+jvm_library(
+  name = "completionMlRankingModels-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "completionMlRankingModels-tests_test_lib",
+  module_name = "intellij.completionMlRankingModels.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "//java/testFramework",
+    "@lib//:junit4",
+    "//plugins/completion-ml-ranking-models",
+    "//plugins/completion-ml-ranking",
+    "//platform/platform-impl/internal",
+  ],
+  runtime_deps = [":completionMlRankingModels-tests"]
+)
+### auto-generated section `build intellij.completionMlRankingModels.tests` end
+
+### auto-generated section `test intellij.completionMlRankingModels.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "completionMlRankingModels-tests_test",
+  runtime_deps = [":completionMlRankingModels-tests_test_lib"]
+)
+### auto-generated section `test intellij.completionMlRankingModels.tests` end

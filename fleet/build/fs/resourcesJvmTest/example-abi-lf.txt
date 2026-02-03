@@ -1,0 +1,514 @@
+public abstract interface class fleet/dock/api/DockApi : kotlin/coroutines/CoroutineContext$Element {
+	public static final field Companion Lfleet/dock/api/DockApi$Companion;
+	public fun getKey ()Lkotlin/coroutines/CoroutineContext$Key;
+	public abstract fun getRecentShips ()Lfleet/dock/api/RecentShips;
+	public abstract fun getShipScope ()Lfleet/dock/api/ShipScope;
+	public abstract fun perform (Ljava/lang/String;Ljava/lang/String;)V
+	public static synthetic fun perform$default (Lfleet/dock/api/DockApi;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)V
+	public abstract fun withShip (Lfleet/dock/api/ShipDescriptor;Lfleet/dock/api/ShipType;Lfleet/dock/api/ShipParams;Lfleet/dock/api/ShipId;Lkotlin/jvm/functions/Function3;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class fleet/dock/api/DockApi$Companion : kotlin/coroutines/CoroutineContext$Key {
+}
+
+public final class fleet/dock/api/DockApi$DefaultImpls {
+	public static fun fold (Lfleet/dock/api/DockApi;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public static fun get (Lfleet/dock/api/DockApi;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
+	public static fun minusKey (Lfleet/dock/api/DockApi;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
+	public static fun plus (Lfleet/dock/api/DockApi;Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
+}
+
+public final class fleet/dock/api/DockContextElement : kotlin/coroutines/CoroutineContext$Element {
+	public fun <init> (Lfleet/dock/api/DockContextElement$Key;Ljava/lang/Object;)V
+	public final fun component1 ()Lfleet/dock/api/DockContextElement$Key;
+	public final fun component2 ()Ljava/lang/Object;
+	public final fun copy (Lfleet/dock/api/DockContextElement$Key;Ljava/lang/Object;)Lfleet/dock/api/DockContextElement;
+	public static synthetic fun copy$default (Lfleet/dock/api/DockContextElement;Lfleet/dock/api/DockContextElement$Key;Ljava/lang/Object;ILjava/lang/Object;)Lfleet/dock/api/DockContextElement;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun fold (Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public fun get (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
+	public fun getKey ()Lfleet/dock/api/DockContextElement$Key;
+	public synthetic fun getKey ()Lkotlin/coroutines/CoroutineContext$Key;
+	public final fun getValue ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun minusKey (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
+	public fun plus (Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class fleet/dock/api/DockContextElement$Key : kotlin/coroutines/CoroutineContext$Key {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lfleet/dock/api/DockContextElement$Key;
+	public static synthetic fun copy$default (Lfleet/dock/api/DockContextElement$Key;Ljava/lang/String;ILjava/lang/Object;)Lfleet/dock/api/DockContextElement$Key;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKey ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class fleet/dock/api/DockExit : kotlin/coroutines/CoroutineContext$Element {
+	public static final field Companion Lfleet/dock/api/DockExit$Companion;
+	public fun getKey ()Lkotlin/coroutines/CoroutineContext$Key;
+	public abstract fun join (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun quit ()V
+}
+
+public final class fleet/dock/api/DockExit$Companion : kotlin/coroutines/CoroutineContext$Key {
+}
+
+public final class fleet/dock/api/DockExit$DefaultImpls {
+	public static fun fold (Lfleet/dock/api/DockExit;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public static fun get (Lfleet/dock/api/DockExit;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
+	public static fun minusKey (Lfleet/dock/api/DockExit;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
+	public static fun plus (Lfleet/dock/api/DockExit;Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
+}
+
+public abstract interface class fleet/dock/api/DockIdentity : kotlin/coroutines/CoroutineContext$Element {
+	public static final field Companion Lfleet/dock/api/DockIdentity$Companion;
+	public abstract fun getHostId ()Ljava/lang/String;
+	public fun getKey ()Lkotlin/coroutines/CoroutineContext$Key;
+	public abstract fun getUserId ()Ljava/lang/String;
+}
+
+public final class fleet/dock/api/DockIdentity$Companion : kotlin/coroutines/CoroutineContext$Key {
+}
+
+public final class fleet/dock/api/DockIdentity$DefaultImpls {
+	public static fun fold (Lfleet/dock/api/DockIdentity;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public static fun get (Lfleet/dock/api/DockIdentity;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
+	public static fun minusKey (Lfleet/dock/api/DockIdentity;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
+	public static fun plus (Lfleet/dock/api/DockIdentity;Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
+}
+
+public final class fleet/dock/api/DockPath {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lfleet/dock/api/DockPath;
+	public static synthetic fun copy$default (Lfleet/dock/api/DockPath;Ljava/lang/String;ILjava/lang/Object;)Lfleet/dock/api/DockPath;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKey ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class fleet/dock/api/DockPaths : kotlin/coroutines/CoroutineContext$Element {
+	public static final field Companion Lfleet/dock/api/DockPaths$Companion;
+	public fun getKey ()Lkotlin/coroutines/CoroutineContext$Key;
+	public abstract fun getPath (Lfleet/dock/api/DockPath;)Ljava/lang/Object;
+}
+
+public final class fleet/dock/api/DockPaths$Companion : kotlin/coroutines/CoroutineContext$Key {
+}
+
+public final class fleet/dock/api/DockPaths$DefaultImpls {
+	public static fun fold (Lfleet/dock/api/DockPaths;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public static fun get (Lfleet/dock/api/DockPaths;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
+	public static fun minusKey (Lfleet/dock/api/DockPaths;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
+	public static fun plus (Lfleet/dock/api/DockPaths;Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
+}
+
+public abstract interface class fleet/dock/api/LocalStorage : kotlin/coroutines/CoroutineContext$Element {
+	public static final field Companion Lfleet/dock/api/LocalStorage$Companion;
+	public abstract fun get (Lfleet/dock/api/LocalStorageKey;)Ljava/nio/ByteBuffer;
+	public fun getGlobal ()Lfleet/dock/api/LocalStorage;
+	public fun getKey ()Lkotlin/coroutines/CoroutineContext$Key;
+	public abstract fun put (Lfleet/dock/api/LocalStorageKey;Ljava/nio/ByteBuffer;)V
+	public abstract fun remove (Lfleet/dock/api/LocalStorageKey;)Ljava/nio/ByteBuffer;
+}
+
+public final class fleet/dock/api/LocalStorage$Companion : kotlin/coroutines/CoroutineContext$Key {
+	public final fun withPrefix (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class fleet/dock/api/LocalStorage$DefaultImpls {
+	public static fun fold (Lfleet/dock/api/LocalStorage;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public static fun get (Lfleet/dock/api/LocalStorage;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
+	public static fun minusKey (Lfleet/dock/api/LocalStorage;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
+	public static fun plus (Lfleet/dock/api/LocalStorage;Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
+}
+
+public final class fleet/dock/api/LocalStorageKey {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lfleet/dock/api/LocalStorageKey;
+	public static synthetic fun copy$default (Lfleet/dock/api/LocalStorageKey;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lfleet/dock/api/LocalStorageKey;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKey ()Ljava/lang/String;
+	public final fun getVersion ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class fleet/dock/api/LocalStorageKt {
+	public static final fun getString (Lfleet/dock/api/LocalStorage;Lfleet/dock/api/LocalStorageKey;)Ljava/lang/String;
+	public static final fun putString (Lfleet/dock/api/LocalStorage;Lfleet/dock/api/LocalStorageKey;Ljava/lang/String;)V
+}
+
+public final class fleet/dock/api/LocalStorageState : kotlin/coroutines/CoroutineContext$Element {
+	public fun <init> (Lfleet/dock/api/LocalStorageState$Key;Lkotlinx/coroutines/flow/MutableStateFlow;)V
+	public fun fold (Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public fun get (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
+	public fun getKey ()Lfleet/dock/api/LocalStorageState$Key;
+	public synthetic fun getKey ()Lkotlin/coroutines/CoroutineContext$Key;
+	public final fun getState ()Lkotlinx/coroutines/flow/MutableStateFlow;
+	public fun minusKey (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
+	public fun plus (Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
+}
+
+public final class fleet/dock/api/LocalStorageState$Key : kotlin/coroutines/CoroutineContext$Key {
+	public fun <init> (Lfleet/dock/api/LocalStorageKey;)V
+	public final fun component1 ()Lfleet/dock/api/LocalStorageKey;
+	public final fun copy (Lfleet/dock/api/LocalStorageKey;)Lfleet/dock/api/LocalStorageState$Key;
+	public static synthetic fun copy$default (Lfleet/dock/api/LocalStorageState$Key;Lfleet/dock/api/LocalStorageKey;ILjava/lang/Object;)Lfleet/dock/api/LocalStorageState$Key;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKey ()Lfleet/dock/api/LocalStorageKey;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class fleet/dock/api/RecentShipInfo {
+	public fun <init> (Lfleet/dock/api/ShipType;Lfleet/dock/api/ShipParams;Lfleet/dock/api/ShipState;Lfleet/dock/api/ShipDescriptor;Ljava/util/Map;)V
+	public final fun component1 ()Lfleet/dock/api/ShipType;
+	public final fun component2 ()Lfleet/dock/api/ShipParams;
+	public final fun component3 ()Lfleet/dock/api/ShipState;
+	public final fun component4 ()Lfleet/dock/api/ShipDescriptor;
+	public final fun component5 ()Ljava/util/Map;
+	public final fun copy (Lfleet/dock/api/ShipType;Lfleet/dock/api/ShipParams;Lfleet/dock/api/ShipState;Lfleet/dock/api/ShipDescriptor;Ljava/util/Map;)Lfleet/dock/api/RecentShipInfo;
+	public static synthetic fun copy$default (Lfleet/dock/api/RecentShipInfo;Lfleet/dock/api/ShipType;Lfleet/dock/api/ShipParams;Lfleet/dock/api/ShipState;Lfleet/dock/api/ShipDescriptor;Ljava/util/Map;ILjava/lang/Object;)Lfleet/dock/api/RecentShipInfo;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMeta ()Ljava/util/Map;
+	public final fun getShipBundleDescriptor ()Lfleet/dock/api/ShipDescriptor;
+	public final fun getShipParams ()Lfleet/dock/api/ShipParams;
+	public final fun getShipState ()Lfleet/dock/api/ShipState;
+	public final fun getShipType ()Lfleet/dock/api/ShipType;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class fleet/dock/api/RecentShips {
+	public abstract fun forget (Lfleet/dock/api/ShipId;)V
+	public abstract fun getState ()Lkotlinx/coroutines/flow/StateFlow;
+}
+
+public final class fleet/dock/api/RunningShipInfo {
+	public fun <init> (Lfleet/dock/api/ShipType;Lfleet/dock/api/ShipParams;Lfleet/dock/api/ShipDescriptor;Lfleet/dock/api/ShipHandle;Ljava/util/Map;)V
+	public final fun component1 ()Lfleet/dock/api/ShipType;
+	public final fun component2 ()Lfleet/dock/api/ShipParams;
+	public final fun component3 ()Lfleet/dock/api/ShipDescriptor;
+	public final fun component4 ()Lfleet/dock/api/ShipHandle;
+	public final fun component5 ()Ljava/util/Map;
+	public final fun copy (Lfleet/dock/api/ShipType;Lfleet/dock/api/ShipParams;Lfleet/dock/api/ShipDescriptor;Lfleet/dock/api/ShipHandle;Ljava/util/Map;)Lfleet/dock/api/RunningShipInfo;
+	public static synthetic fun copy$default (Lfleet/dock/api/RunningShipInfo;Lfleet/dock/api/ShipType;Lfleet/dock/api/ShipParams;Lfleet/dock/api/ShipDescriptor;Lfleet/dock/api/ShipHandle;Ljava/util/Map;ILjava/lang/Object;)Lfleet/dock/api/RunningShipInfo;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHandle ()Lfleet/dock/api/ShipHandle;
+	public final fun getMeta ()Ljava/util/Map;
+	public final fun getShipBundleDescriptor ()Lfleet/dock/api/ShipDescriptor;
+	public final fun getShipParams ()Lfleet/dock/api/ShipParams;
+	public final fun getShipType ()Lfleet/dock/api/ShipType;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class fleet/dock/api/SelectedThemeState : kotlin/coroutines/CoroutineContext$Element {
+	public static final field Companion Lfleet/dock/api/SelectedThemeState$Companion;
+	public fun getKey ()Lkotlin/coroutines/CoroutineContext$Key;
+	public abstract fun getTheme ()Lkotlinx/coroutines/flow/StateFlow;
+	public abstract fun setTheme (Lfleet/dock/api/ThemeId;)V
+}
+
+public final class fleet/dock/api/SelectedThemeState$Companion : kotlin/coroutines/CoroutineContext$Key {
+}
+
+public final class fleet/dock/api/SelectedThemeState$DefaultImpls {
+	public static fun fold (Lfleet/dock/api/SelectedThemeState;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public static fun get (Lfleet/dock/api/SelectedThemeState;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
+	public static fun minusKey (Lfleet/dock/api/SelectedThemeState;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
+	public static fun plus (Lfleet/dock/api/SelectedThemeState;Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
+}
+
+public final class fleet/dock/api/SelectedThemeStateKt {
+	public static final fun getCurrent (Lfleet/dock/api/SelectedThemeState;)Lfleet/dock/api/ThemeId;
+}
+
+public abstract interface class fleet/dock/api/Ship {
+	public abstract fun getMeta ()Ljava/util/Map;
+	public abstract fun getState ()Lkotlinx/coroutines/flow/StateFlow;
+	public abstract fun perform (Ljava/lang/String;Ljava/lang/String;)V
+	public static synthetic fun perform$default (Lfleet/dock/api/Ship;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)V
+}
+
+public final class fleet/dock/api/ShipBundle {
+	public fun <init> (Ljava/lang/ModuleLayer;Ljava/util/Map;Lfleet/dock/api/ShipDescriptor;Ljava/util/Map;)V
+	public final fun component1 ()Ljava/lang/ModuleLayer;
+	public final fun component2 ()Ljava/util/Map;
+	public final fun component3 ()Lfleet/dock/api/ShipDescriptor;
+	public final fun component4 ()Ljava/util/Map;
+	public final fun copy (Ljava/lang/ModuleLayer;Ljava/util/Map;Lfleet/dock/api/ShipDescriptor;Ljava/util/Map;)Lfleet/dock/api/ShipBundle;
+	public static synthetic fun copy$default (Lfleet/dock/api/ShipBundle;Ljava/lang/ModuleLayer;Ljava/util/Map;Lfleet/dock/api/ShipDescriptor;Ljava/util/Map;ILjava/lang/Object;)Lfleet/dock/api/ShipBundle;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLayers ()Ljava/util/Map;
+	public final fun getMeta ()Ljava/util/Map;
+	public final fun getModuleLayer ()Ljava/lang/ModuleLayer;
+	public final fun getShipBundleDescriptor ()Lfleet/dock/api/ShipDescriptor;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class fleet/dock/api/ShipDescriptor {
+	public fun <init> (Ljava/lang/String;Lfleet/dock/api/ShipVersion;Ljava/util/Map;Lfleet/dock/api/ShipSignature;Ljava/util/Map;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lfleet/dock/api/ShipVersion;
+	public final fun component3 ()Ljava/util/Map;
+	public final fun component4 ()Lfleet/dock/api/ShipSignature;
+	public final fun component5 ()Ljava/util/Map;
+	public final fun copy (Ljava/lang/String;Lfleet/dock/api/ShipVersion;Ljava/util/Map;Lfleet/dock/api/ShipSignature;Ljava/util/Map;)Lfleet/dock/api/ShipDescriptor;
+	public static synthetic fun copy$default (Lfleet/dock/api/ShipDescriptor;Ljava/lang/String;Lfleet/dock/api/ShipVersion;Ljava/util/Map;Lfleet/dock/api/ShipSignature;Ljava/util/Map;ILjava/lang/Object;)Lfleet/dock/api/ShipDescriptor;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLayers ()Ljava/util/Map;
+	public final fun getMeta ()Ljava/util/Map;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getSignature ()Lfleet/dock/api/ShipSignature;
+	public final fun getVersion ()Lfleet/dock/api/ShipVersion;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class fleet/dock/api/ShipHandle {
+	public abstract fun await (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun join (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun shipIfCompleted ()Lfleet/dock/api/Ship;
+	public abstract fun shutdown ()V
+}
+
+public final class fleet/dock/api/ShipId {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lfleet/dock/api/ShipId;
+	public static synthetic fun copy$default (Lfleet/dock/api/ShipId;Ljava/lang/String;ILjava/lang/Object;)Lfleet/dock/api/ShipId;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class fleet/dock/api/ShipJarCoordinates {
+}
+
+public final class fleet/dock/api/ShipJarCoordinates$Local : fleet/dock/api/ShipJarCoordinates {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lfleet/dock/api/ShipJarCoordinates$Local;
+	public static synthetic fun copy$default (Lfleet/dock/api/ShipJarCoordinates$Local;Ljava/lang/String;ILjava/lang/Object;)Lfleet/dock/api/ShipJarCoordinates$Local;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPath ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class fleet/dock/api/ShipJarCoordinates$Remote : fleet/dock/api/ShipJarCoordinates {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lfleet/dock/api/ShipJarCoordinates$Remote;
+	public static synthetic fun copy$default (Lfleet/dock/api/ShipJarCoordinates$Remote;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lfleet/dock/api/ShipJarCoordinates$Remote;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHash ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class fleet/dock/api/ShipJarFile {
+	public fun <init> (Lfleet/dock/api/ShipJarCoordinates;Ljava/lang/String;)V
+	public final fun component1 ()Lfleet/dock/api/ShipJarCoordinates;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Lfleet/dock/api/ShipJarCoordinates;Ljava/lang/String;)Lfleet/dock/api/ShipJarFile;
+	public static synthetic fun copy$default (Lfleet/dock/api/ShipJarFile;Lfleet/dock/api/ShipJarCoordinates;Ljava/lang/String;ILjava/lang/Object;)Lfleet/dock/api/ShipJarFile;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCoordinates ()Lfleet/dock/api/ShipJarCoordinates;
+	public final fun getSerializedModuleDescriptor ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class fleet/dock/api/ShipLauncher {
+	public abstract fun withShip (Lfleet/dock/api/ShipType;Lfleet/dock/api/ShipParams;Lfleet/dock/api/ShipId;Lkotlin/jvm/functions/Function3;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class fleet/dock/api/ShipLauncherProvider {
+	public abstract fun withShipLauncher (Lfleet/dock/api/ShipBundle;Lkotlin/jvm/functions/Function3;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class fleet/dock/api/ShipLayer {
+	public fun <init> (Ljava/util/List;Ljava/lang/ModuleLayer;Ljava/util/Map;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/ModuleLayer;
+	public final fun component3 ()Ljava/util/Map;
+	public final fun copy (Ljava/util/List;Ljava/lang/ModuleLayer;Ljava/util/Map;)Lfleet/dock/api/ShipLayer;
+	public static synthetic fun copy$default (Lfleet/dock/api/ShipLayer;Ljava/util/List;Ljava/lang/ModuleLayer;Ljava/util/Map;ILjava/lang/Object;)Lfleet/dock/api/ShipLayer;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMeta ()Ljava/util/Map;
+	public final fun getModuleLayer ()Ljava/lang/ModuleLayer;
+	public final fun getModules ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class fleet/dock/api/ShipLayerDescriptor {
+	public fun <init> (Ljava/util/Set;Ljava/util/Set;)V
+	public final fun component1 ()Ljava/util/Set;
+	public final fun component2 ()Ljava/util/Set;
+	public final fun copy (Ljava/util/Set;Ljava/util/Set;)Lfleet/dock/api/ShipLayerDescriptor;
+	public static synthetic fun copy$default (Lfleet/dock/api/ShipLayerDescriptor;Ljava/util/Set;Ljava/util/Set;ILjava/lang/Object;)Lfleet/dock/api/ShipLayerDescriptor;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getModulePath ()Ljava/util/Set;
+	public final fun getModules ()Ljava/util/Set;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class fleet/dock/api/ShipLayerSelector {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lfleet/dock/api/ShipLayerSelector;
+	public static synthetic fun copy$default (Lfleet/dock/api/ShipLayerSelector;Ljava/lang/String;ILjava/lang/Object;)Lfleet/dock/api/ShipLayerSelector;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getSelector ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class fleet/dock/api/ShipParams {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lfleet/dock/api/ShipParams;
+	public static synthetic fun copy$default (Lfleet/dock/api/ShipParams;Ljava/lang/String;ILjava/lang/Object;)Lfleet/dock/api/ShipParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getConfig ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class fleet/dock/api/ShipProgressEvent {
+}
+
+public final class fleet/dock/api/ShipProgressEvent$Finished : fleet/dock/api/ShipProgressEvent {
+	public static final field INSTANCE Lfleet/dock/api/ShipProgressEvent$Finished;
+}
+
+public final class fleet/dock/api/ShipProgressEvent$Progress : fleet/dock/api/ShipProgressEvent {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Double;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Double;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/Double;
+	public final fun copy (Ljava/lang/String;Ljava/lang/Double;)Lfleet/dock/api/ShipProgressEvent$Progress;
+	public static synthetic fun copy$default (Lfleet/dock/api/ShipProgressEvent$Progress;Ljava/lang/String;Ljava/lang/Double;ILjava/lang/Object;)Lfleet/dock/api/ShipProgressEvent$Progress;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFraction ()Ljava/lang/Double;
+	public final fun getMessage ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class fleet/dock/api/ShipProgressEvent$Started : fleet/dock/api/ShipProgressEvent {
+	public static final field INSTANCE Lfleet/dock/api/ShipProgressEvent$Started;
+}
+
+public abstract interface class fleet/dock/api/ShipProgressReporting : kotlin/coroutines/CoroutineContext$Element {
+	public static final field Companion Lfleet/dock/api/ShipProgressReporting$Companion;
+	public fun getKey ()Lkotlin/coroutines/CoroutineContext$Key;
+	public abstract fun report (Lfleet/dock/api/ShipId;Lfleet/dock/api/ShipProgressEvent;)V
+}
+
+public final class fleet/dock/api/ShipProgressReporting$Companion : kotlin/coroutines/CoroutineContext$Key {
+}
+
+public final class fleet/dock/api/ShipProgressReporting$DefaultImpls {
+	public static fun fold (Lfleet/dock/api/ShipProgressReporting;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public static fun get (Lfleet/dock/api/ShipProgressReporting;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
+	public static fun minusKey (Lfleet/dock/api/ShipProgressReporting;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
+	public static fun plus (Lfleet/dock/api/ShipProgressReporting;Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
+}
+
+public abstract interface class fleet/dock/api/ShipScope {
+	public abstract fun getShips ()Lkotlinx/coroutines/flow/StateFlow;
+	public abstract fun launchShip (Lfleet/dock/api/ShipDescriptor;Lfleet/dock/api/ShipType;Lfleet/dock/api/ShipParams;Lfleet/dock/api/ShipId;)Lfleet/dock/api/ShipHandle;
+	public abstract fun restartShip (Lfleet/dock/api/ShipId;Lfleet/dock/api/ShipDescriptor;)Lfleet/dock/api/ShipHandle;
+}
+
+public final class fleet/dock/api/ShipSignature {
+	public fun <init> ([B)V
+	public final fun component1 ()[B
+	public final fun copy ([B)Lfleet/dock/api/ShipSignature;
+	public static synthetic fun copy$default (Lfleet/dock/api/ShipSignature;[BILjava/lang/Object;)Lfleet/dock/api/ShipSignature;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBytes ()[B
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class fleet/dock/api/ShipState {
+	public fun <init> (Ljava/util/Map;)V
+	public final fun component1 ()Ljava/util/Map;
+	public final fun copy (Ljava/util/Map;)Lfleet/dock/api/ShipState;
+	public static synthetic fun copy$default (Lfleet/dock/api/ShipState;Ljava/util/Map;ILjava/lang/Object;)Lfleet/dock/api/ShipState;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getData ()Ljava/util/Map;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class fleet/dock/api/ShipType {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lfleet/dock/api/ShipType;
+	public static synthetic fun copy$default (Lfleet/dock/api/ShipType;Ljava/lang/String;ILjava/lang/Object;)Lfleet/dock/api/ShipType;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class fleet/dock/api/ShipVersion {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lfleet/dock/api/ShipVersion;
+	public static synthetic fun copy$default (Lfleet/dock/api/ShipVersion;Ljava/lang/String;ILjava/lang/Object;)Lfleet/dock/api/ShipVersion;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getVersion ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class fleet/dock/api/SpaceTokensStorage : kotlin/coroutines/CoroutineContext$Element {
+	public static final field Companion Lfleet/dock/api/SpaceTokensStorage$Companion;
+	public fun getKey ()Lkotlin/coroutines/CoroutineContext$Key;
+	public abstract fun getSpaceToken (Ljava/lang/String;)Ljava/lang/String;
+	public abstract fun getTokens ()Lkotlinx/coroutines/flow/StateFlow;
+	public abstract fun putSpaceToken (Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun removeSpaceToken (Ljava/lang/String;)V
+}
+
+public final class fleet/dock/api/SpaceTokensStorage$Companion : kotlin/coroutines/CoroutineContext$Key {
+}
+
+public final class fleet/dock/api/SpaceTokensStorage$DefaultImpls {
+	public static fun fold (Lfleet/dock/api/SpaceTokensStorage;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public static fun get (Lfleet/dock/api/SpaceTokensStorage;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
+	public static fun minusKey (Lfleet/dock/api/SpaceTokensStorage;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
+	public static fun plus (Lfleet/dock/api/SpaceTokensStorage;Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
+}
+
+public final class fleet/dock/api/ThemeId {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lfleet/dock/api/ThemeId;
+	public static synthetic fun copy$default (Lfleet/dock/api/ThemeId;Ljava/lang/String;ILjava/lang/Object;)Lfleet/dock/api/ThemeId;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getIdent ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+

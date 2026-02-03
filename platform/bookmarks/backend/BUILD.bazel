@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.platform.bookmarks.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "backend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.platform.bookmarks.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/bookmarks",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/kernel/backend",
+    "//platform/project/shared:project",
+  ],
+  exports = ["//platform/bookmarks"],
+  runtime_deps = ["//platform/backend"]
+)
+### auto-generated section `build intellij.platform.bookmarks.backend` end

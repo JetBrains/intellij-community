@@ -1,0 +1,1 @@
+Text: (<highlight>f: (String) -> Int</highlight>), Disabled: false, Strikeout: false, Green: true

@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.pty4j.jar
+  modules:
+  - name: intellij.libraries.pty4j
+    libraries:
+      pty4j:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0/pty4j-0.jar

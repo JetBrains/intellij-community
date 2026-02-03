@@ -1,0 +1,1 @@
+r"%(compl<caret>)s" % dict(completion="smth")

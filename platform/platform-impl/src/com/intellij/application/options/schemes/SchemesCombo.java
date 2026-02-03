@@ -1,0 +1,139 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.application.options.schemes;
+
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.editor.colors.Groups;
+import com.intellij.openapi.options.Scheme;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+
+public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCombo.MySchemeListItem<T>> {
+
+  static final @NotNull Supplier<@Nls String> PROJECT_LEVEL = IdeBundle.messagePointer("scheme.project");
+  static final @NotNull Supplier<@Nls String> IDE_LEVEL = IdeBundle.messagePointer("scheme.ide");
+
+  final Map<@NotNull Scheme, @Nullable @Nls String> schemeSeparators = new HashMap<>();
+
+  public SchemesCombo() {
+    super(new DefaultComboBoxModel<>());
+    setRenderer(SchemesComboRendererKt.getRenderer(this));
+    setSwingPopup(false);
+  }
+
+  public void resetSchemes(@NotNull Collection<? extends T> schemes) {
+    final DefaultComboBoxModel<MySchemeListItem<T>> model = (DefaultComboBoxModel<MySchemeListItem<T>>)getModel();
+    model.removeAllElements();
+    schemeSeparators.clear();
+    if (supportsProjectSchemes()) {
+      addItems(schemes,
+               scheme -> scheme != null && isProjectScheme(scheme),
+               IdeBundle.message("separator.scheme.stored.in", PROJECT_LEVEL.get()));
+
+      addItems(schemes,
+               scheme -> scheme != null && !isProjectScheme(scheme),
+               IdeBundle.message("separator.scheme.stored.in", IDE_LEVEL.get()));
+    }
+    else {
+      addItems(schemes, scheme -> scheme != null, "");
+    }
+  }
+
+  public void resetGroupedSchemes(@NotNull Groups<? extends T> schemeGroups) {
+    final DefaultComboBoxModel<MySchemeListItem<T>> model = (DefaultComboBoxModel<MySchemeListItem<T>>)getModel();
+    model.removeAllElements();
+    schemeSeparators.clear();
+
+    for (Groups.GroupInfo<? extends T> schemeGroup : schemeGroups.getInfos()) {
+      Collection<? extends T> schemes = schemeGroup.getItems();
+      addItems(schemes, scheme -> scheme != null, schemeGroup.getTitle());
+    }
+  }
+
+  public void selectScheme(@Nullable T scheme) {
+    for (int i = 0; i < getItemCount(); i++) {
+      if (getItemAt(i).getScheme() == scheme) {
+        setSelectedIndex(i);
+        break;
+      }
+    }
+  }
+
+  public @Nullable T getSelectedScheme() {
+    SchemesCombo.MySchemeListItem<T> item = getSelectedItem();
+    return item != null ? item.getScheme() : null;
+  }
+
+  @Override
+  public @Nullable SchemesCombo.MySchemeListItem<T> getSelectedItem() {
+    int i = getSelectedIndex();
+    return i >= 0 ? getItemAt(i) : null;
+  }
+
+  protected abstract boolean supportsProjectSchemes();
+
+  protected boolean isProjectScheme(@NotNull T scheme) {
+    throw new UnsupportedOperationException();
+  }
+
+  protected boolean isDefaultScheme(@NotNull T scheme) {
+    return false;
+  }
+
+  protected int getIndent(@NotNull T scheme) {
+    return 0;
+  }
+
+  protected abstract @NotNull SimpleTextAttributes getSchemeAttributes(T scheme);
+
+  private void addItems(@NotNull Collection<? extends T> schemes, Predicate<? super T> filter, @Nullable @Nls String separatorTitle) {
+    MySchemeListItem<T> firstItem = null;
+
+    for (T scheme : schemes) {
+      if (filter.test(scheme)) {
+        MySchemeListItem<T> item = new MySchemeListItem<>(scheme);
+        ((DefaultComboBoxModel<MySchemeListItem<T>>)getModel()).addElement(item);
+
+        if (firstItem == null) {
+          firstItem = item;
+        }
+      }
+    }
+
+    if (firstItem != null && firstItem.getScheme() != null) {
+      schemeSeparators.put(firstItem.getScheme(), separatorTitle);
+    }
+  }
+
+  @ApiStatus.Internal
+  public static final class MySchemeListItem<T extends Scheme> {
+    private final @Nullable T myScheme;
+
+    MySchemeListItem(@Nullable T scheme) {
+      myScheme = scheme;
+    }
+
+    public @Nullable String getSchemeName() {
+      return myScheme != null ? myScheme.getName() : null;
+    }
+
+    public @Nullable T getScheme() {
+      return myScheme;
+    }
+
+    public @NotNull @NlsContexts.ListItem String getPresentableText() {
+      return myScheme != null ? myScheme.getDisplayName() : "";
+    }
+  }
+}

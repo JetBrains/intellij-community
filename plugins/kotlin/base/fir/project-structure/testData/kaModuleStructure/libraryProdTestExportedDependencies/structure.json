@@ -1,0 +1,11 @@
+{
+    "modules": [
+        { "name": "A1", "content_roots": ["production", "tests"], "dependencies": ["B1"]},
+        { "name": "B1", "content_roots": ["production", "tests"], "dependencies": [{"name": "L", "exported": true}]},
+        { "name": "A2", "content_roots": ["production", "tests"], "dependencies": ["B2"]},
+        { "name": "B2", "content_roots": ["production", "tests"], "dependencies": [{"name": "L", "exported": true}]}
+    ],
+    "libraries": [
+        { "name": "L" }
+    ]
+}

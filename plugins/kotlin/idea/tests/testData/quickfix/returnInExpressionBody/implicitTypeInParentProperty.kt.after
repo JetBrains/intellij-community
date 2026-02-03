@@ -1,0 +1,14 @@
+// "Specify 'Int' type for enclosing property 'Derived.implicitPropertyReturnType'" "true"
+
+interface Base {
+    val implicitPropertyReturnType
+        get() = 1
+}
+
+class Derived : Base {
+    override val implicitPropertyReturnType: Int
+        get() = retu<caret>rn 1
+}
+
+// IGNORE_K1
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.plugin.k2" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="RUNTIME" />
+    <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.asm" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.guava" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="jb-jdi" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-cli" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-ir" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.util" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.psi" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.fir.frontend-independent" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.base.util" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.coroutines" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.gradle" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.eval4j" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.debugger.streams" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.native" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.test" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.serviceContainer" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.scripting.shared" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl.shared" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl.backend" scope="TEST" />
+  </component>
+</module>

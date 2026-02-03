@@ -1,0 +1,9 @@
+<selection>a - b
+a - b</selection>
+println foo
+-----
+with() {
+    a - b
+    a - b
+}
+println foo

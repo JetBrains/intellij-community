@@ -1,0 +1,12 @@
+// FIR_IDENTICAL
+// HIGHLIGHT_WARNINGS
+// WITH_COROUTINES
+package test
+
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.*
+
+fun test(flow: Flow<Int>) {
+    flow.flowOn(<!HIGHLIGHTING("severity='WARNING'; descr='Passing 'CoroutineContext' with a 'Job' to 'flowOn' builder can lead to structured concurrency violations'")!>Job()<!>)
+}
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutineContextWithJobInspection

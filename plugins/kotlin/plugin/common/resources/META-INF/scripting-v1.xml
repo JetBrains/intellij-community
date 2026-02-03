@@ -1,0 +1,29 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scriptDefinitionsProvider"
+            interface="kotlin.script.experimental.intellij.ScriptDefinitionsProvider"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scriptAdditionalIdeaDependenciesProvider"
+            interface="org.jetbrains.kotlin.idea.core.script.v1.ScriptAdditionalIdeaDependenciesProvider"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.ideScriptConfigurationControlFacade"
+            interface="kotlin.script.experimental.intellij.IdeScriptConfigurationControlFacade"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <idea.base.platforms.targetPlatformDetector
+            implementation="org.jetbrains.kotlin.idea.core.script.v1.ScriptingTargetPlatformDetector"/>
+
+    <syntheticResolveExtension implementation="org.jetbrains.kotlin.scripting.extensions.ScriptingResolveExtension"/>
+    <extraImportsProviderExtension implementation="org.jetbrains.kotlin.scripting.extensions.ScriptExtraImportsProviderExtension"/>
+  </extensions>
+</idea-plugin>

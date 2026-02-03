@@ -1,0 +1,27 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="remoteDev.configureClientHook" interface="com.intellij.remoteDev.downloader.ConfigureClientHook" dynamic="true" />
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <statistics.counterUsagesCollector implementationClass="com.intellij.remoteDev.downloader.RemoteDevStatisticsCollector" />
+    <applicationService serviceInterface="com.intellij.remoteDev.downloader.JetBrainsClientDownloaderConfigurationProvider"
+                        serviceImplementation="com.intellij.remoteDev.downloader.RealJetBrainsClientDownloaderConfigurationProvider"
+                        testServiceImplementation="com.intellij.remoteDev.downloader.TestJetBrainsClientDownloaderConfigurationProvider"/>
+    <openTelemetryExporterProvider implementation="com.intellij.remoteDev.tracing.RdctExportersProvider"/>
+    <openTelemetryExporterProvider implementation="com.intellij.remoteDev.tracing.LuxExportersProvider"/>
+    <applicationInitializedListener implementation="com.intellij.remoteDev.tracing.CustomExportersListener"/>
+    <registryKey key="rdct.use.embedded.client" defaultValue="true"
+                 description="Enable to run JetBrains Client process from the current IDE instead of downloading it when connecting to an IDE of same version"/>
+    <registryKey key="rdct.always.use.embedded.client" defaultValue="false"
+                 description="Enable to run embedded client unconditionally
+                              (may have compatibility problems if the backend and client protocols do not match)"/>
+    <registryKey key="rdct.path.to.custom.snapshot.frontend.installation" defaultValue=""
+                 description="Specifies path to a standalone frontend installation (JetBrains Client) which will be used while connecting to backends with *.snapshot build numbers"/>
+    <registryKey key="rdct.embedded.client.debug.port" defaultValue="-1" 
+                 description="Specify a positive value to make a client process started from an IDE listen for debug connections on that port."/>
+    <registryKey key="rdct.embedded.client.debug.suspend" defaultValue="false" 
+                 description="Enable this option to suspend a client process started from an IDE until a debugger connects to it."/>
+    <registryKey key="rdct.use.native.client.launcher.on.linux" defaultValue="true"
+                 description="If enabled, the native launcher is used to run JetBrains Client process on Linux instead of jetbrains_client.sh script"/>
+  </extensions>
+</idea-plugin>

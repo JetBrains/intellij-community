@@ -1,0 +1,46 @@
+### auto-generated section `build intellij.kotlin.compilerPlugins.parcelize` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_kotlin-compilerPlugins-parcelize",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+  ],
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "kotlin-compilerPlugins-parcelize_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-compilerPlugins-parcelize",
+  module_name = "intellij.kotlin.compilerPlugins.parcelize",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-compilerPlugins-parcelize_resources"],
+  kotlinc_opts = ":custom_kotlin-compilerPlugins-parcelize",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fir",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-k2",
+    "@lib//:kotlinc-parcelize-compiler-plugin",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/compiler-plugins/parcelize/common",
+    "//plugins/kotlin/code-insight/api",
+    "//plugins/kotlin/frontend-independent",
+    "//java/java-psi-api:psi",
+    "//platform/analysis-api:analysis",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
+  ]
+)
+### auto-generated section `build intellij.kotlin.compilerPlugins.parcelize` end

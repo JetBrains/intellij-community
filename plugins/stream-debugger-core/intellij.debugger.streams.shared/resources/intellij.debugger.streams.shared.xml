@@ -1,0 +1,17 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl"/>
+  </dependencies>
+  <actions resource-bundle="messages.SharedStreamDebuggerBundle">
+    <action id="StreamTracerAction"
+            class="com.intellij.debugger.streams.shared.TraceStreamAction"
+            icon="com.intellij.debugger.streams.shared.icons.DebuggerStreamsSharedIcons.Stream_debugger">
+      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" anchor="after" relative-to-action="EvaluateExpression"/>
+      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
+    </action>
+  </actions>
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.debugger.streams.shared.TraceDebuggerInitializationProjectActivity"/>
+  </extensions>
+</idea-plugin>

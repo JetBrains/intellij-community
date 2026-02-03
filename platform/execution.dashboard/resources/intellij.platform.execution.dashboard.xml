@@ -1,0 +1,114 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.execution.serviceView"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl"/>
+  </dependencies>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.runDashboardManagerProxy"
+                    interface="com.intellij.execution.dashboard.RunDashboardManagerProxy" dynamic="true"/>
+    <extensionPoint name="runDashboardGroupingRule"
+                    interface="com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardGroupingRule" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <legacyRunDashboardServiceSubstitutor implementation="com.intellij.platform.execution.dashboard.splitApi.LegacyRunDashboardServiceSubstitutorImpl"/>
+    <remote.customDataContextSerializer implementation="com.intellij.platform.execution.dashboard.RunDashboardServiceDataContextSerializer"/>
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.execution.dashboard.splitApi.frontend.RunContentSyncListener"/>
+
+    <runDashboardManagerProxy
+      implementation="com.intellij.platform.execution.dashboard.splitApi.frontend.FrontendRunDashboardManagerProxy"/>
+    <projectService serviceInterface="com.intellij.execution.dashboard.RunDashboardUiManager"
+                    serviceImplementation="com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardUiManagerImpl"/>
+    <serviceViewContributor implementation="com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributor"/>
+
+    <runDashboardGroupingRule id="type" order="first"
+                              implementation="com.intellij.platform.execution.dashboard.splitApi.frontend.tree.ConfigurationTypeDashboardGroupingRule"/>
+    <runDashboardGroupingRule id="status" order="after type"
+                              implementation="com.intellij.platform.execution.dashboard.splitApi.frontend.tree.StatusDashboardGroupingRule"/>
+    <runDashboardGroupingRule id="folder" order="after status"
+                              implementation="com.intellij.platform.execution.dashboard.splitApi.frontend.tree.FolderDashboardGroupingRule"/>
+    <actionPromoter implementation="com.intellij.platform.execution.dashboard.actions.RunDashboardActionPromoter"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij.statistics">
+    <projectUsagesCollector implementation="com.intellij.platform.execution.dashboard.RunDashboardUsagesCollector"/>
+    <validation.customValidationRule
+      implementation="com.intellij.platform.execution.dashboard.RunDashboardUsagesCollector$RunConfigurationTypeValidator"/>
+  </extensions>
+  <actions>
+    <action id="RunDashboard.Run" icon="AllIcons.Actions.Execute" use-shortcut-of="RunClass"
+            class="com.intellij.platform.execution.dashboard.actions.RunAction">
+      <add-to-group anchor="first" group-id="RunTab.TopToolbar"/>
+      <add-to-group anchor="first" group-id="RunTab.TopToolbar.Old"/>
+      <add-to-group anchor="first" group-id="XDebugger.ToolWindow.TopToolbar3"/>
+    </action>
+    <action id="RunDashboard.Debug" icon="AllIcons.Actions.StartDebugger" use-shortcut-of="DebugClass"
+            class="com.intellij.platform.execution.dashboard.actions.DebugAction">
+      <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="RunTab.TopToolbar"/>
+      <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="RunTab.TopToolbar.Old"/>
+      <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="XDebugger.ToolWindow.TopToolbar3"/>
+    </action>
+    <action id="RunDashboard.Stop" icon="AllIcons.Actions.Suspend" use-shortcut-of="Stop"
+            class="com.intellij.platform.execution.dashboard.actions.StopAction">
+    </action>
+
+    <group id="RunDashboardContentToolbar">
+      <reference ref="RunDashboard.Run"/>
+      <reference ref="RunDashboard.Debug"/>
+      <reference ref="RunDashboard.Stop"/>
+      <separator/>
+      <reference ref="ExpandAll"/>
+      <reference ref="CollapseAll"/>
+    </group>
+    <group id="RunDashboardPopup">
+      <action id="RunDashboard.EditConfiguration" icon="AllIcons.Actions.EditSource" use-shortcut-of="EditSourceInNewWindow"
+              class="com.intellij.platform.execution.dashboard.actions.EditConfigurationAction"/>
+      <action id="RunDashboard.CopyConfiguration" icon="AllIcons.Actions.Copy" use-shortcut-of="EditorDuplicate"
+              class="com.intellij.platform.execution.dashboard.actions.CopyConfigurationAction"/>
+      <separator/>
+      <action id="RunDashboard.HideConfiguration"
+              class="com.intellij.platform.execution.dashboard.actions.HideConfigurationAction"/>
+      <action id="RunDashboard.RestoreHiddenConfigurations"
+              class="com.intellij.platform.execution.dashboard.actions.RestoreHiddenConfigurationsAction"/>
+      <action id="RunDashboard.RemoveType"
+              class="com.intellij.platform.execution.dashboard.actions.RemoveRunConfigurationTypeAction"/>
+      <action id="RunDashboard.OpenRunningConfigInNewTab"
+              class="com.intellij.platform.execution.dashboard.actions.OpenRunningConfigInNewTabAction"/>
+      <separator/>
+      <action id="RunDashboard.ClearConsole" icon="AllIcons.General.Delete"
+              class="com.intellij.platform.execution.dashboard.actions.ClearConsoleAction"/>
+      <action id="RunDashboard.ClearContent" icon="AllIcons.Actions.Cancel"
+              class="com.intellij.platform.execution.dashboard.actions.ClearContentAction"/>
+      <action id="RunDashboard.RestoreConfiguration" icon="AllIcons.Actions.Rollback"
+              class="com.intellij.platform.execution.dashboard.actions.RestoreConfigurationAction"/>
+      <separator/>
+      <action id="RunDashboard.GroupConfigurations" icon="AllIcons.Actions.GroupByPackage"
+              class="com.intellij.platform.execution.dashboard.actions.GroupConfigurationsAction"/>
+      <action id="RunDashboard.UngroupConfigurations" icon="AllIcons.General.Remove" use-shortcut-of="$Delete"
+              class="com.intellij.platform.execution.dashboard.actions.UngroupConfigurationsActions"/>
+      <separator/>
+    </group>
+    <group id="RunDashboard.ViewOptions" popup="true" class="com.intellij.ide.actions.NonEmptyActionGroup">
+      <separator key="separator.RunDashboard.GroupBy"/>
+      <action id="RunDashboard.GroupByType"
+              class="com.intellij.platform.execution.dashboard.actions.GroupByConfigurationTypeAction"/>
+      <action id="RunDashboard.GroupByStatus"
+              class="com.intellij.platform.execution.dashboard.actions.GroupByConfigurationStatusAction"/>
+      <separator/>
+      <separator key="separator.RunDashboard.Filter"/>
+      <group id="RunDashboard.Filter" class="com.intellij.platform.execution.dashboard.actions.RunDashboardFilterActionGroup"/>
+      <add-to-group group-id="ServiceView.ViewOptions"/>
+    </group>
+    <action id="RunDashboard.AddConfiguration" class="com.intellij.platform.execution.dashboard.actions.AddRunConfigurationAction">
+      <add-to-group group-id="ServiceView.AddService"/>
+    </action>
+    <reference ref="RunDashboard.RestoreHiddenConfigurations">
+      <add-to-group group-id="ServiceView.AddService" anchor="after" relative-to-action="RunDashboard.AddConfiguration"/>
+    </reference>
+    <action id="RunDashboard.DoubleClickRun"
+            class="com.intellij.platform.execution.dashboard.actions.RunDashboardDoubleClickRunAction">
+      <add-to-group group-id="ServiceView.Gear"/>
+    </action>
+  </actions>
+</idea-plugin>

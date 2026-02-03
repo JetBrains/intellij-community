@@ -1,0 +1,39 @@
+### auto-generated section `build intellij.kotlin.plugin.updater` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "plugin-updater_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "plugin-updater",
+  module_name = "intellij.kotlin.plugin.updater",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":plugin-updater_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:jaxb-api",
+    "//libraries/gson",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/facet",
+    "//platform/analysis-api:analysis",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/project-configuration",
+    "//platform/util/jdom",
+    "//platform/core-impl",
+    "//platform/core-ui",
+    "//platform/platform-impl:ide-impl",
+    "//java/compiler/openapi:java-compiler",
+    "//platform/statistics",
+  ]
+)
+### auto-generated section `build intellij.kotlin.plugin.updater` end

@@ -1,0 +1,178 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.compiler;
+
+import org.intellij.lang.annotations.Language;
+
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticCollector;
+import javax.tools.FileObject;
+import javax.tools.ForwardingJavaFileManager;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.SimpleJavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.StandardLocation;
+import javax.tools.ToolProvider;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.StringWriter;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+/**
+ * @author Bas Leijdekkers
+ */
+public final class JavaInMemoryCompiler {
+
+  private final JavaCompiler myCompiler = createJavaCompiler();
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  private final JavaMemFileManager myFileManager = new JavaMemFileManager(myCompiler);
+
+  private static JavaCompiler createJavaCompiler() {
+    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+    if (compiler == null) {
+      //workaround for IJPL-229691
+      try {
+        compiler = (JavaCompiler)Class.forName("com.sun.tools.javac.api.JavacTool").getMethod("create").invoke(null);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+    return compiler;
+  }
+
+  public JavaInMemoryCompiler(File... classpath) {
+    try {
+      myFileManager.setLocation(StandardLocation.CLASS_PATH, Arrays.asList(classpath));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * @return the compiled classes as a map (a class Name -> the class compiled content)
+   */
+  public Map<String, byte[]> compile(String className, @Language("JAVA") String code) {
+    return compile(Collections.singletonMap(className, code));
+  }
+
+  /**
+   * Compiles the given Java source classes.
+   * @param sources mapping from dot-separated class names to their source code
+   * @return the compiled classes as a map (a class Name -> the class compiled content)
+   */
+  public Map<String, byte[]> compile(Map<String, String> sources) {
+    final DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
+    final List<JavaSourceFromString> compilationUnits = new ArrayList<>();
+    for (Map.Entry<String, String> entry : sources.entrySet()) {
+      compilationUnits.add(new JavaSourceFromString(entry.getKey(), entry.getValue()));
+    }
+    final Iterable<String> options = Collections.singletonList("-g"); // generate debugging info.
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+    final OutputStreamWriter out = new OutputStreamWriter(System.err, StandardCharsets.UTF_8);
+    final Boolean success = myCompiler.getTask(out, myFileManager, diagnostics, options, null, compilationUnits).call();
+
+    if (!success.booleanValue()) {
+      final StringWriter writer = new StringWriter();
+      for (Diagnostic diagnostic : diagnostics.getDiagnostics()) {
+        writer.write(diagnostic.getMessage(Locale.ENGLISH));
+        writer.write(" on line " + diagnostic.getLineNumber());
+        writer.write("\n");
+      }
+      throw new RuntimeException(writer.toString());
+    }
+    final List<InMemoryClassFile> classFiles = myFileManager.getClassFiles();
+    final Map<String, byte[]> result = new HashMap<>(classFiles.size());
+    for (InMemoryClassFile classFile : classFiles) {
+      result.put(classFile.getClassName(), classFile.getBytes());
+    }
+    return result;
+  }
+
+  public static class JavaSourceFromString extends SimpleJavaFileObject {
+
+    final String myCode;
+
+    JavaSourceFromString(String className, String code) {
+      super(URI.create("string:///" + className.replace('.', '/') + Kind.SOURCE.extension), Kind.SOURCE);
+      this.myCode = code;
+    }
+
+    @Override
+    public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+      return myCode;
+    }
+  }
+
+  public static class InMemoryClassFile extends SimpleJavaFileObject {
+
+    private final String myClassName;
+    ByteArrayOutputStream myOutputStream = new ByteArrayOutputStream();
+
+    public InMemoryClassFile(String className) {
+      super(URI.create("class:///" + className.replace('.', '/') + ".class"), Kind.CLASS);
+      myClassName = className;
+    }
+
+    public String getClassName() {
+      return myClassName;
+    }
+
+    public byte[] getBytes() {
+      return myOutputStream.toByteArray();
+    }
+
+    @Override
+    public OutputStream openOutputStream() {
+      myOutputStream.reset();
+      return myOutputStream;
+    }
+  }
+
+  public static class JavaMemFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> {
+
+    private final List<InMemoryClassFile> myClassFiles = new ArrayList<>(2);
+
+    public JavaMemFileManager(JavaCompiler compiler) {
+      super(compiler.getStandardFileManager(null, null, null));
+    }
+
+    @Override
+    public JavaFileObject getJavaFileForOutput(Location location, String className, JavaFileObject.Kind kind, FileObject sibling)
+      throws IOException {
+      if (StandardLocation.CLASS_OUTPUT == location && JavaFileObject.Kind.CLASS == kind) {
+        final InMemoryClassFile file = new InMemoryClassFile(className);
+        myClassFiles.add(file);
+        return file;
+      }
+      else {
+        return super.getJavaFileForOutput(location, className, kind, sibling);
+      }
+    }
+
+    public void setLocation(Location location, Iterable<? extends File> path) throws IOException {
+      fileManager.setLocation(location, path);
+    }
+
+    public List<InMemoryClassFile> getClassFiles() {
+      return myClassFiles;
+    }
+
+    @Override
+    public ClassLoader getClassLoader(Location location) {
+      return null;
+    }
+  }
+}

@@ -1,0 +1,233 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.resolve;
+
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.patterns.compiler.PatternCompilerFactory;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.DelegatingScopeProcessor;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ClassUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.MultiProcessor;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
+import static com.intellij.psi.scope.JavaScopeProcessorEvent.CHANGE_LEVEL;
+import static com.intellij.util.containers.ContainerUtil.map;
+import static org.jetbrains.plugins.groovy.dgm.DGMMemberContributor.processDgmMethods;
+import static org.jetbrains.plugins.groovy.lang.resolve.CategoryMemberContributorKt.processCategoriesInScope;
+import static org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor.processClassMixins;
+
+/**
+ * Allows to extend groovy programs with custom properties and methods.
+ * This is useful for implementing custom resolve algorithms and completion.
+ * <p>
+ * Contributor must check if the processor accepts the elements the contributor can offer.
+ * Feeding processor with unnecessary elements which are then filtered away slows down the reference resolution.
+ * <ul>
+ *   <li>Ensure that the element name is right.
+ *     <p>
+ *       Ask processor for the name: {@code val nameHint = processor.getHint(NameHint.KEY)}. <br/>
+ *       If the hint is {@code null} or the name ({@code nameHint.getName(resolveState)}) is {@code null}
+ *       then processor doesn't care about the name, so the contributor is free to feed the processor with whatever elements.
+ *       This usually happens when completion is in progress. <br/>
+ *       If the name is not {@code null} then the contributor has to feed processor with properly named elements.
+ *     </p>
+ *     <p>
+ *       Usually there will be some cache map (name -> element) in contributor model,
+ *       and the contributor will either feed all elements from the cache
+ *       (if the name is {@code null}) or get element by name and feed this element.
+ *     </p>
+ *   </li>
+ *   <li>Ensure that the element kind is right after checking the name.
+ *     <p>
+ *       Ask processor for the kind: {@code val kindHint = processor.getHint(ElementClassHint.KEY)}. <br/>
+ *       If there is no hint (i.e. {@code null}), then, again,
+ *       the contributor is free to feed processor with whatever elements. <br/>
+ *       If there is a hint, then contributor has to check if it accepts fields:
+ *       {@code kindHint.shouldProcess(ElementClassHint.DeclarationKind.FIELD)}. <br/>
+ *       The same applies for methods: kindHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD)
+ *     </p>
+ *   </li>
+ * </ul>
+ * <p>
+ * The processor's {@link PsiScopeProcessor#execute execute} method returns boolean value.
+ * Contributors must use use it to check if the processor was stopped:
+ * <pre>
+ * if (!processor.execute(element, state)) {
+ *   return
+ * }
+ * </pre>
+ *
+ * @see com.intellij.psi.scope.NameHint
+ * @see com.intellij.psi.scope.ElementClassHint
+ */
+public abstract class NonCodeMembersContributor {
+  public static final ExtensionPointName<NonCodeMembersContributor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.membersContributor");
+
+  static {
+    EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
+      @Override
+      public void extensionAdded(@NotNull NonCodeMembersContributor extension, @NotNull PluginDescriptor pluginDescriptor) {
+        dropCache();
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull NonCodeMembersContributor extension, @NotNull PluginDescriptor pluginDescriptor) {
+        dropCache();
+      }
+    }, null);
+  }
+
+  private static volatile Cache cache;
+
+  public void processDynamicElements(@NotNull PsiType qualifierType,
+                                     @NotNull PsiScopeProcessor processor,
+                                     @NotNull PsiElement place,
+                                     @NotNull ResolveState state) {
+    throw new RuntimeException("One of two 'processDynamicElements()' methods must be implemented");
+  }
+
+  public void processDynamicElements(@NotNull PsiType qualifierType,
+                                     @Nullable PsiClass aClass,
+                                     @NotNull PsiScopeProcessor processor,
+                                     @NotNull PsiElement place,
+                                     @NotNull ResolveState state) {
+    processDynamicElements(qualifierType, processor, place, state);
+  }
+
+  protected boolean unwrapMultiprocessor() {
+    return true;
+  }
+
+  protected @Nullable String getParentClassName() {
+    return null;
+  }
+
+  protected @NotNull Collection<String> getClassNames() {
+    String className = getParentClassName();
+    return ContainerUtil.createMaybeSingletonList(className);
+  }
+
+  private static void dropCache() {
+    cache = null;
+    PatternCompilerFactory.getFactory().dropCache();
+  }
+
+  private static void ensureInit() {
+    if (cache != null) return;
+
+    final Collection<NonCodeMembersContributor> allTypeContributors = new ArrayList<>();
+    final MultiMap<String, NonCodeMembersContributor> contributorMap = new MultiMap<>();
+    for (final NonCodeMembersContributor contributor : EP_NAME.getExtensions()) {
+      Collection<String> fqns = contributor.getClassNames();
+      if (fqns.isEmpty()) {
+        allTypeContributors.add(contributor);
+      }
+      else {
+        for (String fqn : fqns) {
+          contributorMap.putValue(fqn, contributor);
+        }
+      }
+    }
+    cache = new Cache(contributorMap, allTypeContributors.toArray(new NonCodeMembersContributor[0]));
+  }
+
+  private static @NotNull Iterable<NonCodeMembersContributor> getApplicableContributors(@Nullable PsiClass clazz) {
+    final List<NonCodeMembersContributor> result = new ArrayList<>();
+    if (clazz != null) {
+      for (String superClassName : ClassUtil.getSuperClassesWithCache(clazz).keySet()) {
+        result.addAll(cache.classSpecifiedContributors.get(superClassName));
+      }
+    }
+    ContainerUtil.addAll(result, cache.allTypeContributors);
+    return result;
+  }
+
+  public static boolean runContributors(@NotNull PsiType qualifierType,
+                                        @NotNull PsiScopeProcessor processor,
+                                        @NotNull PsiElement place,
+                                        @NotNull ResolveState state) {
+    ensureInit();
+
+    final PsiClass aClass = PsiTypesUtil.getPsiClass(qualifierType);
+
+    final Iterable<? extends PsiScopeProcessor> unwrappedOriginals = MultiProcessor.allProcessors(processor);
+    for (PsiScopeProcessor each : unwrappedOriginals) {
+      if (!processClassMixins(qualifierType, each, place, state)) {
+        return false;
+      }
+      if (!processCategoriesInScope(qualifierType, each, place, state)) {
+        return false;
+      }
+      if (!processDgmMethods(qualifierType, each, place, state)) {
+        return false;
+      }
+    }
+
+    final List<MyDelegatingScopeProcessor> wrapped = Collections.singletonList(new MyDelegatingScopeProcessor(processor));
+    final List<MyDelegatingScopeProcessor> unwrapped = map(MultiProcessor.allProcessors(processor), MyDelegatingScopeProcessor::new);
+
+    final Iterable<NonCodeMembersContributor> contributors = getApplicableContributors(aClass);
+    for (NonCodeMembersContributor contributor : contributors) {
+      ProgressManager.checkCanceled();
+      processor.handleEvent(CHANGE_LEVEL, null);
+      final List<MyDelegatingScopeProcessor> delegates = contributor.unwrapMultiprocessor() ? unwrapped : wrapped;
+      for (MyDelegatingScopeProcessor delegatingProcessor : delegates) {
+        ProgressManager.checkCanceled();
+        contributor.processDynamicElements(qualifierType, aClass, delegatingProcessor, place, state);
+        if (!delegatingProcessor.wantMore) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  private static class MyDelegatingScopeProcessor extends DelegatingScopeProcessor implements MultiProcessor {
+    public boolean wantMore = true;
+
+    MyDelegatingScopeProcessor(PsiScopeProcessor delegate) {
+      super(delegate);
+    }
+
+    @Override
+    public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
+      if (!wantMore) {
+        return false;
+      }
+      wantMore = super.execute(element, state);
+      return wantMore;
+    }
+
+    @Override
+    public @NotNull Iterable<? extends PsiScopeProcessor> getProcessors() {
+      return MultiProcessor.allProcessors(getDelegate());
+    }
+  }
+
+  private static final class Cache {
+    public final MultiMap<String, NonCodeMembersContributor> classSpecifiedContributors;
+    public final NonCodeMembersContributor[] allTypeContributors;
+
+    private Cache(MultiMap<String, NonCodeMembersContributor> classSpecifiedContributors,
+                  NonCodeMembersContributor[] allTypeContributors) {
+      this.classSpecifiedContributors = classSpecifiedContributors;
+      this.allTypeContributors = allTypeContributors;
+    }
+  }
+}

@@ -1,0 +1,7 @@
+// WITH_STDLIB
+fun test(b: Boolean): Int {
+    when (b) {
+        true -> return 1
+        else -> TODO()
+    }
+}

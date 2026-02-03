@@ -1,0 +1,7 @@
+fun main() {
+    val a = buildList {
+        addAll(listOf(1,2))
+        addAll(listOf(1).mapTo(mutableListOf()) { it })
+    }
+}
+

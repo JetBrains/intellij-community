@@ -1,0 +1,724 @@
+**Experimental and under active development**
+
+This section documents the wire protocol commands exposed to transports
+using the frame-based protocol. The set of commands exposed through
+these transports is distinct from the set of commands exposed to legacy
+transports.
+
+The frame-based protocol uses CBOR to encode command execution requests.
+All command arguments must be mapped to a specific or set of CBOR data
+types.
+
+The response to many commands is also CBOR. There is no common response
+format: each command defines its own response format.
+
+TODOs
+=====
+
+* Add "node namespace" support to each command. In order to support
+  SHA-1 hash transition, we want servers to be able to expose different
+  "node namespaces" for the same data. Every command operating on nodes
+  should specify which "node namespace" it is operating on and responses
+  should encode the "node namespace" accordingly.
+
+Commands
+========
+
+The sections below detail all commands available to wire protocol version
+2.
+
+branchmap
+---------
+
+Obtain heads in named branches.
+
+Receives no arguments.
+
+The response is a map with bytestring keys defining the branch name.
+Values are arrays of bytestring defining raw changeset nodes.
+
+capabilities
+------------
+
+Obtain the server's capabilities.
+
+Receives no arguments.
+
+This command is typically called only as part of the handshake during
+initial connection establishment.
+
+The response is a map with bytestring keys defining server information.
+
+The defined keys are:
+
+commands
+   A map defining available wire protocol commands on this server.
+
+   Keys in the map are the names of commands that can be invoked. Values
+   are maps defining information about that command. The bytestring keys
+   are:
+
+      args
+         (map) Describes arguments accepted by the command.
+
+         Keys are bytestrings denoting the argument name.
+
+         Values are maps describing the argument. The map has the following
+         bytestring keys:
+
+         default
+            (varied) The default value for this argument if not specified. Only
+            present if ``required`` is not true.
+
+         required
+            (boolean) Whether the argument must be specified. Failure to send
+            required arguments will result in an error executing the command.
+
+         type
+            (bytestring) The type of the argument. e.g. ``bytes`` or ``bool``.
+
+         validvalues
+            (set) Values that are recognized for this argument. Some arguments
+            only allow a fixed set of values to be specified. These arguments
+            may advertise that set in this key. If this set is advertised and
+            a value not in this set is specified, the command should result
+            in error.
+
+      permissions
+         An array of permissions required to execute this command.
+
+      *
+         (various) Individual commands may define extra keys that supplement
+         generic command metadata. See the command definition for more.
+
+framingmediatypes
+   An array of bytestrings defining the supported framing protocol
+   media types. Servers will not accept media types not in this list.
+
+pathfilterprefixes
+   (set of bytestring) Matcher prefixes that are recognized when performing
+   path filtering. Specifying a path filter whose type/prefix does not
+   match one in this set will likely be rejected by the server.
+
+rawrepoformats
+   An array of storage formats the repository is using. This set of
+   requirements can be used to determine whether a client can read a
+   *raw* copy of file data available.
+
+redirect
+   A map declaring potential *content redirects* that may be used by this
+   server. Contains the following bytestring keys:
+
+   targets
+      (array of maps) Potential redirect targets. Values are maps describing
+      this target in more detail. Each map has the following bytestring keys:
+
+      name
+         (bytestring) Identifier for this target. The identifier will be used
+         by clients to uniquely identify this target.
+
+      protocol
+         (bytestring) High-level network protocol. Values can be
+         ``http``, ```https``, ``ssh``, etc.
+
+      uris
+          (array of bytestrings) Representative URIs for this target.
+
+      snirequired (optional)
+          (boolean) Indicates whether Server Name Indication is required
+          to use this target. Defaults to False.
+
+      tlsversions (optional)
+          (array of bytestring) Indicates which TLS versions are supported by
+          this target. Values are ``1.1``, ``1.2``, ``1.3``, etc.
+
+   hashes
+      (array of bytestring) Indicates support for hashing algorithms that are
+      used to ensure content integrity. Values include ``sha1``, ``sha256``,
+      etc.
+
+changesetdata
+-------------
+
+Obtain various data related to changesets.
+
+The command accepts the following arguments:
+
+revisions
+   (array of maps) Specifies revisions whose data is being requested. Each
+   value in the array is a map describing revisions. See the
+   *Revisions Specifiers* section below for the format of this map.
+
+   Data will be sent for the union of all revisions resolved by all
+   revision specifiers.
+
+   Only revision specifiers operating on changeset revisions are allowed.
+
+fields
+   (set of bytestring) Which data associated with changelog revisions to
+   fetch. The following values are recognized:
+
+   bookmarks
+      Bookmarks associated with a revision.
+
+   parents
+      Parent revisions.
+
+   phase
+      The phase state of a revision.
+
+   revision
+      The raw, revision data for the changelog entry. The hash of this data
+      will match the revision's node value.
+
+The response bytestream starts with a CBOR map describing the data that follows.
+This map has the following bytestring keys:
+
+totalitems
+   (unsigned integer) Total number of changelog revisions whose data is being
+   transferred. This maps to the set of revisions in the requested node
+   range, not the total number of records that follow (see below for why).
+
+Following the map header is a series of 0 or more CBOR values. If values
+are present, the first value will always be a map describing a single changeset
+revision.
+
+If the ``fieldsfollowing`` key is present, the map will immediately be followed
+by N CBOR bytestring values, where N is the number of elements in
+``fieldsfollowing``. Each bytestring value corresponds to a field denoted
+by ``fieldsfollowing``.
+
+Following the optional bytestring field values is the next revision descriptor
+map, or end of stream.
+
+Each revision descriptor map has the following bytestring keys:
+
+node
+   (bytestring) The node value for this revision. This is the SHA-1 hash of
+   the raw revision data.
+
+bookmarks (optional)
+   (array of bytestrings) Bookmarks attached to this revision. Only present
+   if ``bookmarks`` data is being requested and the revision has bookmarks
+   attached.
+
+fieldsfollowing (optional)
+   (array of 2-array) Denotes what fields immediately follow this map. Each
+   value is an array with 2 elements: the bytestring field name and an unsigned
+   integer describing the length of the data, in bytes.
+
+   If this key isn't present, no special fields will follow this map.
+
+   The following fields may be present:
+
+   revision
+      Raw, revision data for the changelog entry. Contains a serialized form
+      of the changeset data, including the author, date, commit message, set
+      of changed files, manifest node, and other metadata.
+
+      Only present if the ``revision`` field was requested.
+
+parents (optional)
+   (array of bytestrings) The nodes representing the parent revisions of this
+   revision. Only present if ``parents`` data is being requested.
+
+phase (optional)
+   (bytestring) The phase that a revision is in. Recognized values are
+   ``secret``, ``draft``, and ``public``. Only present if ``phase`` data
+   is being requested.
+
+The set of changeset revisions emitted may not match the exact set of
+changesets requested. Furthermore, the set of keys present on each
+map may vary. This is to facilitate emitting changeset updates as well
+as new revisions.
+
+For example, if the request wants ``phase`` and ``revision`` data,
+the response may contain entries for each changeset in the common nodes
+set with the ``phase`` key and without the ``revision`` key in order
+to reflect a phase-only update.
+
+TODO support different revision selection mechanisms (e.g. non-public, specific
+revisions)
+TODO support different hash "namespaces" for revisions (e.g. sha-1 versus other)
+TODO support emitting obsolescence data
+TODO support filtering based on relevant paths (narrow clone)
+TODO support hgtagsfnodes cache / tags data
+TODO support branch heads cache
+TODO consider unify query mechanism. e.g. as an array of "query descriptors"
+rather than a set of top-level arguments that have semantics when combined.
+
+filedata
+--------
+
+Obtain various data related to an individual tracked file.
+
+The command accepts the following arguments:
+
+fields
+   (set of bytestring) Which data associated with a file to fetch.
+   The following values are recognized:
+
+   linknode
+      The changeset node introducing this revision.
+
+   parents
+      Parent nodes for the revision.
+
+   revision
+      The raw revision data for a file.
+
+haveparents
+   (bool) Whether the client has the parent revisions of all requested
+   nodes. If set, the server may emit revision data as deltas against
+   any parent revision. If not set, the server MUST only emit deltas for
+   revisions previously emitted by this command.
+
+   False is assumed in the absence of any value.
+
+nodes
+   (array of bytestrings) File nodes whose data to retrieve.
+
+path
+   (bytestring) Path of the tracked file whose data to retrieve.
+
+TODO allow specifying revisions via alternate means (such as from
+changeset revisions or ranges)
+
+The response bytestream starts with a CBOR map describing the data that
+follows. It has the following bytestream keys:
+
+totalitems
+   (unsigned integer) Total number of file revisions whose data is
+   being returned.
+
+Following the map header is a series of 0 or more CBOR values. If values
+are present, the first value will always be a map describing a single changeset
+revision.
+
+If the ``fieldsfollowing`` key is present, the map will immediately be followed
+by N CBOR bytestring values, where N is the number of elements in
+``fieldsfollowing``. Each bytestring value corresponds to a field denoted
+by ``fieldsfollowing``.
+
+Following the optional bytestring field values is the next revision descriptor
+map, or end of stream.
+
+Each revision descriptor map has the following bytestring keys:
+
+Each map has the following bytestring keys:
+
+node
+   (bytestring) The node of the file revision whose data is represented.
+
+deltabasenode
+   (bytestring) Node of the file revision the following delta is against.
+
+   Only present if the ``revision`` field is requested and delta data
+   follows this map.
+
+fieldsfollowing
+   (array of 2-array) Denotes extra bytestring fields that following this map.
+   See the documentation for ``changesetdata`` for semantics.
+
+   The following named fields may be present:
+
+   ``delta``
+      The delta data to use to construct the fulltext revision.
+
+      Only present if the ``revision`` field is requested and a delta is
+      being emitted. The ``deltabasenode`` top-level key will also be
+      present if this field is being emitted.
+
+   ``revision``
+      The fulltext revision data for this manifest. Only present if the
+      ``revision`` field is requested and a fulltext revision is being emitted.
+
+parents
+   (array of bytestring) The nodes of the parents of this file revision.
+
+   Only present if the ``parents`` field is requested.
+
+When ``revision`` data is requested, the server chooses to emit either fulltext
+revision data or a delta. What the server decides can be inferred by looking
+for the presence of the ``delta`` or ``revision`` keys in the
+``fieldsfollowing`` array.
+
+filesdata
+---------
+
+Obtain various data related to multiple tracked files for specific changesets.
+
+This command is similar to ``filedata`` with the main difference being that
+individual requests operate on multiple file paths. This allows clients to
+request data for multiple paths by issuing a single command.
+
+The command accepts the following arguments:
+
+fields
+   (set of bytestring) Which data associated with a file to fetch.
+   The following values are recognized:
+
+   linknode
+      The changeset node introducing this revision.
+
+   parents
+      Parent nodes for the revision.
+
+   revision
+      The raw revision data for a file.
+
+haveparents
+   (bool) Whether the client has the parent revisions of all requested
+   nodes.
+
+pathfilter
+   (map) Defines a filter that determines what file paths are relevant.
+
+   See the *Path Filters* section for more.
+
+   If the argument is omitted, it is assumed that all paths are relevant.
+
+revisions
+   (array of maps) Specifies revisions whose data is being requested. Each value
+   in the array is a map describing revisions. See the *Revisions Specifiers*
+   section below for the format of this map.
+
+   Data will be sent for the union of all revisions resolved by all revision
+   specifiers.
+
+   Only revision specifiers operating on changeset revisions are allowed.
+
+The response bytestream starts with a CBOR map describing the data that
+follows. This map has the following bytestring keys:
+
+totalpaths
+   (unsigned integer) Total number of paths whose data is being transferred.
+
+totalitems
+   (unsigned integer) Total number of file revisions whose data is being
+   transferred.
+
+Following the map header are 0 or more sequences of CBOR values. Each sequence
+represents data for a specific tracked path. Each sequence begins with a CBOR
+map describing the file data that follows. Following that map is N CBOR values
+describing file revision data. The format of this data is identical to that
+returned by the ``filedata`` command.
+
+Each sequence's map header has the following bytestring keys:
+
+path
+   (bytestring) The tracked file path whose data follows.
+
+totalitems
+   (unsigned integer) Total number of file revisions whose data is being
+   transferred.
+
+The ``haveparents`` argument has significant implications on the data
+transferred.
+
+When ``haveparents`` is true, the command MAY only emit data for file
+revisions introduced by the set of changeset revisions whose data is being
+requested. In other words, the command may assume that all file revisions
+for all relevant paths for ancestors of the requested changeset revisions
+are present on the receiver.
+
+When ``haveparents`` is false, the command MUST assume that the receiver
+has no file revisions data. This means that all referenced file revisions
+in the queried set of changeset revisions will be sent.
+
+TODO we want a more complicated mechanism for the client to specify which
+ancestor revisions are known. This is needed so intelligent deltas can be
+emitted and so updated linknodes can be sent if the client needs to adjust
+its linknodes for existing file nodes to older changeset revisions.
+TODO we may want to make linknodes an array so multiple changesets can be
+marked as introducing a file revision, since this can occur with e.g. hidden
+changesets.
+
+heads
+-----
+
+Obtain DAG heads in the repository.
+
+The command accepts the following arguments:
+
+publiconly (optional)
+   (boolean) If set, operate on the DAG for public phase changesets only.
+   Non-public (i.e. draft) phase DAG heads will not be returned.
+
+The response is a CBOR array of bytestrings defining changeset nodes
+of DAG heads. The array can be empty if the repository is empty or no
+changesets satisfied the request.
+
+TODO consider exposing phase of heads in response
+
+known
+-----
+
+Determine whether a series of changeset nodes is known to the server.
+
+The command accepts the following arguments:
+
+nodes
+   (array of bytestrings) List of changeset nodes whose presence to
+   query.
+
+The response is a bytestring where each byte contains a 0 or 1 for the
+corresponding requested node at the same index.
+
+TODO use a bit array for even more compact response
+
+listkeys
+--------
+
+List values in a specified ``pushkey`` namespace.
+
+The command receives the following arguments:
+
+namespace
+   (bytestring) Pushkey namespace to query.
+
+The response is a map with bytestring keys and values.
+
+TODO consider using binary to represent nodes in certain pushkey namespaces.
+
+lookup
+------
+
+Try to resolve a value to a changeset revision.
+
+Unlike ``known`` which operates on changeset nodes, lookup operates on
+node fragments and other names that a user may use.
+
+The command receives the following arguments:
+
+key
+   (bytestring) Value to try to resolve.
+
+On success, returns a bytestring containing the resolved node.
+
+manifestdata
+------------
+
+Obtain various data related to manifests (which are lists of files in
+a revision).
+
+The command accepts the following arguments:
+
+fields
+   (set of bytestring) Which data associated with manifests to fetch.
+   The following values are recognized:
+
+   parents
+      Parent nodes for the manifest.
+
+   revision
+      The raw revision data for the manifest.
+
+haveparents
+   (bool) Whether the client has the parent revisions of all requested
+   nodes. If set, the server may emit revision data as deltas against
+   any parent revision. If not set, the server MUST only emit deltas for
+   revisions previously emitted by this command.
+
+   False is assumed in the absence of any value.
+
+nodes
+   (array of bytestring) Manifest nodes whose data to retrieve.
+
+tree
+   (bytestring) Path to manifest to retrieve. The empty bytestring represents
+   the root manifest. All other values represent directories/trees within
+   the repository.
+
+TODO allow specifying revisions via alternate means (such as from changeset
+revisions or ranges)
+TODO consider recursive expansion of manifests (with path filtering for
+narrow use cases)
+
+The response bytestream starts with a CBOR map describing the data that
+follows. It has the following bytestring keys:
+
+totalitems
+   (unsigned integer) Total number of manifest revisions whose data is
+   being returned.
+
+Following the map header is a series of 0 or more CBOR values. If values
+are present, the first value will always be a map describing a single manifest
+revision.
+
+If the ``fieldsfollowing`` key is present, the map will immediately be followed
+by N CBOR bytestring values, where N is the number of elements in
+``fieldsfollowing``. Each bytestring value corresponds to a field denoted
+by ``fieldsfollowing``.
+
+Following the optional bytestring field values is the next revision descriptor
+map, or end of stream.
+
+Each revision descriptor map has the following bytestring keys:
+
+node
+   (bytestring) The node of the manifest revision whose data is represented.
+
+deltabasenode
+   (bytestring) The node that the delta representation of this revision is
+   computed against. Only present if the ``revision`` field is requested and
+   a delta is being emitted.
+
+fieldsfollowing
+   (array of 2-array) Denotes extra bytestring fields that following this map.
+   See the documentation for ``changesetdata`` for semantics.
+
+   The following named fields may be present:
+
+   ``delta``
+      The delta data to use to construct the fulltext revision.
+
+      Only present if the ``revision`` field is requested and a delta is
+      being emitted. The ``deltabasenode`` top-level key will also be
+      present if this field is being emitted.
+
+   ``revision``
+      The fulltext revision data for this manifest. Only present if the
+      ``revision`` field is requested and a fulltext revision is being emitted.
+
+parents
+   (array of bytestring) The nodes of the parents of this manifest revision.
+   Only present if the ``parents`` field is requested.
+
+When ``revision`` data is requested, the server chooses to emit either fulltext
+revision data or a delta. What the server decides can be inferred by looking
+for the presence of ``delta`` or ``revision`` in the ``fieldsfollowing`` array.
+
+Servers MAY advertise the following extra fields in the capabilities
+descriptor for this command:
+
+recommendedbatchsize
+   (unsigned integer) Number of revisions the server recommends as a batch
+   query size. If defined, clients needing to issue multiple ``manifestdata``
+   commands to obtain needed data SHOULD construct their commands to have
+   this many revisions per request.
+
+pushkey
+-------
+
+Set a value using the ``pushkey`` protocol.
+
+The command receives the following arguments:
+
+namespace
+   (bytestring) Pushkey namespace to operate on.
+key
+   (bytestring) The pushkey key to set.
+old
+   (bytestring) Old value for this key.
+new
+   (bytestring) New value for this key.
+
+TODO consider using binary to represent nodes is certain pushkey namespaces.
+TODO better define response type and meaning.
+
+rawstorefiledata
+----------------
+
+Allows retrieving raw files used to store repository data.
+
+The command accepts the following arguments:
+
+files
+   (array of bytestring) Describes the files that should be retrieved.
+
+   The meaning of values in this array is dependent on the storage backend used
+   by the server.
+
+The response bytestream starts with a CBOR map describing the data that follows.
+This map has the following bytestring keys:
+
+filecount
+   (unsigned integer) Total number of files whose data is being transferred.
+
+totalsize
+   (unsigned integer) Total size in bytes of files data that will be
+   transferred. This is file on-disk size and not wire size.
+
+Following the map header are N file segments. Each file segment consists of a
+CBOR map followed by an indefinite length bytestring. Each map has the following
+bytestring keys:
+
+location
+   (bytestring) Denotes the location in the repository where the file should be
+   written. Values map to vfs instances to use for the writing.
+
+path
+   (bytestring) Path of file being transferred. Path is the raw store
+   path and can be any sequence of bytes that can be tracked in a Mercurial
+   manifest.
+
+size
+   (unsigned integer) Size of file data. This will be the final written
+   file size. The total size of the data that follows the CBOR map
+   will be greater due to encoding overhead of CBOR.
+
+TODO this command is woefully incomplete. If we are to move forward with a
+stream clone analog, it needs a lot more metadata around how to describe what
+files are available to retrieve, other semantics.
+
+Revision Specifiers
+===================
+
+A *revision specifier* is a map that evaluates to a set of revisions.
+
+A *revision specifier* has a ``type`` key that defines the revision
+selection type to perform. Other keys in the map are used in a
+type-specific manner.
+
+The following types are defined:
+
+changesetexplicit
+   An explicit set of enumerated changeset revisions.
+
+   The ``nodes`` key MUST contain an array of full binary nodes, expressed
+   as bytestrings.
+
+changesetexplicitdepth
+   Like ``changesetexplicit``, but contains a ``depth`` key defining the
+   unsigned integer number of ancestor revisions to also resolve. For each
+   value in ``nodes``, DAG ancestors will be walked until up to N total
+   revisions from that ancestry walk are present in the final resolved set.
+
+changesetdagrange
+   Defines revisions via a DAG range of changesets on the changelog.
+
+   The ``roots`` key MUST contain an array of full, binary node values
+   representing the *root* revisions.
+
+   The ``heads`` key MUST contain an array of full, binary nodes values
+   representing the *head* revisions.
+
+   The DAG range between ``roots`` and ``heads`` will be resolved and all
+   revisions between will be used. Nodes in ``roots`` are not part of the
+   resolved set. Nodes in ``heads`` are. The ``roots`` array may be empty.
+   The ``heads`` array MUST be defined.
+
+Path Filters
+============
+
+Various commands accept a *path filter* argument that defines the set of file
+paths relevant to the request.
+
+A *path filter* is defined as a map with the bytestring keys ``include`` and
+``exclude``. Each is an array of bytestring values. Each value defines a pattern
+rule (see :hg:`help patterns`) that is used to match file paths.
+
+A path matches the path filter if it is matched by a rule in the ``include``
+set but doesn't match a rule in the ``exclude`` set. In other words, a path
+matcher takes the union of all ``include`` patterns and then substracts the
+union of all ``exclude`` patterns.
+
+Patterns MUST be prefixed with their pattern type. Only the following pattern
+types are allowed: ``path:``, ``rootfilesin:``.
+
+If the ``include`` key is omitted, it is assumed that all paths are
+relevant. The patterns from ``exclude`` will still be used, if defined.
+
+An example value is ``path:tests/foo``, which would match a file named
+``tests/foo`` or a directory ``tests/foo`` and all files under it.

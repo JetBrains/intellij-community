@@ -1,0 +1,6 @@
+-Constructor.java
+ -Constructor
+  [Constructor()]
+  foo(): void
+  num1: int
+  num2: int

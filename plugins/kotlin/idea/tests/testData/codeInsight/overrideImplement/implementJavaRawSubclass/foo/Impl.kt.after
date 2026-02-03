@@ -1,0 +1,11 @@
+import foo.A
+import foo.B
+
+class C : A() {
+    override fun foo(x: MutableList<Any?>?, y: String?): B<*> {
+        <selection><caret>TODO("Not yet implemented")</selection>
+    }
+}
+
+// MEMBER_K2: "foo(x: List<String?>?, y: String?): B<String?>?"
+// MEMBER_K1: "foo(x: (Mutable)List<(raw) Any?>!, y: String!): B<(raw) Any!>!"

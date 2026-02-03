@@ -1,0 +1,377 @@
+- name: lib/completion-ranking-kotlin.jar
+  library: completion-ranking-kotlin
+  module: intellij.kotlin.completion.ml
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0/completion-ranking-kotlin-0.jar
+- name: lib/ehcache.sizeof.jar
+  library: ehcache.sizeof
+  module: intellij.kotlin.analysis.platform
+  files:
+  - name: $MAVEN_REPOSITORY$/org/ehcache/sizeof/0/sizeof-0.jar
+- name: lib/frontend-split/kotlin-frontend.jar
+  modules:
+  - name: kotlin.frontend.split
+- name: lib/jackson-dataformat-toml.jar
+  library: jackson-dataformat-toml
+  files:
+  - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-toml/2/jackson-dataformat-toml-2.jar
+  reason: withProjectLibrary
+- name: lib/javax-inject.jar
+  library: javax-inject
+  files:
+  - name: $MAVEN_REPOSITORY$/javax/inject/javax.inject/1/javax.inject-1.jar
+  reason: withProjectLibrary
+- name: lib/jps/kotlin-jps-plugin.jar
+  library: kotlinc.kotlin-jps-plugin-classpath
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2/kotlin-jps-plugin-classpath-2.jar
+  reason: withProjectLibrary
+- name: lib/kotlin-base-jps.jar
+  modules:
+  - name: intellij.kotlin.base.jps
+- name: lib/kotlin-gradle-tooling.jar
+  projectLibraries:
+  - name: kotlin-gradle-plugin-idea
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea/1/kotlin-gradle-plugin-idea-1.jar
+  - name: kotlin-gradle-plugin-idea-proto
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/1/kotlin-gradle-plugin-idea-proto-1.jar
+  - name: kotlin-tooling-core
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-tooling-core/1/kotlin-tooling-core-1.jar
+  modules:
+  - name: intellij.kotlin.base.projectModel
+  - name: intellij.kotlin.gradle.tooling.impl
+- name: lib/kotlin-plugin-shared.jar
+  modules:
+  - name: intellij.kotlin.base.resources
+  - name: intellij.kotlin.base.codeInsight.minimal
+  - name: intellij.kotlin.highlighting.minimal
+  - name: intellij.kotlin.formatter.minimal
+- name: lib/kotlin-plugin.jar
+  projectLibraries:
+  - name: kotlin-metadata
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2/kotlin-metadata-jvm-2.jar
+  - name: kotlinc.analysis-api
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-for-ide/2/analysis-api-for-ide-2.jar
+  - name: kotlinc.analysis-api-fe10
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-fe10-for-ide/2/analysis-api-fe10-for-ide-2.jar
+  - name: kotlinc.analysis-api-impl-base
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2/analysis-api-impl-base-for-ide-2.jar
+  - name: kotlinc.analysis-api-k2
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-for-ide/2/analysis-api-k2-for-ide-2.jar
+  - name: kotlinc.analysis-api-platform-interface
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2/analysis-api-platform-interface-for-ide-2.jar
+  - name: kotlinc.kotlin-compiler-fir
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2/kotlin-compiler-fir-for-ide-2.jar
+  - name: kotlinc.kotlin-gradle-statistics
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2/kotlin-gradle-statistics-for-ide-2.jar
+  - name: kotlinc.kotlin-script-runtime
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2/kotlin-script-runtime-2.jar
+  - name: kotlinc.kotlin-scripting-common
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2/kotlin-scripting-common-2.jar
+  - name: kotlinc.kotlin-scripting-compiler-impl
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2/kotlin-scripting-compiler-impl-2.jar
+  - name: kotlinc.kotlin-scripting-dependencies
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2/kotlin-scripting-dependencies-2.jar
+  - name: kotlinc.kotlin-scripting-jvm
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2/kotlin-scripting-jvm-2.jar
+  - name: kotlinc.low-level-api-fir
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/low-level-api-fir-for-ide/2/low-level-api-fir-for-ide-2.jar
+  - name: kotlinc.symbol-light-classes
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/symbol-light-classes-for-ide/2/symbol-light-classes-for-ide-2.jar
+  modules:
+  - name: kotlin.plugin.common
+  - name: kotlin.plugin.k1
+  - name: kotlin.plugin.k2
+  - name: intellij.kotlin.base.util
+  - name: intellij.kotlin.base.indices
+  - name: intellij.kotlin.base.compilerConfiguration
+  - name: intellij.kotlin.base.plugin
+  - name: intellij.kotlin.base.psi
+  - name: intellij.kotlin.base.kdoc
+  - name: intellij.kotlin.base.platforms
+  - name: intellij.kotlin.base.facet
+  - name: intellij.kotlin.base.projectStructure
+  - name: intellij.kotlin.base.externalSystem
+  - name: kotlin.base.scripting.k1
+  - name: intellij.kotlin.base.scripting
+  - name: intellij.kotlin.base.scripting.shared
+  - name: intellij.kotlin.base.analysis.platform
+  - name: intellij.kotlin.base.analysis
+  - name: intellij.kotlin.base.codeInsight
+  - name: intellij.kotlin.base.analysis.utils
+  - name: intellij.kotlin.base.compilerConfiguration.ui
+  - name: kotlin.base.obsolete-compat
+  - name: intellij.kotlin.base.statistics
+  - name: kotlin.base.fe10.plugin
+  - name: kotlin.base.fe10.analysis
+  - name: kotlin.base.fe10.analysis-api-platform
+  - name: kotlin.base.fe10.kdoc
+  - name: kotlin.base.fe10.code-insight
+  - name: kotlin.base.fe10.obsolete-compat
+  - name: kotlin.base.fe10.project-structure
+  - name: kotlin.core
+  - name: intellij.kotlin.ide
+  - name: kotlin.idea
+  - name: kotlin.fir.frontend-independent
+  - name: kotlin.jvm.shared
+  - name: intellij.kotlin.jvm
+  - name: kotlin.jvm.k1
+  - name: intellij.kotlin.compilerReferenceIndex
+  - name: kotlin.compiler-plugins.parcelize.common
+  - name: kotlin.compiler-plugins.parcelize.k1
+  - name: intellij.kotlin.compilerPlugins.parcelize
+  - name: kotlin.compiler-plugins.parcelize.gradle
+  - name: kotlin.compiler-plugins.allopen.common.k1
+  - name: kotlin.compiler-plugins.allopen.gradle
+  - name: intellij.kotlin.compilerPlugins.allopen.maven
+  - name: intellij.kotlin.compilerPlugins.support
+  - name: kotlin.compiler-plugins.compiler-plugin-support.gradle
+  - name: intellij.kotlin.compilerPlugins.support.maven
+  - name: intellij.kotlin.compilerPlugins.kapt
+  - name: kotlin.compiler-plugins.kotlinx-serialization.common
+  - name: kotlin.compiler-plugins.kotlinx-serialization.gradle
+  - name: intellij.kotlin.compilerPlugins.serialization
+  - name: intellij.kotlin.compilerPlugins.serialization.maven
+  - name: intellij.kotlin.compilerPlugins.dataframe.maven
+  - name: kotlin.compiler-plugins.noarg.common
+  - name: kotlin.compiler-plugins.noarg.gradle
+  - name: intellij.kotlin.compilerPlugins.noarg.maven
+  - name: kotlin.compiler-plugins.sam-with-receiver.common
+  - name: kotlin.compiler-plugins.sam-with-receiver.gradle
+  - name: intellij.kotlin.compilerPlugins.samWithReceiver.maven
+  - name: kotlin.compiler-plugins.assignment.common.k1
+  - name: intellij.kotlin.compilerPlugins.assignment.fixes
+  - name: kotlin.compiler-plugins.assignment.gradle
+  - name: intellij.kotlin.compilerPlugins.assignment.maven
+  - name: kotlin.compiler-plugins.lombok.gradle
+  - name: intellij.kotlin.compilerPlugins.lombok.maven
+  - name: intellij.kotlin.compilerPlugins.scripting
+  - name: kotlin.compiler-plugins.android-extensions-stubs
+  - name: intellij.kotlin.completion.api
+  - name: kotlin.completion.impl.shared
+  - name: kotlin.completion.impl.k1
+  - name: intellij.kotlin.completion.impl
+  - name: intellij.kotlin.maven
+  - name: intellij.kotlin.gradle.tooling
+  - name: intellij.kotlin.gradle.gradle
+  - name: intellij.kotlin.gradle.codeInsight.common
+  - name: kotlin.gradle.gradle-java
+  - name: kotlin.gradle.gradle-java.k1
+  - name: intellij.kotlin.gradle.java
+  - name: kotlin.gradle.scripting.k1
+  - name: intellij.kotlin.gradle.scripting
+  - name: kotlin.gradle.scripting.shared
+  - name: intellij.kotlin.gradle.codeInsight.groovy
+  - name: intellij.kotlin.gradle.codeInsight.toml
+  - name: intellij.kotlin.gradle.codeInsight.toml.k2
+  - name: intellij.kotlin.native
+  - name: intellij.kotlin.grazie
+  - name: intellij.kotlin.runConfigurations.jvm
+  - name: intellij.kotlin.runConfigurations.junit
+  - name: kotlin.run-configurations.junit-fe10
+  - name: intellij.kotlin.runConfigurations.testng
+  - name: intellij.kotlin.formatter
+  - name: kotlin.repl
+  - name: intellij.kotlin.git
+  - name: kotlin.base.injection
+  - name: kotlin.injection.k1
+  - name: intellij.kotlin.injection
+  - name: kotlin.scripting
+  - name: intellij.kotlin.coverage
+  - name: intellij.kotlin.completion.ml
+  - name: intellij.kotlin.copyright
+  - name: intellij.kotlin.spellchecker
+  - name: intellij.kotlin.jvm.decompiler
+  - name: kotlin.j2k.shared
+  - name: kotlin.j2k.k1.new.post-processing
+  - name: kotlin.j2k.k1.old
+  - name: kotlin.j2k.k1.old.post-processing
+  - name: kotlin.j2k.k1.new
+  - name: intellij.kotlin.j2k
+  - name: intellij.kotlin.onboarding
+  - name: intellij.kotlin.onboarding.gradle
+  - name: intellij.kotlin.onboarding.maven
+  - name: intellij.kotlin.plugin.updater
+  - name: intellij.kotlin.preferences
+  - name: intellij.kotlin.projectConfiguration
+  - name: intellij.kotlin.projectWizard.cli
+  - name: intellij.kotlin.projectWizard.core
+  - name: intellij.kotlin.projectWizard.idea
+  - name: kotlin.project-wizard.idea.k1
+  - name: intellij.kotlin.projectWizard.maven
+  - name: intellij.kotlin.projectWizard.gradle
+  - name: intellij.kotlin.projectWizard.compose
+  - name: intellij.kotlin.jvm.debugger.base.util
+  - name: intellij.kotlin.jvm.debugger.core
+  - name: kotlin.jvm-debugger.core-fe10
+  - name: kotlin.jvm-debugger.evaluation
+  - name: kotlin.jvm-debugger.evaluation.k1
+  - name: intellij.kotlin.jvm.debugger.evaluation
+  - name: intellij.kotlin.jvm.debugger.coroutines
+  - name: kotlin.jvm-debugger.sequence.k1
+  - name: intellij.kotlin.jvm.debugger.eval4j
+  - name: kotlin.uast.uast-kotlin-base
+  - name: kotlin.uast.uast-kotlin
+  - name: kotlin.uast.uast-kotlin-idea-base
+  - name: kotlin.uast.uast-kotlin-idea
+  - name: intellij.kotlin.i18n
+  - name: intellij.kotlin.migration
+  - name: kotlin.inspections
+  - name: kotlin.inspections-fe10
+  - name: intellij.kotlin.featuresTrainer
+  - name: intellij.kotlin.analysis.platform
+  - name: intellij.kotlin.codeInsight.base
+  - name: intellij.kotlin.projectStructure
+  - name: intellij.kotlin.scripting
+  - name: intellij.kotlin.codeInsight.api
+  - name: intellij.kotlin.codeInsight.utils
+  - name: kotlin.code-insight.intentions.shared
+  - name: kotlin.code-insight.inspections.shared
+  - name: intellij.kotlin.codeInsight.shared
+  - name: intellij.kotlin.codeInsight.descriptions
+  - name: intellij.kotlin.codeInsight.fixes
+  - name: kotlin.code-insight.intentions.k1
+  - name: intellij.kotlin.codeInsight.intentions
+  - name: kotlin.code-insight.inspections.k1
+  - name: intellij.kotlin.codeInsight.inspections
+  - name: kotlin.code-insight.k1
+  - name: intellij.kotlin.codeInsight
+  - name: kotlin.code-insight.override-implement.shared
+  - name: kotlin.code-insight.override-implement.k1
+  - name: intellij.kotlin.codeInsight.overrideImplement
+  - name: kotlin.code-insight.live-templates.shared
+  - name: kotlin.code-insight.live-templates.k1
+  - name: intellij.kotlin.codeInsight.liveTemplates
+  - name: kotlin.code-insight.postfix-templates.k1
+  - name: intellij.kotlin.codeInsight.postfixTemplates
+  - name: kotlin.code-insight.structural-search.k1
+  - name: intellij.kotlin.codeInsight.structuralSearch
+  - name: kotlin.code-insight.line-markers.shared
+  - name: intellij.kotlin.codeInsight.lineMarkers
+  - name: kotlin.fir
+  - name: intellij.kotlin.searching
+  - name: intellij.kotlin.searching.base
+  - name: kotlin.highlighting.shared
+  - name: kotlin.highlighting.k1
+  - name: intellij.kotlin.highlighting
+  - name: intellij.kotlin.uast
+  - name: intellij.kotlin.uast.idea
+  - name: intellij.kotlin.navigation
+  - name: kotlin.refactorings.common
+  - name: intellij.kotlin.refactorings
+  - name: intellij.kotlin.refactorings.move
+  - name: intellij.kotlin.refactorings.rename
+  - name: intellij.kotlin.performanceExtendedPlugin
+  - name: kotlin.bundled-compiler-plugins-support
+  - name: kotlin.jsr223
+  - name: intellij.kotlin.internal
+  - name: intellij.kotlin.base.serialization
+  - name: kotlin-ultimate.common-native
+  - name: kotlin-ultimate.javascript.debugger
+  - name: kotlin-ultimate.javascript.nodeJs
+  - name: kotlin-ultimate.native-debugger
+  - name: kotlin-ultimate.ultimate-native
+  - name: kotlin-ultimate.wasm.debugger
+  - name: kotlin-ultimate.profiler
+  - name: kotlin-ultimate.ultimate-plugin
+  - name: intellij.kotlin.duplicate.scope
+  - name: kotlin.plugin
+- name: lib/kotlinc.allopen-compiler-plugin.jar
+  library: kotlinc.allopen-compiler-plugin
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2/allopen-compiler-plugin-for-ide-2.jar
+  reason: withProjectLibrary
+- name: lib/kotlinc.assignment-compiler-plugin.jar
+  library: kotlinc.assignment-compiler-plugin
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2/assignment-compiler-plugin-for-ide-2.jar
+  reason: withProjectLibrary
+- name: lib/kotlinc.compose-compiler-plugin.jar
+  library: kotlinc.compose-compiler-plugin
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2/compose-compiler-plugin-for-ide-2.jar
+  reason: withProjectLibrary
+- name: lib/kotlinc.js-plain-objects-compiler-plugin.jar
+  library: kotlinc.js-plain-objects-compiler-plugin
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2/js-plain-objects-compiler-plugin-for-ide-2.jar
+  reason: withProjectLibrary
+- name: lib/kotlinc.kotlin-compiler-common.jar
+  library: kotlinc.kotlin-compiler-common
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2/kotlin-compiler-common-for-ide-2.jar
+  reason: withProjectLibrary
+- name: lib/kotlinc.kotlin-compiler-fe10.jar
+  library: kotlinc.kotlin-compiler-fe10
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2/kotlin-compiler-fe10-for-ide-2.jar
+  reason: withProjectLibrary
+- name: lib/kotlinc.kotlin-compiler-ir.jar
+  library: kotlinc.kotlin-compiler-ir
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2/kotlin-compiler-ir-for-ide-2.jar
+  reason: withProjectLibrary
+- name: lib/kotlinc.kotlin-dataframe-compiler-plugin.jar
+  library: kotlinc.kotlin-dataframe-compiler-plugin
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2/kotlin-dataframe-compiler-plugin-for-ide-2.jar
+  reason: withProjectLibrary
+- name: lib/kotlinc.kotlin-jps-common.jar
+  library: kotlinc.kotlin-jps-common
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2/kotlin-jps-common-for-ide-2.jar
+  reason: withProjectLibrary
+- name: lib/kotlinc.kotlinx-serialization-compiler-plugin.jar
+  library: kotlinc.kotlinx-serialization-compiler-plugin
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2/kotlinx-serialization-compiler-plugin-for-ide-2.jar
+  reason: withProjectLibrary
+- name: lib/kotlinc.lombok-compiler-plugin.jar
+  library: kotlinc.lombok-compiler-plugin
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2/lombok-compiler-plugin-for-ide-2.jar
+  reason: withProjectLibrary
+- name: lib/kotlinc.noarg-compiler-plugin.jar
+  library: kotlinc.noarg-compiler-plugin
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2/noarg-compiler-plugin-for-ide-2.jar
+  reason: withProjectLibrary
+- name: lib/kotlinc.parcelize-compiler-plugin.jar
+  library: kotlinc.parcelize-compiler-plugin
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2/parcelize-compiler-plugin-for-ide-2.jar
+  reason: withProjectLibrary
+- name: lib/kotlinc.sam-with-receiver-compiler-plugin.jar
+  library: kotlinc.sam-with-receiver-compiler-plugin
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2/sam-with-receiver-compiler-plugin-for-ide-2.jar
+  reason: withProjectLibrary
+- name: lib/kotlinc.scripting-compiler-plugin.jar
+  library: kotlinc.scripting-compiler-plugin
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2/scripting-compiler-plugin-for-ide-2.jar
+  reason: withProjectLibrary
+- name: lib/vavr.jar
+  library: vavr
+  files:
+  - name: $MAVEN_REPOSITORY$/io/vavr/vavr/0/vavr-0.jar
+  - name: $MAVEN_REPOSITORY$/io/vavr/vavr-match/0/vavr-match-0.jar
+  reason: withProjectLibrary

@@ -1,0 +1,10 @@
+Types:
+PsiField:fooDontMigrateName : int
+PsiMethod:isFooDontMigrateName : int
+PsiMethodCallExpression:isFooDontMigrateName() : int
+PsiReferenceExpression:fooDontMigrateName : int
+
+Conversions:
+
+New expression type changes:
+Fails:

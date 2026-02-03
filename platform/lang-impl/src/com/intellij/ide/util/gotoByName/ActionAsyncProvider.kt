@@ -1,0 +1,587 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.util.gotoByName
+
+import com.intellij.ide.SearchTopHitProvider
+import com.intellij.ide.actions.ApplyIntentionAction
+import com.intellij.ide.ui.OptionsSearchTopHitProvider
+import com.intellij.ide.ui.OptionsTopHitProvider
+import com.intellij.ide.ui.OptionsTopHitProvider.ProjectLevelProvidersAdapter
+import com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider
+import com.intellij.ide.ui.search.OptionDescription
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar
+import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl
+import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
+import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
+import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValueType
+import com.intellij.openapi.actionSystem.AbbreviationManager
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionStubBase
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.util.coroutines.forEachConcurrent
+import com.intellij.platform.util.coroutines.mapConcurrent
+import com.intellij.platform.util.coroutines.mapNotNullConcurrent
+import com.intellij.platform.util.coroutines.transformConcurrent
+import com.intellij.psi.codeStyle.MinusculeMatcher
+import com.intellij.psi.codeStyle.NameUtil
+import com.intellij.ui.switcher.QuickActionProvider
+import com.intellij.util.CollectConsumer
+import com.intellij.util.gotoByName.FindActionSearchableOptionsFilter
+import com.intellij.util.text.matching.MatchingMode
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.channels.toList
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.withIndex
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.PriorityBlockingQueue
+import kotlin.coroutines.CoroutineContext
+
+private val LOG = logger<ActionAsyncProvider>()
+
+@OptIn(ExperimentalCoroutinesApi::class)
+@ApiStatus.Internal
+class ActionAsyncProvider(private val model: GotoActionModel) {
+  private val actionManager: ActionManager = ActionManager.getInstance()
+  private val intentions = ConcurrentHashMap<String, ApplyIntentionAction>()
+  private val MATCHED_VALUE_COMPARATOR = Comparator<MatchedValue> { o1, o2 -> o1.compareWeights(o2) }
+
+  fun processActions(
+    scope: CoroutineScope,
+    presentationProvider: suspend (AnAction) -> Presentation,
+    pattern: String,
+    ids: Set<String>,
+    consumer: suspend (MatchedValue) -> Boolean,
+  ) {
+    scope.launch {
+      val nonMatchedIdsChannel = Channel<String>(capacity = Channel.UNLIMITED)
+      val matchedStubsJob = processMatchedActionsAndStubs(pattern, ids, presentationProvider, consumer, nonMatchedIdsChannel, null)
+      processUnmatchedStubs(nonMatchedIdsChannel, pattern, presentationProvider, consumer, matchedStubsJob)
+    }
+  }
+
+  fun filterElements(
+    scope: CoroutineScope,
+    presentationProvider: suspend (AnAction) -> Presentation,
+    pattern: String,
+    consumer: suspend (MatchedValue) -> Boolean,
+  ) {
+    if (pattern.isEmpty()) return
+
+    LOG.debug { "Start actions searching ($pattern)" }
+
+    val actionIds = (actionManager as ActionManagerImpl).actionIds
+
+    scope.launch {
+      runFilterJobs(presentationProvider, pattern, consumer, actionIds)
+    }
+  }
+
+  suspend fun filterElementsSuspend(
+    presentationProvider: suspend (AnAction) -> Presentation,
+    pattern: String,
+    consumer: suspend (MatchedValue) -> Boolean,
+  ) {
+    return filterElementsSuspend(presentationProvider, pattern, false, consumer)
+  }
+
+  suspend fun filterElementsSuspend(
+    presentationProvider: suspend (AnAction) -> Presentation,
+    pattern: String,
+    allowEmpty: Boolean,
+    consumer: suspend (MatchedValue) -> Boolean,
+  ) {
+    if (!allowEmpty && pattern.isEmpty()) return
+
+    LOG.debug { "Start actions searching ($pattern) from suspend function" }
+
+    val actionIds = (actionManager as ActionManagerImpl).actionIds
+
+    runFilterJobs(presentationProvider, pattern, consumer, actionIds)
+  }
+
+  private suspend fun runFilterJobs(
+    presentationProvider: suspend (AnAction) -> Presentation,
+    pattern: String,
+    consumer: suspend (MatchedValue) -> Boolean,
+    actionIds: Set<String>
+  ) = coroutineScope {
+    val abbreviationsJob = processAbbreviations(pattern, presentationProvider, consumer)
+
+    val nonMatchedIdsChannel = Channel<String>(capacity = Channel.UNLIMITED)
+    val matchedStubsJob = processMatchedActionsAndStubs(pattern, actionIds, presentationProvider, consumer, nonMatchedIdsChannel, abbreviationsJob)
+    val unmatchedStubsJob = processUnmatchedStubs(nonMatchedIdsChannel, pattern, presentationProvider, consumer, matchedStubsJob)
+
+    val topHitsJob = processTopHits(pattern, presentationProvider, consumer, unmatchedStubsJob)
+    val intentionsJob = processIntentions(pattern, presentationProvider, consumer, topHitsJob)
+    processOptions(pattern, presentationProvider, consumer, intentionsJob)
+  }
+
+  private fun CoroutineScope.processAbbreviations(pattern: String,
+                                                  presentationProvider: suspend (AnAction) -> Presentation,
+                                                  consumer: suspend (MatchedValue) -> Boolean
+  ): Job = launch {
+    LOG.debug { "Process abbreviations for \"$pattern\"" }
+    val matcher = buildWeightMatcher(pattern)
+    val actionIds = serviceAsync<AbbreviationManager>().findActions(pattern)
+
+    actionIds.forEachConcurrent { id ->
+      val action = loadAction(id) ?: return@forEachConcurrent
+      val wrapper = wrapAnAction(action, presentationProvider)
+      val degree = matcher.matchingDegree(pattern)
+      val matchedValue = abbreviationMatchedValue(wrapper, pattern, degree)
+      if (!consumer(matchedValue)) {
+        cancel()
+      }
+    }
+  }
+
+  private fun CoroutineScope.processMatchedActionsAndStubs(pattern: String,
+                                                           allIds: Collection<String>,
+                                                           presentationProvider: suspend (AnAction) -> Presentation,
+                                                           consumer: suspend (MatchedValue) -> Boolean,
+                                                           unmatchedIdsChannel: SendChannel<String>,
+                                                           awaitJob: Job?
+  ): Job = launch {
+    val weightMatcher = buildWeightMatcher(pattern)
+
+    val list = try {
+      collectMatchedActions(pattern, allIds, weightMatcher, unmatchedIdsChannel)
+    }
+    catch (e: Throwable) {
+      val t = Throwable(e)
+      if (LOG.isDebugEnabled && pattern == "Collect Host and Client Logs") {
+        LOG.warn("[$pattern] TEST DIAGNOSTICS: exception during collectMatchedActions: ${t.message}", t)
+      }
+      throw e
+    }
+    finally {
+      unmatchedIdsChannel.close()
+    }
+
+    LOG.debug { "Matched actions list is collected" }
+
+    awaitJob?.join() // wait until all items from the previous step are processed
+    LOG.debug { "Process matched actions for \"$pattern\"" }
+    list.forEachConcurrentOrdered ({ matchedActionOrStub ->
+      val action = matchedActionOrStub.action
+      val matchedAction = if (action is ActionStubBase) loadAction(action.id)?.let { MatchedAction(it, matchedActionOrStub.mode, matchedActionOrStub.weight) } else matchedActionOrStub
+      if (matchedAction == null) return@forEachConcurrentOrdered null
+      val matchedValue = matchItem(
+        item = wrapAnAction(action = matchedAction.action, presentationProvider = presentationProvider, matchMode = matchedAction.mode),
+        matcher = weightMatcher,
+        pattern = pattern,
+        matchType = MatchedValueType.ACTION,
+      )
+
+        return@forEachConcurrentOrdered matchedValue
+    }, { matchedValue ->
+      if (!consumer(matchedValue)) {
+        cancel()
+      }
+    })
+  }
+
+  /**
+   * Executes concurrent actions on the elements of the collection and applies a sequentially ordered action on the results.
+   * The concurrent actions run in parallel, but their results are processed in the same order as the collection elements.
+   *
+   * This implementation considers priorities of elements (what is good for delivering first results asap)
+   * but still runs many more concurrent actions at once than the approach with standard forEachConcurrent
+   * (what is good for performance in case of client-server communication)
+   */
+  private suspend fun <TIn, TOut : Any> Collection<TIn>.forEachConcurrentOrdered(concurrentAction: suspend (TIn) -> TOut?, orderedAction: suspend (TOut) -> Unit) {
+    coroutineScope {
+      // PriorityDispatcher runs tasks with associated with contexts indexes
+      // The smaller index - the higher priority of the task
+      val dispatcher = PriorityDispatcher(this, size)
+
+      withContext(dispatcher.priorityDispatcher + IntElement(-1)) {
+        this@forEachConcurrentOrdered.asFlow().withIndex().map { (index, value) ->
+          async(dispatcher.priorityDispatcher + IntElement(index)) { concurrentAction(value) }
+        }.buffer(
+          // We limit the number of concurrently processing actions
+          // because in real life the original list contains up to 3000, but the consumer needs only the first 100-200 elements
+          // Without this limitation we may run approximately 500 unnecessary concurrent actions.
+          capacity = 100
+        ).collect {
+          orderedAction(it.await() ?: return@collect)
+        }
+      }
+    }
+  }
+
+  private class IntElement(val value: Int) : CoroutineContext.Element {
+    companion object Key : CoroutineContext.Key<IntElement> // Unique key for this element
+    override val key: CoroutineContext.Key<*> get() = Key
+  }
+
+  private data class PriorityRunnable(val priority: Int, val runnable: Runnable)
+
+  @OptIn(ExperimentalStdlibApi::class)
+  private class PriorityDispatcher(scope: CoroutineScope, size: Int) {
+    private val context = scope.coroutineContext
+    private val dispatcher = context[CoroutineDispatcher]!!
+    private val priorityQueue = PriorityBlockingQueue<PriorityRunnable>(maxOf(1, size), compareBy { it.priority })
+
+    private val executeNext = Runnable {
+      val action = priorityQueue.poll()
+      action.runnable.run()
+    }
+
+    val priorityDispatcher: CoroutineDispatcher = object : CoroutineDispatcher() {
+      override fun dispatch(context: CoroutineContext, block: Runnable) {
+        val index = context[IntElement.Key]?.value ?: Int.MAX_VALUE
+        priorityQueue.add(PriorityRunnable(index, block))
+
+        dispatchNext()
+      }
+    }
+
+    private fun dispatchNext() {
+      dispatcher.dispatch(context, executeNext)
+    }
+  }
+
+  private suspend fun collectMatchedActions(pattern: String, allIds: Collection<String>, weightMatcher: MinusculeMatcher, unmatchedIdsChannel: SendChannel<String>): List<MatchedAction> = coroutineScope {
+    val matcher = buildMatcher(pattern)
+
+    val mainActions: Sequence<AnAction> = allIds.asSequence().mapNotNull {
+      val action = actionManager.getActionOrStub(it) ?: return@mapNotNull null
+      if (action is ActionGroup && !action.isSearchable) return@mapNotNull null
+
+      return@mapNotNull action
+    }
+
+    if (LOG.isDebugEnabled) {
+      LOG.debug { "[$pattern] TEST DIAGNOSTICS: allIds contains \"CollectZippedLogs\": ${allIds.contains("CollectZippedLogs")}" }
+    }
+
+    val extendedActions: Sequence<AnAction> = model.dataContext.getData(QuickActionProvider.KEY)?.getActions(true)?.asSequence() ?: emptySequence<AnAction>()
+    val allActions: Sequence<AnAction> = mainActions + extendedActions + extendedActions.flatMap { (it as? ActionGroup)?.let { model.updateSession.children(it) } ?: emptyList() }
+    val matchedActions = produce(capacity = Channel.UNLIMITED) {
+      val startAllTime = System.currentTimeMillis()
+
+      allActions.forEach { action ->
+        val isCollectLogsAction = LOG.isDebugEnabled && action::class.java.simpleName.let {
+          it == "ClientCollectZippedLogsWithRemoteAction" || it == "CWMBackendCollectZippedLogsWithRemoteAction"
+        }
+
+        if (isCollectLogsAction) {
+           LOG.debug { "[$pattern] TEST DIAGNOSTICS: allActions contains Collect Logs action: ${action::class.java.simpleName}" }
+        }
+
+        launch {
+          runCatching {
+            val startOneTime = System.currentTimeMillis()
+            val mode = model.actionMatches(pattern, matcher, action)
+            val endTime = System.currentTimeMillis()
+
+            if (mode != MatchMode.NONE) {
+              if (isCollectLogsAction) {
+                LOG.debug("[$pattern] TEST DIAGNOSTICS: Collect Logs action matched")
+              }
+
+              val weight = calcElementWeight(action, pattern, weightMatcher)
+              send(MatchedAction(action, mode, weight))
+            }
+            else {
+              if (isCollectLogsAction) {
+                LOG.debug("[$pattern] TEST DIAGNOSTICS: Collect Logs action unmatched")
+              }
+
+              if (action is ActionStubBase) actionManager.getId(action)?.let { unmatchedIdsChannel.send(it) }
+            }
+          }.onFailure { t ->
+            handleCancellationError(t)
+          }
+        }
+      }
+    }.toList()
+
+
+    LOG.debug { "[$pattern] TEST DIAGNOSTICS: matchedActions list is ready (${matchedActions.size})" }
+
+    val comparator = Comparator.comparing<MatchedAction, Int> { it.weight ?: 0 }.reversed()
+    return@coroutineScope matchedActions.sortedWith(comparator)
+  }
+
+  private fun handleCancellationError(throwable: Throwable) {
+    if (throwable is CancellationException) {
+      try {
+        ProgressManager.checkCanceled()
+      }
+      catch (ce: CancellationException) {
+        ce.addSuppressed(throwable)
+        throw ce
+      }
+      LOG.error(RuntimeException("Improper cancellation propagation", throwable))
+    } else {
+      LOG.error(throwable)
+    }
+  }
+
+  private fun CoroutineScope.processUnmatchedStubs(nonMatchedIds: ReceiveChannel<String>,
+                                                   pattern: String,
+                                                   presentationProvider: suspend (AnAction) -> Presentation,
+                                                   consumer: suspend (MatchedValue) -> Boolean,
+                                                   awaitJob: Job
+  ): Job = launch {
+    val matcher = buildMatcher(pattern)
+    val weightMatcher = buildWeightMatcher(pattern)
+
+    val matchedActions = nonMatchedIds.toList().mapNotNullConcurrent { id ->
+      runCatching {
+        val action = loadAction(id) ?: return@runCatching null
+        if (action is ActionGroup && !action.isSearchable) return@runCatching null
+
+        val mode = model.actionMatches(pattern, matcher, action)
+        if (mode == MatchMode.NONE) return@runCatching null
+
+        val weight = calcElementWeight(element = action, pattern = pattern, matcher = weightMatcher)
+        val matchedAction = MatchedAction(action = action, mode = mode, weight = weight)
+        val item = wrapAnAction(matchedAction.action, presentationProvider, matchedAction.mode)
+        val matchedValue = matchItem(item = item, matcher = weightMatcher, pattern = pattern, matchType = MatchedValueType.ACTION)
+        return@runCatching matchedValue
+      }.getOrLogException(LOG)
+    }.sortedWith(MATCHED_VALUE_COMPARATOR)
+
+    awaitJob.join() //wait until all items from previous step are processed
+    LOG.debug { "Process unmatched stubs for \"$pattern\"" }
+    matchedActions.forEach {
+      if (!consumer(it)) cancel()
+    }
+  }
+
+  private  fun CoroutineScope.processTopHits(pattern: String,
+                                             presentationProvider: suspend (AnAction) -> Presentation,
+                                             consumer: suspend (MatchedValue) -> Boolean,
+                                             awaitJob: Job
+  ): Job = launch {
+    val project = model.project
+    val commandAccelerator = SearchTopHitProvider.getTopHitAccelerator()
+    val matcher = buildWeightMatcher(pattern)
+    val collector = CollectConsumer<Any>()
+
+    for (provider in SearchTopHitProvider.EP_NAME.extensionList) {
+      @Suppress("DEPRECATION")
+      if (provider is OptionsTopHitProvider.CoveredByToggleActions) {
+        continue
+      }
+
+      if (provider is OptionsSearchTopHitProvider && !pattern.startsWith(commandAccelerator)) {
+        val prefix = commandAccelerator + provider.getId() + " "
+        runCatching {
+          provider.consumeTopHits(pattern = prefix + pattern, collector = collector, project = project)
+        }.getOrLogException(LOG)
+      }
+      else if (project != null && provider is ProjectLevelProvidersAdapter) {
+        runCatching {
+          provider.consumeAllTopHits(
+            pattern = pattern,
+            collector = { collector.accept(it) },
+            project = project,
+          )
+        }.getOrLogException(LOG)
+      }
+
+      runCatching {
+        provider.consumeTopHits(pattern, collector, project)
+      }.getOrLogException(LOG)
+    }
+
+    val matchedValues = collector.result.mapConcurrent { item ->
+      val obj = (item as? AnAction)?.let { wrapAnAction(action = it, presentationProvider = presentationProvider) } ?: item
+      matchItem(item = obj, matcher = matcher, pattern = pattern, matchType = MatchedValueType.TOP_HIT)
+    }.sortedWith(MATCHED_VALUE_COMPARATOR)
+
+    awaitJob.join() //wait until all items from previous step are processed
+    LOG.debug { "Process top hits for \"$pattern\"" }
+    matchedValues.forEach { if (!consumer(it)) cancel() }
+  }
+
+  private fun CoroutineScope.processIntentions(pattern: String,
+                                               presentationProvider: suspend (AnAction) -> Presentation,
+                                               consumer: suspend (MatchedValue) -> Boolean,
+                                               awaitJob: Job
+  ): Job = launch {
+    val matcher = buildMatcher(pattern)
+    val weightMatcher = buildWeightMatcher(pattern)
+
+    val matchedValues = getIntentionsMap().entries
+      .mapNotNullConcurrent { (text, action) ->
+        if (model.actionMatches(pattern, matcher, action) == MatchMode.NONE) return@mapNotNullConcurrent null
+
+        val groupMapping = GroupMapping.createFromText(text, false)
+        val wrapper = ActionWrapper(action, groupMapping, MatchMode.INTENTION, presentationProvider(action))
+        matchItem(wrapper, weightMatcher, pattern, MatchedValueType.INTENTION)
+      }
+      .sortedWith(MATCHED_VALUE_COMPARATOR)
+
+    awaitJob.join()
+    LOG.debug { "Process intentions for \"$pattern\""}
+    matchedValues.forEach { if (!consumer(it)) cancel() }
+  }
+
+  private suspend fun getIntentionsMap(): Map<String, ApplyIntentionAction> {
+    if (intentions.isEmpty()) {
+      val intentions = readAction {
+        model.availableIntentions
+      }
+
+      this.intentions.putAll(intentions)
+    }
+    return intentions
+  }
+
+  private fun CoroutineScope.processOptions(pattern: String,
+                                            presentationProvider: suspend (AnAction) -> Presentation,
+                                            consumer: suspend (MatchedValue) -> Boolean,
+                                            awaitJob: Job): Job = launch {
+    val weightMatcher = buildWeightMatcher(pattern)
+
+
+
+    // Use LinkedHashSet to preserve the order of the elements to iterate through them later
+    val optionDescriptions = LinkedHashSet<OptionDescription>()
+
+    val mapDescriptionsPromise: Deferred<Collection<OptionDescription>> = async {
+      val res = mutableListOf<OptionDescription>()
+      val map = model.configurablesNames
+      if (pattern.isNotBlank()) {
+        val matcher = buildMatcher(pattern)
+        for ((key, value) in map) {
+          if (matcher.matches(value)) {
+            res.add(OptionDescription(_option = null, configurableId = key, hit = value, path = null, groupName = value))
+          }
+        }
+      }
+      res
+    }
+
+    val registrarDescriptionsPromise: Deferred<Collection<OptionDescription>?> = async {
+      val registrar = serviceAsync<SearchableOptionsRegistrar>() as SearchableOptionsRegistrarImpl
+      val words = registrar.getProcessedWords(pattern)
+      val filterOutInspections = Registry.`is`("go.to.action.filter.out.inspections", true)
+      var registrarDescriptions: MutableSet<OptionDescription>? = null
+      registrar.initialize()
+      for (word in words) {
+        val descriptions = registrar.findAcceptableDescriptions(word)
+          ?.filter {
+            @Suppress("HardCodedStringLiteral")
+            !(it.path == "ActionManager" || filterOutInspections && it.groupName == "Inspections")
+          }
+          ?.filter { description ->
+            FindActionSearchableOptionsFilter.EP_NAME.extensionList.all { findActionFilter -> findActionFilter.isAvailable(description) }
+          }
+          ?.toHashSet()
+        if (descriptions.isNullOrEmpty()) {
+          registrarDescriptions = null
+          break
+        }
+
+        if (registrarDescriptions == null) {
+          registrarDescriptions = descriptions
+        }
+        else {
+          registrarDescriptions.retainAll(descriptions)
+        }
+      }
+      registrarDescriptions
+    }
+
+    optionDescriptions.addAll(mapDescriptionsPromise.await())
+    // Add registrar's options to the end of the `LinkedHashSet`
+    // to guarantee that options from the `map` are going to be processed first
+    registrarDescriptionsPromise.await()?.let { optionDescriptions.addAll(it) }
+
+    if (optionDescriptions.isNotEmpty()) {
+      val currentHits = HashSet<String>()
+      val iterator = optionDescriptions.iterator()
+      for (description in iterator) {
+        val hit = description.hit
+        if (hit == null || !currentHits.add(hit.trim())) {
+          iterator.remove()
+        }
+      }
+
+
+      val matchedValues = optionDescriptions.transformConcurrent { description ->
+        for (converter in ActionFromOptionDescriptorProvider.EP.extensionList) {
+          val action = converter.provide(description) ?: continue
+          val actionWrapper = ActionWrapper(action, null, MatchMode.NAME, presentationProvider(action))
+          out(matchItem(item = actionWrapper, matcher = weightMatcher, pattern = pattern, matchType = MatchedValueType.TOP_HIT))
+        }
+        out(matchItem(item = description, matcher = weightMatcher, pattern = pattern, matchType = MatchedValueType.TOP_HIT))
+      }.sortedWith(MATCHED_VALUE_COMPARATOR)
+
+      awaitJob.join()
+      LOG.debug { "Process options for \"$pattern\""}
+      matchedValues.forEach { if (!consumer(it)) cancel() }
+    }
+  }
+
+  private suspend fun loadAction(id: String): AnAction? {
+    return withContext(currentCoroutineContext()) {
+      actionManager.getAction(id)
+    }
+  }
+
+  private fun matchItem(item: Any, matcher: MinusculeMatcher, pattern: String, matchType: MatchedValueType): MatchedValue {
+    val weight = calcElementWeight(element = item, pattern = pattern, matcher = matcher)
+    return if (weight == null) MatchedValue(item, pattern, matchType) else MatchedValue(item, pattern, weight, matchType)
+  }
+
+  private suspend fun wrapAnAction(action: AnAction, presentationProvider: suspend (AnAction) -> Presentation, matchMode: MatchMode = MatchMode.NAME): ActionWrapper {
+    val groupMapping = model.getGroupMapping(action)
+    groupMapping?.updateBeforeShowSuspend(presentationProvider)
+    val presentation = presentationProvider(action)
+    return ActionWrapper(action, groupMapping, matchMode, presentation)
+  }
+
+  private fun buildWeightMatcher(pattern: String): MinusculeMatcher {
+    return NameUtil.buildMatcher("*$pattern")
+      .withMatchingMode(MatchingMode.IGNORE_CASE)
+      .preferringStartMatches()
+      .build()
+  }
+
+  fun clearIntentions() {
+    intentions.clear()
+  }
+}
+
+private fun abbreviationMatchedValue(wrapper: ActionWrapper, pattern: String, degree: Int): MatchedValue {
+  return object : MatchedValue(wrapper, pattern, degree, MatchedValueType.ABBREVIATION) {
+    override fun getValueText(): String = pattern
+  }
+}
+
+private data class MatchedAction(@JvmField val action: AnAction, @JvmField val mode: MatchMode, @JvmField val weight: Int?)

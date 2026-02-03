@@ -1,0 +1,31 @@
+<idea-plugin visibility="internal" package="com.intellij.platform.ide.newUsersOnboarding">
+  <dependencies>
+    <module name="intellij.platform.ide.newUiOnboarding"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij.ide.newUiOnboarding">
+    <step key="searchEverywhere" implementationClass="com.intellij.platform.ide.newUsersOnboarding.SearchEverywhereStep"/>
+    <step key="settingsPopup" implementationClass="com.intellij.platform.ide.newUsersOnboarding.SettingsPopupStep"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="ide.newUsersOnboarding" defaultValue="true"
+                 description="Whether to show New Users Onboarding dialog on first IDE start and corresponding action in the Help menu"/>
+    <postStartupActivity implementation="com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingStartupActivity"/>
+    <applicationActivity implementation="com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingExperiment$Initializer"/>
+
+    <notificationGroup displayType="BALLOON" id="newUsersOnboarding" bundle="messages.NewUsersOnboardingBundle"
+                       key="notification.group"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingStatistics"/>
+  </extensions>
+
+  <actions resource-bundle="messages.NewUsersOnboardingBundle">
+    <action id="StartNewUsersOnboarding" class="com.intellij.platform.ide.newUsersOnboarding.StartNewUsersOnboardingAction">
+      <add-to-group group-id="LearnGroup" relative-to-action="ShowLearnPanel" anchor="after"/>
+    </action>
+
+    <action internal="true" id="ShowNewUsersOnboardingDialog"
+            class="com.intellij.platform.ide.newUsersOnboarding.ShowNewUsersOnboardingDialogAction"/>
+  </actions>
+</idea-plugin>

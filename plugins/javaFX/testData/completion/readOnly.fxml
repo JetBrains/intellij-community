@@ -1,0 +1,6 @@
+
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.Region?>
+<GridPane xmlns:fx="http://javafx.com/fxml">
+  <Region <caret>/>
+</GridPane>

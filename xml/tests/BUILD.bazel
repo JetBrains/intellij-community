@@ -1,0 +1,95 @@
+### auto-generated section `build intellij.xml.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "tests_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//xml/impl",
+    "//java/testFramework",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/ide-core-impl",
+    "//RegExpSupport:regexp",
+    "//platform/util/nanoxml",
+    "//xml/langInjection",
+    "//java/langInjection",
+    "//platform/core-ui",
+  ]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "intellij.xml.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":tests_test_resources"],
+  deps = [
+    "@lib//:junit4",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/lang-core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/structure-view-impl:structureView-impl",
+    "//xml/impl",
+    "//java/testFramework",
+    "//java/idea-ui:ui",
+    "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
+    "//platform/editor-ui-ex:editor-ex",
+    "//xml/xml-psi-api:psi",
+    "//xml/testFramework",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/ant",
+    "//plugins/ant:ant_test_lib",
+    "//plugins/xpath",
+    "//plugins/xpath:xpath_test_lib",
+    "//xml/dom-impl",
+    "//platform/platform-tests:tests_test_lib",
+    "//platform/ide-core-impl",
+    "@lib//:xml-resolver",
+    "//RegExpSupport:regexp",
+    "//RegExpSupport:regexp_test_lib",
+    "//platform/util/nanoxml",
+    "//plugins/IntelliLang:langInjection",
+    "//java/langInjection",
+    "//xml/xml-analysis-impl:analysis-impl",
+    "//platform/core-ui",
+    "@lib//:assert_j",
+    "//libraries/guava",
+    "//libraries/jackson/jackson",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/polySymbols:polySymbols-testFramework",
+    "//libraries/xerces",
+    "//platform/syntax/syntax-scripts:scripts",
+    "//xml/xml-syntax:syntax",
+    "//java/java-runtime:rt",
+    "@lib//:jet_check",
+    "//xml/xml-analysis-api:analysis",
+    "//xml/emmet",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build intellij.xml.tests` end
+
+### auto-generated section `test intellij.xml.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test intellij.xml.tests` end

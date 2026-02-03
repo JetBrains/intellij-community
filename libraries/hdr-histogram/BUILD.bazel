@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.hdr.histogram` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "hdr-histogram_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "hdr-histogram",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":hdr-histogram_resources"],
+  exports = ["@lib//:libraries-hdr-histogram-_hdr_histogram"],
+  runtime_deps = ["@lib//:libraries-hdr-histogram-_hdr_histogram"]
+)
+### auto-generated section `build intellij.libraries.hdr.histogram` end

@@ -1,0 +1,10 @@
+{
+  "type": "object",
+
+  "properties": {
+    "a": {
+      "$ref": "#"
+    }
+  }
+}
+

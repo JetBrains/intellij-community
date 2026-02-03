@@ -1,0 +1,44 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_files", "strip_prefix")
+
+pkg_files(
+    name = "files_to_zip",
+    prefix = "zip",
+    srcs = glob(
+        ["**"],
+        exclude = [
+            "*.iml",
+        ],
+    ),
+    strip_prefix = strip_prefix.from_pkg(),
+    visibility = ["//visibility:public"],
+)
+
+# used by @community//build:zip
+filegroup(
+    name = "zip_sources",
+    srcs = glob(["src/*.kt"]),
+    visibility = ["//visibility:public"],
+)
+
+kt_jvm_library(
+    name = "zip",
+    srcs = [":zip_sources"],
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    visibility = [
+        "//jvm-inc-builder:__pkg__",
+        "//src/builder-state:__pkg__",
+        "//src/jvm-builder:__pkg__",
+        "//src/jvm-builder-core:__pkg__",
+        "//src/kotlin/kotlin-builder:__pkg__",
+    ],
+    deps = [
+        "//:hash4j_import",
+        "//:intellij-deps-fastutil_import",
+        "//:kotlin-stdlib_import",
+        "//:netty-buffer_import",
+        "//:netty-common_import",
+    ],
+)
+
+### skip generation section `build intellij.idea.community.build.zip`

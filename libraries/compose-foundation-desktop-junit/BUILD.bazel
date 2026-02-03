@@ -1,0 +1,23 @@
+### auto-generated section `build intellij.libraries.compose.foundation.desktop.junit` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "compose-foundation-desktop-junit_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "compose-foundation-desktop-junit",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":compose-foundation-desktop-junit_resources"],
+  exports = [
+    "//libraries/compose-foundation-desktop",
+    "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-junit4-desktop",
+    "//libraries/kotlinx/coroutines/test",
+    "//libraries/junit4",
+    "//libraries/hamcrest",
+  ]
+)
+### auto-generated section `build intellij.libraries.compose.foundation.desktop.junit` end

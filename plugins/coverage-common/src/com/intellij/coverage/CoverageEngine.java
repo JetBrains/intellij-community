@@ -1,0 +1,472 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.coverage;
+
+import com.intellij.codeEditor.printing.ExportToHTMLSettings;
+import com.intellij.codeInspection.export.ExportToHTMLDialog;
+import com.intellij.coverage.view.CoverageViewExtension;
+import com.intellij.coverage.view.CoverageViewManager;
+import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.rt.coverage.data.LineData;
+import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+
+/**
+ * Coverage engine provides coverage support for different languages or coverage runner classes.
+ * E.g., engine for JVM languages, Ruby, Python
+ * <p/>
+ * Each coverage engine may work with several coverage runners.
+ * E.g., Java coverage engine supports IDEA/Jacoco, Ruby engine works with RCov
+ *
+ * @author Roman.Chernyatchik
+ */
+public abstract class CoverageEngine {
+  public static final ExtensionPointName<CoverageEngine> EP_NAME = ExtensionPointName.create("com.intellij.coverageEngine");
+
+  public abstract @NlsActions.ActionText String getPresentableText();
+
+  /**
+   * Checks whether this engine supports coverage for a given configuration or not.
+   *
+   * @param conf Run Configuration
+   * @return True if this engine supports coverage for a given run configuration
+   */
+  public abstract boolean isApplicableTo(final @NotNull RunConfigurationBase<?> conf);
+
+  /**
+   * Creates coverage enabled configuration for given RunConfiguration. It is supposed that one run configuration may be associated
+   * with no more than one coverage engine.
+   *
+   * @param conf Run Configuration
+   * @return Coverage enabled configuration with engine-specific settings
+   */
+  public abstract @NotNull CoverageEnabledConfiguration createCoverageEnabledConfiguration(final @NotNull RunConfigurationBase<?> conf);
+
+
+  /**
+   * Create a suite from an external report.
+   * <p>
+   * This method must be overridden for the coverage providers.
+   */
+  public @Nullable CoverageSuite createCoverageSuite(
+    @NotNull String name,
+    @NotNull Project project,
+    @NotNull CoverageRunner runner,
+    @NotNull CoverageFileProvider fileProvider,
+    long timestamp
+  ) {
+    return createCoverageSuite(runner, name, fileProvider, null, timestamp, null, false, false, false, project);
+  }
+
+
+  /**
+   * Create a suite from a run configuration.
+   */
+  @ApiStatus.NonExtendable
+  public @Nullable CoverageSuite createCoverageSuite(@NotNull CoverageEnabledConfiguration config) {
+    CoverageRunner runner = config.getCoverageRunner();
+    if (runner == null) return null;
+    return createCoverageSuite(config.createSuiteName(), config.getConfiguration().getProject(), runner,
+                               config.createFileProvider(), config.createTimestamp(), config);
+  }
+
+  /**
+   * Create a suite from a run configuration.
+   * This is a short-cut for {@link #createCoverageSuite(CoverageEnabledConfiguration)}
+   * <p>
+   * This method must be overridden for the coverage providers.
+   */
+  @ApiStatus.OverrideOnly
+  public @Nullable CoverageSuite createCoverageSuite(
+    @NotNull String name,
+    @NotNull Project project,
+    @NotNull CoverageRunner runner,
+    @NotNull CoverageFileProvider fileProvider,
+    long timestamp,
+    @NotNull CoverageEnabledConfiguration config
+  ) {
+    return createCoverageSuite(runner, name, fileProvider, config);
+  }
+
+  /**
+   * Create a new suite with no parameters set.
+   * <p/>
+   * This method is used to read a suite from persistent storage.
+   */
+  public abstract @Nullable CoverageSuite createEmptyCoverageSuite(@NotNull CoverageRunner coverageRunner);
+
+  /**
+   * Coverage annotator which annotates smth(e.g. Project view nodes / editor) with coverage information
+   *
+   * @param project Project
+   * @return Annotator
+   */
+  public abstract @NotNull CoverageAnnotator getCoverageAnnotator(Project project);
+
+  /**
+   * Determines if coverage information should be displayed for a given file.
+   * E.g., coverage may be applicable only to user source files or only for files of specific types
+   *
+   * @param psiFile file
+   * @return false if coverage N/A for given file
+   */
+  public boolean coverageEditorHighlightingApplicableTo(final @NotNull PsiFile psiFile) {
+    return true;
+  }
+
+  /**
+   * Checks whether file is accepted by coverage filters or not. Is used in Project View Nodes annotator.
+   *
+   * @param psiFile Psi file
+   * @param suite   Coverage suite
+   * @return true if included in coverage
+   */
+  public boolean acceptedByFilters(final @NotNull PsiFile psiFile, final @NotNull CoverageSuitesBundle suite) {
+    return true;
+  }
+
+  /**
+   * E.g., all *.class files for java source file with several classes
+   *
+   * @return files
+   */
+  @ApiStatus.Internal
+  public @NotNull Set<File> getCorrespondingOutputFiles(final @NotNull PsiFile srcFile,
+                                                        final @Nullable Module module,
+                                                        final @NotNull CoverageSuitesBundle suite) {
+    final VirtualFile virtualFile = srcFile.getVirtualFile();
+    return virtualFile == null ? Collections.emptySet() : Collections.singleton(VfsUtilCore.virtualToIoFile(virtualFile));
+  }
+
+  /**
+   * When output directory is empty we probably should recompile the source and then choose a suite again
+   *
+   * @return True, if should stop and wait for compilation (e.g., for Java). False if we can ignore output (e.g., for Ruby)
+   */
+  @ApiStatus.Internal
+  public boolean recompileProjectAndRerunAction(final @NotNull Module module, final @NotNull CoverageSuitesBundle suite,
+                                                final @NotNull Runnable chooseSuiteAction) {
+    return false;
+  }
+
+  /**
+   * Qualified name same as in coverage raw project data
+   * E.g., java class qualified name by *.class file of some Java class in corresponding source file
+   */
+  @ApiStatus.Internal
+  protected @Nullable String getQualifiedName(final @NotNull File outputFile,
+                                              final @NotNull PsiFile sourceFile) {
+    return null;
+  }
+
+  /**
+   * Returns the list of qualified names of classes generated from a particular source file.
+   * (The concept of "qualified name" is specific to each coverage engine, but it should be
+   * a valid parameter for {@link com.intellij.rt.coverage.data.ProjectData#getClassData(String)}).
+   */
+  public @NotNull Set<String> getQualifiedNames(final @NotNull PsiFile sourceFile) {
+    return Collections.emptySet();
+  }
+
+  /**
+   * Decide to include a file or not in a coverage report if coverage data isn't available for the file.
+   * E.g., file wasn't touched by coverage util
+   */
+  @ApiStatus.Internal
+  public boolean includeUntouchedFileInCoverage(final @NotNull String qualifiedName,
+                                                final @NotNull File outputFile,
+                                                final @NotNull PsiFile sourceFile,
+                                                final @NotNull CoverageSuitesBundle suite) {
+    return false;
+  }
+
+  /**
+   * Collect code lines if untouched file should be included in coverage information. These lines will be marked as uncovered.
+   *
+   * @return List (probably empty) of code lines or null if all lines should be marked as uncovered
+   */
+  @ApiStatus.Internal
+  public @Nullable List<Integer> collectSrcLinesForUntouchedFile(final @NotNull File classFile,
+                                                                 final @NotNull CoverageSuitesBundle suite) {
+    return null;
+  }
+
+  /**
+   * Content of a brief report which will be shown by click on coverage icon
+   *
+   * @param editor      the editor in which the gutter is displayed.
+   * @param psiFile     the file shown in the editor.
+   * @param lineNumber  the line number which was clicked.
+   * @param startOffset the start offset of that line in the PSI file.
+   * @param endOffset   the end offset of that line in the PSI file.
+   * @param lineData    the coverage data for the line.
+   * @return the text to show.
+   */
+  @ApiStatus.Internal
+  public String generateBriefReport(@NotNull Editor editor,
+                                    @NotNull PsiFile psiFile,
+                                    int lineNumber,
+                                    int startOffset,
+                                    int endOffset,
+                                    @Nullable LineData lineData) {
+    final int hits = lineData == null ? 0 : lineData.getHits();
+    return CoverageBundle.message("hits.title", hits);
+  }
+
+  /**
+   * Content of a brief report which will be shown by click on coverage icon
+   */
+  @ApiStatus.Internal
+  public String generateBriefReport(@NotNull CoverageSuitesBundle bundle,
+                                    @NotNull Editor editor,
+                                    @NotNull PsiFile psiFile,
+                                    @NotNull TextRange range,
+                                    @Nullable LineData lineData) {
+    int lineNumber = editor.getDocument().getLineNumber(range.getStartOffset());
+    return generateBriefReport(editor, psiFile, lineNumber, range.getStartOffset(), range.getEndOffset(), lineData);
+  }
+
+  /**
+   * @return true to enable 'Generate Coverage Report...' action
+   */
+  public boolean isReportGenerationAvailable(@NotNull Project project,
+                                             @NotNull DataContext dataContext,
+                                             @NotNull CoverageSuitesBundle currentSuite) {
+    return false;
+  }
+
+  public void generateReport(final @NotNull Project project,
+                             final @NotNull DataContext dataContext,
+                             final @NotNull CoverageSuitesBundle currentSuite) {
+  }
+
+  @ApiStatus.Internal
+  public @NotNull ExportToHTMLDialog createGenerateReportDialog(final @NotNull Project project,
+                                                                final @NotNull DataContext dataContext,
+                                                                final @NotNull CoverageSuitesBundle currentSuite) {
+    final ExportToHTMLDialog dialog = new ExportToHTMLDialog(project, true);
+    dialog.setTitle(CoverageBundle.message("generate.coverage.report.for", currentSuite.getPresentableName()));
+    final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
+    if (StringUtil.isEmpty(settings.OUTPUT_DIRECTORY)) {
+      final VirtualFile file = ProjectUtil.guessProjectDir(project);
+      if (file != null) {
+        final String path = file.getCanonicalPath();
+        if (path != null) {
+          settings.OUTPUT_DIRECTORY = FileUtil.toSystemDependentName(path) + File.separator + "htmlReport";
+        }
+      }
+    }
+
+    return dialog;
+  }
+
+  @ApiStatus.Internal
+  public boolean coverageProjectViewStatisticsApplicableTo(VirtualFile fileOrDir) {
+    return false;
+  }
+
+  @ApiStatus.Internal
+  protected Object @NotNull [] postProcessExecutableLines(Object @NotNull [] lines, @NotNull Editor editor) {
+    return lines;
+  }
+
+  @ApiStatus.Internal
+  public CoverageLineMarkerRenderer getLineMarkerRenderer(int lineNumber,
+                                                          final @Nullable String className,
+                                                          final @NotNull TreeMap<Integer, LineData> lines,
+                                                          final boolean coverageByTestApplicable,
+                                                          final @NotNull CoverageSuitesBundle coverageSuite,
+                                                          final Function<? super Integer, Integer> newToOldConverter,
+                                                          final Function<? super Integer, Integer> oldToNewConverter,
+                                                          boolean subCoverageActive) {
+    return CoverageLineMarkerRenderer
+      .getRenderer(lineNumber, className, lines, coverageByTestApplicable, coverageSuite, newToOldConverter, oldToNewConverter,
+                   subCoverageActive);
+  }
+
+  /**
+   * @return true if highlighting should skip the line as it represents no actual source code
+   */
+  @ApiStatus.Internal
+  protected boolean isGeneratedCode(Project project, String qualifiedName, Object lineData) {
+    return false;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull CoverageEditorAnnotator createSrcFileAnnotator(PsiFile file, Editor editor) {
+    return new CoverageEditorAnnotatorImpl(file, editor);
+  }
+
+  @ApiStatus.Internal
+  public static @TabTitle String getEditorTitle() {
+    return CoverageBundle.message("coverage.tab.title");
+  }
+
+  /**
+   * @deprecated Use {@link #createCoverageViewExtension(Project, CoverageSuitesBundle)}
+   */
+  @Deprecated
+  public CoverageViewExtension createCoverageViewExtension(Project project,
+                                                           CoverageSuitesBundle suiteBundle,
+                                                           @SuppressWarnings("unused") CoverageViewManager.StateBean stateBean) {
+    return createCoverageViewExtension(project, suiteBundle);
+  }
+
+  public CoverageViewExtension createCoverageViewExtension(Project project,
+                                                           CoverageSuitesBundle suiteBundle) {
+    return null;
+  }
+
+  public boolean isInLibraryClasses(final Project project, final VirtualFile file) {
+    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+
+    return ReadAction.compute(() -> projectFileIndex.isInLibraryClasses(file) && !projectFileIndex.isInSource(file));
+  }
+
+  @ApiStatus.Internal
+  protected boolean isInLibrarySource(Project project, VirtualFile file) {
+    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+
+    return ReadAction.compute(() -> projectFileIndex.isInLibrarySource(file));
+  }
+
+  @ApiStatus.Internal
+  public boolean canHavePerTestCoverage(final @NotNull RunConfigurationBase<?> conf) {
+    return false;
+  }
+
+  /**
+   * @return tests, which covered specified line. Names should be compatible with {@link CoverageEngine#findTestsByNames(String[], Project)}
+   */
+  @ApiStatus.Internal
+  public Set<String> getTestsForLine(Project project, CoverageSuitesBundle bundle, String classFQName, int lineNumber) {
+    return Collections.emptySet();
+  }
+
+  /**
+   * @return true, if test data was collected
+   */
+  @ApiStatus.Internal
+  public boolean wasTestDataCollected(Project project, CoverageSuitesBundle bundle) {
+    return false;
+  }
+
+  @ApiStatus.Internal
+  public List<PsiElement> findTestsByNames(final String @NotNull [] testNames, final @NotNull Project project) {
+    return Collections.emptyList();
+  }
+
+  /**
+   * To support per test coverage. Return file name which contains traces for a given test
+   */
+  @ApiStatus.Internal
+  public @Nullable String getTestMethodName(final @NotNull PsiElement element, final @NotNull AbstractTestProxy testProxy) {
+    return null;
+  }
+
+  /**
+   * Extract coverage data by subset of executed tests
+   *
+   * @param sanitizedTestNames sanitized qualified method names for which traces should be collected
+   * @param suite              suite to find corresponding traces
+   * @param trace              class - lines map, corresponding to the lines covered by sanitizedTestNames
+   */
+  @ApiStatus.Internal
+  public void collectTestLines(List<String> sanitizedTestNames, CoverageSuite suite, Map<String, Set<Integer>> trace) { }
+
+  @ApiStatus.Internal
+  protected void deleteAssociatedTraces(CoverageSuite suite) { }
+
+  /**
+   * Coverage suite is coverage settings & coverage data gather by coverage runner. This method is used for external suites.
+   *
+   * @param runner                Coverage Runner
+   * @param name                  Suite name
+   * @param fileProvider          Coverage raw data file provider
+   * @param filters               Coverage data filters
+   * @param lastCoverageTimeStamp timestamp
+   * @param suiteToMerge          Suite to merge this coverage data with
+   * @param coverageByTestEnabled Collect coverage per test
+   * @param branchCoverage        Whether the suite includes branch coverage, or only line coverage otherwise
+   * @param trackTestFolders      Track test folders option
+   * @return Suite
+   * @deprecated Use {@link CoverageEngine#createCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long)}
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public @Nullable CoverageSuite createCoverageSuite(
+    @NotNull CoverageRunner runner,
+    @NotNull String name,
+    @NotNull CoverageFileProvider fileProvider,
+    String @Nullable [] filters,
+    long lastCoverageTimeStamp,
+    @Nullable String suiteToMerge,
+    boolean coverageByTestEnabled,
+    boolean branchCoverage,
+    boolean trackTestFolders,
+    @Nullable Project project
+  ) {
+    AbstractMethodError error = new AbstractMethodError(
+      "Please override CoverageEngine#createCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long) method");
+    if (project == null || isCalledByDelegationFromThis(error)) {
+      throw error;
+    }
+    Logger.getInstance(CoverageEngine.class).error(error);
+    return createCoverageSuite(name, project, runner, fileProvider, lastCoverageTimeStamp);
+  }
+
+  /**
+   * @deprecated Override {@link CoverageEngine#createCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long, CoverageEnabledConfiguration)}
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public @Nullable CoverageSuite createCoverageSuite(@NotNull CoverageRunner runner,
+                                                     @NotNull String name,
+                                                     @NotNull CoverageFileProvider fileProvider,
+                                                     @NotNull CoverageEnabledConfiguration config) {
+    AbstractMethodError error = new AbstractMethodError(
+      "Please override CoverageEngine#createCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long, CoverageEnabledConfiguration) method");
+    if (isCalledByDelegationFromThis(error)) {
+      throw error;
+    }
+    Logger.getInstance(CoverageEngine.class).error(error);
+    return createCoverageSuite(name, config.getConfiguration().getProject(), runner, fileProvider, config.createTimestamp(), config);
+  }
+
+
+  private static boolean isCalledByDelegationFromThis(Throwable e) {
+    StackTraceElement[] stackTrace = e.getStackTrace();
+    if (stackTrace.length < 2) return false;
+    StackTraceElement element = stackTrace[1];
+    return element.getClassName().equals(CoverageEngine.class.getName()) && element.getMethodName().equals("createCoverageSuite");
+  }
+}

@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.mcpserver.stdio` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "mcpserver.stdio",
+  module_name = "intellij.mcpserver.stdio",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "@lib//:slf4j-api",
+    "@lib//:slf4j-jdk14",
+    "@lib//:ktor-server-sse-jvm",
+    "@lib//:io-modelcontextprotocol-kotlin-sdk",
+    "@lib//:io-github-oshai-kotlin-logging-jvm",
+    "//libraries/io",
+    "//libraries/ktor/client",
+  ],
+  exports = [
+    "@lib//:slf4j-api",
+    "@lib//:slf4j-jdk14",
+    "@lib//:ktor-server-sse-jvm",
+    "@lib//:io-modelcontextprotocol-kotlin-sdk",
+    "@lib//:io-github-oshai-kotlin-logging-jvm",
+  ]
+)
+### auto-generated section `build intellij.mcpserver.stdio` end

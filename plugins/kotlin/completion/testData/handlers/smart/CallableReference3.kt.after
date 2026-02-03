@@ -1,0 +1,10 @@
+fun foo(p: () -> Unit){}
+
+fun bar() {
+    foo(::f)<caret>
+}
+
+fun f(){}
+
+// ELEMENT: f
+// IGNORE_K2

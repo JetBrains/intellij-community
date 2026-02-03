@@ -1,0 +1,34 @@
+0(1) element: null
+1(2) element: PyIfStatement
+2(3,4) READ ACCESS: c
+3(8) element: null. Condition: c:false
+4(5) element: null. Condition: c:true
+5(6) ASSERTTYPE ACCESS: c
+6(7) element: PyStatementList
+7(16) element: PyPassStatement
+8(9,10) READ ACCESS: False
+9(16) element: null. Condition: False:false
+10(11) element: null. Condition: False:true
+11(12) ASSERTTYPE ACCESS: False
+12(13) Unreachable
+13(14) element: PyStatementList
+14(15) element: PyAssignmentStatement
+15() WRITE ACCESS: a
+16(17) element: PyIfStatement
+17(18,19) READ ACCESS: d
+18(23) element: null. Condition: d:false
+19(20) element: null. Condition: d:true
+20(21) ASSERTTYPE ACCESS: d
+21(22) element: PyStatementList
+22(33) element: PyPassStatement
+23(24,25) READ ACCESS: False
+24(31) element: null. Condition: False:false
+25(26) element: null. Condition: False:true
+26(27) ASSERTTYPE ACCESS: False
+27(28) Unreachable
+28(29) element: PyStatementList
+29(30) element: PyAssignmentStatement
+30() WRITE ACCESS: b
+31(32) element: PyStatementList
+32(33) element: PyPassStatement
+33() element: null

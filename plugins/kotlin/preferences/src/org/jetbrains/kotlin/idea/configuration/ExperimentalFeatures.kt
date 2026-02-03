@@ -1,0 +1,82 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.idea.configuration
+
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.components.JBCheckBox
+import org.jdesktop.swingx.VerticalLayout
+import javax.swing.JCheckBox
+import javax.swing.JPanel
+
+object ExperimentalFeatures {
+    val allFeatures: List<ExperimentalFeature> = ExperimentalFeature.EP_NAME.extensionList
+}
+
+abstract class ExperimentalFeature {
+    abstract val title: String
+    abstract var isEnabled: Boolean
+    open fun shouldBeShown(): Boolean = true
+    open fun onFeatureStatusChanged(enabled: Boolean) {}
+
+    companion object {
+        internal var EP_NAME = ExtensionPointName<ExperimentalFeature>("org.jetbrains.kotlin.experimentalFeature")
+    }
+}
+
+// It can be used for future experimental features
+@Suppress("unused")
+open class RegistryExperimentalFeature(
+    override val title: String,
+    private val registryKey: String,
+    private val enabledByDefault: Boolean
+) : ExperimentalFeature() {
+    final override var isEnabled
+        get() = Registry.`is`(registryKey, enabledByDefault)
+        set(value) {
+            Registry.get(registryKey).setValue(value)
+        }
+}
+
+class ExperimentalFeaturesPanel : JPanel(VerticalLayout(5)) {
+    private val featuresWithCheckboxes = ExperimentalFeatures.allFeatures.map { feature ->
+        FeatureWithCheckbox(
+            feature,
+            JBCheckBox(feature.title, feature.isEnabled)
+        )
+    }
+
+    init {
+        featuresWithCheckboxes.forEach { (feature, checkBox) ->
+            if (feature.shouldBeShown()) {
+                add(checkBox)
+            }
+        }
+    }
+
+    private data class FeatureWithCheckbox(
+        val feature: ExperimentalFeature,
+        val checkbox: JCheckBox
+    )
+
+    fun isModified() = featuresWithCheckboxes.any { (feature, checkBox) ->
+        feature.isEnabled != checkBox.isSelected
+    }
+
+    fun applySelectedChanges() {
+        featuresWithCheckboxes.forEach { (feature, checkBox) ->
+            if (feature.isEnabled != checkBox.isSelected) {
+                feature.isEnabled = checkBox.isSelected
+                feature.onFeatureStatusChanged(checkBox.isSelected)
+            }
+        }
+    }
+
+    companion object {
+        fun createPanelIfShouldBeShown(): ExperimentalFeaturesPanel? {
+            val shouldBeShown = ApplicationInfo.getInstance().isEAP && ExperimentalFeatures.allFeatures.isNotEmpty()
+            return if (shouldBeShown) ExperimentalFeaturesPanel() else null
+        }
+    }
+}

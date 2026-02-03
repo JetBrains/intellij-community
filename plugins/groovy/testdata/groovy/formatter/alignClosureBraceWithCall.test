@@ -1,0 +1,9 @@
+fooo(longParameter,
+   reallyLongParameter) {
+
+  }
+-----
+fooo(longParameter,
+    reallyLongParameter) {
+
+}

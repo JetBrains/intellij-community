@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.platform.ide.codeinsight.inline` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "ide-codeinsight-inline",
+  module_name = "intellij.platform.ide.codeinsight.inline",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-impl",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//platform/statistics",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/core-ui",
+    "//platform/util/coroutines",
+    "//platform/analysis-impl",
+    "//platform/platform-impl/ui",
+    "//platform/lang-api:lang",
+    "//fleet/util/core",
+    "//libraries/kotlinx/serialization/core",
+  ]
+)
+### auto-generated section `build intellij.platform.ide.codeinsight.inline` end

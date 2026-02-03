@@ -1,0 +1,28 @@
+### auto-generated section `build kotlin.compiler-plugins.compiler-plugin-support.gradle` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "gradle_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "gradle",
+  module_name = "kotlin.compiler-plugins.compiler-plugin-support.gradle",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":gradle_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/gradle/gradle-tooling/impl",
+    "//plugins/kotlin/gradle/gradle-java",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
+    "//plugins/gradle:gradle-common",
+  ]
+)
+### auto-generated section `build kotlin.compiler-plugins.compiler-plugin-support.gradle` end

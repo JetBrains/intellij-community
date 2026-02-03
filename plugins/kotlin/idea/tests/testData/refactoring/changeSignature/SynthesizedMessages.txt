@@ -1,0 +1,2 @@
+Cannot perform refactoring.
+Cannot refactor synthesized function

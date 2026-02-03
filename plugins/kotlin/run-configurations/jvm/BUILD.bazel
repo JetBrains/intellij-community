@@ -1,0 +1,54 @@
+### auto-generated section `build intellij.kotlin.runConfigurations.jvm` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "jvm_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jvm",
+  module_name = "intellij.kotlin.runConfigurations.jvm",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":jvm_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/util/jdom",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/analysis-api:analysis",
+    "//platform/projectModel-api:projectModel",
+    "//platform/execution",
+    "//platform/ide-core",
+    "//platform/platform-util-io:ide-util-io",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+    "//java/execution/impl",
+    "//platform/core-ui",
+    "//plugins/kotlin/base/scripting/scripting.shared",
+    "@lib//:kotlinc-kotlin-scripting-common",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
+)
+### auto-generated section `build intellij.kotlin.runConfigurations.jvm` end

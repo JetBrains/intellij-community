@@ -1,0 +1,10 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
+fun flag(): Boolean{}
+
+fun foo() {
+    if (!flag()<caret>)
+}
+
+// ELEMENT: flag
+// CHAR: '!'

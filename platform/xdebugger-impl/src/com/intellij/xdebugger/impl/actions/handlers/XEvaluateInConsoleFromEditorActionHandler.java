@@ -1,0 +1,91 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.xdebugger.impl.actions.handlers;
+
+import com.intellij.execution.console.ConsoleExecuteAction;
+import com.intellij.execution.console.LanguageConsoleView;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xdebugger.evaluation.ExpressionInfo;
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
+
+import java.util.List;
+
+@ApiStatus.Internal
+public class XEvaluateInConsoleFromEditorActionHandler extends XAddToWatchesFromEditorActionHandler {
+  @Override
+  protected boolean isEnabled(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
+    return super.isEnabled(session, dataContext) && getConsoleExecuteAction(session) != null;
+  }
+
+  private static @Nullable ConsoleExecuteAction getConsoleExecuteAction(@NotNull XDebugSessionProxy session) {
+    return getConsoleExecuteAction(session.getConsoleView());
+  }
+
+  public static @Nullable ConsoleExecuteAction getConsoleExecuteAction(@Nullable ConsoleView consoleView) {
+    if (!(consoleView instanceof LanguageConsoleView languageConsoleView)) {
+      return null;
+    }
+
+    List<AnAction> actions = ActionUtil.getActions(languageConsoleView.getConsoleEditor().getComponent());
+    ConsoleExecuteAction action = ContainerUtil.findInstance(actions, ConsoleExecuteAction.class);
+    return action == null || !action.isEnabled() ? null : action;
+  }
+
+  @Override
+  protected void perform(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    if (!(editor instanceof EditorEx)) {
+      return;
+    }
+
+    int selectionStart = editor.getSelectionModel().getSelectionStart();
+    int selectionEnd = editor.getSelectionModel().getSelectionEnd();
+    Promise<Pair<TextRange, String>> rangeAndText;
+    if (selectionStart != selectionEnd) {
+      TextRange textRange = new TextRange(selectionStart, selectionEnd);
+      rangeAndText = Promises.resolvedPromise(Pair.create(textRange, editor.getDocument().getText(textRange)));
+    } else {
+      XDebuggerEvaluator evaluator = session.getCurrentEvaluator();
+      if (evaluator != null) {
+        Promise<ExpressionInfo> expressionInfoPromise = evaluator.getExpressionInfoAtOffsetAsync(session.getProject(), editor.getDocument(), selectionStart, true);
+        rangeAndText = expressionInfoPromise.then(expressionInfo -> {
+          if (expressionInfo == null) {
+            return null;
+          }
+
+          // todo check - is it wrong in case of not-null expressionInfo.second - copied (to console history document) text (text range) could be not correct statement?
+          return Pair.create(expressionInfo.getTextRange(), XDebuggerEvaluateActionHandler.getExpressionText(expressionInfo, editor.getDocument()));
+        });
+
+      } else {
+        return;
+      }
+    }
+
+    rangeAndText.onSuccess(textRangeStringPair -> ApplicationManager.getApplication().invokeLater(() -> {
+      TextRange range = textRangeStringPair.getFirst();
+      String text = textRangeStringPair.getSecond();
+      if (text == null)
+        return;
+      ConsoleExecuteAction action = getConsoleExecuteAction(session);
+      if (action != null) {
+        action.execute(range, text, (EditorEx) editor);
+      }
+    }));
+  }
+}

@@ -1,0 +1,31 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
+  <name>Git</name>
+  <id>Git4Idea</id>
+  <category>Version Controls</category>
+  <vendor>JetBrains</vendor>
+
+  <description><![CDATA[
+    Provides integration with <a href="https://git-scm.com/">Git</a>.
+    <ul>
+      <li>Check out your source code from a Git repository</li>
+      <li>Browse, commit, push, pull, merge, view log, review pull requests, and much more</li>
+      <li>Dedicated item in the VCS menu and in the context menu</li>
+    </ul>
+    <p>To configure, open <b>Settings / Preferences</b> and go to <b>Version Control | Git</b>.</p>
+  ]]></description>
+
+  <depends optional="true" config-file="git-performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
+
+  <!--Included and not module to preserve compatibility (plugin classes/action must be available externally-->
+  <xi:include href="intellij.vcs.git.xml"/>
+
+  <content namespace="jetbrains">
+    <module name="intellij.vcs.git.localHistory"/>
+    <module name="intellij.vcs.git.terminal"/>
+    <module name="intellij.vcs.git.coverage"/>
+    <!--It makes sense to reconsider this dependency in the future
+    by moving intellij.vcs.git to intellij.vcs.git.backend and making content of this module shared-->
+    <module name="intellij.vcs.git.shared" loading="embedded"/>
+    <module name="intellij.vcs.git.frontend"/>
+  </content>
+</idea-plugin>

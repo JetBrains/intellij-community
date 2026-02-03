@@ -1,0 +1,13 @@
+fragment commit on Commit {
+    ...commitShort
+    committer {
+        ...gitActorInfo
+    }
+    messageBody
+    committedDate
+    parents(first: 100) {
+        nodes {
+            ...commitHash
+        }
+    }
+}

@@ -1,0 +1,1 @@
+se<caret>aled class C {}

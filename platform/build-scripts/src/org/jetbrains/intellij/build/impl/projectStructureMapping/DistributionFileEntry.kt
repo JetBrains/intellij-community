@@ -1,0 +1,130 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build.impl.projectStructureMapping
+
+import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
+import org.jetbrains.intellij.build.impl.ModuleItem
+import org.jetbrains.intellij.build.impl.ProjectLibraryData
+import java.nio.file.Path
+
+internal data class ContentReport(
+  @JvmField val platform: List<DistributionFileEntry>,
+  @JvmField val bundledPlugins: List<PluginBuildDescriptor>,
+  @JvmField val nonBundledPlugins: List<PluginBuildDescriptor>,
+) {
+  fun all(): Sequence<DistributionFileEntry> = sequence {
+    yieldAll(platform)
+    yieldAll(bundledPlugins.flatMap { it.distribution })
+    yieldAll(nonBundledPlugins.flatMap { it.distribution })
+  }
+
+  fun bundled(): Sequence<DistributionFileEntry> = sequence {
+    yieldAll(platform)
+    yieldAll(bundledPlugins.flatMap { it.distribution })
+  }
+}
+
+sealed interface DistributionFileEntry {
+  /**
+   * Path to a file in IDE distribution
+   */
+  val path: Path
+
+  val relativeOutputFile: String?
+
+  /**
+   * Type of the element in the project configuration which was copied to [.path]
+   */
+  val type: String
+
+  val hash: Long
+}
+
+sealed interface LibraryFileEntry : DistributionFileEntry {
+  val libraryFile: Path?
+  /**
+   * The canonical relative path for reporting purposes (e.g., "org/xerial/sqlite-jdbc/3/sqlite-jdbc-3.jar").
+   * Used to produce consistent `$MAVEN_REPOSITORY$/...` paths across different build systems (JPS vs Bazel).
+   * When null, falls back to [libraryFile].
+   */
+  val canonicalLibraryPath: String?
+  val size: Int
+}
+
+data class CustomAssetEntry(
+  override val path: Path,
+  override val hash: Long,
+  override val relativeOutputFile: String? = null,
+) : DistributionFileEntry {
+  override val type: String
+    get() = "custom-asset"
+}
+
+internal interface ModuleOwnedFileEntry {
+  val owner: ModuleItem?
+}
+
+/**
+ * Represents a file in a module-level library
+ */
+internal data class ModuleLibraryFileEntry(
+  override val path: Path,
+  @JvmField val moduleName: String,
+  @JvmField val libraryName: String,
+  override val libraryFile: Path?,
+  override val canonicalLibraryPath: String?,
+  override val size: Int,
+  override val hash: Long,
+  override val relativeOutputFile: String?,
+  override val owner: ModuleItem?,
+) : DistributionFileEntry, LibraryFileEntry, ModuleOwnedFileEntry {
+  override val type: String
+    get() = "module-library-file"
+}
+
+/**
+ * Represents test classes of a module
+ */
+internal data class ModuleTestOutputEntry(override val path: Path, @JvmField val moduleName: String) : DistributionFileEntry {
+  override val relativeOutputFile: String?
+    get() = null
+
+  override val type: String
+    get() = "module-test-output"
+
+  override val hash: Long
+    get() = 0
+}
+
+/**
+ * Represents a project-level library
+ */
+internal data class ProjectLibraryEntry(
+  override val path: Path,
+  @JvmField val data: ProjectLibraryData,
+  override val libraryFile: Path?,
+  override val canonicalLibraryPath: String?,
+  override val hash: Long,
+  override val size: Int,
+  override val relativeOutputFile: String?,
+) : DistributionFileEntry, LibraryFileEntry, ModuleOwnedFileEntry {
+  override val type: String
+    get() = "project-library"
+
+  override val owner: ModuleItem?
+    get() = data.owner
+}
+
+/**
+ * Represents production classes of a module
+ */
+data class ModuleOutputEntry(
+  override val path: Path,
+  override val owner: ModuleItem,
+  @JvmField val size: Int,
+  override val hash: Long,
+  override val relativeOutputFile: String,
+  @JvmField val reason: String? = null,
+) : DistributionFileEntry, ModuleOwnedFileEntry {
+  override val type: String
+    get() = "module-output"
+}

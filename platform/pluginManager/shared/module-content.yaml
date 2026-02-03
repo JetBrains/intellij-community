@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.pluginManager.shared.jar
+  modules:
+  - name: intellij.platform.pluginManager.shared

@@ -1,0 +1,66 @@
+### auto-generated section `build intellij.turboComplete` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "turboComplete_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "turboComplete",
+  module_name = "intellij.turboComplete",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":turboComplete_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-impl",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-api:lang",
+    "//platform/statistics",
+    "//plugins/completion-ml-ranking",
+    "//platform/lang-impl",
+    "//platform/ml-impl",
+    "//platform/platform-impl/internal",
+    "//platform/ml-api:ml",
+  ]
+)
+### auto-generated section `build intellij.turboComplete` end
+
+### auto-generated section `build intellij.turboComplete.tests` start
+jvm_library(
+  name = "turboComplete-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "turboComplete-tests_test_lib",
+  module_name = "intellij.turboComplete.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:junit5",
+    "//plugins/turboComplete",
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/ml-impl",
+    "//platform/ml-impl:ml-impl_test_lib",
+  ],
+  runtime_deps = [":turboComplete-tests"]
+)
+### auto-generated section `build intellij.turboComplete.tests` end
+
+### auto-generated section `test intellij.turboComplete.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "turboComplete-tests_test",
+  runtime_deps = [":turboComplete-tests_test_lib"]
+)
+### auto-generated section `test intellij.turboComplete.tests` end

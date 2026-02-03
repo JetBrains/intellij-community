@@ -1,0 +1,25 @@
+# ========
+# 3.9 only
+# ========
+
+# `eventmask` argument exists at runtime, but is not correctly recognized
+# while being inspected by stubtest. Fixed in Python 3.10.
+select.epoll.register
+
+# According to stubtest, these are sometimes not present at runtime, starting
+# with Python 3.9.24. Which is not true.
+(_frozen_importlib_external.PathFinder.find_distributions)?
+(importlib._bootstrap_external.PathFinder.find_distributions)?
+(importlib.machinery.PathFinder.find_distributions)?
+
+
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; <= 3.12
+# =============================================================
+
+# doesn't exist on linux
+_msi
+msilib(.[a-z]+)?
+
+# doesn't exist in all installations
+(nis)?

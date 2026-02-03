@@ -1,0 +1,10 @@
+a ?=
+-----
+Groovy script
+  Assignment expression
+    Reference expression
+      PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(?=)('?=')
+    PsiErrorElement:<expression> expected
+      <empty list>

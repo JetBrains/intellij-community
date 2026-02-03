@@ -1,0 +1,5 @@
+<!DOCTYPE ejb-jar [
+<!ELEMENT display-name (#PCDATA)>
+<!ELEMENT ejb-jar (display-name)*>
+]>
+<ejb-jar<error> </error>,

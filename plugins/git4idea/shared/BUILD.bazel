@@ -1,0 +1,41 @@
+### auto-generated section `build intellij.vcs.git.shared` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "shared_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "shared",
+  module_name = "intellij.vcs.git.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":shared_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/vcs-impl/shared",
+    "//platform/platform-api:ide",
+    "//platform/kernel/shared:kernel",
+    "//platform/platform-impl/rpc",
+    "//platform/project/shared:project",
+    "//platform/platform-impl:ide-impl",
+    "//platform/dvcs-impl/shared",
+    "//platform/core-ui",
+    "//platform/util/coroutines",
+    "//platform/editor-ui-api:editor-ui",
+    "//libraries/caffeine",
+    "//platform/analysis-api:analysis",
+    "//platform/util/text-matching",
+    "//platform/platform-impl/ui",
+    "//platform/diagnostic/telemetry",
+    "@lib//:opentelemetry",
+    "//platform/vcs-api/shared",
+  ]
+)
+### auto-generated section `build intellij.vcs.git.shared` end

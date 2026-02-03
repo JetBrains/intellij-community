@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="com.jetbrains.fus.reporting.api" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.fus.reporting:api:1.0.205">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/api/1.0.205/api-1.0.205.jar">
+          <sha256sum>bd122fb2110ec009cf3143aef5e2d473611b5e015c0d2701686eb94200e538ca</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/api/1.0.205/api-1.0.205.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/api/1.0.205/api-1.0.205-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

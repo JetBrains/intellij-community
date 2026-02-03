@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.java.promo` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "promo_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "promo",
+  module_name = "intellij.java.promo",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":promo_resources"],
+  deps = [
+    "//platform/lang-core",
+    "//platform/util",
+    "//java/openapi:java",
+    "//java/idea-ui:ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/extensions",
+    "//platform/core-api:core",
+    "//xml/xml-psi-api:psi",
+    "//platform/lang-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/analysis-api:analysis",
+  ]
+)
+### auto-generated section `build intellij.java.promo` end

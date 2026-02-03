@@ -1,0 +1,47 @@
+### auto-generated section `build intellij.xml.dom.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "dom-impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "dom-impl",
+  module_name = "intellij.xml.dom.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":dom-impl_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/usageView-impl",
+    "//xml/dom-openapi:dom",
+    "//xml/xml-analysis-api:analysis",
+    "//xml/impl",
+    "//platform/util",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
+    "//xml/xml-psi-api:psi",
+    "//xml/xml-structure-view-api:structureView",
+    "//platform/lang-impl",
+    "//platform/indexing-impl",
+    "//xml/xml-parser:parser",
+    "//platform/refactoring",
+    "//platform/usageView",
+    "//libraries/fastutil",
+    "//platform/core-ui",
+    "//platform/libraries/cglib",
+    "//platform/core-impl",
+  ],
+  exports = ["//xml/dom-openapi:dom"],
+  runtime_deps = ["//platform/backend"]
+)
+### auto-generated section `build intellij.xml.dom.impl` end

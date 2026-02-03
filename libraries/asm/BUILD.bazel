@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.asm` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "asm_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "asm",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":asm_resources"],
+  exports = ["@lib//:libraries-asm-asm"],
+  runtime_deps = ["@lib//:libraries-asm-asm"]
+)
+### auto-generated section `build intellij.libraries.asm` end

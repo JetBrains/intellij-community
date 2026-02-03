@@ -1,0 +1,41 @@
+### auto-generated section `build intellij.kotlin.migration` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "migration_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "migration",
+  module_name = "intellij.kotlin.migration",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":migration_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/analysis-api:analysis",
+    "//platform/lang-api:lang",
+    "//platform/core-api:core",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/formatter",
+    "//platform/util/jdom",
+    "//platform/core-impl",
+    "//platform/ide-core",
+    "//platform/ide-core-impl",
+    "//platform/lang-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/core-ui",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/statistics",
+  ]
+)
+### auto-generated section `build intellij.kotlin.migration` end

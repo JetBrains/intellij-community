@@ -1,0 +1,21 @@
+while (true){
+    """
+
+   asf gfhf
+sdfs
+
+   sdfs
+"""
+42
+}
+-----
+while (true) {
+  """
+
+   asf gfhf
+sdfs
+
+   sdfs
+"""
+  42
+}

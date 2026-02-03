@@ -1,0 +1,7 @@
+// WITH_STDLIB
+// PROBLEM: Java collection 'ConcurrentLinkedQueue' is parameterized with a nullable type
+import java.util.concurrent.ConcurrentLinkedQueue
+
+fun typeUsage() {
+    val queue: ConcurrentLinkedQueue<<caret>String?>???? = null
+}

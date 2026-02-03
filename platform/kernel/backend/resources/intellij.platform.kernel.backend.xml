@@ -1,0 +1,15 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.rpc.backend"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.platform.kernel.KernelService"
+                        serviceImplementation="com.intellij.platform.kernel.backend.BackendKernelService"/>
+    <platform.entityTypes implementation="com.intellij.platform.kernel.backend.BackendValueEntityTypesProvider"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij.platform">
+    <rpc.backend.remoteApiProvider implementation="com.intellij.platform.kernel.backend.RemoteKernelProvider"/>
+  </extensions>
+</idea-plugin>

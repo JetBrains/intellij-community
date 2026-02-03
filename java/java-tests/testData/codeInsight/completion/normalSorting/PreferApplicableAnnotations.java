@@ -1,0 +1,2 @@
+@Tt<caret>
+@interface Foo { }

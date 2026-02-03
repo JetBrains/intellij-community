@@ -1,0 +1,147 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.intellij.plugins.intelliLang.inject.config.ui;
+
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.UnknownFileType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.compiler.PatternCompiler;
+import com.intellij.patterns.compiler.PatternCompilerImpl;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.ui.EditorTextField;
+import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
+import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import java.awt.BorderLayout;
+import java.util.ArrayList;
+
+/**
+ * @author Gregory.Shrago
+ */
+public final class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
+
+  // read by reflection
+  LanguagePanel myLanguagePanel;
+  JPanel myCenterPanel;
+  EditorTextField myTextArea;
+  AdvancedPanel myAdvancedPanel;
+
+  private JPanel myRoot;
+  private JTextField myNameTextField;
+  private final PatternCompiler<PsiElement> myHelper;
+
+  public BaseInjectionPanel(BaseInjection injection, Project project) {
+    super(injection, project);
+    $$$setupUI$$$(); // see IDEA-9987
+    myHelper = injection.getCompiler();
+    final FileType groovy = FileTypeManager.getInstance().getFileTypeByExtension("groovy");
+    final FileType realFileType = groovy == UnknownFileType.INSTANCE ? FileTypes.PLAIN_TEXT : groovy;
+    final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("injection." + realFileType.getDefaultExtension(), realFileType, "", 0, true);
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+    psiFile.putUserData(BaseInjection.INJECTION_KEY, injection);
+    myTextArea = new EditorTextField(document, project, realFileType) {
+      @Override
+      protected @NotNull EditorEx createEditor() {
+        final EditorEx ex = super.createEditor();
+        ex.setVerticalScrollbarVisible(true);
+        ex.setHorizontalScrollbarVisible(true);
+        return ex;
+      }
+
+      @Override
+      protected boolean isOneLineMode() {
+        return false;
+      }
+    };
+    myCenterPanel.add(myTextArea, BorderLayout.CENTER);
+    myTextArea.setFontInheritedFromLAF(false);
+    //myTextArea.setFont(EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN));
+    init(injection.copy());
+  }
+
+  @Override
+  protected void apply(BaseInjection other) {
+    final String displayName = myNameTextField.getText();
+    if (StringUtil.isEmpty(displayName)) {
+      throw new IllegalArgumentException("Display name should not be empty");
+    }
+    other.setDisplayName(displayName);
+    boolean enabled = true;
+    final StringBuilder sb = new StringBuilder();
+    final ArrayList<InjectionPlace> places = new ArrayList<>();
+    for (String s : myTextArea.getText().split("\\s*\n\\s*")) {
+      final boolean nextEnabled;
+      if (s.startsWith("+")) {
+        nextEnabled = true;
+        s = s.substring(1).trim();
+      }
+      else if (s.startsWith("-")) {
+        nextEnabled = false;
+        s = s.substring(1).trim();
+      }
+      else {
+        sb.append(s.trim());
+        continue;
+      }
+      if (!sb.isEmpty()) {
+        final String text = sb.toString();
+        places.add(new InjectionPlace(myHelper.compileElementPattern(text), enabled));
+        sb.setLength(0);
+      }
+      sb.append(s);
+      enabled = nextEnabled;
+    }
+    if (!sb.isEmpty()) {
+      final String text = sb.toString();
+      places.add(new InjectionPlace(myHelper.compileElementPattern(text), enabled));
+    }
+    for (InjectionPlace place : places) {
+      ElementPattern<? extends PsiElement> pattern = place.getElementPattern();
+      if (pattern instanceof PatternCompilerImpl.LazyPresentablePattern) {
+        try {
+          ((PatternCompilerImpl.LazyPresentablePattern<?>)pattern).compile();
+        }
+        catch (Throwable ex) {
+          throw new IllegalArgumentException("Pattern failed to compile:", ex);
+        }
+      }
+    }
+    other.setInjectionPlaces(places.toArray(InjectionPlace.EMPTY_ARRAY));
+  }
+
+  @Override
+  protected void resetImpl() {
+    final StringBuilder sb = new StringBuilder();
+    for (InjectionPlace place : myOrigInjection.getInjectionPlaces()) {
+      sb.append(place.isEnabled()?"+ ":"- ").append(place.getText()).append("\n");
+    }
+    myTextArea.setText(sb.toString());
+    myNameTextField.setText(myOrigInjection.getDisplayName());
+  }
+
+  @Override
+  public JPanel getComponent() {
+    return myRoot;
+  }
+
+  private void createUIComponents() {
+    myLanguagePanel = new LanguagePanel(myProject, myOrigInjection);
+    myAdvancedPanel = new AdvancedPanel(myProject, myOrigInjection);
+  }
+
+  private void $$$setupUI$$$() {
+  }
+
+}
+

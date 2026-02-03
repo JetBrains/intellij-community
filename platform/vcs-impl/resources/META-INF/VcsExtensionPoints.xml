@@ -1,0 +1,289 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="checkoutProvider"
+                    interface="com.intellij.openapi.vcs.CheckoutProvider"
+                    dynamic="true"/>
+    <extensionPoint name="vcs.checkoutProcessor"
+                    interface="com.intellij.openapi.vcs.VcsCheckoutProcessor"
+                    dynamic="true"/>
+    <extensionPoint name="vcsRootChecker"
+                    interface="com.intellij.openapi.vcs.VcsRootChecker"
+                    dynamic="true"/>
+    <extensionPoint name="vcsRootErrorFilter"
+                    interface="com.intellij.openapi.vcs.VcsRootErrorFilter"
+                    dynamic="true"/>
+    <extensionPoint name="vcsIgnoreChecker"
+                    interface="com.intellij.openapi.vcs.VcsIgnoreChecker"
+                    dynamic="true"/>
+    <extensionPoint name="checkoutListener"
+                    interface="com.intellij.openapi.vcs.checkout.CheckoutListener"
+                    dynamic="true"/>
+    <extensionPoint name="vcsAwareCheckoutListener"
+                    interface="com.intellij.openapi.vcs.checkout.VcsAwareCheckoutListener"
+                    dynamic="true"/>
+    <extensionPoint name="checkoutCompletedListener"
+                    interface="com.intellij.openapi.vcs.checkout.CheckoutListener"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs"
+                    beanClass="com.intellij.openapi.vcs.impl.VcsEP"
+                    dynamic="true">
+      <with attribute="vcsClass" implements="com.intellij.openapi.vcs.AbstractVcs"/>
+    </extensionPoint>
+
+    <extensionPoint name="checkinHandlerFactory"
+                    interface="com.intellij.openapi.vcs.checkin.CheckinHandlerFactory"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcsCheckinHandlerFactory"
+                    interface="com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory"
+                    dynamic="true"/>
+
+    <extensionPoint name="unresolvedMergeCheckProvider"
+                    interface="com.intellij.openapi.vcs.checkin.UnresolvedMergeCheckProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="changesViewContent"
+                    beanClass="com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP"
+                    area="IDEA_PROJECT"
+                    dynamic="true">
+      <with attribute="className" implements="com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider"/>
+      <with attribute="predicateClassName" implements="java.util.function.Predicate"/>
+      <with attribute="preloaderClassName" implements="com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider$Preloader"/>
+    </extensionPoint>
+
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="openapi.vcs.impl.LocalLineStatusTrackerProvider"
+                    interface="com.intellij.openapi.vcs.impl.LocalLineStatusTrackerProvider"
+                    dynamic="true"/>
+    <extensionPoint name="vcs.branchStateProvider"
+                    interface="com.intellij.vcs.branch.BranchStateProvider"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.commitMessageProvider" interface="com.intellij.openapi.vcs.changes.ui.CommitMessageProvider" dynamic="true"/>
+    <extensionPoint name="vcs.changes.changesViewConflictsBannerCustomizer"
+                    interface="com.intellij.openapi.vcs.merge.ChangesViewConflictsBannerCustomizer"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+    <extensionPoint name="editChangelistSupport"
+                    interface="com.intellij.openapi.vcs.changes.ui.EditChangelistSupport"
+                    area="IDEA_PROJECT"/>
+
+    <extensionPoint name="vcsSelectionProvider"
+                    interface="com.intellij.vcsUtil.VcsSelectionProvider"
+                    dynamic="true"/>
+    <extensionPoint name="vcs.changes.localCommitExecutor" interface="com.intellij.openapi.vcs.changes.CommitExecutor"
+                    area="IDEA_PROJECT" dynamic="true"/>
+
+    <extensionPoint name="vcs.commitSuccessNotificationActionProvider"
+                    interface="com.intellij.vcs.commit.CommitSuccessNotificationActionProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcsConfigurableProvider"
+                    interface="com.intellij.openapi.vcs.VcsConfigurableProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="generalVcsSettingsExtension"
+                    beanClass="com.intellij.openapi.vcs.configurable.GeneralVcsSettingsProviderEP"
+                    area="IDEA_PROJECT" dynamic="true">
+      <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable"/>
+    </extensionPoint>
+
+    <!--<extensionPoint name="writingAccessProvider"-->
+    <!--interface="com.intellij.openapi.vfs.WritingAccessProvider"-->
+    <!--area="IDEA_PROJECT"/>-->
+
+    <extensionPoint name="vcs.fileStatusProvider"
+                    interface="com.intellij.openapi.vcs.impl.FileStatusProvider"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.baseContentProvider"
+                    interface="com.intellij.openapi.vcs.impl.VcsBaseContentProvider"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.ignoredFilesHolder"
+                    interface="com.intellij.openapi.vcs.changes.VcsManagedFilesHolder$Provider"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.unversionedFilesHolder"
+                    interface="com.intellij.openapi.vcs.changes.VcsManagedFilesHolder$Provider"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.resolvedConflictsFilesHolder"
+                    interface="com.intellij.openapi.vcs.changes.VcsManagedFilesHolder$Provider"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+    <extensionPoint name="vcs.pathsToRefreshProvider"
+                    interface="com.intellij.vcs.commit.VcsPathsToRefreshProvider"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcsPopupProvider"
+                    interface="com.intellij.openapi.vcs.actions.VcsQuickListContentProvider"
+                    dynamic="true"/>
+    <extensionPoint name="patch.extension"
+                    interface="com.intellij.openapi.diff.impl.patch.PatchEP"
+                    dynamic="true"/>
+    <extensionPoint name="vcsChangesViewRefresher"
+                    interface="com.intellij.openapi.vcs.changes.ChangesViewRefresher"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+    <extensionPoint name="vcsAnnotationGutterActionProvider"
+                    interface="com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcsAnnotationGutterColumnProvider"
+                    interface="com.intellij.openapi.vcs.annotate.AnnotationGutterColumnProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.taskHandler"
+                    interface="com.intellij.openapi.vcs.VcsTaskHandler"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider"
+                    interface="com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider"
+                    dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="openapi.vcs.changes.actions.diff.ChangeDiffViewerWrapperProvider"
+                    interface="com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffViewerWrapperProvider"
+                    dynamic="true"/>
+
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="openapi.vcs.actions.AnnotateToggleAction.Provider"
+                    interface="com.intellij.openapi.vcs.actions.AnnotateToggleAction$Provider" dynamic="true"/>
+
+    <extensionPoint name="ignoredFileProvider"
+                    dynamic="true"
+                    interface="com.intellij.openapi.vcs.changes.IgnoredFileProvider"/>
+    <extensionPoint name="ignoredFileContentProvider"
+                    dynamic="true"
+                    interface="com.intellij.openapi.vcs.changes.IgnoredFileContentProvider" area="IDEA_PROJECT"/>
+
+    <extensionPoint name="vcsSharedChecker"
+                    dynamic="true"
+                    interface="com.intellij.openapi.vcs.VcsSharedChecker" area="IDEA_PROJECT"/>
+
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider"
+                    interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"
+                    dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider"
+                    interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"
+                    dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="openapi.vcs.changes.actions.CreatePatchFromChangesAction.Dialog.ExtensionProvider"
+                    interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"
+                    dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="openapi.vcs.changes.actions.CreatePatchFromChangesAction.Clipboard.ExtensionProvider"
+                    interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"
+                    dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="openapi.vcs.history.actions.GetVersionAction.ExtensionProvider"
+                    interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcsRepositoryInitializer"
+                    interface="com.intellij.vcs.VcsRepositoryInitializer"
+                    dynamic="true"/>
+    <extensionPoint name="openapi.vcs.changes.vcsPreservingExecutor"
+                    interface="com.intellij.openapi.vcs.changes.VcsPreservingExecutor"
+                    dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint qualifiedName="com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension"
+                    interface="com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.openapi.vcs.ui.commitOptionsDialogExtension"
+                    interface="com.intellij.openapi.vcs.ui.CommitOptionsDialogExtension"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.openapi.vcs.changes.ui.shareProjectAction"
+                    interface="com.intellij.openapi.vcs.changes.ui.ShareProjectActionProvider"
+                    dynamic="true"/>
+
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="vcs.actions.ScheduleForAdditionActionExtension"
+                    interface="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionActionExtension"
+                    dynamic="true"/>
+    <extensionPoint name="vcsStartupActivity" interface="com.intellij.openapi.vcs.impl.VcsStartupActivity" dynamic="false"/>
+
+    <extensionPoint name="vcsBulkMovesOnlyChangesFilter"
+                    interface="com.intellij.openapi.vcs.changes.ui.browser.BulkMovesOnlyChangesFilter"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.consoleFolding"
+                    interface="com.intellij.vcs.console.VcsConsoleFolding"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.changeListChangeAssigner"
+                    interface="com.intellij.openapi.vcs.changes.ChangeListChangeAssigner"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.lineStatusClientIdRenderer"
+                    interface="com.intellij.openapi.vcs.ex.LineStatusClientIdRenderer"
+                    area="IDEA_PROJECT"
+                    dynamic="false"/>
+
+    <extensionPoint name="vcs.envCustomizer"
+                    interface="com.intellij.openapi.vcs.VcsEnvCustomizer"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.vcsSymlinkResolver"
+                    interface="com.intellij.vcs.VcsSymlinkResolver"
+                    area="IDEA_PROJECT"
+                    dynamic="false"/>
+
+    <extensionPoint name="vcs.codeVisionLanguageContext" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.VcsCodeVisionLanguageContext"/>
+    </extensionPoint>
+
+    <extensionPoint name="vcs.defaultCommitMessagePolicy" interface="com.intellij.vcs.commit.DefaultCommitMessagePolicy" dynamic="true"/>
+    <extensionPoint name="vcs.changeListClassifierProvider" interface="com.intellij.vcs.commit.ChangeListClassifierProvider" dynamic="true"/>
+
+    <extensionPoint name="vcs.shelveSilentlyTitleProvider"
+                    interface="com.intellij.openapi.vcs.changes.shelf.ShelveSilentlyTitleProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.shelveSilentlyGotItTooltipProvider"
+                    interface="com.intellij.openapi.vcs.changes.shelf.ShelveSilentlyGotItTooltipProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.diffRevisionMetadataProvider"
+                    interface="com.intellij.openapi.diff.impl.DiffRevisionMetadataProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.fileListenerIgnoredFilesProvider"
+                    interface="com.intellij.openapi.vcs.VcsFileListenerIgnoredFilesProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.commitMessageInspection"
+                    beanClass="com.intellij.vcs.commit.message.CommitMessageInspectionEP"
+                    dynamic="true">
+      <with attribute="implementation" implements="com.intellij.vcs.commit.message.BaseCommitMessageInspection"/>
+    </extensionPoint>
+
+    <extensionPoint name="vcs.issueDocumentationTargetProvider"
+                    interface="com.intellij.openapi.vcs.IssueDocumentationTargetProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.vcs.impl.backend.treeNodeConverter"
+                    interface="com.intellij.vcs.shelf.NodeToEntityConverter"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.vcs.impl.changeListDiffViewerDecorator"
+                    interface="com.intellij.openapi.vcs.changes.actions.diff.lst.ChangeListDiffViewerDecorator"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.updateOptionsDialogProvider"
+                    interface="com.intellij.openapi.vcs.update.UpdateOptionsDialogProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

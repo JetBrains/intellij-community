@@ -1,0 +1,7 @@
+# Whenever you update version here, PACKAGE_VERSION should be updated
+# in scripts/sync_protobuf/s2clientprotocol.py and vice-versa.
+# When updating, also re-run the script
+version = "5.*"
+upstream_repository = "https://github.com/Blizzard/s2client-proto"
+requires = ["types-protobuf"]
+extra_description = "Partially generated using [mypy-protobuf==3.6.0](https://github.com/nipunn1313/mypy-protobuf/tree/v3.6.0) and libprotoc 27.2 on [s2client-proto 5.0.12.91115.0](https://github.com/Blizzard/s2client-proto/tree/c04df4adbe274858a4eb8417175ee32ad02fd609)."

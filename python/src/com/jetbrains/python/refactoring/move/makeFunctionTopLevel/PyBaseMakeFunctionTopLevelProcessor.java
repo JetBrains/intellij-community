@@ -1,0 +1,270 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.refactoring.move.makeFunctionTopLevel;
+
+import com.intellij.codeInsight.controlflow.ControlFlow;
+import com.intellij.codeInsight.controlflow.Instruction;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNonlocalStatement;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
+import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
+import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.PyUtil.inSameFile;
+import static com.jetbrains.python.psi.PyUtil.multiResolveTopPriority;
+import static com.jetbrains.python.psi.PyUtil.turnConstructorIntoClass;
+import static com.jetbrains.python.psi.resolve.PyNamespacePackageUtil.isInNamespacePackage;
+
+/**
+ * @author Mikhail Golubev
+ */
+public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactoringProcessor {
+  protected final PyFunction myFunction;
+  protected final PsiFile mySourceFile;
+  protected final PyResolveContext myResolveContext;
+  protected final PyElementGenerator myGenerator;
+  protected final String myDestinationPath;
+  protected final List<PsiElement> myExternalReads = new ArrayList<>();
+
+  public PyBaseMakeFunctionTopLevelProcessor(@NotNull PyFunction targetFunction, @NotNull String destinationPath) {
+    super(targetFunction.getProject());
+    myFunction = targetFunction;
+    myDestinationPath = destinationPath;
+    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(myProject, targetFunction.getContainingFile());
+    myResolveContext = PyResolveContext.defaultContext(typeEvalContext);
+    myGenerator = PyElementGenerator.getInstance(myProject);
+    mySourceFile = myFunction.getContainingFile();
+  }
+
+  @Override
+  protected final @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+    return new UsageViewDescriptorAdapter() {
+      @Override
+      public PsiElement @NotNull [] getElements() {
+        return new PsiElement[] {myFunction};
+      }
+
+      @Override
+      public String getProcessedElementsHeader() {
+        return getRefactoringName();
+      }
+    };
+  }
+
+  @Override
+  protected final UsageInfo @NotNull [] findUsages() {
+    return PyPsiIndexUtil.findUsages(myFunction, false).toArray(UsageInfo.EMPTY_ARRAY);
+  }
+
+  @Override
+  protected final @NotNull String getCommandName() {
+    return getRefactoringName();
+  }
+
+  @Override
+  protected final void performRefactoring(UsageInfo @NotNull [] usages) {
+    final List<String> newParameters = collectNewParameterNames();
+
+    assert ApplicationManager.getApplication().isWriteAccessAllowed();
+
+    boolean isNamespace = isInNamespacePackage(myFunction);
+    final PyFile targetFile = PyClassRefactoringUtil.getOrCreateFile(myDestinationPath, myProject, isNamespace);
+    if (targetFile.findTopLevelFunction(myFunction.getName()) != null) {
+      throw new IncorrectOperationException(
+        PyBundle.message("refactoring.move.error.destination.file.contains.function", myFunction.getName()));
+    }
+    if (importsRequired(usages, targetFile)) {
+      PyMoveRefactoringUtil.checkValidImportableFile(targetFile, targetFile.getVirtualFile());
+    }
+
+    final PsiElement position = PyMoveRefactoringUtil.findLowestPossibleTopLevelInsertionPosition(Arrays.asList(usages), targetFile);
+    // We should update usages before we generate and insert new function, because we have to update its usages inside 
+    // (e.g. recursive calls) it first 
+    updateUsages(newParameters, usages);
+    final PyFunction newFunction = insertFunction(createNewFunction(newParameters), targetFile, position);
+
+    myFunction.delete();
+
+    updateImports(newFunction, usages);
+  }
+
+  private boolean importsRequired(UsageInfo @NotNull [] usages, final PyFile targetFile) {
+    return ContainerUtil.exists(usages, info -> {
+      final PsiElement element = info.getElement();
+      if (element == null) {
+        return false;
+      }
+      return !belongsToFunction(element) && info.getFile() != targetFile;
+    });
+  }
+
+  private boolean belongsToFunction(PsiElement element) {
+    return PsiTreeUtil.isAncestor(myFunction, element, false);
+  }
+
+
+  private void updateImports(@NotNull PyFunction newFunction, UsageInfo @NotNull [] usages) {
+    final Set<PsiFile> usageFiles = new HashSet<>();
+    for (UsageInfo usage : usages) {
+      usageFiles.add(usage.getFile());
+    }
+    for (PsiFile file : usageFiles) {
+      if (file != newFunction.getContainingFile()) {
+        PyPsiRefactoringUtil.insertImport(file, newFunction, null, true);
+      }
+    }
+    // References inside the body of function 
+    if (newFunction.getContainingFile() != mySourceFile) {
+      for (PsiElement read : myExternalReads) {
+        if (read instanceof PsiNamedElement && read.isValid()) {
+          PyPsiRefactoringUtil.insertImport(newFunction, (PsiNamedElement)read, null, true);
+        }
+      }
+      PyClassRefactoringUtil.optimizeImports(mySourceFile);
+    }
+  }
+
+  protected abstract @NotNull @Nls String getRefactoringName();
+
+  protected abstract @NotNull List<String> collectNewParameterNames();
+
+  protected abstract void updateUsages(@NotNull Collection<String> newParamNames, UsageInfo @NotNull [] usages);
+  
+  protected abstract @NotNull PyFunction createNewFunction(@NotNull Collection<String> newParamNames);
+
+  protected final @NotNull PyParameterList addParameters(@NotNull PyParameterList paramList, @NotNull Collection<String> newParameters) {
+    if (!newParameters.isEmpty()) {
+      final String commaSeparatedNames = StringUtil.join(newParameters, ", ");
+      final StringBuilder paramListText = new StringBuilder(paramList.getText());
+      paramListText.insert(1, commaSeparatedNames + (paramList.getParameters().length > 0 ? ", " : ""));
+      final PyParameterList newElement = myGenerator.createParameterList(LanguageLevel.forElement(myFunction), paramListText.toString());
+      return (PyParameterList)paramList.replace(newElement);
+    }
+    return paramList;
+  }
+
+  protected @NotNull PyArgumentList addArguments(@NotNull PyArgumentList argList, @NotNull Collection<String> newArguments) {
+    if (!newArguments.isEmpty()) {
+      final String commaSeparatedNames = StringUtil.join(newArguments, ", ");
+      final StringBuilder argListText = new StringBuilder(argList.getText());
+      argListText.insert(1, commaSeparatedNames + (argList.getArguments().length > 0 ? ", " : ""));
+      final PyArgumentList newElement = myGenerator.createArgumentList(LanguageLevel.forElement(argList), argListText.toString());
+      return (PyArgumentList)argList.replace(newElement);
+    }
+    return argList;
+  }
+
+  protected @NotNull PyFunction insertFunction(@NotNull PyFunction newFunction, @NotNull PyFile newFile, @Nullable PsiElement anchor) {
+    if (mySourceFile == newFile) {
+      // In the same file try inserting generated function at the top level but preferably right after the original scope owner
+      final PsiElement surroundingStatement = PyPsiUtils.getParentRightBefore(myFunction, mySourceFile);
+      if (anchor == null || surroundingStatement.getTextRange().getEndOffset() < anchor.getTextRange().getStartOffset()) {
+        return (PyFunction)mySourceFile.addAfter(newFunction, surroundingStatement);
+      }
+    }
+    // Insert at the end or before first top-level usage in the file
+    return (PyFunction)newFile.addBefore(newFunction, anchor);
+  }
+
+  protected @NotNull AnalysisResult analyseScope(@NotNull ScopeOwner owner) {
+    final ControlFlow controlFlow = ControlFlowCache.getControlFlow(owner);
+    final AnalysisResult result = new AnalysisResult();
+    for (Instruction instruction : controlFlow.getInstructions()) {
+      if (instruction instanceof ReadWriteInstruction readWriteInstruction) {
+        final PsiElement element = readWriteInstruction.getElement();
+        if (element == null) {
+          continue;
+        }
+        if (readWriteInstruction.getAccess().isReadAccess()) {
+          for (PsiElement resolved : multiResolveTopPriority(element, myResolveContext)) {
+            resolved = ObjectUtils.chooseNotNull(turnConstructorIntoClass(as(resolved, PyFunction.class)), resolved);
+            if (resolved != null) {
+              if (isFromEnclosingScope(resolved)) {
+                result.readsFromEnclosingScope.add(element);
+              }
+              else if (!belongsToFunction(resolved)) {
+                myExternalReads.add(resolved);
+              }
+              if (resolved instanceof PyParameter && ((PyParameter)resolved).isSelf()) {
+                if (PsiTreeUtil.getParentOfType(resolved, PyFunction.class) == myFunction) {
+                  result.readsOfSelfParameter.add(element);
+                }
+                else if (!PsiTreeUtil.isAncestor(myFunction, resolved, true)) {
+                  result.readsOfSelfParametersFromEnclosingScope.add(element);
+                }
+              }
+            }
+          }
+        }
+        if (readWriteInstruction.getAccess().isWriteAccess() && element instanceof PyTargetExpression) {
+          for (PsiElement resolved : multiResolveTopPriority(element, myResolveContext)) {
+            if (resolved != null) {
+              if (element.getParent() instanceof PyNonlocalStatement && isFromEnclosingScope(resolved)) {
+                result.nonlocalWritesToEnclosingScope.add((PyTargetExpression)element);
+              }
+              if (resolved instanceof PyParameter && ((PyParameter)resolved).isSelf() && 
+                  PsiTreeUtil.getParentOfType(resolved, PyFunction.class) == myFunction) {
+                result.writesToSelfParameter.add((PyTargetExpression)element);
+              }
+            }
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  private boolean isFromEnclosingScope(@NotNull PsiElement element) {
+    return inSameFile(element, myFunction) &&
+           !belongsToFunction(element) &&
+           !(ScopeUtil.getScopeOwner(element) instanceof PsiFile); 
+  }
+
+  protected static class AnalysisResult {
+    final List<PsiElement> readsFromEnclosingScope = new ArrayList<>();
+    final List<PyTargetExpression> nonlocalWritesToEnclosingScope = new ArrayList<>();
+    final List<PsiElement> readsOfSelfParametersFromEnclosingScope = new ArrayList<>();
+    final List<PsiElement> readsOfSelfParameter = new ArrayList<>();
+    // No one writes to "self", but handle this case too just to be sure
+    final List<PyTargetExpression> writesToSelfParameter = new ArrayList<>();
+  }
+}

@@ -1,0 +1,7 @@
+// "Convert function to property" "true"
+// PRIORITY: LOW
+package common
+
+interface Foo {
+    val foo<selection><caret></selection>: String
+}

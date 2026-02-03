@@ -1,0 +1,41 @@
+### auto-generated section `build intellij.platform.vcs` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "vcs_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs",
+  module_name = "intellij.platform.vcs",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":vcs_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-api:ide",
+    "//platform/lang-api:lang",
+    "//platform/projectModel-api:projectModel",
+    "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/diff-api:diff",
+    "//platform/util/jdom",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/util",
+    "//platform/util:util-ui",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//libraries/caffeine",
+    "//platform/vcs-api/shared",
+    "//platform/execution",
+  ],
+  exports = [
+    "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/vcs-api/shared",
+  ],
+  runtime_deps = ["//platform/backend"]
+)
+### auto-generated section `build intellij.platform.vcs` end

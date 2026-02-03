@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.platform.jewel.markdown.extensions.gfmStrikethrough.jar
+  modules:
+  - name: intellij.platform.jewel.markdown.extensions.gfmStrikethrough
+    libraries:
+      commonmark.ext.gfm.strikethrough:
+      - name: $MAVEN_REPOSITORY$/org/commonmark/commonmark-ext-gfm-strikethrough/0/commonmark-ext-gfm-strikethrough-0.jar

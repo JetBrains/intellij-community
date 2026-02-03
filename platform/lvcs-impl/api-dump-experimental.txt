@@ -1,0 +1,10 @@
+*f:com.intellij.history.core.HistoryPathFilter
+- *sf:Companion:com.intellij.history.core.HistoryPathFilter$Companion
+- f:affectsMatching(java.lang.String):Z
+- sf:create(java.lang.String,com.intellij.openapi.project.Project):com.intellij.history.core.HistoryPathFilter
+- sf:create(java.lang.String,java.lang.String):com.intellij.history.core.HistoryPathFilter
+- f:getMatcher():com.intellij.psi.codeStyle.MinusculeMatcher
+*f:com.intellij.history.core.HistoryPathFilter$Companion
+- f:create(java.lang.String,com.intellij.openapi.project.Project):com.intellij.history.core.HistoryPathFilter
+f:com.intellij.history.core.LocalHistoryFacadeKt
+- *sf:collectChanges(com.intellij.history.core.LocalHistoryFacade,java.lang.String,java.lang.String,com.intellij.history.core.HistoryPathFilter,kotlin.jvm.functions.Function1):V

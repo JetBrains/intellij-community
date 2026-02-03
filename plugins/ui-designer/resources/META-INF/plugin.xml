@@ -1,0 +1,238 @@
+<idea-plugin>
+  <name>Swing UI Designer</name>
+  <id>com.intellij.uiDesigner</id>
+  <category>Swing</category>
+  <vendor>JetBrains</vendor>
+  <description>Allows to design Swing UI graphically, supports code generation/instrumentation, preview, widgets library and UI-related code inspections</description>
+  <resource-bundle>messages.UIDesignerBundle</resource-bundle>
+  <depends>com.intellij.java-i18n</depends>
+  <depends>com.intellij.modules.spellchecker</depends>
+  <depends>com.intellij.properties</depends>
+
+  <extensionPoints>
+    <extensionPoint name="formInspectionTool"
+                    interface="com.intellij.uiDesigner.inspections.FormInspectionTool"/>
+
+    <extensionPoint qualifiedName="com.intellij.paletteItemProvider"
+                    area="IDEA_PROJECT"
+                    interface="com.intellij.ide.palette.PaletteItemProvider"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij.uiDesigner">
+    <formInspectionTool implementation="com.intellij.uiDesigner.i18n.InvalidPropertyKeyFormInspection"/>
+    <formInspectionTool implementation="com.intellij.uiDesigner.i18n.I18nFormInspection"/>
+    <formInspectionTool implementation="com.intellij.uiDesigner.inspections.Java15FormInspection"/>
+    <formInspectionTool implementation="com.intellij.uiDesigner.inspections.DuplicateMnemonicInspection"/>
+    <formInspectionTool implementation="com.intellij.uiDesigner.inspections.MissingMnemonicInspection"/>
+    <formInspectionTool implementation="com.intellij.uiDesigner.inspections.NoLabelForInspection"/>
+    <formInspectionTool implementation="com.intellij.uiDesigner.inspections.NoButtonGroupInspection"/>
+    <formInspectionTool implementation="com.intellij.uiDesigner.inspections.NoScrollPaneInspection"/>
+    <formInspectionTool implementation="com.intellij.uiDesigner.inspections.OneButtonGroupInspection"/>
+    <formInspectionTool implementation="com.intellij.uiDesigner.inspections.FormSpellCheckingInspection"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+
+    <fileType name="GUI_DESIGNER_FORM" extensions="form"
+              implementationClass="com.intellij.uiDesigner.GuiFormFileType" fieldName="INSTANCE"/>
+    <syntaxHighlighter key="GUI_DESIGNER_FORM" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
+
+    <projectConfigurable groupId="editor" instance="com.intellij.uiDesigner.GuiDesignerConfigurable" id="project.propGUI" key="title.gui.designer"
+                         bundle="messages.UIDesignerBundle"/>
+
+    <favoriteNodeProvider implementation="com.intellij.uiDesigner.projectView.UIDesignerFavoriteNodeProvider"/>
+    <renameHandler implementation="com.intellij.uiDesigner.projectView.FormRenameHandler"/>
+    <implicitUsageProvider implementation="com.intellij.uiDesigner.binding.UIDesignerImplicitUsageProvider"/>
+    <usageTypeProvider implementation="com.intellij.uiDesigner.binding.FormUsageTypeProvider"/>
+
+    <localInspection language="TEXT" shortName="InvalidPropertyKeyForm" bundle="messages.UIDesignerBundle" key="inspection.invalid.property.in.form.title"
+                     groupKey="form.inspections.group" alternativeId="UnresolvedPropertyKey" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.uiDesigner.i18n.InvalidPropertyKeyFormInspection"/>
+    <localInspection language="TEXT" shortName="FormSpellChecking" bundle="messages.UIDesignerBundle" key="inspection.message.typo.in.word.title"
+                     groupKey="form.inspections.group" alternativeId="SpellCheckingInspection" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.uiDesigner.inspections.FormSpellCheckingInspection"/>
+    <localInspection language="TEXT" shortName="I18nForm" bundle="messages.UIDesignerBundle" key="inspection.i18n.message.in.form.title"
+                     groupKey="form.inspections.group" alternativeId="HardCodedStringLiteral" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.uiDesigner.i18n.I18nFormInspection"/>
+    <localInspection language="TEXT" shortName="DuplicateMnemonic" bundle="messages.UIDesignerBundle" key="inspection.duplicate.mnemonics"
+                     groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.uiDesigner.inspections.DuplicateMnemonicInspection"/>
+    <localInspection language="TEXT" shortName="MissingMnemonic" bundle="messages.UIDesignerBundle" key="inspection.missing.mnemonics"
+                     groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.uiDesigner.inspections.MissingMnemonicInspection"/>
+    <localInspection language="TEXT" shortName="NoLabelFor" bundle="messages.UIDesignerBundle" key="inspection.no.label.for"
+                     groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.uiDesigner.inspections.NoLabelForInspection"/>
+    <localInspection language="TEXT" shortName="NoButtonGroup" bundle="messages.UIDesignerBundle" key="inspection.no.button.group"
+                     groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.uiDesigner.inspections.NoButtonGroupInspection"/>
+    <localInspection language="TEXT" shortName="OneButtonGroup" bundle="messages.UIDesignerBundle" key="inspection.one.button.group"
+                     groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.uiDesigner.inspections.OneButtonGroupInspection"/>
+    <localInspection language="TEXT" shortName="NoScrollPane" bundle="messages.UIDesignerBundle" key="inspection.no.scroll.pane"
+                     groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.uiDesigner.inspections.NoScrollPaneInspection"/>
+    <localInspection language="JAVA" shortName="BoundFieldAssignment" bundle="messages.UIDesignerBundle" key="inspection.bound.field.title"
+                     groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.uiDesigner.inspections.BoundFieldAssignmentInspection"/>
+
+    <fileEditorProvider id="ui-designer" implementation="com.intellij.uiDesigner.editor.UIFormEditorProvider"/>
+
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty"/>
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty"/>
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.IndentProperty"/>
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.UseParentLayoutProperty"/>
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.CustomCreateProperty"/>
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.ClientPropertiesProperty"/>
+
+    <moduleService serviceImplementation="com.intellij.uiDesigner.StringDescriptorManager"/>
+
+    <annotator language="JAVA" implementationClass="com.intellij.uiDesigner.binding.FormClassAnnotator"/>
+
+    <cacheBuilder fileType="GUI_DESIGNER_FORM" wordsScannerClass="com.intellij.uiDesigner.binding.FormWordsScanner"/>
+
+    <referencesSearch implementation="com.intellij.uiDesigner.binding.FormReferencesSearcher"/>
+
+    <saveFileAsTemplateHandler implementation="com.intellij.uiDesigner.fileTemplate.SaveFormAsTemplateHandler"/>
+    <createFromTemplateHandler implementation="com.intellij.uiDesigner.fileTemplate.CreateFormFromTemplateHandler"/>
+
+    <automaticRenamerFactory implementation="com.intellij.uiDesigner.binding.FormsRenamerFactory"/>
+
+    <treeStructureProvider implementation="com.intellij.uiDesigner.projectView.FormMergerTreeStructureProvider"/>
+
+    <fileBasedIndex implementation="com.intellij.uiDesigner.binding.FormClassIndex"/>
+
+    <compiler implementation="com.intellij.uiDesigner.make.Form2SourceCompiler"/>
+    <compileServer.plugin classpath="jps/java-guiForms-jps.jar"/>
+    <compilableFileTypesProvider implementation="com.intellij.uiDesigner.make.FormTypeRegistrar" />
+
+    <psi.referenceContributor language="TEXT" implementation="com.intellij.uiDesigner.binding.FormReferenceContributor"/>
+
+    <refactoring.elementListenerProvider implementation="com.intellij.uiDesigner.palette.PaletteRefactoringListenerProvider"/>
+    <refactoring.moveHandler implementation="com.intellij.uiDesigner.projectView.FormMoveProvider"/>
+    <paletteItemProvider implementation="com.intellij.uiDesigner.palette.UIDesignerPaletteProvider"/>
+
+    <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.uiDesigner.binding.GeneratedCodeFoldingBuilder"/>
+    <gotoRelatedProvider implementation="com.intellij.uiDesigner.binding.FormRelatedFilesProvider"/>
+
+    <projectService serviceImplementation="com.intellij.uiDesigner.clientProperties.ClientPropertiesManager"/>
+
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager" headlessImplementation=""/>
+
+    <projectService serviceImplementation="com.intellij.ide.palette.impl.PaletteToolWindowManager" headlessImplementation=""/>
+  </extensions>
+
+  <actions>
+    <group id="GuiDesigner.MainToolbarActions">
+      <separator/>
+      <action id="GuiDesigner.PreviewForm" class="com.intellij.uiDesigner.actions.PreviewFormAction"
+              icon="AllIcons.Actions.Preview"/>
+      <action id="GuiDesigner.ReloadCustomComponents" class="com.intellij.uiDesigner.actions.ReloadCustomComponentsAction"
+              icon="AllIcons.Actions.Refresh"/>
+      <action id="GuiDesigner.ChooseLocale" class="com.intellij.uiDesigner.actions.ChooseLocaleAction"/>
+      <separator/>
+
+      <add-to-group anchor="before" group-id="MainToolBar" relative-to-action="HelpTopics"/>
+    </group>
+
+    <group id="GuiDesigner.EditorPopupMenu">
+      <reference ref="GuiDesigner.PreviewForm"/>
+      <separator/>
+      <reference ref="$Cut"/>
+      <reference ref="$Copy"/>
+      <reference ref="$Paste"/>
+      <separator/>
+      <action id="GuiDesigner.Pack" class="com.intellij.uiDesigner.actions.PackAction"/>
+      <action id="GuiDesigner.ShowGrid" class="com.intellij.uiDesigner.actions.ShowGridAction"/>
+      <action id="GuiDesigner.ShowComponentTags" class="com.intellij.uiDesigner.actions.ShowComponentTagsAction"/>
+      <separator/>
+      <action id="GuiDesigner.CreateComponent" class="com.intellij.uiDesigner.actions.CreateComponentAction"
+              use-shortcut-of="Generate"/>
+      <action id="GuiDesigner.AddTab" class="com.intellij.uiDesigner.actions.AddTabAction"/>
+      <separator/>
+      <reference ref="EditSource"/>
+      <action id="GuiDesigner.ExpandSelection" class="com.intellij.uiDesigner.actions.ExpandSelectionAction" use-shortcut-of="EditorSelectWord"/>
+      <action id="GuiDesigner.ShrinkSelection" class="com.intellij.uiDesigner.actions.ShrinkSelectionAction" use-shortcut-of="EditorUnSelectWord"/>
+      <action id="GuiDesigner.IncreaseIndent" class="com.intellij.uiDesigner.actions.IncreaseIndentAction" use-shortcut-of="EditorIndentSelection"/>
+      <action id="GuiDesigner.DecreaseIndent" class="com.intellij.uiDesigner.actions.DecreaseIndentAction" use-shortcut-of="EditorUnindentSelection"/>
+      <action id="GuiDesigner.GroupButtons" class="com.intellij.uiDesigner.actions.GroupButtonsAction"/>
+      <action id="GuiDesigner.UngroupButtons" class="com.intellij.uiDesigner.actions.UngroupButtonsAction"/>
+      <action id="GuiDesigner.Duplicate" class="com.intellij.uiDesigner.actions.DuplicateComponentsAction"
+              use-shortcut-of="EditorDuplicate"/>
+      <action id="GuiDesigner.Morph" class="com.intellij.uiDesigner.actions.MorphAction"/>
+      <action id="GuiDesigner.CreateListener" class="com.intellij.uiDesigner.actions.CreateListenerAction"
+              use-shortcut-of="OverrideMethods"/>
+      <action id="GuiDesigner.GoToListener" class="com.intellij.uiDesigner.actions.NavigateToListenerAction"
+              use-shortcut-of="GotoImplementation"/>
+      <separator/>
+      <action id="GuiDesigner.SurroundPopup" class="com.intellij.uiDesigner.actions.SurroundPopupAction"
+              use-shortcut-of="SurroundWith"/>
+      <action id="GuiDesigner.Flatten" class="com.intellij.uiDesigner.actions.FlattenAction"/>
+      <separator/>
+      <action id="GuiDesigner.FormSource" class="com.intellij.uiDesigner.actions.ShowFormSourceAction"/>
+      <separator/>
+      <reference ref="VersionControlsGroup"/>
+      <separator/>
+    </group>
+
+    <group id="GuiDesigner.ComponentTreePopupMenu">
+      <reference ref="EditSource"/>
+      <reference ref="GuiDesigner.ExpandSelection"/>
+      <reference ref="GuiDesigner.ShrinkSelection"/>
+      <separator/>
+      <reference ref="$Cut"/>
+      <reference ref="$Copy"/>
+      <reference ref="$Paste"/>
+      <separator/>
+      <reference ref="GuiDesigner.AddTab"/>
+      <separator/>
+      <reference ref="GuiDesigner.Morph"/>
+      <reference ref="GuiDesigner.CreateListener"/>
+      <reference ref="GuiDesigner.GoToListener"/>
+      <separator/>
+      <reference ref="GuiDesigner.SurroundPopup"/>
+      <reference ref="GuiDesigner.Flatten"/>
+    </group>
+
+    <group id="GuiDesigner.PropertyInspectorPopupMenu">
+      <action id="GuiDesigner.QuickJavadoc" class="com.intellij.uiDesigner.actions.ShowJavadocAction" use-shortcut-of="QuickJavaDoc"/>
+      <reference ref="EditSource"/>
+      <action id="GuiDesigner.ResetValue" class="com.intellij.uiDesigner.actions.ResetValueAction"/>
+    </group>
+
+    <group id="GuiDesigner.PaletteComponentPopupMenu">
+      <action id="GuiDesigner.AddComponent" class="com.intellij.uiDesigner.palette.AddComponentAction">
+        <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="popup@ExpandableBookmarkContextMenu"/>
+      </action>
+      <action id="GuiDesigner.EditComponent" class="com.intellij.uiDesigner.palette.EditComponentAction">
+        <keyboard-shortcut first-keystroke="F2" keymap="$default"/>
+      </action>
+      <action id="GuiDesigner.DeleteComponent" class="com.intellij.uiDesigner.palette.DeleteComponentAction"
+              use-shortcut-of="$Delete"/>
+      <action id="GuiDesigner.AddGroup" class="com.intellij.uiDesigner.palette.AddGroupAction"/>
+    </group>
+
+    <group id="GuiDesigner.PaletteGroupPopupMenu">
+      <reference ref="GuiDesigner.AddComponent"/>
+      <reference ref="GuiDesigner.AddGroup"/>
+      <action id="GuiDesigner.EditGroup" class="com.intellij.uiDesigner.palette.EditGroupAction">
+        <keyboard-shortcut first-keystroke="F2" keymap="$default"/>
+      </action>
+      <action id="GuiDesigner.DeleteGroup" class="com.intellij.uiDesigner.palette.DeleteGroupAction"
+              use-shortcut-of="$Delete"/>
+    </group>
+
+    <!--suppress PluginXmlCapitalization -->
+    <action id="GuiDesigner.GenerateMain" class="com.intellij.uiDesigner.actions.GenerateMainAction">
+      <add-to-group anchor="after" group-id="GenerateGroup" relative-to-action="GenerateSuperMethodCall"/>
+    </action>
+
+    <group id="GuiDesigner.NewActions" class="com.intellij.ide.actions.NonTrivialActionGroup">
+      <separator/>
+      <action id="NewForm" class="com.intellij.uiDesigner.actions.CreateFormAction" icon="AllIcons.FileTypes.UiForm"/>
+      <action id="NewDialog" class="com.intellij.uiDesigner.actions.CreateDialogAction" icon="AllIcons.General.Balloon"/>
+
+      <add-to-group group-id="NewGroup" anchor="last"/>
+    </group>
+  </actions>
+</idea-plugin>

@@ -1,0 +1,10 @@
+Used in com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectReloadingTest.
+
+The test loads default "sampleProject" from `community/jps/model-serialization/testData/sampleProject`, and then applies
+modifications as described in by specific test directory:
+1. Files that exist in "new" test directory will be copied (with overwrite) to "sampleProject"
+2. File with content.trim() == "<delete/>" will be deleted from "sampleProject"
+3. Other files in the "sampleProject" will remain unmodified
+
+You can use several test directories with `JpsProjectReloadingTest.checkProjectAfterReload` to simulate more complex changes requiring
+several modification steps (see example in `JpsProjectReloadingTest.remove add iml file`).

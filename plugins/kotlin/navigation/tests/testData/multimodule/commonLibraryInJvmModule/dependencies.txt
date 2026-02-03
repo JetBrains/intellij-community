@@ -1,0 +1,4 @@
+MODE SinglePlatform
+MODULE jvm { platform=[JVM]; root=jvm }
+
+jvm -> STDLIB_COMMON, KOTLIN_REFLECT, STDLIB_JVM,  KOTLIN_SDK { kind=DEPENDENCY }

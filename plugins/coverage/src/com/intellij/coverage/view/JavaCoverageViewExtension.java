@@ -1,0 +1,209 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.coverage.view;
+
+import com.intellij.coverage.CoverageDataManager;
+import com.intellij.coverage.CoverageRunner;
+import com.intellij.coverage.CoverageSuite;
+import com.intellij.coverage.CoverageSuitesBundle;
+import com.intellij.coverage.JavaCoverageRunner;
+import com.intellij.coverage.JavaCoverageSuite;
+import com.intellij.coverage.analysis.JavaCoverageAnnotator;
+import com.intellij.coverage.analysis.PackageAnnotator;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.java.coverage.JavaCoverageBundle;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ui.ColumnInfo;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+public class JavaCoverageViewExtension extends CoverageViewExtension {
+  private final JavaCoverageAnnotator myAnnotator;
+
+  public JavaCoverageViewExtension(JavaCoverageAnnotator annotator,
+                                   Project project,
+                                   CoverageSuitesBundle suitesBundle) {
+    super(project, suitesBundle);
+    myAnnotator = annotator;
+  }
+
+  @Override
+  public String getPercentage(int columnIndex, @NotNull AbstractTreeNode node) {
+    final PackageAnnotator.SummaryCoverageInfo info = getSummaryCoverageForNodeValue(node);
+
+    if (columnIndex == 1) {
+      return JavaCoverageAnnotator.getClassCoveredPercentage(info);
+    }
+    if (columnIndex == 2) {
+      return JavaCoverageAnnotator.getMethodCoveredPercentage(info);
+    }
+
+    if (columnIndex == 3) {
+      return JavaCoverageAnnotator.getLineCoveredPercentage(info);
+    }
+
+    if (columnIndex == 4) {
+      return JavaCoverageAnnotator.getBranchCoveredPercentage(info);
+    }
+    return "";
+  }
+
+  private @Nullable PackageAnnotator.SummaryCoverageInfo getSummaryCoverageForNodeValue(AbstractTreeNode<?> node) {
+    CoverageClassStructure structure = myAnnotator.getStructure();
+    if (structure == null) return null;
+    CoverageNodeInfo info = structure.getNodeInfo(getNodeId(node));
+    if (info == null) return null;
+    return info.getCounter();
+  }
+
+  private static @NotNull String getNodeId(AbstractTreeNode<?> node) {
+    return node instanceof CoverageListRootNode ? CoverageClassStructure.ROOT_ID : ((JavaCoverageNode)node).getQualifiedName();
+  }
+
+  @Override
+  public PsiElement getElementToSelect(Object object) {
+    PsiElement psiElement = super.getElementToSelect(object);
+    if (psiElement != null && psiElement.isValid()) {
+      final PsiFile containingFile = psiElement.getContainingFile();
+      if (containingFile instanceof PsiClassOwner) {
+        final PsiClass[] classes = ((PsiClassOwner)containingFile).getClasses();
+        if (classes.length == 1) return classes[0];
+        for (PsiClass aClass : classes) {
+          if (PsiTreeUtil.isAncestor(aClass, psiElement, false)) return aClass;
+        }
+      }
+    }
+    return psiElement;
+  }
+
+  @Override
+  public VirtualFile getVirtualFile(Object object) {
+    if (object instanceof PsiPackage) {
+      final PsiDirectory[] directories = ((PsiPackage)object).getDirectories();
+      return directories.length > 0 ? directories[0].getVirtualFile() : null;
+    }
+    return super.getVirtualFile(object);
+  }
+
+  @Override
+  public @Nullable PsiElement getParentElement(PsiElement element) {
+    if (element instanceof PsiClass) {
+      final PsiDirectory containingDirectory = element.getContainingFile().getContainingDirectory();
+      return containingDirectory != null ? JavaDirectoryService.getInstance().getPackage(containingDirectory) : null;
+    }
+    return ((PsiPackage)element).getParentPackage();
+  }
+
+  @Override
+  public @NotNull AbstractTreeNode<?> createRootNode() {
+    final PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage("");
+    return new JavaCoverageRootNode(myProject, Objects.requireNonNull(aPackage), mySuitesBundle);
+  }
+
+  @Override
+  public boolean hasChildren(AbstractTreeNode<?> node) {
+    CoverageClassStructure structure = myAnnotator.getStructure();
+    if (structure == null) return false;
+    return structure.hasChildren(getNodeId(node));
+  }
+
+  @Override
+  public List<AbstractTreeNode<?>> getChildrenNodes(final AbstractTreeNode node) {
+    List<AbstractTreeNode<?>> children = new ArrayList<>();
+    CoverageClassStructure structure = myAnnotator.getStructure();
+    if (structure == null) return children;
+    List<CoverageNodeInfo> infos = structure.getChildrenInfo(getNodeId(node));
+    for (CoverageNodeInfo info : infos) {
+      children.add(new JavaCoverageNode(myProject, info.getValue(), mySuitesBundle, info.getName()));
+    }
+    return children;
+  }
+
+  @Override
+  public boolean hasFullyCoveredNodes() {
+    CoverageClassStructure structure = myAnnotator.getStructure();
+    if (structure == null) return false;
+    return structure.getHasFullyCoveredChildren();
+  }
+
+  @Override
+  public ColumnInfo[] createColumnInfos() {
+    ArrayList<ColumnInfo> infos = new ArrayList<>();
+    infos.add(new ElementColumnInfo());
+    infos.add(new PercentageCoverageColumnInfo(1, JavaCoverageBundle.message("coverage.view.column.class"), mySuitesBundle));
+    infos.add(new PercentageCoverageColumnInfo(2, JavaCoverageBundle.message("coverage.view.column.method"), mySuitesBundle));
+    infos.add(new PercentageCoverageColumnInfo(3, JavaCoverageBundle.message("coverage.view.column.line"), mySuitesBundle));
+    for (CoverageSuite suite : mySuitesBundle.getSuites()) {
+      if (tryAddBranches(infos, suite.getRunner(), suite.isBranchCoverage())) {
+        break;
+      }
+    }
+    return infos.toArray(ColumnInfo.EMPTY_ARRAY);
+  }
+
+  private boolean tryAddBranches(ArrayList<? super ColumnInfo> infos, CoverageRunner coverageRunner, boolean branchCoverage) {
+    // cannot determine per-test branch coverage as test tracking works with line granularity only
+    if (CoverageDataManager.getInstance(myProject).isSubCoverageActive()) return false;
+    if (isBranchInfoAvailable(coverageRunner, branchCoverage)) {
+      infos.add(new PercentageCoverageColumnInfo(4, JavaCoverageBundle.message("coverage.view.column.branch"), mySuitesBundle));
+      return true;
+    }
+    return false;
+  }
+
+  protected boolean isBranchInfoAvailable(CoverageRunner coverageRunner, boolean branchCoverage) {
+    return coverageRunner instanceof JavaCoverageRunner javaCoverageRunner && javaCoverageRunner.isBranchInfoAvailable(branchCoverage);
+  }
+
+  private boolean isInCoverageScope(PsiElement element) {
+    if (element instanceof PsiPackage psiPackage) {
+      final String qualifiedName = psiPackage.getQualifiedName();
+      for (CoverageSuite suite : mySuitesBundle.getSuites()) {
+        if (((JavaCoverageSuite)suite).isPackageFiltered(qualifiedName)) return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public boolean canSelectInCoverageView(Object object) {
+    final PsiFile psiFile = object instanceof VirtualFile ? PsiManager.getInstance(myProject).findFile((VirtualFile)object) : null;
+    if (psiFile instanceof PsiClassOwner) {
+      final String packageName = ((PsiClassOwner)psiFile).getPackageName();
+      return isInCoverageScope(JavaPsiFacade.getInstance(myProject).findPackage(packageName));
+    }
+    if (object instanceof PsiPackage) {
+      return isInCoverageScope((PsiElement)object);
+    }
+    return false;
+  }
+
+  @Override
+  public boolean supportFlattenPackages() {
+    return true;
+  }
+
+  @Override
+  public String getElementsName() {
+    return JavaCoverageBundle.message("coverage.classes");
+  }
+
+  @Override
+  public String getElementsCapitalisedName() {
+    return JavaCoverageBundle.message("coverage.classes.capitalised");
+  }
+}

@@ -1,0 +1,31 @@
+### auto-generated section `build intellij.platform.buildView` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "buildView_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "buildView",
+  module_name = "intellij.platform.buildView",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":buildView_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/serialization/core",
+    "//platform/kernel/shared:kernel",
+    "//platform/execution",
+    "//platform/execution-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/project/shared:project",
+  ]
+)
+### auto-generated section `build intellij.platform.buildView` end

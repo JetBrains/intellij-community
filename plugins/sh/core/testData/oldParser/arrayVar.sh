@@ -1,0 +1,1 @@
+TOMCAT_HOST_LIST[$index]=$LINE

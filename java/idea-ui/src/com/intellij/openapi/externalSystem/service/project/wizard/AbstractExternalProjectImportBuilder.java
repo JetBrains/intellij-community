@@ -1,0 +1,425 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.externalSystem.service.project.wizard;
+
+import com.intellij.ide.JavaUiBundle;
+import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
+import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
+import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
+import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
+import com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelectorDialog;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
+import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NotNullFactory;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
+import com.intellij.projectImport.ProjectImportBuilder;
+import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.invokeLater;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.refreshProject;
+import static com.intellij.workspaceModel.ide.ProjectRootEntityKt.registerProjectRootBlocking;
+
+/**
+ * GoF builder for external system backed projects.
+ */
+public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImportFromExternalSystemControl>
+  extends ProjectImportBuilder<DataNode<ProjectData>>
+{
+
+  private static final Logger LOG = Logger.getInstance(AbstractExternalProjectImportBuilder.class);
+
+  private final @NotNull ProjectDataManager myProjectDataManager;
+  private final @NotNull NotNullLazyValue<C> myControlValue;
+  private final @NotNull ProjectSystemId myExternalSystemId;
+
+  private DataNode<ProjectData> myExternalProjectNode;
+
+  public AbstractExternalProjectImportBuilder(@NotNull ProjectDataManager projectDataManager,
+                                              @NotNull NotNullFactory<? extends C> controlFactory,
+                                              @NotNull ProjectSystemId externalSystemId) {
+    myProjectDataManager = projectDataManager;
+    myControlValue = NotNullLazyValue.createValue(controlFactory);
+    myExternalSystemId = externalSystemId;
+  }
+
+  @Override
+  public List<DataNode<ProjectData>> getList() {
+    return Collections.singletonList(myExternalProjectNode);
+  }
+
+  @Override
+  public boolean isMarked(DataNode<ProjectData> element) {
+    return true;
+  }
+
+  @Override
+  public void setOpenProjectSettingsAfter(boolean on) {
+  }
+
+  public @NotNull C getControl(@Nullable Project currentProject) {
+    C control = getControl();
+    control.setCurrentProject(currentProject);
+    return control;
+  }
+
+  public void prepare(@NotNull WizardContext context) {
+    if (context.getProjectJdk() == null) {
+      context.setProjectJdk(resolveProjectJdk(context));
+    }
+    C control = getControl();
+    control.setShowProjectFormatPanel(context.isCreatingNewProject());
+    control.reset(context, null);
+    String pathToUse = getFileToImport();
+    control.setLinkedProjectPath(pathToUse);
+    doPrepare(context);
+  }
+
+  protected @Nullable Sdk resolveProjectJdk(@NotNull WizardContext context) {
+    Project project = context.getProject() != null ? context.getProject() : ProjectManager.getInstance().getDefaultProject();
+    final Pair<String, Sdk> sdkPair = ExternalSystemJdkUtil.getAvailableJdk(project);
+    if (!ExternalSystemJdkUtil.USE_INTERNAL_JAVA.equals(sdkPair.first)) {
+      return sdkPair.second;
+    }
+    return null;
+  }
+
+  protected abstract void doPrepare(@NotNull WizardContext context);
+
+  @Override
+  public List<Module> commit(final Project project,
+                             final ModifiableModuleModel model,
+                             final ModulesProvider modulesProvider,
+                             final ModifiableArtifactModel artifactModel)
+  {
+    project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, Boolean.TRUE);
+    final DataNode<ProjectData> externalProjectNode = getExternalProjectNode();
+    if (externalProjectNode != null) {
+      beforeCommit(externalProjectNode, project);
+    }
+
+    final boolean isFromUI = model != null;
+
+    final List<Module> modules = new SmartList<>();
+    final Map<ModifiableRootModel, Module> moduleMap = new IdentityHashMap<>();
+    final IdeModifiableModelsProvider modelsProvider = isFromUI ? new IdeUIModifiableModelsProvider(
+      project, model, (ModulesConfigurator)modulesProvider, artifactModel) {
+
+      @Override
+      protected ModifiableRootModel doGetModifiableRootModel(Module module) {
+        ModifiableRootModel modifiableRootModel = super.doGetModifiableRootModel(module);
+        moduleMap.put(modifiableRootModel, module);
+        return modifiableRootModel;
+      }
+
+      @Override
+      public void commit() {
+        super.commit();
+        for (Map.Entry<ModifiableRootModel, Module> moduleEntry : moduleMap.entrySet()) {
+          modules.add(moduleEntry.getValue());
+        }
+      }
+    } : new IdeModifiableModelsProviderImpl(project){
+      @Override
+      protected @NotNull ModifiableRootModel doGetModifiableRootModel(@NotNull Module module) {
+        ModifiableRootModel modifiableRootModel = super.doGetModifiableRootModel(module);
+        moduleMap.put(modifiableRootModel, module);
+        return modifiableRootModel;
+      }
+
+      @Override
+      public void commit() {
+        super.commit();
+        for (Map.Entry<ModifiableRootModel, Module> moduleEntry : moduleMap.entrySet()) {
+          if (!moduleEntry.getKey().isWritable()) {
+            modules.add(moduleEntry.getValue());
+          }
+        }
+      }
+    };
+    AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(project, myExternalSystemId);
+    final ExternalProjectSettings projectSettings = getCurrentExternalProjectSettings();
+
+    //noinspection unchecked
+    Set<ExternalProjectSettings> projects = new HashSet<ExternalProjectSettings>(systemSettings.getLinkedProjectsSettings());
+    // add current importing project settings to linked projects settings or replace if similar already exist
+    projects.remove(projectSettings);
+    projects.add(projectSettings);
+
+    //noinspection unchecked
+    systemSettings.copyFrom(getControl().getSystemSettings());
+    //noinspection unchecked
+    systemSettings.setLinkedProjectsSettings(projects);
+
+    if (externalProjectNode != null) {
+      if (systemSettings.showSelectiveImportDialogOnInitialImport() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        ExternalProjectDataSelectorDialog dialog = new ExternalProjectDataSelectorDialog(
+          project, new InternalExternalProjectInfo(myExternalSystemId, projectSettings.getExternalProjectPath(), externalProjectNode));
+        if (dialog.hasMultipleDataToSelect()) {
+          dialog.showAndGet();
+        } else {
+          Disposer.dispose(dialog.getDisposable());
+        }
+      }
+
+      if (!project.isInitialized()) {
+        StartupManager.getInstance(project).runWhenProjectIsInitialized(
+          () -> finishImport(project, externalProjectNode, isFromUI, modules, modelsProvider, projectSettings));
+      }
+      else finishImport(project, externalProjectNode, isFromUI, modules, modelsProvider, projectSettings);
+    }
+    return modules;
+  }
+
+  protected void finishImport(final Project project,
+                              DataNode<ProjectData> externalProjectNode,
+                              boolean isFromUI,
+                              final List<Module> modules,
+                              IdeModifiableModelsProvider modelsProvider, final ExternalProjectSettings projectSettings) {
+    myExternalProjectNode = null;
+
+    registerProjectRootBlocking(project, Paths.get(projectSettings.getExternalProjectPath()));
+
+    // resolve dependencies
+    final Runnable resolveDependenciesTask = () -> refreshProject(projectSettings.getExternalProjectPath(),
+                                                                  new ImportSpecBuilder(project, myExternalSystemId)
+                                                                    .callback(createFinalImportCallback(project, projectSettings)));
+    if (!isFromUI) {
+      resolveDependenciesTask.run();
+    }
+    else {
+      // execute when current dialog is closed
+      invokeLater(project, ModalityState.nonModal(), () -> {
+        final Module[] committedModules = ModuleManager.getInstance(project).getModules();
+        if (Arrays.asList(committedModules).containsAll(modules)) {
+          resolveDependenciesTask.run();
+        }
+      });
+    }
+  }
+
+  protected ExternalProjectRefreshCallback createFinalImportCallback(@NotNull Project project,
+                                                                     @NotNull ExternalProjectSettings projectSettings) {
+    return new ExternalProjectRefreshCallback() {
+      @Override
+      public void onSuccess(final @Nullable DataNode<ProjectData> externalProject) {
+        if (externalProject == null) {
+          return;
+        }
+        ProjectDataManager.getInstance().importData(externalProject, project);
+      }
+    };
+  }
+
+  private @NotNull ExternalProjectSettings getCurrentExternalProjectSettings() {
+    ExternalProjectSettings result = getControl().getProjectSettings().clone();
+    File externalProjectConfigFile = getExternalProjectConfigToUse(new File(result.getExternalProjectPath()));
+    final String linkedProjectPath = FileUtil.toCanonicalPath(externalProjectConfigFile.getPath());
+    assert linkedProjectPath != null;
+    result.setExternalProjectPath(linkedProjectPath);
+    return result;
+  }
+
+  protected abstract void beforeCommit(@NotNull DataNode<ProjectData> dataNode, @NotNull Project project);
+
+  private @Nullable File getProjectFile() {
+    String path = getControl().getProjectSettings().getExternalProjectPath();
+    return path == null ? null : new File(path);
+  }
+
+  /**
+   * Asks current builder to ensure that target external project is defined.
+   *
+   * @param wizardContext             current wizard context
+   * @throws ConfigurationException   if external project is not defined and can't be constructed
+   */
+  public void ensureProjectIsDefined(@NotNull WizardContext wizardContext) throws ConfigurationException {
+    final String externalSystemName = myExternalSystemId.getReadableName();
+    File projectFile = getProjectFile();
+    if (projectFile == null) {
+      throw new ConfigurationException(JavaUiBundle.message("error.project.undefined"));
+    }
+    projectFile = getExternalProjectConfigToUse(projectFile);
+    final Ref<ConfigurationException> error = new Ref<>();
+    final ExternalProjectRefreshCallback callback = new ExternalProjectRefreshCallback() {
+      @Override
+      public void onSuccess(@Nullable DataNode<ProjectData> externalProject) {
+        myExternalProjectNode = externalProject;
+      }
+
+      @Override
+      public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
+        if (!StringUtil.isEmpty(errorDetails)) {
+          LOG.warn(errorDetails);
+        }
+        error.set(new ConfigurationException(
+          JavaUiBundle.message("error.resolve.with.log_link", errorMessage, PathManager.getLogPath()),
+          JavaUiBundle.message("error.resolve.generic")));
+      }
+    };
+
+    final Project project = getProject(wizardContext);
+    final File finalProjectFile = projectFile;
+    final String externalProjectPath = FileUtil.toCanonicalPath(finalProjectFile.getAbsolutePath());
+    final Ref<ConfigurationException> exRef = new Ref<>();
+    executeAndRestoreDefaultProjectSettings(project, () -> {
+      try {
+        refreshProject(externalProjectPath,
+                       new ImportSpecBuilder(project, myExternalSystemId)
+                         .use(ProgressExecutionMode.MODAL_SYNC)
+                         .usePreviewMode()
+                         .callback(callback));
+      }
+      catch (IllegalArgumentException e) {
+        exRef.set(
+          new ConfigurationException(e.getMessage(), JavaUiBundle.message("error.cannot.parse.project", externalSystemName)));
+      }
+    });
+    ConfigurationException ex = exRef.get();
+    if (ex != null) {
+      throw ex;
+    }
+    if (myExternalProjectNode == null) {
+      ConfigurationException exception = error.get();
+      if (exception != null) {
+        throw exception;
+      }
+    }
+    else {
+      applyProjectSettings(wizardContext);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private void executeAndRestoreDefaultProjectSettings(@NotNull Project project, @NotNull Runnable task) {
+    AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(project, myExternalSystemId);
+    Object systemStateToRestore = null;
+    if (systemSettings instanceof PersistentStateComponent) {
+      systemStateToRestore = ((PersistentStateComponent<?>)systemSettings).getState();
+    }
+    systemSettings.copyFrom(getControl().getSystemSettings());
+    Collection projectSettingsToRestore = systemSettings.getLinkedProjectsSettings();
+    Set<ExternalProjectSettings> projects = new HashSet<>(systemSettings.getLinkedProjectsSettings());
+    projects.add(getCurrentExternalProjectSettings());
+    systemSettings.setLinkedProjectsSettings(projects);
+
+    try {
+      task.run();
+    }
+    finally {
+      if (systemStateToRestore != null) {
+        ((PersistentStateComponent)systemSettings).loadState(systemStateToRestore);
+      }
+      else {
+        systemSettings.setLinkedProjectsSettings(projectSettingsToRestore);
+      }
+    }
+  }
+
+  /**
+   * Allows to adjust external project config file to use on the basis of the given value.
+   * <p/>
+   * Example: a user might choose a directory which contains target config file and particular implementation expands
+   * that to a particular file under the directory.
+   *
+   * @param file  base external project config file
+   * @return      external project config file to use
+   */
+  protected abstract @NotNull File getExternalProjectConfigToUse(@NotNull File file);
+
+  public @Nullable DataNode<ProjectData> getExternalProjectNode() {
+    return myExternalProjectNode;
+  }
+
+  /**
+   * Applies external system-specific settings like project files location etc to the given context.
+   *
+   * @param context  storage for the project/module settings.
+   */
+  public void applyProjectSettings(@NotNull WizardContext context) {
+    if (myExternalProjectNode == null) {
+      assert false;
+      return;
+    }
+    context.setProjectName(myExternalProjectNode.getData().getInternalName());
+    context.setProjectFileDirectory(myExternalProjectNode.getData().getIdeProjectFileDirectoryPath());
+    applyExtraSettings(context);
+  }
+
+  protected abstract void applyExtraSettings(@NotNull WizardContext context);
+
+  /**
+   * Allows to get {@link Project} instance to use. Basically, there are two alternatives -
+   * {@link WizardContext#getProject() project from the current wizard context} and
+   * {@link ProjectManager#getDefaultProject() default project}.
+   *
+   * @param wizardContext   current wizard context
+   * @return                {@link Project} instance to use
+   */
+  public @NotNull Project getProject(@NotNull WizardContext wizardContext) {
+    Project result = wizardContext.getProject();
+    if (result == null) {
+      result = ProjectManager.getInstance().getDefaultProject();
+    }
+    return result;
+  }
+
+  @Override
+  public @Nullable Project createProject(String name, String path) {
+    Project project = super.createProject(name, path);
+    if (project != null) {
+      project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, Boolean.TRUE);
+    }
+    return project;
+  }
+
+  private @NotNull C getControl() {
+    return myControlValue.getValue();
+  }
+
+}

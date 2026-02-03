@@ -1,0 +1,91 @@
+### auto-generated section `build intellij.kotlin.projectWizard.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "core_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "core",
+  module_name = "intellij.kotlin.projectWizard.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "generated/**/*.kt", "generated/**/*.java"], allow_empty = True),
+  resources = [":core_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlin/reflect",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/observable",
+    "//libraries/velocity",
+    "//libraries/gson",
+    "//platform/lang-core",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//platform/core-api:core",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/editor-ui-api:editor-ui",
+    "@lib//:slf4j-api",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//plugins/gradle:gradle-common",
+    "//java/idea-ui:ui",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//java/java-psi-api:psi",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/base/project-structure",
+    "@lib//:kotlinc-kotlin-jps-plugin-classpath",
+  ]
+)
+
+jvm_library(
+  name = "core_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [":core"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlin/reflect",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/observable",
+    "//libraries/velocity",
+    "//libraries/gson",
+    "@lib//:junit4",
+    "@lib//:kotlin-test-junit",
+    "@lib//:kotlin-test",
+    "//platform/lang-core",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//platform/core-api:core",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/editor-ui-api:editor-ui",
+    "@lib//:slf4j-api",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//plugins/gradle:gradle-common",
+    "//java/idea-ui:ui",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//java/java-psi-api:psi",
+    "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "@lib//:kotlinc-kotlin-jps-plugin-classpath",
+  ]
+)
+### auto-generated section `build intellij.kotlin.projectWizard.core` end
+
+### auto-generated section `test intellij.kotlin.projectWizard.core` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "core_test",
+  runtime_deps = [":core_test_lib"]
+)
+### auto-generated section `test intellij.kotlin.projectWizard.core` end

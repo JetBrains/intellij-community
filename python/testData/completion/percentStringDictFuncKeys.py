@@ -1,0 +1,1 @@
+print("Other string %(<caret>)d" % {str(4): int('4')})

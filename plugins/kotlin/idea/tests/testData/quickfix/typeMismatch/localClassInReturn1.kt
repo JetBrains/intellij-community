@@ -1,0 +1,12 @@
+// "Specify 'U' return type for enclosing function 'foo'" "true"
+interface T
+interface U
+
+fun foo() {
+    open class A: T
+    class B: A(), U
+
+    return <caret>B()
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForEnclosing
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

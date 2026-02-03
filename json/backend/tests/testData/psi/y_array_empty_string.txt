@@ -1,0 +1,6 @@
+JsonFile: y_array_empty_string.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('""')
+    PsiElement(])(']')

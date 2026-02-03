@@ -1,0 +1,34 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.python.community"/>
+    <module name="intellij.python.psi.impl"/>
+    <module name="intellij.python.sdk"/>
+    <module name="intellij.python.community.execService"/>
+    <module name="intellij.python.venv"/>
+    <module name="intellij.python.community.services.shared"/>
+    <module name="intellij.python.community.services.internal.impl"/>
+    <module name="intellij.python.community.impl.installer"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.python.community.services.systemPython.impl.SystemPythonInitialLoader"/>
+  </extensions>
+  <extensions defaultExtensionNs="Pythonid">
+    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.LegacySystemPythonProvider"/>
+
+    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.BrewSystemPythonProvider"
+                          os="mac"/>
+    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.MacSystemPythonProvider"
+                          os="mac"/>
+
+    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.WindowsSystemPythonProvider"
+                          os="windows"/>
+
+    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.AsdfSystemPythonProvider"/>
+    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.PyenvSystemPythonProvider"/>
+
+    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.UnixSystemPythonProvider"
+                          os="unix"/>
+
+  </extensions>
+</idea-plugin>

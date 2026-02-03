@@ -1,0 +1,69 @@
+load("//:jvm.bzl", "resourcegroup")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_files", "strip_prefix")
+
+pkg_files(
+  name = "files_to_zip",
+  prefix = "jps-builders-6",
+  srcs = glob(
+      ["**"],
+      exclude = [
+          "api-dump.txt",
+          "exposed-third-party-api.txt",
+          "*.iml",
+      ],
+  ),
+  strip_prefix = strip_prefix.from_pkg(),
+  visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "build-javac-rt_resources_sources",
+    srcs = glob(["resources/**/*"]),
+)
+
+filegroup(
+    name = "build-javac-rt_sources",
+    srcs = glob(
+        [
+            "gen/**/*.kt",
+            "gen/**/*.java",
+            "src/**/*.kt",
+            "src/**/*.java",
+        ],
+        allow_empty = True,
+    ),
+    visibility = ["//visibility:public"],  # used by @community//build:build-javac-rt
+)
+
+kt_jvm_library(
+    name = "build-javac-rt",
+    srcs = [":build-javac-rt_sources"],
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    resource_strip_prefix = "resources",
+    resources = [":build-javac-rt_resources_sources"],
+    visibility = [
+        "//dependency-graph:__pkg__",
+        "//jvm-inc-builder:__pkg__",
+        "//jvm-inc-builder-tests:__pkg__",
+    ],
+    deps = [
+        "//:annotations_import",
+        "//:javax-annotation-api_import",
+        "//:jps-javac-extension_import",
+        "//:netty-buffer_import",
+        "//:netty-codec-jps",
+        "//:netty-common_import",
+        "//:netty-transport-jps_import",
+        "//:protobuf-java_import",
+    ],
+)
+
+resourcegroup(
+    name = "build-javac-rt_resources",
+    srcs = [":build-javac-rt_resources_sources"],
+    strip_prefix = "resources",
+    visibility = ["//visibility:public"],  # used by @community//build:build-javac-rt
+)
+
+### skip generation section `build intellij.platform.jps.build.javac.rt`

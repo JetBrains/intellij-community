@@ -1,0 +1,40 @@
+### auto-generated section `build intellij.platform.scriptDebugger.ui` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "scriptDebugger-ui_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "scriptDebugger-ui",
+  module_name = "intellij.platform.scriptDebugger.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":scriptDebugger-ui_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/xdebugger-api:debugger",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/script-debugger/backend",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//libraries/guava",
+    "//platform/execution-impl",
+    "//libraries/netty/codec-http:libraries-netty-codec-http",
+    "//libraries/fastutil",
+    "//libraries/netty/buffer",
+    "//platform/core-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//platform/util/jdom",
+    "//platform/execution",
+  ]
+)
+### auto-generated section `build intellij.platform.scriptDebugger.ui` end

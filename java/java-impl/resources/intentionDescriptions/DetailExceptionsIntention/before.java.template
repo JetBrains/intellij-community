@@ -1,0 +1,11 @@
+import java.io.*;
+
+public class X {
+  void f() {
+    <spot>try</spot> {
+      new FileInputStream("file.txt");
+    }
+    catch (Throwable e) {
+    }
+  }
+}

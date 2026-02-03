@@ -1,0 +1,27 @@
++ com.intellij
++ incompatible_with_unknown_module
++ optional_config_cycle1
++ plugin3
++ missing4
++ incompatible_with_disabled_module
++ missing0
++ plugin0
++ plugin2
++ plugin1
+
+
+Plugins optional_config_cycle0 (optional_config_cycle0), optional_config_cycle2 (optional_config_cycle2) cannot be loaded because they form a dependency cycle
+Plugins optional_cycle0 (optional_cycle0), optional_cycle2 (optional_cycle2), optional_cycle1 (optional_cycle1) cannot be loaded because they form a dependency cycle
+Plugins cycle4 (cycle4), cycle5 (cycle5) cannot be loaded because they form a dependency cycle
+Plugins cycle1 (cycle1), cycle3 (cycle3), cycle2 (cycle2) cannot be loaded because they form a dependency cycle
+Plugin incompatible0 (version 2042.42) is not compatible with the current version of the IDE, because it requires build 1.111111 or older but the current build is 2042.42
+Plugin duplicate declares id com.intellij.modules.duplicate which conflicts with the same id from plugin duplicate0
+Plugin incompatible0-alt (version 2042.42) is not compatible with the current version of the IDE, because it requires build 1.111 or older but the current build is 2042.42
+Plugin duplicate0 declares id com.intellij.modules.duplicate which conflicts with the same id from plugin duplicate
+Plugin incompatible2 (version 2042.42) is not compatible with the current version of the IDE, because it requires build 1.111111 or older but the current build is 2042.42
+Plugin incompatible1 (version 2042.42) is not compatible with the current version of the IDE, because it requires build 9999.0 or newer but the current build is 2042.42
+Plugin missing2 requires plugin com.intellij.missing to be installed
+Plugin missing3 requires plugin missing2 to be enabled
+Plugin missing1 requires plugin com.intellij.modules.missing to be installed
+Plugin cycle0 requires plugin cycle1 to be enabled
+Plugin incompatible_with_enabled_module is not compatible with the IDE because the IDE contains module plugin0 which conflicts with the plugin

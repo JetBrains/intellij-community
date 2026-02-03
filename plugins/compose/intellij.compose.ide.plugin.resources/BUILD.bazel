@@ -1,0 +1,119 @@
+### auto-generated section `build intellij.compose.ide.plugin.resources` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "ide-plugin-resources_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ide-plugin-resources",
+  module_name = "intellij.compose.ide.plugin.resources",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ide-plugin-resources_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/core-impl",
+    "//platform/refactoring",
+    "//platform/usageView-impl",
+    "//xml/xml-psi-api:psi",
+    "//plugins/kotlin/gradle/gradle-tooling/impl",
+    "//plugins/kotlin/base/project-model",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/util",
+    "//platform/external-system-api:externalSystem",
+    "//plugins/gradle",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/lang-impl",
+    "//platform/lang-api:lang",
+    "//xml/impl",
+    "//platform/util/coroutines",
+    "//platform/platform-util-io:ide-util-io",
+    "//plugins/compose/intellij.compose.ide.plugin.gradleTooling:ide-plugin-gradleTooling-rt",
+    "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
+    "//xml/xml-parser:parser",
+    "//platform/usageView",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//platform/core-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/statistics",
+  ]
+)
+
+jvm_library(
+  name = "ide-plugin-resources_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  associates = [":ide-plugin-resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/core-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/usageView-impl",
+    "//xml/xml-psi-api:psi",
+    "//plugins/kotlin/gradle/gradle-tooling/impl",
+    "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
+    "//plugins/kotlin/base/project-model",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//platform/external-system-api:externalSystem",
+    "//plugins/gradle",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/lang-impl",
+    "//platform/lang-api:lang",
+    "//xml/impl",
+    "//libraries/kotlin/test:libraries-kotlinTest",
+    "@lib//:kotlin-test-junit",
+    "@lib//:junit4",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/util:util-tests_test_lib",
+    "//platform/util/coroutines",
+    "//platform/platform-util-io:ide-util-io",
+    "//plugins/compose/intellij.compose.ide.plugin.gradleTooling:ide-plugin-gradleTooling-rt",
+    "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
+    "//xml/xml-parser:parser",
+    "//platform/usageView",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//platform/core-ui",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
+    "//plugins/gradle:gradle-tests_test_lib",
+    "//platform/external-system-impl:externalSystem-tests_test_lib",
+    "//platform/external-system-api/testFramework",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//libraries/kotlinx/coroutines/test",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+  ]
+)
+### auto-generated section `build intellij.compose.ide.plugin.resources` end
+
+### auto-generated section `test intellij.compose.ide.plugin.resources` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "ide-plugin-resources_test",
+  runtime_deps = [":ide-plugin-resources_test_lib"]
+)
+### auto-generated section `test intellij.compose.ide.plugin.resources` end

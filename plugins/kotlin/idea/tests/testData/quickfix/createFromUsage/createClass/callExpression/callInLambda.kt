@@ -1,0 +1,20 @@
+// "Create class 'Foo'" "true"
+// KEEP_ACTIONS_LIST_ORDER
+// K2_ACTIONS_LIST: Introduce local variable
+// K2_ACTIONS_LIST: Convert to multi-line lambda
+// K2_ACTIONS_LIST: Create annotation 'Foo'
+// K2_ACTIONS_LIST: Create class 'Foo'
+// K2_ACTIONS_LIST: Create enum 'Foo'
+// K2_ACTIONS_LIST: Create interface 'Foo'
+// K2_ACTIONS_LIST: Remove invocation
+// K2_ACTIONS_LIST: Specify explicit lambda signature
+// K2_ACTIONS_LIST: Create function 'Foo'
+// K2_ACTIONS_LIST: Enable a trailing comma by default in the formatter
+// K2_ACTIONS_LIST: Move lambda argument into parentheses
+fun <T> run(f: () -> T) = f()
+
+fun test() {
+    run { <caret>Foo() }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClassFromUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinClassAction

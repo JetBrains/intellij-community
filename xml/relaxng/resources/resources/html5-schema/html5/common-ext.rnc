@@ -1,0 +1,7 @@
+datatypes w = "http://whattf.org/datatype-draft"
+
+## content language
+
+	common.data.string =
+        string
+#		w:content-language

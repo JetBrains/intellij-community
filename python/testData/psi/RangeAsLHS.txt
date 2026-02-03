@@ -1,0 +1,25 @@
+PyFile:RangeAsLHS.py
+  PyAssignmentStatement
+    PyTargetExpression: foo
+      PsiElement(Py:IDENTIFIER)('foo')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyListLiteralExpression
+      PsiElement(Py:LBRACKET)('[')
+      PsiElement(Py:RBRACKET)(']')
+  PsiWhiteSpace('\n')
+  PyAssignmentStatement
+    PySubscriptionExpression
+      PyReferenceExpression: foo
+        PsiElement(Py:IDENTIFIER)('foo')
+      PsiElement(Py:LBRACKET)('[')
+      PySliceItem
+        PsiElement(Py:COLON)(':')
+      PsiElement(Py:RBRACKET)(']')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyListLiteralExpression
+      PsiElement(Py:LBRACKET)('[')
+      PsiElement(Py:RBRACKET)(']')

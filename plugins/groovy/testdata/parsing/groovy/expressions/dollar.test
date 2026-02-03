@@ -1,0 +1,11 @@
+foo$bar = 1
+-----
+Groovy script
+  Assignment expression
+    Reference expression
+      PsiElement(identifier)('foo$bar')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    Literal
+      PsiElement(Integer)('1')

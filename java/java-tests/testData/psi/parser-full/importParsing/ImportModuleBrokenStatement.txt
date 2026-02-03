@@ -1,0 +1,57 @@
+PsiJavaFile:ImportModuleBrokenStatement.java
+  PsiImportList
+    PsiImportStatement
+      PsiKeyword:import('import')
+      PsiWhiteSpace(' ')
+      PsiJavaCodeReferenceElement:module
+        PsiIdentifier:module('module')
+        PsiReferenceParameterList
+          <empty list>
+      PsiJavaToken:SEMICOLON(';')
+    PsiWhiteSpace('\n')
+    PsiImportStatement
+      PsiKeyword:import('import')
+      PsiWhiteSpace(' ')
+      PsiJavaCodeReferenceElement:module
+        PsiIdentifier:module('module')
+        PsiReferenceParameterList
+          <empty list>
+      PsiErrorElement:Identifier or ';' expected
+        <empty list>
+    PsiWhiteSpace('\n')
+    PsiImportStatement
+      PsiKeyword:import('import')
+      PsiWhiteSpace(' ')
+      PsiJavaCodeReferenceElement:module
+        PsiIdentifier:module('module')
+        PsiReferenceParameterList
+          <empty list>
+      PsiErrorElement:Identifier or ';' expected
+        <empty list>
+    PsiWhiteSpace('\n')
+    PsiImportModuleStatement
+      PsiKeyword:import('import')
+      PsiWhiteSpace(' ')
+      PsiKeyword:module('module')
+      PsiWhiteSpace(' ')
+      PsiJavaModuleReference
+        PsiIdentifier:a('a')
+      PsiJavaToken:SEMICOLON(';')
+  PsiWhiteSpace('\n\n')
+  PsiClass:Test
+    PsiModifierList:public
+      PsiKeyword:public('public')
+    PsiWhiteSpace(' ')
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:Test('Test')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace('\n')
+    PsiJavaToken:RBRACE('}')

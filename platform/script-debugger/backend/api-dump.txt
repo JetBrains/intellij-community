@@ -1,0 +1,107 @@
+org.jetbrains.debugger.BreakpointListener
+- java.util.EventListener
+org.jetbrains.debugger.CallFrame
+org.jetbrains.debugger.DebugEventListener
+- java.util.EventListener
+- childVmAdded(org.jetbrains.debugger.Vm):V
+- errorOccurred(java.lang.String):V
+- navigated(java.lang.String):V
+- resumed(org.jetbrains.debugger.Vm):V
+- scriptAdded(org.jetbrains.debugger.Vm,org.jetbrains.debugger.Script):V
+- scriptContentChanged(org.jetbrains.debugger.Script):V
+- scriptRemoved(org.jetbrains.debugger.Script):V
+- scriptsCleared():V
+- suspended(org.jetbrains.debugger.SuspendContext):V
+f:org.jetbrains.debugger.EvaluateResult
+- <init>(org.jetbrains.debugger.values.Value,Z):V
+- b:<init>(org.jetbrains.debugger.values.Value,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():org.jetbrains.debugger.values.Value
+- f:component2():Z
+- f:copy(org.jetbrains.debugger.values.Value,Z):org.jetbrains.debugger.EvaluateResult
+- bs:copy$default(org.jetbrains.debugger.EvaluateResult,org.jetbrains.debugger.values.Value,Z,I,java.lang.Object):org.jetbrains.debugger.EvaluateResult
+- equals(java.lang.Object):Z
+- f:getValue():org.jetbrains.debugger.values.Value
+- f:getWasThrown():Z
+- hashCode():I
+org.jetbrains.debugger.Script
+- com.intellij.openapi.util.UserDataHolderEx
+- a:setSourceMap(org.jetbrains.debugger.sourcemap.SourceMap):V
+org.jetbrains.debugger.SuspendContext
+org.jetbrains.debugger.Vm
+- com.intellij.openapi.util.UserDataHolderEx
+org.jetbrains.debugger.sourcemap.MappingEntry
+- a:getGeneratedColumn():I
+- a:getGeneratedLine():I
+- getName():java.lang.String
+- a:getNextGenerated():org.jetbrains.debugger.sourcemap.MappingEntry
+- getSource():I
+- a:getSourceColumn():I
+- a:getSourceLine():I
+org.jetbrains.debugger.sourcemap.SourceMap
+- a:getSourceMappingsInLine(I,I):java.lang.Iterable
+f:org.jetbrains.debugger.sourcemap.SourceMapDecoderKt
+- sf:decodeSourceMapSafely(java.lang.CharSequence,Z,com.intellij.util.Url,Z):org.jetbrains.debugger.sourcemap.SourceMap
+- sf:decodeSourceMapSafely(java.lang.CharSequence,Z,com.intellij.util.Url,Z,Z):org.jetbrains.debugger.sourcemap.SourceMap
+- bs:decodeSourceMapSafely$default(java.lang.CharSequence,Z,com.intellij.util.Url,Z,Z,I,java.lang.Object):org.jetbrains.debugger.sourcemap.SourceMap
+org.jetbrains.debugger.values.Value
+- a:getType():org.jetbrains.debugger.values.ValueType
+- a:getValueString():java.lang.String
+e:org.jetbrains.debugger.values.ValueType
+- java.lang.Enum
+- sf:ARRAY:org.jetbrains.debugger.values.ValueType
+- sf:BIGINT:org.jetbrains.debugger.values.ValueType
+- sf:BOOLEAN:org.jetbrains.debugger.values.ValueType
+- sf:Companion:org.jetbrains.debugger.values.ValueType$Companion
+- sf:FUNCTION:org.jetbrains.debugger.values.ValueType
+- sf:NODE:org.jetbrains.debugger.values.ValueType
+- sf:NULL:org.jetbrains.debugger.values.ValueType
+- sf:NUMBER:org.jetbrains.debugger.values.ValueType
+- sf:OBJECT:org.jetbrains.debugger.values.ValueType
+- sf:STRING:org.jetbrains.debugger.values.ValueType
+- sf:SYMBOL:org.jetbrains.debugger.values.ValueType
+- sf:UNDEFINED:org.jetbrains.debugger.values.ValueType
+- s:getEntries():kotlin.enums.EnumEntries
+- f:isObjectType():Z
+- s:valueOf(java.lang.String):org.jetbrains.debugger.values.ValueType
+- s:values():org.jetbrains.debugger.values.ValueType[]
+f:org.jetbrains.debugger.values.ValueType$Companion
+Fa:org.jetbrains.rpc.CommandProcessor
+- org.jetbrains.rpc.CommandSenderBase
+- org.jetbrains.rpc.MessageManager$Handler
+- org.jetbrains.rpc.MessageProcessor
+- org.jetbrains.rpc.ResultReader
+- <init>():V
+- cancelWaitingRequests():V
+- closed():V
+- getUpdatedSequence(org.jetbrains.jsonProtocol.Request):I
+f:org.jetbrains.rpc.CommandProcessorKt
+- bsf:getLOG():com.intellij.openapi.diagnostic.Logger
+a:org.jetbrains.rpc.CommandSenderBase
+- <init>():V
+- f:send(org.jetbrains.jsonProtocol.Request):org.jetbrains.concurrency.Promise
+f:org.jetbrains.rpc.MessageManager
+- <init>(org.jetbrains.rpc.MessageManager$Handler):V
+- f:cancelWaitingRequests():V
+- f:getCallbackAndRemove(I):org.jetbrains.rpc.RequestCallback
+- f:processIncoming(java.lang.Object):V
+- f:send(org.jetbrains.jsonProtocol.Request,org.jetbrains.rpc.RequestCallback):V
+org.jetbrains.rpc.MessageManager$Handler
+- a:acceptNonSequence(java.lang.Object):V
+- a:call(java.lang.Object,org.jetbrains.rpc.RequestCallback):V
+- getSequence(java.lang.Object):I
+- getSequence(java.lang.Object,java.lang.Object):I
+- a:getUpdatedSequence(java.lang.Object):I
+- a:readIfHasSequence(java.lang.Object):java.lang.Object
+- a:write(java.lang.Object):Z
+org.jetbrains.rpc.MessageProcessor
+- a:cancelWaitingRequests():V
+- a:closed():V
+- a:send(org.jetbrains.jsonProtocol.Request):org.jetbrains.concurrency.Promise
+org.jetbrains.rpc.RequestCallback
+- onCancel():V
+- a:onCancel(java.lang.Throwable):V
+- onError(java.lang.String):V
+- a:onError(java.lang.Throwable):V
+- a:onSuccess(java.lang.Object,org.jetbrains.rpc.ResultReader):V
+org.jetbrains.rpc.ResultReader
+- a:readResult(java.lang.String,java.lang.Object):java.lang.Object

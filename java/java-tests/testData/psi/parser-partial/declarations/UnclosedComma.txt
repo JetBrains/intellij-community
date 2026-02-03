@@ -1,0 +1,15 @@
+PsiJavaFile:UnclosedComma.java
+  PsiJavaToken:LBRACE('{')
+  PsiWhiteSpace(' ')
+  PsiField:field
+    PsiModifierList:
+      <empty list>
+    PsiTypeElement:int
+      PsiKeyword:int('int')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:field('field')
+  PsiJavaToken:COMMA(',')
+  PsiErrorElement:Identifier expected
+    <empty list>
+  PsiWhiteSpace(' ')
+  PsiJavaToken:RBRACE('}')

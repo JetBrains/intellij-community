@@ -1,0 +1,8 @@
+// WITH_COROUTINES
+// PROBLEM: Usage of 'forEach { it.join() }' on 'Collection<Job>' instead of single 'joinAll()'
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.joinAll
+
+suspend fun List<Job>.test() {
+    joinAll()
+}

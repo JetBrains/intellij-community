@@ -1,0 +1,5 @@
+class Foo {
+    {
+        for (;;<caret>)
+    }
+}

@@ -1,0 +1,101 @@
+### auto-generated section `build intellij.compose.ide.plugin.k2` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_ide-plugin-k2",
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "ide-plugin-k2_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ide-plugin-k2",
+  module_name = "intellij.compose.ide.plugin.k2",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ide-plugin-k2_resources"],
+  kotlinc_opts = ":custom_ide-plugin-k2",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/lang-api:lang",
+    "//plugins/kotlin/completion/impl-k2:kotlin-completion-impl",
+    "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting",
+    "//platform/util",
+    "//platform/analysis-impl",
+    "//platform/core-impl",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "@lib//:kotlinc-analysis-api-provided",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+    "//java/java-psi-api:psi",
+  ]
+)
+### auto-generated section `build intellij.compose.ide.plugin.k2` end
+
+### auto-generated section `build intellij.compose.ide.plugin.k2.tests` start
+create_kotlinc_options(
+  name = "custom_ide-plugin-k2-tests",
+  x_context_parameters = True
+)
+
+jvm_library(
+  name = "ide-plugin-k2-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "ide-plugin-k2-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_ide-plugin-k2-tests",
+  associates = ["//plugins/compose/intellij.compose.ide.plugin.k2:ide-plugin-k2"],
+  deps = [
+    "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
+    "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared-tests_test_lib",
+    "//java/testFramework",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//platform/refactoring",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/plugin/k2",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting",
+    "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/core",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "@lib//:kotlinc-analysis-api-provided",
+    "@lib//:kotlin-test-assertions-core-jvm",
+    "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
+    "//plugins/gradle:gradle-tests_test_lib",
+    "//platform/external-system-impl:externalSystem-tests_test_lib",
+  ],
+  runtime_deps = [":ide-plugin-k2-tests"]
+)
+### auto-generated section `build intellij.compose.ide.plugin.k2.tests` end
+
+### auto-generated section `test intellij.compose.ide.plugin.k2.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "ide-plugin-k2-tests_test",
+  runtime_deps = [":ide-plugin-k2-tests_test_lib"]
+)
+### auto-generated section `test intellij.compose.ide.plugin.k2.tests` end

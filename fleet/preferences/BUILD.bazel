@@ -1,0 +1,31 @@
+### auto-generated section `build fleet.preferences` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+
+create_kotlinc_options(
+  name = "custom_preferences",
+  x_consistent_data_class_copy_visibility = True,
+  x_context_parameters = True,
+  x_jvm_default = "all-compatibility",
+  x_lambdas = "class"
+)
+
+jvm_provided_library(
+  name = "fleet_util_multiplatform_provided",
+  lib = "//fleet/util/multiplatform"
+)
+
+jvm_library(
+  name = "preferences",
+  module_name = "fleet.preferences",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  kotlinc_opts = ":custom_preferences",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-io-core",
+    ":fleet_util_multiplatform_provided",
+  ],
+  exports = ["@lib//:kotlinx-io-core"]
+)
+### auto-generated section `build fleet.preferences` end

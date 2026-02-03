@@ -1,0 +1,27 @@
+class StringCategory {
+    static String lower(String string) {
+        return string.toLowerCase()
+    }
+
+    def doSmth() {
+        <begin>use(StringCategory) {
+            println "TeSt".lower()
+        }<end>
+    }
+}
+-----
+class StringCategory {
+    static String lower(String string) {
+        return string.toLowerCase()
+    }
+
+    def doSmth() {
+        testMethod()
+    }
+
+    private testMethod() {
+        return use(StringCategory) {
+            println "TeSt".lower()
+        }
+    }
+}

@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.kotlin.i18n` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "i18n_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "i18n",
+  module_name = "intellij.kotlin.i18n",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":i18n_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/java-i18n",
+    "//plugins/properties/properties-psi-impl:backend-psi",
+    "//plugins/kotlin/code-insight/api",
+    "@lib//:kotlinc-analysis-api",
+  ]
+)
+### auto-generated section `build intellij.kotlin.i18n` end

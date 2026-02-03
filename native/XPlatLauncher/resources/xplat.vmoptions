@@ -1,0 +1,7 @@
+-Xmx256m
+-XX:+UseG1GC
+-ea
+-Dsun.io.useCanonCaches=false
+-Djbr.catch.SIGABRT=true
+--add-modules=jdk.jcmd
+--add-exports=jdk.jcmd/sun.tools.jps=ALL-UNNAMED

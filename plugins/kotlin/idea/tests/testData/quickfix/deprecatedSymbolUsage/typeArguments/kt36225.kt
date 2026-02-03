@@ -1,0 +1,21 @@
+// "Replace with 'foo(list)'" "true"
+// WITH_STDLIB
+
+class Builder<Base : Any> {
+    @Deprecated(message = "", level = DeprecationLevel.WARNING, replaceWith = ReplaceWith("foo(list)"))
+    inline fun <reified T: Base> addFoo(list: List<T>) {
+
+    }
+
+    inline fun <reified T: Base> foo(list: List<T>) {
+
+    }
+
+}
+
+fun test() {
+    val b = Builder<Number>()
+    b.<caret>addFoo(listOf(1))
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

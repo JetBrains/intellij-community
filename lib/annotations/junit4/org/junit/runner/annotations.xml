@@ -1,0 +1,5 @@
+<root>
+  <item name='org.junit.runner.Description T getAnnotation(java.lang.Class&lt;T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+</root>

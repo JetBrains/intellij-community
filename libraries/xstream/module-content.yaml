@@ -1,0 +1,8 @@
+- name: dist.all/lib/intellij.libraries.xstream.jar
+  modules:
+  - name: intellij.libraries.xstream
+    libraries:
+      xstream:
+      - name: $MAVEN_REPOSITORY$/com/thoughtworks/xstream/xstream/1/xstream-1.jar
+      - name: $MAVEN_REPOSITORY$/io/github/x-stream/mxparser/1/mxparser-1.jar
+      - name: $MAVEN_REPOSITORY$/xmlpull/xmlpull/1/xmlpull-1.jar

@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.rpc.topics.frontend.jar
+  modules:
+  - name: intellij.platform.rpc.topics.frontend

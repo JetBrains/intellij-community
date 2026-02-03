@@ -1,0 +1,48 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.psi.impl.search;
+
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.QueryExecutor;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+
+public final class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiMethod, PsiMethod>, AllOverridingMethodsSearch.SearchParameters> {
+  @Override
+  public boolean execute(final @NotNull AllOverridingMethodsSearch.SearchParameters p, final @NotNull Processor<? super Pair<PsiMethod, PsiMethod>> consumer) {
+    final PsiClass psiClass = p.getPsiClass();
+
+    List<PsiMethod> potentials = ReadAction.compute(() -> ContainerUtil.filter(psiClass.getMethods(), PsiUtil::canBeOverridden));
+    if (potentials.isEmpty()) return true;
+
+    final SearchScope scope = p.getScope();
+    JavaPsiFacade psiFacade = ReadAction.compute(()->JavaPsiFacade.getInstance(psiClass.getProject()));
+
+    Processor<PsiClass> inheritorsProcessor = inheritor -> {
+      for (PsiMethod superMethod : potentials) {
+        ProgressManager.checkCanceled();
+        if (superMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
+            !psiFacade.arePackagesTheSame(psiClass, inheritor)) continue;
+
+        PsiMethod inInheritor = JavaOverridingMethodsSearcher.findOverridingMethod(inheritor, superMethod, psiClass);
+        if (inInheritor != null && !consumer.process(Pair.create(superMethod, inInheritor))) return false;
+      }
+
+      return true;
+    };
+
+    return ClassInheritorsSearch.search(psiClass, scope, true).allowParallelProcessing().forEach(inheritorsProcessor);
+  }
+}

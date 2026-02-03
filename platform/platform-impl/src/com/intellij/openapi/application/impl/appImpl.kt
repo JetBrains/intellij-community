@@ -1,0 +1,257 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.application.impl
+
+import com.intellij.concurrency.ContextAwareRunnable
+import com.intellij.concurrency.currentThreadContext
+import com.intellij.ide.IdeEventQueue
+import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ThreadingSupport.RunnableWithTransferredWriteAction
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.util.SuvorovProgress
+import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.platform.locking.impl.getGlobalThreadingSupport
+import com.intellij.util.SlowOperations
+import com.intellij.util.ThrowableRunnable
+import com.intellij.util.application
+import com.intellij.util.concurrency.AppScheduledExecutorService
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import com.intellij.util.ui.EDT
+import com.intellij.util.ui.UIUtil
+import io.opentelemetry.api.metrics.BatchCallback
+import io.opentelemetry.api.metrics.Meter
+import kotlinx.coroutines.CompletableJob
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.future.asCompletableFuture
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
+import java.awt.event.InvocationEvent
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+
+/** Count read & write actions executed, and report to OpenTelemetry Metrics  */
+internal class OTelReadWriteActionsMonitor(meter: Meter) : AutoCloseable {
+  private val batchCallback: BatchCallback
+  private val readActionsExecuted = AtomicInteger()
+  private val writeActionsExecuted = AtomicInteger()
+
+  init {
+    val raExecutionsCounter = meter.counterBuilder("ReadAction.executionsCount")
+      .setDescription("Total read actions executed")
+      .buildObserver()
+    val waExecutionCounter = meter.counterBuilder("WriteAction.executionsCount")
+      .setDescription("Total write actions executed")
+      .buildObserver()
+    batchCallback = meter.batchCallback(
+      Runnable {
+        raExecutionsCounter.record(readActionsExecuted.get().toLong())
+        waExecutionCounter.record(writeActionsExecuted.get().toLong())
+      },
+      raExecutionsCounter,
+      waExecutionCounter
+    )
+  }
+
+  fun readActionExecuted() {
+    readActionsExecuted.incrementAndGet()
+  }
+
+  fun writeActionExecuted() {
+    writeActionsExecuted.incrementAndGet()
+  }
+
+  override fun close() {
+    batchCallback.close()
+  }
+}
+
+/**
+ * Helps to rethrow exceptions coming from [actual] bypassing an exception-intolerant layer defined by [transformer]
+ */
+@ApiStatus.Internal
+internal fun rethrowExceptions(transformer: (Runnable) -> Runnable, actual: Runnable): Runnable {
+  val exception: AtomicReference<Throwable> = AtomicReference(null)
+  val localTransformer = { r: Runnable -> if (actual is ContextAwareRunnable) ContextAwareRunnable { r.run() } else r }
+  val wrapped = transformer(localTransformer {
+    try {
+      actual.run()
+    }
+    catch (_: ProcessCanceledException) {
+      // An aborted runnable should simply stop its execution and NOT signal its parent about the failure
+    }
+    catch (e: Throwable) {
+      exception.set(e)
+    }
+  })
+  return Runnable {
+    try {
+      wrapped.run()
+    }
+    catch (e: ProcessCanceledException) {
+      // Throwing PCE from `invokeAndWait` is a potentially very dangerous change.
+      // This is definitely TODO, but not for now
+    }
+    val caughtException = exception.get()
+    if (caughtException != null) {
+      throw caughtException
+    }
+  }
+}
+
+@Volatile
+private var compensationTimeout: Duration? = if (readLockCompensationTimeout == -1) {
+  null
+}
+else {
+  readLockCompensationTimeout.milliseconds
+}
+
+
+@TestOnly
+@ApiStatus.Internal
+fun setCompensationTimeout(timeout: Duration?): Duration? {
+  val currentTimeout = compensationTimeout
+  compensationTimeout = timeout
+  return currentTimeout
+}
+
+internal fun runnableUnitFunction(runnable: Runnable): () -> Unit = runnable::run
+internal fun rethrowCheckedExceptions(f: ThrowableRunnable<*>): () -> Unit = f::run
+internal fun <T> rethrowCheckedExceptions(f: ThrowableComputable<T, *>): () -> T = f::compute
+
+@TestOnly
+@ApiStatus.Experimental
+object TestOnlyThreading {
+
+  /**
+   * When called on EDT under write-intent lock, executes [action] with released write-intent lock. After termination, takes write-intent lock back.
+   * This method is needed to help background write action to proceed in tests.
+   * The typical (and expected) use-case is to wrap synchronous event dispatch (like [com.intellij.util.ui.UIUtil.dispatchAllInvocationEvents]) into this function.
+   * The reason is that synchronous dispatch is often used to execute write actions stuck in the Event Queue, so with background write actions we need to release write-intent lock to help them proceed.
+   *
+   * Please note that in tests it is more appropriate to use [com.intellij.testFramework.PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue]
+   */
+  @JvmStatic
+  fun releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(action: Runnable) {
+    val application = ApplicationManager.getApplication()
+    if (application == null) {
+      return action.run()
+    }
+    if (application.isWriteIntentLockAcquired) {
+      return getGlobalThreadingSupport().releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(action::run)
+    } else {
+      return action.run()
+    }
+  }
+
+  /**
+   * This method allows executing all scheduled AWT events that could depend on model changes.
+   *
+   * In the IntelliJ Platform Test Framework, there are many tests that run on the EDT, and these tests often need to wait until their asynchronous computations terminate.
+   * Historically, the tests were using synchronous dispatch of AWT events in these scenarios.
+   * In particular, it allowed to wait for scheduled write actions.
+   * With the introduction of Background Write Action, this strategy does not work -- a test cannot wait for a write action if it is not scheduled to the EDT.
+   * Such tests need to use this function, as it allows background write actions to proceed.
+   */
+  @JvmStatic
+  fun dispatchAwtEventsWithoutWriteIntentLock() {
+    releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+      UIUtil.dispatchAllInvocationEvents()
+    }
+  }
+}
+
+@ApiStatus.Internal
+object InternalThreading {
+  private val backgroundWriteActionCounter = AtomicInteger(0)
+
+  @JvmStatic
+  fun incrementBackgroundWriteActionCount() {
+    backgroundWriteActionCounter.incrementAndGet()
+  }
+
+  @JvmStatic
+  fun isBackgroundWriteActionRunning(): Boolean {
+    return backgroundWriteActionCounter.get() > 0
+  }
+
+  @JvmStatic
+  fun decrementBackgroundWriteActionCount() {
+    backgroundWriteActionCounter.decrementAndGet()
+  }
+
+  @RequiresBackgroundThread(generateAssertion = false)
+  @RequiresWriteLock(generateAssertion = false)
+  @Throws(Throwable::class)
+  @JvmStatic
+  fun invokeAndWaitWithTransferredWriteAction(runnable: Runnable) {
+    val lock = getGlobalThreadingSupport()
+    assert(lock.isWriteAccessAllowed()) { "Transferring of write action is permitted only if write lock is acquired" }
+    if (!useBackgroundWriteAction) {
+      runnable.run()
+      return
+    }
+    assert(!EDT.isCurrentThreadEdt()) { "Transferring of write action is permitted only on background thread" }
+    val exceptionRef = Ref.create<Throwable?>()
+    val capturedRunnable = AppScheduledExecutorService.captureContextCancellationForRunnableThatDoesNotOutliveContextScope {
+      try {
+        // we can appear here if someone tries to acquire a read action in a forced slow-op section
+        // the users have no control over computations that run inside transferred write action, hence we reset the slow-op section
+        SlowOperations.startSection(SlowOperations.RESET).use {
+          (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity(runnable)
+        }
+      }
+      catch (e: Throwable) {
+        exceptionRef.set(e)
+      }
+    }
+    lock.transferWriteActionAndBlock({ toRun: RunnableWithTransferredWriteAction ->
+                                       val event = TransferredWriteActionEvent(toRun)
+                                       try {
+                                         IdeEventQueue.getInstance().doPostEvent(event, true)
+                                         SuvorovProgress.logErrorIfTooLong().use {
+                                           event.blockingWait()
+                                         }
+                                       }
+                                       catch (e: InterruptedException) {
+                                         exceptionRef.set(e)
+                                       }
+                                     }, capturedRunnable)
+    exceptionRef.get()?.let { throw it }
+  }
+
+  @ApiStatus.Internal
+  class TransferredWriteActionEvent private constructor(
+    val action: AtomicReference<RunnableWithTransferredWriteAction>,
+    val job: CompletableJob = Job(currentThreadContext()[Job])) : InvocationEvent(InternalThreading, {
+    execute(action, job)
+  }) {
+
+    companion object {
+      fun execute(action: AtomicReference<RunnableWithTransferredWriteAction>, job: CompletableJob) {
+        try {
+          val action = action.getAndSet(null) ?: return
+          action.run()
+        } finally {
+          job.complete()
+        }
+      }
+    }
+
+    constructor(action: RunnableWithTransferredWriteAction) : this(AtomicReference(action))
+
+    fun execute() {
+      execute(action, job)
+    }
+
+    fun blockingWait() {
+      job.asCompletableFuture().join()
+    }
+  }
+}
+

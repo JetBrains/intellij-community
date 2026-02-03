@@ -1,0 +1,36 @@
+<idea-plugin>
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.statistics.KotlinProjectSetupImportListener"
+              topic="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener"/>
+  </projectListeners>
+  <extensions defaultExtensionNs="com.intellij">
+    <statistics.validation.customValidationRule implementation="org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationErrorIdValidationRule"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinFailureCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationErrorFrequencyStatsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.WizardStatsService"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinCreateFileFUSCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinMoveRefactoringFUSCollector"/>
+    <statistics.counterUsagesCollector
+            implementationClass="org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlineRefactoringFUSCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinIDEGradleActionsFUSCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectFUSCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.J2KFusCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinLanguageFeaturesFUSCollector"/>
+    <statistics.counterUsagesCollector
+            implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinCodeVisionUsagesCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinProjectSetupFUSCollector"/>
+
+    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.IDESettingsFUSCollector"/>
+    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector"/>
+    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.statistics.ProjectConfigurationCollector"/>
+    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.statistics.KotlinModuleSizeCollector"/>
+    <statistics.counterUsagesCollector
+            implementationClass="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluatorStatisticsCollector"/>
+    <statistics.validation.customValidationRule
+            implementation="org.jetbrains.kotlin.idea.debugger.evaluate.StandardExceptionNameRuleValidator"/>
+    <internal.statistic.libraryUsageImportProcessor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinLibraryUsageImportProcessor"/>
+    <statistics.applicationUsagesCollector implementation="org.jetbrains.kotlin.idea.statistics.K2MetricsFUSCollector"/>
+
+    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.statistics.KotlinProjectOpenerCollector"/>
+  </extensions>
+</idea-plugin>

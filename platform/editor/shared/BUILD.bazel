@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.platform.editor` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "editor_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "editor",
+  module_name = "intellij.platform.editor",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":editor_resources"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/serialization/core",
+    "//platform/core-api:core",
+    "//platform/kernel/shared:kernel",
+    "//platform/platform-impl:ide-impl",
+    "//platform/kernel/pasta",
+  ]
+)
+### auto-generated section `build intellij.platform.editor` end

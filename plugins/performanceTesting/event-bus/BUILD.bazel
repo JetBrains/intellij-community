@@ -1,0 +1,58 @@
+### auto-generated section `build intellij.tools.ide.starter.bus` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "tools-ide-starter-bus_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "tools-ide-starter-bus",
+  module_name = "intellij.tools.ide.starter.bus",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":tools-ide-starter-bus_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/jackson/databind",
+    "//libraries/kotlin/reflect",
+    "//libraries/netty/codec-http:libraries-netty-codec-http",
+    "//libraries/netty/buffer",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//libraries/netty/codec-compression:libraries-netty-codec-compression",
+  ]
+)
+
+jvm_library(
+  name = "tools-ide-starter-bus_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":tools-ide-starter-bus"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:junit5",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/jackson/databind",
+    "//libraries/kotlin/reflect",
+    "//libraries/netty/codec-http:libraries-netty-codec-http",
+    "//libraries/netty/buffer",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//libraries/netty/codec-compression:libraries-netty-codec-compression",
+  ]
+)
+### auto-generated section `build intellij.tools.ide.starter.bus` end
+
+### auto-generated section `test intellij.tools.ide.starter.bus` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tools-ide-starter-bus_test",
+  runtime_deps = [":tools-ide-starter-bus_test_lib"]
+)
+### auto-generated section `test intellij.tools.ide.starter.bus` end

@@ -1,0 +1,23 @@
+### auto-generated section `build intellij.platform.wsl.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "wsl-impl",
+  module_name = "intellij.platform.wsl.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/execution",
+    "//platform/util",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/core-api:core",
+    "//libraries/lz4",
+    "//platform/util-ex",
+    "//libraries/ktor/utils",
+    "//libraries/ktor/io",
+    "//libraries/ktor/network-tls:libraries-ktor-network-tls",
+  ]
+)
+### auto-generated section `build intellij.platform.wsl.impl` end

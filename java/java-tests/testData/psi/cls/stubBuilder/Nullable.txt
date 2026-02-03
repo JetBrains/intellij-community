@@ -1,0 +1,16 @@
+PsiJavaFileStub [org.jetbrains.annotations]
+  PsiPackageStatementStub[org.jetbrains.annotations]
+  PsiClassStub[interface annotation name=Nullable fqn=org.jetbrains.annotations.Nullable]
+    PsiModifierListStub[mask=1025]
+      PsiAnnotationStub[@java.lang.annotation.Documented]
+      PsiAnnotationStub[@java.lang.annotation.Retention(value=java.lang.annotation.RetentionPolicy.CLASS)]
+      PsiAnnotationStub[@java.lang.annotation.Target(value={java.lang.annotation.ElementType.METHOD,java.lang.annotation.ElementType.FIELD,java.lang.annotation.ElementType.PARAMETER,java.lang.annotation.ElementType.LOCAL_VARIABLE,java.lang.annotation.ElementType.TYPE_USE})]
+    PsiTypeParameterListStub
+    PsiRefListStub[EXTENDS_LIST:]
+    PsiRefListStub[IMPLEMENTS_LIST:]
+    PsiMethodStub[annotation value:java.lang.String default=""]
+      PsiModifierListStub[mask=1025]
+        PsiAnnotationStub[@org.jetbrains.annotations.NonNls]
+      PsiTypeParameterListStub
+      PsiParameterListStub
+      PsiRefListStub[THROWS_LIST:]

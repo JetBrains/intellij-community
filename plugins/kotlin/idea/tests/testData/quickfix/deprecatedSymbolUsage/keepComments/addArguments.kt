@@ -1,0 +1,16 @@
+// "Replace with 'newFun(p1, -1, p2, p3, -2)'" "true"
+
+@Deprecated("", ReplaceWith("newFun(p1, -1, p2, p3, -2)"))
+fun oldFun(p1: Int, p2: Int, p3: Int){}
+
+fun newFun(p1: Int, a: Int, p2: Int, p3: Int, b: Int){}
+
+
+fun foo() {
+    <caret>oldFun(0, // 0
+                  1, // 1
+                  2 // 2
+    )
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

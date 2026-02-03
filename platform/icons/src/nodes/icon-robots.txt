@@ -1,0 +1,2 @@
+deprecated: inspectionResults.svg; to be removed without replacement
+deprecated: weblistener.svg; to be removed without replacement

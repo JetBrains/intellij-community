@@ -1,0 +1,8 @@
+{
+  "type": "MARKED_ELEMENT",
+  "mainFile": "test/JavaClient.java",
+  "newName": "Foo",
+  "withRuntime": "true",
+  "byRef": "true",
+  "enabledInK2": true
+}

@@ -1,0 +1,6 @@
+<selection>foo()</selection>
+-----
+try {
+    foo()
+} catch () {
+}

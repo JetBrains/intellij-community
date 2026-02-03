@@ -1,0 +1,7 @@
+// HIGHLIGHT: INFORMATION
+fun foo(style: Int?) {
+    when (style) { // comment
+        0 -> {}
+        else -> {}
+    }
+}

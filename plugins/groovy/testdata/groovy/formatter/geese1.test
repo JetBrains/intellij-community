@@ -1,0 +1,25 @@
+foo(2) {
+  foo(2, {
+    foo(2) {
+      print f
+    }})}
+
+foo(2) {
+  foo(2) {
+    foo(2, {
+      print f
+    })}}
+-----
+foo(2) {
+  foo(2, {
+    foo(2) {
+      print f
+  } })
+}
+
+foo(2) {
+  foo(2) {
+    foo(2, {
+      print f
+    })
+} }

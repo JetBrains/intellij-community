@@ -1,0 +1,118 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.vcs.log;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.awt.Color;
+import java.util.Collection;
+
+/**
+ * Factory for creating instances of default implementation VcsCommitStyle.
+ */
+public final class VcsCommitStyleFactory {
+  /**
+   * Creates VcsCommitStyle with specified text color and background color.
+   *
+   * @param foreground text color or null if unspecified.
+   * @param background background color or null if unspecified.
+   * @return new instance of VcsCommitStyle with specified text and background color.
+   */
+  public static @NotNull VcsLogHighlighter.VcsCommitStyle createStyle(@Nullable Color foreground,
+                                                             @Nullable Color background,
+                                                             @Nullable VcsLogHighlighter.TextStyle textStyle) {
+    return new VcsCommitStyleImpl(foreground, background, textStyle);
+  }
+
+  /**
+   * Creates VcsCommitStyleImpl with specified text color and no background color.
+   *
+   * @param foreground text color or null if unspecified.
+   */
+  public static @NotNull VcsLogHighlighter.VcsCommitStyle foreground(@Nullable Color foreground) {
+    return createStyle(foreground, null, null);
+  }
+
+  /**
+   * Creates VcsCommitStyleImpl with specified background color and no text color.
+   *
+   * @param background background color or null if unspecified.
+   */
+  public static @NotNull VcsLogHighlighter.VcsCommitStyle background(@Nullable Color background) {
+    return createStyle(null, background, null);
+  }
+
+  /**
+   * Creates VcsCommitStyleImpl with bold text.
+   */
+  public static @NotNull VcsLogHighlighter.VcsCommitStyle bold() {
+    return createStyle(null, null, VcsLogHighlighter.TextStyle.BOLD);
+  }
+
+  /**
+   * Combines a list of styles into one. For example, if first style in the list specifies text color but does not provide
+   * background color and second style in the list does have a background color then this method will return a style with text color from the first
+   * and background color from the second. However, if the first style in the list has all the attributes then the result will be equal to the first style
+   * and the rest of the list will be ignored.
+   *
+   * @param styles list of styles to combine into one.
+   * @return a combination of styles from the list.
+   */
+  public static @NotNull VcsLogHighlighter.VcsCommitStyle combine(@NotNull Collection<? extends VcsLogHighlighter.VcsCommitStyle> styles) {
+    Color foreground = null;
+    Color background = null;
+    VcsLogHighlighter.TextStyle textStyle = null;
+
+    for (VcsLogHighlighter.VcsCommitStyle style : styles) {
+      if (foreground == null) {
+        foreground = style.getForeground();
+      }
+      if (background == null) {
+        background = style.getBackground();
+      }
+      if (textStyle == null) {
+        textStyle = style.getTextStyle();
+      }
+      if (background != null && foreground != null && textStyle != null) break;
+    }
+
+    return createStyle(foreground, background, textStyle);
+  }
+
+  /**
+   * Default implementation of VcsCommitStyle.
+   */
+  private static class VcsCommitStyleImpl implements VcsLogHighlighter.VcsCommitStyle {
+    private final @Nullable Color myForeground;
+    private final @Nullable Color myBackground;
+    private final @Nullable VcsLogHighlighter.TextStyle myTextStyle;
+
+    /**
+     * Creates VcsCommitStyleImpl with specified text and background color, and text style.
+     *
+     * @param foreground text color or null if unspecified.
+     * @param background background color or null if unspecified.
+     * @param textStyle  text style or null if unspecified
+     */
+    VcsCommitStyleImpl(@Nullable Color foreground, @Nullable Color background, @Nullable VcsLogHighlighter.TextStyle textStyle) {
+      myForeground = foreground;
+      myBackground = background;
+      myTextStyle = textStyle;
+    }
+
+    @Override
+    public @Nullable Color getForeground() {
+      return myForeground;
+    }
+
+    @Override
+    public @Nullable Color getBackground() {
+      return myBackground;
+    }
+
+    @Override
+    public @Nullable VcsLogHighlighter.TextStyle getTextStyle() {
+      return myTextStyle;
+    }
+  }
+}

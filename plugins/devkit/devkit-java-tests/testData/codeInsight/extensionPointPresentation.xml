@@ -1,0 +1,14 @@
+<idea-plugin>
+
+    <id>foo</id>
+
+    <extensionPoints>
+        <extensionPoint name="bar" interface="bar.MyExtensionPoint"/>
+    </extensionPoints>
+
+    <extensions defaultExtensionNs="foo">
+
+        <b<caret>ar/>
+    </extensions>
+
+</idea-plugin>

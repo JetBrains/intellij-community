@@ -1,0 +1,10 @@
+def pageProperty = {
+    String propertyValue = ""
+
+    <selection>if (!propertyValue)
+        propertyValue = null</selection>
+}
+-----
+input:
+propertyValue
+output:

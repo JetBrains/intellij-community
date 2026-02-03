@@ -1,0 +1,42 @@
+### auto-generated section `build kotlin.highlighting.shared.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "kotlin.highlighting.shared.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/testFramework",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
+    "//platform/diff-impl",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build kotlin.highlighting.shared.tests` end
+
+### auto-generated section `test kotlin.highlighting.shared.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test kotlin.highlighting.shared.tests` end

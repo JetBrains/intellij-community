@@ -1,0 +1,14 @@
+// FIR_IDENTICAL
+// HIGHLIGHT_WARNINGS
+// WITH_COROUTINES
+package test
+
+import kotlin.coroutines.*
+import kotlinx.coroutines.*
+
+suspend fun test(job: Job) {
+    withContext(job + Dispatchers.IO + NonCancellable) {}
+
+    withContext(job + (Dispatchers.IO + NonCancellable)) {}
+}
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutineContextWithJobInspection

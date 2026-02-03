@@ -1,0 +1,32 @@
+### auto-generated section `build intellij.platform.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "core_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "core",
+  module_name = "intellij.platform.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":core_resources"],
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "//platform/util",
+    "//platform/extensions",
+    "//platform/util/progress",
+    "//platform/util/jdom",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/util/xmlDom",
+    "//platform/diagnostic",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/util/coroutines",
+    "@lib//:jetbrains-annotations",
+  ],
+  exports = ["//platform/extensions"]
+)
+### auto-generated section `build intellij.platform.core` end

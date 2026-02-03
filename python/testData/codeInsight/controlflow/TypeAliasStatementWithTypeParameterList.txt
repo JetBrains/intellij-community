@@ -1,0 +1,6 @@
+0(1) element: null
+1(2) element: PySubscriptionExpression
+2(3) READ ACCESS: Union
+3(4) READ ACCESS: T
+4(5) READ ACCESS: U
+5() element: null

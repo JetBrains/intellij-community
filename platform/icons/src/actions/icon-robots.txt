@@ -1,0 +1,1 @@
+deprecated: showViewer.png; to be removed (use expandable text field instead, see https://plugins.jetbrains.com/docs/intellij/built-in-button.html)

@@ -1,0 +1,32 @@
+### auto-generated section `build intellij.grazie.xml` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "xml_resources",
+  srcs = glob(["main/resources/**/*"]),
+  strip_prefix = "main/resources"
+)
+
+jvm_library(
+  name = "xml",
+  module_name = "intellij.grazie.xml",
+  visibility = ["//visibility:public"],
+  srcs = glob(["main/kotlin/**/*.kt", "main/kotlin/**/*.java", "main/kotlin/**/*.form"], allow_empty = True),
+  resources = [":xml_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/grazie/src:core",
+    "//xml/xml-psi-api:psi",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/util-ex",
+    "//platform/code-style-api:codeStyle",
+    "//platform/analysis-api:analysis",
+    "//xml/xml-parser:parser",
+    "//xml/impl",
+    "//spellchecker",
+    "//spellchecker/xml",
+  ]
+)
+### auto-generated section `build intellij.grazie.xml` end

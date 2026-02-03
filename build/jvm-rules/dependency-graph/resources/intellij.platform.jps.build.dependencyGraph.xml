@@ -1,0 +1,9 @@
+<idea-plugin>
+
+  <dependencies>
+    <module name="intellij.libraries.caffeine" />
+    <module name="intellij.libraries.fastutil" />
+  </dependencies>
+
+</idea-plugin>
+

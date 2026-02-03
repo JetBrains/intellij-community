@@ -1,0 +1,45 @@
+### auto-generated section `build intellij.kotlin.featuresTrainer` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "features-trainer_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "features-trainer",
+  module_name = "intellij.kotlin.featuresTrainer",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":features-trainer_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/ide-features-trainer:featuresTrainer",
+    "//java/java-features-trainer:featuresTrainer",
+    "//java/java-psi-api:psi",
+    "//platform/analysis-api:analysis",
+    "//platform/core-impl",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/analysis-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/formatter",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//java/openapi:java",
+    "//platform/execution-impl",
+    "//platform/xdebugger-api:debugger",
+    "//platform/core-ui",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
+  ]
+)
+### auto-generated section `build intellij.kotlin.featuresTrainer` end

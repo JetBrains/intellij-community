@@ -1,0 +1,4 @@
+<project default="A">
+  <length string="str" property="str.len"/>
+  <target name="A"/>
+</project>

@@ -1,0 +1,18 @@
+<idea-plugin package="com.intellij.markdown.compose.preview">
+  <dependencies>
+    <module name="intellij.platform.compose"/>
+    <module name="intellij.platform.compose.markdown"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.coil"/>
+    <module name="intellij.libraries.compose.foundation.desktop"/>
+    <!-- endregion -->
+  </dependencies>
+  <extensions defaultExtensionNs="org.intellij.markdown">
+    <html.panel.provider implementation="com.intellij.markdown.compose.preview.ComposePanelProvider"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="enable.markdown.compose.preview.renderer.choice"
+                 defaultValue="true"
+                 description="Add possibility to render Markdown Preview using Compose instead of JCEF (experimental feature, many inlines are unsupported yet)."/>
+  </extensions>
+</idea-plugin>

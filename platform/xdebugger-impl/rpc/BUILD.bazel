@@ -1,0 +1,33 @@
+### auto-generated section `build intellij.platform.debugger.impl.rpc` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "rpc_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "rpc",
+  module_name = "intellij.platform.debugger.impl.rpc",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":rpc_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/kernel/shared:kernel",
+    "//platform/xdebugger-api:debugger",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//platform/project/shared:project",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl/rpc",
+    "//platform/core-ui",
+    "//platform/execution-impl",
+    "//platform/remote-topics/shared:rpc-topics",
+    "//platform/core-api:core",
+    "//platform/execution",
+    "//platform/util/concurrency",
+  ]
+)
+### auto-generated section `build intellij.platform.debugger.impl.rpc` end

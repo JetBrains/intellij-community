@@ -1,0 +1,47 @@
+// FILE: first.before.kt
+// "Import operator 'Some.component1'" "true"
+// ERROR: Destructuring declaration initializer of type Some! must have a 'component1()' function
+
+package testing
+
+import some.SomeUtils
+
+fun testing() {
+    val (a) = <caret>SomeUtils.flexibleSome()
+}
+//-----------------------
+
+
+// FILE: second.kt
+
+package some
+
+public class Some
+
+operator fun Some.component1() = 1
+//-----------------------
+
+// FILE: some/SomeUtil.java
+package some;
+
+public class SomeUtils {
+    public static Some flexibleSome() {
+        return new Some();
+    }
+}
+
+
+// FILE: first.after.kt
+// "Import operator 'Some.component1'" "true"
+// ERROR: Destructuring declaration initializer of type Some! must have a 'component1()' function
+
+package testing
+
+import some.SomeUtils
+import some.component1
+
+fun testing() {
+    val (a) = <caret>SomeUtils.flexibleSome()
+}
+//-----------------------
+

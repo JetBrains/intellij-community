@@ -1,0 +1,16 @@
+{
+  "type": "object",
+
+  "definitions": {
+    "qq": {
+      "$ref": "#/definitions/qq"
+    }
+  },
+
+  "properties": {
+    "a": {
+      "$ref": "#/definitions/qq"
+    }
+  }
+}
+

@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.platform.execution.serviceView.frontend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "frontend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "frontend",
+  module_name = "intellij.platform.execution.serviceView.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":frontend_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/lang-impl",
+    "//platform/execution.serviceView",
+    "//platform/core-impl",
+    "//platform/core-ui",
+    "//platform/kernel/rpc",
+    "//platform/platform-impl/rpc",
+    "//platform/core-api:core",
+    "//platform/lang-api:lang",
+  ]
+)
+### auto-generated section `build intellij.platform.execution.serviceView.frontend` end

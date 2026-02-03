@@ -1,0 +1,18 @@
+{
+  "definitions": {
+    "middle": {
+      "properties": {
+        "findMe" : {
+          "type": "integer",
+          "description": "this is found!",
+          "enum": [1,2]
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "$ref": "#/definitions/middle"
+    }
+  ]
+}

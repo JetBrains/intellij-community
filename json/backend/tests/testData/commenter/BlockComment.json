@@ -1,0 +1,6 @@
+{
+  "foo": null,
+  "bar": <selection>{
+    "baz": [1, 2, 3]
+  }</selection>
+}

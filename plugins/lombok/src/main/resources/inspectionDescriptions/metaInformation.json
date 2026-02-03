@@ -1,0 +1,48 @@
+{
+  "inspections": [
+    {
+      "id": "SpringQualifierCopyableLombok",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "RedundantSlf4jDefinition",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "LombokSetterMayBeUsed",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "Lombok",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "LombokFlagUsage",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "RedundantModifiersUtilityClassLombok",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "RedundantModifiersValLombok",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "LombokGetterMayBeUsed",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "RedundantModifiersValueLombok",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "StaticMethodImportLombok",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "DeprecatedLombok",
+      "codeQualityCategory": "Code Style"
+    }
+  ]
+}

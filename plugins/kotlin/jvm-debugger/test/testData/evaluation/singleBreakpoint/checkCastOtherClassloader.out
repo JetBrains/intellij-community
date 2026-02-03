@@ -1,0 +1,9 @@
+LineBreakpoint created at checkCastOtherClassloader.kt:6
+Run Java
+Connected to the target VM
+checkCastOtherClassloader.kt:6
+Compile bytecode for c1 is CastLoaders
+Compile bytecode for c1 as CastLoaders
+Disconnected from the target VM
+
+Process finished with exit code 0

@@ -1,0 +1,1 @@
+Following declarations would clash: to move function &#39;fun &lt;T&gt; foo(T)&#39; and destination function &#39;fun foo(Any)&#39; declared in scope b

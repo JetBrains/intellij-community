@@ -1,0 +1,78 @@
+### auto-generated section `build intellij.kotlin.jvm.debugger.core` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_core",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+  ],
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "core_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "core",
+  module_name = "intellij.kotlin.jvm.debugger.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":core_resources"],
+  kotlinc_opts = ":custom_core",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-impl-base",
+    "//libraries/asm",
+    "@lib//:jb-jdi",
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/jvm-debugger/base/util",
+    "//platform/core-ui",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-impl/shared",
+    "//platform/projectModel-impl",
+    "//platform/util:util-ui",
+    "//platform/script-debugger/debugger-ui:scriptDebugger-ui",
+    "//platform/platform-impl:ide-impl",
+    "//java/debugger/openapi:java-debugger",
+    "//platform/lang-impl",
+    "//platform/platform-util-io-impl:ide-util-io-impl",
+    "//java/openapi:java",
+    "//platform/util/progress",
+    "//java/execution/openapi:java-execution",
+    "//java/debugger/impl",
+    "//java/java-psi-impl:psi-impl",
+    "//plugins/kotlin/code-insight/utils",
+    "//platform/statistics",
+    "//platform/util",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//libraries/gson",
+    "//java/debugger/shared",
+    "//platform/util/jdom",
+    "//java/java-runtime:rt",
+    "@lib//:kotlin-metadata",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
+)
+### auto-generated section `build intellij.kotlin.jvm.debugger.core` end

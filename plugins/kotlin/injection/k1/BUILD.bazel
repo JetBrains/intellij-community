@@ -1,0 +1,43 @@
+### auto-generated section `build kotlin.injection.k1` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_k1",
+  opt_in = ["org.jetbrains.kotlin.K1Deprecation"],
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "k1_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "k1",
+  module_name = "kotlin.injection.k1",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":k1_resources"],
+  kotlinc_opts = ":custom_k1",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//platform/core-api:core",
+    "//plugins/kotlin/injection/base:kotlin-base-injection",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/base/fe10/code-insight",
+    "//plugins/kotlin/core",
+    "//platform/core-impl",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/idea",
+    "//plugins/IntelliLang:langInjection",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+  ]
+)
+### auto-generated section `build kotlin.injection.k1` end

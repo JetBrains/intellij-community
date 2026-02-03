@@ -1,0 +1,44 @@
+### auto-generated section `build intellij.textmate.core` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_core",
+  opt_in = ["kotlin.concurrent.atomics.ExperimentalAtomicApi"]
+)
+
+resourcegroup(
+  name = "core_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_provided_library(
+  name = "libraries_kotlinx_coroutines_core_provided",
+  lib = "//libraries/kotlinx/coroutines/core"
+)
+
+jvm_provided_library(
+  name = "libraries_kotlinx_libraries-kotlinx-collections-immutable_provided",
+  lib = "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable"
+)
+
+jvm_library(
+  name = "core",
+  module_name = "intellij.textmate.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form", "srcMultiplatform/**/*.kt", "srcMultiplatform/**/*.java", "srcMultiplatform/**/*.form"], allow_empty = True),
+  resources = [":core_resources"],
+  kotlinc_opts = ":custom_core",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlin/reflect",
+    "@lib//:slf4j-api",
+    ":libraries_kotlinx_coroutines_core_provided",
+    ":libraries_kotlinx_libraries-kotlinx-collections-immutable_provided",
+  ]
+)
+### auto-generated section `build intellij.textmate.core` end

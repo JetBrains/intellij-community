@@ -1,0 +1,4 @@
+<spot>public class Foo</spot> {
+  public void doSomething() {
+  }
+}

@@ -1,0 +1,4 @@
+package pack;
+class Ba{
+
+}

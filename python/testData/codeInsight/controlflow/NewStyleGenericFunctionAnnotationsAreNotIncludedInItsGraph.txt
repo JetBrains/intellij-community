@@ -1,0 +1,10 @@
+0(1) element: null
+1(2) element: PySubscriptionExpression
+2(3) READ ACCESS: list
+3(4) READ ACCESS: T
+4(5) WRITE ACCESS: x
+5(6) READ ACCESS: T
+6(7) element: PyReturnStatement
+7(8) element: PySubscriptionExpression
+8(9) READ ACCESS: x
+9() element: null

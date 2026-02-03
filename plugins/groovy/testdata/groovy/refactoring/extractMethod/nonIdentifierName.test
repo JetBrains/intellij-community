@@ -1,0 +1,7 @@
+<begin>print 2<end>
+-----
+'f*f'()
+
+private 'f*f'() {
+    print 2
+}

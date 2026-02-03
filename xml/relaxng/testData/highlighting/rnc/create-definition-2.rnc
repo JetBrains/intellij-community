@@ -1,0 +1,5 @@
+
+foo = grammar {
+  start = parent <caret>unresolved
+}
+bar = element bar { empty }

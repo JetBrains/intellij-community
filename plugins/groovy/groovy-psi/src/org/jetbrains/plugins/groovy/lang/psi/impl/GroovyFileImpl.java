@@ -1,0 +1,371 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.psi.impl;
+
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFileStub;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrPackageDefinitionStub;
+import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImports;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.processLocals;
+import static org.jetbrains.plugins.groovy.lang.resolve.bindings.BindingsKt.processBindings;
+
+/**
+ * Implements all abstractions related to Groovy file
+ */
+public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
+
+  private static final Logger LOG = Logger.getInstance(GroovyFileImpl.class);
+
+  private static final @NlsSafe String SYNTHETIC_PARAMETER_NAME = "args";
+
+  private volatile Boolean myScript;
+  private volatile GroovyScriptClass myScriptClass;
+  private volatile GrParameter mySyntheticArgsParameter;
+  private volatile PsiElement myContext;
+
+  public GroovyFileImpl(FileViewProvider viewProvider) {
+    super(viewProvider, GroovyLanguage.INSTANCE);
+  }
+
+  @Override
+  public @NotNull String getPackageName() {
+    GrPackageDefinition packageDef = getPackageDefinition();
+    if (packageDef != null) {
+      final String name = packageDef.getPackageName();
+      if (name != null) {
+        return name;
+      }
+    }
+    return "";
+  }
+
+  @Override
+  public GrPackageDefinition getPackageDefinition() {
+    final StubElement<?> stub = getStub();
+    if (stub != null) {
+      for (StubElement element : stub.getChildrenStubs()) {
+        if (element instanceof GrPackageDefinitionStub) return (GrPackageDefinition)element.getPsi();
+      }
+      return null;
+    }
+
+    ASTNode node = calcTreeElement().findChildByType(GroovyStubElementTypes.PACKAGE_DEFINITION);
+    return node != null ? (GrPackageDefinition)node.getPsi() : null;
+  }
+
+  private GrParameter getSyntheticArgsParameter() {
+    GrParameter parameter = mySyntheticArgsParameter;
+    if (parameter == null) {
+      final PsiType psiType = JavaPsiFacade.getElementFactory(getProject()).createTypeFromText("java.lang.String[]", this);
+      parameter = new GrLightParameter(SYNTHETIC_PARAMETER_NAME, psiType, this);
+      mySyntheticArgsParameter = parameter;
+    }
+    return parameter;
+  }
+
+  @Override
+  public boolean processDeclarations(final @NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     @Nullable PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
+
+    if (getStub() == null) {
+      if (!(lastParent instanceof GrMember)) {
+        // only local usages are traversed here. Having a stub means the clients are outside and won't see our variables
+        if (!processLocals(this, processor, state, lastParent, place)) return false;
+      }
+      if (!processBindings(this, processor, state, lastParent, place)) return false;
+    }
+
+    if (myContext != null) {
+      return true;
+    }
+
+    final GroovyScriptClass scriptClass = getScriptClass();
+    if (scriptClass != null && !(lastParent instanceof GrTypeDefinition)) {
+      if (!ResolveUtil.processClassDeclarations(scriptClass, processor, state, lastParent, place)) return false;
+    }
+
+    if (!super.processDeclarations(processor, state, lastParent, place)) return false;
+
+    if (ResolveUtil.shouldProcessProperties(classHint)) {
+      if (lastParent != null && !(lastParent instanceof GrTypeDefinition) && scriptClass != null) {
+        if (!ResolveUtil.processElement(processor, getSyntheticArgsParameter(), state)) return false;
+      }
+    }
+
+    return true;
+  }
+
+  @Override
+  public boolean isTopControlFlowOwner() {
+    return true;
+  }
+
+  @Override
+  public GrImportStatement[] getImportStatements() {
+    final StubElement<?> stub = getStub();
+    if (stub != null) {
+      return stub.getChildrenByType(GroovyStubElementTypes.IMPORT, GrImportStatement.ARRAY_FACTORY);
+    }
+
+    return calcTreeElement().getChildrenAsPsiElements(GroovyStubElementTypes.IMPORT, GrImportStatement.ARRAY_FACTORY);
+  }
+
+  @Override
+  public GrImportStatement addImportForClass(@NotNull PsiClass aClass) {
+    try {
+      // Calculating position
+      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
+
+      String qname = aClass.getQualifiedName();
+      if (qname != null) {
+        GrImportStatement importStatement = factory.createImportStatementFromText(qname, false, false, null);
+        return addImport(importStatement);
+      }
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+    return null;
+  }
+
+
+  @Override
+  public @NotNull GrImportStatement addImport(@NotNull GrImportStatement statement) throws IncorrectOperationException {
+    return GroovyCodeStyleManager.getInstance(getProject()).addImport(this, statement);
+  }
+
+  @Override
+  public boolean isScript() {
+    return ReadAction.compute(() -> {
+      final StubElement stub = getStub();
+      if (stub instanceof GrFileStub) {
+        return ((GrFileStub)stub).isScript();
+      }
+
+      Boolean isScript = myScript;
+      if (isScript == null) {
+        isScript = checkIsScript();
+        myScript = isScript;
+      }
+      return isScript;
+    });
+  }
+
+  private boolean checkIsScript() {
+    final GrTopStatement[] topStatements = findChildrenByClass(GrTopStatement.class);
+    boolean hasClassDefinitions = false;
+    boolean hasTopStatements = false;
+    for (GrTopStatement st : topStatements) {
+      if (st instanceof GrTypeDefinition) {
+        hasClassDefinitions = true;
+      }
+      else if (!(st instanceof GrImportStatement || st instanceof GrPackageDefinition)) {
+        hasTopStatements = true;
+        break;
+      }
+    }
+    return hasTopStatements || !hasClassDefinitions;
+  }
+
+  @Override
+  public void subtreeChanged() {
+    myScript = null;
+    super.subtreeChanged();
+  }
+
+  @Override
+  public GroovyScriptClass getScriptClass() {
+    if (!isScript()) {
+      return null;
+    }
+
+    GroovyScriptClass aClass = myScriptClass;
+    if (aClass == null) {
+      aClass = new GroovyScriptClass(this);
+      myScriptClass = aClass;
+    }
+
+    return aClass;
+  }
+
+  @Override
+  public void setPackageName(@NotNull String packageName) {
+    final ASTNode fileNode = getNode();
+    final GrPackageDefinition currentPackage = getPackageDefinition();
+    if (packageName.isEmpty()) {
+      if (currentPackage != null) {
+        final ASTNode currNode = currentPackage.getNode();
+        fileNode.removeChild(currNode);
+      }
+      return;
+    }
+
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
+    final GrPackageDefinition newPackage = (GrPackageDefinition)factory.createTopElementFromText("package " + packageName);
+
+    if (currentPackage != null) {
+      final GrCodeReferenceElement packageReference = currentPackage.getPackageReference();
+      if (packageReference != null) {
+        GrCodeReferenceElement ref = newPackage.getPackageReference();
+        if (ref != null) {
+          packageReference.replace(ref);
+        }
+        return;
+      }
+    }
+
+    final ASTNode newNode = newPackage.getNode();
+    if (currentPackage != null) {
+      final ASTNode currNode = currentPackage.getNode();
+      fileNode.replaceChild(currNode, newNode);
+    }
+    else {
+      ASTNode anchor = fileNode.getFirstChildNode();
+      if (anchor != null && anchor.getElementType() == GroovyTokenTypes.mSH_COMMENT) {
+        anchor = anchor.getTreeNext();
+        fileNode.addLeaf(GroovyTokenTypes.mNLS, "\n", anchor);
+      }
+      fileNode.addChild(newNode, anchor);
+      if (anchor != null && !anchor.getText().startsWith("\n\n")) {
+        fileNode.addLeaf(GroovyTokenTypes.mNLS, "\n", anchor);
+      }
+    }
+  }
+
+  @Override
+  public @Nullable GrPackageDefinition setPackage(@Nullable GrPackageDefinition newPackage) {
+    final GrPackageDefinition oldPackage = getPackageDefinition();
+    if (oldPackage == null) {
+      if (newPackage != null) {
+        final GrPackageDefinition result = (GrPackageDefinition)addAfter(newPackage, null);
+        getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", result.getNode().getTreeNext());
+        return result;
+      }
+    }
+    else {
+      if (newPackage != null) {
+        return (GrPackageDefinition)oldPackage.replace(newPackage);
+      }
+      else {
+        oldPackage.delete();
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public PsiType getInferredScriptReturnType() {
+    return CachedValuesManager.getCachedValue(this, () -> CachedValueProvider.Result
+      .create(GroovyPsiManager.inferType(this, new MethodTypeInferencer(this)),
+              PsiModificationTracker.MODIFICATION_COUNT));
+  }
+
+  @Override
+  public void clearCaches() {
+    super.clearCaches();
+    myScriptClass = null;
+    mySyntheticArgsParameter = null;
+  }
+
+  @Override
+  public PsiElement getContext() {
+    return myContext != null && myContext.isValid() ? myContext : super.getContext();
+  }
+
+  @Override
+  protected GroovyFileImpl clone() {
+    GroovyFileImpl clone = (GroovyFileImpl)super.clone();
+    clone.myContext = myContext;
+    return clone;
+  }
+
+  public void setContext(PsiElement context) {
+    if (context != null) {
+      myContext = context;
+    }
+  }
+
+  public void setContextNullable(PsiElement context) {
+    myContext = context;
+  }
+
+  @Override
+  public PsiClass @NotNull [] getClasses() {
+    final PsiClass[] declaredDefs = super.getClasses();
+    if (!isScript()) return declaredDefs;
+    final PsiClass scriptClass = getScriptClass();
+    return ArrayUtil.append(declaredDefs, scriptClass);
+  }
+
+  @Override
+  public PsiElement getOriginalElement() {
+    final PsiClass scriptClass = getScriptClass();
+    if (scriptClass != null) {
+      final PsiElement originalElement = scriptClass.getOriginalElement();
+      if (originalElement != scriptClass) {
+        return originalElement.getContainingFile();
+      }
+    }
+    return this;
+  }
+
+  @Override
+  public GrVariableDeclaration @NotNull [] getScriptDeclarations(boolean topLevelOnly) {
+    return PsiImplUtilKt.getScriptDeclarations(this, topLevelOnly);
+  }
+
+  @Override
+  public @NotNull GroovyFileImports getImports() {
+    return GroovyImports.getFileImports(this);
+  }
+
+  @Override
+  public String toString() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return super.toString();
+    }
+    return "GroovyFileImpl:" + getName();
+  }
+}
+

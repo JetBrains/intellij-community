@@ -1,0 +1,10 @@
+abstract class Groovy   {
+abstract void great();
+abstract void stuff();
+}
+-----
+abstract class Groovy {
+  abstract void great();
+
+  abstract void stuff();
+}

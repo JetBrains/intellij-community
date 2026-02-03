@@ -1,0 +1,21 @@
+### auto-generated section `build kotlin.compiler-plugins.noarg.common` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "common",
+  module_name = "kotlin.compiler-plugins.noarg.common",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//platform/core-api:core",
+    "//platform/util",
+    "@lib//:kotlinc-noarg-compiler-plugin",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
+    "//platform/core-impl",
+    "//java/java-psi-impl:psi-impl",
+  ]
+)
+### auto-generated section `build kotlin.compiler-plugins.noarg.common` end

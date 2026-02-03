@@ -1,0 +1,6 @@
+fragment pullRequestCommitWithCheckStatuses on PullRequestCommit {
+  ...nodeInfo
+  commit {
+    ...commitWithCheckStatuses
+  }
+}

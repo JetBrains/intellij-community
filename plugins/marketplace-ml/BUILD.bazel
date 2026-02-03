@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.marketplaceMl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "marketplace-ml_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "marketplace-ml",
+  module_name = "intellij.marketplaceMl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":marketplace-ml_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/statistics",
+    "//platform/platform-impl/internal",
+    "//libraries/caffeine",
+    "//platform/ml-impl",
+  ]
+)
+### auto-generated section `build intellij.marketplaceMl` end

@@ -1,0 +1,332 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.plugins.groovy.codeInspection.local;
+
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil;
+import com.intellij.codeInsight.daemon.impl.GlobalUsageHelper;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
+import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection;
+import org.jetbrains.plugins.groovy.ext.spock.SpockUtils;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnnotationTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrRecordDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTraitTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
+import org.jetbrains.plugins.groovy.util.GroovyMainMethodSearcher;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyUnusedImportUtil.unusedImports;
+
+public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
+
+  private final @NotNull GroovyFile myFile;
+  private final @NotNull Editor myEditor;
+  private volatile Set<GrImportStatement> myUnusedImports;
+  private volatile List<HighlightInfo> myUnusedDeclarations;
+
+  GroovyPostHighlightingPass(@NotNull GroovyFile file, @NotNull Editor editor) {
+    super(file.getProject(), editor.getDocument(), true);
+    myFile = file;
+    myEditor = editor;
+  }
+
+  @Override
+  public void doCollectInformation(final @NotNull ProgressIndicator progress) {
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    VirtualFile virtualFile = myFile.getViewProvider().getVirtualFile();
+    if (!fileIndex.isInContent(virtualFile)) {
+      return;
+    }
+
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
+    final HighlightDisplayKey unusedDefKey = HighlightDisplayKey.find(GroovyUnusedDeclarationInspection.SHORT_NAME);
+    final boolean deadCodeEnabled = profile.isToolEnabled(unusedDefKey, myFile);
+    final UnusedDeclarationInspectionBase deadCodeInspection = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedDeclarationInspectionBase.SHORT_NAME, myFile);
+    final GroovyUsageHelper usageHelper = new GroovyUsageHelper(deadCodeInspection);
+
+    final List<HighlightInfo> unusedDeclarations = new ArrayList<>();
+
+    final Map<GrParameter, Boolean> usedParams = new HashMap<>();
+    myFile.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        if (element instanceof GrReferenceExpression && !((GrReferenceElement<?>)element).isQualified()) {
+          GroovyResolveResult[] results = ((GrReferenceExpression)element).multiResolve(false);
+          if (results.length == 0) {
+            results = ((GrReferenceExpression)element).multiResolve(true);
+          }
+          for (GroovyResolveResult result : results) {
+            PsiElement resolved = result.getElement();
+            if (resolved instanceof GrParameter && resolved.getContainingFile() == myFile) {
+              usedParams.put((GrParameter)resolved, Boolean.TRUE);
+            }
+          }
+        }
+
+        if (deadCodeEnabled &&
+            element instanceof GrNamedElement && element instanceof PsiModifierListOwner &&
+            !UnusedSymbolUtil.isImplicitUsage(element.getProject(), (PsiModifierListOwner)element) &&
+            !GroovySuppressableInspectionTool.isElementToolSuppressedIn(element, GroovyUnusedDeclarationInspection.SHORT_NAME)) {
+          PsiElement nameId = ((GrNamedElement)element).getNameIdentifierGroovy();
+          if (nameId.getNode().getElementType() == GroovyTokenTypes.mIDENT) {
+            String name = ((GrNamedElement)element).getName();
+            if (element instanceof GrTypeDefinition definition && !UnusedSymbolUtil.isClassUsed(myProject,
+                                                                                     element.getContainingFile(), definition,
+                                                                                     usageHelper
+            )) {
+              HighlightInfo.Builder builder = UnusedSymbolUtil
+                .createUnusedSymbolInfoBuilder(nameId, GroovyBundle.message(getKeyForTypeDefinition(definition), name), HighlightInfoType.UNUSED_SYMBOL, GroovyUnusedDeclarationInspection.SHORT_NAME);
+              IntentionAction action = QuickFixFactory.getInstance().createSafeDeleteFix(element);
+              builder.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(unusedDefKey), null, unusedDefKey);
+              ContainerUtil.addIfNotNull(unusedDeclarations, builder.create());
+            }
+            else if (element instanceof GrMethod method) {
+              if (SpockUtils.isUnusedInSpock(method, usageHelper)) {
+                usageHelper.shouldCheckContributors = false;
+              }
+              try {
+                if (!UnusedSymbolUtil.isMethodUsed(method.getProject(), method.getContainingFile(), method, usageHelper)) {
+                  String message;
+                  if (method.isConstructor()) {
+                    message = GroovyBundle.message("text.constructor.0.is.unused", name);
+                  } else {
+                    message = GroovyBundle.message("text.method.0.is.unused", name);
+                  }
+                  HighlightInfo.Builder builder = UnusedSymbolUtil.createUnusedSymbolInfoBuilder(nameId, message, HighlightInfoType.UNUSED_SYMBOL, GroovyUnusedDeclarationInspection.SHORT_NAME);
+                  IntentionAction action = QuickFixFactory.getInstance().createSafeDeleteFix(method);
+                  builder.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(unusedDefKey), null, unusedDefKey);
+                  ContainerUtil.addIfNotNull(unusedDeclarations, builder.create());
+                }
+              }
+              finally {
+                usageHelper.shouldCheckContributors = true;
+              }
+            }
+            else if (element instanceof GrField && isFieldUnused((GrField)element, usageHelper)) {
+              HighlightInfo.Builder builder =
+                UnusedSymbolUtil.createUnusedSymbolInfoBuilder(nameId, GroovyBundle.message("text.property.0.is.unused", name), HighlightInfoType.UNUSED_SYMBOL, GroovyUnusedDeclarationInspection.SHORT_NAME);
+              IntentionAction action = QuickFixFactory.getInstance().createSafeDeleteFix(element);
+              builder.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(unusedDefKey), null, unusedDefKey);
+              ContainerUtil.addIfNotNull(unusedDeclarations, builder.create());
+            }
+            else if (element instanceof GrParameter) {
+              if (!usedParams.containsKey(element)) {
+                usedParams.put((GrParameter)element, Boolean.FALSE);
+              }
+            }
+          }
+        }
+
+        super.visitElement(element);
+      }
+    });
+    Set<GrImportStatement> unusedImports;
+    myUnusedImports = unusedImports = unusedImports(myFile);
+
+    if (deadCodeEnabled) {
+      for (GrParameter parameter : usedParams.keySet()) {
+        if (usedParams.get(parameter)) continue;
+
+        PsiElement scope = parameter.getDeclarationScope();
+        if (scope instanceof GrMethod method) {
+          if (methodMayHaveUnusedParameters(method)) {
+            PsiElement identifier = parameter.getNameIdentifierGroovy();
+            HighlightInfo.Builder builder = UnusedSymbolUtil
+              .createUnusedSymbolInfoBuilder(identifier, GroovyBundle.message("text.parameter.0.is.unused", parameter.getName()), HighlightInfoType.UNUSED_SYMBOL, GroovyUnusedDeclarationInspection.SHORT_NAME);
+            IntentionAction action = GroovyQuickFixFactory.getInstance().createRemoveUnusedGrParameterFix(parameter);
+            builder.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(unusedDefKey), null, unusedDefKey);
+            ContainerUtil.addIfNotNull(unusedDeclarations, builder.create());
+          }
+        }
+        else if (scope instanceof GrClosableBlock) {
+          //todo Max Medvedev
+        }
+      }
+    }
+    myUnusedDeclarations = unusedDeclarations;
+    List<HighlightInfo> infos = convertUnusedImportsToInfos(unusedDeclarations, unusedImports);
+    BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, myFile, myDocument, 0, myFile.getTextLength(), infos, getId());
+  }
+
+  @Override
+  public void doApplyInformationToEditor() {
+    Set<GrImportStatement> unusedImports = myUnusedImports;
+    if (myUnusedDeclarations != null && unusedImports != null) {
+      optimizeImports(unusedImports);
+    }
+  }
+
+  private static @NotNull @PropertyKey(resourceBundle = GroovyBundle.BUNDLE) String getKeyForTypeDefinition(@NotNull GrTypeDefinition definition) {
+    return switch (definition) {
+      case GrTypeParameter ignored -> "text.type.parameter.0.is.unused";
+      case GrInterfaceDefinition ignored -> "text.interface.0.is.unused";
+      case GrTraitTypeDefinition ignored -> "text.trait.0.is.unused";
+      case GrEnumTypeDefinition ignored -> "text.enum.0.is.unused";
+      case GrRecordDefinition ignored -> "text.record.0.is.unused";
+      case GrAnnotationTypeDefinition ignored -> "text.annotation.class.0.is.unused";
+      default -> "text.class.0.is.unused";
+    };
+  }
+
+  private static boolean methodMayHaveUnusedParameters(GrMethod method) {
+    return (method.isConstructor() ||
+         method.hasModifierProperty(PsiModifier.PRIVATE) ||
+         method.hasModifierProperty(PsiModifier.STATIC) ||
+         !method.hasModifierProperty(PsiModifier.ABSTRACT) && !isOverriddenOrOverrides(method)) &&
+        !method.hasModifierProperty(PsiModifier.NATIVE) &&
+        !JavaHighlightUtil.isSerializationRelatedMethod(method, method.getContainingClass());
+  }
+
+  private static boolean isFieldUnused(GrField field, GlobalUsageHelper usageHelper) {
+    if (UnusedSymbolUtil.isFieldUsed(field.getProject(), field.getContainingFile(), field, usageHelper)) return false;
+    final GrAccessorMethod[] getters = field.getGetters();
+    final GrAccessorMethod setter = field.getSetter();
+
+    for (GrAccessorMethod getter : getters) {
+      if (getter.findSuperMethods().length > 0) {
+        return false;
+      }
+    }
+
+    if (setter != null) {
+      if (setter.findSuperMethods().length > 0) {
+        return false;
+      }
+    }
+
+    return !UnusedSymbolUtil.isImplicitRead(field) && !UnusedSymbolUtil.isImplicitWrite(field);
+  }
+
+  private static boolean isOverriddenOrOverrides(PsiMethod method) {
+    boolean overrides = SuperMethodsSearch.search(method, null, true, false).findFirst() != null;
+    return overrides || OverridingMethodsSearch.search(method).findFirst() != null;
+  }
+
+  private void optimizeImports(@NotNull Collection<GrImportStatement> unusedImports) {
+    if (!unusedImports.isEmpty()) {
+      IntentionAction fix = GroovyQuickFixFactory.getInstance().createOptimizeImportsFix(true);
+      if (fix.isAvailable(myProject, myEditor, myFile) && myFile.isWritable()) {
+        fix.invoke(myProject, myEditor, myFile);
+      }
+    }
+  }
+
+  private static @NotNull List<HighlightInfo> convertUnusedImportsToInfos(@NotNull List<? extends HighlightInfo> unusedDeclarations,
+                                                                          @NotNull Set<? extends GrImportStatement> unusedImports) {
+    List<HighlightInfo> infos = new ArrayList<>(unusedDeclarations);
+    for (GrImportStatement unusedImport : unusedImports) {
+      IntentionAction action = GroovyQuickFixFactory.getInstance().createOptimizeImportsFix(false);
+      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.UNUSED_SYMBOL).range(calculateRangeToUse(unusedImport))
+        .descriptionAndTooltip(GroovyBundle.message("unused.import"))
+        .registerFix(action, List.of(), null, null, null)
+        .create();
+      if (info != null) {
+        infos.add(info);
+      }
+    }
+    return infos;
+  }
+
+
+  private static TextRange calculateRangeToUse(GrImportStatement unusedImport) {
+    final TextRange range = unusedImport.getTextRange();
+
+    if (StringUtil.isEmptyOrSpaces(unusedImport.getAnnotationList().getText())) return range;
+
+    int start = 0;
+    for (PsiElement child = unusedImport.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child.getNode().getElementType() == GroovyTokenTypes.kIMPORT) {
+        start = child.getTextRange().getStartOffset();
+      }
+    }
+    return new TextRange(start, range.getEndOffset());
+  }
+
+  private static boolean isMainMethod(@NotNull PsiElement element) {
+    if (!(element instanceof GrMethod method)) {
+      return false;
+    }
+    return method.getName().equals("main") && GroovyMainMethodSearcher.INSTANCE.isMainMethod(method);
+  }
+
+  private static class GroovyUsageHelper extends GlobalUsageHelper {
+    private boolean shouldCheckContributors = true;
+    private final UnusedDeclarationInspectionBase deadCodeInspection;
+
+    private GroovyUsageHelper(UnusedDeclarationInspectionBase inspection) { deadCodeInspection = inspection; }
+
+    @Override
+    public boolean isCurrentFileAlreadyChecked() {
+      return false;
+    }
+
+    @Override
+    public boolean isLocallyUsed(@NotNull PsiNamedElement member) {
+      return false;
+    }
+
+    @Override
+    public boolean shouldCheckUsages(@NotNull PsiMember member) {
+      if (shouldCheckContributors) {
+        if (isMainMethod(member)) {
+          return false;
+        }
+        return deadCodeInspection == null || !deadCodeInspection.isEntryPoint(member);
+      } else {
+        return true;
+      }
+    }
+  }
+}

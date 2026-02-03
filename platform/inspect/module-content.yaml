@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.inspect.jar
+  modules:
+  - name: intellij.platform.inspect

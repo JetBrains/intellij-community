@@ -1,0 +1,4 @@
+package target
+
+fun foo() {
+}

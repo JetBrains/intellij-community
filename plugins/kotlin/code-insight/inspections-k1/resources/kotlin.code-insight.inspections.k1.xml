@@ -1,0 +1,14 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.k1.codeinsight.inspections">
+  <dependencies>
+    <module name="kotlin.code-insight.inspections.shared"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k1.codeinsight.inspections.KDocUnresolvedReferenceInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.k.doc.unresolved.reference.display.name" bundle="messages.KotlinBundle"/>
+  </extensions>
+</idea-plugin>

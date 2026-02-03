@@ -1,0 +1,174 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInspection;
+
+import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.FunctionalExpressionUtils;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
+
+public final class SimplifyCollectorInspection extends AbstractBaseJavaLocalInspectionTool {
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
+  }
+
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+
+    return new JavaElementVisitor() {
+      @Override
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
+        super.visitMethodCallExpression(call);
+        PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
+        if (nameElement == null || !isCollectorMethod(call, "groupingBy", "groupingByConcurrent")) return;
+        PsiExpression[] args = call.getArgumentList().getExpressions();
+        if (args.length != 2 && args.length != 3) return;
+        CombinedCollector combinedCollector = new CombinedCollector(ArrayUtil.getLastElement(args), null, null);
+        // Unwrap at most twice to gather collectingAndThen and/or mapping
+        combinedCollector = combinedCollector.tryUnwrap().tryUnwrap();
+        PsiMethodCallExpression downstream = ObjectUtils.tryCast(combinedCollector.myDownstream, PsiMethodCallExpression.class);
+        if (downstream == null ||
+            !FunctionalExpressionUtils
+              .isFunctionalReferenceTo(combinedCollector.myFinisher, CommonClassNames.JAVA_UTIL_OPTIONAL, null, "get")) {
+          return;
+        }
+        if (isCollectorMethod(downstream, "maxBy", "minBy", "reducing") &&
+            downstream.getArgumentList().getExpressionCount() == 1) {
+          String replacement = nameElement.getText().equals("groupingBy") ? "toMap" : "toConcurrentMap";
+          holder.registerProblem(nameElement, JavaBundle.message("inspection.simplify.collector.message", replacement),
+                                 new SimplifyCollectorFix(replacement));
+        }
+      }
+    };
+  }
+
+  @Contract("null, _ -> false")
+  private static boolean isCollectorMethod(PsiMethodCallExpression call, String... methodNames) {
+    if (call == null) return false;
+    String name = call.getMethodExpression().getReferenceName();
+    if (ArrayUtil.contains(name, methodNames)) {
+      PsiMethod method = call.resolveMethod();
+      if (method != null && method.hasModifierProperty(PsiModifier.STATIC)) {
+        PsiClass aClass = method.getContainingClass();
+        return aClass != null && CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS.equals(aClass.getQualifiedName())
+               && method.getParameterList().getParametersCount() == call.getArgumentList().getExpressionCount();
+      }
+    }
+    return false;
+  }
+
+  static class CombinedCollector {
+    final PsiExpression myDownstream;
+    final @Nullable PsiExpression myFinisher;
+    final @Nullable PsiExpression myMapper;
+
+    CombinedCollector(PsiExpression downstream, @Nullable PsiExpression finisher, @Nullable PsiExpression mapper) {
+      myDownstream = PsiUtil.skipParenthesizedExprDown(downstream);
+      myFinisher = PsiUtil.skipParenthesizedExprDown(finisher);
+      myMapper = PsiUtil.skipParenthesizedExprDown(mapper);
+    }
+
+    CombinedCollector tryUnwrap() {
+      if (myDownstream instanceof PsiMethodCallExpression call) {
+        PsiExpression[] args = call.getArgumentList().getExpressions();
+        if (myFinisher == null && isCollectorMethod(call, "collectingAndThen")) {
+          return new CombinedCollector(args[0], args[1], myMapper);
+        }
+        if (myMapper == null && isCollectorMethod(call, "mapping")) {
+          return new CombinedCollector(args[1], myFinisher, args[0]);
+        }
+      }
+      return this;
+    }
+  }
+
+  private static class SimplifyCollectorFix extends PsiUpdateModCommandQuickFix {
+    private final String myMethodName;
+
+    SimplifyCollectorFix(String methodName) {
+      myMethodName = methodName;
+    }
+
+    @Override
+    public @Nls @NotNull String getName() {
+      return JavaBundle.message("inspection.simplify.collector.fix.name", myMethodName);
+    }
+
+    @Override
+    public @Nls @NotNull String getFamilyName() {
+      return JavaBundle.message("inspection.simplify.collector.fix.family.name");
+    }
+
+    @Override
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+      if (!isCollectorMethod(call, "groupingBy", "groupingByConcurrent")) return;
+      PsiExpression[] args = call.getArgumentList().getExpressions();
+      if (args.length != 2 && args.length != 3) return;
+      CombinedCollector combinedCollector = new CombinedCollector(ArrayUtil.getLastElement(args), null, null);
+      // Unwrap at most twice to gather collectingAndThen and/or mapping
+      combinedCollector = combinedCollector.tryUnwrap().tryUnwrap();
+      PsiMethodCallExpression downstream = ObjectUtils.tryCast(combinedCollector.myDownstream, PsiMethodCallExpression.class);
+      if (downstream == null ||
+          !FunctionalExpressionUtils.isFunctionalReferenceTo(combinedCollector.myFinisher, CommonClassNames.JAVA_UTIL_OPTIONAL, null, "get")) {
+        return;
+      }
+      PsiExpression[] downstreamArgs = downstream.getArgumentList().getExpressions();
+      if (downstreamArgs.length != 1) return;
+      PsiExpression downstreamArg = downstreamArgs[0];
+      String downstreamName = downstream.getMethodExpression().getReferenceName();
+      if (downstreamName == null) return;
+      CommentTracker ct = new CommentTracker();
+      PsiType collectorType = call.getType();
+      PsiType mapType = PsiUtil.substituteTypeParameter(collectorType, "java.util.stream.Collector", 2, false);
+      PsiType valueType = PsiUtil.substituteTypeParameter(mapType, CommonClassNames.JAVA_UTIL_MAP, 1, false);
+      String valueTypeArg = valueType == null ? "" : "<" + valueType.getCanonicalText() + ">";
+      String merger;
+      switch (downstreamName) {
+        case "minBy", "maxBy" ->
+          merger = "java.util.function.BinaryOperator." + valueTypeArg + downstreamName + "(" + ct.text(downstreamArg) + ")";
+        case "reducing" -> merger = ct.text(downstreamArg);
+        default -> {
+          return;
+        }
+      }
+      String keyMapper = ct.text(args[0]);
+      String mapSupplier = args.length == 3 ? ct.text(args[1]) : null;
+      String valueMapper =
+        combinedCollector.myMapper == null ? CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION + "." + valueTypeArg + "identity()" :
+        ct.text(combinedCollector.myMapper);
+      String replacement = StreamEx.of(keyMapper, valueMapper, merger, mapSupplier).nonNull()
+        .joining(",", CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + "." + myMethodName + "(", ")");
+      PsiElement result = ct.replaceAndRestoreComments(call, replacement);
+      RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(result);
+      result = JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
+      CodeStyleManager.getInstance(project).reformat(result);
+    }
+  }
+}

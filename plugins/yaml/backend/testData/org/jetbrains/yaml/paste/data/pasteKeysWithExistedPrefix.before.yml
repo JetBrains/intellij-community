@@ -1,0 +1,4 @@
+top:
+  <caret>first: value1
+  next:
+    hello: world

@@ -1,0 +1,7 @@
+<idea-plugin>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <toolWindow factoryClass="FactoryClass" id="ToolWindowId"/>
+    <toolWindow factoryClass="FactoryClassForSpaces" id="Tool Window Id With Spaces"/>
+  </extensions>
+</idea-plugin>

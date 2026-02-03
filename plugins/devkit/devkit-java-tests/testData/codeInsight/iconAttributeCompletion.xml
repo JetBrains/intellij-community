@@ -1,0 +1,5 @@
+<idea-plugin>
+  <actions>
+    <action icon="<caret>"/>
+  </actions>
+</idea-plugin>

@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.kotlin.base.statistics` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "statistics",
+  module_name = "intellij.kotlin.base.statistics",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/facet",
+    "//platform/core-impl",
+    "//java/java-impl:impl",
+    "//platform/external-system-api:externalSystem",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+  ]
+)
+### auto-generated section `build intellij.kotlin.base.statistics` end

@@ -1,0 +1,9 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

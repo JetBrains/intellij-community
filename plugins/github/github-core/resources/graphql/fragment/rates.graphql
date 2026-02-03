@@ -1,0 +1,3 @@
+fragment rates on RateLimit {
+  cost
+}

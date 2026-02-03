@@ -1,0 +1,19 @@
+c:com.intellij.internal.statistic.eventLog.EventLogGroup
+- b:<init>(java.lang.String,I,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getGroupData():java.util.List
+- f:registerEvent(java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField,java.lang.String,I,java.lang.Object):com.intellij.internal.statistic.eventLog.events.EventId1
+f:com.intellij.internal.statistic.eventLog.EventLogGroupKt
+- sf:FUS_RECORDER:java.lang.String
+com.intellij.internal.statistic.eventLog.StatisticsEventLogListener
+- a:onLogEvent(com.jetbrains.fus.reporting.model.lion3.LogEvent,java.lang.String,java.util.Map):V
+com.intellij.internal.statistic.eventLog.StatisticsEventLogger
+- a:cleanup():V
+- a:computeAsync(kotlin.jvm.functions.Function1):V
+- a:getActiveLogFile():com.intellij.internal.statistic.eventLog.EventLogFile
+- a:getLogFilesProvider():com.intellij.internal.statistic.eventLog.EventLogFilesProvider
+- a:logAsync(com.intellij.internal.statistic.eventLog.EventLogGroup,java.lang.String,java.util.Map,Z):java.util.concurrent.CompletableFuture
+- a:logAsync(com.intellij.internal.statistic.eventLog.EventLogGroup,java.lang.String,kotlin.jvm.functions.Function0,Z):java.util.concurrent.CompletableFuture
+- logAsync(com.intellij.internal.statistic.eventLog.EventLogGroup,java.lang.String,Z):java.util.concurrent.CompletableFuture
+- a:rollOver():V
+f:com.intellij.internal.statistic.eventLog.events.scheme.RegisteredLogDescriptionsProcessorKt
+- sf:FUS_DESCRIPTION_REGISTRATION_ENABLED:java.lang.String

@@ -1,0 +1,22 @@
+<idea-plugin>
+  <id>com.intellij.example</id>
+
+  <extensionPoints>
+    <extensionPoint name="myExtension" interface="MyExtension" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.projectService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="MyService" serviceImplementation="MyServiceImpl"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij.example">
+    <myExtension implementation="MyExtensionImpl"/>
+    <myExtension implementation="MyPublicExtensionImpl"/>
+  </extensions>
+
+  <actions>
+    <action id="MyAction" class="MyActionImpl"/>
+    <action id="MyPublicAction" class="MyPublicActionImpl"/>
+  </actions>
+</idea-plugin>

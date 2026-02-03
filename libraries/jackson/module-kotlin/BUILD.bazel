@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.libraries.jackson.module.kotlin` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "libraries-jackson-module-kotlin_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "libraries-jackson-module-kotlin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":libraries-jackson-module-kotlin_resources"],
+  exports = ["@lib//:jackson-module-kotlin"],
+  runtime_deps = [
+    "@lib//:jackson-module-kotlin",
+    "//libraries/jackson/jackson",
+  ]
+)
+### auto-generated section `build intellij.libraries.jackson.module.kotlin` end

@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="org.codehaus.groovy:groovy-jsr223" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.codehaus.groovy:groovy-jsr223:3.0.25">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-jsr223/3.0.25/groovy-jsr223-3.0.25.jar">
+          <sha256sum>7d703a1d484ac1135b78b24a4880f5653161cda83454c0f484fa09e29311d3bd</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-jsr223/3.0.25/groovy-jsr223-3.0.25.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-jsr223/3.0.25/groovy-jsr223-3.0.25-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

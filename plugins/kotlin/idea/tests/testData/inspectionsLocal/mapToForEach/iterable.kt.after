@@ -1,0 +1,7 @@
+// FIX: Replace with 'forEach'
+
+fun foo(nums: Iterable<Int>) {
+    nums.forEach { println(it) }
+}
+
+// IGNORE_K1

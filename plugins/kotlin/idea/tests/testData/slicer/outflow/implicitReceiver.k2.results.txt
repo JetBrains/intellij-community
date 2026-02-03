@@ -1,0 +1,7 @@
+16 <bold>"A"</bold>.foo() (in Int.outer())
+9 	fun <bold>String</bold>.foo() { (in Int.outer())
+5 		fun <bold>String</bold>.stringExtensionFun() = this (in Int.outer())
+5 			fun String.stringExtensionFun() = <bold>this</bold> (in Int.outer())
+5 				<bold>fun String.stringExtensionFun()</bold> = this (in Int.outer())
+10 					val string = <bold>stringExtensionFun()</bold> (in Int.outer())
+10 						<bold>val string</bold> = stringExtensionFun() (in Int.outer())

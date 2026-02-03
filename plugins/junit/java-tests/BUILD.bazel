@@ -1,0 +1,59 @@
+### auto-generated section `build intellij.junit.java.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "java-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//platform/smRunner"]
+)
+
+jvm_library(
+  name = "java-tests_test_lib",
+  module_name = "intellij.junit.java.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/util/jdom",
+    "//plugins/junit_rt:junit-rt",
+    "//plugins/properties/properties-psi-impl:backend-psi",
+    "//plugins/junit/testFramework",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//jvm/jvm-analysis-testFramework:analysis-testFramework",
+    "//platform/smRunner",
+    "//platform/smRunner:smRunner_test_lib",
+    "//java/testFramework",
+    "//java/java-runtime:rt",
+    "//platform/platform-util-io:ide-util-io",
+    "//java/execution/impl",
+    "//java/openapi:java",
+    "//java/java-tests:tests_test_lib",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/testFramework/extensions:testExtensions",
+    "@lib//:assert_j",
+    "//java/compiler/openapi:java-compiler",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//platform/execution",
+  ],
+  runtime_deps = [":java-tests"]
+)
+### auto-generated section `build intellij.junit.java.tests` end
+
+### auto-generated section `test intellij.junit.java.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "java-tests_test",
+  runtime_deps = [":java-tests_test_lib"]
+)
+### auto-generated section `test intellij.junit.java.tests` end

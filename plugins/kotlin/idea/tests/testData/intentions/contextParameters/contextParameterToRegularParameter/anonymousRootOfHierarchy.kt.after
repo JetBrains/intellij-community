@@ -1,0 +1,16 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+interface Context
+
+interface IFaceBase {
+    fun foo(context: Context)
+}
+
+interface Iface : IFaceBase {
+    override fun foo(context: Context)
+}
+
+class Impl : Iface {
+    override fun foo(context: Context) {
+    }
+}

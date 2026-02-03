@@ -1,0 +1,6 @@
+// WITH_STDLIB
+// AFTER-WARNING: Variable 'index' is never used
+fun foo(bar: Sequence<String>) {
+    for ((index, a) in bar.withIndex())
+        <caret>print(a)
+}

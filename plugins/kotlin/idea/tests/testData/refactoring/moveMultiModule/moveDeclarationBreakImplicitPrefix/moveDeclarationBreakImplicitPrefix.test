@@ -1,0 +1,9 @@
+{
+  "mainFile": "A/src/move/one/JustSomeDeclarations.kt",
+  "type": "MOVE_FILES",
+  "sourceDir": "A/src/move/one",
+  "targetDirectory": "B/src",
+  "targetPackage": "p1.p3",
+  "enabledInK1": "false",
+  "enabledInK2": "true"
+}

@@ -1,0 +1,8 @@
+<idea-plugin>
+
+  <dependencies>
+    <module name="intellij.libraries.jgoodies.forms" />
+  </dependencies>
+
+</idea-plugin>
+

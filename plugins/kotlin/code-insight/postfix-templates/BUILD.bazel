@@ -1,0 +1,106 @@
+### auto-generated section `build intellij.kotlin.codeInsight.postfixTemplates` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_postfix-templates",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+  ],
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "postfix-templates_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "postfix-templates",
+  module_name = "intellij.kotlin.codeInsight.postfixTemplates",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":postfix-templates_resources"],
+  kotlinc_opts = ":custom_postfix-templates",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "//platform/analysis-api:analysis",
+    "//platform/core-impl",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/refactoring",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+    "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared",
+    "//plugins/kotlin/code-insight/live-templates-k2:kotlin-codeInsight-liveTemplates",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+    "//plugins/kotlin/code-insight/utils",
+  ]
+)
+
+jvm_library(
+  name = "postfix-templates_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_postfix-templates",
+  associates = [":postfix-templates"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:junit4",
+    "//platform/analysis-api:analysis",
+    "//platform/core-impl",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/refactoring",
+    "//plugins/kotlin/plugin/k2",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+    "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared",
+    "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared_test_lib",
+    "//plugins/kotlin/code-insight/live-templates-k2:kotlin-codeInsight-liveTemplates",
+    "//plugins/kotlin/code-insight/live-templates-k2:kotlin-codeInsight-liveTemplates_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/java-psi-api:psi",
+    "//java/testFramework",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+    "//plugins/kotlin/code-insight/utils",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+  ]
+)
+### auto-generated section `build intellij.kotlin.codeInsight.postfixTemplates` end
+
+### auto-generated section `test intellij.kotlin.codeInsight.postfixTemplates` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "postfix-templates_test",
+  runtime_deps = [":postfix-templates_test_lib"]
+)
+### auto-generated section `test intellij.kotlin.codeInsight.postfixTemplates` end

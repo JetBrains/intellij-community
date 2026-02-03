@@ -1,0 +1,81 @@
+apply plugin: 'java'
+apply plugin: 'kotlin'
+
+group = "com.jetbrains.intellij.tools"
+
+buildscript {
+  ext.kotlin_version = '2.2.0-RC'
+
+  repositories {
+    maven { url = "https://cache-redirector.jetbrains.com/maven-central" }
+    maven { url = "https://cache-redirector.jetbrains.com/intellij-dependencies" }
+  }
+
+  dependencies {
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+  }
+}
+
+repositories {
+  maven { url = "https://cache-redirector.jetbrains.com/maven-central" }
+  maven { url = "https://cache-redirector.jetbrains.com/intellij-dependencies" }
+
+  maven { url = "https://www.jetbrains.com/intellij-repository/releases" }
+  maven { url = "https://www.jetbrains.com/intellij-repository/snapshots" }
+  maven { url = "https://www.jetbrains.com/intellij-repository/nightly" }
+}
+
+dependencies {
+  implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+  implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0"
+  implementation "org.kodein.di:kodein-di-jvm:7.20.2"
+
+  // TODO: change versions to LATEST-EAP-SNAPSHOT or remove completely in next EAP
+  implementation 'com.jetbrains.intellij.platform:core:LATEST-TRUNK-SNAPSHOT'
+  implementation 'com.jetbrains.intellij.driver:driver-model:LATEST-TRUNK-SNAPSHOT'
+  implementation 'com.jetbrains.intellij.tools:ide-util-common:LATEST-TRUNK-SNAPSHOT'
+  testImplementation 'com.jetbrains.intellij.tools:ide-metrics-collector:LATEST-TRUNK-SNAPSHOT'
+  testImplementation 'com.jetbrains.intellij.tools:ide-metrics-collector-starter:LATEST-TRUNK-SNAPSHOT'
+  implementation "com.jetbrains.intellij.tools:ide-starter:LATEST-TRUNK-SNAPSHOT"
+  implementation "io.opentelemetry:opentelemetry-sdk:1.41.0"
+
+  testImplementation "com.jetbrains.intellij.tools:ide-performance-testing-commands:LATEST-TRUNK-SNAPSHOT"
+
+  implementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+  implementation 'org.junit.jupiter:junit-jupiter-params:5.10.2'
+  implementation 'org.junit.platform:junit-platform-launcher:1.10.2'
+  testImplementation 'io.kotest:kotest-assertions-core-jvm:5.5.4'
+  testImplementation 'org.mockito:mockito-core:5.7.0'
+  testImplementation 'org.mockito:mockito-junit-jupiter:5.7.0'
+}
+
+kotlin {
+  jvmToolchain(21)
+  compileKotlin {
+    kotlinOptions {
+      freeCompilerArgs += "-opt-in=kotlin.time.ExperimentalTime"
+    }
+  }
+}
+
+sourceSets {
+  main.kotlin.srcDirs += 'src'
+  test.kotlin.srcDirs += 'testSrc'
+  main.resources {
+    srcDirs "resources"
+    includes = ["**/*.*"]
+  }
+  test.resources {
+    srcDirs "testResources"
+    includes = ["**/*.*"]
+  }
+}
+
+tasks.test {
+  useJUnitPlatform()
+
+  testLogging {
+    events "passed", "skipped", "failed", "standardOut", "standardError"
+  }
+}

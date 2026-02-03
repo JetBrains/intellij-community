@@ -1,0 +1,14 @@
+[flake8]
+# Y: Flake8 is only used to run flake8-pyi, everything else is in Ruff
+select = Y
+# Ignore rules normally excluded by default
+extend-ignore = Y090,Y091
+per-file-ignores =
+  # Generated protobuf files:
+  # Y021: Include docstrings
+  # Y023: Alias typing as typing_extensions
+  # Y026: Have implicit type aliases
+  # Y053: have literals >50 characters long
+  stubs/*_pb2.pyi: Y021, Y023, Y026, Y053
+
+exclude = .venv*,.git

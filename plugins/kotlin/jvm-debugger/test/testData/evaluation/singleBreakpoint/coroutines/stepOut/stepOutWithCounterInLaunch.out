@@ -1,0 +1,40 @@
+LineBreakpoint created at stepOutWithCounterInLaunch.kt:31
+Run Java
+Connected to the target VM
+stepOutWithCounterInLaunch.kt:31
+stepOutWithCounterInLaunch.kt:17
+stepOutWithCounterInLaunch.kt:18
+stepOutWithCounterInLaunch.kt:14
+stepOutWithCounterInLaunch.kt:15
+stepOutWithCounterInLaunch.kt:16
+stepOutWithCounterInLaunch.kt:31
+stepOutWithCounterInLaunch.kt:17
+stepOutWithCounterInLaunch.kt:18
+stepOutWithCounterInLaunch.kt:14
+stepOutWithCounterInLaunch.kt:15
+stepOutWithCounterInLaunch.kt:16
+stepOutWithCounterInLaunch.kt:31
+stepOutWithCounterInLaunch.kt:17
+stepOutWithCounterInLaunch.kt:18
+stepOutWithCounterInLaunch.kt:14
+stepOutWithCounterInLaunch.kt:15
+stepOutWithCounterInLaunch.kt:16
+stepOutWithCounterInLaunch.kt:31
+stepOutWithCounterInLaunch.kt:17
+stepOutWithCounterInLaunch.kt:18
+stepOutWithCounterInLaunch.kt:14
+stepOutWithCounterInLaunch.kt:15
+stepOutWithCounterInLaunch.kt:16
+stepOutWithCounterInLaunch.kt:31
+stepOutWithCounterInLaunch.kt:17
+Compile bytecode for x
+Compile bytecode for y
+stepOutWithCounterInLaunch.kt:31
+resuming stepOutWithCounterInLaunch.kt:31
+resuming stepOutWithCounterInLaunch.kt:31
+resuming stepOutWithCounterInLaunch.kt:31
+resuming stepOutWithCounterInLaunch.kt:31
+resuming stepOutWithCounterInLaunch.kt:31
+Disconnected from the target VM
+
+Process finished with exit code 0

@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.libraries.junit4` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "junit4_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "junit4",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":junit4_resources"],
+  exports = [
+    "@lib//:junit4",
+    "//libraries/hamcrest",
+  ],
+  runtime_deps = [
+    "@lib//:junit4",
+    "//libraries/hamcrest",
+  ]
+)
+### auto-generated section `build intellij.libraries.junit4` end

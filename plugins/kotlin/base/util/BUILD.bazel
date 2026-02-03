@@ -1,0 +1,94 @@
+### auto-generated section `build intellij.kotlin.base.util` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_util",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+  ],
+  x_context_parameters = True
+)
+
+jvm_library(
+  name = "util",
+  module_name = "intellij.kotlin.base.util",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_util",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/workspace/storage",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//platform/platform-impl:ide-impl",
+    "//platform/ide-core-impl",
+    "//platform/external-system-api:externalSystem",
+    "//platform/lang-core",
+    "//platform/indexing-api:indexing",
+    "//java/java-psi-impl:psi-impl",
+    "//java/java-analysis-impl:analysis-impl",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//libraries/gson",
+    "//platform/core-ui",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "@lib//:kotlinc-analysis-api",
+  ]
+)
+
+jvm_library(
+  name = "util_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_util",
+  associates = [":util"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/workspace/storage",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//platform/platform-impl:ide-impl",
+    "//platform/ide-core-impl",
+    "//platform/external-system-api:externalSystem",
+    "//platform/lang-core",
+    "//platform/indexing-api:indexing",
+    "//java/java-psi-impl:psi-impl",
+    "@lib//:kotlin-test-junit",
+    "@lib//:kotlin-test",
+    "@lib//:junit4",
+    "//java/java-analysis-impl:analysis-impl",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//libraries/gson",
+    "//platform/core-ui",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "@lib//:kotlinc-analysis-api",
+  ]
+)
+### auto-generated section `build intellij.kotlin.base.util` end
+
+### auto-generated section `test intellij.kotlin.base.util` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "util_test",
+  runtime_deps = [":util_test_lib"]
+)
+### auto-generated section `test intellij.kotlin.base.util` end

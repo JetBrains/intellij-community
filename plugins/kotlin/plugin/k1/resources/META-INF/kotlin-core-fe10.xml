@@ -1,0 +1,338 @@
+<idea-plugin>
+
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.kotlinIndicesHelperExtension"
+            interface="org.jetbrains.kotlin.idea.core.extension.KotlinIndicesHelperExtension"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.quickFixContributor"
+            interface="org.jetbrains.kotlin.idea.quickfix.QuickFixContributor"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idea.caches.resolve.resolveOptimizingOptionsProvider"
+            interface="org.jetbrains.kotlin.idea.caches.resolve.ResolveOptimizingOptionsProvider"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.classImportFilter"
+            interface="org.jetbrains.kotlin.idea.util.ClassImportFilter"
+            dynamic="true"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idePlatformKindResolution"
+            interface="org.jetbrains.kotlin.caches.resolve.IdePlatformKindResolution"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderIdeImpl"/>
+
+    <lang.parserDefinition language="kotlin" implementationClass="org.jetbrains.kotlin.parsing.KotlinParserDefinition"/>
+
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.K1PluginStartupActivity"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.Fe10ShortenReferencesFacility"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.codeInsight.overrideImplement.OverrideImplementFacility"
+            serviceImplementation="org.jetbrains.kotlin.idea.core.overrideImplement.Fe10OverrideImplementFacility"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllowedErrorFilter"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.compiler.K1KotlinCompilerIdeAllowedErrorFilter"/>
+
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.util.FirPluginOracleService"
+            serviceImplementation="org.jetbrains.kotlin.idea.util.FirPluginOracleServiceFE10Impl"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.util.ImportInsertHelper"
+            serviceImplementation="org.jetbrains.kotlin.idea.util.ImportInsertHelperImpl"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.core.NotPropertiesService"
+            serviceImplementation="org.jetbrains.kotlin.idea.intentions.NotPropertiesServiceImpl"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.highlighter.Fe10QuickFixProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.Fe10QuickFixProviderImpl"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisFacade"
+            serviceImplementation="org.jetbrains.kotlin.base.fe10.analysis.IdeFe10AnalysisFacade"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService"
+            serviceImplementation="org.jetbrains.kotlin.idea.decompiler.navigation.Fe10LibrarySourceScopeService"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporterFacility"
+            serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.K1ReferenceImporterFacility"/>
+
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService"/>
+
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.api.imports.KaDefaultImportsProvider"
+            serviceImplementation="org.jetbrains.kotlin.base.fe10.analysis.KaFe10DefaultImportsProvider"/>
+
+    <fileBasedIndex implementation="org.jetbrains.kotlin.idea.stubindex.resolve.KotlinShortClassNameFileIndex"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactoryService"
+            serviceImplementation="org.jetbrains.kotlin.idea.stubindex.resolve.PluginDeclarationProviderFactoryService"/>
+    <!--suppress LightServiceMigrationXML -->
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.stubindex.resolve.ShortNamesCacheService"/>
+
+    <lang.importOptimizer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.imports.KotlinImportOptimizer"/>
+
+    <codeInsight.parameterInfo
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinFunctionParameterInfoHandler"/>
+    <codeInsight.parameterInfo
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinLambdaParameterInfoHandler"/>
+    <codeInsight.parameterInfo
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinArrayAccessParameterInfoHandler"/>
+    <codeInsight.parameterInfo
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinClassTypeArgumentInfoHandler"/>
+    <codeInsight.parameterInfo
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinFunctionTypeArgumentInfoHandler"/>
+    <codeInsight.parameterInfo
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinClassConstructorInfoHandler"/>
+
+    <codeInsight.implementMethod language="kotlin"
+                                 implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler"/>
+    <codeInsight.overrideMethod language="kotlin"
+                                implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMembersHandler"/>
+
+
+    <callHierarchyProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.hierarchy.calls.KotlinCallHierarchyProvider"/>
+    <methodHierarchyProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.hierarchy.overrides.KotlinOverrideHierarchyProvider"/>
+
+    <typeHierarchyProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.hierarchy.KotlinTypeHierarchyProviderBySuperTypeCallEntry"/>
+    <typeHierarchyProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.hierarchy.KotlinTypeHierarchyProvider"/>
+    <typeHierarchyProvider
+            language="JAVA"
+            order="last"
+            implementationClass="org.jetbrains.kotlin.idea.hierarchy.KotlinTypeHierarchyProviderBySuperTypeCallEntry"/>
+
+    <hierarchy.referenceProcessor implementation="org.jetbrains.kotlin.idea.hierarchy.calls.KotlinCallReferenceProcessor"/>
+
+    <codeInsight.typeInfo language="kotlin"
+                          implementationClass="org.jetbrains.kotlin.idea.codeInsight.KotlinExpressionTypeProviderDescriptorsImpl"/>
+
+    <testCreator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.testIntegration.KotlinTestCreator"/>
+
+    <lang.jvm.actions.jvmElementActionsFactory
+            implementation="org.jetbrains.kotlin.idea.quickfix.crossLanguage.KotlinElementActionsFactory"/>
+
+    <codeInsight.unresolvedReferenceQuickFixProvider
+            id="kotlinUnresolvedReferenceQuickFixProvider"
+            implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinUnresolvedReferenceQuickFixProvider"/>
+
+    <lang.documentationProvider language="JAVA" implementationClass="org.jetbrains.kotlin.idea.KotlinDocumentationProvider" order="first"/>
+    <documentationProvider implementation="org.jetbrains.kotlin.idea.KotlinDocumentationProvider"/>
+
+    <definitionsScopedSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinDefinitionsSearcher"/>
+  </extensions>
+
+
+  <!-- Templates -->
+  <extensions defaultExtensionNs="com.intellij">
+    <lang.psiStructureViewFactory
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.structureView.KotlinStructureViewFactory"/>
+    <structureViewBuilder
+            order="first"
+            key="CLASS"
+            factoryClass="org.jetbrains.kotlin.idea.structureView.KtDecompiledFileStructureViewBuilderProvider"/>
+    <structureViewBuilder
+            order="first"
+            key="kotlin_builtins"
+            factoryClass="org.jetbrains.kotlin.idea.structureView.KtDecompiledFileStructureViewBuilderProvider"/>
+    <structureViewBuilder
+            order="first"
+            key="KNM"
+            factoryClass="org.jetbrains.kotlin.idea.structureView.KtDecompiledFileStructureViewBuilderProvider"/>
+    <lang.logicalStructureTreeElementProvider
+            implementation="org.jetbrains.kotlin.idea.structureView.KotlinClassLogicalStructureTreeElementProvider"
+            order="before javaPsiClassLogicalStructureTreeElementProvider"/>
+  </extensions>
+
+  <!-- Line markers -->
+  <extensions defaultExtensionNs="com.intellij">
+    <codeInsight.lineMarkerProvider language="kotlin"
+                                    implementationClass="org.jetbrains.kotlin.idea.highlighter.markers.KotlinLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="kotlin"
+                                    implementationClass="org.jetbrains.kotlin.idea.highlighter.KotlinRecursiveCallLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="kotlin"
+                                    implementationClass="org.jetbrains.kotlin.idea.highlighter.KotlinSuspendCallLineMarkerProvider"/>
+  </extensions>
+
+  <!-- Inlay hints -->
+  <extensions defaultExtensionNs="com.intellij">
+    <codeInsight.parameterNameHints language="kotlin"
+                                    implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinInlayParameterHintsProvider"/>
+
+    <codeInsight.inlayActionHandler implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler"
+                                    handlerId="kotlin.fqn.class"/>
+
+    <codeInsight.declarativeInlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinCallChainHintsProvider"
+            isEnabledByDefault="false"
+            group="METHOD_CHAINS_GROUP"
+            providerId="kotlin.method.chains"
+            bundle="messages.JavaBundle"
+            nameKey="java.method.chains.inlay.provider.name"
+            descriptionKey="inlay.MethodChainsInlayProvider.description" />
+
+    <codeInsight.declarativeInlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinReferencesTypeHintsProvider"
+            isEnabledByDefault="false"
+            group="TYPES_GROUP"
+            providerId="kotlin.references.types.hints"
+            bundle="messages.KotlinBundle"
+            nameKey="hints.settings.types"
+            descriptionKey="inlay.kotlin.references.types.hints">
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.type.property"
+              enabledByDefault="false"
+              nameKey="hints.settings.types.property"
+              descriptionKey="inlay.kotlin.references.types.hints.hints.type.property"/>
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.type.variable"
+              enabledByDefault="false"
+              nameKey="hints.settings.types.variable"
+              descriptionKey="inlay.kotlin.references.types.hints.hints.type.variable"/>
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.type.function.return"
+              enabledByDefault="false"
+              nameKey="hints.settings.types.return"
+              descriptionKey="inlay.kotlin.references.types.hints.hints.type.function.return"/>
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.type.function.parameter"
+              enabledByDefault="false"
+              nameKey="hints.settings.types.parameter"
+              descriptionKey="inlay.kotlin.references.types.hints.hints.type.function.parameter"/>
+    </codeInsight.declarativeInlayProvider>
+
+    <codeInsight.declarativeInlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinLambdasHintsProvider"
+            isEnabledByDefault="false"
+            group="LAMBDAS_GROUP"
+            providerId="kotlin.lambdas.hints"
+            bundle="messages.KotlinBundle"
+            nameKey="hints.settings.lambdas"
+            descriptionKey="inlay.kotlin.lambdas.hints">
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.lambda.return"
+              enabledByDefault="true"
+              nameKey="hints.settings.lambda.return"
+              descriptionKey="inlay.kotlin.lambdas.hints.hints.lambda.return"/>
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.lambda.receivers.parameters"
+              enabledByDefault="true"
+              nameKey="hints.settings.lambda.receivers.parameters"
+              descriptionKey="inlay.kotlin.lambdas.hints.hints.lambda.receivers.parameters"/>
+    </codeInsight.declarativeInlayProvider>
+
+    <codeInsight.declarativeInlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinValuesHintsProvider"
+            isEnabledByDefault="true"
+            group="VALUES_GROUP"
+            providerId="kotlin.values.hints"
+            bundle="messages.KotlinBundle"
+            nameKey="hints.settings.values.ranges"
+            descriptionKey="inlay.kotlin.values.hints"/>
+
+    <vcs.codeVisionLanguageContext language="kotlin"
+                                   implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinVcsCodeVisionContext"/>
+
+    <search.projectOptionsTopHitProvider implementation="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinInlayHintsTopHitProvider"/>
+  </extensions>
+
+  <!-- Go to declaration -->
+  <extensions defaultExtensionNs="com.intellij">
+
+    <codeInsight.gotoSuper language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeInsight.GotoSuperActionHandler"/>
+
+    <gotoTargetRendererProvider
+            id="JetGotoTargetRenderProvider"
+            order="first"
+            implementation="org.jetbrains.kotlin.idea.KotlinGotoTargetRenderProvider"/>
+  </extensions>
+
+  <!-- Copy-paste -->
+  <extensions defaultExtensionNs="com.intellij">
+    <copyPastePostProcessor implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinCopyPasteReferenceProcessor"/>
+    <copyPastePostProcessor implementation="org.jetbrains.kotlin.idea.refactoring.cutPaste.MoveDeclarationsCopyPasteProcessor"/>
+
+    <elementDescriptionProvider order="first" implementation="org.jetbrains.kotlin.idea.findUsages.KotlinElementDescriptionProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <quickFixContributor implementation="org.jetbrains.kotlin.idea.quickfix.QuickFixRegistrar"/>
+
+    <j2kConverterExtension implementation="org.jetbrains.kotlin.j2k.OldJ2kConverterExtension"/>
+  </extensions>
+
+  <!-- Declaration search and Find Usages -->
+  <extensions defaultExtensionNs="com.intellij">
+    <targetElementEvaluator language="kotlin"
+                            implementationClass="org.jetbrains.kotlin.idea.search.ideaExtensions.FE10KotlinTargetElementEvaluator"/>
+    <targetElementUtilExtender implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.FE10KotlinTargetElementEvaluator"/>
+
+    <lang.findUsagesProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesProvider"/>
+    <classInheritorsSearch implementation="org.jetbrains.kotlin.idea.findUsages.KotlinInnerClassInheritorsSearcher"/>
+
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport"
+                    serviceImplementation="org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupportImpl"/>
+
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport"
+                    serviceImplementation="org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupportImpl"/>
+
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.search.ExpectActualSupport"
+                    serviceImplementation="org.jetbrains.kotlin.idea.search.KotlinExpectActualSupportImpl"/>
+
+    <usageTypeProvider implementation="org.jetbrains.kotlin.idea.findUsages.KotlinUsageTypeProviderImpl"/>
+
+    <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighter.K1HighlightExitPointsHandlerFactory"/>
+    <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightImplicitItHandlerFactory"/>
+    <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightReceiverUsagesHandlerFactory"/>
+    <registryKey defaultValue="false" description="Enables highlighting for receiver usages" key="kotlin.receiver.usage.highlighting"/>
+
+    <overridingMethodsSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinOverridingMethodsWithGenericsSearcher"/>
+
+    <iconProvider implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.Fe10KotlinIconProvider"/>
+  </extensions>
+
+  <!-- dataflow -->
+  <extensions defaultExtensionNs="com.intellij">
+    <dataflowIRProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.inspections.dfa.KotlinDataFlowIRProvider"/>
+  </extensions>
+
+  <!-- slicer -->
+  <extensions defaultExtensionNs="com.intellij">
+    <lang.sliceProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.slicer.KotlinSliceProvider"/>
+    <usageContextPanelProvider implementation="org.jetbrains.kotlin.idea.slicer.KotlinUsageContextDataInflowPanel$Provider"/>
+    <usageContextPanelProvider implementation="org.jetbrains.kotlin.idea.slicer.KotlinUsageContextDataOutflowPanel$Provider"/>
+  </extensions>
+
+  <!-- notification about unsupported K2 features in K1 mode -->
+  <extensions defaultExtensionNs="com.intellij">
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.configuration.KotlinK2FeaturesInK1ModeNotifier"/>
+  </extensions>
+
+</idea-plugin>

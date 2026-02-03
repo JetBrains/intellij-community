@@ -1,0 +1,95 @@
+### auto-generated section `build intellij.platform.jewel.ui` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_ui",
+  opt_in = [
+    "androidx.compose.ui.ExperimentalComposeUiApi",
+    "androidx.compose.foundation.ExperimentalFoundationApi",
+    "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+    "org.jetbrains.jewel.foundation.InternalJewelApi",
+  ],
+  x_context_parameters = True,
+  x_explicit_api_mode = "strict"
+)
+
+resourcegroup(
+  name = "ui_resources",
+  srcs = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+resourcegroup(
+  name = "ui_test_resources",
+  srcs = glob(["src/test/resources/**/*"]),
+  strip_prefix = "src/test/resources"
+)
+
+jvm_library(
+  name = "ui",
+  module_name = "intellij.platform.jewel.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form", "generated/**/*.kt", "generated/**/*.java"], allow_empty = True),
+  resources = [":ui_resources"],
+  kotlinc_opts = ":custom_ui",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:jetbrains-annotations",
+    "//libraries/skiko",
+    "//platform/jewel/foundation",
+    "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
+    "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
+    "//libraries/compose-foundation-desktop",
+    "//libraries/compose-runtime-desktop",
+  ],
+  exports = [
+    "//platform/jewel/foundation",
+    "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
+    "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
+    "//libraries/compose-foundation-desktop",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
+
+jvm_library(
+  name = "ui_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java", "src/test/kotlin/**/*.form"], allow_empty = True),
+  resources = [":ui_test_resources"],
+  kotlinc_opts = ":custom_ui",
+  associates = [":ui"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:jetbrains-annotations",
+    "//libraries/skiko",
+    "//platform/jewel/foundation",
+    "//platform/jewel/foundation:foundation_test_lib",
+    "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
+    "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
+    "//libraries/compose-foundation-desktop",
+    "//libraries/compose-runtime-desktop",
+    "//libraries/junit4",
+    "//libraries/compose-foundation-desktop-junit",
+  ],
+  exports = [
+    "//platform/jewel/foundation",
+    "//platform/jewel/foundation:foundation_test_lib",
+    "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
+    "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
+    "//libraries/compose-foundation-desktop",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
+### auto-generated section `build intellij.platform.jewel.ui` end
+
+### auto-generated section `test intellij.platform.jewel.ui` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "ui_test",
+  runtime_deps = [":ui_test_lib"]
+)
+### auto-generated section `test intellij.platform.jewel.ui` end

@@ -1,0 +1,46 @@
+### auto-generated section `build intellij.kotlin.ide` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "kotlin.ide",
+  module_name = "intellij.kotlin.ide",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/core-ui",
+    "//platform/analysis-api:analysis",
+    "//platform/lang-impl",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//libraries/jsoup",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/statistics",
+    "//platform/ide-core-impl",
+    "//plugins/kotlin/project-configuration",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/base/code-insight/minimal",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//java/openapi:java",
+    "//platform/analysis-impl",
+    "//platform/util/jdom",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+    "//platform/diff-impl",
+    "@lib//:kotlinc-kotlin-scripting-common",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "//plugins/kotlin/base/scripting/scripting.shared",
+    "//libraries/gson",
+  ],
+  runtime_deps = ["//plugins/kotlin/base/frontend-agnostic"]
+)
+### auto-generated section `build intellij.kotlin.ide` end

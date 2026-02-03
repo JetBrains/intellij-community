@@ -1,0 +1,168 @@
+name: Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths-ignore:
+      - "**/*.md"
+      - "scripts/**"
+
+permissions:
+  contents: read
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
+  FORCE_COLOR: 1
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  typeshed-structure:
+    name: Check typeshed structure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version-file: "requirements-tests.txt"
+      - run: uv pip install -r requirements-tests.txt --system
+      - run: python ./tests/check_typeshed_structure.py
+
+  mypy:
+    name: "mypy: Check stubs"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: ["linux", "win32", "darwin"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version-file: "requirements-tests.txt"
+      - run: uv pip install -r requirements-tests.txt --system
+      - name: Install required APT packages
+        run: |
+          PACKAGES=$(python tests/get_stubtest_system_requirements.py)
+          if [ -n "$PACKAGES" ]; then
+            printf "Installing APT packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
+            sudo apt-get update -q && sudo apt-get install -qy $PACKAGES
+          fi
+      - name: Run mypy_test.py
+        run: python ./tests/mypy_test.py --platform=${{ matrix.platform }} --python-version=${{ matrix.python-version }}
+
+  regression-tests:
+    name: "mypy: Run test cases"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version-file: "requirements-tests.txt"
+      - run: uv pip install -r requirements-tests.txt --system
+      - run: python ./tests/regr_test.py --all --verbosity QUIET
+
+  pyright:
+    name: "pyright: Run test cases"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-platform: ["Linux", "Windows", "Darwin"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version-file: "requirements-tests.txt"
+      - name: Install typeshed test-suite requirements
+        # Install these so we can run `get_*_requirements.py`
+        run: uv pip install -r requirements-tests.txt --system
+      - name: Install required APT packages
+        run: |
+          PACKAGES=$(python tests/get_stubtest_system_requirements.py)
+          if [ -n "$PACKAGES" ]; then
+            printf "Installing APT packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
+            sudo apt-get update -q && sudo apt-get install -qy $PACKAGES
+          fi
+      - name: Create an isolated venv for testing
+        run: uv venv .venv
+      - name: Install 3rd-party stub dependencies
+        run: |
+          PACKAGES=$(python tests/get_external_stub_requirements.py)
+          if [ -n "$PACKAGES" ]; then
+              printf "Installing python packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
+              uv pip install --python-version ${{ matrix.python-version }} $PACKAGES
+          fi
+      - name: Activate the isolated venv for the rest of the job
+        run: echo "$PWD/.venv/bin" >> $GITHUB_PATH
+      - name: List 3rd-party stub dependencies installed
+        run: uv pip freeze
+      - name: Run pyright with basic settings on all the stubs
+        uses: jakebailey/pyright-action@v2
+        with:
+          version: PATH
+          python-platform: ${{ matrix.python-platform }}
+          python-version: ${{ matrix.python-version }}
+          annotate: ${{ matrix.python-version == '3.13' && matrix.python-platform == 'Linux' }} # Having each job create the same comment is too noisy.
+      - name: Run pyright with stricter settings on some of the stubs
+        uses: jakebailey/pyright-action@v2
+        with:
+          version: PATH
+          python-platform: ${{ matrix.python-platform }}
+          python-version: ${{ matrix.python-version }}
+          annotate: ${{ matrix.python-version == '3.13' && matrix.python-platform == 'Linux' }} # Having each job create the same comment is too noisy.
+          project: ./pyrightconfig.stricter.json
+      - name: Run pyright on the test cases
+        uses: jakebailey/pyright-action@v2
+        with:
+          version: PATH
+          python-platform: ${{ matrix.python-platform }}
+          python-version: ${{ matrix.python-version }}
+          annotate: ${{ matrix.python-version == '3.13' && matrix.python-platform == 'Linux' }} # Having each job create the same comment is too noisy.
+          project: ./pyrightconfig.testcases.json
+
+  stub-uploader:
+    name: stub_uploader tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout typeshed
+        uses: actions/checkout@v6
+        with:
+          path: typeshed
+      - name: Checkout stub_uploader
+        uses: actions/checkout@v6
+        with:
+          repository: typeshed-internal/stub_uploader
+          path: stub_uploader
+      - uses: actions/setup-python@v6
+        with:
+          # Keep in sync with stub_uploader's check_scripts.yml workflow.
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version-file: "typeshed/requirements-tests.txt"
+      - name: Run tests
+        run: |
+          cd stub_uploader
+          uv pip install -r requirements.txt --system
+          python -m pytest tests

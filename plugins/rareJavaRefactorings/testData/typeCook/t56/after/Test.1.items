@@ -1,0 +1,3 @@
+LinkedList<LinkedList<java.io.Serializable>>\nPsiLocalVariable:x
+LinkedList<java.io.Serializable>\nPsiLocalVariable:y
+LinkedList<java.io.Serializable>\nPsiLocalVariable:z

@@ -1,0 +1,15 @@
+// "Make 'doSth' public" "true"
+// PRIORITY: HIGH
+
+open class A {
+    fun doSth() {
+    }
+}
+
+class B : A() {
+    fun bar() {
+        doSth()
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToPublicFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeVisibilityFixFactories$ChangeToPublicModCommandAction

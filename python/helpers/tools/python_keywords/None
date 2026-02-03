@@ -1,0 +1,6 @@
+<div class="section" id="none">
+<tt class="descname">None</tt>
+<p>The sole value of the type <tt class="docutils literal"><span class="pre">NoneType</span></tt>.  <tt class="docutils literal"><span class="pre">None</span></tt> is frequently used to
+represent the absence of a value, as when default arguments are not passed to a
+function. Assignments to <tt class="docutils literal"><span class="pre">None</span></tt> are illegal and raise a <a class="reference internal" href="exceptions.html#SyntaxError" title="SyntaxError"><tt class="xref py py-exc docutils literal"><span class="pre">SyntaxError</span></tt></a>.</p>
+</div>

@@ -1,0 +1,3 @@
+import pkg.A
+
+fun test(a: A) {}

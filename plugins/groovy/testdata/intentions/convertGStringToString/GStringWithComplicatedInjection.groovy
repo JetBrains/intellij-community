@@ -1,0 +1,1 @@
+def text = "ab<caret>c${writer -> writer.append('a')}"

@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.rhino.jar
+  modules:
+  - name: intellij.libraries.rhino
+    libraries:
+      rhino:
+      - name: $MAVEN_REPOSITORY$/org/mozilla/rhino-runtime/1/rhino-runtime-1.jar

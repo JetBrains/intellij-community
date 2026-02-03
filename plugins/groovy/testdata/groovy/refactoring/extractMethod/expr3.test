@@ -1,0 +1,11 @@
+iii = null
+
+jjj = <begin>iii + 1<end>
+-----
+iii = null
+
+jjj = testMethod(iii)
+
+private testMethod(iii) {
+    iii + 1
+}

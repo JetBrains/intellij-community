@@ -1,0 +1,8 @@
+class Test:
+  pass
+
+def foo():
+  """
+  >>> a = Test
+
+  """

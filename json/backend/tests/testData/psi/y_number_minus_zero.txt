@@ -1,0 +1,6 @@
+JsonFile: y_number_minus_zero.json
+  JsonArray
+    PsiElement([)('[')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('-0')
+    PsiElement(])(']')

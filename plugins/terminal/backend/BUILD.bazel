@@ -1,0 +1,39 @@
+### auto-generated section `build intellij.terminal.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "backend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.terminal.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend_resources"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/ide-core-impl",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/terminal",
+    "//libraries/jediterm-core",
+    "//libraries/jediterm-ui",
+    "//libraries/pty4j",
+    "//platform/util/coroutines",
+    "//platform/kernel/backend",
+    "//platform/project/shared:project",
+    "//platform/execution-impl",
+    "//platform/core-impl",
+    "//platform/statistics",
+    "//platform/core-ui",
+    "//platform/lang-api:lang",
+    "//platform/eel",
+    "//platform/eel-provider",
+    "//platform/execution",
+  ]
+)
+### auto-generated section `build intellij.terminal.backend` end

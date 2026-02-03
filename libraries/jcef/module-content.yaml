@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.jcef.jar
+  modules:
+  - name: intellij.libraries.jcef
+    libraries:
+      jcef:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/137/jcef-137.jar

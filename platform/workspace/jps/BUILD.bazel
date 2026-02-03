@@ -1,0 +1,44 @@
+### auto-generated section `build intellij.platform.workspace.jps` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_jps",
+  jvm_target = "11",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+  ]
+)
+
+resourcegroup(
+  name = "jps_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jps",
+  module_name = "intellij.platform.workspace.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":jps_resources"],
+  kotlinc_opts = ":custom_jps",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/workspace/storage",
+    "//jps/model-api:model",
+    "//jps/model-impl",
+    "//jps/model-serialization",
+    "//platform/util",
+    "//libraries/fastutil",
+    "//platform/util/jdom",
+    "//libraries/kryo5",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/diagnostic/telemetry",
+    "//platform/util/coroutines",
+  ]
+)
+### auto-generated section `build intellij.platform.workspace.jps` end

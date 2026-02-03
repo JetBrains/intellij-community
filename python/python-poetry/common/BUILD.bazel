@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.python.community.impl.poetry.common` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "common_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "common",
+  module_name = "intellij.python.community.impl.poetry.common",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":common_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//python/common",
+    "//python/openapi:community",
+  ]
+)
+### auto-generated section `build intellij.python.community.impl.poetry.common` end

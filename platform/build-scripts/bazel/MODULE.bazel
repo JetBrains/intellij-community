@@ -1,0 +1,70 @@
+module(
+    name = "jps_to_bazel",
+    version = "0.1",
+)
+
+bazel_dep(name = "rules_java", version = "9.3.0")
+bazel_dep(name = "rules_kotlin", version = "2.2.2")
+bazel_dep(name = "rules_jvm_external", version = "6.9")
+
+# https://github.com/JetBrains/rules_jvm_external/commits/no-windows-check
+# https://github.com/JetBrains/rules_jvm_external/commit/4d575639286760f67ae1ce416c4e922dc269851c
+# differs from released version of rules_jvm_external by two things
+#  - uses copyfile instead of genrule (platform independent, already in upstream master), https://github.com/bazel-contrib/rules_jvm_external/commit/6dda4baeb438117480e40b1844b48da2dd8043ff
+#  - disables check for bash presence since it's not used for dependency resolution anyway, https://github.com/JetBrains/rules_jvm_external/commit/4d575639286760f67ae1ce416c4e922dc269851c
+archive_override(
+  module_name = "rules_jvm_external",
+  url = "https://github.com/JetBrains/rules_jvm_external/archive/4d575639286760f67ae1ce416c4e922dc269851c.zip",
+  sha256 = "bca26ef5cdaff94991c0ddf3e77b6811f4226816045aab5e70212c9426ae99f9",
+  strip_prefix = "rules_jvm_external-4d575639286760f67ae1ce416c4e922dc269851c",
+)
+
+intellij_version = "253.29346.138"
+
+maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
+maven.install(
+    name = "j2b_maven",
+    artifacts = [
+        "com.jetbrains.intellij.platform:jps-model-impl:" + intellij_version,
+        "com.jetbrains.intellij.platform:build-scripts-downloader:" + intellij_version,
+        "com.jetbrains.intellij.platform:jps-model-serialization:" + intellij_version,
+        "org.jetbrains.kotlin:kotlin-jps-plugin:2.2.0",
+        "org.jetbrains.teamcity:serviceMessages:2024.07",
+    ],
+    fail_if_repin_required = True,
+    fetch_sources = True,
+    lock_file = "//:maven_install.json",
+    repositories = [
+        "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2",
+        "https://cache-redirector.jetbrains.com/intellij-dependencies",
+        "https://cache-redirector.jetbrains.com/download.jetbrains.com/teamcity-repository",
+        "https://cache-redirector.jetbrains.com/www.jetbrains.com/intellij-repository/releases",
+    ],
+)
+use_repo(maven, "j2b_maven")
+
+bazel_dep(name = "hermetic_cc_toolchain", version = "4.0.1")
+
+toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains", dev_dependency = True)  # `dev_dependency = True` because of https://github.com/bazel-contrib/toolchains_llvm/issues/569
+
+use_repo(toolchains, "zig_sdk")
+
+register_toolchains(
+    "@zig_sdk//toolchain/...",
+    "@zig_sdk//libc_aware/toolchain/...",
+    dev_dependency = True,
+)  # `dev_dependency = True` to avoid registering toolchains in modules using that module
+
+bazel_dep(name = "rules_python", version = "1.7.0")
+
+# Use custom remote_java_tools_windows with vc_redist .dll files due to https://github.com/bazelbuild/rules_java/issues/316
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+http_archive(
+    name = "remote_java_tools_windows_with_vc_redist",
+    sha256 = "9ec4e41ebbb2b7259eb14f1ad708e8ee60087f33515bdec4876c675205e6950f",
+    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/rules-java/java_tools_windows-v13.18-with-vc_redist.zip",
+)
+override_repo(
+    use_extension("@rules_java//java:extensions.bzl", "toolchains"),
+    remote_java_tools_windows = "remote_java_tools_windows_with_vc_redist",
+)

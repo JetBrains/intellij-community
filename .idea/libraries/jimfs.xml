@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="jimfs" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.google.jimfs:jimfs:1.3.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/google/jimfs/jimfs/1.3.0/jimfs-1.3.0.jar">
+          <sha256sum>82494408bb513f5512652e7b7f63d6f31f01eff57ce35c878644ffc2d25aee4f</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/jimfs/jimfs/1.3.0/jimfs-1.3.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/jimfs/jimfs/1.3.0/jimfs-1.3.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

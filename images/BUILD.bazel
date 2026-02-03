@@ -1,0 +1,93 @@
+### auto-generated section `build intellij.platform.images` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "images_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "images",
+  module_name = "intellij.platform.images",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":images_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-api:lang",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util:util-ui",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//libraries/commons/imaging",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/jdom",
+    "//libraries/jcef",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//platform/core-impl",
+    "//xml/xml-parser:parser",
+    "//platform/ui.jcef",
+    "@lib//:kotlin-stdlib",
+    "//platform/statistics",
+    "//platform/util/coroutines",
+    "//xml/xml-psi-impl:psi-impl",
+    "//xml/xml-psi-api:psi",
+    "//platform/util-ex",
+  ]
+)
+
+jvm_library(
+  name = "images_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [":images"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-api:lang",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util:util-ui",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//libraries/commons/imaging",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/jdom",
+    "//libraries/jcef",
+    "@lib//:junit4",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//platform/core-impl",
+    "//xml/xml-parser:parser",
+    "//platform/ui.jcef",
+    "@lib//:kotlin-stdlib",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/util/coroutines",
+    "//xml/xml-psi-impl:psi-impl",
+    "//xml/xml-psi-api:psi",
+    "//platform/util-ex",
+  ]
+)
+### auto-generated section `build intellij.platform.images` end
+
+### auto-generated section `test intellij.platform.images` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "images_test",
+  runtime_deps = [":images_test_lib"]
+)
+### auto-generated section `test intellij.platform.images` end

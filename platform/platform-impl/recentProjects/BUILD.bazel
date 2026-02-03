@@ -1,0 +1,16 @@
+### auto-generated section `build intellij.platform.ide.recentProjects` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "recentProjects",
+  module_name = "intellij.platform.ide.recentProjects",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/base/multiplatform",
+    "//platform/editor-ui-api:editor-ui",
+  ]
+)
+### auto-generated section `build intellij.platform.ide.recentProjects` end

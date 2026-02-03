@@ -1,0 +1,16 @@
+### auto-generated section `build intellij.devkit.intelliLang` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "intelliLang_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "intelliLang",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":intelliLang_resources"]
+)
+### auto-generated section `build intellij.devkit.intelliLang` end

@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.platform.settings.local.jar
+  modules:
+  - name: intellij.platform.settings.local
+    libraries:
+      jackson-dataformat-cbor:
+      - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-cbor/2/jackson-dataformat-cbor-2.jar

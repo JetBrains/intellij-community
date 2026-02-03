@@ -1,0 +1,5 @@
+class X {
+  void f(a,  b) {
+    if (<spot>a < b</spot>) return
+  }
+}

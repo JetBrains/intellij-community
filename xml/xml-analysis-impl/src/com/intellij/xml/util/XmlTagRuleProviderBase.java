@@ -1,0 +1,225 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.xml.util;
+
+import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.XmlQuickFixFactory;
+import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.RoleFinder;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
+import com.intellij.xml.XmlTagRuleProvider;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
+
+  public static RequireAttributeOneOf requireAttr(String ... attributeNames) {
+    return new RequireAttributeOneOf(attributeNames);
+  }
+
+  public static ShouldHaveParams shouldHaveParams() {
+    return new ShouldHaveParams();
+  }
+
+  public static Rule unusedIfPresent(String attrPresent, String ... attrUnused) {
+    Effect[] effects = new Effect[attrUnused.length];
+    for (int i = 0; i < effects.length; i++) {
+      effects[i] = unused(
+        attrUnused[i], XmlAnalysisBundle.message("xml.inspections.attribute.unused.because.other.attribute.present", attrUnused[i], attrPresent));
+    }
+
+    return new ConditionRule(ifAttrPresent(attrPresent), effects);
+  }
+
+  public static Rule unusedAllIfPresent(String attrPresent, String ... attrUnused) {
+    return new ConditionRule(ifAttrPresent(attrPresent),
+                             new InvalidAllExpectSome(
+                               XmlAnalysisBundle.message("xml.inspections.all.attributes.unused.because.an.attribute.present", attrPresent),
+                               ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                               ArrayUtil.append(attrUnused, attrPresent)));
+  }
+
+  public static Effect invalid(String attrName, @InspectionMessage String text) {
+    return new InvalidAttrEffect(attrName, text, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+  }
+
+  public static Effect unused(String attrName) {
+    return new InvalidAttrEffect(attrName, XmlAnalysisBundle.message("xml.inspections.attribute.unused", attrName), ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+  }
+
+  public static Effect unused(String attrName, @InspectionMessage String text) {
+    return new InvalidAttrEffect(attrName, text, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+  }
+
+  public static Effect unusedAll(@InspectionMessage String text, String... attrNames) {
+    return new InvalidAllExpectSome(text, ProblemHighlightType.LIKE_UNUSED_SYMBOL, attrNames);
+  }
+
+  public static Rule rule(Condition<? super XmlTag> condition, Effect ... effect) {
+    return new ConditionRule(condition, effect);
+  }
+
+  public static @Nullable PsiElement getXmlElement(RoleFinder roleFinder, XmlElement tag) {
+    ASTNode tagNode = tag.getNode();
+    if (tagNode == null) return null;
+
+    ASTNode nameElement = roleFinder.findChild(tagNode);
+    if (nameElement == null) return null;
+
+    return nameElement.getPsi();
+  }
+
+  public static @Nullable PsiElement getTagNameElement(XmlTag tag) {
+    return getXmlElement(XmlChildRole.START_TAG_NAME_FINDER, tag);
+  }
+
+  public static @Nullable PsiElement getAttributeNameElement(XmlAttribute attribute) {
+    return getXmlElement(XmlChildRole.ATTRIBUTE_NAME_FINDER, attribute);
+  }
+
+  public static boolean isClosedTag(XmlTag tag) {
+    return getXmlElement(XmlChildRole.EMPTY_TAG_END_FINDER, tag) != null || getXmlElement(XmlChildRole.CLOSING_TAG_START_FINDER, tag) != null;
+  }
+
+  public static Condition<XmlTag> ifAttrPresent(final String attrName) {
+    return tag -> tag.getAttribute(attrName) != null;
+  }
+
+  // ---=== Classes ===---
+
+  public abstract static class Effect {
+    public abstract void annotate(@NotNull XmlTag tag, @NotNull ProblemsHolder holder);
+  }
+
+  public static class InvalidAttrEffect extends Effect {
+    private final String myAttrName;
+    private final @InspectionMessage String myText;
+    private final ProblemHighlightType myType;
+
+    public InvalidAttrEffect(String attrName, @InspectionMessage String text, ProblemHighlightType type) {
+      myAttrName = attrName;
+      myText = text;
+      myType = type;
+    }
+
+    @Override
+    public void annotate(@NotNull XmlTag tag, @NotNull ProblemsHolder holder) {
+      XmlAttribute attribute = tag.getAttribute(myAttrName);
+      if (attribute != null) {
+        PsiElement attributeNameElement = getAttributeNameElement(attribute);
+        if (attributeNameElement != null) {
+          holder.registerProblem(attributeNameElement, myText, myType, new RemoveAttributeIntentionFix(myAttrName));
+        }
+      }
+    }
+  }
+
+  public static class InvalidAllExpectSome extends Effect {
+    private final String[] myAttrNames;
+    private final @InspectionMessage String myText;
+    private final ProblemHighlightType myType;
+
+    public InvalidAllExpectSome(@InspectionMessage String text, ProblemHighlightType type, String... attrNames) {
+      myAttrNames = attrNames;
+      myText = text;
+      myType = type;
+    }
+
+    @Override
+    public void annotate(@NotNull XmlTag tag, @NotNull ProblemsHolder holder) {
+      for (XmlAttribute xmlAttribute : tag.getAttributes()) {
+        String attrName = xmlAttribute.getName();
+        if (!ArrayUtil.contains(attrName, myAttrNames)) {
+          PsiElement attributeNameElement = getAttributeNameElement(xmlAttribute);
+          if (attributeNameElement != null) {
+            holder.registerProblem(attributeNameElement, myText, myType, new RemoveAttributeIntentionFix(attrName));
+          }
+        }
+      }
+    }
+  }
+
+  public static class ConditionRule extends Rule {
+    private final Condition<? super XmlTag> myCondition;
+    private final Effect[] myEffect;
+
+    public ConditionRule(Condition<? super XmlTag> condition, Effect ... effect) {
+      this.myCondition = condition;
+      this.myEffect = effect;
+    }
+
+    @Override
+    public void annotate(@NotNull XmlTag tag, @NotNull ProblemsHolder holder) {
+      if (myCondition.value(tag)) {
+        for (Effect effect : myEffect) {
+          effect.annotate(tag, holder);
+        }
+      }
+    }
+  }
+
+  public static class ShouldHaveParams extends Rule {
+    @Override
+    public boolean needAtLeastOneAttribute(@NotNull XmlTag tag) {
+      return true;
+    }
+  }
+
+  public static class RequireAttributeOneOf extends ShouldHaveParams {
+    private final String[] myAttributeNames;
+    private final ProblemHighlightType myProblemHighlightType;
+
+    public RequireAttributeOneOf(String ... attributeNames) {
+      myAttributeNames = attributeNames;
+      myProblemHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+    }
+
+    public RequireAttributeOneOf(@NotNull ProblemHighlightType problemHighlightType, String... attributeNames) {
+      assert attributeNames.length > 0;
+      myAttributeNames = attributeNames;
+      myProblemHighlightType = problemHighlightType;
+    }
+
+    public String[] getAttributeNames() {
+      return myAttributeNames;
+    }
+
+    @Override
+    public void annotate(@NotNull XmlTag tag, @NotNull ProblemsHolder holder) {
+      for (String attributeName : myAttributeNames) {
+        if (tag.getAttribute(attributeName) != null) {
+          return;
+        }
+      }
+
+      if (!isClosedTag(tag)) return;
+
+      PsiElement tagNameElement = getTagNameElement(tag);
+      if (tagNameElement == null) return;
+
+      LocalQuickFix[] fixes = LocalQuickFix.EMPTY_ARRAY;
+      if (holder.isOnTheFly()) {
+        fixes = new LocalQuickFix[myAttributeNames.length];
+        for (int i = 0; i < myAttributeNames.length; i++) {
+          fixes[i] = XmlQuickFixFactory.getInstance().insertRequiredAttributeFix(tag, myAttributeNames[i]);
+        }
+      }
+
+      holder.registerProblem(tagNameElement,
+                             XmlAnalysisBundle.message("xml.inspections.tag.should.have.one.of.following.attributes.0", StringUtil.join(myAttributeNames, ", ")),
+                             myProblemHighlightType,
+                             fixes);
+    }
+  }
+}

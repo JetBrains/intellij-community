@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="kotlin-language" name="Kotlin">
+      <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
+        <compilerSettings>
+          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
+        </compilerSettings>
+        <compilerArguments>
+          <stringArguments>
+            <stringArg name="jvmTarget" arg="21" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
+          </stringArguments>
+          <arrayArguments>
+            <arrayArg name="pluginClasspaths">
+              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
+            </arrayArg>
+            <arrayArg name="pluginOptions" />
+          </arrayArguments>
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="module-library">
+      <library name="toml4j" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.moandjiezana.toml:toml4j:0.7.2">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/moandjiezana/toml/toml4j/0.7.2/toml4j-0.7.2.jar">
+              <sha256sum>f5475e63e7e89e5db62223489aec7a56bd303543772077a17c2cb54c19ca3a20</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/moandjiezana/toml/toml4j/0.7.2/toml4j-0.7.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/moandjiezana/toml/toml4j/0.7.2/toml4j-0.7.2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
+    <orderEntry type="library" name="io.modelcontextprotocol.kotlin.sdk" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="library" name="io.github.oshai.kotlin.logging.jvm" level="project" />
+    <orderEntry type="library" name="ktor-server-sse-jvm" level="project" />
+    <orderEntry type="library" name="io.github.smiley4.schema.kenerator.jsonschema" level="project" />
+    <orderEntry type="library" name="io.github.smiley4.schema.kenerator.serialization" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
+    <orderEntry type="library" name="io.github.smiley4.schema.kenerator.core" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.debugger" />
+    <orderEntry type="module" module-name="intellij.platform.refactoring" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.usageView" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" />
+    <orderEntry type="module" module-name="intellij.terminal" />
+    <orderEntry type="module" module-name="intellij.platform.vcs" />
+    <orderEntry type="module" module-name="intellij.vcs.git" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.log.impl" />
+    <orderEntry type="module" module-name="intellij.libraries.gson" />
+    <orderEntry type="module" module-name="intellij.libraries.jediterm.ui" />
+    <orderEntry type="module" module-name="intellij.libraries.jediterm.core" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="intellij.mcpserver.stdio" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" />
+    <orderEntry type="module" module-name="intellij.terminal.backend" />
+    <orderEntry type="module" module-name="intellij.sh.core" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.client.cio" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.network.tls" />
+    <orderEntry type="module-library">
+      <library name="ktor-server-cio-internal" type="repository">
+        <properties maven-id="io.ktor:ktor-server-cio-jvm:3.1.3">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-server-cio-jvm/3.1.3/ktor-server-cio-jvm-3.1.3.jar">
+              <sha256sum>f1526fe94e8d76c5251b5a25e4b4bb72199a25d3e1f6045e4b9e42789293f069</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-server-core-jvm/3.1.3/ktor-server-core-jvm-3.1.3.jar">
+              <sha256sum>bf582ba004634d0d343bb2dfa1edd0e8de18cdc2c607a4089db8b79d3085d10a</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/typesafe/config/1.4.3/config-1.4.3.jar">
+              <sha256sum>8ada4c185ce72416712d63e0b5afdc5f009c0cdf405e5f26efecdf156aa5dfb6</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.slf4j:slf4j-api" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
+            <dependency maven-id="org.fusesource.jansi:jansi" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-io-core-jvm" />
+            <dependency maven-id="io.ktor:ktor-websockets-jvm" />
+            <dependency maven-id="io.ktor:ktor-utils-jvm" />
+            <dependency maven-id="io.ktor:ktor-http-jvm" />
+            <dependency maven-id="io.ktor:ktor-serialization-jvm" />
+            <dependency maven-id="io.ktor:ktor-events-jvm" />
+            <dependency maven-id="io.ktor:ktor-http-cio-jvm" />
+            <dependency maven-id="io.ktor:ktor-io-jvm" />
+            <dependency maven-id="io.ktor:ktor-network-jvm" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-cio-jvm/3.1.3/ktor-server-cio-jvm-3.1.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-core-jvm/3.1.3/ktor-server-core-jvm-3.1.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/typesafe/config/1.4.3/config-1.4.3.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-cio-jvm/3.1.3/ktor-server-cio-jvm-3.1.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-core-jvm/3.1.3/ktor-server-core-jvm-3.1.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/typesafe/config/1.4.3/config-1.4.3-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.eel" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.io" />
+    <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="library" name="opentelemetry" level="project" />
+  </component>
+</module>

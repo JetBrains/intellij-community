@@ -1,0 +1,21 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+    <module name="intellij.java.backend"/>
+  </dependencies>
+
+
+
+  <actions resource-bundle="messages.JShellBundle">
+    <action id="JShell.Console"
+            class="com.intellij.execution.jshell.LaunchJShellConsoleAction">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup id="JSHELL_NOTIFICATIONS" displayType="BALLOON" bundle="messages.JShellBundle" key="notification.group.jshell"/>
+    <scratch.rootType implementation="com.intellij.execution.jshell.JShellRootType"/>
+    <editorNotificationProvider implementation="com.intellij.execution.jshell.SnippetEditorDecorator"/>
+  </extensions>
+</idea-plugin>

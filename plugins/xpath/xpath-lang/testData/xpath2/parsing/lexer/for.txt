@@ -1,0 +1,4 @@
+FOR ('for')
+WHITE_SPACE (' ')
+DOLLAR ('$')
+VARIABLE_NAME ('i')

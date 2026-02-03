@@ -1,0 +1,5 @@
+// COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
+
+fun test() {
+    $"${'$'}\$ Foo\$Bar \$${'$'}`Boo` ${'$'}\$\$${'$'}_Baz\$$$$${'$'} \$\$\$\$ Bee \$\$42 \$<caret>"
+}

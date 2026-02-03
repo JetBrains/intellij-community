@@ -1,0 +1,6 @@
+/**
+ * @deprecated
+ */
+/
+public class Foo  {
+}

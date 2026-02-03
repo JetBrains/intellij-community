@@ -1,0 +1,173 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.debugger.streams.psi.impl;
+
+import com.intellij.debugger.streams.core.wrapper.StreamChain;
+import com.intellij.debugger.streams.core.wrapper.StreamChainBuilder;
+import com.intellij.debugger.streams.psi.ChainDetector;
+import com.intellij.debugger.streams.psi.ChainTransformer;
+import com.intellij.debugger.streams.psi.PsiUtil;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * @author Vitaliy.Bibaev
+ */
+public class JavaStreamChainBuilder implements StreamChainBuilder {
+  private final ChainTransformer.Java myChainTransformer;
+  private final ChainDetector myDetector;
+
+  public JavaStreamChainBuilder(@NotNull ChainTransformer.Java transformer, @NotNull ChainDetector detector) {
+    myChainTransformer = transformer;
+    myDetector = detector;
+  }
+
+  @Override
+  public boolean isChainExists(@NotNull PsiElement startElement) {
+    PsiElement current = getLatestElementInCurrentScope(PsiUtil.ignoreWhiteSpaces(startElement));
+    MyStreamChainExistenceChecker existenceChecker = new MyStreamChainExistenceChecker();
+    while (current != null) {
+      current.accept(existenceChecker);
+      if (existenceChecker.found()) {
+        return true;
+      }
+      current = toUpperLevel(current);
+    }
+
+    return false;
+  }
+
+  @Override
+  public @NotNull @Unmodifiable List<StreamChain> build(@NotNull PsiElement startElement) {
+    final MyChainCollectorVisitor visitor = new MyChainCollectorVisitor();
+
+    PsiElement current = getLatestElementInCurrentScope(PsiUtil.ignoreWhiteSpaces(startElement));
+    while (current != null) {
+      current.accept(visitor);
+      current = toUpperLevel(current);
+    }
+
+    final List<List<PsiMethodCallExpression>> chains = visitor.getPsiChains();
+    return buildChains(chains, startElement);
+  }
+
+  private static @Nullable PsiElement toUpperLevel(@NotNull PsiElement element) {
+    element = element.getParent();
+    while (element != null && !(element instanceof PsiLambdaExpression) && !(element instanceof PsiAnonymousClass)) {
+      element = element.getParent();
+    }
+
+    return getLatestElementInCurrentScope(element);
+  }
+
+  @Contract("null -> null")
+  private static @Nullable PsiElement getLatestElementInCurrentScope(@Nullable PsiElement element) {
+    PsiElement current = element;
+    while (current != null) {
+      final PsiElement parent = current.getParent();
+
+      if (parent instanceof PsiCodeBlock || parent instanceof PsiLambdaExpression || parent instanceof PsiStatement) {
+        break;
+      }
+
+      current = parent;
+    }
+
+    return current;
+  }
+
+  private @NotNull @Unmodifiable List<StreamChain> buildChains(@NotNull List<List<PsiMethodCallExpression>> chains, @NotNull PsiElement context) {
+    return ContainerUtil.map(chains, x -> myChainTransformer.transform(x, context));
+  }
+
+  private class MyStreamChainExistenceChecker extends MyVisitorBase {
+    private boolean myFound = false;
+
+    @Override
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+      if (myFound) return;
+      super.visitMethodCallExpression(expression);
+      if (!myFound && myDetector.isTerminationCall(expression)) {
+        myFound = true;
+      }
+    }
+
+    boolean found() {
+      return myFound;
+    }
+  }
+
+  private class MyChainCollectorVisitor extends MyVisitorBase {
+    private final Set<PsiMethodCallExpression> myTerminationCalls = new HashSet<>();
+    private final Map<PsiMethodCallExpression, PsiMethodCallExpression> myPreviousCalls = new HashMap<>();
+
+    @Override
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (!myPreviousCalls.containsKey(expression) && myDetector.isStreamCall(expression)) {
+        updateCallTree(expression);
+      }
+    }
+
+    private void updateCallTree(@NotNull PsiMethodCallExpression expression) {
+      if (myDetector.isTerminationCall(expression)) {
+        myTerminationCalls.add(expression);
+      }
+
+      final PsiElement parent = expression.getParent();
+      if (!(parent instanceof PsiReferenceExpression)) return;
+      final PsiElement parentCall = parent.getParent();
+      if (parentCall instanceof PsiMethodCallExpression parentCallExpression && myDetector.isStreamCall(parentCallExpression)) {
+        myPreviousCalls.put(parentCallExpression, expression);
+        updateCallTree(parentCallExpression);
+      }
+    }
+
+    @NotNull
+    List<List<PsiMethodCallExpression>> getPsiChains() {
+      final List<List<PsiMethodCallExpression>> chains = new ArrayList<>();
+      for (final PsiMethodCallExpression terminationCall : myTerminationCalls) {
+        List<PsiMethodCallExpression> chain = new ArrayList<>();
+        PsiMethodCallExpression current = terminationCall;
+        while (current != null) {
+          if (!myDetector.isIntermediateCall(current) && !myDetector.isTerminationCall(current)) break;
+          chain.add(current);
+          current = myPreviousCalls.get(current);
+        }
+
+        Collections.reverse(chain);
+        chains.add(chain);
+      }
+
+      return chains;
+    }
+  }
+
+  private static class MyVisitorBase extends JavaRecursiveElementVisitor {
+    @Override
+    public void visitCodeBlock(@NotNull PsiCodeBlock block) {
+    }
+
+    @Override
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
+    }
+  }
+}

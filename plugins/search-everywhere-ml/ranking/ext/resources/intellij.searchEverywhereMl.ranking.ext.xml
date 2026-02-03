@@ -1,0 +1,7 @@
+<idea-plugin visibility="internal">
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.searchEverywhereMl.searchEverywhereElementKeyProvider"
+                    interface="com.intellij.searchEverywhereMl.ranking.ext.SearchEverywhereElementKeyProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

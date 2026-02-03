@@ -1,0 +1,63 @@
+### auto-generated section `build intellij.vcs.github.tracker` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "vcs-github-tracker_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-github-tracker",
+  module_name = "intellij.vcs.github.tracker",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":vcs-github-tracker_resources"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/credential-store",
+    "//plugins/tasks/tasks-api:tasks",
+    "//plugins/github/github-core:vcs-github",
+    "//platform/platform-api:ide",
+    "//platform/util:util-ui",
+    "//platform/collaboration-tools",
+    "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/core-ui",
+    "@lib//:kotlin-stdlib",
+    "//platform/platform-impl:ide-impl",
+  ]
+)
+
+jvm_library(
+  name = "vcs-github-tracker_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [":vcs-github-tracker"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/credential-store",
+    "//plugins/tasks/tasks-api:tasks",
+    "//plugins/github/github-core:vcs-github",
+    "//plugins/github/github-core:vcs-github_test_lib",
+    "//platform/platform-api:ide",
+    "//platform/util:util-ui",
+    "//platform/collaboration-tools",
+    "//platform/collaboration-tools:collaboration-tools_test_lib",
+    "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
+    "//platform/core-ui",
+    "@lib//:kotlin-stdlib",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:junit5",
+  ]
+)
+### auto-generated section `build intellij.vcs.github.tracker` end
+
+### auto-generated section `test intellij.vcs.github.tracker` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "vcs-github-tracker_test",
+  runtime_deps = [":vcs-github-tracker_test_lib"]
+)
+### auto-generated section `test intellij.vcs.github.tracker` end

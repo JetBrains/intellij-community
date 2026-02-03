@@ -1,0 +1,52 @@
+<idea-plugin visibility="public">
+  <resource-bundle>messages.GitBundle</resource-bundle>
+
+  <dependencies>
+    <module name="intellij.platform.vcs.impl.shared"/>
+    <module name="intellij.platform.vcs.dvcs.impl.shared"/>
+  </dependencies>
+
+  <actions resource-bundle="messages.GitBundle">
+    <group id="MainToolbarVCSGroup">
+      <add-to-group group-id="MainToolbarLeft" relative-to-action="MainToolbarGeneralActionsGroup" anchor="before"/>
+    </group>
+
+    <action id="git.branches.show.tags" class="com.intellij.vcs.git.actions.GitBranchesTreeShowTagsAction"/>
+
+    <group id="Git.Branches.Popup.SpeedSearch">
+      <reference ref="EditorCut"/>
+      <reference ref="EditorPaste"/>
+    </group>
+
+    <group id="Git.Branches.Popup.Settings" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">
+      <group id="git.branches.popup.filter.by.separator" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupFilterSeparatorWithText"/>
+      <action id="git.branches.popup.filter.by.action" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupFilterByAction"/>
+      <action id="git.branches.popup.filter.by.repository" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupFilterByRepository"/>
+      <separator/>
+      <action id="git.branches.group.by.prefix" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupGroupByPrefixAction"/>
+      <action class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupTrackReposSynchronouslyAction"/>
+      <action id="git.branches.show.recent" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupShowRecentBranchesAction"/>
+      <reference ref="git.branches.show.tags"/>
+      <action id="git.branches.popup.resize" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupResizeAction"/>
+    </group>
+
+    <group id="Git.Branch">
+      <group id="Git.Branch.Checkout">
+        <action id="Git.Checkout.Update" class="com.intellij.vcs.git.actions.branch.GitCheckoutWithUpdateAction"/>
+      </group>
+      <group id="Git.Branch.Placeholder"/>
+    </group>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="git4idea.config.GitVcsSettings" configurationSchemaKey="versionControl.git"/>
+    <projectSettings service="git4idea.config.GitVcsSettings"/>
+
+    <rdct.remoteSettingProvider implementation="git4idea.config.GitRemoteSettingsInfoProvider"/>
+
+    <postStartupActivity implementation="com.intellij.vcs.git.GitDataHoldersInitializer"/>
+
+    <registryKey key="git.enable.working.trees.feature" defaultValue="true" restartRequired="true"
+                 description="Enables the 'Working Trees' feature, see https://youtrack.jetbrains.com/issue/IJPL-204771"/>
+  </extensions>
+</idea-plugin>

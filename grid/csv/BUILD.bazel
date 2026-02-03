@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.grid.csv.core.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "csv-core-impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "csv-core-impl",
+  module_name = "intellij.grid.csv.core.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":csv-core-impl_resources"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//platform/util",
+    "//platform/util/jdom",
+    "//platform/core-api:core",
+    "//grid/types",
+    "//platform/core-impl",
+    "//platform/projectModel-api:projectModel",
+    "//libraries/automaton",
+  ]
+)
+### auto-generated section `build intellij.grid.csv.core.impl` end

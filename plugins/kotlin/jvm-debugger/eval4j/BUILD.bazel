@@ -1,0 +1,48 @@
+### auto-generated section `build intellij.kotlin.jvm.debugger.eval4j` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "eval4j",
+  module_name = "intellij.kotlin.jvm.debugger.eval4j",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "//java/debugger/openapi:java-debugger",
+    "@lib//:kotlin-stdlib",
+    "//libraries/asm",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/util",
+    "//java/debugger/impl",
+  ],
+  runtime_deps = ["//platform/core-api:core"]
+)
+
+jvm_library(
+  name = "eval4j_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [":eval4j"],
+  deps = [
+    "//java/debugger/openapi:java-debugger",
+    "@lib//:kotlin-stdlib",
+    "//libraries/asm",
+    "@lib//:junit4",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/util",
+    "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.kotlin.jvm.debugger.eval4j` end
+
+### auto-generated section `test intellij.kotlin.jvm.debugger.eval4j` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "eval4j_test",
+  runtime_deps = [
+    ":eval4j_test_lib",
+    "//:main_test_lib",
+  ]
+)
+### auto-generated section `test intellij.kotlin.jvm.debugger.eval4j` end

@@ -1,0 +1,8 @@
+Types:
+PsiMethod:x : void
+
+Conversions:
+s -> $
+
+New expression type changes:
+Fails:

@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.jbr.jar
+  modules:
+  - name: intellij.libraries.jbr
+  library: jbr-api
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/runtime/jbr-api/1/jbr-api-1.jar

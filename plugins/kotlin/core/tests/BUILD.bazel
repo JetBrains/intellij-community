@@ -1,0 +1,110 @@
+### auto-generated section `build kotlin.core.tests` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_tests",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+    "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+  ]
+)
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:vavr",
+    "//platform/util/jdom",
+    "@lib//:javax-inject",
+    "//libraries/guava",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-script-runtime",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/frontend-independent",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/statistics",
+    "//java/openapi:java",
+    "//java/java-indexing-impl:indexing-impl",
+    "//xml/xml-psi-api:psi",
+    "//platform/lang-impl",
+    "//platform/projectModel-impl",
+    "//platform/indexing-api:indexing",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//java/java-impl:impl",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//java/manifest",
+  ]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "kotlin.core.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_tests",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:vavr",
+    "//platform/util/jdom",
+    "@lib//:javax-inject",
+    "//libraries/guava",
+    "@lib//:junit4",
+    "@lib//:kotlin-test",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-script-runtime",
+    "//plugins/kotlin/plugin/k1",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/frontend-independent",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//java/openapi:java",
+    "//java/java-indexing-impl:indexing-impl",
+    "//xml/xml-psi-api:psi",
+    "//platform/lang-impl",
+    "//platform/projectModel-impl",
+    "//platform/indexing-api:indexing",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//java/manifest",
+    "//java/manifest:manifest_test_lib",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build kotlin.core.tests` end
+
+### auto-generated section `test kotlin.core.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test kotlin.core.tests` end

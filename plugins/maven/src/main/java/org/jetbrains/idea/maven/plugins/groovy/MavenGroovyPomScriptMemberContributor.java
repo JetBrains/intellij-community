@@ -1,0 +1,55 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.maven.plugins.groovy;
+
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.xml.DomManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.MavenDomProjectModelDescription;
+import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
+import org.jetbrains.plugins.groovy.util.dynamicMembers.DynamicMemberUtils;
+
+public final class MavenGroovyPomScriptMemberContributor extends NonCodeMembersContributor {
+
+  private static final String CLASS_SOURCE = """
+    class PomElements {
+      org.apache.maven.project.MavenProject project;
+      org.apache.maven.project.MavenProject pom;
+      org.apache.maven.execution.MavenSession session;
+      org.apache.maven.settings.Settings settings;
+      org.slf4j.Logger log;
+      groovy.util.AntBuilder ant;
+      public void fail() {}}""";
+
+  @Override
+  protected @Nullable String getParentClassName() {
+    return "pom";
+  }
+
+  @Override
+  public void processDynamicElements(@NotNull PsiType qualifierType,
+                                     @Nullable PsiClass aClass,
+                                     @NotNull PsiScopeProcessor processor,
+                                     @NotNull PsiElement place,
+                                     @NotNull ResolveState state) {
+    if (aClass == null) return;
+    PsiElement pomElement = aClass.getContainingFile().getContext();
+    if (pomElement == null) return;
+
+    PsiFile pomFile = pomElement.getContainingFile();
+    if (!(pomFile instanceof XmlFile)) return;
+
+    DomManager domManager = DomManager.getDomManager(pomElement.getProject());
+    if (!(domManager.getDomFileDescription((XmlFile)pomFile) instanceof MavenDomProjectModelDescription)) {
+      return;
+    }
+
+    DynamicMemberUtils.process(processor, false, place, CLASS_SOURCE);
+  }
+}

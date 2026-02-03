@@ -1,0 +1,41 @@
+### auto-generated section `build fleet.kernel` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_kernel",
+  opt_in = [
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+    "kotlin.ExperimentalStdlibApi",
+    "kotlin.concurrent.atomics.ExperimentalAtomicApi",
+  ],
+  x_consistent_data_class_copy_visibility = True,
+  x_context_parameters = True,
+  x_jvm_default = "all-compatibility",
+  x_lambdas = "class"
+)
+
+resourcegroup(
+  name = "kernel_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kernel",
+  module_name = "fleet.kernel",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  resources = [":kernel_resources"],
+  kotlinc_opts = ":custom_kernel",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//fleet/rhizomedb.transactor",
+    "//fleet/rhizomedb.transactor.rebase",
+  ],
+  exports = [
+    "//fleet/rhizomedb.transactor",
+    "//fleet/rhizomedb.transactor.rebase",
+  ]
+)
+### auto-generated section `build fleet.kernel` end

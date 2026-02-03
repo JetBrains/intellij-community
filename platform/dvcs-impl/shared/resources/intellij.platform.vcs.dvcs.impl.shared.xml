@@ -1,0 +1,13 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.platform.vcs.impl.shared"/>
+  </dependencies>
+
+  <resource-bundle>messages.DvcsBundle</resource-bundle>
+
+  <actions>
+    <action id="ChangesView.GroupBy.Repository" class="com.intellij.dvcs.actions.SetRepositoryChangesGroupingAction">
+      <add-to-group group-id="ChangesView.GroupBy"/>
+    </action>
+  </actions>
+</idea-plugin>

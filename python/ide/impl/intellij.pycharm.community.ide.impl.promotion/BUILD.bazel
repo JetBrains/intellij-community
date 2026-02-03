@@ -1,0 +1,33 @@
+### auto-generated section `build intellij.pycharm.community.ide.impl.promotion` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "pycharm-community-ide-impl-promotion_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "pycharm-community-ide-impl-promotion",
+  module_name = "intellij.pycharm.community.ide.impl.promotion",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":pycharm-community-ide-impl-promotion_resources"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/ide-core",
+    "//platform/platform-api:ide",
+    "//python/ide/impl",
+    "//python:python-community-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//platform/statistics",
+    "//libraries/http-client",
+    "//platform/core-ui",
+    "//python/ide/customization.shared",
+    "//platform/platform-impl/update-checker",
+  ]
+)
+### auto-generated section `build intellij.pycharm.community.ide.impl.promotion` end

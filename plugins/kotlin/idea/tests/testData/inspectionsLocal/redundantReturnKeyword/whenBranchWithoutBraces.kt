@@ -1,0 +1,13 @@
+// FIX: Remove 'return' keyword
+
+fun foo(x: Int): String {
+    return when {
+        x < 0 -> ret<caret>urn "negative"
+        x == 0 -> "zero"
+        x == 1 -> "one"
+        x == 42 -> "6 * 7"
+        else -> "many"
+    }
+}
+
+// IGNORE_K1

@@ -1,0 +1,9 @@
+Types:
+PsiParameter:p : java.util.Set
+PsiReferenceExpression:p : java.util.Set
+
+Conversions:
+myField -> $
+
+New expression type changes:
+Fails:

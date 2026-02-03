@@ -1,0 +1,3 @@
+# This file lacks __all__ and "now" is only used to set the default value of
+# RateLimitDecorator.__init__()'s clock parameter
+ratelimit.decorators.now

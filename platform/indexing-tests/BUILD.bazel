@@ -1,0 +1,39 @@
+### auto-generated section `build intellij.platform.indexing.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "indexing-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/core-impl",
+    "//platform/analysis-api:analysis",
+  ]
+)
+
+jvm_library(
+  name = "indexing-tests_test_lib",
+  module_name = "intellij.platform.indexing.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/indexing-api:indexing",
+    "//platform/indexing-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+  ],
+  runtime_deps = [":indexing-tests"]
+)
+### auto-generated section `build intellij.platform.indexing.tests` end
+
+### auto-generated section `test intellij.platform.indexing.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "indexing-tests_test",
+  runtime_deps = [":indexing-tests_test_lib"]
+)
+### auto-generated section `test intellij.platform.indexing.tests` end

@@ -1,0 +1,31 @@
+PsiJavaFile:Uncomplete1.java
+  PsiImportList
+    <empty list>
+  PsiClass:Foo
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:Foo('Foo')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace('\n  ')
+    PsiClassInitializer
+      PsiModifierList:
+        <empty list>
+      PsiCodeBlock
+        PsiJavaToken:LBRACE('{')
+        PsiWhiteSpace('\n    ')
+        PsiForStatement
+          PsiKeyword:for('for')
+          PsiErrorElement:'(' expected
+            <empty list>
+        PsiWhiteSpace('\n  ')
+        PsiJavaToken:RBRACE('}')
+    PsiWhiteSpace('\n')
+    PsiJavaToken:RBRACE('}')

@@ -1,0 +1,19 @@
+<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.k2.codeinsight.fixes">
+  <dependencies>
+    <module name="intellij.kotlin.refactorings"/>
+    <module name="intellij.kotlin.codeInsight"/>
+    <module name="intellij.kotlin.searching"/>
+  </dependencies>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.k2.codeinsight.fixes.KotlinK2QuickFixRegistrar"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <annotator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.fixes.MissingConstructorBracketsAnnotator"/>
+    <codeInsight.unresolvedReferenceQuickFixProvider
+            implementation="org.jetbrains.kotlin.idea.k2.codeinsight.fixes.KotlinFirUnresolvedReferenceQuickFixProvider"/>
+    <codeInsight.unresolvedReferenceQuickFixProvider 
+            implementation="org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.KDocUnresolvedReferenceQuickFixProvider"/>
+    <errorQuickFixProvider implementation="org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ReplaceAndWithWhenGuardFixProvider"/>
+  </extensions>
+</idea-plugin>

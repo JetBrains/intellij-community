@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/kotlin" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/testResources" type="java-test-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.spellchecker" />
+    <orderEntry type="module" module-name="intellij.grazie" exported="" />
+    <orderEntry type="module" module-name="intellij.grazie.core" scope="TEST" />
+    <orderEntry type="library" name="kotlin-test" level="project" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" />
+    <orderEntry type="module-library" exported="" scope="TEST">
+      <library name="ai.grazie.spell.hunspell.de" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:hunspell-de:0.2.327">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-de/0.2.327/hunspell-de-0.2.327.jar">
+              <sha256sum>41ace2052e81a529fdaca24d9ac47a1323d7ac91a4e764481ef4b84477483b42</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-de/0.2.327/hunspell-de-0.2.327.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="" scope="TEST">
+      <library name="ai.grazie.spell.hunspell.ru" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:hunspell-ru:0.2.327">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-ru/0.2.327/hunspell-ru-0.2.327.jar">
+              <sha256sum>8c2b71691fbbc75cd6868aa6e7948f637470ba8b559cf6c98cacfe6b024f3513</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-ru/0.2.327/hunspell-ru-0.2.327.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="" scope="TEST">
+      <library name="ai.grazie.spell.hunspell.uk" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:hunspell-uk:0.2.327">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-uk/0.2.327/hunspell-uk-0.2.327.jar">
+              <sha256sum>155565ea33fdac34ffc3117bf645493a245a655eb2030b40f5f532348e72a81a</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-uk/0.2.327/hunspell-uk-0.2.327.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="org.jetbrains.intellij.deps.languagetool:languagetool-core" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:languagetool-core:6.7.20">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.7.20/languagetool-core-6.7.20.jar">
+              <sha256sum>2ceb4fddcf6e6943e8e418a417caf05affd239c9f7855ba22aa8494aa0668256</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar">
+              <sha256sum>33021c9cca70c6292d53ff7dac5d1832d422e986aba52ec998532a5f47f921f8</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="com.carrotsearch:hppc" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-databind" />
+            <dependency maven-id="com.gitlab.dumonts:hunspell" />
+            <dependency maven-id="com.google.guava:guava" />
+            <dependency maven-id="com.google.protobuf:protobuf-java" />
+            <dependency maven-id="com.hankcs:aho-corasick-double-array-trie" />
+            <dependency maven-id="com.optimaize.languagedetector:language-detector" />
+            <dependency maven-id="commons-logging:commons-logging" />
+            <dependency maven-id="commons-validator:commons-validator" />
+            <dependency maven-id="io.github.resilience4j:resilience4j-circuitbreaker" />
+            <dependency maven-id="io.github.resilience4j:resilience4j-micrometer" />
+            <dependency maven-id="io.opentelemetry:opentelemetry-api" />
+            <dependency maven-id="io.opentelemetry:opentelemetry-semconv" />
+            <dependency maven-id="io.grpc:grpc-netty-shaded" />
+            <dependency maven-id="io.grpc:grpc-protobuf" />
+            <dependency maven-id="io.grpc:grpc-stub" />
+            <dependency maven-id="io.micrometer:micrometer-registry-prometheus" />
+            <dependency maven-id="io.prometheus:simpleclient" />
+            <dependency maven-id="io.prometheus:simpleclient_guava" />
+            <dependency maven-id="javax.activation:javax.activation-api" />
+            <dependency maven-id="javax.annotation:javax.annotation-api" />
+            <dependency maven-id="javax.measure:unit-api" />
+            <dependency maven-id="javax.xml.bind:jaxb-api" />
+            <dependency maven-id="net.loomchild:segment" />
+            <dependency maven-id="org.apache.commons:commons-lang3" />
+            <dependency maven-id="org.apache.commons:commons-pool2" />
+            <dependency maven-id="org.apache.commons:commons-text" />
+            <dependency maven-id="org.apache.lucene:lucene-backward-codecs" />
+            <dependency maven-id="org.apache.lucene:lucene-core" />
+            <dependency maven-id="org.carrot2:morfologik-fsa" />
+            <dependency maven-id="org.carrot2:morfologik-fsa-builders" />
+            <dependency maven-id="org.carrot2:morfologik-speller" />
+            <dependency maven-id="org.carrot2:morfologik-stemming" />
+            <dependency maven-id="org.glassfish.jaxb:jaxb-runtime" />
+            <dependency maven-id="org.jetbrains:annotations" />
+            <dependency maven-id="it.unimi.dsi:fastutil-core" />
+            <dependency maven-id="org.json:json" />
+            <dependency maven-id="org.slf4j:slf4j-api" />
+            <dependency maven-id="tech.units:indriya" />
+            <dependency maven-id="io.github.java-diff-utils:java-diff-utils" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.7.20/languagetool-core-6.7.20.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.7.20/languagetool-core-6.7.20-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library name="org.jetbrains.intellij.deps.languagetool:language-ru" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.languagetool:language-ru:6.7.20">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-ru/6.7.20/language-ru-6.7.20.jar">
+              <sha256sum>37ee7871b86ded531c364ab448ebf446a1666aef088ecbd35c9bebd25f7239f4</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-ru/6.7.20/language-ru-6.7.20.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-ru/6.7.20/language-ru-6.7.20-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library name="org.jetbrains.intellij.deps.languagetool:language-zh" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-zh:6.7.20">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-zh/6.7.20/language-zh-6.7.20.jar">
+              <sha256sum>c04ded4e5f33399dc14a52e4d4b13d6a4bfaa817f91efb26aaf208a4bbfdb42b</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/hankcs/hanlp/portable-1.8.2/hanlp-portable-1.8.2.jar">
+              <sha256sum>f4e8e42211f62dc952a669329f43b78c72927690407b1ccea37448c76f843379</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="com.carrotsearch:hppc" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-databind" />
+            <dependency maven-id="com.gitlab.dumonts:hunspell" />
+            <dependency maven-id="com.google.guava:guava" />
+            <dependency maven-id="com.google.protobuf:protobuf-java" />
+            <dependency maven-id="com.hankcs:aho-corasick-double-array-trie" />
+            <dependency maven-id="com.optimaize.languagedetector:language-detector" />
+            <dependency maven-id="commons-logging:commons-logging" />
+            <dependency maven-id="commons-validator:commons-validator" />
+            <dependency maven-id="io.github.resilience4j:resilience4j-circuitbreaker" />
+            <dependency maven-id="io.github.resilience4j:resilience4j-micrometer" />
+            <dependency maven-id="io.opentelemetry:opentelemetry-api" />
+            <dependency maven-id="io.opentelemetry:opentelemetry-semconv" />
+            <dependency maven-id="io.grpc:grpc-netty-shaded" />
+            <dependency maven-id="io.grpc:grpc-protobuf" />
+            <dependency maven-id="io.grpc:grpc-stub" />
+            <dependency maven-id="io.micrometer:micrometer-registry-prometheus" />
+            <dependency maven-id="io.prometheus:simpleclient" />
+            <dependency maven-id="io.prometheus:simpleclient_guava" />
+            <dependency maven-id="javax.activation:javax.activation-api" />
+            <dependency maven-id="javax.annotation:javax.annotation-api" />
+            <dependency maven-id="javax.measure:unit-api" />
+            <dependency maven-id="javax.xml.bind:jaxb-api" />
+            <dependency maven-id="net.loomchild:segment" />
+            <dependency maven-id="org.apache.commons:commons-lang3" />
+            <dependency maven-id="org.apache.commons:commons-pool2" />
+            <dependency maven-id="org.apache.commons:commons-text" />
+            <dependency maven-id="org.apache.lucene:lucene-backward-codecs" />
+            <dependency maven-id="org.apache.lucene:lucene-core" />
+            <dependency maven-id="org.carrot2:morfologik-fsa" />
+            <dependency maven-id="org.carrot2:morfologik-fsa-builders" />
+            <dependency maven-id="org.carrot2:morfologik-speller" />
+            <dependency maven-id="org.carrot2:morfologik-stemming" />
+            <dependency maven-id="org.glassfish.jaxb:jaxb-runtime" />
+            <dependency maven-id="it.unimi.dsi:fastutil-core" />
+            <dependency maven-id="org.json:json" />
+            <dependency maven-id="org.slf4j:slf4j-api" />
+            <dependency maven-id="tech.units:indriya" />
+            <dependency maven-id="edu.washington.cs.knowitall:openregex" />
+            <dependency maven-id="io.github.java-diff-utils:java-diff-utils" />
+            <dependency maven-id="org.jetbrains.intellij.deps.languagetool:languagetool-core" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-zh/6.7.20/language-zh-6.7.20.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/hankcs/hanlp/portable-1.8.2/hanlp-portable-1.8.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-zh/6.7.20/language-zh-6.7.20-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/hankcs/hanlp/portable-1.8.2/hanlp-portable-1.8.2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library name="org.jetbrains.intellij.deps.languagetool:language-de" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-de:6.7.20">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-de/6.7.20/language-de-6.7.20.jar">
+              <sha256sum>91d7d42c173b92d918cdf4266f7f6b468726445dca98740976002745ebdd9678</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/de/danielnaber/german-pos-dict/1.2.4/german-pos-dict-1.2.4.jar">
+              <sha256sum>56f0b00adb704cbc1e86776b45f6890efe90685ab370a34b5b299593cdcaae22</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.7/jwordsplitter-4.7.jar">
+              <sha256sum>0435e604abe8b4a0b27f568db9349fbe0546df286bbe62f667c9fd9663df71b2</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="edu.washington.cs.knowitall:openregex" />
+            <dependency maven-id="org.apache.commons:commons-lang3" />
+            <dependency maven-id="org.jetbrains.intellij.deps.languagetool:languagetool-core" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-de/6.7.20/language-de-6.7.20.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/german-pos-dict/1.2.4/german-pos-dict-1.2.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.7/jwordsplitter-4.7.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-de/6.7.20/language-de-6.7.20-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.7/jwordsplitter-4.7-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library name="org.jetbrains.intellij.deps.languagetool:language-it" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.languagetool:language-it:6.7.20">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-it/6.7.20/language-it-6.7.20.jar">
+              <sha256sum>6b25433cf377e3fafce95f772aec21fec29c0267bf1b651834d74309700b34a5</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-it/6.7.20/language-it-6.7.20.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-it/6.7.20/language-it-6.7.20-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library name="jetbrains.intellij.deps.languagetool.language.uk" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-uk:6.7.20">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-uk/6.7.20/language-uk-6.7.20.jar">
+              <sha256sum>bc94dd9aaee1f3e076d55bc91872d383cd92c9293cc7efd2e316915690963280</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/ua/net/nlp/morfologik-ukrainian-lt/6.7.1/morfologik-ukrainian-lt-6.7.1.jar">
+              <sha256sum>453886930ba7ba0d80d1158577e3e10d814e2c739ee17e297f062542d92dfd04</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.intellij.deps.languagetool:languagetool-core" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-uk/6.7.20/language-uk-6.7.20.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ua/net/nlp/morfologik-ukrainian-lt/6.7.1/morfologik-ukrainian-lt-6.7.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-uk/6.7.20/language-uk-6.7.20-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library name="jetbrains.intellij.deps.languagetool.language.be" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-be:6.7.20">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-be/6.7.20/language-be-6.7.20.jar">
+              <sha256sum>f24b9d99f0b9dddbe1d63118dce0af30fd32cb6228f949cfbbad9902e2bfa169</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/belarus/linguistics.grammardb.spell.languagetool/1.0.2/linguistics.grammardb.spell.languagetool-1.0.2.jar">
+              <sha256sum>1d1a55e905faa9740d648144cf05c4a460f0f26416d2ee01157bad0877be31c2</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.intellij.deps.languagetool:languagetool-core" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-be/6.7.20/language-be-6.7.20.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/belarus/linguistics.grammardb.spell.languagetool/1.0.2/linguistics.grammardb.spell.languagetool-1.0.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-be/6.7.20/language-be-6.7.20-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library name="org.jetbrains.intellij.deps.languagetool:language-pt" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.languagetool:language-pt:6.7.20">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-pt/6.7.20/language-pt-6.7.20.jar">
+              <sha256sum>2878fbeeeff14a74a970a2a1c477a9cd5fd74a432c015ca810a85eaeaa078186</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-pt/6.7.20/language-pt-6.7.20.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-pt/6.7.20/language-pt-6.7.20-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.ai.grazie.spell.gec.engine.local" scope="TEST" />
+    <orderEntry type="module-library" scope="TEST">
+      <library name="org.languagetool:portuguese-pos-dict" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:portuguese-pos-dict:1.2.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/portuguese-pos-dict/1.2.0/portuguese-pos-dict-1.2.0.jar">
+              <sha256sum>fe8da88bb31b6372855741fbd81ee1c7477b4f8a0624d3dafd20ee23e184650e</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/portuguese-pos-dict/1.2.0/portuguese-pos-dict-1.2.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.stream" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.regexp" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.psi" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.grazie.java" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.vcs" />
+    <orderEntry type="module" module-name="intellij.markdown" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.markdown.plugin.main" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.grazie.markdown" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="jetCheck" level="project" />
+  </component>
+</module>

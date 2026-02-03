@@ -1,0 +1,3 @@
+<begin>0.abs()<end>
+-----
+def preved = 0.abs()<caret>

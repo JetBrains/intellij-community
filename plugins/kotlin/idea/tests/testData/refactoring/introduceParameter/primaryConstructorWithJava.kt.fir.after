@@ -1,0 +1,8 @@
+open class Foo(
+    pathToTestDir: String, testGroupOutputDirPrefix: String,
+)
+
+open class Bar(pathToTestDir: String = "path", val string: String = "path1") : Foo(
+    pathToTestDir = pathToTestDir,
+    testGroupOutputDirPrefix = string
+)

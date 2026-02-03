@@ -1,0 +1,224 @@
+f:com.intellij.find.ngrams.TrigramIndex
+- com.intellij.util.indexing.ScalarIndexExtension
+- sf:INDEX_ID:com.intellij.util.indexing.ID
+- dependsOnFileContent():Z
+- getCacheSize():I
+- getIndexer():com.intellij.util.indexing.DataIndexer
+- getInputFilter():com.intellij.util.indexing.FileBasedIndex$InputFilter
+- getKeyDescriptor():com.intellij.util.io.KeyDescriptor
+- getName():com.intellij.util.indexing.ID
+- getVersion():I
+- needsForwardIndexWhenSharing():Z
+f:com.intellij.ide.todo.TodoFilter
+- java.lang.Cloneable
+- <init>():V
+- accept(com.intellij.psi.search.PsiTodoSearchHelper,com.intellij.psi.PsiFile):Z
+- addTodoPattern(com.intellij.psi.search.TodoPattern):V
+- clone():com.intellij.ide.todo.TodoFilter
+- contains(com.intellij.psi.search.TodoPattern):Z
+- equals(java.lang.Object):Z
+- getName():java.lang.String
+- hashCode():I
+- isEmpty():Z
+- iterator():java.util.Iterator
+- removeTodoPattern(com.intellij.psi.search.TodoPattern):V
+- setName(java.lang.String):V
+- writeExternal(org.jdom.Element,com.intellij.psi.search.TodoPattern[]):V
+c:com.intellij.lang.cacheBuilder.DefaultWordsScanner
+- com.intellij.lang.cacheBuilder.VersionedWordsScanner
+- <init>(com.intellij.lexer.Lexer,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet):V
+- <init>(com.intellij.lexer.Lexer,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet):V
+- <init>(com.intellij.lexer.Lexer,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet):V
+- processWords(java.lang.CharSequence,com.intellij.util.Processor):V
+- setMayHaveFileRefsInLiterals(Z):V
+- s:stripWords(com.intellij.util.Processor,java.lang.CharSequence,I,I,com.intellij.lang.cacheBuilder.WordOccurrence$Kind,com.intellij.lang.cacheBuilder.WordOccurrence,Z):Z
+a:com.intellij.psi.impl.cache.impl.BaseFilterLexer
+- com.intellij.lexer.DelegateLexer
+- com.intellij.psi.impl.cache.impl.id.IdTableBuilding$ScanWordProcessor
+- p:<init>(com.intellij.lexer.Lexer,com.intellij.psi.impl.cache.impl.OccurrenceConsumer):V
+- pf:addOccurrenceInToken(I):V
+- pf:addOccurrenceInToken(I,I,I):V
+- pf:advanceTodoItemCountsInToken():V
+- p:getWordCodePointPredicate():java.util.function.IntPredicate
+- f:run(java.lang.CharSequence,C[],I,I):V
+- pf:scanWordsInToken(I,Z,Z):V
+- start(java.lang.CharSequence,I,I,I):V
+f:com.intellij.psi.impl.cache.impl.BaseFilterLexerUtil
+- s:calcIdEntries(com.intellij.util.indexing.FileContent,com.intellij.psi.impl.cache.impl.IdAndToDoScannerBasedOnFilterLexer):java.util.Map
+- s:calcTodoEntries(com.intellij.util.indexing.FileContent,com.intellij.psi.impl.cache.impl.IdAndToDoScannerBasedOnFilterLexer):java.util.Map
+com.intellij.psi.impl.cache.impl.IdAndToDoScannerBasedOnFilterLexer
+- a:createLexer(com.intellij.psi.impl.cache.impl.OccurrenceConsumer):com.intellij.lexer.Lexer
+f:com.intellij.psi.impl.cache.impl.OccurrenceConsumer
+- <init>(com.intellij.psi.impl.cache.impl.id.IdDataConsumer,Z):V
+- addOccurrence(java.lang.CharSequence,C[],I,I,I):V
+- getOccurrenceCount(com.intellij.psi.search.IndexPattern):I
+- incTodoOccurrence(com.intellij.psi.search.IndexPattern):V
+- isNeedToDo():Z
+f:com.intellij.psi.impl.cache.impl.id.IdDataConsumer
+- <init>():V
+- addOccurrence(java.lang.CharSequence,I,I,I):V
+- addOccurrence(C[],I,I,I):V
+- getResult():java.util.Map
+com.intellij.psi.impl.cache.impl.id.IdIndexer
+- com.intellij.util.indexing.DataIndexer
+- getVersion():I
+- a:map(com.intellij.util.indexing.FileContent):java.util.Map
+f:com.intellij.psi.impl.cache.impl.id.IdTableBuilding
+- s:createCustomFileTypeScanner(com.intellij.ide.highlighter.custom.SyntaxTable):com.intellij.lang.cacheBuilder.WordsScanner
+- s:createDefaultIndexer(com.intellij.lang.cacheBuilder.WordsScanner):com.intellij.psi.impl.cache.impl.id.IdIndexer
+- s:getFileTypeIndexer(com.intellij.openapi.fileTypes.FileType):com.intellij.psi.impl.cache.impl.id.IdIndexer
+- s:isWordCodePoint(I):Z
+- s:scanWords(com.intellij.psi.impl.cache.impl.id.IdTableBuilding$ScanWordProcessor,java.lang.CharSequence,I,I):V
+- s:scanWords(com.intellij.psi.impl.cache.impl.id.IdTableBuilding$ScanWordProcessor,java.lang.CharSequence,C[],I,I,Z):V
+- s:scanWords(com.intellij.psi.impl.cache.impl.id.IdTableBuilding$ScanWordProcessor,java.lang.CharSequence,C[],I,I,Z,java.util.function.IntPredicate):V
+com.intellij.psi.impl.cache.impl.id.IdTableBuilding$ScanWordProcessor
+- a:run(java.lang.CharSequence,C[],I,I):V
+a:com.intellij.psi.impl.cache.impl.id.LexerBasedIdIndexer
+- com.intellij.psi.impl.cache.impl.IdAndToDoScannerBasedOnFilterLexer
+- com.intellij.psi.impl.cache.impl.id.LexingIdIndexer
+- <init>():V
+- f:map(com.intellij.util.indexing.FileContent):java.util.Map
+com.intellij.psi.impl.cache.impl.id.LexingIdIndexer
+- com.intellij.psi.impl.cache.impl.id.IdIndexer
+a:com.intellij.psi.impl.cache.impl.id.ScanningIdIndexer
+- com.intellij.psi.impl.cache.impl.id.IdIndexer
+- <init>():V
+- ps:createProcessor(java.lang.CharSequence,com.intellij.psi.impl.cache.impl.id.IdDataConsumer):com.intellij.util.Processor
+- pa:createScanner():com.intellij.lang.cacheBuilder.WordsScanner
+- getVersion():I
+- map(com.intellij.util.indexing.FileContent):java.util.Map
+a:com.intellij.psi.impl.cache.impl.todo.LexerBasedTodoIndexer
+- com.intellij.psi.impl.cache.impl.todo.VersionedTodoIndexer
+- com.intellij.psi.impl.cache.impl.IdAndToDoScannerBasedOnFilterLexer
+- <init>():V
+- map(com.intellij.util.indexing.FileContent):java.util.Map
+c:com.intellij.psi.impl.cache.impl.todo.PlainTextTodoIndexer
+- com.intellij.psi.impl.cache.impl.todo.VersionedTodoIndexer
+- <init>():V
+- map(com.intellij.util.indexing.FileContent):java.util.Map
+f:com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry
+- equals(java.lang.Object):Z
+- hashCode():I
+f:com.intellij.psi.impl.cache.impl.todo.TodoIndexers
+- com.intellij.openapi.fileTypes.FileTypeExtension
+com.intellij.psi.impl.cache.impl.todo.TodoIndexers$ExtraPlaceChecker
+- a:accept(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
+a:com.intellij.psi.impl.cache.impl.todo.VersionedTodoIndexer
+- com.intellij.util.indexing.DataIndexer
+- <init>():V
+- getVersion():I
+f:com.intellij.psi.impl.search.CachesBasedRefSearcher
+- com.intellij.openapi.application.QueryExecutorBase
+- <init>():V
+- processQuery(com.intellij.psi.search.searches.ReferencesSearch$SearchParameters,com.intellij.util.Processor):V
+com.intellij.psi.impl.search.IndexPatternBuilder
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- getCharsAllowedInContinuationPrefix(com.intellij.psi.tree.IElementType):java.lang.String
+- a:getCommentEndDelta(com.intellij.psi.tree.IElementType):I
+- a:getCommentStartDelta(com.intellij.psi.tree.IElementType):I
+- getCommentStartDelta(com.intellij.psi.tree.IElementType,java.lang.CharSequence):I
+- a:getCommentTokenSet(com.intellij.psi.PsiFile):com.intellij.psi.tree.TokenSet
+- a:getIndexingLexer(com.intellij.psi.PsiFile):com.intellij.lexer.Lexer
+f:com.intellij.psi.impl.search.LowLevelSearchUtil
+- s:processElementsContainingWordInElement(com.intellij.psi.search.TextOccurenceProcessor,com.intellij.psi.PsiElement,com.intellij.util.text.StringSearcher,Z,com.intellij.openapi.progress.ProgressIndicator):Z
+- s:processTexts(java.lang.CharSequence,I,I,com.intellij.util.text.StringSearcher,java.util.function.IntPredicate):Z
+c:com.intellij.psi.impl.search.PsiSearchHelperImpl
+- com.intellij.psi.search.PsiSearchHelper
+- sf:LOG:com.intellij.openapi.diagnostic.Logger
+- <init>(com.intellij.openapi.project.Project):V
+- findCommentsContainingIdentifier(java.lang.String,com.intellij.psi.search.SearchScope):com.intellij.psi.PsiElement[]
+- findFilesWithPlainTextWords(java.lang.String):com.intellij.psi.PsiFile[]
+- getCodeUsageScope(com.intellij.psi.PsiElement):com.intellij.psi.search.SearchScope
+- getUseScope(com.intellij.psi.PsiElement):com.intellij.psi.search.SearchScope
+- hasIdentifierInFile(com.intellij.psi.PsiFile,java.lang.String):Z
+- isCheapEnoughToSearch(java.lang.String,com.intellij.psi.search.GlobalSearchScope,com.intellij.psi.PsiFile):com.intellij.psi.search.PsiSearchHelper$SearchCostResult
+- isCheapEnoughToSearch(java.lang.String,com.intellij.psi.search.GlobalSearchScope,com.intellij.psi.PsiFile,com.intellij.openapi.progress.ProgressIndicator):com.intellij.psi.search.PsiSearchHelper$SearchCostResult
+- processAllFilesWithWord(java.lang.String,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.Processor,Z):Z
+- processAllFilesWithWordInComments(java.lang.String,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.Processor):Z
+- processAllFilesWithWordInLiterals(java.lang.String,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.Processor):Z
+- processAllFilesWithWordInText(java.lang.String,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.Processor,Z):Z
+- processCandidateFilesForText(com.intellij.psi.search.GlobalSearchScope,S,Z,java.lang.String,com.intellij.util.Processor):Z
+- processCandidateFilesForText(com.intellij.psi.search.GlobalSearchScope,S,Z,Z,java.lang.String,com.intellij.util.Processor):Z
+- processCommentsContainingIdentifier(java.lang.String,com.intellij.psi.search.SearchScope,com.intellij.util.Processor):Z
+- processElementsWithWord(com.intellij.psi.search.SearchScope,java.lang.String,S,java.util.EnumSet,java.lang.String,com.intellij.psi.search.SearchSession,com.intellij.psi.search.TextOccurenceProcessor):Z
+- processElementsWithWord(com.intellij.psi.search.TextOccurenceProcessor,com.intellij.psi.search.SearchScope,java.lang.String,S,Z):Z
+- processElementsWithWord(com.intellij.psi.search.TextOccurenceProcessor,com.intellij.psi.search.SearchScope,java.lang.String,S,Z,Z):Z
+- processElementsWithWordAsync(com.intellij.psi.search.TextOccurenceProcessor,com.intellij.psi.search.SearchScope,java.lang.String,S,Z):com.intellij.concurrency.AsyncFuture
+- processRequests(com.intellij.psi.search.SearchRequestCollector,com.intellij.util.Processor):Z
+- processRequestsAsync(com.intellij.psi.search.SearchRequestCollector,com.intellij.util.Processor):com.intellij.concurrency.AsyncFuture
+- processUsagesInNonJavaFiles(com.intellij.psi.PsiElement,java.lang.String,com.intellij.psi.search.PsiNonJavaFileReferenceProcessor,com.intellij.psi.search.GlobalSearchScope):Z
+- processUsagesInNonJavaFiles(java.lang.String,com.intellij.psi.search.PsiNonJavaFileReferenceProcessor,com.intellij.psi.search.GlobalSearchScope):Z
+- s:shouldProcessInjectedPsi(com.intellij.psi.search.SearchScope):Z
+e:com.intellij.psi.impl.search.PsiSearchHelperImpl$Options
+- java.lang.Enum
+- sf:CASE_SENSITIVE_SEARCH:com.intellij.psi.impl.search.PsiSearchHelperImpl$Options
+- sf:PROCESS_INJECTED_PSI:com.intellij.psi.impl.search.PsiSearchHelperImpl$Options
+- sf:PROCESS_ONLY_JAVA_IDENTIFIERS_IF_POSSIBLE:com.intellij.psi.impl.search.PsiSearchHelperImpl$Options
+- s:valueOf(java.lang.String):com.intellij.psi.impl.search.PsiSearchHelperImpl$Options
+- s:values():com.intellij.psi.impl.search.PsiSearchHelperImpl$Options[]
+f:com.intellij.psi.impl.search.TodoItemImpl
+- com.intellij.psi.search.TodoItem
+- <init>(com.intellij.psi.PsiFile,I,I,com.intellij.psi.search.TodoPattern,java.util.List):V
+- equals(java.lang.Object):Z
+- getAdditionalTextRanges():java.util.List
+- getFile():com.intellij.psi.PsiFile
+- getPattern():com.intellij.psi.search.TodoPattern
+- getTextRange():com.intellij.openapi.util.TextRange
+- hashCode():I
+f:com.intellij.psi.stubs.StubUpdatingIndex
+- com.intellij.util.indexing.SingleEntryFileBasedIndexExtension
+- sf:INDEX_ID:com.intellij.util.indexing.ID
+- sf:USE_SNAPSHOT_MAPPINGS:Z
+- s:canHaveStub(com.intellij.openapi.vfs.VirtualFile):Z
+- enableWal():Z
+- getCacheSize():I
+- getIndexer():com.intellij.util.indexing.SingleEntryIndexer
+- getInputFilter():com.intellij.util.indexing.FileBasedIndex$InputFilter
+- getName():com.intellij.util.indexing.ID
+- getValueExternalizer():com.intellij.util.io.DataExternalizer
+- getVersion():I
+- handleInitializationError(java.lang.Throwable):V
+com.intellij.util.xml.NanoXmlBuilder
+- net.n3.nanoxml.IXMLBuilder
+- addAttribute(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
+- addPCData(java.io.Reader,java.lang.String,I):V
+- elementAttributesProcessed(java.lang.String,java.lang.String,java.lang.String):V
+- endElement(java.lang.String,java.lang.String,java.lang.String):V
+- getResult():java.lang.Object
+- newProcessingInstruction(java.lang.String,java.io.Reader):V
+- startBuilding(java.lang.String,I):V
+- startElement(java.lang.String,java.lang.String,java.lang.String,java.lang.String,I):V
+- s:stop():V
+f:com.intellij.util.xml.NanoXmlUtil
+- s:createLocation(java.lang.String[]):java.lang.String
+- s:parse(java.io.InputStream,net.n3.nanoxml.IXMLBuilder):V
+- s:parse(java.io.Reader,net.n3.nanoxml.IXMLBuilder):V
+- s:parse(java.io.Reader,net.n3.nanoxml.IXMLBuilder,net.n3.nanoxml.IXMLValidator):V
+- s:parse(net.n3.nanoxml.StdXMLReader,net.n3.nanoxml.IXMLBuilder):V
+- s:parse(net.n3.nanoxml.StdXMLReader,net.n3.nanoxml.IXMLBuilder,net.n3.nanoxml.IXMLValidator):V
+- s:parseHeader(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.xml.XmlFileHeader
+- s:parseHeader(com.intellij.psi.PsiFile):com.intellij.util.xml.XmlFileHeader
+- s:parseHeader(java.io.Reader):com.intellij.util.xml.XmlFileHeader
+- s:parseHeaderWithException(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.xml.XmlFileHeader
+- s:parseHeaderWithException(java.io.Reader):com.intellij.util.xml.XmlFileHeader
+c:com.intellij.util.xml.NanoXmlUtil$BaseXmlBuilder
+- com.intellij.util.xml.NanoXmlBuilder
+- <init>():V
+- endElement(java.lang.String,java.lang.String,java.lang.String):V
+- p:getLocation():java.lang.String
+- ps:readText(java.io.Reader):java.lang.String
+- startBuilding(java.lang.String,I):V
+- startElement(java.lang.String,java.lang.String,java.lang.String,java.lang.String,I):V
+c:com.intellij.util.xml.NanoXmlUtil$EmptyValidator
+- net.n3.nanoxml.NonValidator
+- <init>():V
+- attributeAdded(java.lang.String,java.lang.String,java.lang.String,I):V
+- elementAttributesProcessed(java.lang.String,java.util.Properties,java.lang.String,I):V
+- elementStarted(java.lang.String,java.lang.String,I):V
+a:com.intellij.util.xml.NanoXmlUtil$IXMLBuilderAdapter
+- com.intellij.util.xml.NanoXmlBuilder
+- <init>():V
+f:com.intellij.util.xml.NanoXmlUtil$ParserStoppedXmlException
+- net.n3.nanoxml.XMLException
+- sf:INSTANCE:com.intellij.util.xml.NanoXmlUtil$ParserStoppedXmlException
+- fillInStackTrace():java.lang.Throwable

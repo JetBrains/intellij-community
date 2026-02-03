@@ -1,0 +1,6 @@
+-Field.java
+ -Field
+  Field()
+  foo(): void
+  num1: int
+  [num2: int]

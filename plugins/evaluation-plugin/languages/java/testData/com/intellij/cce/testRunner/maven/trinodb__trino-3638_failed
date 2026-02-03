@@ -1,0 +1,110 @@
+/bin/sh ./mvnw -Didea.version=2025.3 -Dmaven.ext.class.path=/home/roman-vasiliev/ws/intellij/out/classes/production/intellij.maven.server.eventListener -Djansi.passthrough=true -Dstyle.color=always -DfailIfNoTests=false -Dsurefire.reportFormat=plain -Dtest=io.prestosql.plugin.hive.metastore.TestSemiTransactionalHiveMetastore,io.prestosql.plugin.hive.TestHiveConfig -am --projects=:presto-hive test
+[IJ]-1-ProjectDiscoveryStarted-[IJ]-id=unknown
+[INFO] Scanning for projects...
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=io.airlift:airbase:pom:103-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-provider-gitexe:pom:1.8.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-providers-git:pom:1.8.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-providers:pom:1.8.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm:pom:1.8.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:22-[IJ]-error=
+
+...
+
+[IJ]-38-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:common-java5:jar:2.19.1-[IJ]-error=
+[IJ]-39-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-api:jar:2.19.1-[IJ]-error=
+[IJ]-35-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-testng-utils:jar:2.19.1-[IJ]-error=
+[IJ]-37-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-grouper:jar:2.19.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-testng-utils:jar:2.19.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-grouper:jar:2.19.1-[IJ]-error=
+
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running TestSuite
+2025-07-11T07:59:00.717-0600 INFO LogTestDurationListener enabled: false
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by net.sf.cglib.core.ReflectUtils$1 (file:/home/roman-vasiliev/.m2/repository/cglib/cglib-nodep/3.3.0/cglib-nodep-3.3.0.jar) to method java.lang.ClassLoader.defineClass(java.lang.String,byte[],int,int,java.security.ProtectionDomain)
+WARNING: Please consider reporting this to the maintainers of net.sf.cglib.core.ReflectUtils$1
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+2025-07-11T07:59:01.163-0600 INFO not retrying; FlakyTestRetryAnalyzer disabled
+Tests run: 4, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 1.328 sec <<< FAILURE! - in TestSuite
+testDefaults(io.prestosql.plugin.hive.TestHiveConfig)  Time elapsed: 0.09 sec
+testExplicitPropertyMappings(io.prestosql.plugin.hive.TestHiveConfig)  Time elapsed: 0.204 sec  <<< FAILURE!
+java.lang.AssertionError: MaxConcurrentMetastoreUpdates expected [101] but found [100]
+	at org.testng.Assert.fail(Assert.java:94)
+	at org.testng.Assert.failNotEquals(Assert.java:513)
+	at org.testng.Assert.assertEqualsImpl(Assert.java:135)
+	at org.testng.Assert.assertEquals(Assert.java:116)
+	at io.airlift.configuration.testing.ConfigAssertions.assertAttributesEqual(ConfigAssertions.java:216)
+	at io.airlift.configuration.testing.ConfigAssertions.assertFullMapping(ConfigAssertions.java:135)
+	at io.prestosql.plugin.hive.TestHiveConfig.testExplicitPropertyMappings(TestHiveConfig.java:238)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:566)
+	at org.testng.internal.MethodInvocationHelper.invokeMethod(MethodInvocationHelper.java:104)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:645)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:851)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:1177)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:129)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:112)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)
+	at java.base/java.lang.Thread.run(Thread.java:829)
+
+testParallelPartitionDrops(io.prestosql.plugin.hive.metastore.TestSemiTransactionalHiveMetastore)  Time elapsed: 0.765 sec
+testParallelUpdateStatisticsOperations(io.prestosql.plugin.hive.metastore.TestSemiTransactionalHiveMetastore)  Time elapsed: 0.768 sec
+
+Results :
+
+Failed tests:
+  TestHiveConfig.testExplicitPropertyMappings:238 MaxConcurrentMetastoreUpdates expected [101] but found [100]
+
+Tests run: 4, Failures: 1, Errors: 0, Skipped: 0
+
+[IJ]-1-MojoFailed-[IJ]-source=LIFECYCLE-[IJ]-goal=test-[IJ]-id=io.prestosql:presto-hive:jar:346-SNAPSHOT-[IJ]-error=There are test failures.-[N]--[N]-Please refer to /home/roman-vasiliev/ws/ml-eval/trino/presto-hive/target/surefire-reports for the individual test results.
+[IJ]-1-ProjectFailed-[IJ]-id=io.prestosql:presto-hive:jar:346-SNAPSHOT
+[IJ]-1-SessionEnded-[IJ]-id=unknown
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for presto-root 346-SNAPSHOT:
+[INFO]
+[INFO] presto-root ........................................ SUCCESS [  1.114 s]
+[INFO] presto-spi ......................................... SUCCESS [  2.386 s]
+[INFO] presto-plugin-toolkit .............................. SUCCESS [  1.536 s]
+[INFO] presto-array ....................................... SUCCESS [  2.036 s]
+[INFO] presto-client ...................................... SUCCESS [  1.539 s]
+[INFO] presto-geospatial-toolkit .......................... SUCCESS [  1.466 s]
+[INFO] presto-matching .................................... SUCCESS [  1.542 s]
+[INFO] presto-memory-context .............................. SUCCESS [  1.484 s]
+[INFO] presto-parser ...................................... SUCCESS [  1.564 s]
+[INFO] presto-testng-services ............................. SUCCESS [  1.610 s]
+[INFO] presto-tpch ........................................ SUCCESS [  1.689 s]
+[INFO] presto-main ........................................ SUCCESS [  1.689 s]
+[INFO] presto-testing ..................................... SUCCESS [  1.427 s]
+[INFO] presto-memory ...................................... SUCCESS [  1.393 s]
+[INFO] presto-benchmark ................................... SUCCESS [  1.378 s]
+[INFO] presto-orc ......................................... SUCCESS [  1.454 s]
+[INFO] presto-parquet ..................................... SUCCESS [  1.371 s]
+[INFO] presto-rcfile ...................................... SUCCESS [  1.517 s]
+[INFO] presto-hive ........................................ FAILURE [  9.878 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  38.501 s
+[INFO] Finished at: 2025-07-11T15:59:02+02:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:2.19.1:test (default-test) on project presto-hive: There are test failures.
+[ERROR]
+[ERROR] Please refer to /home/roman-vasiliev/ws/ml-eval/trino/presto-hive/target/surefire-reports for the individual test results.
+[ERROR] -> [Help 1]
+[ERROR]
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR]
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+[ERROR]
+[ERROR] After correcting the problems, you can resume the build with the command
+[ERROR]   mvn <args> -rf :presto-hive
+

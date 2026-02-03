@@ -1,0 +1,11 @@
+class CCC {
+}
+
+cl<caret>ass BBB {
+}
+-----
+cl<caret>ass BBB {
+}
+
+class CCC {
+}

@@ -1,0 +1,16 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+var String.prop: Int
+    get() = length
+    set(value) {
+        println(this)
+        foo()
+        bar()
+    }
+
+context(c: String)
+fun foo() {
+}
+
+fun String.bar() {
+}

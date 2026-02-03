@@ -1,0 +1,60 @@
+<idea-plugin>
+  <id>com.intellij.stats.completion</id>
+  <name>Completion Stats Collector</name>
+  <vendor>JetBrains</vendor>
+  <category>Platform Development</category>
+
+  <description><![CDATA[
+      <p>The plugin collects anonymous statistics about code completion usage.
+      It allows us to improve code completion feature using machine learning.</p>
+      <br>
+      <p>Notice: the plugin does not collect or send any data in stable (release) builds. But in the EAP builds
+      the plugin collects data about your usage of code completion, anonymizes and sends it to JetBrains.
+      Note, the plugin doesn't send any of your personal data or code. All it sends is just numbers
+      calculated based on your completion usage patterns. The plugin does not send more than 15MB of data per day. </p>
+    ]]></description>
+
+  <depends>com.intellij.modules.lang</depends>
+  <depends>com.intellij.modules.platform</depends>
+  <depends>com.intellij.completion.ml.ranking</depends>
+
+  <extensionPoints>
+    <extensionPoint name="policy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.stats.completion.CompletionStatsPolicy"/>
+    </extensionPoint>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.stats.completion.tracker.CompletionLoggerProvider"
+                        serviceImplementation="com.intellij.stats.completion.tracker.CompletionFileLoggerProvider"/>
+
+    <applicationService serviceInterface="com.intellij.stats.completion.storage.FilePathProvider"
+                        serviceImplementation="com.intellij.stats.completion.storage.PluginDirectoryFilePathProvider"
+                        testServiceImplementation="com.intellij.mocks.TestFilePathProvider"/>
+
+    <applicationService serviceInterface="com.intellij.stats.completion.sender.StatisticSender"
+                        serviceImplementation="com.intellij.stats.completion.sender.StatisticSenderImpl"
+                        testServiceImplementation="com.intellij.mocks.TestStatisticSender"/>
+
+    <applicationService serviceInterface="com.intellij.stats.completion.network.service.RequestService"
+                        serviceImplementation="com.intellij.stats.completion.network.service.SimpleRequestService"
+                        testServiceImplementation="com.intellij.mocks.TestRequestService"/>
+
+    <applicationService serviceInterface="com.intellij.stats.completion.tracker.InstallationIdProvider"
+                        serviceImplementation="com.intellij.stats.completion.tracker.PermanentInstallationIdProvider"/>
+
+    <registryKey key="completion.stats.analytics.platform.send" defaultValue="true" restartRequired="true"
+                 description="Send completion logs to Analytics Platform"/>
+
+    <registryKey key="completion.stats.analytics.platform.url" defaultValue="default" restartRequired="true"
+                 description="URL to status page with endpoints for sending completion logs to Analytics Platform"/>
+
+    <applicationActivity implementation="com.intellij.stats.completion.sender.SenderPreloadingActivity"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.stats.completion.tracker.CompletionLoggerInitializer"
+              topic="com.intellij.codeInsight.lookup.LookupManagerListener"
+              activeInTestMode="false"/>
+  </projectListeners>
+</idea-plugin>

@@ -1,0 +1,5 @@
+<project name="testProject" default="test">
+  <target name="test" depends="<ren>a,b"/>
+  <target name="a"/>
+  <target name="b"/>
+</project>

@@ -1,0 +1,34 @@
+### auto-generated section `build kotlin.inspections` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "inspections_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "inspections",
+  module_name = "kotlin.inspections",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":inspections_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/core-api:core",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/project-configuration",
+    "//platform/util",
+    "//platform/core-impl",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/analysis-api:analysis",
+    "//plugins/kotlin/code-insight/api",
+  ]
+)
+### auto-generated section `build kotlin.inspections` end

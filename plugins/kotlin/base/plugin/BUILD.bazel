@@ -1,0 +1,116 @@
+### auto-generated section `build intellij.kotlin.base.plugin` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "plugin_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+resourcegroup(
+  name = "plugin_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "plugin",
+  module_name = "intellij.kotlin.base.plugin",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":plugin_resources"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//libraries/guava",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/execution",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//platform/util/jdom",
+    "//platform/core-impl",
+    "//platform/projectModel-impl",
+    "//platform/statistics",
+    "//platform/util/xmlDom",
+    "//platform/workspace/storage",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+    "//java/idea-ui:ui",
+    "//aether-dependency-resolver",
+    "//platform/ide-core",
+    "//platform/core-ui",
+    "//platform/util",
+    "//platform/lang-core",
+    "//platform/platform-impl/update-checker",
+  ],
+  runtime_deps = ["//platform/util/trove"]
+)
+
+jvm_library(
+  name = "plugin_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  resources = [":plugin_test_resources"],
+  associates = [":plugin"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//libraries/commons/compress",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//libraries/guava",
+    "@lib//:junit4",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/execution",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//platform/util/jdom",
+    "//platform/core-impl",
+    "//platform/projectModel-impl",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/util/xmlDom",
+    "//platform/workspace/storage",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
+    "//java/idea-ui:ui",
+    "//aether-dependency-resolver",
+    "//aether-dependency-resolver:aether-dependency-resolver_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/ide-core",
+    "//platform/core-ui",
+    "//libraries/maven-resolver-provider",
+    "//platform/util",
+    "//platform/build-scripts/downloader",
+    "//platform/lang-core",
+    "//plugins/kotlin/util/project-model-updater",
+    "//platform/platform-impl/update-checker",
+  ]
+)
+### auto-generated section `build intellij.kotlin.base.plugin` end
+
+### auto-generated section `test intellij.kotlin.base.plugin` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "plugin_test",
+  runtime_deps = [":plugin_test_lib"]
+)
+### auto-generated section `test intellij.kotlin.base.plugin` end

@@ -1,0 +1,38 @@
+<component name="libraryTable">
+  <library name="jline.terminal.jna" type="repository">
+    <properties maven-id="org.jline:jline-terminal-jna:3.27.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jline/jline-terminal-jna/3.27.0/jline-terminal-jna-3.27.0.jar">
+          <sha256sum>e7322e6d8dc1bd69f507b91865af741af4a95c649ccab36e79e8be89696bb432</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.15.0/jna-5.15.0.jar">
+          <sha256sum>a564158d28ab5127fc6a958028ed54279fe0999662c46425b6a3b09a2a52094d</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jline/jline-terminal/3.27.0/jline-terminal-3.27.0.jar">
+          <sha256sum>2f461c75091ec3810a42184afc80c96910f54e9dd2110e9ecb9902a5ee6c244b</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jline/jline-native/3.27.0/jline-native-3.27.0.jar">
+          <sha256sum>d8bc77bc80edc7d9a02a06a069b2d7085629421db0843aba7c153a869ffe525d</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-terminal-jna/3.27.0/jline-terminal-jna-3.27.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.15.0/jna-5.15.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-terminal/3.27.0/jline-terminal-3.27.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-native/3.27.0/jline-native-3.27.0.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-terminal-jna/3.27.0/jline-terminal-jna-3.27.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.15.0/jna-5.15.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-terminal/3.27.0/jline-terminal-3.27.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-native/3.27.0/jline-native-3.27.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-terminal-jna/3.27.0/jline-terminal-jna-3.27.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.15.0/jna-5.15.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-terminal/3.27.0/jline-terminal-3.27.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-native/3.27.0/jline-native-3.27.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

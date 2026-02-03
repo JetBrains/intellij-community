@@ -1,0 +1,30 @@
+[
+  {
+    "consentId": "rsch.send.usage.stat",
+    "version": "1.1",
+    "text": "This information includes, but is not limited to, anonymous data about your feature and plugin usage, hardware and software configuration, file type statistics, and the number of files per project.\nNo personal data or sensitive information, such as source code or file names, is shared with us. Learn more <a href=\"https://www.jetbrains.com/legal/docs/terms/product_data_collection/\">here</a>.",
+    "printableName": "Send anonymous usage statistics",
+    "accepted": "false"
+  },
+  {
+    "consentId": "eap",
+    "version": "2021.2",
+    "text": "By subscribing, I understand JetBrains s.r.o. will process my email address for this purpose in accordance with the <a href=\"https://www.jetbrains.com/company/privacy.html\">Privacy Policy</a>. I can withdraw my consent at any time in privacy settings in the JetBrains account.",
+    "printableName": "Send me EAP-related feedback requests and surveys",
+    "accepted": "false"
+  },
+  {
+    "consentId": "ai.data.collection.and.use.policy",
+    "version": "1.0",
+    "text": "To measure and improve integration with JetBrains AI, we can <a href=\"https://www.jetbrains.com/help/ai/data-collection-and-use-policy.html\">collect non-anonymous information</a> about its usage, which includes the full text of inputs sent by the IDE to the large language model and its responses, including source code snippets.",
+    "printableName": "Allow detailed data collection by JetBrains AI",
+    "accepted": "false"
+  },
+  {
+    "consentId": "ea.auto.report",
+    "version": "1.0",
+    "text": "These reports may include exception details, code fragments, and system info.<br/><br/>I acknowledge that JetBrains s.r.o. may process my personal data (if contained in the error reports), and may engage <a href=\"https://www.jetbrains.com/legal/privacy/third-parties.html\" target=\"_blank\">third parties</a> in such processing. More details about the processing are in <a href=\"https://www.jetbrains.com/legal/docs/privacy/privacy/\" target=\"_blank\">JetBrains Privacy Notice</a>.",
+    "printableName": "Send error reports to JetBrains automatically.",
+    "accepted": "false"
+  }
+]

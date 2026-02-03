@@ -1,0 +1,3 @@
+version = "3.3.*"
+upstream_repository = "https://gitlab.com/doctormo/python-crontab"
+requires = ["types-croniter"]

@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.jsoup.jar
+  modules:
+  - name: intellij.libraries.jsoup
+  library: jsoup
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jsoup/jsoup/1/jsoup-1.jar

@@ -1,0 +1,3 @@
+- "PackageChecker.ProjectDependenciesModelImpl":ProducerCoroutine{Active}@af0fd80, state: SUSPENDED [Dispatchers.Default]
+#  at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
+  at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3.invokeSuspend(Merge.kt:27)

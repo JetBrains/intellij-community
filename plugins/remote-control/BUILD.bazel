@@ -1,0 +1,70 @@
+### auto-generated section `build intellij.remoteControl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "remote-control_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "remote-control",
+  module_name = "intellij.remoteControl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":remote-control_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/built-in-server-api:builtInServer",
+    "//platform/built-in-server:builtInServer-impl",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//platform/platform-impl:ide-impl",
+    "//libraries/netty/buffer",
+    "//libraries/netty/codec-http:libraries-netty-codec-http",
+    "//libraries/gson",
+    "//platform/analysis-api:analysis",
+    "//platform/projectModel-api:projectModel",
+  ]
+)
+
+jvm_library(
+  name = "remote-control_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":remote-control"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/built-in-server-api:builtInServer",
+    "//platform/built-in-server:builtInServer-impl",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//platform/platform-impl:ide-impl",
+    "//libraries/netty/buffer",
+    "//libraries/netty/codec-http:libraries-netty-codec-http",
+    "//libraries/gson",
+    "//platform/analysis-api:analysis",
+    "//platform/projectModel-api:projectModel",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-impl",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//platform/built-in-server:builtInServer-tests_test_lib",
+    "@lib//:assert_j",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+  ]
+)
+### auto-generated section `build intellij.remoteControl` end
+
+### auto-generated section `test intellij.remoteControl` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "remote-control_test",
+  runtime_deps = [":remote-control_test_lib"]
+)
+### auto-generated section `test intellij.remoteControl` end

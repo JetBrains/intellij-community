@@ -1,0 +1,15 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    GENERIC_COMMAND_DIRECTIVE
+      LITERAL
+        PsiElement(word)('.')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    GENERIC_COMMAND_DIRECTIVE
+      LITERAL
+        PsiElement(word)('.')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    GENERIC_COMMAND_DIRECTIVE
+      LITERAL
+        PsiElement(word)('source')

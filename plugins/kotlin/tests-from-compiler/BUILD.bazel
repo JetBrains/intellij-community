@@ -1,0 +1,45 @@
+### auto-generated section `build kotlin.testsFromCompiler` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tests-from-compiler",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//platform/util/trove"]
+)
+
+jvm_library(
+  name = "tests-from-compiler_test_lib",
+  module_name = "kotlin.testsFromCompiler",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/util/base/multiplatform",
+    "//platform/util/multiplatform",
+    "@lib//:kotlinc-kotlin-jps-plugin-classpath",
+    "@lib//:kotlinc-kotlin-jps-plugin-tests",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//java/testFramework",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/util/compiler-dependencies",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/devkit/jps-plugin:jps",
+  ],
+  runtime_deps = [":tests-from-compiler"]
+)
+### auto-generated section `build kotlin.testsFromCompiler` end
+
+### auto-generated section `test kotlin.testsFromCompiler` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests-from-compiler_test",
+  runtime_deps = [":tests-from-compiler_test_lib"]
+)
+### auto-generated section `test kotlin.testsFromCompiler` end

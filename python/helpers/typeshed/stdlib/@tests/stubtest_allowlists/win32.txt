@@ -1,0 +1,41 @@
+# ============================================
+# Modules that do not exist on Windows systems
+# ============================================
+
+_curses
+_dbm
+_gdbm
+_posixsubprocess
+asyncio.unix_events
+dbm.gnu
+dbm.ndbm
+fcntl
+grp
+posix
+pwd
+readline
+resource
+syslog
+termios
+xxlimited
+
+# Modules that rely on _curses
+_curses_panel
+curses
+curses.ascii
+curses.has_key
+curses.panel
+curses.textpad
+
+# Modules that rely on termios
+pty
+tty
+
+
+# ==========================================================
+# Other allowlist entries that cannot or should not be fixed
+# ==========================================================
+
+multiprocessing.popen_fork  # exists on Windows but fails to import
+multiprocessing.popen_forkserver  # exists on Windows but fails to import
+multiprocessing.popen_spawn_posix  # exists on Windows but fails to import

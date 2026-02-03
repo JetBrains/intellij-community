@@ -1,0 +1,15 @@
+-Tuples.kt
+ A.to(B): Pair<A, B>
+ -Pair
+  constructor Pair(A, B)
+  first: A
+  second: B
+  toString(): String
+ Pair<T, T>.toList(): List<T>
+ -Triple
+  constructor Triple(A, B, C)
+  first: A
+  second: B
+  third: C
+  toString(): String
+ Triple<T, T, T>.toList(): List<T>

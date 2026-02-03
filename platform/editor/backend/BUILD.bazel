@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.platform.editor.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "backend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.platform.editor.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend_resources"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/core-api:core",
+    "//platform/editor/shared:editor",
+    "//platform/editor-ui-api:editor-ui",
+    "//fleet/kernel",
+    "//platform/platform-impl:ide-impl",
+    "//platform/util/coroutines",
+    "//platform/kernel/shared:kernel",
+    "//platform/kernel/pasta",
+  ]
+)
+### auto-generated section `build intellij.platform.editor.backend` end

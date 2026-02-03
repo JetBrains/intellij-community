@@ -1,0 +1,19 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="moduleExtension" beanClass="com.intellij.openapi.roots.ModuleExtensionEp" dynamic="true">
+      <with attribute="implementation" implements="com.intellij.openapi.roots.ModuleExtension"/>
+    </extensionPoint>
+    <extensionPoint name="orderEnumerationHandlerFactory" interface="com.intellij.openapi.roots.OrderEnumerationHandler$Factory" dynamic="true"/>
+    <extensionPoint name="filePropertyPusher" interface="com.intellij.openapi.roots.impl.FilePropertyPusher" dynamic="true"/>
+    <extensionPoint name="projectFileScanner" interface="com.intellij.util.indexing.roots.IndexableFileScanner" dynamic="true"/>
+    <extensionPoint name="customLibraryTable" interface="com.intellij.openapi.roots.libraries.CustomLibraryTableDescription" dynamic="true"/>
+    <extensionPoint name="primaryModuleManager" interface="com.intellij.openapi.module.PrimaryModuleManager" dynamic="true"/>
+    <extensionPoint name="orderRootType" interface="com.intellij.openapi.roots.OrderRootType"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.openapi.roots.libraries.LibraryKindRegistry" open="true"/>
+    <applicationService serviceInterface="com.intellij.openapi.roots.ExternalProjectSystemRegistry" open="true"
+                        serviceImplementation="com.intellij.openapi.roots.impl.EmptyProjectSystemRegistry"/>
+  </extensions>
+</idea-plugin>

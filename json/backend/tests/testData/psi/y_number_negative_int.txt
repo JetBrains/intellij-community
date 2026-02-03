@@ -1,0 +1,6 @@
+JsonFile: y_number_negative_int.json
+  JsonArray
+    PsiElement([)('[')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('-123')
+    PsiElement(])(']')

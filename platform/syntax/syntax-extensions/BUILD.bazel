@@ -1,0 +1,57 @@
+### auto-generated section `build intellij.platform.syntax.extensions` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+
+create_kotlinc_options(
+  name = "custom_extensions",
+  jvm_target = "8",
+  x_no_call_assertions = True,
+  x_no_param_assertions = True
+)
+
+jvm_provided_library(
+  name = "platform_multiplatformSupport_provided",
+  lib = "//platform/multiplatformSupport"
+)
+
+jvm_library(
+  name = "extensions",
+  module_name = "intellij.platform.syntax.extensions",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_extensions",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/syntax/syntax-api:syntax",
+    ":platform_multiplatformSupport_provided",
+  ]
+)
+
+jvm_library(
+  name = "extensions_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_extensions",
+  associates = [":extensions"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "@lib//:junit5",
+    "@lib//:kotlin-test",
+    "@lib//:kotlin-test-junit",
+    "//platform/syntax/syntax-api:syntax",
+    "//platform/syntax/syntax-api:syntax_test_lib",
+    ":platform_multiplatformSupport_provided",
+  ]
+)
+### auto-generated section `build intellij.platform.syntax.extensions` end
+
+### auto-generated section `test intellij.platform.syntax.extensions` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "extensions_test",
+  runtime_deps = [":extensions_test_lib"]
+)
+### auto-generated section `test intellij.platform.syntax.extensions` end

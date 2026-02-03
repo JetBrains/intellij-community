@@ -1,0 +1,38 @@
+### auto-generated section `build intellij.kotlin.jvm.debugger.evaluation` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "kotlin-jvm-debugger-evaluation_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-jvm-debugger-evaluation",
+  module_name = "intellij.kotlin.jvm.debugger.evaluation",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-jvm-debugger-evaluation_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections",
+    "//java/debugger/impl",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlin-stdlib",
+    "//java/debugger/openapi:java-debugger",
+    "//platform/analysis-impl",
+    "//java/java-analysis-impl:analysis-impl",
+    "//plugins/kotlin/jvm-debugger/base/util",
+    "//plugins/kotlin/jvm-debugger/evaluation",
+    "//libraries/asm",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+    "//plugins/kotlin/base/psi",
+    "//platform/util",
+    "//platform/util/multiplatform",
+    "//plugins/kotlin/jvm-debugger/core",
+  ]
+)
+### auto-generated section `build intellij.kotlin.jvm.debugger.evaluation` end

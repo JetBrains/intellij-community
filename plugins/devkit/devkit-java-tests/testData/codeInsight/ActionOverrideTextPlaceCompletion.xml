@@ -1,0 +1,7 @@
+<idea-plugin>
+  <actions>
+    <action>
+      <override-text place="<caret>"/>
+    </action>
+  </actions>
+</idea-plugin>

@@ -1,0 +1,1 @@
+"I want to rename this{renamed}".format(renamed="renaming")

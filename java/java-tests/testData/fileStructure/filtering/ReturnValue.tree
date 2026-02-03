@@ -1,0 +1,4 @@
+-ReturnValue.java
+ -ReturnValue
+  getLocationOnScreen(): Point
+  [getPoint(): Point]

@@ -1,0 +1,30 @@
+interface DataFrameSchema {
+    val columns: Map<String, ColumnSchema>
+}
+
+abstract class ColumnSchema {
+    class Group(val schema: DataFrameSchema) : ColumnSchema()
+
+    class Frame(val schema: DataFrameSchema) : ColumnSchema()
+}
+
+data class ColumnPath(val path: List<String>) {
+    operator fun plus(name: String): ColumnPath = ColumnPath(path + name)
+}
+
+internal fun MutableMap<ColumnPath, Int>.putColumnsOrder(schema: DataFrameSchema, p<caret>ath: ColumnPath) {
+    schema.columns.entries.forEachIndexed { i, (name, column) ->
+        val columnPath = path + name
+        this[columnPath] = i
+        when (column) {
+            is ColumnSchema.Frame -> {
+                this.putColumnsOrder(column.schema, columnPath)
+            }
+
+            is ColumnSchema.Group -> {
+                this.putColumnsOrder(column.schema, columnPath)
+            }
+        }
+    }
+}
+// IGNORE_K1

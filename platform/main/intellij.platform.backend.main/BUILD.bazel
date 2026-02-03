@@ -1,0 +1,42 @@
+### auto-generated section `build intellij.platform.backend.main` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "backend-main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/main/intellij.platform.main:main",
+    "//platform/kernel/backend",
+    "//platform/navbar/backend",
+    "//platform/project/backend",
+    "//platform/progress/backend",
+    "//platform/xdebugger-impl/backend",
+    "//plugins/stream-debugger-core/intellij.debugger.streams.backend:debugger-streams-backend",
+    "//platform/searchEverywhere/backend",
+    "//platform/vcs-impl",
+    "//platform/bookmarks/backend",
+    "//platform/recentFiles/backend",
+    "//platform/editor/backend",
+    "//platform/execution-impl/backend",
+    "//platform/execution.dashboard/backend",
+    "//spellchecker/xml",
+    "//platform/find/backend",
+    "//platform/todo/backend",
+    "//platform/managed-cache/managed.cache.backend",
+    "//platform/scopes/backend",
+    "//platform/remote-topics/backend",
+    "//platform/buildView/backend",
+    "//platform/lang-impl/backend",
+    "//platform/pluginManager/backend",
+  ]
+)
+
+jvm_library(
+  name = "backend-main_test_lib",
+  module_name = "intellij.platform.backend.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":backend-main"]
+)
+### auto-generated section `build intellij.platform.backend.main` end

@@ -1,0 +1,1866 @@
+#file: noinspection MarkdownUnresolvedHeaderReference,RequiredAttributes,MarkdownUnresolvedFileReference
+
+# This file content is rendered by:
+# - SDK Docs (see https://github.com/JetBrains/intellij-sdk-docs/blob/main/.github/scripts/generate_descriptor_pages.main.kts)
+# - org.jetbrains.idea.devkit.documentation.PluginDescriptorDocumentationTargetProvider
+# Textual values must be compatible with Writerside Markdown format.
+# Some of the Writerside-specific markup require cleaning up
+# (see org.jetbrains.idea.devkit.documentation.DocumentationRenderer.removeWritersideSpecificTags).
+
+# baseUrl is used to append it to non-PSI element hash anchors
+baseUrl: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html
+elements:
+  - element:
+      name: idea-plugin
+      requirement:
+        required: yes
+      description: The <path>plugin.xml</path> file root element.
+
+      attributes:
+        - attribute:
+            name: url
+            requirement:
+              required: no
+              details:
+                - &ignoredInAdditionalPluginXml |
+                  ignored in an [additional config file](#additional-plugin-configuration-files)
+            description: |
+              The link to the plugin homepage displayed on the plugin page in
+              the [JetBrains Marketplace](https://plugins.jetbrains.com).
+        - attribute:
+            name: require-restart
+            requirement:
+              required: no
+            defaultValue: |
+              `false`
+            description: |
+              The boolean value determining whether the plugin installation, update, or uninstallation requires an IDE restart
+              (see [Dynamic Plugins](https://plugins.jetbrains.com/docs/intellij/dynamic-plugins.html) for details).
+        - attribute:
+            name: package
+            renderContexts: [doc_provider]
+            deprecatedSince: "2026.1"
+            deprecationNote: |
+              Package attribute usage is discouraged and deprecated, content modules should be packaged into separate jars under `lib/modules/`.
+              IntelliJ Monorepository build system does it automatically when the attribute is not specified.
+              IntelliJ Platform Gradle Plugin allows doing that with `pluginModule` declaration since version 2.7.0.
+              
+              Note that after this attribute is removed, the classloader configuration will change.
+              While the class files of the module were packed into the main plugin's jar,
+              other modules could've accidentally accessed them. After they are separated into a module jar,
+              such accesses will start to throw `NoClassDefFoundError`.
+              Double-check that compile-time dependencies between modules match the module dependencies in module XMLs.
+              
+              See [_Plugin Model_](https://youtrack.jetbrains.com/articles/IJPL-A-31){internal} for more details.
+            requirement:
+              required: no
+            description: |
+              Defines a JVM package where all module's classes are located.
+              Packages are included recursively, for example, `com.example` implies `com.example.sub`.
+              
+              If a package is specified, then all module [dependencies](#element:idea-plugin__dependencies) of the plugin must also specify a package, and it must be
+              different. For example, if `com.example` is set for the main plugin descriptor, `com.example` cannot be used for any
+              module dependency.
+            internalNote: &plugin_model_v2_internal_note |
+              This item is part of the [_Plugin Model_](https://youtrack.jetbrains.com/articles/IJPL-A-31){internal},
+              which is not recommended to be used in third-party plugins in the current state.
+        - attribute:
+            name: visibility
+            renderContexts: [doc_provider]
+            requirement:
+              required: no
+            description: |
+              Specifies the visibility of the content module (not applicable for `plugin.xml` descriptors).
+              The visibility determines which modules may declare a dependency on this module.
+              
+              Allowed values:
+              - `private` - the module is visible only inside the plugin where it's defined
+              - `internal` - the module is visible only from content modules declared in the same [namespace](#attribute:idea-plugin__content__namespace)
+              - `public` - the module is visible from all content modules of all plugins
+            internalNote: *plugin_model_v2_internal_note
+            defaultValue: |
+              `private`
+        - attribute:
+            name: dependent-on-core
+            renderContexts: [doc_provider]
+            requirement:
+              required: no
+            description: |
+              Determines whether the main classloader of the core plugin is used as the parent classloader for the current content module.
+              If set to `false`, the Java platform classloader is used as the parent classloader.
+              
+              The attribute is effective only for content modules in the core (`com.intellij`) plugin.
+            internalNote: This item is internal and should be used only in modules implemented by JetBrains.
+            defaultValue: |
+              `true`
+      children:
+        - element:
+            name: id
+            description: |
+              A unique identifier of the plugin.
+              It should be a fully qualified name similar to Java packages and must not collide with the ID of existing plugins.
+              The ID is a technical value used to identify the plugin in the IDE and [JetBrains Marketplace](https://plugins.jetbrains.com).
+              Please use characters, numbers, and `'.'`/`'-'`/`'_'` symbols only and keep it reasonably short.
+              
+              > Make sure to pick a stable ID, as the value cannot be changed later after public release.
+              >
+              {style="warning"}
+            requirement:
+              required: no
+              details:
+                - *ignoredInAdditionalPluginXml
+                - |
+                  **It is highly recommended to set in <path>plugin.xml</path> file.**
+                - &patchXmlGradleTask |
+                  The element can be skipped in the source <path>plugin.xml</path> file if the Gradle plugin `patchPluginXml` task
+                  ([2.x](https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-tasks.html#patchPluginXml),
+                  [1.x](https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html#tasks-patchpluginxml))
+                  is enabled and configured.
+            defaultValue: Value of the [`<name>`](#element:idea-plugin__name) element.
+            examples:
+              - |
+                ```xml
+                <id>com.example.framework</id>
+                ```
+
+        - element:
+            name: module
+            renderContexts: [doc_provider]
+            description: |
+              Defines the current plugin's alias.
+              
+              The alias can be used instead of the plugin [ID](#element:idea-plugin__id) in [`depends`](#element:idea-plugin__depends)
+              or [`dependencies/plugin@id`](#element:idea-plugin__dependencies__plugin__id).
+              
+              Aliases are usually added to core plugins and work as markers of the corresponding IDEs.
+              For example, `com.intellij.modules.ruby-capable` alias is declared in core plugins for IntelliJ IDEA Ultimate and RubyMine,
+              and the Ruby plugin has a dependency on that alias.
+              It makes the Ruby plugin compatible with IntelliJ IDEA Ultimate and RubyMine only and prevents it from being installed in other IDEs.
+              
+              Aliases can be also used for compatibility reasons in regular plugins and modules.
+              
+              Avoid adding new aliases and using them for other reasons.
+            internalNote: *plugin_model_v2_internal_note
+            attributes:
+              - attribute:
+                  name: value
+                  requirement:
+                    required: yes
+                  description: |
+                    The alias value. It must be unique.
+
+        - element:
+            name: name
+            references:
+              - |
+                [JetBrains Marketplace: Plugin Name](https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-name)
+            description: The user-visible plugin display name (Title Case).
+            requirement:
+              required: yes
+              details:
+                - *ignoredInAdditionalPluginXml
+            examples:
+              - |
+                ```xml
+                <name>My Framework Support</name>
+                ```
+
+        - element:
+            name: version
+            references:
+              - |
+                [JetBrains Marketplace: Semantic Versioning](https://plugins.jetbrains.com/docs/marketplace/semver.html)
+            description: |
+              The plugin version displayed in the <control>Plugins</control> settings dialog and on the
+              [JetBrains Marketplace](https://plugins.jetbrains.com) plugin page.
+              Plugins uploaded to the JetBrains Marketplace must follow semantic versioning.
+            requirement:
+              required: yes
+              details:
+                - *ignoredInAdditionalPluginXml
+                - *patchXmlGradleTask
+            examples:
+              - |
+                ```xml
+                <version>1.3.18</version>
+                ```
+
+        - element:
+            name: product-descriptor
+            references:
+              - |
+                [JetBrains Marketplace: How to add required parameters for paid plugins](https://plugins.jetbrains.com/docs/marketplace/add-required-parameters.html)
+            description: |
+              [Paid](https://plugins.jetbrains.com/build-and-market) or
+              [Freemium](https://plugins.jetbrains.com/docs/marketplace/freemium.html) plugin descriptor.
+            requirement:
+              # noinspection YAMLIncompatibleTypes
+              required: yes_for_paid
+              details:
+                - *ignoredInAdditionalPluginXml
+                - |
+                  **Do not add `<product-descriptor>` element in a free plugin.**
+            attributes:
+              - attribute:
+                  name: code
+                  requirement:
+                    required: yes
+                  description: |
+                    The plugin product code used in the JetBrains Sales System.
+                    The code must be agreed with JetBrains in advance and follow
+                    [the requirements](https://plugins.jetbrains.com/docs/marketplace/add-required-parameters.html).
+              - attribute:
+                  name: release-date
+                  requirement:
+                    required: yes
+                  description: Date of the major version release in the `YYYYMMDD` format.
+              - attribute:
+                  name: release-version
+                  requirement:
+                    required: yes
+                  description: |
+                    A major version in a specific number format, for example, `20242` for the 2024.2 major release.<br/>
+                    See [`release-version` constraints](https://plugins.jetbrains.com/docs/marketplace/versioning-of-paid-plugins.html#release-version-constraints) for more details.
+              - attribute:
+                  name: optional
+                  requirement:
+                    required: no
+                  description: |
+                    The boolean value determining whether the plugin is
+                    a [Freemium](https://plugins.jetbrains.com/docs/marketplace/freemium.html) plugin.
+                  defaultValue: |
+                    `false`
+              - attribute:
+                  name: eap
+                  requirement:
+                    required: no
+                  description: Specifies the boolean value determining whether the plugin is an EAP release.
+                  defaultValue: |
+                    `false`
+        - element:
+            name: idea-version
+            references:
+              - |
+                [Build Number Ranges](https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html)
+            description: The plugin's range of compatible IntelliJ-based IDE versions.
+            requirement:
+              required: yes
+              details:
+                - *ignoredInAdditionalPluginXml
+                - *patchXmlGradleTask
+            attributes:
+              - attribute:
+                  name: since-build
+                  requirement:
+                    required: yes
+                  description: The lowest IDE version compatible with the plugin.
+              - attribute:
+                  name: until-build
+                  requirement:
+                    required: no
+                  description: |
+                    The highest version of the IDE the plugin is compatible with.
+                    It's highly recommended not to set this attribute, so the plugin will be compatible with all IDE versions since the 
+                    version specified by the [`since-build`](#attribute:idea-plugin__idea-version__since-build).<br/>
+                    If it becomes necessary to specify the highest compatible IDE version later, it'll be possible to do that via JetBrains
+                    Marketplace.<br/>
+                    Only if the publishing process for the plugin is configured to upload a new version for each major IDE version, it makes
+                    sense to limit the highest compatible IDE version from the beginning. 
+                    In that case, use [`strict-until-build`](#attribute:idea-plugin__idea-version__strict-until-build) instead.
+              - attribute:
+                  name: strict-until-build
+                  requirement:
+                    required: no
+                  since: "2025.3"
+                  description: |
+                    The highest version of the IDE the plugin is compatible with.<br/>
+                    Use this attribute only if the publishing process for the plugin is configured to upload a new version for each major
+                    IDE version.
+                    Otherwise, skip this attribute.<br/>
+                    If it becomes necessary to specify the highest compatible IDE version later, it'll be possible to do that via
+                    JetBrains Marketplace.
+            examples:
+              - | # code snippets must have 4 spaces indent here
+                Compatibility with a specific build number (2021.3.3) and higher versions:
+                    ```xml
+                    <idea-version since-build="213.7172.25"/>
+                    ```
+              - |
+                Compatibility with versions from any of `213` branches to any of `221` branches:
+                    ```xml
+                    <idea-version
+                        since-build="213" until-build="221.*"/>
+                    ```
+
+        - element:
+            name: vendor
+            references:
+              - |
+                [JetBrains Marketplace: Contacts and Resources](https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#contacts-and-resources)
+            description: |
+              The vendor name or organization ID (if created) in the <control>Plugins</control> settings dialog and on
+              the [JetBrains Marketplace](https://plugins.jetbrains.com) plugin page.
+            requirement:
+              required: yes
+              details:
+                - *ignoredInAdditionalPluginXml
+            attributes:
+              - attribute:
+                  name: url
+                  requirement:
+                    required: no
+                  description: |
+                    The URL to the vendor's homepage.
+                    Supports `https://` and `http://` scheme links.
+              - attribute:
+                  name: email
+                  requirement:
+                    required: no
+                  description: The vendor's email address.
+            examples:
+              - | # code snippets must have 4 spaces indent here
+                Personal vendor with an email address provided:
+                    ```xml
+                    <vendor email="joe@example.com">Joe Doe</vendor>
+                    ```
+              - |
+                Organizational vendor with a website URL and email address provided:
+                    ```xml
+                    <vendor
+                        url="https://mycompany.example.com"
+                        email="contact@example.com">
+                      My Company
+                    </vendor>
+                    ```
+
+        - element:
+            name: description
+            references:
+              - |
+                [JetBrains Marketplace: Plugin Description](https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-description)
+            description: |
+              The plugin description displayed on the [JetBrains Marketplace](https://plugins.jetbrains.com) plugin page and in
+              the <control>Plugins</control> settings dialog.
+              
+              Simple HTML elements, like text formatting, paragraphs, lists, etc., are allowed and must be wrapped into
+              `<![CDATA[` ... `]]>` section.
+            requirement:
+              required: yes
+              details:
+                - *ignoredInAdditionalPluginXml
+                - *patchXmlGradleTask
+            examples:
+              - |
+                ```xml
+                <description><![CDATA[
+                Provides support for My Framework.
+                The support includes:
+                <ul>
+                  <li>code completion</li>
+                  <li>references</li>
+                </ul>
+                For more information visit the
+                <a href="https://example.com">project site</a>.
+                ]]></description>
+                ```
+
+        - element:
+            name: change-notes
+            references:
+              - |
+                [JetBrains Marketplace: Change Notes](https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#change-notes)
+            description: |
+              A short summary of new features, bugfixes, and changes provided with the latest plugin version.
+              Change notes are displayed on the [JetBrains Marketplace](https://plugins.jetbrains.com) plugin page and in
+              the <control>Plugins</control> settings dialog.
+              
+              Simple HTML elements, like text formatting, paragraphs, lists, etc., are allowed and must be wrapped into
+              `<![CDATA[` ... `]]>` section.
+            requirement:
+              required: no
+              details:
+                - *ignoredInAdditionalPluginXml
+                - *patchXmlGradleTask
+            examples:
+              - |
+                ```xml
+                <change-notes><![CDATA[
+                <h2>New Features</h2>
+                <ul>
+                  <li>Feature 1</li>
+                  <li>Feature 2</li>
+                </ul>
+                <h2>Bug Fixes</h2>
+                <ul>
+                  <li>Fixed issue 1</li>
+                  <li>Fixed issue 2</li>
+                </ul>
+                ]]></change-notes>
+                ```
+
+        - element:
+            name: depends
+            references:
+              - |
+                [Plugin Dependencies](https://plugins.jetbrains.com/docs/intellij/plugin-dependencies.html)
+              - |
+                [Modules Specific to Functionality](https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#modules-specific-to-functionality)
+            description: |
+              Specifies a dependency on another plugin or a module of an IntelliJ Platform-based product.
+              A single [`<idea-plugin>`](#element:idea-plugin) element can contain multiple `<depends>` elements.
+
+            requirement:
+              required: no
+              details:
+                - |
+                  in most cases dependency on the
+                  [platform](https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#modules-available-in-all-products)
+                  module is needed
+            attributes:
+              - attribute:
+                  name: optional
+                  requirement:
+                    required: no
+                  description: |
+                    Boolean value defining whether the dependency is optional to load the plugin in the IDE.
+                    If the dependency plugin is not installed in the current IDE, and `optional` is:
+                      - `true` - the plugin will be loaded
+                      - `false` (default) - the plugin will not be loaded
+              - attribute:
+                  name: config-file
+                  requirement:
+                    details:
+                      - required when [`optional`](#attribute:idea-plugin__depends__optional) is `true`
+                  description: |
+                    Relative path to an
+                    [additional configuration file](#additional-plugin-configuration-files),
+                    loaded only if the dependency plugin is installed in the current IDE.
+            examples:
+            - |
+              Required plugin dependency:
+                  ```xml
+                  <depends>com.example.dependencypluginid</depends>
+                  ```
+            - |
+              Required dependency on the IntelliJ IDEA Java Module:
+                  ```xml
+                  <depends>com.intellij.modules.java</depends>
+                  ```
+            - |
+              Required module dependency with additional configuration:
+                  ```xml
+                  <depends
+                      config-file="myPluginId-withJava.xml">
+                    com.intellij.modules.java
+                  </depends>
+                  ```
+            - |
+              Optional module dependency with additional configuration:
+                  ```xml
+                  <depends
+                      optional="true"
+                      config-file="myPluginId-withKotlin.xml">
+                    org.jetbrains.kotlin
+                  </depends>
+                  ```
+
+        - element:
+            name: dependencies
+            renderContexts: [doc_provider]
+            description: |
+              Defines the dependencies of the module.
+              
+              A dependency from an `optional` or `on-demand`
+              [content](#element:idea-plugin__content) [module](#element:idea-plugin__content__module)
+              to the main module of the containing plugin is added automatically.
+              
+              Circular dependencies aren't allowed: if a set of modules forms a dependency cycle, plugins which contain modules
+              from the cycle will fail to load.
+            internalNote: *plugin_model_v2_internal_note
+            children:
+              - element:
+                  name: module
+                  description: |
+                    A dependency on another module.
+                  examples:
+                    - |
+                      ```xml
+                      <dependencies>
+                        <module name="com.example.core"/>
+                      </dependencies>
+                      ```
+                  attributes:
+                    - attribute:
+                        name: name
+                        requirement:
+                          required: yes
+                        description: |
+                          The name of the module to depend on.
+                    - attribute:
+                        name: namespace
+                        description: |
+                          Specifies the [namespace](#attribute:idea-plugin__content__namespace) where the referenced module is defined. 
+                          
+                          If the namespace is not specified explicitly, the dependency is resolved as follows:
+                          - if a content module with the specified [name](#attribute:idea-plugin__dependencies__name) exists in the plugin
+                            where the current module is defined, the dependency resolved to that module.
+                          - otherwise, the module is searched in the default `jetbrains` namespace.
+              - element:
+                  name: plugin
+                  description: |
+                    Declares a dependency on the main module of another plugin.
+                  attributes:
+                    - attribute:
+                        name: id
+                        requirement:
+                          required: yes
+                        description: |
+                          The [ID](#element:idea-plugin__id) or [alias](#element:idea-plugin__module) of the plugin to depend on.
+                  examples:
+                    - |
+                      ```xml
+                      <dependencies>
+                        <plugin id="com.example.plugin.id"/>
+                      </dependencies>
+                      ```
+
+        - element:
+            name: incompatible-with
+            since: "2020.2"
+            references:
+              - |
+                [Declaring Incompatibility with Plugin](https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#declaring-incompatibility-with-module)
+            description: |
+              The [ID](#element:idea-plugin__id) or [alias](#element:idea-plugin__module){internal} of the plugin the current plugin is incompatible with.
+              The plugin is not loaded if the incompatible plugin is installed in the current IDE.
+            requirement:
+              required: no
+              details:
+                - *ignoredInAdditionalPluginXml
+            examples:
+              - |
+                Incompatibility with the Java plugin:
+                    ```xml
+                        <incompatible-with>
+                          com.intellij.java
+                        </incompatible-with>
+                    ```
+              - |
+                Incompatibility with the AppCode plugin referenced via its alias:
+                    ```xml
+                        <incompatible-with>
+                          com.intellij.modules.appcode.ide
+                        </incompatible-with>
+                    ```
+
+        - element:
+            name: content
+            renderContexts: [doc_provider]
+            description: |
+              Defines the content modules of the plugin.
+              
+              The module which contains the plugin descriptor (<path>plugin.xml</path>) is included implicitly.
+            internalNote: *plugin_model_v2_internal_note
+            requirement:
+              required: no
+            examples:
+              - |
+                ```xml
+                <content>
+                  <module name="com.example.core" loading="required"/>
+                  <module name="com.example.git"/>
+                  <module name="com.example.i18n"/>
+                </content>
+                ```
+            attributes:
+              - attribute:
+                  name: namespace
+                  description: |
+                    Specifies the namespace for content modules. 
+                    
+                    If all content modules have private [visibility](#attribute:idea-plugin__visibility) (this is the default), the namespace is not required.
+                    However, if at least one non-private content module is defined, the namespace must be set.
+                    
+                    If the namespace is set, it must be associated with the plugin's vendor at the Marketplace. 
+                    Plugins developed by JetBrains may use the `jetbrains` namespace.
+                    
+                    A namespace must contain only Latin letters, numbers, dashes and underscores. 
+                    It cannot start or end with a dash or underscore, and it cannot contain multiple consecutive dashes or underscores.
+                    Its length is between 5 and 30 characters, inclusive.
+                    
+                    If there are multiple [`<content>`](#element:idea-plugin__content) tags in the plugin descriptor, the namespace must be the same for all of them.
+            children:
+              - element:
+                  name: module
+                  description: |
+                    A content module to include in the plugin.<br/>
+                    Content modules contain components implementing the plugin functionality.
+                    Each content module's components are loaded with its own classloader (unless overridden with
+                    [`loading="embedded"`](#attribute:idea-plugin__content__module__loading)).
+                  requirement:
+                    required: no
+                  examples:
+                    - |
+                      A module with the implicit `optional` [`loading`](#attribute:idea-plugin__content__module__loading) behavior:
+                          ```xml
+                          <module name="com.example.core"/>
+                          ```
+                    - |
+                      A required module that will fail to load the plugin if it is unavailable:
+                          ```xml
+                          <module name="com.example.core" loading="required"/>
+                          ```
+                  attributes:
+                    - attribute:
+                        name: name
+                        description: The name of a JPS module to include in the plugin.
+                        requirement:
+                          required: yes
+                    - attribute:
+                        name: loading
+                        description: |
+                          Specifies when a content module of a plugin should be loaded.
+                          Allowed values:
+                          - `required` - the module is a required part of the plugin.
+                            If the module cannot be loaded because some of its dependencies aren't available, the whole plugin isn't
+                            loaded, and an error is shown to the user.
+                          - `embedded` - the same as `required`, but also puts the module's classes to the main plugin JAR and loads them
+                            using the main plugin classloader.
+                            **This is an internal temporary option added to simplify the migration of some existing plugins.
+                            For new modules, use `required` instead.**
+                          - `optional` - the module is an optional part of the plugin.
+                            If the module cannot be loaded, it is skipped and doesn't prevent other modules from the plugin from being
+                            loaded.
+                          - `on-demand` - the module is used by other modules of the plugin and doesn't provide user-visible functionality
+                            itself.
+                            The module is loaded if and only if another `required` or `optional` module, which depends on it, is loaded.
+                            **This option isn't implemented yet and currently behaves the same way as `optional`.**
+                        defaultValue: |
+                          `optional`
+                    - attribute:
+                        name: required-if-available
+                        description: |
+                          **Experimental attribute**
+                          
+                          Specifies a condition when the loading rule should be restricted to 'required' instead of the rule given by the 'loading' attribute.
+                          The value of the attribute may reference one of the special content modules that reflect the configuration of the IDE:
+                          - `intellij.platform.frontend` 
+                          - `intellij.platform.backend` 
+                          - `intellij.platform.frontend.split`                          
+                          
+                          [Internal doc](https://youtrack.jetbrains.com/articles/IJPL-A-1503).
+        - element:
+            name: extensions
+            references:
+              - |
+                [Extensions](https://plugins.jetbrains.com/docs/intellij/plugin-extensions.html)
+            description: Defines the plugin extensions.
+            requirement:
+              required: no
+            attributes:
+              - attribute:
+                  name: defaultExtensionNs
+                  requirement:
+                    required: no
+                  description: |
+                    Default extensions namespace.
+                    It allows skipping the common prefix in fully qualified extension point names.
+                    Usually, the `com.intellij` namespace is used when the plugin implements IntelliJ Platform extensions.
+            examples:
+              - |
+                Extensions' declaration with a default namespace:
+                    ```xml
+                    <extensions defaultExtensionNs="com.intellij">
+                      <applicationService
+                          serviceImplementation="com.example.Service"/>
+                    </extensions>
+                    ```
+              - |
+                Extensions' declaration using the fully qualified extension name:
+                    ```xml
+                    <extensions>
+                      <com.example.vcs.myExtension
+                          implementation="com.example.MyExtension"/>
+                    </extensions>
+                    ```
+            childrenDescription: |
+              The children elements are registrations of instances
+              of [extension points](#element:idea-plugin__extensionPoints__extensionPoint) provided by the IntelliJ Platform or plugins.
+              <br/>
+              An extension element name is defined by its extension point via
+              [`name`](#attribute:idea-plugin__extensionPoints__extensionPoint__name)
+              or [`qualifiedName`](#attribute:idea-plugin__extensionPoints__extensionPoint__qualifiedName) attributes.
+              <br/>
+              An extension element attributes depend on the extension point implementation, but all extensions support basic attributes:
+              [`id`](#attribute:idea-plugin__extensions__*__id), [`order`](#attribute:idea-plugin__extensions__*__order),
+              and [`os`](#attribute:idea-plugin__extensions__*__os).
+            children:
+              - element:
+                  name: "*"
+                  descriptiveName: "An Extension"
+                  description: |
+                    An extension instance registered under [`<extensions>`](#element:idea-plugin__extensions).
+                    
+                    Listed attributes are basic attributes available for all extensions.
+                    The list of actual attributes can be longer depending on the extension point implementation.
+                  attributes:
+                    - attribute:
+                        name: id
+                        requirement:
+                          required: no
+                        description: |
+                          Unique extension identifier.
+                          It allows for referencing an extension in other attributes, for example, in
+                          [`order`](#attribute:idea-plugin__extensions__*__order).
+                          <br/>
+                          To not clash with other plugins defining extensions with the same identifier,
+                          consider prepending the identifier with a prefix related to the plugin [`<id>`](#element:idea-plugin__id) or 
+                          [`<name>`](#element:idea-plugin__name), for example, `id="com.example.myplugin.myExtension"`.
+                    - attribute:
+                        name: order
+                        requirement:
+                          required: no
+                        description: |
+                          Allows for ordering the extension relative to other instances of the same extension point.
+                          Supported values:
+                            - `first` - orders the extension as first.
+                               It is not guaranteed that the extension will be the first if multiple extensions are defined as `first`.
+                            - `last` - orders the extension as last.
+                               It is not guaranteed that the extension will be the last if multiple extensions are defined as `last`.
+                            - `before extension_id` - orders the extension before an extension with
+                               the given [`id`](#attribute:idea-plugin__extensions__*__id)
+                            - `after extension_id` - orders the extension after an extension with
+                               the given [`id`](#attribute:idea-plugin__extensions__*__id)
+                          <br/>
+                          Values can be combined, for example, `order="after extensionY, before extensionX"`.
+                    - attribute:
+                        name: os
+                        requirement:
+                          required: no
+                        description: |
+                          Allows restricting an extension to a given OS.
+                          Supported values:
+                            - `freebsd`
+                            - `linux`
+                            - `mac`
+                            - `unix`
+                            - `windows`
+                          
+                          For example, `os="windows"` registers the extension on Windows only.
+        - element:
+            name: extensionPoints
+            references:
+              - |
+                [Extension Points](https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html)
+            description: |
+              Extension points defined by the plugin.
+            requirement:
+              required: no
+            children:
+              - element:
+                  name: extensionPoint
+                  references:
+                    - |
+                      [Declaring Extension Points](https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html#declaring-extension-points)
+                  description: |
+                    A single extension point entry of the [`<extensionPoints>`](#element:idea-plugin__extensionPoints) defined by the plugin.
+                    A single [`<extensionPoints>`](#element:idea-plugin__extensionPoints) element can contain multiple `<extensionPoint>` elements.
+                  requirement:
+                    required: no
+                  attributes:
+                    - attribute:
+                        name: name
+                        requirement:
+                          details:
+                            - |
+                              `name` or [`qualifiedName`](#attribute:idea-plugin__extensionPoints__extensionPoint__qualifiedName) is **required**
+                        description: |
+                          The extension point name that should be unique in the scope of the plugin, e.g., `myExtension`.
+                          The fully qualified name of the extension point is built at runtime by prepending the value of the `name`
+                          attribute with the plugin [`<id>`](#element:idea-plugin__id) + `.` prefix.<br/>
+                          Example: when the `name` is `myExtension` and plugin ID is `com.example.myplugin`, the fully qualified name of
+                          the EP will be `com.example.myplugin.myExtension`.<br/>
+                          Only one of the `name` and
+                          [`qualifiedName`](#attribute:idea-plugin__extensionPoints__extensionPoint__qualifiedName) attributes can be
+                          specified.
+                    - attribute:
+                        name: qualifiedName
+                        requirement:
+                          details:
+                            - |
+                              [`name`](#attribute:idea-plugin__extensionPoints__extensionPoint__name) or `qualifiedName` is **required**
+                        description: |
+                          The fully qualified name of the extension point.
+                          It should be unique between different plugins, and it is recommended to include a plugin ID to guarantee uniqueness,
+                          e.g., `com.example.myplugin.myExtension`.<br/>
+                          Only one of the [`name`](#attribute:idea-plugin__extensionPoints__extensionPoint__name) and `qualifiedName` attributes can be specified.
+                    - attribute:
+                        name: interface
+                        requirement:
+                          details:
+                            - |
+                              `interface` or [`beanClass`](#attribute:idea-plugin__extensionPoints__extensionPoint__beanClass) is **required**
+                        description: |
+                          The fully qualified name of the interface to be implemented for extending the plugin's functionality.<br/>
+                          Only one of the `interface` and [`beanClass`](#attribute:idea-plugin__extensionPoints__extensionPoint__beanClass) attributes can be specified.
+                    - attribute:
+                        name: beanClass
+                        requirement:
+                          details:
+                            - |
+                              [`interface`](#attribute:idea-plugin__extensionPoints__extensionPoint__interface) or `beanClass` is **required**
+                        description: |
+                          The fully qualified name of the extension point bean class providing additional information to the plugin.<br/>
+                          The bean class specifies one or several properties annotated with the
+                          [`@Attribute`](%gh-ic%/platform/util/src/com/intellij/util/xmlb/annotations/Attribute.java){fqn="com.intellij.util.xmlb.annotations.Attribute"}
+                          annotation.
+                          Note that bean classes do not follow the JavaBean standard.
+                          Implement
+                          [`PluginAware`](%gh-ic%/platform/extensions/src/com/intellij/openapi/extensions/PluginAware.java){fqn="com.intellij.openapi.extensions.PluginAware"}
+                          to obtain information about the plugin providing the actual extension (see [Error Handling](https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html#error-handling)).<br/>
+                          Only one of the [`interface`](#attribute:idea-plugin__extensionPoints__extensionPoint__interface) and `beanClass` attributes can be specified.
+                    - attribute:
+                        name: dynamic
+                        requirement:
+                          required: no
+                        description: |
+                          Boolean value defining whether the extension point meets the requirements to be
+                          [dynamic](https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html#dynamic-extension-points),
+                          which is a prerequisite for [dynamic plugins](https://plugins.jetbrains.com/docs/intellij/dynamic-plugins.html).
+                        defaultValue: |
+                          `false`
+                    - attribute:
+                        name: area
+                        requirement:
+                          required: no
+                        description: |
+                          The scope in which the [extension](https://plugins.jetbrains.com/docs/intellij/plugin-extensions.html) is
+                          instantiated.
+                          
+                          Allowed values:
+                            - `IDEA_APPLICATION` _(default)_
+                            - `IDEA_PROJECT`
+                            - `IDEA_MODULE` (**deprecated**)
+                          
+                          **It is strongly recommended not to introduce new project- and module-level extension points.**
+                          If an extension point needs to operate on a `Project` or `Module` instance, declare an application-level extension
+                          point and pass the instance as a method parameter.
+                  children:
+                    - element:
+                        name: with
+                        description: |
+                          Specifies the required parent type for class names provided in extension point tags or attributes.
+                          A single [`<extensionPoint>`](#element:idea-plugin__extensionPoints__extensionPoint) element can contain
+                          multiple `<with>` elements.
+                        requirement:
+                          required: no
+                        attributes:
+                          - attribute:
+                              name: tag
+                              requirement:
+                                details:
+                                  - |
+                                    `tag` or [`attribute`](#attribute:idea-plugin__extensionPoints__extensionPoint__with__attribute) is **required**
+                              description: |
+                                The name of the tag holding the fully qualified name of the class which parent type will be limited
+                                by the type provided in the [`implements`](#attribute:idea-plugin__extensionPoints__extensionPoint__with__implements) attribute.<br/>
+                                Only one of the `tag` and [`attribute`](#attribute:idea-plugin__extensionPoints__extensionPoint__with__attribute) attributes can be specified.
+                          - attribute:
+                              name: attribute
+                              requirement:
+                                details:
+                                  - |
+                                    [`tag`](#attribute:idea-plugin__extensionPoints__extensionPoint__with__tag) or `attribute` is **required**
+                              description: |
+                                The name of the attribute holding the fully qualified name of the class which parent type will be limited
+                                by the type provided in the [`implements`](#attribute:idea-plugin__extensionPoints__extensionPoint__with__implements) attribute.<br/>
+                                Only one of the [`tag`](#attribute:idea-plugin__extensionPoints__extensionPoint__with__tag) and `attribute` attributes can be specified.
+                          - attribute:
+                              name: implements
+                              requirement:
+                                required: yes
+                              description: |
+                                The fully qualified name of the parent type limiting the type provided in the place specified by
+                                [`tag`](#attribute:idea-plugin__extensionPoints__extensionPoint__with__tag) or
+                                [`attribute`](#attribute:idea-plugin__extensionPoints__extensionPoint__with__attribute).
+                        examples:
+                          - |
+                            An extension point which restricts the type provided in a `myClass` attribute to be an instance
+                            of `com.example.ParentType`, and the type provided in a `someClass` element to be an instance
+                            of `java.lang.Comparable`:
+                            
+                            ```xml
+                            <extensionPoint
+                                name="myExtension"
+                                beanClass="com.example.MyExtension">
+                              <with
+                                  attribute="myClass"
+                                  implements="com.example.ParentType"/>
+                              <with
+                                  tag="someClass"
+                                  implements="java.lang.Comparable"/>
+                            </extensionPoint>
+                            ```
+                            
+                            When using the above extension point, an implementation could be registered as follows:
+                            
+                            ```xml
+                            <myExtension ...
+                                myClass="com.example.MyCustomType">
+                              <someClass>com.example.MyComparable</someClass>
+                            </myExtension>
+                            ```
+                            
+                            where:
+                            
+                            - `com.example.MyCustomType` must be a subtype of `com.example.ParentType`
+                            - `com.example.MyComparable` must be a subtype of `java.lang.Comparable`
+              - element:
+                  name: &xIncludeName xi:include
+                  namespace: &xIncludeNamespace xi="http://www.w3.org/2001/XInclude"
+                  renderContexts: [doc_provider]
+                  description: |
+                    Allows including extension points of another plugin descriptor in this descriptor with
+                    [XInclude](http://www.w3.org/2001/XInclude) standard.
+                    
+                    The inclusion of extension points is supported for internal purposes and shouldn't be used by third party plugins.
+                  requirement:
+                    required: no
+                  attributes:
+                    - attribute:
+                        name: href
+                        requirement:
+                          required: no
+                        description: Path of the plugin descriptor file to include `extensionPoints` content from.
+                    - attribute:
+                        name: xpointer
+                        requirement:
+                          required: no
+                        deprecatedSince: '2021.2'
+                        deprecationNote: |
+                          The `xpointer` attribute must be `xpointer(/idea-plugin/extensionPoints/*)` or not defined.
+                        description: Extensions points pointer to include.
+                        defaultValue: |
+                          `xpointer(/idea-plugin/extensionPoints/*)`
+                  children:
+                    - element: &xIncludeFallback
+                        name: xi:fallback
+                        namespace: *xIncludeNamespace
+                        description: |
+                          Indicates that including the specified file is optional.
+                          
+                          If the file referenced in [`href`](#attribute:idea-plugin__xi:include__href) is not found and the `xi:fallback`
+                          element
+                          is missing, the plugin will fail to load.
+                        requirement:
+                          required: no
+                        examples:
+                          - |
+                              ```xml
+                              <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+                                ...
+                                <xi:include href="/META-INF/optional-plugin.xml">
+                                  <xi:fallback/>
+                                </xi:include>
+                                ...
+                              </idea-plugin>
+                              ```
+        - element:
+            name: resource-bundle
+            description: |
+              A resource bundle to be used with message key attributes in extension declarations and for
+              [action and group localization](https://plugins.jetbrains.com/docs/intellij/action-system.html#localizing-actions-and-groups).
+              A single [`<idea-plugin>`](#element:idea-plugin) element can contain multiple `<resource-bundle>` elements.
+            requirement:
+              required: no
+            examples:
+              - |
+                To load the content of <path>messages/Bundle.properties</path> bundle, declare:
+                  ```xml
+                  <resource-bundle>messages.Bundle</resource-bundle>
+                  ```
+        - element:
+            name: actions
+            references:
+              - |
+                [Actions](https://plugins.jetbrains.com/docs/intellij/action-system.html)
+            description: |
+              Defines the plugin actions.
+            requirement:
+              required: no
+            attributes:
+              - attribute:
+                  name: resource-bundle
+                  since: "2020.1"
+                  requirement:
+                    required: no
+                  description: |
+                    Defines the dedicated actions resource bundle.
+                    See [Localizing Actions and Groups](https://plugins.jetbrains.com/docs/intellij/action-system.html#localizing-actions-and-groups)
+                    for more details.
+            examples:
+              - |
+                ```xml
+                <actions resource-bundle="messages.ActionsBundle">
+                  <!--
+                  Actions/Groups defined here will use keys
+                  from the ActionsBundle.properties bundle.
+                  -->
+                </actions>
+                ```
+            children:
+              - element: &action
+                  name: action
+                  sdkDocsFixedPath: [idea-plugin, actions, action]
+                  references:
+                    - |
+                      [Registering Actions in plugin.xml](https://plugins.jetbrains.com/docs/intellij/action-system.html#registering-actions-in-pluginxml)
+                  description: |
+                    A single action entry of the [`<actions>`](#element:idea-plugin__actions) implemented by the plugin.
+                    A single `<actions>` element can contain multiple `<action>` elements.
+                  requirement:
+                    required: no
+                  attributes:
+                    - attribute:
+                        name: id
+                        requirement:
+                          required: no
+                          details:
+                            - defaults to the action class short name if not specified
+                        description: |
+                          A unique action identifier.
+                          It is recommended to specify the `id` attribute explicitly.<br/>
+                          The action identifier must be unique across different plugins.
+                          To ensure uniqueness, consider prepending it with the value of the plugin's [`<id>`](#element:idea-plugin__id).
+                    - attribute:
+                        name: class
+                        requirement:
+                          required: yes
+                        description: |
+                          The fully qualified name of the action implementation class.
+                    - attribute:
+                        name: text
+                        requirement:
+                          details:
+                            - |
+                              **required** if the action is not
+                              [localized](https://plugins.jetbrains.com/docs/intellij/action-system.html#localizing-actions-and-groups)
+                        description: |
+                          The default long-version text to be displayed for the action (tooltip for toolbar button or text for menu item).
+                    - attribute:
+                        name: description
+                        requirement:
+                          required: no
+                        description: |
+                          The text which is displayed in the status bar when the action is focused.
+                    - attribute:
+                        name: icon
+                        requirement:
+                          required: no
+                        description: |
+                          The icon that is displayed on the toolbar button or next to the action menu item.
+                          See [Working with Icons](https://plugins.jetbrains.com/docs/intellij/icons.html) for more information
+                          about defining and using icons.
+                    - attribute:
+                        name: use-shortcut-of
+                        requirement:
+                          required: no
+                        description: |
+                          The ID of the action whose keyboard shortcut this action will use.
+
+                  examples:
+                    - |
+                      Action declaring explicit `text`:
+                          ```xml
+                          <action
+                              id="com.example.myframeworksupport.MyAction"
+                              class="com.example.impl.MyAction"
+                              text="Do Action"
+                              description="Do something with the code"
+                              icon="AllIcons.Actions.GC">
+                            <!-- action children elements -->
+                          </action>
+                          ```
+                    - |
+                      Action without the `text` attribute must use the texts from the resource bundle declared with
+                      the [`<resource-bundle>`](#element:idea-plugin__resource-bundle) element,
+                      or the [`resource-bundle`](#attribute:idea-plugin__actions__resource-bundle) attribute of
+                      the [`<actions>`](#element:idea-plugin__actions) element:
+                          ```xml
+                          <action
+                              id="com.example.myframeworksupport.MyAction"
+                              class="com.example.impl.MyAction"
+                              icon="AllIcons.Actions.GC"/>
+                          ```
+                  children:
+                    - element: &addToGroup
+                        name: add-to-group
+                        sdkDocsFixedPath: [idea-plugin, actions, action, add-to-group]
+                        description: |
+                          Specifies that the action should be added to an existing [`<group>`](#element:idea-plugin__actions__group).
+                          A single action can be added to multiple groups.
+                        requirement:
+                          required: no
+                        attributes:
+                          - attribute:
+                              name: group-id
+                              requirement:
+                                required: yes
+                              description: |
+                                Specifies the ID of the [`<group>`](#element:idea-plugin__actions__group) to which the action is added.
+                                The group must be an implementation of the
+                                [`DefaultActionGroup`](%gh-ic%/platform/platform-api/src/com/intellij/openapi/actionSystem/DefaultActionGroup.java){fqn="com.intellij.openapi.actionSystem.DefaultActionGroup"}
+                                class.
+                          - attribute:
+                              name: anchor
+                              requirement:
+                                required: no
+                              description: |
+                                Specifies the position of the action relative to other actions.
+                                Allowed values:
+                                  - `first` - the action is placed as the first in the group
+                                  - `last` _(default)_ - the action is placed as the last in the group
+                                  - `before` - the action is placed before the action specified by the [`relative-to-action`](#attribute:idea-plugin__actions__action__add-to-group) attribute
+                                  - `after` - the action is placed after the action specified by the [`relative-to-action`](#attribute:idea-plugin__actions__action__add-to-group) attribute
+                          - attribute:
+                              name: relative-to-action
+                              requirement:
+                                details:
+                                  - |
+                                    **required** if [`anchor`](#attribute:idea-plugin__actions__action__anchor) is `before`/`after`
+                              description: The action before or after which the current action is inserted.
+                        examples:
+                          - |
+                            ```xml
+                              <add-to-group
+                                  group-id="ToolsMenu"
+                                  anchor="after"
+                                  relative-to-action="GenerateJavadoc"/>
+                            ```
+                    - element:
+                        name: keyboard-shortcut
+                        sdkDocsFixedPath: [idea-plugin, actions, action, keyboard-shortcut]
+                        description: |
+                          Specifies the keyboard shortcut for the action.
+                          A single action can have several keyboard shortcuts.
+                        requirement:
+                          required: no
+                        attributes:
+                          - attribute:
+                              name: keymap
+                              requirement:
+                                required: yes
+                              description: |
+                                Specifies the keymap for which the action shortcut is active.
+                                IDs of the standard keymaps are defined as constants in the
+                                [KeymapManager](%gh-ic%/platform/platform-api/src/com/intellij/openapi/keymap/KeymapManager.java){fqn="com.intellij.openapi.keymap.KeymapManager"}
+                                class.
+                          - attribute:
+                              name: first-keystroke
+                              requirement:
+                                required: yes
+                              description: |
+                                Specifies the first keystroke of the action shortcut.
+                                The keystrokes are specified according to the regular Swing rules.
+                          - attribute:
+                              name: second-keystroke
+                              requirement:
+                                required: no
+                              description: Specifies the second keystroke of the action shortcut.
+                          - attribute:
+                              name: remove
+                              requirement:
+                                required: no
+                              description: Removes a shortcut from the specified action.
+                          - attribute:
+                              name: replace-all
+                              requirement:
+                                required: no
+                              description: |
+                                Removes all keyboard and mouse shortcuts from the specified action before adding
+                                the specified shortcut.
+                        examples:
+                          - |
+                            Add the first and second keystrokes to all keymaps:
+                                ```xml
+                                <keyboard-shortcut
+                                    keymap="$default"
+                                    first-keystroke="control alt G"
+                                    second-keystroke="C"/>
+                                ```
+                          - |
+                            Remove the given shortcut from the _Mac OS X_ keymap:
+                                ```xml
+                                <keyboard-shortcut
+                                    keymap="Mac OS X"
+                                    first-keystroke="control alt G"
+                                    second-keystroke="C"
+                                    remove="true"/>
+                                ```
+                          - |
+                            Remove all existing keyboard and mouse shortcuts and register one for the _Mac OS X 10.5+_ keymap only:
+                                ```xml
+                                <keyboard-shortcut
+                                    keymap="Mac OS X 10.5+"
+                                    first-keystroke="control alt G"
+                                    second-keystroke="C"
+                                    replace-all="true"/>
+                                ```
+                    - element:
+                        name: mouse-shortcut
+                        sdkDocsFixedPath: [idea-plugin, actions, action, mouse-shortcut]
+                        description: |
+                          Specifies the mouse shortcut for the action.
+                          A single action can have several mouse shortcuts.
+                        requirement:
+                          required: no
+                        attributes:
+                          - attribute:
+                              name: keymap
+                              requirement:
+                                required: yes
+                              description: |
+                                Specifies the keymap for which the action shortcut is active.
+                                IDs of the standard keymaps are defined as constants in the
+                                [KeymapManager](%gh-ic%/platform/platform-api/src/com/intellij/openapi/keymap/KeymapManager.java){fqn="com.intellij.openapi.keymap.KeymapManager"}
+                                class.
+                          - attribute:
+                              name: keystroke
+                              requirement:
+                                required: yes
+                              description: |
+                                Specifies the clicks and modifiers for the action.
+                                It is defined as a sequence of words separated by spaces:
+                                  - modifier keys: `shift`, `control`, `meta`, `alt`, `altGraph`
+                                  - mouse buttons: `button1`, `button2`, `button3`
+                                  - button double-click: `doubleClick`
+                          - attribute:
+                              name: remove
+                              requirement:
+                                required: no
+                              description: Removes a shortcut from the specified action.
+                          - attribute:
+                              name: replace-all
+                              requirement:
+                                required: no
+                              description: |
+                                Removes all keyboard and mouse shortcuts from the specified action before adding
+                                the specified shortcut.
+                        examples:
+                          - |
+                            Add the shortcut to all keymaps:
+                                ```xml
+                                <mouse-shortcut
+                                    keymap="$default"
+                                    keystroke="control button3 doubleClick"/>
+                                ```
+                          - |
+                            Remove the given shortcut from the _Mac OS X_ keymap:
+                                ```xml
+                                <mouse-shortcut
+                                    keymap="Mac OS X"
+                                    keystroke="control button3 doubleClick"
+                                    remove="true"/>
+                                ```
+                          - |
+                            Remove all existing keyboard and mouse shortcuts and register one for the _Mac OS X 10.5+_ keymap only:
+                                ```xml
+                                <mouse-shortcut
+                                    keymap="Mac OS X 10.5+"
+                                    keystroke="control button3 doubleClick"
+                                    replace-all="true"/>
+                                ```
+                    - element: &overrideText
+                        name: override-text
+                        sdkDocsFixedPath: [idea-plugin, actions, action, override-text]
+                        since: "2020.1"
+                        description: |
+                          Defines an alternate menu action or group text depending on context: menu location, toolbar, and other.
+                        sdkDocsSupportDetails: |
+                          2020.1+ for actions<br/>
+                          2020.3+ for groups
+                        requirement:
+                          required: no
+                        attributes:
+                          - attribute:
+                              name: place
+                              requirement:
+                                required: yes
+                              description: Declares where the alternate text should be used.
+                          - attribute:
+                              name: text
+                              requirement:
+                                details:
+                                  - |
+                                    `text` or [`use-text-of-place`](#attribute:idea-plugin__actions__action__override-text__use-text-of-place) is **required**
+                              description: Defines the text to be displayed for the action.
+                          - attribute:
+                              name: use-text-of-place
+                              requirement:
+                                details:
+                                  - |
+                                    [`text`](#attribute:idea-plugin__actions__action__override-text__text) or `use-text-of-place` is **required**
+                              description: Defines a location whose text should be displayed for this action.
+                        examples:
+                          - |
+                            Explicitly overridden text:
+                                ```xml
+                                <!--
+                                Default action text:
+                                "Garbage Collector: Collect _Garbage"
+                                -->
+                                <action
+                                    class="com.example.CollectGarbage"
+                                    text="Garbage Collector: Collect _Garbage"
+                                    ...>
+                                  <!--
+                                  Alternate text displayed anywhere in the main menu:
+                                  "Collect _Garbage"
+                                  -->
+                                  <override-text
+                                      place="MainMenu"
+                                      text="Collect _Garbage"/>
+                                </action>
+                                ```
+                          - |
+                            Overridden text reused from the `MainMenu` place:
+                                ```xml
+                                <override-text
+                                    place="EditorPopup"
+                                    use-text-of-place="MainMenu"/>
+                                ```
+                    - element:
+                        name: synonym
+                        sdkDocsFixedPath: [idea-plugin, actions, action, synonym]
+                        since: "2020.3"
+                        description: |
+                          Defines an alternative text for searching the action in <ui-path>Help | Find Action...</ui-path> or
+                          <ui-path>Navigate | Search Everywhere</ui-path> popups.
+                          A single action can have multiple synonyms.
+                        requirement:
+                          required: no
+                        attributes:
+                          - attribute:
+                              name: key
+                              requirement:
+                                details:
+                                  - |
+                                    `key` or [`text`](#attribute:idea-plugin__actions__action__synonym__text) is **required**
+                              description: The key of the synonym text provided in a [message bundle](https://plugins.jetbrains.com/docs/intellij/action-system.html#localizing-actions-and-groups).
+                          - attribute:
+                              name: text
+                              requirement:
+                                details:
+                                  - |
+                                    [`key`](#attribute:idea-plugin__actions__action__synonym__key) or `text` is **required**
+                              description: The synonym text.
+                        examples:
+                          - |
+                            ```xml
+                            <!-- Default action text: Delete Element -->
+                            <synonym key="my.action.text.remove.element"/>
+                            <synonym text="Remove Element"/>
+                            ```
+                    - element:
+                        name: abbreviation
+                        sdkDocsFixedPath: [idea-plugin, actions, action, abbreviation]
+                        description: |
+                          Defines an abbreviation for searching the action in <ui-path>Help | Find Action...</ui-path> or
+                          <ui-path>Navigate | Search Everywhere</ui-path> popups.
+                          A single action can have multiple abbreviations.
+                        requirement:
+                          required: no
+                        attributes:
+                          - attribute:
+                              name: value
+                              requirement:
+                                required: yes
+                              description: The abbreviation value.
+                        examples:
+                          - |
+                            ```xml
+                            <!-- Default action text: UI Inspector -->
+                            <abbreviation value="uii"/>
+                            ```
+              - element:
+                  name: group
+                  references:
+                    - |
+                      [Grouping Actions](https://plugins.jetbrains.com/docs/intellij/action-system.html#grouping-actions)
+                  description: |
+                    Defines an action group.
+                    The [`<action>`](#element:idea-plugin__actions__action), `<group>` and [`<separator>`](#element:idea-plugin__actions__group__separator) elements defined inside the group are automatically included in it.
+                    The `<group>` elements can be nested.
+                  requirement:
+                    required: no
+                  attributes:
+                    - attribute:
+                        name: id
+                        requirement:
+                          required: yes
+                        description: |
+                          A unique group identifier.
+                          The group identifier must be unique between different plugins.
+                          Thus, it is recommended to prepend it with the value of the plugin [`<id>`](#element:idea-plugin__id).
+                    - attribute:
+                        name: class
+                        requirement:
+                          required: no
+                        description: |
+                          The fully qualified name of the group implementation class.
+                          If not specified,
+                          [`DefaultActionGroup`](%gh-ic%/platform/platform-api/src/com/intellij/openapi/actionSystem/DefaultActionGroup.java){fqn="com.intellij.openapi.actionSystem.DefaultActionGroup"}
+                          is used.
+                    - attribute:
+                        name: text
+                        requirement:
+                          details:
+                            - |
+                              **required** if the [`popup`](#attribute:idea-plugin__actions__group__popup) is `true` and the group is not
+                              [localized](https://plugins.jetbrains.com/docs/intellij/action-system.html#localizing-actions-and-groups)
+                        description: |
+                          The default long-version text to be displayed for the group (text for the menu item showing the submenu).
+                    - attribute:
+                        name: description
+                        requirement:
+                          required: no
+                        description: |
+                          The text which is displayed in the status bar when the group is focused.
+                    - attribute:
+                        name: icon
+                        requirement:
+                          required: no
+                        description: |
+                          The icon that is displayed next to the group menu item.
+                          See [Working with Icons](https://plugins.jetbrains.com/docs/intellij/icons.html) for more information about defining
+                          and using icons.
+                    - attribute:
+                        name: popup
+                        requirement:
+                          required: no
+                        description: |
+                          Boolean flag defining whether the group items are presented in the submenu popup.
+                            - `true` - group actions are placed in a submenu
+                            - `false` _(default)_ - actions are displayed as a section of the same menu delimited by separators
+                    - attribute:
+                        name: compact
+                        requirement:
+                          required: no
+                        description: |
+                          Boolean flag defining whether disabled actions within this group are hidden.
+                          If the value is:
+                            - `true` - disabled actions are hidden
+                            - `false` _(default)_ - disabled actions are visible
+                    - attribute:
+                        name: use-shortcut-of
+                        requirement:
+                          required: no
+                        description: |
+                          The ID of the action whose keyboard shortcut this group will use.
+                    - attribute:
+                        name: searchable
+                        since: "2020.3"
+                        requirement:
+                          required: no
+                        description: |
+                          Boolean flag defining whether the group is displayed in <ui-path>Help&nbsp;|&nbsp;Find Action...</ui-path>
+                          or <ui-path>Navigate | Search Everywhere</ui-path> popups.
+                        defaultValue: |
+                          `true`
+
+                  examples:
+                    - |
+                      Group declaring explicit [`text`](#attribute:idea-plugin__actions__group__text):
+                          ```xml
+                          <group
+                              id="com.example.myframeworksupport.MyGroup"
+                              popup="true"
+                              text="My Tools">
+                            <!-- group children elements -->
+                          </group>
+                          ```
+                    - |
+                      A popup group without the [`text`](#attribute:idea-plugin__actions__group__text) attribute must use the texts from the resource bundle declared with
+                      the [`<resource-bundle>`](#element:idea-plugin__resource-bundle) element,
+                      or the [`resource-bundle`](#attribute:idea-plugin__actions__resource-bundle) attribute
+                      of the [`<actions>`](#element:idea-plugin__actions) element:
+                          ```xml
+                          <group
+                              id="com.example.myframeworksupport.MyGroup"
+                              popup="true"/>
+                          ```
+                    - |
+                      A group with custom implementation and icon:
+                          ```xml
+                          <group
+                              id="com.example.myframeworksupport.MyGroup"
+                              class="com.example.impl.MyGroup"
+                              icon="AllIcons.Actions.GC"/>
+                          ```
+                  containsItself: true
+                  children:
+                    - element: *action
+                    - element: *addToGroup
+                    - element: *overrideText
+                    - element: &reference
+                        name: reference
+                        sdkDocsFixedPath: [idea-plugin, actions, group, reference]
+                        description: |
+                          Allows adding an existing action to the group.
+                          The element can be used directly under the [`<actions>`](#element:idea-plugin__actions) element, or in
+                          the [`<group>`](#element:idea-plugin__actions__group) element.
+                        requirement:
+                          required: no
+                        attributes:
+                          - attribute:
+                              name: ref
+                              requirement:
+                                required: yes
+                              description: The ID of the action to add to a group.
+                          - attribute:
+                              name: id
+                              requirement:
+                                required: no
+                              deprecationNote: |
+                                Use [`ref`](#attribute:idea-plugin__actions__reference__ref) instead.
+                              description: The ID of the action to add to a group.
+                        examples:
+                          - |
+                            An action reference in a group:
+                                ```xml
+                                <group ...>
+                                  <reference ref="EditorCopy"/>
+                                </group>
+                                ```
+                          - |
+                            An action reference registered directly in the [`<actions>`](#element:idea-plugin__actions) element:
+                                ```xml
+                                <actions>
+                                  <reference ref="com.example.MyAction">
+                                    <add-to-group group-id="ToolsMenu"/>
+                                  </reference>
+                                </group>
+                                ```
+                        children:
+                          - element: *addToGroup
+                    - element:
+                        name: separator
+                        description: |
+                          Defines a separator between actions in a group.
+                          The element can be used directly under the [`<actions>`](#element:idea-plugin__actions) element with the child
+                          [`<add-to-group>`](#element:idea-plugin__actions__action__add-to-group) element defining the target group, or in the
+                          [`<group>`](#element:idea-plugin__actions__group) element.
+                        requirement:
+                          required: no
+                        attributes:
+                          - attribute:
+                              name: text
+                              requirement:
+                                required: no
+                              description: |
+                                Text displayed on the separator.
+                                Separator text is displayed only in specific contexts such as popup menus, toolbars, etc.
+                          - attribute:
+                              name: key
+                              requirement:
+                                required: no
+                              description: |
+                                The [message key](https://plugins.jetbrains.com/docs/intellij/action-system.html#localizing-actions-and-groups) for the separator text.
+                                The message bundle for use should be registered via the [`resource-bundle`](#attribute:idea-plugin__actions__resource-bundle) attribute of
+                                the [`<actions>`](#element:idea-plugin__actions) element.
+                                The attribute is ignored if the [`text`](#attribute:idea-plugin__group__separator) attribute is specified.
+                        examples:
+                          - |
+                            A separator dividing two actions in a group:
+                                ```xml
+                                <group ...>
+                                  <action .../>
+                                  <separator/>
+                                  <action .../>
+                                </group>
+                                ```
+                          - |
+                            A separator registered directly in the [`<actions>`](#element:idea-plugin__actions) element:
+                                ```xml
+                                <actions>
+                                  <separator>
+                                    <add-to-group
+                                        group-id="com.example.MyGroup"
+                                        anchor="first"/>
+                                  </separator>
+                                </group>
+                                ```
+                          - |
+                            A separator with a defined text:
+                                ```xml
+                                <separator text="Group By"/>
+                                ```
+
+                          - |
+                            A separator with a text defined by a message key:
+                                ```xml
+                                <separator key="message.key"/>
+                                ```
+                        children:
+                          - element: *addToGroup
+              - element: *reference
+        - element:
+            name: applicationListeners
+            since: "2019.3"
+            references:
+              - |
+                [Defining Application-Level Listeners](https://plugins.jetbrains.com/docs/intellij/plugin-listeners.html#defining-application-level-listeners)
+            description: |
+              Defines the application-level listeners.
+            requirement:
+              required: no
+            children:
+              - element: &listener
+                  name: listener
+                  sdkDocsFixedPath: [idea-plugin, applicationListeners, listener]
+                  since: "2019.3"
+                  references:
+                    - |
+                      [Listeners](https://plugins.jetbrains.com/docs/intellij/plugin-listeners.html)
+                  description: |
+                    Defines a single application or project-level listener.
+                    A single [`<applicationListeners>`](#element:idea-plugin__applicationListeners) or
+                    [`<projectListeners>`](#element:idea-plugin__projectListeners) can contain multiple `<listener>` elements.
+                  requirement:
+                    required: no
+                  attributes:
+                    - attribute:
+                        name: topic
+                        requirement:
+                          required: yes
+                        description: |
+                          The fully qualified name of the listener interface corresponding to the type of received events.
+                    - attribute:
+                        name: class
+                        requirement:
+                          required: yes
+                        description: |
+                          The fully qualified name of the class implementing the listener interface that receives and handles the events.
+                    - attribute:
+                        name: os
+                        since: "2020.1"
+                        requirement:
+                          required: no
+                        description: |
+                          Restricts listener instantiation to a specific operating system.
+                          Allowed values:
+                            - `freebsd`
+                            - `mac`
+                            - `linux`
+                            - `unix`
+                            - `windows`
+                    - attribute:
+                        name: activeInTestMode
+                        requirement:
+                          required: no
+                        description: |
+                          Boolean flag defining whether the listener should be instantiated in test mode.
+                        defaultValue: |
+                          `true`
+                    - attribute:
+                        name: activeInHeadlessMode
+                        requirement:
+                          required: no
+                        description: |
+                          Boolean flag defining whether the listener should be instantiated in headless mode.
+                        defaultValue: |
+                          `true`
+                  examples:
+                    - |
+                      ```xml
+                      <listener
+                          topic="com.intellij.ide.AppLifecycleListener"
+                          class="com.example.MyListener"
+                          os="mac"
+                          activeInTestMode="false"/>
+                      ```
+        - element:
+            name: projectListeners
+            since: "2019.3"
+            references:
+              - |
+                [Defining Project-Level Listeners](https://plugins.jetbrains.com/docs/intellij/plugin-listeners.html#defining-project-level-listeners)
+            description: |
+              Defines the project-level listeners.
+            requirement:
+              required: no
+            children:
+              - element: *listener
+        - element:
+            name: application-components
+            deprecatedSince: &componentsDeprecatedSince "2020.1"
+            deprecationNote: &componentsDeprecationNote |
+              Do not use it in new plugins.
+              See [Components](https://plugins.jetbrains.com/docs/intellij/plugin-components.html) for the migration guide.
+            description: Defines a list of application [components](https://plugins.jetbrains.com/docs/intellij/plugin-components.html).
+            requirement:
+              required: no
+            children:
+              - element: &component
+                  name: component
+                  sdkDocsFixedPath: [idea-plugin, application-components, component]
+                  deprecatedSince: *componentsDeprecatedSince
+                  deprecationNote: *componentsDeprecationNote
+                  description: |
+                    Defines a single application, project, or
+                    module [component](https://plugins.jetbrains.com/docs/intellij/plugin-components.html).
+                    A single [`<application-components>`](#element:idea-plugin__application-components),
+                    [`<project-components>`](#element:idea-plugin__project-components), or [`<module-components>`](#element:idea-plugin__module-components)
+                    element can contain multiple `<component>` elements.
+                  requirement:
+                    required: no
+                  children:
+                    - element:
+                        name: implementation-class
+                        sdkDocsFixedPath: [idea-plugin, application-components, component, implementation-class]
+                        deprecatedSince: *componentsDeprecatedSince
+                        deprecationNote: *componentsDeprecationNote
+                        description: The fully qualified name of the component implementation class.
+                        requirement:
+                          required: yes
+                    - element:
+                        name: interface-class
+                        sdkDocsFixedPath: [idea-plugin, application-components, component, interface-class]
+                        deprecatedSince: *componentsDeprecatedSince
+                        deprecationNote: *componentsDeprecationNote
+                        description: |
+                          The fully qualified name of the component interface class. If not specified, the interface will be the same as
+                          defined by [`<implementation-class>`](#element:idea-plugin__application-components__component__interface-class) element.
+                        requirement:
+                          required: no
+                    - element:
+                        name: headless-implementation-class
+                        sdkDocsFixedPath: [idea-plugin, application-components, component, headless-implementation-class]
+                        deprecatedSince: *componentsDeprecatedSince
+                        deprecationNote: *componentsDeprecationNote
+                        description: |
+                          The fully qualified name of the component implementation class to be used when the IDE runs in headless mode.
+                        requirement:
+                          required: no
+                    - element:
+                        name: option
+                        sdkDocsFixedPath: [idea-plugin, application-components, component, option]
+                        deprecatedSince: *componentsDeprecatedSince
+                        deprecationNote: *componentsDeprecationNote
+                        description: |
+                          Allows to provide additional component options.
+                          A single [`<component>`](#element:idea-plugin__application-components__component) element can contain multiple `<option>` elements.
+                        requirement:
+                          required: no
+                        attributes:
+                          - attribute:
+                              name: name
+                              requirement:
+                                required: yes
+                              description: Option name.
+                          - attribute:
+                              name: value
+                              requirement:
+                                required: yes
+                              description: Option value.
+
+                    - element:
+                        name: loadForDefaultProject
+                        sdkDocsFixedPath: [idea-plugin, application-components, component, loadForDefaultProject]
+                        deprecatedSince: *componentsDeprecatedSince
+                        deprecationNote: *componentsDeprecationNote
+                        description: |
+                          If present, the component is instantiated also for the default project. It takes effect only when used inside
+                          [`<project-components>`](#element:idea-plugin__project-components) element.
+                        requirement:
+                          required: no
+                    - element:
+                        name: skipForDefaultProject
+                        sdkDocsFixedPath: [idea-plugin, application-components, component, skipForDefaultProject]
+                        deprecatedSince: *componentsDeprecatedSince
+                        deprecationNote: *componentsDeprecationNote
+                        description: |
+                          In the past, if present, the component was not loaded for the default project.
+                          
+                          Currently, project components aren't loaded in the default project by default, so this element has no effect.
+                          Use [`<loadForDefaultProject>`](#element:idea-plugin__application-components__component__loadForDefaultProject)
+                          if it is required to load a component in the default project.
+                        requirement:
+                          required: no
+        - element:
+            name: *xIncludeName
+            namespace: *xIncludeNamespace
+            description: |
+              Allows including content of another plugin descriptor in this descriptor with
+              [XInclude](http://www.w3.org/2001/XInclude) standard.
+            requirement:
+              required: no
+            attributes:
+              - attribute:
+                  name: href
+                  requirement:
+                    required: no
+                  description: Path of the plugin descriptor file to include.
+              - attribute:
+                  name: xpointer
+                  requirement:
+                    required: no
+                  deprecatedSince: '2021.2'
+                  deprecationNote: |
+                    The `xpointer` attribute must be `xpointer(/idea-plugin/*)` or not defined.
+                  description: Elements pointer to include.
+                  defaultValue: |
+                    `xpointer(/idea-plugin/*)`
+            examples:
+              - |
+                Given a plugin descriptor:
+                
+                ```xml
+                <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+                  <id>com.example.myplugin</id>
+                  <name>Example</name>
+                  <xi:include href="/META-INF/another-plugin.xml"/>
+                  ...
+                </idea-plugin>
+                ```
+                
+                and <path>/META-INF/another-plugin.xml</path>:
+                
+                ```xml
+                <idea-plugin>
+                  <extensions>...</extensions>
+                  <actions>...</actions>
+                </idea-plugin>
+                ```
+                
+                The effective plugin descriptor loaded to memory will contain the following elements:
+                
+                ```xml
+                <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+                  <id>com.example.myplugin</id>
+                  <name>Example</name>
+                  <extensions>...</extensions>
+                  <actions>...</actions>
+                  ...
+                </idea-plugin>
+                ```
+            children:
+              - element: *xIncludeFallback
+        - element:
+            name: project-components
+            deprecatedSince: *componentsDeprecatedSince
+            deprecationNote: *componentsDeprecationNote
+            description: Defines a list of project [components](https://plugins.jetbrains.com/docs/intellij/plugin-components.html).
+            requirement:
+              required: no
+            children:
+              - element: *component
+        - element:
+            name: module-components
+            deprecatedSince: *componentsDeprecatedSince
+            deprecationNote: *componentsDeprecationNote
+            description: Defines a list of module [components](https://plugins.jetbrains.com/docs/intellij/plugin-components.html).
+            requirement:
+              required: no
+            children:
+              - element: *component

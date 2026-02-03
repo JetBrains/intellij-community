@@ -1,0 +1,1 @@
+class f<caret>oo

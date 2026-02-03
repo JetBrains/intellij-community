@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" visibility="public">
+  <dependencies>
+    <module name="intellij.java.debugger"/>
+    <module name="intellij.java"/>
+    <module name="intellij.java.execution"/>
+    <module name="intellij.java.indexing"/>
+    <module name="intellij.java.resources"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.debugger.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.java.compiler"/>
+    <module name="intellij.java.compiler.impl"/>
+    <module name="intellij.jsp"/>
+    <module name="intellij.platform.jps.build"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.impl.refactorings"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.java.debugger.memory.agent"/>
+    <module name="intellij.platform.core.ui"/>
+    <!--todo-->
+    <module name="intellij.java.debugger.impl.shared"/>
+    <module name="intellij.java.codeserver.highlighting"/>
+    <module name="intellij.xml.psi"/>
+    <module name="intellij.platform.debugger.impl.shared"/>
+    <module name="fleet.rpc"/>
+    <module name="intellij.platform.rpc"/>
+
+    <plugin id="com.intellij.modules.java-capable"/>
+    <module name="intellij.platform.backend"/>
+
+  </dependencies>
+
+  <xi:include href="/META-INF/java-debugger.xml"/>
+</idea-plugin>

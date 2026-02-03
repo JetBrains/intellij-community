@@ -1,0 +1,31 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.scopes"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <usagePresentationProvider implementation="com.intellij.platform.find.UsageInfoModelPresentationProvider"/>
+
+    <!--suppress PluginXmlRegistrationCheck -->
+    <applicationService serviceInterface="com.intellij.find.impl.FindAndReplaceExecutor" open="true"
+                        serviceImplementation="com.intellij.platform.find.FindAndReplaceExecutorImpl"/>
+
+    <registryKey key="find.in.files.split"
+                 defaultValue="true"
+                 description="Enables the 'Find in Files' implementation, optimized to support both remote development workflows and monolithic setups."/>
+
+    <registryKey key="find.in.files.split.lazy.preview"
+                 defaultValue="false"
+                 description="Loading content for 'Find in Files' results is deferred until the user navigates to the result."/>
+  </extensions>
+
+</idea-plugin>

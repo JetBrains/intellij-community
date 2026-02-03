@@ -1,0 +1,7 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.vcs.log"/>
+    <module name="intellij.platform.vcs.dvcs.impl.shared"/>
+  </dependencies>
+</idea-plugin>

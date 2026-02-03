@@ -1,0 +1,13 @@
+<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <g fill="#7F8B91" fill-opacity=".9" fill-rule="evenodd" transform="rotate(-135 7.707 7.293)">
+    <rect width="2" height="4" x="2.471" y="1.471" opacity=".93" transform="rotate(-45 3.471 3.471)"/>
+    <rect width="4" height="2" y="6" opacity=".78"/>
+    <rect width="2" height="4" x="2.471" y="8.531" opacity=".69" transform="rotate(45 3.471 10.531)"/>
+    <rect width="2" height="4" x="6" y="10" opacity=".62"/>
+    <rect width="2" height="4" x="9.531" y="8.531" opacity=".48" transform="rotate(-45 10.531 10.531)"/>
+    <rect width="4" height="2" x="10" y="6" opacity=".38"/>
+    <rect width="2" height="4" x="9.531" y="1.471" opacity=".3" transform="rotate(45 10.531 3.471)"/>
+    <rect width="2" height="4" x="6"/>
+  </g>
+</svg>

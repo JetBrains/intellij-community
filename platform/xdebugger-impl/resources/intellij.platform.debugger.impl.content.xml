@@ -1,0 +1,498 @@
+<!--
+  This file contains extensions, actions, services, etc. without v2 dependencies,
+  so it can be included in Analyzer dependencies where V2 is not yet supported.
+
+  All new extensions, actions, services, extension points, etc. should be added to this file.
+-->
+<idea-plugin>
+  <applicationListeners>
+    <listener topic="com.intellij.openapi.project.ProjectManagerListener"
+              class="com.intellij.xdebugger.impl.ui.DebuggerFocusManager"
+              os="windows"
+              activeInHeadlessMode="false"/>
+  </applicationListeners>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.debuggerSupport" interface="com.intellij.xdebugger.impl.DebuggerSupport" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.nodeLinkActionProvider" interface="com.intellij.xdebugger.impl.collection.visualizer.XDebuggerNodeLinkActionProvider" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.xdebugger.attachHostProvider" interface="com.intellij.xdebugger.attach.XAttachHostProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.attachDebuggerProvider" interface="com.intellij.xdebugger.attach.XAttachDebuggerProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.inlineValuePopupProvider" interface="com.intellij.xdebugger.impl.inline.InlineValuePopupProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.attachHostSettingsProvider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachHostSettingsProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.dialog.item.presentation.provider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogItemPresentationProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.dialog.presentation.provider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogPresentationProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.dialog.process.view.provider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachToProcessViewProvider" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.xdebugger.hotSwapUiExtension" interface="com.intellij.xdebugger.impl.hotswap.HotSwapUiExtension" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.xdebugger.customEvaluateHandler"
+                    interface="com.intellij.xdebugger.impl.actions.handlers.XDebuggerCustomEvaluateHandler" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.xdebugger.customMuteBreakpointHandler"
+                    interface="com.intellij.xdebugger.impl.actions.handlers.XDebuggerCustomMuteBreakpointHandler" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <colorSettingsPage implementation="com.intellij.xdebugger.impl.ui.DebuggerColorsPage"/>
+
+    <applicationService serviceInterface="com.intellij.xdebugger.settings.XDebuggerSettingsManager"
+                        serviceImplementation="com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl"/>
+    <applicationSettings service="com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl"/>
+
+    <applicationService serviceInterface="com.intellij.xdebugger.XDebuggerUtil" open="true"
+                        serviceImplementation="com.intellij.xdebugger.impl.XDebuggerUtilImpl"/>
+
+    <execution.inlineResumeCreator implementation="com.intellij.xdebugger.impl.runToolbar.XDebuggerInlineResumeCreator" order="first"/>
+    <projectService serviceInterface="com.intellij.xdebugger.XDebuggerManager"
+                    serviceImplementation="com.intellij.xdebugger.impl.XDebuggerManagerImpl"
+                    preload="notLightEdit"/>
+    <ide.dynamicPluginVetoer implementation="com.intellij.xdebugger.impl.XDebuggerManagerImpl$XDebuggerPluginVetoer"/>
+
+    <projectService serviceImplementation="com.intellij.xdebugger.impl.inline.DebuggerInlayListener"/>
+
+    <pathMacroFilter implementation="com.intellij.xdebugger.impl.XDebuggerHistoryManager$XDebuggerHistoryPathMacroFilter"/>
+
+    <applicationConfigurable groupId="build" dynamic="true" key="debugger.configurable.display.name" bundle="messages.XDebuggerBundle"
+                             id="project.propDebugger" provider="com.intellij.xdebugger.impl.settings.DebuggerConfigurableProvider"/>
+
+    <customizableActionGroupProvider implementation="com.intellij.xdebugger.impl.ui.XDebugTabCustomizableActionGroupProvider"/>
+
+    <xdebugger.breakpointGroupingRule implementation="com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointGroupingByTypeRule"/>
+    <xdebugger.breakpointGroupingRule implementation="com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule"/>
+    <xdebugger.breakpointGroupingRule implementation="com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointCustomGroupingRule"/>
+
+    <xdebugger.inlineValuePopupProvider implementation="com.intellij.xdebugger.impl.InlineTextValuePopupProvider"/>
+
+    <xdebugger.configurableProvider implementation="com.intellij.xdebugger.impl.settings.XDebuggerConfigurableProvider" order="first"/>
+
+    <executor implementation="com.intellij.execution.executors.DefaultDebugExecutor" order="first,after run" id="debug"/>
+
+    <runToolbarProcess implementation="com.intellij.xdebugger.impl.runToolbar.RunToolbarDebugProcess"/>
+    <runToolbarProcess implementation="com.intellij.xdebugger.impl.runToolbar.RunToolbarAttachDebugProcess"/>
+
+    <copyPastePreProcessor implementation="com.intellij.xdebugger.impl.ui.DebuggerCopyPastePreprocessor"/>
+
+    <virtualFileSystem key="lazyAttachVfs" implementationClass="com.intellij.xdebugger.attach.fs.LazyAttachVirtualFS"/>
+
+    <statistics.validation.customValidationRule implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointsUtilValidator"/>
+
+    <statistics.projectUsagesCollector implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointsStatisticsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.breakpoints.BreakpointsUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.evaluate.DebuggerEvaluationStatisticsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.ui.XDebugThreadsFramesViewChangeCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.ui.attach.dialog.statistics.AttachDialogStatisticsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.ui.visualizedtext.TextVisualizerStatisticsCollector"/>
+
+    <editorActionHandler action="EditorUp" implementationClass="com.intellij.xdebugger.impl.actions.handlers.UpHandler"
+                         id="smart-step-into-up"/>
+    <editorActionHandler action="EditorDown" implementationClass="com.intellij.xdebugger.impl.actions.handlers.DownHandler"
+                         id="smart-step-into-down"/>
+    <editorActionHandler action="EditorLeft" implementationClass="com.intellij.xdebugger.impl.actions.handlers.LeftHandler"
+                         id="smart-step-into-left"/>
+    <editorActionHandler action="PrevParameter" implementationClass="com.intellij.xdebugger.impl.actions.handlers.LeftHandler"
+                         id="smart-step-into-previous"/>
+    <editorActionHandler action="EditorRight" implementationClass="com.intellij.xdebugger.impl.actions.handlers.RightHandler"
+                         id="smart-step-into-right"/>
+    <editorActionHandler action="NextParameter" implementationClass="com.intellij.xdebugger.impl.actions.handlers.RightHandler"
+                         id="smart-step-into-next"/>
+    <editorActionHandler action="EditorEnter" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebugSmartStepIntoEnterHandler"
+                         order="first" id="smart-step-into-enter"/>
+    <editorActionHandler action="EditorEscape" implementationClass="com.intellij.xdebugger.impl.actions.handlers.EscHandler"
+                         order="before hide-search" id="smart-step-into-escape"/>
+    <applicationService serviceImplementation="com.intellij.xdebugger.memory.component.MemoryViewManager"/>
+
+    <xdebugger.dialog.item.presentation.provider implementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogDefaultItemPresentationProvider"/>
+    <xdebugger.dialog.presentation.provider implementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogDefaultPresentationProvider"/>
+
+    <xdebugger.dialog.process.view.provider implementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachToRemoteProcessViewProvider" />
+
+    <projectService serviceImplementation="com.intellij.xdebugger.memory.component.InstancesTracker" />
+
+    <projectService serviceImplementation="com.intellij.xdebugger.impl.frame.XDebuggerExecutionStackDescriptionService" open="true" />
+    <postStartupActivity implementation="com.intellij.xdebugger.impl.hotswap.HotSwapManagerInitActivity"/>
+    <projectService serviceInterface="com.intellij.xdebugger.hotswap.HotSwapSessionManager"
+                    serviceImplementation="com.intellij.xdebugger.impl.hotswap.HotSwapSessionManagerImpl"/>
+
+    <titleInfoProvider implementation="com.intellij.xdebugger.impl.ui.DebuggerTitleInfoProvider"/>
+    <notificationGroup id="Debugger messages" displayType="TOOL_WINDOW" toolWindowId="Debug" isLogByDefault="false" bundle="messages.XDebuggerBundle" key="notification.group.debugger.messages"/>
+    <notificationGroup id="HotSwap Messages" displayType="BALLOON" bundle="messages.XDebuggerBundle" key="notification.group.debugger.hotswap.messages" isLogByDefault="false"/>
+    <notificationGroup id="Breakpoint hit" displayType="NONE" toolWindowId="Debug" isLogByDefault="false" bundle="messages.XDebuggerBundle" key="notification.group.breakpoint.hit"/>
+    <notificationGroup id="Attach to Process action" displayType="BALLOON" bundle="messages.XDebuggerBundle" key="notification.group.attach.to.process"/>
+
+    <advancedSetting id="debugger.max.recent.expressions" default="50"
+                     groupKey="group.advanced.settings.debugger" bundle="messages.XDebuggerBundle"/>
+    <advancedSetting id="debugger.inlay.run.to.cursor" default="true"
+                     groupKey="group.advanced.settings.debugger" bundle="messages.XDebuggerBundle"/>
+
+    <projectService serviceInterface="com.intellij.xdebugger.impl.RunToCursorService" open="true"
+                    serviceImplementation="com.intellij.xdebugger.impl.DefaultRunToCursorService"/>
+
+    <statistics.applicationUsagesCollector implementation="com.intellij.xdebugger.impl.settings.XDebuggerSettingsStatisticsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.XDebuggerPerformanceCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.hotswap.HotSwapStatistics"/>
+
+    <applicationService serviceInterface="com.intellij.xdebugger.attach.XAttachRecentItemsMatcher" open="true"
+                        serviceImplementation="com.intellij.xdebugger.impl.actions.DefaultAttachRecentItemsMatcher"/>
+
+    <gutterMarkPreprocessor implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointGutterIconMerge"/>
+
+    <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.HtmlTextVisualizer"/>
+    <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.XmlTextVisualizer"/>
+    <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.JsonTextVisualizer"/>
+    <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.JwtTextVisualizer"/>
+    <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.UrlEncodedTextVisualizer"/>
+
+    <runDashboardCustomizer implementation="com.intellij.xdebugger.impl.dashboard.XDebuggerRunDashboardCustomizer" order="first"/>
+    <xdebugger.managerProxy implementation="com.intellij.xdebugger.impl.proxy.MonolithXDebugManagerProxy" order="last"/>
+    <xdebugger.monolithAccessPoint implementation="com.intellij.xdebugger.impl.proxy.XDebuggerMonolithAccessPointImpl"/>
+
+    <bookmarksListProvider implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointListProvider"/>
+
+    <registryKey defaultValue="false"
+                 description="Enables remove/disable all but this breakpoint actions"
+                 key="debugger.remove.disable.actions"/>
+
+    <registryKey defaultValue="true"
+                 description="Debugger implementation for split mode. Enable it in monolith as well to have the same experience as in RD."
+                 key="xdebugger.toolwindow.split"
+                 restartRequired="true"/>
+
+    <registryKey defaultValue="false"
+                 description="Use LUXed evaluation debugger popup"
+                 key="xdebugger.lux.evaluation.popup"/>
+
+    <registryKey defaultValue="true"
+                 description="Throw warnings and errors about misusages of frontend components on the backend (and vice versa)"
+                 key="xdebugger.toolwindow.split.warnings"/>
+
+    <remote.customDataContextSerializer implementation="com.intellij.xdebugger.impl.ui.RunContentDescriptorKeySerializer"/>
+    <remote.customDataContextSerializer implementation="com.intellij.xdebugger.impl.ui.ExecutionEnvironmentKeySerializer"/>
+    <remote.customDataContextSerializer implementation="com.intellij.xdebugger.impl.ui.XDebuggerTreeSelectedValuesSerializer"/>
+    <remote.customDataContextSerializer implementation="com.intellij.xdebugger.impl.ui.XDebuggerTreeSelectedStacksSerializer"/>
+
+    <intentionAction>
+      <language>UAST</language>
+      <className>com.intellij.xdebugger.impl.codeinsight.ControlExceptionBreakpointIntentionAction</className>
+    </intentionAction>
+  </extensions>
+
+  <actions resource-bundle="messages.XDebuggerImplBundle">
+    <group id="XDebugger.Threads.View.Popup">
+      <reference ref="Debugger.PopFrame"/>
+    </group>
+    <group id="XDebugger.Actions">
+      <action id="Debugger.AddToWatch" class="com.intellij.xdebugger.impl.actions.AddToWatchesAction" icon="AllIcons.Debugger.AddToWatch">
+        <add-to-group group-id="EditorPopupMenuDebug" anchor="after" relative-to-action="ForceRunToCursor"/>
+      </action>
+      <action id="Debugger.AddInlineWatch" class="com.intellij.xdebugger.impl.inline.AddInlineWatchAction"
+              icon="AllIcons.Debugger.AddToWatch">
+        <add-to-group group-id="EditorPopupMenuDebug" anchor="after" relative-to-action="Debugger.AddToWatch"/>
+      </action>
+      <action id="Debugger.EvaluateInConsole" class="com.intellij.xdebugger.impl.actions.EvaluateInConsoleAction">
+        <add-to-group group-id="EditorPopupMenuDebug" anchor="after" relative-to-action="Debugger.AddInlineWatch"/>
+      </action>
+
+      <action id="XDebugger.Inspect" class="com.intellij.xdebugger.impl.ui.tree.actions.XInspectAction"/>
+      <action id="Debugger.MarkObject" class="com.intellij.xdebugger.impl.actions.MarkObjectAction" use-shortcut-of="ToggleBookmark"/>
+      <action id="XDebugger.SetValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XSetValueAction"/>
+      <action id="XDebugger.CopyValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyValueAction$Simple" use-shortcut-of="$Copy"/>
+      <action id="XDebugger.CompareValueWithClipboard" class="com.intellij.xdebugger.impl.ui.tree.actions.XCompareWithClipboardAction"/>
+      <action id="XDebugger.CopyName" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyNameAction"/>
+      <action id="XDebugger.JumpToSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToSourceAction"
+              use-shortcut-of="EditSource"/>
+      <action id="XDebugger.JumpToTypeSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToTypeSourceAction"/>
+
+      <action id="Debugger.Tree.EvaluateInConsole" class="com.intellij.xdebugger.impl.ui.tree.actions.EvaluateInConsoleFromTreeAction"/>
+
+      <action id="XDebugger.NewWatch" class="com.intellij.xdebugger.impl.frame.actions.XNewWatchAction" icon="AllIcons.General.Add"/>
+      <action id="XDebugger.EditWatch" class="com.intellij.xdebugger.impl.frame.actions.XEditWatchAction"
+              use-shortcut-of="XDebugger.SetValue"/>
+      <action id="XDebugger.CopyWatch" class="com.intellij.xdebugger.impl.frame.actions.XCopyWatchAction" icon="AllIcons.Actions.Copy"
+              use-shortcut-of="EditorDuplicate"/>
+      <action id="XDebugger.RemoveWatch" class="com.intellij.xdebugger.impl.frame.actions.XRemoveWatchAction" icon="AllIcons.General.Remove"
+              use-shortcut-of="$Delete"/>
+      <action id="XDebugger.MoveWatchUp" class="com.intellij.xdebugger.impl.frame.actions.XMoveWatchUp" use-shortcut-of="MoveLineUp"/>
+      <action id="XDebugger.MoveWatchDown" class="com.intellij.xdebugger.impl.frame.actions.XMoveWatchDown" use-shortcut-of="MoveLineDown"/>
+      <action id="XDebugger.SeparateWatches" class="com.intellij.xdebugger.impl.frame.actions.XSeparateWatchesAndVariables"
+              icon="AllIcons.Debugger.Watch"/>
+      <action id="XDebugger.PauseWatch" class="com.intellij.xdebugger.impl.frame.actions.XPauseWatchAction"/>
+      <action id="XDebugger.ToggleEvaluateExpressionField"
+              class="com.intellij.xdebugger.impl.frame.actions.XToggleEvaluateExpressionFieldAction"/>
+      <action id="XDebugger.RemoveAllWatches" class="com.intellij.xdebugger.impl.frame.actions.XRemoveAllWatchesAction"/>
+      <action id="XDebugger.MuteBreakpoints" class="com.intellij.xdebugger.impl.actions.MuteBreakpointAction"
+              icon="AllIcons.Debugger.MuteBreakpoints"/>
+      <action id="XDebugger.RemoveAllButThisBreakpoint" class="com.intellij.xdebugger.impl.actions.RemoveAllButThisBreakpointAction">
+        <add-to-group group-id="EditorGutterPopupMenu" anchor="last"/>
+      </action>
+      <action id="XDebugger.DisableAllButThisBreakpoint" class="com.intellij.xdebugger.impl.actions.DisableAllButThisBreakpointAction">
+        <add-to-group group-id="EditorGutterPopupMenu" anchor="last"/>
+      </action>
+      <action id="XDebugger.ToggleSortValues" class="com.intellij.xdebugger.impl.ui.tree.actions.SortValuesToggleAction"
+              icon="AllIcons.ObjectBrowser.Sorted"/>
+      <action id="Debugger.FocusOnBreakpoint" class="com.intellij.xdebugger.impl.actions.FocusOnBreakpointAction"/>
+      <action id="Debugger.FocusOnFinish" class="com.intellij.xdebugger.impl.actions.FocusOnFinishAction"/>
+      <action id="Debugger.ShowReferring" class="com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction"/>
+      <action id="Debugger.RemoveAllBreakpoints" class="com.intellij.xdebugger.impl.actions.RemoveAllBreakpointsAction"/>
+      <action id="Debugger.RemoveAllBreakpointsInFile" class="com.intellij.xdebugger.impl.actions.RemoveAllBreakpointsInFileAction"/>
+      <action id="Debugger.FreezeActiveThreadAction" class="com.intellij.xdebugger.impl.actions.FreezeActiveThreadAction"
+              icon="AllIcons.Debugger.Freeze">
+        <synonym key="action.Debugger.FreezeActiveThreadAction.synonym"/>
+      </action>
+      <action id="Debugger.ThawActiveThreadAction" class="com.intellij.xdebugger.impl.actions.ThawActiveThreadAction"
+              icon="AllIcons.Debugger.Thaw">
+        <synonym key="action.Debugger.ThawActiveThreadAction.synonym"/>
+      </action>
+      <action id="Debugger.FreezeInactiveThreadsAction" class="com.intellij.xdebugger.impl.actions.FreezeInactiveThreadsAction"
+              icon="AllIcons.Debugger.FreezeAll">
+        <synonym key="action.Debugger.FreezeInactiveThreadsAction.synonym"/>
+      </action>
+      <action id="Debugger.ThawAllThreadsAction" class="com.intellij.xdebugger.impl.actions.ThawAllThreadsAction"
+              icon="AllIcons.Debugger.ThawAll">
+        <synonym key="action.Debugger.ThawAllThreadsAction.synonym"/>
+      </action>
+      <action id="Debugger.FreezeInactiveThreadsAmongSelected"
+              class="com.intellij.xdebugger.impl.actions.FreezeInactiveThreadsAmongSelectedAction" icon="AllIcons.Debugger.FreezeAll">
+        <synonym key="action.Debugger.FreezeInactiveThreadsAmongSelected.synonym"/>
+      </action>
+      <action id="Debugger.FreezeSelectedThreads" class="com.intellij.xdebugger.impl.actions.FreezeSelectedThreadsAction"
+              icon="AllIcons.Debugger.Freeze">
+        <synonym key="action.Debugger.FreezeSelectedThreads.synonym"/>
+      </action>
+      <action id="Debugger.ThawSelectedThreads" class="com.intellij.xdebugger.impl.actions.ThawSelectedThreadsAction"
+              icon="AllIcons.Debugger.Thaw">
+        <synonym key="action.Debugger.ThawSelectedThreads.synonym"/>
+      </action>
+      <action id="Debugger.ShowLibraryFrames" class="com.intellij.xdebugger.impl.actions.ShowLibraryFramesAction"/>
+      <action id="Debugger.CopyStack" class="com.intellij.xdebugger.impl.frame.XDebuggerFramesList$CopyStackAction"
+              icon="AllIcons.Actions.Copy"/>
+    </group>
+
+    <group id="XDebugger.ToolWindow.TopToolbar">
+      <reference ref="ShowExecutionPoint"/>
+      <separator/>
+      <reference ref="StepOver.Ref"/>
+      <reference ref="StepInto"/>
+      <reference ref="StepOut"/>
+      <reference ref="RunToCursor"/>
+      <separator/>
+      <reference ref="EvaluateExpression"/>
+    </group>
+
+    <group id="XDebugger.ToolWindow.TopToolbar3">
+      <reference ref="Rerun"/>
+      <reference ref="Stop"/>
+      <separator/>
+      <reference ref="Resume.Ref"/>
+      <reference ref="Pause.Ref"/>
+      <reference ref="StepOver.Ref"/>
+      <reference ref="StepInto"/>
+      <reference ref="StepOut"/>
+      <separator/>
+      <reference ref="ViewBreakpoints"/>
+      <reference ref="XDebugger.MuteBreakpoints"/>
+    </group>
+
+    <group id="XDebugger.ToolWindow.TopToolbar3.Extra" class="com.intellij.openapi.actionSystem.impl.MoreActionGroup">
+      <reference ref="ForceStepOver"/>
+      <reference ref="ForceStepInto"/>
+      <reference ref="SmartStepInto"/>
+      <separator/>
+      <reference ref="RunToCursor"/>
+      <reference ref="ForceRunToCursor"/>
+      <separator/>
+      <reference ref="ShowExecutionPoint"/>
+      <separator/>
+      <reference ref="EvaluateExpression"/>
+      <reference ref="Debugger.PopFrame"/>
+    </group>
+
+    <group id="XDebugger.ToolWindow.LeftToolbar">
+      <separator/>
+      <reference ref="Resume.Ref"/>
+      <reference ref="Pause.Ref"/>
+      <reference ref="Stop"/>
+      <separator/>
+      <reference ref="ViewBreakpoints"/>
+      <reference ref="XDebugger.MuteBreakpoints"/>
+    </group>
+
+    <group id="XDebugger.ValueGroup" popup="false">
+      <reference ref="XDebugger.Inspect"/>
+      <reference ref="Debugger.MarkObject"/>
+      <reference ref="XDebugger.SetValue"/>
+      <reference ref="XDebugger.CopyValue"/>
+      <reference ref="XDebugger.CompareValueWithClipboard"/>
+      <reference ref="XDebugger.CopyName"/>
+      <separator/>
+      <reference ref="EvaluateExpression"/>
+      <reference ref="Debugger.Tree.EvaluateInConsole"/>
+      <reference ref="Debugger.AddToWatch"/>
+      <reference ref="Debugger.ShowReferring"/>
+      <separator/>
+      <reference ref="XDebugger.JumpToSource"/>
+      <reference ref="XDebugger.JumpToTypeSource"/>
+      <separator/>
+    </group>
+
+    <group id="XDebugger.Evaluation.Dialog.Tree.Popup">
+      <reference ref="XDebugger.ValueGroup"/>
+    </group>
+
+    <group id="XDebugger.Frames.Tree.Popup">
+      <reference ref="Debugger.PopFrame"/>
+      <reference ref="Debugger.CopyStack"/>
+    </group>
+
+    <group id="XDebugger.Frames.TopToolbar">
+      <reference ref="Debugger.ShowLibraryFrames"/>
+    </group>
+
+    <group id="XDebugger.Variables.Tree.Popup">
+      <reference ref="XDebugger.ValueGroup"/>
+    </group>
+
+    <group id="XDebugger.Variables.Tree.Toolbar">
+    </group>
+
+    <group id="XDebugger.ParallelStacks.Popup.FreezeThreadGroup">
+      <separator/>
+      <reference ref="Debugger.FreezeInactiveThreadsAmongSelected"/>
+      <reference ref="Debugger.ThawAllThreadsAction"/>
+      <reference ref="Debugger.FreezeSelectedThreads"/>
+      <reference ref="Debugger.ThawSelectedThreads"/>
+    </group>
+
+    <group id="XDebugger.ParallelStacks.Popup.Extra">
+    </group>
+
+    <group id="XDebugger.ParallelStacks.ToolBar.Extra">
+    </group>
+
+    <group id="XDebugger.Watches.Tree.Popup">
+      <reference ref="XDebugger.NewWatch"/>
+      <reference ref="XDebugger.RemoveWatch"/>
+      <reference ref="XDebugger.RemoveAllWatches"/>
+      <reference ref="XDebugger.EditWatch"/>
+      <reference ref="XDebugger.PauseWatch"/>
+      <separator/>
+      <reference ref="XDebugger.ValueGroup"/>
+    </group>
+
+    <group id="XDebugger.Watches.Tree.Toolbar">
+      <reference ref="XDebugger.NewWatch"/>
+      <reference ref="XDebugger.RemoveWatch"/>
+      <reference ref="XDebugger.MoveWatchUp"/>
+      <reference ref="XDebugger.MoveWatchDown"/>
+      <reference ref="XDebugger.CopyWatch"/>
+    </group>
+
+    <group id="XDebugger.Watches.Inline.Popup" popup="true">
+    </group>
+
+    <group id="XDebugger.Inspect.Tree.Popup">
+      <reference ref="XDebugger.ValueGroup"/>
+    </group>
+
+    <group id="XDebugger.Evaluate.Code.Fragment.Editor.Popup">
+      <reference ref="BasicEditorPopupMenu"/>
+      <reference ref="EditorToggleUseSoftWraps"/>
+    </group>
+
+    <group id="XDebugger.Settings" icon="AllIcons.General.GearPlain" popup="true">
+      <action id="XDebugger.PreviewTab" class="com.intellij.xdebugger.impl.actions.OpenFilesInPreviewTabAction"/>
+      <action id="XDebugger.Inline" class="com.intellij.xdebugger.impl.actions.UseInlineDebuggerAction"/>
+      <separator/>
+      <reference ref="XDebugger.ToggleSortValues"/>
+      <separator/>
+      <action id="XDebugger.UnmuteOnStop" class="com.intellij.xdebugger.impl.actions.UnmuteOnStopAction"/>
+    </group>
+
+    <group id="XDebugger.Touchbar.Debug">
+      <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
+      <separator text="type.small"/>
+      <reference ref="XDebugger.MuteBreakpoints"/>
+      <add-to-group group-id="TouchBarDebug" anchor="after" relative-to-action="Stop"/>
+    </group>
+
+    <group id="XDebugger.Code.Toolbar" class="com.intellij.xdebugger.impl.actions.DebuggerCodeToolbarGroup">
+      <add-to-group group-id="Floating.CodeToolbar" anchor="after" relative-to-action="Floating.CodeToolbar.Surround"/>
+      <separator/>
+      <reference ref="EvaluateExpression"/>
+      <reference ref="Debugger.AddToWatch"/>
+    </group>
+    <action class="com.intellij.xdebugger.impl.runToolbar.ConfigurationXDebuggerResumeAction">
+      <add-to-group group-id="compositeResumeGroup"/>
+    </action>
+    <group id="XDebugger.AttachGroup">
+      <action id="XDebugger.AttachToProcess" class="com.intellij.xdebugger.impl.actions.AttachToProcessAction"/>
+      <add-to-group group-id="RunMenu" anchor="before" relative-to-action="editRunConfigurations"/>
+    </group>
+
+    <group id="ToolbarPopupActions.XDebugger.ToolWindow.TopToolbar3">
+      <group id="DebugToolbarQuickActions" class="com.intellij.xdebugger.impl.actions.DebuggerToolbarQuickActionsGroup" searchable="false"
+             popup="true"/>
+    </group>
+
+    <group id="RunToolbarMainMoreActionGroupDebuggerPart">
+      <separator key="RunToolbarMainMoreActionGroupDebuggerPart.separator.text"/>
+      <group id="RunToolbarDebugMoreActionSubGroupName"/>
+      <reference ref="XDebugger.AttachGroup"/>
+      <add-to-group group-id="RunToolbarMainMoreActionGroup" anchor="last"/>
+    </group>
+
+    <group id="AdditionalRunningOptionsGroupMainDebuggerPart">
+      <separator key="AdditionalRunningOptionsGroupMainDebuggerPart.separator.text"/>
+      <reference ref="XDebugger.AttachGroup"/>
+      <add-to-group group-id="AdditionalRunningOptionsGroupMain"/>
+    </group>
+
+    <group id="RunToolbarDebuggerAdditionalActions">
+      <action id="RunToolbarResumeAction" class="com.intellij.xdebugger.impl.runToolbar.RunToolbarResumeAction" icon="AllIcons.Actions.Resume"/>
+      <action id="RunToolbarPauseAction" class="com.intellij.xdebugger.impl.runToolbar.RunToolbarPauseAction" icon="AllIcons.Actions.Pause"/>
+      <add-to-group group-id="RunToolbarAdditionalProcessActions"/>
+    </group>
+
+    <group id="MemoryView.SettingsPopupActionGroup">
+      <action class="com.intellij.xdebugger.memory.action.ShowClassesWithDiffAction" id="MemoryView.ShowOnlyWithDiff"/>
+      <separator/>
+      <action class="com.intellij.xdebugger.memory.action.SwitchUpdateModeAction" id="MemoryView.SwitchUpdateMode"/>
+    </group>
+
+    <action id="XDebugger.PinToTop" class="com.intellij.xdebugger.impl.pinned.items.actions.XDebuggerPinToTopAction">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
+    </action>
+
+    <action class="com.intellij.execution.actions.ActivateDebugToolWindowAction" id="ActivateDebugToolWindow">
+      <add-to-group group-id="ActivateToolWindowActions"/>
+    </action>
+    <group id="XDebugger.Hover.Breakpoint.Context.Menu">
+      <action id="AddBreakpoint" class="com.intellij.xdebugger.impl.actions.handlers.AddLineBreakpointAction"/>
+      <action id="AddConditionalBreakpoint" class="com.intellij.xdebugger.impl.actions.handlers.AddLineBreakpointAction$WithCondition"/>
+      <action id="AddLoggingBreakpoint" class="com.intellij.xdebugger.impl.actions.handlers.AddLineBreakpointAction$WithLogging"/>
+    </group>
+
+    <group id="XDebugger.Attach.Dialog.Settings" class="com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogSettings" popup="true"/>
+
+    <action id="XDebugger.Show.Breakpoints.Over.Line.Numbers" class="com.intellij.xdebugger.impl.settings.ShowBreakpointsOverLineNumbersAction">
+      <add-to-group group-id="EditorGutterPopupMenu.Appearance" anchor="after" relative-to-action="EditorGutterToggleGlobalLineNumbers"/>
+    </action>
+
+    <action id="XDebugger.Attach.Dialog.ShowOnlyMyProcessesToggleAction"
+            class="com.intellij.xdebugger.impl.ui.attach.dialog.AttachShowOnlyMyProcessesToggleAction">
+      <add-to-group group-id="XDebugger.Attach.Dialog.Settings"/>
+    </action>
+
+    <group id="XDebugger.RunToCursorInlayExtraActions">
+    </group>
+  </actions>
+
+  <projectListeners>
+    <listener class="com.intellij.xdebugger.impl.dashboard.XDebuggerRunDashboardUpdater"
+              topic="com.intellij.execution.ExecutionListener"/>
+    <listener class="com.intellij.xdebugger.impl.MonolithListenerAdapter"
+              topic="com.intellij.xdebugger.XDebuggerManagerListener"/>
+    <listener class="com.intellij.xdebugger.impl.ExecutionPointManagerChangeListener"
+              topic="com.intellij.xdebugger.impl.XDebuggerManagerProxyListener"/>
+  </projectListeners>
+</idea-plugin>

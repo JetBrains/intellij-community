@@ -1,0 +1,50 @@
+- name: lib/io.github.smiley4.schema.kenerator.core.jar
+  library: io.github.smiley4.schema.kenerator.core
+  files:
+  - name: $MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-core/2/schema-kenerator-core-2.jar
+  reason: <- intellij.mcpserver
+- name: lib/io.github.smiley4.schema.kenerator.jsonschema.jar
+  library: io.github.smiley4.schema.kenerator.jsonschema
+  files:
+  - name: $MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-jsonschema/2/schema-kenerator-jsonschema-2.jar
+  reason: <- intellij.mcpserver
+- name: lib/io.github.smiley4.schema.kenerator.serialization.jar
+  library: io.github.smiley4.schema.kenerator.serialization
+  files:
+  - name: $MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-serialization/2/schema-kenerator-serialization-2.jar
+  reason: <- intellij.mcpserver
+- name: lib/ktor-server-cio-internal.jar
+  library: ktor-server-cio-internal
+  module: intellij.mcpserver
+  files:
+  - name: $MAVEN_REPOSITORY$/io/ktor/ktor-server-cio-jvm/3/ktor-server-cio-jvm-3.jar
+  - name: $MAVEN_REPOSITORY$/io/ktor/ktor-server-core-jvm/3/ktor-server-core-jvm-3.jar
+  - name: $MAVEN_REPOSITORY$/com/typesafe/config/1/config-1.jar
+- name: lib/mcpserver-frontend.jar
+  projectLibraries:
+  - name: io.github.oshai.kotlin.logging.jvm
+    files:
+    - name: $MAVEN_REPOSITORY$/io/github/oshai/kotlin-logging-jvm/7/kotlin-logging-jvm-7.jar
+    reason: <- intellij.mcpserver.stdio
+  - name: io.modelcontextprotocol.kotlin.sdk
+    files:
+    - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0/kotlin-sdk-jvm-0.jar
+    - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-client-jvm/0/kotlin-sdk-client-jvm-0.jar
+    - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-server-jvm/0/kotlin-sdk-server-jvm-0.jar
+    - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-core-jvm/0/kotlin-sdk-core-jvm-0.jar
+    reason: <- intellij.mcpserver.stdio
+  - name: ktor-server-sse-jvm
+    files:
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-server-sse-jvm/3/ktor-server-sse-jvm-3.jar
+    reason: <- intellij.mcpserver.stdio
+  modules:
+  - name: intellij.mcpserver.stdio
+    reason: <- intellij.mcpserver
+- name: lib/mcpserver.jar
+  modules:
+  - name: intellij.mcpserver
+- name: lib/toml4j.jar
+  library: toml4j
+  module: intellij.mcpserver
+  files:
+  - name: $MAVEN_REPOSITORY$/com/moandjiezana/toml/toml4j/0/toml4j-0.jar

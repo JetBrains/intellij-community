@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.tools.launcherGenerator` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "launcher-generator_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "launcher-generator",
+  module_name = "intellij.tools.launcherGenerator",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":launcher-generator_resources"],
+  deps = [
+    "//platform/util/jdom",
+    "//libraries/commons/imaging",
+  ]
+)
+### auto-generated section `build intellij.tools.launcherGenerator` end

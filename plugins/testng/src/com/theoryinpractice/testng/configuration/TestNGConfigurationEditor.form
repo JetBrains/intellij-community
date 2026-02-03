@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.theoryinpractice.testng.configuration.TestNGConfigurationEditor">
+  <grid id="27dc6" binding="panel" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="0" left="0" bottom="0" right="0"/>
+    <constraints>
+      <xy x="20" y="20" width="772" height="546"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <grid id="b9bd" layout-manager="GridLayoutManager" row-count="8" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
+        </clientProperties>
+        <border type="none"/>
+        <children>
+          <component id="3d515" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="methodField">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <labelLocation value="West"/>
+              <text resource-bundle="messages/TestngBundle" key="testng.configuration.method.label"/>
+            </properties>
+          </component>
+          <component id="93b2" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="suiteField">
+            <constraints>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <labelLocation value="West"/>
+              <text resource-bundle="messages/TestngBundle" key="testng.configuration.suite.label"/>
+            </properties>
+          </component>
+          <grid id="3ac91" binding="packagePanel" layout-manager="FormLayout">
+            <rowspec value="center:d:noGrow"/>
+            <rowspec value="top:4dlu:noGrow"/>
+            <rowspec value="center:max(d;4px):noGrow"/>
+            <colspec value="fill:d:noGrow"/>
+            <colspec value="left:4dlu:noGrow"/>
+            <colspec value="fill:max(d;4px):noGrow"/>
+            <colspec value="left:4dlu:noGrow"/>
+            <colspec value="fill:max(d;4px):grow"/>
+            <constraints>
+              <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="c819c" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="packageField">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="5" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties>
+                  <labelLocation value="West"/>
+                  <text resource-bundle="messages/TestngBundle" key="testng.configuration.package.label"/>
+                </properties>
+              </component>
+              <component id="a9e21" class="javax.swing.JRadioButton" binding="packagesInProject">
+                <constraints>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/TestngBundle" key="testng.configuration.in.whole.project.radio"/>
+                </properties>
+              </component>
+              <component id="9d797" class="javax.swing.JRadioButton" binding="packagesInModule">
+                <constraints>
+                  <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/TestngBundle" key="testng.configuration.in.single.module.radio"/>
+                </properties>
+              </component>
+              <component id="b6e4c" class="javax.swing.JRadioButton" binding="packagesAcrossModules">
+                <constraints>
+                  <grid row="2" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/TestngBundle" key="testng.configuration.across.module.dependencies.radio"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <component id="ecafd" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="classField">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <labelLocation value="West"/>
+              <text resource-bundle="messages/TestngBundle" key="testng.configuration.class.label"/>
+            </properties>
+          </component>
+          <component id="d1d3" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="outputDirectory">
+            <constraints>
+              <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <labelLocation value="West"/>
+              <text resource-bundle="messages/TestngBundle" key="testng.configuration.output.directory"/>
+            </properties>
+          </component>
+          <component id="ba631" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="groupField">
+            <constraints>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <labelLocation value="West"/>
+              <text resource-bundle="messages/TestngBundle" key="testng.configuration.group.label"/>
+            </properties>
+          </component>
+          <component id="d64d9" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myPattern">
+            <constraints>
+              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <componentClass value="javax.swing.JPanel"/>
+              <labelLocation value="West"/>
+              <text resource-bundle="messages/TestngBundle" key="testng.configuration.pattern.label"/>
+              <visible value="true"/>
+            </properties>
+          </component>
+          <component id="7e297" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myAsyncStackTraceForExceptions" default-binding="true">
+            <constraints>
+              <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <componentClass value="javax.swing.JCheckBox"/>
+              <labelLocation value="West"/>
+              <text value=""/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+      <tabbedpane id="7ce0a" class="com.intellij.ui.components.JBTabbedPane" default-binding="true">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <preferred-size width="200" height="200"/>
+          </grid>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <grid id="fab89" layout-manager="GridLayoutManager" row-count="7" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <tabbedpane title-resource-bundle="messages/TestngBundle" title-key="testng.configuration.jdk.settings.pane"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="86d21" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myShortenCommandLineCombo" custom-create="true" default-binding="true">
+                <constraints>
+                  <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <labelLocation value="West"/>
+                  <text resource-bundle="messages/ExecutionBundle" key="application.configuration.shorten.command.line.label"/>
+                </properties>
+              </component>
+              <grid id="f5de" binding="commonParametersPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children/>
+              </grid>
+              <vspacer id="15fd">
+                <constraints>
+                  <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                </constraints>
+              </vspacer>
+              <vspacer id="348fc">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false">
+                    <preferred-size width="-1" height="15"/>
+                  </grid>
+                </constraints>
+              </vspacer>
+              <component id="baac2" class="com.intellij.execution.ui.JrePathEditor" binding="alternateJDK">
+                <constraints>
+                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+              </component>
+              <component id="6ab4" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="moduleClasspath">
+                <constraints>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <componentClass value="com.intellij.application.options.ModuleDescriptionsComboBox"/>
+                  <labelLocation value="West"/>
+                  <text resource-bundle="messages/ExecutionBundle" key="application.configuration.use.classpath.and.jdk.of.module.label"/>
+                </properties>
+              </component>
+              <component id="8042a" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myUseModulePath">
+                <constraints>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <componentClass value="javax.swing.JCheckBox"/>
+                  <labelLocation value="West"/>
+                  <text value=""/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <grid id="bccab" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints>
+              <tabbedpane title-resource-bundle="messages/TestngBundle" title-key="testng.configuration.parameters.pane"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="64fad" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="propertiesFile">
+                <constraints border-constraint="North"/>
+                <properties>
+                  <labelLocation value="West"/>
+                  <text resource-bundle="messages/TestngBundle" key="testng.configuration.properties.file"/>
+                </properties>
+              </component>
+              <grid id="28036" binding="myPropertiesPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+                <constraints border-constraint="Center"/>
+                <properties/>
+                <border type="none"/>
+                <children/>
+              </grid>
+            </children>
+          </grid>
+          <grid id="da698" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <tabbedpane title-resource-bundle="messages/TestngBundle" title-key="testng.configuration.listeners.pane"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <grid id="af0ed" binding="myListenersPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+                    <preferred-size width="-1" height="100"/>
+                  </grid>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children/>
+              </grid>
+              <component id="4fd4c" class="javax.swing.JCheckBox" binding="myUseDefaultReportersCheckBox" default-binding="true">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/TestngBundle" key="testng.configuration.use.default.reporters.option"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+        </children>
+      </tabbedpane>
+      <vspacer id="edd17">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+        </constraints>
+      </vspacer>
+      <grid id="3054c" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <hspacer id="99645">
+            <constraints>
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+          </hspacer>
+          <component id="fccce" class="javax.swing.JComboBox" binding="myTestKind">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+          </component>
+          <component id="ec186" class="com.intellij.ui.components.JBLabel" binding="myTestLabel">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/TestngBundle" key="testng.configuration.test.kind.label"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+    </children>
+  </grid>
+  <buttonGroups>
+    <group name="testGroup">
+      <member id="5eaf8"/>
+      <member id="61e8b"/>
+      <member id="2ab9d"/>
+      <member id="dcd9c"/>
+      <member id="d8c06"/>
+      <member id="99b4d"/>
+    </group>
+  </buttonGroups>
+</form>

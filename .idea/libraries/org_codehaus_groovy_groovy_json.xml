@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="org.codehaus.groovy:groovy-json" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.codehaus.groovy:groovy-json:3.0.25">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-json/3.0.25/groovy-json-3.0.25.jar">
+          <sha256sum>511cea72a464809d7e376968910fa704f9fa5afa8f2a94b53672a061b45475bb</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-json/3.0.25/groovy-json-3.0.25.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-json/3.0.25/groovy-json-3.0.25-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -1,0 +1,579 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+@file:OptIn(UnsafeCastFunction::class)
+
+package org.jetbrains.kotlin.idea.core
+
+import com.intellij.psi.PsiElement
+import com.intellij.psi.tree.IElementType
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.builtins.isFunctionOrSuspendFunctionType
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.MemberDescriptor
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.descriptors.isFinalOrEnum
+import org.jetbrains.kotlin.diagnostics.Severity
+import org.jetbrains.kotlin.extensions.DeclarationAttributeAltererExtension
+import org.jetbrains.kotlin.idea.FrontendInternals
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.addTypeParameter
+import org.jetbrains.kotlin.idea.base.psi.appendDeclaration
+import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
+import org.jetbrains.kotlin.idea.base.psi.predictImplicitModality
+import org.jetbrains.kotlin.idea.base.psi.setDefaultValue
+import org.jetbrains.kotlin.idea.base.psi.shouldLambdaParameterBeNamed
+import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
+import org.jetbrains.kotlin.idea.refactoring.isComplexCallWithLambdaArgument
+import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
+import org.jetbrains.kotlin.idea.resolve.frontendService
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
+import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
+import org.jetbrains.kotlin.idea.util.isExpectDeclaration
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtAnnotation
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassBody
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDelegatedSuperTypeEntry
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtLabeledExpression
+import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtModifierList
+import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtParameterList
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtScriptInitializer
+import org.jetbrains.kotlin.psi.KtTypeParameter
+import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.psi.addRemoveModifier.MODIFIERS_ORDER
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
+import org.jetbrains.kotlin.psi.psiUtil.hasBody
+import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
+import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
+import org.jetbrains.kotlin.psi.unpackFunctionLiteral
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.OverridingUtil
+import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
+import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.isFakeElement
+import org.jetbrains.kotlin.resolve.checkers.ExplicitApiDeclarationChecker
+import org.jetbrains.kotlin.resolve.checkers.explicitApiEnabled
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.resolve.sam.SamConversionOracle
+import org.jetbrains.kotlin.resolve.sam.SamConversionResolver
+import org.jetbrains.kotlin.resolve.sam.getFunctionTypeForPossibleSamType
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.isError
+import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
+import org.jetbrains.kotlin.util.match
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
+import org.jetbrains.kotlin.utils.SmartList
+import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+
+@K1Deprecation
+fun KtLambdaArgument.moveInsideParentheses(bindingContext: BindingContext): KtCallExpression {
+    val ktExpression = this.getArgumentExpression()
+        ?: throw KotlinExceptionWithAttachments("no argument expression for $this")
+            .withPsiAttachment("lambdaExpression", this)
+    return moveInsideParenthesesAndReplaceWith(ktExpression, bindingContext)
+}
+
+/**
+ * Moves the lambda argument inside parentheses and replaces it with the specified replacement expression.
+ * If the lambda argument should be named, it retrieves the lambda argument name from the binding context.
+ *
+ * @param replacement The replacement expression to be used.
+ * @param bindingContext The binding context used to retrieve the lambda argument name if necessary.
+ * @return The modified `KtCallExpression` with the lambda argument moved inside parentheses and replaced with
+ * the specified replacement expression.
+ */
+@K1Deprecation
+fun KtLambdaArgument.moveInsideParenthesesAndReplaceWith(
+    replacement: KtExpression,
+    bindingContext: BindingContext
+): KtCallExpression {
+    val lambdaArgumentName = if (shouldLambdaParameterBeNamed(this)) {
+        this.getLambdaArgumentName(bindingContext)
+    } else null
+    return this.moveInsideParenthesesAndReplaceWith(replacement, lambdaArgumentName)
+}
+
+@K1Deprecation
+fun KtLambdaArgument.getLambdaArgumentName(bindingContext: BindingContext): Name? {
+    val callExpression = parent as KtCallExpression
+    val resolvedCall = callExpression.getResolvedCall(bindingContext)
+    return (resolvedCall?.getArgumentMapping(this) as? ArgumentMatch)?.valueParameter?.name
+}
+
+@K1Deprecation
+fun KtLambdaExpression.moveFunctionLiteralOutsideParenthesesIfPossible() {
+    val valueArgument = parentOfType<KtValueArgument>()?.takeIf {
+        KtPsiUtil.deparenthesize(it.getArgumentExpression()) == this
+    } ?: return
+    val valueArgumentList = valueArgument.parent as? KtValueArgumentList ?: return
+    val call = valueArgumentList.parent as? KtCallExpression ?: return
+    if (call.canMoveLambdaOutsideParentheses()) {
+        call.moveFunctionLiteralOutsideParentheses()
+    }
+}
+
+@K1Deprecation
+@OptIn(FrontendInternals::class)
+fun KtCallExpression.canMoveLambdaOutsideParentheses(skipComplexCalls: Boolean = true): Boolean {
+    if (skipComplexCalls && isComplexCallWithLambdaArgument()) return false
+
+    if (getStrictParentOfType<KtDelegatedSuperTypeEntry>() != null) return false
+    val lastLambdaExpression = getLastLambdaExpression() ?: return false
+    if (lastLambdaExpression.parentLabeledExpression()?.parentLabeledExpression() != null) return false
+
+    val callee = calleeExpression
+    if (callee !is KtNameReferenceExpression) return true
+
+    val resolutionFacade = getResolutionFacade()
+    val samConversionTransformer = resolutionFacade.frontendService<SamConversionResolver>()
+    val samConversionOracle = resolutionFacade.frontendService<SamConversionOracle>()
+    val languageVersionSettings = resolutionFacade.languageVersionSettings
+    val newInferenceEnabled = languageVersionSettings.supportsFeature(LanguageFeature.NewInference)
+
+    val bindingContext = safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
+    if (bindingContext.diagnostics.forElement(lastLambdaExpression).none { it.severity == Severity.ERROR }) {
+        val resolvedCall = getResolvedCall(bindingContext)
+        if (resolvedCall != null) {
+            val parameter = resolvedCall.getParameterForArgument(valueArguments.last()) ?: return false
+            val functionDescriptor = resolvedCall.resultingDescriptor as? FunctionDescriptor ?: return false
+            if (parameter != functionDescriptor.valueParameters.lastOrNull()) return false
+            return parameter.type.allowsMoveOutsideParentheses(samConversionTransformer, samConversionOracle, newInferenceEnabled)
+        }
+    }
+
+    val targets = bindingContext[BindingContext.REFERENCE_TARGET, callee]?.let { listOf(it) }
+        ?: bindingContext[BindingContext.AMBIGUOUS_REFERENCE_TARGET, callee]
+        ?: listOf()
+    val candidates = targets.filterIsInstance<FunctionDescriptor>()
+
+    val lambdaArgumentCount = valueArguments.count { it.getArgumentExpression()?.unpackFunctionLiteral() != null }
+    val referenceArgumentCount = valueArguments.count { it.getArgumentExpression() is KtCallableReferenceExpression }
+
+    // if there are functions among candidates but none of them have last function parameter then not show the intention
+    val areAllCandidatesWithoutLastFunctionParameter = candidates.none {
+        it.allowsMoveOfLastParameterOutsideParentheses(
+            lambdaArgumentCount + referenceArgumentCount,
+            samConversionTransformer,
+            samConversionOracle,
+            newInferenceEnabled
+        )
+    }
+
+    return candidates.isEmpty() || !areAllCandidatesWithoutLastFunctionParameter
+}
+
+private fun KtExpression.parentLabeledExpression(): KtLabeledExpression? {
+    return getStrictParentOfType<KtLabeledExpression>()?.takeIf { it.baseExpression == this }
+}
+
+private fun KotlinType.allowsMoveOutsideParentheses(
+    samConversionTransformer: SamConversionResolver,
+    samConversionOracle: SamConversionOracle,
+    newInferenceEnabled: Boolean
+): Boolean {
+    // Fast-path
+    if (isFunctionOrSuspendFunctionType || isTypeParameter()) return true
+
+    // Also check if it can be SAM-converted
+    // Note that it is not necessary in OI, where we provide synthetic candidate descriptors with already
+    // converted types, but in NI it is performed by conversions, so we check it explicitly
+    // Also note that 'newInferenceEnabled' is essentially a micro-optimization, as there are no
+    // harm in just calling 'samConversionTransformer' on all candidates.
+    return newInferenceEnabled && samConversionTransformer.getFunctionTypeForPossibleSamType(this.unwrap(), samConversionOracle) != null
+}
+
+private fun FunctionDescriptor.allowsMoveOfLastParameterOutsideParentheses(
+    lambdaAndCallableReferencesInOriginalCallCount: Int,
+    samConversionTransformer: SamConversionResolver,
+    samConversionOracle: SamConversionOracle,
+    newInferenceEnabled: Boolean
+): Boolean {
+    val params = valueParameters
+    val lastParamType = params.lastOrNull()?.type ?: return false
+
+    if (!lastParamType.allowsMoveOutsideParentheses(samConversionTransformer, samConversionOracle, newInferenceEnabled)) return false
+
+    val movableParametersOfCandidateCount = params.count {
+        it.type.allowsMoveOutsideParentheses(samConversionTransformer, samConversionOracle, newInferenceEnabled)
+    }
+    return movableParametersOfCandidateCount == lambdaAndCallableReferencesInOriginalCallCount
+}
+
+//TODO: git rid of this method
+@K1Deprecation
+fun PsiElement.deleteElementAndCleanParent() {
+    val parent = parent
+
+    deleteElementWithDelimiters(this)
+    deleteChildlessElement(parent, this::class.java)
+}
+
+// Delete element if it doesn't contain children of a given type
+private fun <T : PsiElement> deleteChildlessElement(element: PsiElement, childClass: Class<T>) {
+    if (PsiTreeUtil.getChildrenOfType(element, childClass) == null) {
+        element.delete()
+    }
+}
+
+// Delete given element and all the elements separating it from the neighboring elements of the same class
+private fun deleteElementWithDelimiters(element: PsiElement) {
+    val paramBefore = PsiTreeUtil.getPrevSiblingOfType(element, element.javaClass)
+
+    val from: PsiElement
+    val to: PsiElement
+    if (paramBefore != null) {
+        from = paramBefore.nextSibling
+        to = element
+    } else {
+        val paramAfter = PsiTreeUtil.getNextSiblingOfType(element, element.javaClass)
+
+        from = element
+        to = if (paramAfter != null) paramAfter.prevSibling else element
+    }
+
+    val parent = element.parent
+
+    parent.deleteChildRange(from, to)
+}
+
+@K1Deprecation
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
+    ReplaceWith("this.appendDeclaration(declaration)", "org.jetbrains.kotlin.idea.base.psi.appendDeclaration")
+)
+inline fun <reified T : KtDeclaration> KtClass.appendDeclaration(declaration: T): T  = appendDeclaration(declaration)
+
+@K1Deprecation
+fun KtDeclaration.toDescriptor(): DeclarationDescriptor? {
+    if (this is KtScriptInitializer) {
+        return null
+    }
+
+    return resolveToDescriptorIfAny()
+}
+
+@K1Deprecation
+fun KtModifierListOwner.setVisibility(visibilityModifier: KtModifierKeywordToken, addImplicitVisibilityModifier: Boolean = false) {
+    if (this is KtDeclaration && !addImplicitVisibilityModifier) {
+        val defaultVisibilityKeyword = implicitVisibility()
+
+        if (visibilityModifier == defaultVisibilityKeyword) {
+            // Fake elements do not have ModuleInfo and languageVersionSettings because they can't be analysed
+            // Effectively, this leads to J2K not respecting explicit api mode, but this case seems to be rare anyway.
+            val explicitVisibilityRequired = !this.isFakeElement &&
+                    this.languageVersionSettings.explicitApiEnabled &&
+                    this.resolveToDescriptorIfAny()?.let { !ExplicitApiDeclarationChecker.explicitVisibilityIsNotRequired(it) } == true
+
+            if (!explicitVisibilityRequired) {
+                this.visibilityModifierType()?.let { removeModifier(it) }
+                return
+            }
+        }
+    }
+
+    addModifier(visibilityModifier)
+}
+
+@K1Deprecation
+fun KtDeclaration.implicitVisibility(): KtModifierKeywordToken? {
+    return when {
+        this is KtPropertyAccessor && isSetter && property.hasModifier(KtTokens.OVERRIDE_KEYWORD) -> {
+            property.resolveToDescriptorIfAny()
+                ?.safeAs<PropertyDescriptor>()
+                ?.overriddenDescriptors?.forEach {
+                    val visibility = it.setter?.visibility?.toKeywordToken()
+                    if (visibility != null) return visibility
+                }
+
+            KtTokens.DEFAULT_VISIBILITY_KEYWORD
+        }
+
+        this is KtConstructor<*> -> {
+            // constructors cannot be declared in objects
+            val klass = getContainingClassOrObject() as? KtClass ?: return KtTokens.DEFAULT_VISIBILITY_KEYWORD
+
+            when {
+                klass.isEnum() -> KtTokens.PRIVATE_KEYWORD
+                klass.isSealed() ->
+                    if (klass.languageVersionSettings.supportsFeature(LanguageFeature.SealedInterfaces)) KtTokens.PROTECTED_KEYWORD
+                    else KtTokens.PRIVATE_KEYWORD
+
+                else -> KtTokens.DEFAULT_VISIBILITY_KEYWORD
+            }
+        }
+
+        hasModifier(KtTokens.OVERRIDE_KEYWORD) -> {
+            resolveToDescriptorIfAny()?.safeAs<CallableMemberDescriptor>()
+                ?.overriddenDescriptors
+                ?.let { OverridingUtil.findMaxVisibility(it) }
+                ?.toKeywordToken()
+        }
+
+        else -> KtTokens.DEFAULT_VISIBILITY_KEYWORD
+    }
+}
+
+@K1Deprecation
+fun KtModifierListOwner.canBePrivate(): Boolean {
+    if (modifierList?.hasModifier(KtTokens.ABSTRACT_KEYWORD) == true) return false
+    if (this.isAnnotationClassPrimaryConstructor()) return false
+    if (this is KtProperty && this.hasJvmFieldAnnotation()) return false
+
+    if (this is KtDeclaration) {
+        if (hasActualModifier() || isExpectDeclaration()) return false
+        val containingClassOrObject = containingClassOrObject as? KtClass ?: return true
+        if (containingClassOrObject.isAnnotation()) return false
+        if (containingClassOrObject.isInterface() && !hasBody()) return false
+    }
+
+    return true
+}
+
+@K1Deprecation
+fun KtModifierListOwner.canBePublic(): Boolean = !isSealedClassConstructor()
+
+@K1Deprecation
+fun KtModifierListOwner.canBeProtected(): Boolean {
+    return when (val parent = if (this is KtPropertyAccessor) this.property.parent else this.parent) {
+        is KtClassBody -> {
+            val parentClass = parent.parent as? KtClass
+            parentClass != null && !parentClass.isInterface() && !this.isFinalClassConstructor()
+        }
+
+        is KtParameterList -> parent.parent is KtPrimaryConstructor
+        is KtClass -> !this.isAnnotationClassPrimaryConstructor() && !this.isFinalClassConstructor()
+        else -> false
+    }
+}
+
+@K1Deprecation
+fun KtModifierListOwner.canBeInternal(): Boolean {
+    if (containingClass()?.isInterface() == true) {
+        val objectDeclaration = getStrictParentOfType<KtObjectDeclaration>() ?: return false
+        if (objectDeclaration.isCompanion() && hasJvmFieldAnnotation()) return false
+    }
+
+    return !isAnnotationClassPrimaryConstructor() && !isSealedClassConstructor()
+}
+
+private fun KtModifierListOwner.isAnnotationClassPrimaryConstructor(): Boolean =
+    this is KtPrimaryConstructor && (this.parent as? KtClass)?.hasModifier(KtTokens.ANNOTATION_KEYWORD) ?: false
+
+private fun KtModifierListOwner.isFinalClassConstructor(): Boolean {
+    if (this !is KtConstructor<*>) return false
+    val ktClass = getContainingClassOrObject().safeAs<KtClass>() ?: return false
+    return ktClass.toDescriptor().safeAs<ClassDescriptor>()?.isFinalOrEnum ?: return false
+}
+
+private fun KtModifierListOwner.isSealedClassConstructor(): Boolean {
+    if (this !is KtConstructor<*>) return false
+    val ktClass = getContainingClassOrObject().safeAs<KtClass>() ?: return false
+    return ktClass.isSealed()
+}
+
+@K1Deprecation
+fun KtClass.isInheritable(): Boolean {
+    return when (getModalityFromDescriptor()) {
+        KtTokens.ABSTRACT_KEYWORD, KtTokens.OPEN_KEYWORD, KtTokens.SEALED_KEYWORD -> true
+        else -> false
+    }
+}
+
+@K1Deprecation
+val KtParameter.isOverridable: Boolean
+    get() = hasValOrVar() && !isEffectivelyFinal
+
+@K1Deprecation
+val KtProperty.isOverridable: Boolean
+    get() = !isTopLevel && !isEffectivelyFinal
+
+private val KtDeclaration.isEffectivelyFinal: Boolean
+    get() = hasModifier(KtTokens.FINAL_KEYWORD) ||
+            !(hasModifier(KtTokens.OPEN_KEYWORD) || hasModifier(KtTokens.ABSTRACT_KEYWORD) || hasModifier(KtTokens.OVERRIDE_KEYWORD) ||
+                    (containingClassOrObject as? KtClass)?.isInterface() == true) ||
+            containingClassOrObject?.isEffectivelyFinal == true
+
+private val KtClassOrObject.isEffectivelyFinal: Boolean
+    get() = this is KtObjectDeclaration ||
+            this is KtClass && isEffectivelyFinal
+
+private val KtClass.isEffectivelyFinal: Boolean
+    get() = hasModifier(KtTokens.FINAL_KEYWORD) ||
+            isData() ||
+            !(isSealed() || hasModifier(KtTokens.OPEN_KEYWORD) || hasModifier(KtTokens.ABSTRACT_KEYWORD) || isInterface())
+
+/**
+ * copy-paste in K2: [org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupportFirImpl.isOverridable]
+ */
+@K1Deprecation
+fun KtDeclaration.isOverridable(): Boolean =
+    !hasModifier(KtTokens.PRIVATE_KEYWORD) &&  // 'private' is incompatible with 'open'
+            (parents.match(KtParameterList::class, KtPrimaryConstructor::class, last = KtClass::class)
+                ?: parents.match(KtClassBody::class, last = KtClass::class))
+                ?.let { it.isInheritable() || it.isEnum() } == true &&
+            getModalityFromDescriptor() in setOf(KtTokens.ABSTRACT_KEYWORD, KtTokens.OPEN_KEYWORD)
+
+@K1Deprecation
+fun KtDeclaration.getModalityFromDescriptor(descriptor: DeclarationDescriptor? = resolveToDescriptorIfAny()): KtModifierKeywordToken? {
+    if (descriptor is MemberDescriptor) {
+        return mapModality(descriptor.modality)
+    }
+
+    return null
+}
+
+@K1Deprecation
+fun KtDeclaration.implicitModality(): KtModifierKeywordToken {
+    var predictedModality = predictImplicitModality()
+    val bindingContext = safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
+    val descriptor = bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, this] ?: return predictedModality
+    val containingDescriptor = descriptor.containingDeclaration ?: return predictedModality
+
+    val extensions = DeclarationAttributeAltererExtension.getInstances(this.project)
+    for (extension in extensions) {
+        val newModality = extension.refineDeclarationModality(
+            this,
+            descriptor as? ClassDescriptor,
+            containingDescriptor,
+            mapModalityToken(predictedModality),
+            isImplicitModality = true
+        )
+
+        if (newModality != null) {
+            predictedModality = mapModality(newModality)
+        }
+    }
+
+    return predictedModality
+}
+
+@K1Deprecation
+fun mapModality(accurateModality: Modality): KtModifierKeywordToken = when (accurateModality) {
+    Modality.FINAL -> KtTokens.FINAL_KEYWORD
+    Modality.SEALED -> KtTokens.SEALED_KEYWORD
+    Modality.OPEN -> KtTokens.OPEN_KEYWORD
+    Modality.ABSTRACT -> KtTokens.ABSTRACT_KEYWORD
+}
+
+private fun mapModalityToken(modalityToken: IElementType): Modality = when (modalityToken) {
+    KtTokens.FINAL_KEYWORD -> Modality.FINAL
+    KtTokens.SEALED_KEYWORD -> Modality.SEALED
+    KtTokens.OPEN_KEYWORD -> Modality.OPEN
+    KtTokens.ABSTRACT_KEYWORD -> Modality.ABSTRACT
+    else -> error("Unexpected modality keyword $modalityToken")
+}
+
+@K1Deprecation
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
+    ReplaceWith("this.addTypeParameter(typeParameter)", "org.jetbrains.kotlin.idea.base.psi.addTypeParameter")
+)
+fun KtTypeParameterListOwner.addTypeParameter(typeParameter: KtTypeParameter) = addTypeParameter(typeParameter)
+
+@K1Deprecation
+fun KtNamedFunction.getOrCreateValueParameterList(): KtParameterList {
+    valueParameterList?.let { return it }
+    val parameterList = KtPsiFactory(project).createParameterList("()")
+    val anchor = nameIdentifier ?: funKeyword!!
+    return addAfter(parameterList, anchor) as KtParameterList
+}
+
+@K1Deprecation
+fun KtCallableDeclaration.setType(type: KotlinType, shortenReferences: Boolean = true) {
+    if (type.isError) return
+    setType(IdeDescriptorRenderers.SOURCE_CODE.renderType(type), shortenReferences)
+}
+
+@K1Deprecation
+fun KtCallableDeclaration.setType(typeString: String, shortenReferences: Boolean = true) {
+    val typeReference = KtPsiFactory(project).createType(typeString)
+    setTypeReference(typeReference)
+    if (shortenReferences) {
+        ShortenReferences.DEFAULT.process(getTypeReference()!!)
+    }
+}
+
+@K1Deprecation
+fun KtCallableDeclaration.setReceiverType(type: KotlinType) {
+    if (type.isError) return
+    val typeReference = KtPsiFactory(project).createType(IdeDescriptorRenderers.SOURCE_CODE.renderType(type))
+    setReceiverTypeReference(typeReference)
+    ShortenReferences.DEFAULT.process(receiverTypeReference!!)
+}
+
+@K1Deprecation
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
+    ReplaceWith("this.setDefaultValue(newDefaultValue)", "org.jetbrains.kotlin.idea.base.psi.setDefaultValue")
+)
+@ApiStatus.ScheduledForRemoval
+fun KtParameter.setDefaultValue(newDefaultValue: KtExpression): PsiElement = setDefaultValue(newDefaultValue)
+
+@K1Deprecation
+fun KtModifierList.appendModifier(modifier: KtModifierKeywordToken) {
+    add(KtPsiFactory(project).createModifier(modifier))
+}
+
+@K1Deprecation
+fun KtModifierList.normalize(): KtModifierList {
+    val psiFactory = KtPsiFactory(project)
+    return psiFactory.createEmptyModifierList().also { newList ->
+        val modifiers = SmartList<PsiElement>()
+        allChildren.forEach {
+            val elementType = it.node.elementType
+            when {
+                it is KtAnnotation || it is KtAnnotationEntry -> newList.add(it)
+                elementType is KtModifierKeywordToken -> {
+                    if (elementType == KtTokens.DEFAULT_VISIBILITY_KEYWORD) return@forEach
+                    if (elementType == KtTokens.FINALLY_KEYWORD && !hasModifier(KtTokens.OVERRIDE_KEYWORD)) return@forEach
+                    modifiers.add(it)
+                }
+            }
+        }
+        modifiers.sortBy { MODIFIERS_ORDER.indexOf(it.node.elementType) }
+        modifiers.forEach { newList.add(it) }
+    }
+}

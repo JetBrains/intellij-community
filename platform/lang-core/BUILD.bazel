@@ -1,0 +1,38 @@
+### auto-generated section `build intellij.platform.lang.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "lang-core_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "lang-core",
+  module_name = "intellij.platform.lang.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":lang-core_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/ide-core",
+    "//platform/execution",
+    "//platform/platform-util-io:ide-util-io",
+    "//jps/model-api:model",
+    "//platform/util/jdom",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/util/concurrency",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util:util-ui",
+    "//platform/util-ex",
+    "//platform/core-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/analysis-api:analysis",
+    "//platform/usageView",
+    "//platform/eel-provider",
+  ]
+)
+### auto-generated section `build intellij.platform.lang.core` end

@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.xml.parser.jar
+  modules:
+  - name: intellij.xml.parser

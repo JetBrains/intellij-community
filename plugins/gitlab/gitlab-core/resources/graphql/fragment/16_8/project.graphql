@@ -1,0 +1,23 @@
+# <16.8 allowsMultipleMergeRequestAssignees, allowsMultipleMergeRequestReviewers removed
+fragment project on Project {
+  id
+  name
+  nameWithNamespace
+  path
+  fullPath
+  httpUrlToRepo
+  sshUrlToRepo
+
+  removeSourceBranchAfterMerge
+  onlyAllowMergeIfAllDiscussionsAreResolved
+  onlyAllowMergeIfPipelineSucceeds
+  allowMergeOnSkippedPipeline
+
+  userPermissions {
+    createSnippet
+  }
+
+  repository {
+    rootRef
+  }
+}

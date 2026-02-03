@@ -1,0 +1,60 @@
+<!-- Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<idea-plugin>
+  <!-- Components and extensions declared in this file work ONLY in PyCharm, not in Python plugin.
+       Both Community and Professional editions.
+
+       Note: Module alias, PlatformLangPlugin.xml, and remoteServers includes are provided by
+       CommunityProductFragments.pycharmCoreFragment() in product definitions. -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationActivity implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
+    <applicationActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"/>
+    <postStartupActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler$MyStartupActivity"/>
+
+    <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
+
+    <projectAttachProcessor implementation="com.intellij.platform.ModuleAttachProcessor"/>
+
+    <renameHandler implementation="com.intellij.platform.renameProject.RenameProjectHandler"/>
+    <renameHandler implementation="com.intellij.platform.renameProject.ProjectFolderRenameHandler"/>
+  </extensions>
+
+  <actions>
+    <group id="PlatformOpenProjectGroup">
+      <reference ref="NewProjectOrModuleGroup"/>
+      <action id="NewElement" class="com.intellij.ide.actions.NewElementAction">
+        <add-to-group group-id="ProjectViewToolbar" anchor="first"/>
+      </action>
+      <reference ref="NewScratchFile"/>
+      <add-to-group group-id="FileOpenGroup" anchor="first"/>
+    </group>
+
+    <action id="SaveAs" class="com.intellij.ide.actions.SaveAsAction">
+      <add-to-group group-id="FileOpenGroup" anchor="after" relative-to-action="OpenFile"/>
+    </action>
+
+    <action id="ProjectFromVersionControl" class="com.intellij.openapi.wm.impl.welcomeScreen.ProjectFromVersionControlAction">
+      <add-to-group group-id="PlatformOpenProjectGroup" relative-to-action="NewProjectOrModuleGroup" anchor="after"/>
+      <override-text place="ProjectWidgetPopup"/>
+      <add-to-group group-id="ProjectWidget.Actions" anchor="after" relative-to-action="OpenFile"/>
+    </action>
+
+    <action id="RerunFailedTests" class="com.intellij.execution.testframework.actions.RerunFailedTestsAction"
+            icon="AllIcons.RunConfigurations.RerunFailedTests"/>
+
+    <group id="PyCharm.MarkRootGroup">
+      <action id="MarkSourceRoot" class="com.intellij.ide.projectView.actions.MarkJavaSourceRootAction"/>
+      <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction"/>
+      <action id="MarkAsContentRoot" class="com.intellij.ide.projectView.actions.MarkAsContentRootAction"/>
+      <action id="MarkTestSourceRoot" class="com.intellij.ide.projectView.actions.MarkTestSourceRootAction"/>
+      <action id="UnmarkRoot" class="com.intellij.ide.projectView.actions.UnmarkRootAction"/>
+      <add-to-group group-id="MarkRootGroup"/>
+    </group>
+
+    <action overrides="true" id="ForceStepInto" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+
+    <action id="RenameProject" class="com.intellij.platform.renameProject.RenameProjectAction">
+      <add-to-group group-id="FileOpenGroup" anchor="after" relative-to-action="RenameFile"/>
+    </action>
+  </actions>
+</idea-plugin>

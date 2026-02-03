@@ -1,0 +1,74 @@
+### auto-generated section `build intellij.kotlin.jvm.debugger.coroutines` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_coroutines",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+  ],
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "coroutines_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "coroutines",
+  module_name = "intellij.kotlin.jvm.debugger.coroutines",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":coroutines_resources"],
+  kotlinc_opts = ":custom_coroutines",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//java/debugger/openapi:java-debugger",
+    "@lib//:kotlinc-analysis-api",
+    "//libraries/maven-resolver-provider",
+    "//libraries/gson",
+    "//libraries/asm",
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/lang-api:lang",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-api:ide",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/jvm-debugger/base/util",
+    "//plugins/kotlin/jvm-debugger/core",
+    "//platform/lang-impl",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-impl/shared",
+    "//platform/execution-impl",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/smRunner",
+    "//platform/threadDumpParser",
+    "//java/java-psi-api:psi",
+    "//platform/platform-impl:ide-impl",
+    "//java/execution/impl",
+    "//java/debugger/impl",
+    "//plugins/kotlin/code-insight/utils",
+    "//java/java-runtime:rt",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//java/java-impl:impl",
+    "//java/debugger/shared",
+    "//platform/xdebugger-impl/rpc",
+    "//platform/execution",
+  ]
+)
+### auto-generated section `build intellij.kotlin.jvm.debugger.coroutines` end

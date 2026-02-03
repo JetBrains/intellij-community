@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" exported="" name="ktor-client-core" level="project" />
+    <orderEntry type="library" exported="" name="ktor-client-java" level="project" />
+    <orderEntry type="module-library" exported="">
+      <library name="ktor-client-encoding" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-encoding-jvm:3.3.2">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-encoding-jvm/3.3.2/ktor-client-encoding-jvm-3.3.2.jar">
+              <sha256sum>41bc2e0a4ea365173e3f68d3a2f3a954424ad0726343c73526621892db9eadef</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-encoding-jvm/3.3.2/ktor-client-encoding-jvm-3.3.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-encoding-jvm/3.3.2/ktor-client-encoding-jvm-3.3.2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="ktor-client-content-negotiation" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-content-negotiation-jvm:3.3.2">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-content-negotiation-jvm/3.3.2/ktor-client-content-negotiation-jvm-3.3.2.jar">
+              <sha256sum>fecae33ebb61a2948f10a40859c6a112bf2f2cf125c4afc65984dc026b5aaf50</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-content-negotiation-jvm/3.3.2/ktor-client-content-negotiation-jvm-3.3.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-content-negotiation-jvm/3.3.2/ktor-client-content-negotiation-jvm-3.3.2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="library" exported="" name="ktor-serialization-kotlinx-json" level="project" />
+    <orderEntry type="library" exported="" name="kotlinx-serialization-json-io" level="project" />
+    <orderEntry type="module-library" exported="">
+      <library name="ktor-client-auth" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-auth-jvm:3.3.2">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-auth-jvm/3.3.2/ktor-client-auth-jvm-3.3.2.jar">
+              <sha256sum>5273496ea61e236af5161732c410ded244c146e7a9317922405d8a9dca6a25f7</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-auth-jvm/3.3.2/ktor-client-auth-jvm-3.3.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-auth-jvm/3.3.2/ktor-client-auth-jvm-3.3.2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="ktor-client-logging" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-logging-jvm:3.3.2">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-logging-jvm/3.3.2/ktor-client-logging-jvm-3.3.2.jar">
+              <sha256sum>ffc083f9e272dd3d8cf8908ba7e06c7c36d5f76e7aff837a69c28e24d35f2f7f</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-logging-jvm/3.3.2/ktor-client-logging-jvm-3.3.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-logging-jvm/3.3.2/ktor-client-logging-jvm-3.3.2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.ktor.utils" exported="" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.io" exported="" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.slf4j" scope="RUNTIME" />
+  </component>
+</module>

@@ -1,0 +1,3 @@
+[NotNull Values]
+8 	val x = <bold>foo</bold> (in A.test())
+8 		val x = <bold>foo</bold> (in A.test())

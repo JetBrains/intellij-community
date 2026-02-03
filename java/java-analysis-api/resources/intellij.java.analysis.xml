@@ -1,0 +1,22 @@
+<idea-plugin  visibility="public">
+  <dependencies>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.uast"/>
+    <module name="intellij.platform.uast.ide"/>
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.syntax"/>
+
+    <module name="intellij.platform.backend"/>
+    <plugin id="com.intellij.modules.java-capable"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.unusedDeclarationFixProvider"
+                    interface="com.intellij.codeInspection.reference.UnusedDeclarationFixProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.lang.jvm.actions.jvmElementActionsFactory" interface="com.intellij.lang.jvm.actions.JvmElementActionsFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.changeVariableTypeQuickFixProvider" interface="com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider" dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

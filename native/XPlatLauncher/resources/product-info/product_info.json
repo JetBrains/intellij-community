@@ -1,0 +1,25 @@
+{
+  "name": "Cross-platform Launcher Test",
+  "version": "1234.5",
+  "buildNumber": "123.456",
+  "productCode": "XL",
+  "envVarBaseName": "XPLAT",
+  "dataDirectoryName": "XPlatLauncherTest",
+  "productVendor": "JetBrains",
+  "launch": [
+    {
+      "os": "Linux",
+      "launcherPath": "bin/xplat.sh",
+      "javaExecutablePath": "jbr/bin/java",
+      "vmOptionsFilePath": "bin/xplat64.vmoptions",
+      "startupWmClass": "jetbrains-idea",
+      "bootClassPathJarNames": [
+        "app.jar"
+      ],
+      "additionalJvmArguments": [
+        "-Didea.paths.selector=XPlatLauncherTest"
+      ],
+      "mainClass": "com.intellij.idea.TestMain"
+    }
+  ]
+}

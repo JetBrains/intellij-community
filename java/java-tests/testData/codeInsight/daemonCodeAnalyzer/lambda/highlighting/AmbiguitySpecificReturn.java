@@ -1,0 +1,30 @@
+class IntStream {
+  private void foo(IntStream s) {
+    s.map<error descr="Ambiguous method call: both 'IntStream.map(IntUnaryOperator)' and 'IntStream.map(ObjIntFunction<Object>)' match">(i -> 1 << i)</error>;
+    s.map<error descr="Ambiguous method call: both 'IntStream.map(IntUnaryOperator)' and 'IntStream.map(ObjIntFunction<Object>)' match">(<warning descr="Parameter 'i' is never used">i</warning> -> 1)</error>;
+    s.map<error descr="Ambiguous method call: both 'IntStream.map(IntUnaryOperator)' and 'IntStream.map(ObjIntFunction<Object>)' match">(i -> i)</error>;
+  }
+
+  public static void main(String[] args) {
+    new IntStream().foo(null);
+  }
+
+  private IntStream <warning descr="Private method 'map(IntUnaryOperator)' is never used">map</warning>(IntUnaryOperator mapper) {
+    System.out.println(mapper);
+    return null;
+  }
+
+  private <T> IntStream <warning descr="Private method 'map(ObjIntFunction<T>)' is never used">map</warning>(ObjIntFunction<T> mapper) {
+    System.out.println(mapper);
+    return null;
+  }
+}
+
+interface IntUnaryOperator {
+  public int applyAsInt(int operand);
+}
+
+interface ObjIntFunction<T> {
+  public T apply(int i);
+}
+

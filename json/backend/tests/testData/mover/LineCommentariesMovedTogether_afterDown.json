@@ -1,0 +1,8 @@
+{
+  "foo": true,
+  // This line won't be moved
+
+  "bar": false
+  // Line 1
+  // Line 2
+}

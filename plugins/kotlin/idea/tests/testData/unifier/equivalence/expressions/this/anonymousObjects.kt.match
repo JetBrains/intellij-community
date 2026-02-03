@@ -1,0 +1,13 @@
+(57,132)
+object: Foo {
+        override fun foo() {
+            this
+        }
+    }
+
+(146,221)
+object: Foo {
+        override fun foo() {
+            this
+        }
+    }

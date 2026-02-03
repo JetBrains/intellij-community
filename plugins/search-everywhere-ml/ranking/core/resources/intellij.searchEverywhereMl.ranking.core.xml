@@ -1,0 +1,129 @@
+<idea-plugin visibility="internal">
+  <resource-bundle>messages.searchEverywhereMlBundle</resource-bundle>
+
+  <dependencies>
+    <module name="intellij.platform.ml.impl"/>
+    <module name="intellij.searchEverywhereMl.ranking.ext"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij.searchEverywhereMl">
+    <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.ActionKeyProvider"/>
+    <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.PsiElementKeyProvider"/>
+    <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.RunConfigurationsKeyProvider"/>
+    <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.NavigationItemKeyProvider"/>
+    <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.TypoKeyProvider"/>
+    <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.TextKeyProvider"/>
+    <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.CalculatorKeyProvider"/>
+    <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.PsiItemWithSimilarityElementKeyProvider"/>
+    <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.CommandInfoKeyProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+
+    <registryKey defaultValue="false"
+                 description="Mark position changes in Search Everywhere"
+                 key="search.everywhere.ml.show.diff"/>
+
+    <registryKey defaultValue=""
+                 description="Path to the local action-ranking model."
+                 key="search.everywhere.ml.action.model.path"/>
+    <registryKey defaultValue=""
+                 description="Path to the local file-ranking model."
+                 key="search.everywhere.ml.files.model.path"/>
+    <registryKey defaultValue=""
+                 description="Path to the local class-ranking model."
+                 key="search.everywhere.ml.classes.model.path"/>
+    <registryKey defaultValue=""
+                 description="Path to the local all-ranking model."
+                 key="search.everywhere.ml.all.model.path"/>
+
+    <statistician key="searchEverywhere"
+                  implementationClass="com.intellij.searchEverywhereMl.ranking.core.features.statistician.SearchEverywhereFileStatistician"/>
+    <statistician key="searchEverywhere"
+                  implementationClass="com.intellij.searchEverywhereMl.ranking.core.features.statistician.SearchEverywhereActionStatistician"/>
+    <statistician key="searchEverywhere"
+                  implementationClass="com.intellij.searchEverywhereMl.ranking.core.features.statistician.SearchEverywhereSymbolStatistician"/>
+
+    <statistician key="searchEverywhereContributor"
+                  implementationClass="com.intellij.searchEverywhereMl.ranking.core.features.statistician.SearchEverywhereContributorStatistician"/>
+
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereRunConfigurationTypeValidator"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector"/>
+
+    <searchEverywhereEssentialContributorsMarker
+      implementation="com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereEssentialContributorMlMarker"/>
+
+    <searchEverywhereMlService implementation="com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMlRankingService"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.searcheverywhere.ml.searchEverywhereElementFeaturesProvider"
+                    interface="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereElementFeaturesProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.searcheverywhere.ml.rankingModelLoader"
+                    interface="com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereMLRankingModelLoader"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij.searcheverywhere.ml">
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGeneralActionFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereOptionFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereClassOrFileFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereFileFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereClassFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereCommonFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereSymbolFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereRunConfigurationFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywherePsiElementFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereFileGroupFeatureProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereTextFeaturesProvider"/>
+
+    <rankingModelLoader
+      implementation="com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereActionsRankingModelLoader"/>
+    <rankingModelLoader
+      implementation="com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereFilesRankingModelLoader"/>
+    <rankingModelLoader
+      implementation="com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereClassesRankingModelLoader"/>
+    <rankingModelLoader
+      implementation="com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereAllRankingModelLoader"/>
+
+    <searchEverywhereStateFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.core.features.CoreStateFeaturesProvider"/>
+  </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.filePrediction.features.history.FileHistoryManagerWrapper$ProjectClosureListener"
+              topic="com.intellij.openapi.project.ProjectCloseListener"/>
+  </applicationListeners>
+
+  <projectListeners>
+    <listener class="com.intellij.filePrediction.features.history.FileHistoryManagerWrapper$EditorManagerListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </projectListeners>
+
+  <actions>
+    <action id="com.intellij.searchEverywhereMl.ranking.core.actions.OpenFeaturesInScratchFileAction"
+            class="com.intellij.searchEverywhereMl.ranking.core.actions.OpenFeaturesInScratchFileAction"
+            internal="true">
+      <add-to-group group-id="MaintenanceGroup" anchor="last"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl alt 1"/>
+      <override-text place="GoToAction"/>
+    </action>
+  </actions>
+</idea-plugin>

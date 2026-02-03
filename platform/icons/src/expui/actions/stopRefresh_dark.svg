@@ -1,0 +1,10 @@
+<!-- Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg fill="none" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+  <g stroke-linecap="round">
+    <path d="m4.82 12.6-0.707-0.707c-2.15-2.15-2.15-5.63 0-7.78 0.783-0.783 1.74-1.28 2.75-1.49" stroke="#CED0D6"/>
+    <path d="m11.2 2.9a0.5 0.5 0 0 0-0.354 0.146 0.5 0.5 0 0 0 0 0.707l0.707 0.707c1.07 1.07 1.55 2.49 1.45 3.88h0.607c0.0616 0 0.124 0.00176 0.184 0.00781 0.0599 0.00605 0.118 0.0155 0.176 0.0273 0.00928 0.00189 0.0181 0.00578 0.0273 0.00781 0.108-1.66-0.471-3.37-1.74-4.63l-0.707-0.707a0.5 0.5 0 0 0-0.354-0.146z" color="#000000" fill="#CED0D6"/>
+    <path d="m2.34 12.9 2.83-2.12e-4 1.48e-4 -2.83" stroke="#CED0D6"/>
+    <path d="m10.8 5.88 1.28e-4 -2.83 2.83-1.27e-4" stroke="#CED0D6"/>
+  </g>
+  <rect x="9.5" y="9.5" width="6" height="6" rx="1.5" fill="#402929" stroke="#DB5C5C"/>
+</svg>

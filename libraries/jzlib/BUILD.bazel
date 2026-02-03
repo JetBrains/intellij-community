@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.jzlib` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "jzlib_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jzlib",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":jzlib_resources"],
+  exports = ["@lib//:libraries-jzlib-jzlib"],
+  runtime_deps = ["@lib//:libraries-jzlib-jzlib"]
+)
+### auto-generated section `build intellij.libraries.jzlib` end

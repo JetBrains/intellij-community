@@ -1,0 +1,13 @@
+import java.util.TreeMap
+
+class X<T> {
+    fun foo(p: java.util.TreeMap<java.io.File, T>){}
+
+    fun f(){
+        foo(TreeMap())
+    }
+}
+
+// ELEMENT: TreeMap
+
+// IGNORE_K2

@@ -1,0 +1,33 @@
+### auto-generated section `build intellij.python.community.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "testFramework_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "testFramework",
+  module_name = "intellij.python.community.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":testFramework_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
+    "//platform/core-impl",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/remote-core",
+    "//platform/testFramework",
+    "//python/python-sdk:sdk",
+    "//platform/execution",
+    "//platform/lang-impl",
+    "//python:python-community-impl",
+  ]
+)
+### auto-generated section `build intellij.python.community.testFramework` end

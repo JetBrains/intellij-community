@@ -1,0 +1,12 @@
+record Complex(double x, double y) {
+  double methodReturnsX() {
+    return x;
+  }
+
+}
+
+class Use {
+  void test(Complex c) {
+      System.out.println(Math.hypot(c.x(), c.y()));
+  }
+}

@@ -1,0 +1,8 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"
+                        serviceImplementation="com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider"
+                        overrides="true"/>
+    <ide.newUiOnboarding ideHelpName="idea"/>
+  </extensions>
+</idea-plugin>

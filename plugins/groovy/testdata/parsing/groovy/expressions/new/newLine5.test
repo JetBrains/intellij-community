@@ -1,0 +1,30 @@
+new Object
+[]
+{ 1
+}
+-----
+Groovy script
+  NEW expression
+    PsiElement(new)('new')
+    PsiWhiteSpace(' ')
+    Reference element
+      PsiElement(identifier)('Object')
+    PsiErrorElement:'(' expected
+      <empty list>
+  PsiElement(new line)('\n')
+  Method call
+    Generalized list
+      PsiElement([)('[')
+      PsiElement(])(']')
+    Arguments
+      <empty list>
+    PsiElement(new line)('\n')
+    Closable block
+      PsiElement({)('{')
+      PsiWhiteSpace(' ')
+      Parameter list
+        <empty list>
+      Literal
+        PsiElement(Integer)('1')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

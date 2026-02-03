@@ -1,0 +1,5 @@
+parsimonious.nodes.RuleDecoratorMeta.__new__
+
+# Tests are shipped with the source, we ignore it:
+parsimonious.tests
+parsimonious\.tests\..*

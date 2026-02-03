@@ -1,0 +1,106 @@
+### auto-generated section `build intellij.python.featuresTrainer` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "featuresTrainer_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+resourcegroup(
+  name = "featuresTrainer_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "featuresTrainer",
+  module_name = "intellij.python.featuresTrainer",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":featuresTrainer_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/execution",
+    "//platform/refactoring",
+    "//python:python-community-impl",
+    "//plugins/ide-features-trainer:featuresTrainer",
+    "//platform/platform-impl:ide-impl",
+    "//platform/xdebugger-api:debugger",
+    "//platform/usageView",
+    "//platform/lang-impl",
+    "//python/python-sdk:sdk",
+    "//platform/core-ui",
+    "//platform/execution-impl",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//python/services/system-python",
+    "//libraries/stream",
+  ]
+)
+
+jvm_library(
+  name = "featuresTrainer_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":featuresTrainer_test_resources"],
+  associates = [":featuresTrainer"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/execution",
+    "//platform/refactoring",
+    "//python:python-community-impl",
+    "//plugins/ide-features-trainer:featuresTrainer",
+    "//plugins/ide-features-trainer:featuresTrainer_test_lib",
+    "//platform/platform-impl:ide-impl",
+    "//platform/xdebugger-api:debugger",
+    "//platform/usageView",
+    "//platform/lang-impl",
+    "//python/python-sdk:sdk",
+    "//python/python-sdk:sdk_test_lib",
+    "//platform/core-ui",
+    "//platform/execution-impl",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//python:pycharm-community",
+    "//python/services/system-python",
+    "//python/services/system-python:system-python_test_lib",
+    "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//python/python-venv:venv",
+    "//python/python-venv:venv_test_lib",
+    "//python/services/internal-impl:python-community-services-internal-impl",
+    "//python/services/internal-impl:python-community-services-internal-impl_test_lib",
+    "//python/pluginCore:community-plugin",
+    "//libraries/stream",
+    "//python/python-test-env/junit5:junit5_test_lib",
+    "//python/python-test-env/common:common_test_lib",
+  ]
+)
+### auto-generated section `build intellij.python.featuresTrainer` end
+
+### auto-generated section `test intellij.python.featuresTrainer` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "featuresTrainer_test",
+  runtime_deps = [":featuresTrainer_test_lib"]
+)
+### auto-generated section `test intellij.python.featuresTrainer` end

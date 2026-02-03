@@ -1,0 +1,14 @@
+fun main() {
+    val list = listOf(1)
+    val a = buildList {
+  <caret>      addAll(listOf(1, 2))
+        mapTo(this) { it + 1}
+        mapNotNullTo(this) { it + 1}
+        mapIndexedTo(this) { i, e -> e - 2 }
+        filterTo(this) { it % 2 == 1 }
+        filterNotTo(this) { it % 2 == 1 }
+        filterNotNullTo(this)
+        filterIsInstanceTo<Int, _>(this)
+        add(5)
+    }
+}

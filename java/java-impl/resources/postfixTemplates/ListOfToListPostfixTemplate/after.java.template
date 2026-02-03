@@ -1,0 +1,3 @@
+public void m(Integer[] value) {
+  List.of(value)<spot></spot>
+}

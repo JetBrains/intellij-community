@@ -1,0 +1,39 @@
+### auto-generated section `build intellij.kotlin.grazie.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "kotlin-grazie-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "kotlin-grazie-tests_test_lib",
+  module_name = "intellij.kotlin.grazie.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "//plugins/kotlin/plugin/k2",
+    "//plugins/kotlin/grazie",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/fir/tests:tests_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/grazie/src/test:grazie-tests_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//platform/core-api:core",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+  ],
+  runtime_deps = [":kotlin-grazie-tests"]
+)
+### auto-generated section `build intellij.kotlin.grazie.tests` end
+
+### auto-generated section `test intellij.kotlin.grazie.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "kotlin-grazie-tests_test",
+  runtime_deps = [":kotlin-grazie-tests_test_lib"]
+)
+### auto-generated section `test intellij.kotlin.grazie.tests` end

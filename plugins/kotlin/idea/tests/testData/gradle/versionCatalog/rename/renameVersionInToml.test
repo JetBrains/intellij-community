@@ -1,0 +1,12 @@
+// FILE: gradle/libs.versions.toml
+## RENAME_TO: renamed_library-version
+## FILE_TO_CHECK: build.gradle.kts
+[versions]
+<caret>test_library-version = "1.0"
+
+// FILE: build.gradle.kts
+libs.versions.test.library.version
+
+// FILE: build.gradle.kts.after
+libs.versions.renamed.library.version
+

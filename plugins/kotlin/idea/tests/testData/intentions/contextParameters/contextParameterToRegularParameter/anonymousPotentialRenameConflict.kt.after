@@ -1,0 +1,14 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+class Context
+class Unrelated
+
+fun foo(context1: Context, context: Unrelated) {
+    with(context1) {
+        bar()
+    }
+}
+
+context(c: Context)
+fun bar() {
+}

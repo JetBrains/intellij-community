@@ -1,0 +1,1 @@
+from <error descr="Unresolved reference 'qwejfknqweklfnjqlkjwnef'">qwejfknqweklfnjqlkjwnef</error>.qwe import <error descr="Unresolved reference 'a_function'">a_function</error>

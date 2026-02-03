@@ -1,0 +1,46 @@
+### auto-generated section `build kotlin.inspections-fe10` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_inspections-fe10",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
+
+resourcegroup(
+  name = "inspections-fe10_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "inspections-fe10",
+  module_name = "kotlin.inspections-fe10",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":inspections-fe10_resources"],
+  kotlinc_opts = ":custom_inspections-fe10",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/fe10/code-insight",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/code-insight/api",
+    "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+  ]
+)
+### auto-generated section `build kotlin.inspections-fe10` end

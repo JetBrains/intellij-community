@@ -1,0 +1,12 @@
+class Absolutely {
+  private Object b = new Object() {
+      {
+          System.out.println(new int[]{1, 2});
+      }
+
+      public String toString() {
+        return "A";
+      }
+  };
+
+}

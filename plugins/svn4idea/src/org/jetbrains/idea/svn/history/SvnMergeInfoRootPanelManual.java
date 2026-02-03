@@ -1,0 +1,293 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.svn.history;
+
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.JBColor;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.api.Url;
+import org.jetbrains.idea.svn.branchConfig.SelectBranchPopup;
+import org.jetbrains.idea.svn.branchConfig.SvnBranchMapperManager;
+import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
+import org.jetbrains.idea.svn.integrate.IntegratedSelectedOptionsDialog;
+import org.jetbrains.idea.svn.integrate.WorkingCopyInfo;
+
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
+public class SvnMergeInfoRootPanelManual {
+
+  private JCheckBox myInclude;
+  private TextFieldWithBrowseButton myBranchField;
+  private FixedSizeButton myFixedSelectLocal;
+  private JPanel myContentPanel;
+  private JTextArea myUrlText;
+  private JTextArea myLocalArea;
+  private JTextArea myMixedRevisions;
+
+  private final @NotNull Project myProject;
+  private final @NotNull NotNullFunction<? super WCInfoWithBranches, ? extends WCInfoWithBranches> myRefresher;
+  private final @NotNull Runnable myListener;
+  private boolean myOnlyOneRoot;
+  private @NotNull WCInfoWithBranches myInfo;
+  private final @NotNull Map<Url, String> myBranchToLocal;
+  private WCInfoWithBranches.Branch mySelectedBranch;
+
+  public SvnMergeInfoRootPanelManual(@NotNull Project project,
+                                     @NotNull NotNullFunction<? super WCInfoWithBranches, ? extends WCInfoWithBranches> refresher,
+                                     @NotNull Runnable listener,
+                                     boolean onlyOneRoot,
+                                     @NotNull WCInfoWithBranches info) {
+    myOnlyOneRoot = onlyOneRoot;
+    myInfo = info;
+    myProject = project;
+    myRefresher = refresher;
+    myListener = listener;
+    myBranchToLocal = new HashMap<>();
+
+    init();
+    myInclude.setVisible(!onlyOneRoot);
+    initWithData();
+  }
+
+  private void initWithData() {
+    myInclude.addActionListener(e -> myListener.run());
+    myUrlText.setText(myInfo.getUrl().toString());
+    myFixedSelectLocal.addActionListener(e -> {
+      if (mySelectedBranch != null) {
+        Pair<WorkingCopyInfo, Url> info =
+          IntegratedSelectedOptionsDialog.selectWorkingCopy(myProject, myInfo.getUrl(), mySelectedBranch.getUrl(), false, null, null);
+        if (info != null) {
+          calculateBranchPathByBranch(mySelectedBranch.getUrl(), info.getFirst().getLocalPath());
+        }
+
+        myListener.run();
+      }
+    });
+
+    myBranchField.getTextField().setEditable(false);
+    myBranchField.addActionListener(e -> {
+      final VirtualFile vf = SvnUtil.getVirtualFile(myInfo.getPath());
+      if (vf != null) {
+        SelectBranchPopup.show(myProject, vf, (project, configuration, url, revision) -> {
+          refreshSelectedBranch(new WCInfoWithBranches.Branch(url));
+          calculateBranchPathByBranch(mySelectedBranch.getUrl(), null);
+          myListener.run();
+        }, message("popup.title.select.branch"));
+      }
+    });
+
+    if (myInfo.getBranches().isEmpty()) {
+      calculateBranchPathByBranch(null, null);
+    } else {
+      refreshSelectedBranch(myInfo.getBranches().get(0));
+      calculateBranchPathByBranch(mySelectedBranch.getUrl(), null);
+    }
+  }
+
+  private void init() {
+    myContentPanel = new JPanel(new GridBagLayout());
+    myContentPanel.setMinimumSize(new Dimension(200, 100));
+
+    final GridBagConstraints gb =
+      new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, JBUI.insets(1), 0, 0);
+
+    myInclude = new JCheckBox();
+    gb.fill = GridBagConstraints.NONE;
+    gb.weightx = 0;
+    myContentPanel.add(myInclude, gb);
+
+    // newline
+    JLabel hereLabel = new JLabel(message("label.merge.from.url"));
+    ++ gb.gridy;
+    gb.gridx = 0;
+    myContentPanel.add(hereLabel, gb);
+
+    myUrlText = new JTextArea();
+    myUrlText.setLineWrap(true);
+    myUrlText.setBackground(UIUtil.getLabelBackground());
+    myUrlText.setWrapStyleWord(true);
+    gb.weightx = 1;
+    ++ gb.gridx;
+    gb.gridwidth = 2;
+    gb.fill = GridBagConstraints.HORIZONTAL;
+    myContentPanel.add(myUrlText, gb);
+
+    // newline
+    gb.fill = GridBagConstraints.NONE;
+    JLabel thereLabel = new JLabel(message("label.merge.to.branch"));
+    gb.weightx = 0;
+    gb.gridwidth = 1;
+    ++ gb.gridy;
+    gb.gridx = 0;
+    myContentPanel.add(thereLabel, gb);
+
+    myBranchField = new TextFieldWithBrowseButton();
+    gb.weightx = 1;
+    ++ gb.gridx;
+    gb.gridwidth = 2;
+    gb.fill = GridBagConstraints.HORIZONTAL;
+    myContentPanel.add(myBranchField, gb);
+
+    // newline
+    gb.gridx = 1;
+    ++ gb.gridy;
+    gb.gridwidth = 1;
+    myLocalArea = new JTextArea();
+    myLocalArea.setBackground(UIUtil.getLabelBackground());
+    myLocalArea.setLineWrap(true);
+    myLocalArea.setWrapStyleWord(true);
+    myContentPanel.add(myLocalArea, gb);
+
+    ++ gb.gridx;
+    gb.weightx = 0;
+    gb.fill = GridBagConstraints.NONE;
+    myFixedSelectLocal = new FixedSizeButton(20);
+    myContentPanel.add(myFixedSelectLocal, gb);
+
+    ++ gb.gridy;
+    gb.gridx = 0;
+    gb.gridwidth = 2;
+    myMixedRevisions = new JTextArea(message("label.mixed.revision.working.copy"));
+    myMixedRevisions.setForeground(JBColor.RED);
+    myMixedRevisions.setBackground(myContentPanel.getBackground());
+    myContentPanel.add(myMixedRevisions, gb);
+
+    myMixedRevisions.setVisible(false);
+  }
+
+  public void setMixedRevisions(final boolean value) {
+    myMixedRevisions.setVisible(value);
+  }
+
+  private static @Nullable String getLocal(@NotNull Url url, @Nullable String localPath) {
+    String result = null;
+    Set<String> paths = SvnBranchMapperManager.getInstance().get(url);
+
+    if (!ContainerUtil.isEmpty(paths)) {
+      result = localPath != null ? ContainerUtil.find(paths, localPath) : ContainerUtil.getFirstItem(ContainerUtil.sorted(paths));
+    }
+
+    return result;
+  }
+
+  // always assign to local area here
+  private void calculateBranchPathByBranch(@Nullable Url url, @Nullable String localPath) {
+    final String local = url == null ? null : getLocal(url, localPath == null ? myBranchToLocal.get(url) : localPath);
+    if (local == null) {
+      myLocalArea.setForeground(JBColor.RED);
+      myLocalArea.setText(message("label.select.target.working.copy"));
+    } else {
+      myLocalArea.setForeground(NamedColorUtil.getInactiveTextColor());
+      myLocalArea.setText(local);
+      myBranchToLocal.put(url, local);
+    }
+  }
+
+  // always assign to selected branch here
+  private void refreshSelectedBranch(@NotNull WCInfoWithBranches.Branch branch) {
+    myBranchField.setText(branch.getName());
+
+    if (!initSelectedBranch(branch)) {
+      myInfo = myRefresher.fun(myInfo);
+      initSelectedBranch(branch);
+    }
+  }
+
+  private boolean initSelectedBranch(@NotNull WCInfoWithBranches.Branch branch) {
+    boolean found = myInfo.getBranches().contains(branch);
+
+    if (found) {
+      mySelectedBranch = branch;
+    }
+
+    return found;
+  }
+
+  public void setOnlyOneRoot(final boolean onlyOneRoot) {
+    myOnlyOneRoot = onlyOneRoot;
+    myInclude.setEnabled(! myOnlyOneRoot);
+    myInclude.setSelected(true);
+  }
+
+  public JPanel getContentPanel() {
+    return myContentPanel;
+  }
+
+  private void createUIComponents() {
+    myFixedSelectLocal = new FixedSizeButton(20);
+  }
+
+  public @NotNull InfoHolder getInfo() {
+    return new InfoHolder(mySelectedBranch, getLocalBranch(), myInclude.isSelected());
+  }
+
+  public void initSelection(@NotNull InfoHolder holder) {
+    myInclude.setSelected(holder.isEnabled());
+    if (holder.getBranch() != null) {
+      refreshSelectedBranch(holder.getBranch());
+      calculateBranchPathByBranch(mySelectedBranch.getUrl(), holder.getLocal());
+    }
+  }
+
+  public static class InfoHolder {
+
+    private final @Nullable WCInfoWithBranches.Branch myBranch;
+    private final @Nullable String myLocal;
+    private final boolean myEnabled;
+
+    public InfoHolder(@Nullable WCInfoWithBranches.Branch branch, @Nullable String local, boolean enabled) {
+      myBranch = branch;
+      myLocal = local;
+      myEnabled = enabled;
+    }
+
+    public @Nullable WCInfoWithBranches.Branch getBranch() {
+      return myBranch;
+    }
+
+    public @Nullable String getLocal() {
+      return myLocal;
+    }
+
+    public boolean isEnabled() {
+      return myEnabled;
+    }
+  }
+
+  public @NotNull WCInfoWithBranches getWcInfo() {
+    return myInfo;
+  }
+
+  public @Nullable WCInfoWithBranches.Branch getBranch() {
+    return mySelectedBranch;
+  }
+
+  public @Nullable String getLocalBranch() {
+    return mySelectedBranch != null ? myBranchToLocal.get(mySelectedBranch.getUrl()) : null;
+  }
+
+  public boolean isEnabled() {
+    return myOnlyOneRoot || myInclude.isSelected();
+  }
+}

@@ -1,0 +1,41 @@
+### auto-generated section `build intellij.platform.execution.dashboard.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "backend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.platform.execution.dashboard.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//platform/execution.dashboard",
+    "//platform/kernel/rpc.backend",
+    "//platform/kernel/backend",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/project/shared:project",
+    "//platform/core-api:core",
+    "//platform/execution",
+    "//platform/lang-api:lang",
+    "//platform/projectModel-api:projectModel",
+    "//platform/execution-impl",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/execution.serviceView/backend",
+    "//platform/util/jdom",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl/rpc",
+    "//platform/util/coroutines",
+    "//platform/execution.serviceView",
+  ]
+)
+### auto-generated section `build intellij.platform.execution.dashboard.backend` end

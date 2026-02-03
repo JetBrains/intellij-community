@@ -1,0 +1,8 @@
+public class X {
+  void f(boolean a, boolean b) {
+    if (!a) {
+      return;
+    }
+    b = false;
+  }
+}

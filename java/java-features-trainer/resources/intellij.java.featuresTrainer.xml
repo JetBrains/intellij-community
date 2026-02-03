@@ -1,0 +1,23 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <plugin id="training"/>
+    <module name="intellij.java"/>
+    <module name="intellij.java.debugger"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.ui"/>
+    <module name="intellij.java.debugger.impl"/>
+    <module name="intellij.java.execution.impl"/>
+    <module name="intellij.java.debugger.impl.shared"/>
+
+    <module name="intellij.platform.backend"/>
+
+  </dependencies>
+  <extensions defaultExtensionNs="training">
+    <ift.language.extension language="JAVA" defaultProductName="IDEA,Aqua" implementationClass="com.intellij.java.ift.JavaLangSupport"/>
+    <ift.learning.course language="JAVA" implementationClass="com.intellij.java.ift.JavaLearningCourse"/>
+    <ifs.suggesterSupport language="JAVA" implementationClass="com.intellij.java.ifs.JavaSuggesterSupport"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <lang.documentationProvider language="JAVA" implementationClass="com.intellij.java.featuresTrainer.onboarding.tips.JavaOnboardingTipsDocumentationProvider" order="first"/>
+  </extensions>
+</idea-plugin>

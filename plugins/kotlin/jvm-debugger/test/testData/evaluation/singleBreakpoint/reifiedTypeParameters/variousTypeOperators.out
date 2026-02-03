@@ -1,0 +1,22 @@
+LineBreakpoint created at variousTypeOperators.kt:5
+Run Java
+Connected to the target VM
+variousTypeOperators.kt:5
+Compile bytecode for T11::class.qualifiedName
+Compile bytecode for T12::class.qualifiedName
+Compile bytecode for T13::class.toString()
+Compile bytecode for T14::class.toString()
+Compile bytecode for kotlin.reflect.typeOf<T11>().toString()
+Compile bytecode for kotlin.reflect.typeOf<T12>().toString()
+Compile bytecode for kotlin.reflect.typeOf<T13>().toString()
+Compile bytecode for kotlin.reflect.typeOf<T14>().toString()
+Compile bytecode for kotlin.reflect.typeOf<Array<Set<T12>>>().toString()
+Compile bytecode for (5 as T11).toString()
+Compile bytecode for (Any() as T11).toString()
+Compile bytecode for (5 as? T11).toString()
+Compile bytecode for Any() as? T11
+Compile bytecode for 5 is T11
+Compile bytecode for Any() is T11
+Disconnected from the target VM
+
+Process finished with exit code 0

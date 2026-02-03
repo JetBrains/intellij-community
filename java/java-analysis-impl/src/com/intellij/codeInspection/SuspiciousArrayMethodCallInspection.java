@@ -1,0 +1,89 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInspection;
+
+import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
+
+public final class SuspiciousArrayMethodCallInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final Set<String> INTERESTING_NAMES = Set.of("fill", "binarySearch", "equals", "mismatch");
+
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    return new JavaElementVisitor() {
+      @Override
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
+        PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
+        if (nameElement == null) return;
+        String name = nameElement.getText();
+        if (!INTERESTING_NAMES.contains(name)) return;
+        PsiMethod method = call.resolveMethod();
+        if (method == null) return;
+        PsiClass aClass = method.getContainingClass();
+        if (aClass == null || !CommonClassNames.JAVA_UTIL_ARRAYS.equals(aClass.getQualifiedName())) return;
+        PsiExpression[] args = call.getArgumentList().getExpressions();
+        switch (name) {
+          case "fill", "binarySearch" -> {
+            if (args.length == 2) {
+              handleArrayElement(args[0], args[1]);
+            }
+            else if (args.length == 4) {
+              handleArrayElement(args[0], args[3]);
+            }
+          }
+          case "equals", "mismatch" -> {
+            if (args.length == 2) {
+              handleArrays(nameElement, args[0], args[1]);
+            }
+            else if (args.length == 6) {
+              handleArrays(nameElement, args[0], args[3]);
+            }
+          }
+        }
+      }
+
+      private void handleArrayElement(PsiExpression array, PsiExpression element) {
+        PsiType arrayType = array.getType();
+        PsiType elementType = element.getType();
+        if (elementType == null || !(arrayType instanceof PsiArrayType)) return;
+        PsiType arrayElementType = ((PsiArrayType)arrayType).getComponentType();
+        // incompatible primitive array will be reported anyways as compilation error
+        if (arrayElementType instanceof PsiPrimitiveType) return;
+        elementType = TypeConversionUtil.erasure(elementType);
+        arrayElementType = TypeConversionUtil.erasure(arrayElementType);
+        if (!TypeConversionUtil.areTypesConvertible(elementType, arrayElementType)) {
+          holder.registerProblem(element, JavaAnalysisBundle.message("inspection.suspicious.array.method.call.problem.element"));
+        }
+      }
+
+      private void handleArrays(PsiElement context, PsiExpression array1, PsiExpression array2) {
+        PsiType array1Type = array1.getType();
+        PsiType array2Type = array2.getType();
+        if (!(array1Type instanceof PsiArrayType) || !(array2Type instanceof PsiArrayType)) return;
+        PsiType array1ElementType = ((PsiArrayType)array1Type).getComponentType();
+        PsiType array2ElementType = ((PsiArrayType)array2Type).getComponentType();
+        // incompatible primitive array will be reported anyways as compilation error
+        if (array1ElementType instanceof PsiPrimitiveType || array2ElementType instanceof PsiPrimitiveType) return;
+        array1ElementType = TypeConversionUtil.erasure(array1ElementType);
+        array2ElementType = TypeConversionUtil.erasure(array2ElementType);
+        if (!TypeConversionUtil.areTypesConvertible(array1ElementType, array2ElementType) ||
+            !TypeConversionUtil.areTypesConvertible(array2ElementType, array1ElementType)) {
+          holder.registerProblem(context, JavaAnalysisBundle.message("inspection.suspicious.array.method.call.problem.arrays"));
+        }
+      }
+    };
+  }
+}

@@ -1,0 +1,59 @@
+### auto-generated section `build intellij.toml.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "tests_test_resources",
+  srcs = glob(["src/test/resources/**/*"]),
+  strip_prefix = "src/test/resources"
+)
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/toml",
+    "//plugins/toml/core",
+    "//plugins/toml/backend",
+    "//plugins/toml/frontend",
+    "//plugins/toml/json",
+    "//plugins/toml/grazie",
+    "//platform/testFramework",
+  ]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "intellij.toml.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java", "src/test/kotlin/**/*.form"], allow_empty = True),
+  resources = [":tests_test_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/toml",
+    "//plugins/toml/core",
+    "//plugins/toml/backend",
+    "//plugins/toml/frontend",
+    "//plugins/toml/json",
+    "//plugins/toml/grazie",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/testFramework",
+    "//plugins/grazie/src/test:grazie-tests_test_lib",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build intellij.toml.tests` end
+
+### auto-generated section `test intellij.toml.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test intellij.toml.tests` end

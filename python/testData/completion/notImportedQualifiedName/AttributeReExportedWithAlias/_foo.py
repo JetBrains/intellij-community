@@ -1,0 +1,2 @@
+CONST = 42
+DIRECT = 42

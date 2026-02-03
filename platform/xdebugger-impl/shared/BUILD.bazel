@@ -1,0 +1,45 @@
+### auto-generated section `build intellij.platform.debugger.impl.shared` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "shared_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "shared",
+  module_name = "intellij.platform.debugger.impl.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":shared_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/core-ui",
+    "//platform/platform-api:ide",
+    "//platform/kernel/shared:kernel",
+    "//platform/util/concurrency",
+    "//platform/xdebugger-api:debugger",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//platform/platform-impl/rpc",
+    "//platform/project/shared:project",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/remote-topics/shared:rpc-topics",
+    "//platform/xdebugger-impl/rpc",
+    "//platform/platform-impl:ide-impl",
+    "//platform/util/coroutines",
+    "//platform/util/jdom",
+    "//platform/projectModel-api:projectModel",
+    "//platform/execution-impl",
+    "//platform/lang-api:lang",
+    "//platform/execution",
+    "//platform/statistics",
+    "//platform/platform-impl/internal",
+  ]
+)
+### auto-generated section `build intellij.platform.debugger.impl.shared` end

@@ -1,0 +1,104 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.workspaceModel.ide.legacyBridge
+
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.libraries.Library
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.SdkId
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
+import java.util.*
+
+/**
+ * Maintains index of libraries and SDKs referenced from project's modules. This is an internal low-level API, it isn't supposed to be used
+ * from plugins.
+ */
+@ApiStatus.Internal
+interface ModuleDependencyIndex {
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): ModuleDependencyIndex = project.service()
+  }
+
+  /**
+   * Registers a listener to track dependencies on project-level, application-level libraries and libraries from custom application-level
+   * tables. 
+   */
+  fun addListener(listener: ModuleDependencyListener)
+  
+  /**
+   * Unregisters a listener added by [addListener]. 
+   */
+  fun removeListener(listener: ModuleDependencyListener)
+
+  fun setupTrackedLibrariesAndJdks()
+  
+  @TestOnly
+  fun reset()
+
+  /**
+   * Return `true` if at least one module has dependency on 'Project SDK'
+   */
+  fun hasProjectSdkDependency(): Boolean
+
+  /**
+   * Return `true` if at least one module has dependency on [libraryId]
+   */
+  fun hasDependencyOn(libraryId: LibraryId): Boolean
+
+  /**
+   * Return `true` if at least one module has dependency on [sdk]
+   */
+  fun hasDependencyOn(sdk: Sdk): Boolean
+
+  /**
+   * Return `true` if at least one module has dependency on [sdk]
+   */
+  fun hasDependencyOn(sdk: SdkId): Boolean
+}
+
+/**
+ * The methods of this listener are called synchronously under 'write action' lock. Events about module-level libraries aren't fired,
+ * because such libraries are implicitly added to containing modules.
+ */
+@ApiStatus.Internal
+interface ModuleDependencyListener : EventListener {
+
+  /**
+   * Called when [library] is created and some module has a dependency on this library (it was unresolved before) 
+   */
+  fun referencedLibraryAdded(library: Library) {
+  }
+
+  /**
+   * Called when configuration of [library] is changed if some module has a dependency on this library
+   */
+  fun referencedLibraryChanged(library: Library) {
+  }
+
+  /**
+   * Called when [library] is removed and some module has a dependency on this library (it will become unresolved)
+   */
+  fun referencedLibraryRemoved(library: Library) {
+  }
+
+  /**
+   * Called when [sdk] is created and some module has a dependency on this SDK (it was unresolved before)
+   */
+  fun referencedSdkAdded(sdk: Sdk) {
+  }
+
+  /**
+   * Called when configuration of [sdk] is changed if some module has a dependency on this SDK
+   */
+  fun referencedSdkChanged(sdk: Sdk) {
+  }
+
+  /**
+   * Called when [sdk] is removed and some module has a dependency on this SDK (it will become unresolved)
+   */
+  fun referencedSdkRemoved(sdk: Sdk) {
+  }
+}

@@ -1,0 +1,85 @@
+### auto-generated section `build intellij.platform.jewel.markdown.core` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_core",
+  opt_in = [
+    "androidx.compose.ui.ExperimentalComposeUiApi",
+    "androidx.compose.foundation.ExperimentalFoundationApi",
+    "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+    "org.jetbrains.jewel.foundation.InternalJewelApi",
+  ],
+  x_context_parameters = True,
+  x_explicit_api_mode = "strict"
+)
+
+resourcegroup(
+  name = "core_resources",
+  srcs = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+resourcegroup(
+  name = "core_test_resources",
+  srcs = glob(["src/test/resources/**/*"]),
+  strip_prefix = "src/test/resources"
+)
+
+jvm_library(
+  name = "core",
+  module_name = "intellij.platform.jewel.markdown.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
+  resources = [":core_resources"],
+  kotlinc_opts = ":custom_core",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:jetbrains-annotations",
+    "//platform/jewel/ui",
+    "@lib//:platform-jewel-markdown-core-org-commonmark-commonmark",
+    "//platform/jewel/foundation",
+    "//libraries/compose-foundation-desktop",
+    "//libraries/compose-runtime-desktop",
+    "//libraries/jsoup",
+  ],
+  exports = ["@lib//:platform-jewel-markdown-core-org-commonmark-commonmark"],
+  plugins = ["@lib//:compose-plugin"]
+)
+
+jvm_library(
+  name = "core_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java", "src/test/kotlin/**/*.form"], allow_empty = True),
+  resources = [":core_test_resources"],
+  kotlinc_opts = ":custom_core",
+  associates = [":core"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:jetbrains-annotations",
+    "//platform/jewel/ui",
+    "//platform/jewel/ui:ui_test_lib",
+    "@lib//:platform-jewel-markdown-core-org-commonmark-commonmark",
+    "//platform/jewel/foundation",
+    "//platform/jewel/foundation:foundation_test_lib",
+    "//libraries/compose-foundation-desktop",
+    "//libraries/junit4",
+    "//libraries/compose-runtime-desktop",
+    "//libraries/compose-foundation-desktop-junit",
+    "//libraries/jsoup",
+  ],
+  exports = ["@lib//:platform-jewel-markdown-core-org-commonmark-commonmark"],
+  plugins = ["@lib//:compose-plugin"]
+)
+### auto-generated section `build intellij.platform.jewel.markdown.core` end
+
+### auto-generated section `test intellij.platform.jewel.markdown.core` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "core_test",
+  runtime_deps = [":core_test_lib"]
+)
+### auto-generated section `test intellij.platform.jewel.markdown.core` end

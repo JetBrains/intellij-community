@@ -1,0 +1,42 @@
+UFile (package = ) [import java.lang.reflect.ParameterizedType...]
+    UImportStatement (isOnDemand = false) [import java.lang.reflect.ParameterizedType]
+    UImportStatement (isOnDemand = false) [import java.lang.reflect.Type]
+    UClass (name = ComplicatedTypesKt) [public final class ComplicatedTypesKt {...}]
+        UMethod (name = typeTokenOf) [public static final fun typeTokenOf() : java.lang.reflect.Type {...}]
+            UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
+                UDeclarationsExpression [var base: TypeBase<T> = anonymous object : TypeBase<T>() {}]
+                    ULocalVariable (name = base) [var base: TypeBase<T> = anonymous object : TypeBase<T>() {}]
+                        UObjectLiteralExpression [anonymous object : TypeBase<T>() {}] : TypeBase
+                            UClass (name = null) [final class null : TypeBase<T> {...}]
+                                UMethod (name = ) [private fun () {...}]
+                                    UBlockExpression [{...}]
+                                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [TypeBase()]
+                                            UIdentifier (Identifier (TypeBase)) [UIdentifier (Identifier (TypeBase))]
+                                            USimpleNameReferenceExpression (identifier = TypeBase, resolvesTo = PsiClass: TypeBase) [TypeBase]
+                UDeclarationsExpression [var superType: java.lang.reflect.Type = TypeBase<T>.java.genericSuperclass!!]
+                    ULocalVariable (name = superType) [var superType: java.lang.reflect.Type = TypeBase<T>.java.genericSuperclass!!]
+                        UPostfixExpression (operator = !!) [TypeBase<T>.java.genericSuperclass!!] : @org.jetbrains.annotations.NotNull() java.lang.reflect.Type
+                            UQualifiedReferenceExpression [TypeBase<T>.java.genericSuperclass] : java.lang.reflect.Type
+                                UQualifiedReferenceExpression [TypeBase<T>.java] : @org.jetbrains.annotations.NotNull() java.lang.Class<? extends @org.jetbrains.annotations.NotNull() TypeBase<T>>
+                                    UClassLiteralExpression [TypeBase<T>] : @org.jetbrains.annotations.NotNull() kotlin.reflect.KClass<? extends @org.jetbrains.annotations.NotNull() TypeBase<T>>
+                                        USimpleNameReferenceExpression (identifier = base) [base] : @org.jetbrains.annotations.NotNull() TypeBase<T>
+                                    USimpleNameReferenceExpression (identifier = java) [java] : @org.jetbrains.annotations.NotNull() java.lang.Class<? extends @org.jetbrains.annotations.NotNull() TypeBase<T>>
+                                USimpleNameReferenceExpression (identifier = genericSuperclass) [genericSuperclass] : java.lang.reflect.Type
+                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [getGenericSuperclass()]
+                                        UIdentifier (Identifier (genericSuperclass)) [UIdentifier (Identifier (genericSuperclass))]
+                UReturnExpression [return (superType as java.lang.reflect.ParameterizedType).actualTypeArguments.first()!!] : @org.jetbrains.annotations.NotNull() java.lang.Void
+                    UPostfixExpression (operator = !!) [(superType as java.lang.reflect.ParameterizedType).actualTypeArguments.first()!!] : @org.jetbrains.annotations.NotNull() java.lang.reflect.Type
+                        UQualifiedReferenceExpression [(superType as java.lang.reflect.ParameterizedType).actualTypeArguments.first()] : @org.jetbrains.annotations.NotNull() java.lang.reflect.Type
+                            UQualifiedReferenceExpression [(superType as java.lang.reflect.ParameterizedType).actualTypeArguments] : @org.jetbrains.annotations.NotNull() java.lang.reflect.Type[]
+                                UParenthesizedExpression [(superType as java.lang.reflect.ParameterizedType)] : @org.jetbrains.annotations.NotNull() java.lang.reflect.ParameterizedType
+                                    UBinaryExpressionWithType [superType as java.lang.reflect.ParameterizedType] : @org.jetbrains.annotations.NotNull() java.lang.reflect.ParameterizedType
+                                        USimpleNameReferenceExpression (identifier = superType) [superType] : @org.jetbrains.annotations.NotNull() java.lang.reflect.Type
+                                        UTypeReferenceExpression (name = java.lang.reflect.ParameterizedType) [java.lang.reflect.ParameterizedType]
+                                USimpleNameReferenceExpression (identifier = actualTypeArguments) [actualTypeArguments] : @org.jetbrains.annotations.NotNull() java.lang.reflect.Type[]
+                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [getActualTypeArguments()]
+                                        UIdentifier (Identifier (actualTypeArguments)) [UIdentifier (Identifier (actualTypeArguments))]
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [first()] : @org.jetbrains.annotations.NotNull() java.lang.reflect.Type
+                                UIdentifier (Identifier (first)) [UIdentifier (Identifier (first))]
+    UClass (name = TypeBase) [public class TypeBase {...}]
+        UAnnotation (fqName = kotlin.PublishedApi) [@kotlin.PublishedApi]
+        UMethod (name = TypeBase) [public fun TypeBase() = UastEmptyExpression]

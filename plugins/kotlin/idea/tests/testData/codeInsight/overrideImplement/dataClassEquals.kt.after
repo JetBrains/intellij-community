@@ -1,0 +1,10 @@
+// FIR_IDENTICAL
+data class Foo(val name: String) {
+    override fun equals(other: Any?): Boolean {
+        <selection>return super.equals(other)</selection>
+    }
+}
+
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

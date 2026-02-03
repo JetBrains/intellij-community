@@ -1,0 +1,9 @@
+// "Add 'operator' modifier" "true"
+class A {
+    operator fun contains(x: Any): Boolean = false
+}
+
+fun foo() = 0 in A()
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.AddModifierFixFactory$createAction$1
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddModifierFix

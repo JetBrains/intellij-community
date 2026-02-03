@@ -1,0 +1,98 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.externalSystemManager"
+                    interface="com.intellij.openapi.externalSystem.ExternalSystemManager"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalSystemSettingsListener"
+                    interface="com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerEx"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalSystem.debuggerBackend"
+                    interface="com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.dependencySubstitutionCoordinateContributor"
+                    interface="com.intellij.platform.externalSystem.impl.dependencySubstitution.DependencySubstitutionExtension"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalProjectDataService"
+                    interface="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalWorkspaceDataService"
+                    interface="com.intellij.openapi.externalSystem.service.project.manage.WorkspaceDataService"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalSystem.modifiableModelsProvider"
+                    interface="com.intellij.openapi.externalSystem.service.project.ModifiableModelsProviderExtension"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalSystem.runConfigurationEx"
+                    interface="com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtension"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalSystemConfigurationHandler"
+                    interface="com.intellij.openapi.externalSystem.service.project.settings.ConfigurationHandler"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalSystem.runConfigurationImporter"
+                    interface="com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalSystem.facetConfigurationImporter"
+                    interface="com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationImporter" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalSystem.beforeRunTaskImporter"
+                    interface="com.intellij.openapi.externalSystem.service.project.settings.BeforeRunTaskImporter" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalSystemConfigLocator"
+                    interface="com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfigLocator" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalSystemNotificationExtension"
+                    interface="com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationExtension"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalSystemKeymapProvider"
+                    interface="com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemKeymapExtension$ActionsProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalSystemTaskNotificationListener"
+                    interface="com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalSystemExecutionConsoleManager"
+                    interface="com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalSystemOutputParserProvider"
+                    interface="com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputParserProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalSystemOutputDispatcher"
+                    interface="com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputDispatcherFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalSystemViewContributor"
+                    interface="com.intellij.openapi.externalSystem.view.ExternalSystemViewContributor"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalProjectStructureCustomizer"
+                    interface="com.intellij.openapi.externalSystem.importing.ExternalProjectStructureCustomizer"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalProjectWatcherContributor"
+                    interface="com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcherImpl$Contributor"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.openapi.externalSystem.projectSetupExtension" interface="com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemProjectSetupExtension" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.externalIconProvider" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.externalTextProvider"
+                    interface="com.intellij.openapi.externalSystem.ui.ExternalSystemTextProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalSystemUnlinkedProjectAware"
+                    interface="com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalExecutionAware" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true">
+      <with attribute="implementationClass"
+            implements="com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.externalSystemCrcCalculator"
+                    interface="com.intellij.openapi.externalSystem.util.ExternalSystemCrcCalculator"
+                    dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.externalSystemContentRootContributor"
+                    interface="com.intellij.openapi.externalSystem.util.ExternalSystemContentRootContributor"
+                    dynamic="true" />
+    <extensionPoint name="externalSystemDependencyAnalyzer"
+                    interface="com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerExtension"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.libraryDataServiceExtension"
+                    interface="com.intellij.openapi.externalSystem.service.project.manage.LibraryDataServiceExtension"
+                    dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.externalSystemTaskProgressIndicatorUpdater"
+                    interface="com.intellij.openapi.externalSystem.service.ExternalSystemTaskProgressIndicatorUpdater" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.openapi.externalSystem.autoimport.autoReloadTypeProviderExtension"
+                    interface="com.intellij.openapi.externalSystem.autoimport.DefaultAutoReloadTypeProvider"
+                    dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.externalSystemRecoveryContributor"
+                    interface="com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemRecoveryContributor$Factory"
+                    dynamic="true" />
+  </extensionPoints>
+</idea-plugin>

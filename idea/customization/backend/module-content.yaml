@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.idea.customization.backend.jar
+  modules:
+  - name: intellij.idea.customization.backend

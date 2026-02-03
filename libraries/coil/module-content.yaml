@@ -1,0 +1,15 @@
+- name: dist.all/lib/intellij.libraries.coil.jar
+  modules:
+  - name: intellij.libraries.coil
+    libraries:
+      io.coil.kt.coil3.network.ktor3.jvm:
+      - name: $MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-network-ktor3-jvm/3/coil-network-ktor3-jvm-3.jar
+      - name: $MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-network-core-jvm/3/coil-network-core-jvm-3.jar
+      io.coil.kt.coil3.svg.jvm:
+      - name: $MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-svg-jvm/3/coil-svg-jvm-3.jar
+      io.coil.kt.coil3.compose.jvm:
+      - name: $MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-compose-jvm/3/coil-compose-jvm-3.jar
+      - name: $MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-jvm/3/coil-jvm-3.jar
+      - name: $MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-core-jvm/3/coil-core-jvm-3.jar
+      - name: $MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3/okio-jvm-3.jar
+      - name: $MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-compose-core-jvm/3/coil-compose-core-jvm-3.jar

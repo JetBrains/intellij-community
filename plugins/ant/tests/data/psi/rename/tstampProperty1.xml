@@ -1,0 +1,6 @@
+<project name="testProject" default="test">
+  <tstamp>
+    <format property="<ren>p"/>
+  </tstamp>
+  <target name="test" if="p"/>
+</project>

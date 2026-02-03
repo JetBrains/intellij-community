@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.vcs.github.json` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "vcs-github-json_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-github-json",
+  module_name = "intellij.vcs.github.json",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":vcs-github-json_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/github/github-core:vcs-github",
+    "//json/backend",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/analysis-api:analysis",
+  ]
+)
+### auto-generated section `build intellij.vcs.github.json` end

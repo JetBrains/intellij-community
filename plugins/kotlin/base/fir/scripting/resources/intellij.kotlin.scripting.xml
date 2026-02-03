@@ -1,0 +1,12 @@
+<idea-plugin visibility="internal" package="org.jetbrains.kotlin.base.fir.scripting">
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <k2KaModuleFactory implementation="org.jetbrains.kotlin.base.fir.scripting.projectStructure.FirKaScriptingModuleFactory"/>
+  </extensions>
+
+  <dependencies>
+    <module name="intellij.kotlin.analysis.platform"/>
+    <module name="intellij.kotlin.projectStructure"/>
+    <module name="intellij.kotlin.base.scripting"/>
+    <module name="intellij.kotlin.base.scripting.shared"/>
+  </dependencies>
+</idea-plugin>

@@ -1,0 +1,109 @@
+PyFile:TypeAliasStatementInsideStatementListContainers.py
+  PyIfStatement
+    PyIfPartIf
+      PsiElement(Py:IF_KEYWORD)('if')
+      PsiWhiteSpace(' ')
+      PyBoolLiteralExpression
+        PsiElement(Py:TRUE_KEYWORD)('True')
+      PsiElement(Py:COLON)(':')
+      PsiWhiteSpace('\n    ')
+      PyStatementList
+        PyTypeAliasStatement
+          PsiElement(Py:TYPE_KEYWORD)('type')
+          PsiWhiteSpace(' ')
+          PsiElement(Py:IDENTIFIER)('myType')
+          PsiWhiteSpace(' ')
+          PsiElement(Py:EQ)('=')
+          PsiWhiteSpace(' ')
+          PyReferenceExpression: int
+            PsiElement(Py:IDENTIFIER)('int')
+    PsiWhiteSpace('\n')
+    PyElsePart
+      PsiElement(Py:ELSE_KEYWORD)('else')
+      PsiElement(Py:COLON)(':')
+      PsiWhiteSpace('\n    ')
+      PyStatementList
+        PyTypeAliasStatement
+          PsiElement(Py:TYPE_KEYWORD)('type')
+          PsiWhiteSpace(' ')
+          PsiElement(Py:IDENTIFIER)('myType')
+          PsiWhiteSpace(' ')
+          PsiElement(Py:EQ)('=')
+          PsiWhiteSpace(' ')
+          PyReferenceExpression: str
+            PsiElement(Py:IDENTIFIER)('str')
+  PsiWhiteSpace('\n\n')
+  PyForStatement
+    PyForPart
+      PsiElement(Py:FOR_KEYWORD)('for')
+      PsiWhiteSpace(' ')
+      PyTargetExpression: i
+        PsiElement(Py:IDENTIFIER)('i')
+      PsiWhiteSpace(' ')
+      PsiElement(Py:IN_KEYWORD)('in')
+      PsiWhiteSpace(' ')
+      PyCallExpression: range
+        PyReferenceExpression: range
+          PsiElement(Py:IDENTIFIER)('range')
+        PyArgumentList
+          PsiElement(Py:LPAR)('(')
+          PyNumericLiteralExpression
+            PsiElement(Py:INTEGER_LITERAL)('10')
+          PsiElement(Py:RPAR)(')')
+      PsiElement(Py:COLON)(':')
+      PsiWhiteSpace('\n    ')
+      PyStatementList
+        PyTypeAliasStatement
+          PsiElement(Py:TYPE_KEYWORD)('type')
+          PsiWhiteSpace(' ')
+          PsiElement(Py:IDENTIFIER)('myType')
+          PsiWhiteSpace(' ')
+          PsiElement(Py:EQ)('=')
+          PsiWhiteSpace(' ')
+          PyReferenceExpression: str
+            PsiElement(Py:IDENTIFIER)('str')
+  PsiWhiteSpace('\n\n')
+  PyMatchStatement
+    PsiElement(Py:MATCH_KEYWORD)('match')
+    PsiWhiteSpace(' ')
+    PyReferenceExpression: num
+      PsiElement(Py:IDENTIFIER)('num')
+    PsiElement(Py:COLON)(':')
+    PsiWhiteSpace('\n    ')
+    PyCaseClause
+      PsiElement(Py:CASE_KEYWORD)('case')
+      PsiWhiteSpace(' ')
+      PyLiteralPattern
+        PyNumericLiteralExpression
+          PsiElement(Py:INTEGER_LITERAL)('1')
+      PsiElement(Py:COLON)(':')
+      PsiWhiteSpace('\n        ')
+      PyStatementList
+        PyTypeAliasStatement
+          PsiElement(Py:TYPE_KEYWORD)('type')
+          PsiWhiteSpace(' ')
+          PsiElement(Py:IDENTIFIER)('myType')
+          PsiWhiteSpace(' ')
+          PsiElement(Py:EQ)('=')
+          PsiWhiteSpace(' ')
+          PyReferenceExpression: int
+            PsiElement(Py:IDENTIFIER)('int')
+    PsiWhiteSpace('\n    ')
+    PyCaseClause
+      PsiElement(Py:CASE_KEYWORD)('case')
+      PsiWhiteSpace(' ')
+      PyLiteralPattern
+        PyNumericLiteralExpression
+          PsiElement(Py:INTEGER_LITERAL)('2')
+      PsiElement(Py:COLON)(':')
+      PsiWhiteSpace('\n        ')
+      PyStatementList
+        PyTypeAliasStatement
+          PsiElement(Py:TYPE_KEYWORD)('type')
+          PsiWhiteSpace(' ')
+          PsiElement(Py:IDENTIFIER)('myType')
+          PsiWhiteSpace(' ')
+          PsiElement(Py:EQ)('=')
+          PsiWhiteSpace(' ')
+          PyReferenceExpression: str
+            PsiElement(Py:IDENTIFIER)('str')

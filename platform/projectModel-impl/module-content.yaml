@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.platform.projectModel.impl.jar
+  modules:
+  - name: intellij.platform.diagnostic.telemetry.exporters
+  - name: intellij.platform.diagnostic.telemetry.impl
+  - name: intellij.platform.projectModel.impl
+  - name: intellij.platform.util.http

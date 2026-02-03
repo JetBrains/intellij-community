@@ -1,0 +1,32 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+package org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.overrides
+
+import com.intellij.icons.AllIcons
+import com.intellij.ide.hierarchy.HierarchyNodeDescriptor
+import com.intellij.ide.hierarchy.HierarchyTreeStructure
+import com.intellij.openapi.project.Project
+import com.intellij.psi.createSmartPointer
+import com.intellij.util.ArrayUtil
+import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.base.util.useScope
+import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+
+class KotlinOverrideTreeStructure(project: Project, declaration: KtCallableDeclaration) : HierarchyTreeStructure(project, null) {
+    init {
+        setBaseElement(KotlinOverrideHierarchyNodeDescriptor(null, declaration.containingClassOrObject!!, declaration))
+    }
+
+    private val baseElement = declaration.createSmartPointer()
+
+    override fun buildChildren(nodeDescriptor: HierarchyNodeDescriptor): Array<Any> {
+        val baseElement = baseElement.element ?: return ArrayUtil.EMPTY_OBJECT_ARRAY
+        val psiElement = nodeDescriptor.psiElement ?: return ArrayUtil.EMPTY_OBJECT_ARRAY
+        val subclasses = KotlinFindUsagesSupport.searchInheritors(psiElement, psiElement.useScope(), false).toList()
+        return subclasses.mapNotNull {
+            it.unwrapped?.let { subclass -> KotlinOverrideHierarchyNodeDescriptor(nodeDescriptor, subclass, baseElement) }
+        }.filter { it.calculateState() != AllIcons.Hierarchy.MethodNotDefined }.toTypedArray()
+    }
+}

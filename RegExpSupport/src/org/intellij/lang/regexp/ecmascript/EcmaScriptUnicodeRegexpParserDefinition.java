@@ -1,0 +1,43 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.intellij.lang.regexp.ecmascript;
+
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.tree.IFileElementType;
+import org.intellij.lang.regexp.RegExpCapability;
+import org.intellij.lang.regexp.RegExpFile;
+import org.intellij.lang.regexp.RegExpParserDefinition;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.EnumSet;
+
+/**
+ * @author Bas Leijdekkers
+ */
+public class EcmaScriptUnicodeRegexpParserDefinition extends RegExpParserDefinition {
+
+  public static final IFileElementType JS_REGEXP_FILE = 
+    new IFileElementType("JS_UNICODE_REGEXP_FILE", EcmaScriptUnicodeRegexpLanguage.INSTANCE);
+  private final EnumSet<RegExpCapability> CAPABILITIES = EnumSet.of(RegExpCapability.OCTAL_NO_LEADING_ZERO,
+                                                                    RegExpCapability.ALLOW_EMPTY_CHARACTER_CLASS,
+                                                                    RegExpCapability.NO_DANGLING_METACHARACTERS,
+                                                                    RegExpCapability.PROPERTY_VALUES,
+                                                                    RegExpCapability.EXTENDED_UNICODE_CHARACTER,
+                                                                    RegExpCapability.SHORTHAND_CLASS_RANGE_START_ERROR,
+                                                                    RegExpCapability.SHORTHAND_CLASS_RANGE_END_ERROR);
+
+  @Override
+  public @NotNull EnumSet<RegExpCapability> getCapabilities() {
+    return CAPABILITIES;
+  }
+
+  @Override
+  public @NotNull IFileElementType getFileNodeType() {
+    return JS_REGEXP_FILE;
+  }
+
+  @Override
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
+    return new RegExpFile(viewProvider, EcmaScriptUnicodeRegexpLanguage.INSTANCE);
+  }
+}

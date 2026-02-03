@@ -1,0 +1,5 @@
+AClass -> USimpleNameReferenceExpression (identifier = AClass) from KtObjectLiteralExpression
+AClass -> USimpleNameReferenceExpression (identifier = AClass) from KtSuperTypeCallEntry
+AClass -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) from KtNameReferenceExpression
+I1 -> USimpleNameReferenceExpression (identifier = I1) from KtNameReferenceExpression
+I2 -> USimpleNameReferenceExpression (identifier = I2) from KtNameReferenceExpression

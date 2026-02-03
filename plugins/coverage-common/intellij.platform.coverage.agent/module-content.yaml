@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.platform.coverage.agent.jar
+  modules:
+  - name: intellij.platform.coverage.agent
+    libraries:
+      intellij-coverage:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-agent/1/intellij-coverage-agent-1.jar

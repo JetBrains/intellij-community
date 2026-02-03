@@ -1,0 +1,1 @@
+private class C <caret>internal constructor()

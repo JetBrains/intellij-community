@@ -1,0 +1,132 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.idea.quickfix
+
+import com.intellij.codeInsight.intention.PriorityAction
+import com.intellij.modcommand.ModCommandAction
+import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
+import org.jetbrains.kotlin.idea.util.findAnnotation
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtAnnotated
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClassBody
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
+import org.jetbrains.kotlin.resolve.checkers.OptInNames
+
+// TODO: migrate from FqName to ClassId fully when the K1 plugin is dropped.
+abstract class OptInGeneralUtilsBase {
+    data class CandidateData(val element: KtElement, val kind: AddAnnotationFix.Kind) {
+        fun addTo(destination: MutableList<CandidateData>) {
+            if (destination.any { this.element == it.element }) return
+            destination.add(this)
+        }
+    }
+
+    abstract fun KtDeclaration.isSubclassOptPropagateApplicable(annotationFqName: FqName): Boolean
+
+    fun collectPropagateOptInAnnotationFix(
+        targetElement: KtDeclaration,
+        kind: AddAnnotationFix.Kind,
+        applicableTargets: Set<KotlinTarget>,
+        actualTargetList: List<KotlinTarget>,
+        annotationClassId: ClassId,
+        isOverrideError: Boolean
+    ): AddAnnotationFix? {
+        if (KtPsiUtil.isLocal(targetElement)) return null
+        if (actualTargetList.none { it in applicableTargets }) return null
+
+        val annotationFqName = annotationClassId.asSingleFqName()
+        return when {
+            // When we are fixing a missing annotation on an overridden function, we should
+            // propose to add a propagating annotation first, and in all other cases
+            // the non-propagating opt-in annotation should be default.
+            // The same logic applies to the similar conditional expressions onward.
+            isOverrideError -> OptInFixes.PropagateOptInAnnotationFix(
+                targetElement,
+                annotationClassId,
+                kind,
+                argumentClassFqName = null,
+                PriorityAction.Priority.HIGH
+            )
+
+            targetElement.isSubclassOptPropagateApplicable(annotationFqName) -> OptInFixes.PropagateOptInAnnotationFix(
+                targetElement, ClassId.topLevel(OptInNames.SUBCLASS_OPT_IN_REQUIRED_FQ_NAME), kind, annotationFqName
+            )
+
+            else -> OptInFixes.PropagateOptInAnnotationFix(targetElement, annotationClassId, kind)
+        }
+    }
+
+    fun collectUseOptInAnnotationFix(
+        targetElement: KtElement,
+        kind: AddAnnotationFix.Kind,
+        optInClassId: ClassId,
+        annotationFqName: FqName,
+        isOverrideError: Boolean
+    ): ModCommandAction {
+        val existingAnnotationEntry = (targetElement as? KtAnnotated)?.findAnnotation(optInClassId)
+        val priority = if (isOverrideError) PriorityAction.Priority.NORMAL else PriorityAction.Priority.HIGH
+        return if (existingAnnotationEntry != null) {
+            OptInFixes.ModifyOptInAnnotationFix(existingAnnotationEntry, kind, annotationFqName, priority)
+        } else {
+            OptInFixes.UseOptInAnnotationFix(targetElement, optInClassId, kind, annotationFqName, priority)
+        }
+    }
+
+    fun collectCandidates(element: KtElement): List<CandidateData> {
+        val result = mutableListOf<CandidateData>()
+
+        val containingDeclaration: KtDeclaration = element.getParentOfTypesAndPredicate(
+            strict = false,
+            KtDeclarationWithBody::class.java,
+            KtClassOrObject::class.java,
+            KtProperty::class.java,
+            KtTypeAlias::class.java
+        ) {
+            !KtPsiUtil.isLocal(it)
+        } ?: return emptyList()
+
+        val containingDeclarationCandidate = findContainingDeclarationCandidate(containingDeclaration)
+        result.add(containingDeclarationCandidate)
+        if (containingDeclaration is KtCallableDeclaration) {
+            findContainingClassOrObjectCandidate(containingDeclaration)?.addTo(result)
+        }
+
+        findStatementCandidate(element)?.addTo(result)
+
+        return result
+    }
+
+
+    fun findContainingDeclarationCandidate(element: KtDeclaration): CandidateData {
+        val kind = if (element is KtConstructor<*>) AddAnnotationFix.Kind.Constructor
+        else AddAnnotationFix.Kind.Declaration(element.name)
+
+        return CandidateData(element, kind)
+    }
+
+    fun findContainingClassOrObjectCandidate(element: KtDeclaration): CandidateData? {
+        val containingClassOrObject = element as? KtClassOrObject ?: (element.containingClassOrObject ?: return null)
+        return CandidateData(containingClassOrObject, AddAnnotationFix.Kind.ContainingClass(containingClassOrObject.name))
+    }
+
+    fun findStatementCandidate(element: KtElement): CandidateData? {
+        var statementElement: KtElement = element
+        while (statementElement.parent !is KtBlockExpression && statementElement.parent !is KtClassBody) statementElement =
+            statementElement.parent as? KtElement ?: return null
+        if (statementElement is KtDestructuringDeclaration) return null
+        return CandidateData(statementElement, AddAnnotationFix.Kind.Self)
+    }
+}

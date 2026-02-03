@@ -1,0 +1,1 @@
+fun foo(bar: Int) = bar !in 0..<10

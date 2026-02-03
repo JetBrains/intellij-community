@@ -1,0 +1,100 @@
+### auto-generated section `build intellij.sh.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "core_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "core",
+  module_name = "intellij.sh.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":core_resources"],
+  deps = [
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/usageView",
+    "//platform/refactoring",
+    "//platform/statistics",
+    "//platform/core-ui",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//libraries/fastutil",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/jdom",
+    "//platform/eel",
+    "//platform/eel-provider",
+    "//platform/eel-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/projectModel-api:projectModel",
+    "//platform/core-impl",
+    "//platform/execution",
+  ]
+)
+### auto-generated section `build intellij.sh.core` end
+
+### auto-generated section `build intellij.sh.tests` start
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/sh/core",
+    "//platform/analysis-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/eel",
+    "//platform/eel-provider",
+    "//platform/testRunner",
+  ]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "intellij.sh.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/core-impl",
+    "//plugins/sh/core",
+    "//plugins/sh/backend",
+    "//plugins/sh/plugin:plugin-main",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
+    "//plugins/grazie/src/test:grazie-tests_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/analysis-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/eel",
+    "//platform/eel-provider",
+    "//platform/testRunner",
+    "//platform/testRunner:testRunner_test_lib",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build intellij.sh.tests` end
+
+### auto-generated section `test intellij.sh.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test intellij.sh.tests` end

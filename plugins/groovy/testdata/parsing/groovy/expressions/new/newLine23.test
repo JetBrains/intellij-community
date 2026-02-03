@@ -1,0 +1,12 @@
+new
+Object()
+-----
+Groovy script
+  NEW expression
+    PsiElement(new)('new')
+    PsiElement(new line)('\n')
+    Reference element
+      PsiElement(identifier)('Object')
+    Arguments
+      PsiElement(()('(')
+      PsiElement())(')')

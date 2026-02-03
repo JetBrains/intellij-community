@@ -1,0 +1,159 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.application.options.editor.fonts;
+
+import com.intellij.application.options.colors.ColorAndFontOptions;
+import com.intellij.application.options.colors.ColorAndFontSettingsListener;
+import com.intellij.application.options.colors.FontEditorPreview;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontCache;
+import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ex.Settings;
+import com.intellij.ui.HoverHyperlinkLabel;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.JBSplitter;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
+import java.awt.*;
+
+@ApiStatus.Internal
+public final class AppFontPanel implements Disposable {
+
+  private final @NotNull AppFontOptionsPanel myOptionsPanel;
+  private final @NotNull FontEditorPreview   myPreview;
+  private final @NotNull EditorColorsScheme  myPreviewScheme;
+  private final @NotNull JPanel              myTopPanel;
+  private                JLabel              myEditorFontLabel;
+  private final @NotNull JPanel              myWarningPanel;
+
+  public AppFontPanel(@NotNull FontOptionsPanelFactory fontOptionsPanelFactory) {
+    myTopPanel = new JPanel(new BorderLayout());
+    myWarningPanel = createMessagePanel();
+    myTopPanel.add(myWarningPanel, BorderLayout.NORTH);
+
+    JPanel innerPanel = new JPanel(new BorderLayout());
+    innerPanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0,0,0));
+    JBSplitter splitter = new JBSplitter(false, 0.3f);
+    myPreviewScheme = createPreviewScheme();
+    myOptionsPanel = fontOptionsPanelFactory.create(myPreviewScheme);
+    myOptionsPanel.setBorder(JBUI.Borders.emptyLeft(5));
+    myPreview = new FontEditorPreview(()-> myPreviewScheme, true) {
+      @Override
+      protected Border getBorder() {
+        return JBUI.Borders.customLine(JBColor.border(), 0, 1, 0,1);
+      }
+    };
+    splitter.setFirstComponent(myOptionsPanel);
+    splitter.setSecondComponent(myPreview.getPanel());
+    splitter.setHonorComponentsMinimumSize(true);
+    innerPanel.add(splitter, BorderLayout.CENTER);
+    myOptionsPanel.addListener(
+      new ColorAndFontSettingsListener.Abstract() {
+        @Override
+        public void fontChanged() {
+          updatePreview();
+          updateWarning();
+        }
+
+        @Override
+        public void schemeChanged(@NotNull Object source) {
+          updatePreview();
+          updateWarning();
+        }
+      }
+    );
+    myTopPanel.add(innerPanel, BorderLayout.CENTER);
+  }
+
+  private JPanel createMessagePanel() {
+    JPanel messagePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    messagePanel.add(new JLabel(AllIcons.General.BalloonWarning));
+    myEditorFontLabel = createHyperlinkLabel();
+    messagePanel.add(myEditorFontLabel);
+    JLabel commentLabel = new JLabel(ApplicationBundle.message("settings.editor.font.defined.in.color.scheme.message"));
+    commentLabel.setForeground(JBColor.GRAY);
+    messagePanel.add(commentLabel);
+    return messagePanel;
+  }
+
+
+  private @NotNull JLabel createHyperlinkLabel() {
+    HoverHyperlinkLabel label = new HoverHyperlinkLabel("");
+    label.addHyperlinkListener(new HyperlinkListener() {
+      @Override
+      public void hyperlinkUpdate(HyperlinkEvent e) {
+        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          navigateToColorSchemeFontConfigurable();
+        }
+      }
+    });
+    return label;
+  }
+
+  private void navigateToColorSchemeFontConfigurable() {
+    Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(myTopPanel));
+    if (allSettings != null) {
+      final Configurable colorSchemeConfigurable = allSettings.find(ColorAndFontOptions.ID);
+      if (colorSchemeConfigurable instanceof ColorAndFontOptions) {
+        Configurable fontOptions =
+          ((ColorAndFontOptions)colorSchemeConfigurable).findSubConfigurable(ColorAndFontOptions.getFontConfigurableName());
+        if (fontOptions != null) {
+          allSettings.select(fontOptions);
+        }
+      }
+    }
+  }
+
+  public void updateWarning() {
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    if (!scheme.isUseAppFontPreferencesInEditor()) {
+      myEditorFontLabel.setText(
+        ApplicationBundle.message("settings.editor.font.overridden.message", scheme.getEditorFontName(), scheme.getEditorFontSize()));
+      myWarningPanel.setVisible(true);
+    }
+    else {
+      myWarningPanel.setVisible(false);
+    }
+  }
+
+  public void updatePreview() {
+    if (myPreviewScheme instanceof EditorFontCache) {
+      ((EditorFontCache)myPreviewScheme).reset();
+    }
+    myPreview.updateView();
+  }
+
+  @Override
+  public void dispose() {
+    myPreview.disposeUIResources();
+  }
+
+  private static @NotNull EditorColorsScheme createPreviewScheme() {
+    EditorColorsScheme scheme = (EditorColorsScheme)EditorColorsManager.getInstance().getSchemeForCurrentUITheme().clone();
+    scheme.setFontPreferences(new FontPreferencesImpl());
+    return scheme;
+  }
+
+  public @NotNull JPanel getComponent() {
+    return myTopPanel;
+  }
+
+  public @NotNull AppFontOptionsPanel getOptionsPanel() {
+    return myOptionsPanel;
+  }
+
+  protected interface FontOptionsPanelFactory {
+    @NotNull AppFontOptionsPanel create(@NotNull EditorColorsScheme previewScheme);
+  }
+}

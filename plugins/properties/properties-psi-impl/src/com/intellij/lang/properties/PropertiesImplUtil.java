@@ -1,0 +1,198 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.lang.properties;
+
+import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.PropertyKeyIndex;
+import com.intellij.lang.properties.xml.XmlPropertiesFileImpl;
+import com.intellij.lang.properties.xml.XmlPropertiesIndex;
+import com.intellij.lang.properties.xml.XmlProperty;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.pom.PomTarget;
+import com.intellij.pom.PomTargetPsiElement;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.indexing.FileBasedIndex;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+/**
+ * @author Konstantin Bulenkov
+ */
+public final class PropertiesImplUtil extends PropertiesUtil {
+  public static @NotNull ResourceBundleWithCachedFiles getResourceBundleWithCachedFiles(final @NotNull PropertiesFile representative) {
+    return ReadAction.compute(() -> {
+      final PsiFile containingFile = representative.getContainingFile();
+      if (!containingFile.isValid()) {
+        return ResourceBundleWithCachedFiles.EMPTY;
+      }
+      final ResourceBundleManager manager = ResourceBundleManager.getInstance(representative.getProject());
+      final CustomResourceBundle customResourceBundle =
+        manager.getCustomResourceBundle(representative);
+      if (customResourceBundle != null) {
+        return new ResourceBundleWithCachedFiles(customResourceBundle, customResourceBundle.getPropertiesFiles());
+      }
+
+      final VirtualFile virtualFile = representative.getVirtualFile();
+      if (virtualFile == null) {
+        return ResourceBundleWithCachedFiles.EMPTY;
+      }
+      if (manager.isDefaultDissociated(virtualFile)) {
+        return new ResourceBundleWithCachedFiles(new ResourceBundleImpl(representative), Collections.singletonList(representative));
+      }
+
+
+      final String baseName = manager.getBaseName(containingFile);
+      final String extension = containingFile.getVirtualFile().getExtension();
+      final PsiDirectory directory = containingFile.getContainingDirectory();
+      if (directory == null) return ResourceBundleWithCachedFiles.EMPTY;
+      final ResourceBundleWithCachedFiles bundle = getResourceBundle(baseName, extension, directory);
+      return bundle == null
+             ? new ResourceBundleWithCachedFiles(new ResourceBundleImpl(representative), Collections.singletonList(representative))
+             : bundle;
+    });
+  }
+
+  public static @NotNull List<PropertiesFile> getResourceBundleFiles(@NotNull PropertiesFile representative) {
+    return getResourceBundleWithCachedFiles(representative).getFiles();
+  }
+
+  public static @NotNull ResourceBundle getResourceBundle(@NotNull PropertiesFile representative) {
+    return getResourceBundleWithCachedFiles(representative).getBundle();
+  }
+
+  private static @Nullable ResourceBundleWithCachedFiles getResourceBundle(final @NotNull String baseName,
+                                                                           final @Nullable String extension,
+                                                                           final @NotNull PsiDirectory baseDirectory) {
+    final ResourceBundleManager bundleBaseNameManager = ResourceBundleManager.getInstance(baseDirectory.getProject());
+    final List<PropertiesFile> bundleFiles = Stream
+      .of(baseDirectory.isValid() ? baseDirectory.getFiles() : PsiFile.EMPTY_ARRAY)
+      .filter(f -> isPropertiesFile(f) &&
+                   Comparing.strEqual(f.getVirtualFile().getExtension(), extension) &&
+                   Objects.equals(bundleBaseNameManager.getBaseName(f), baseName))
+      .map(PropertiesImplUtil::getPropertiesFile)
+      .collect(Collectors.toList());
+    if (bundleFiles.isEmpty()) return null;
+    return new ResourceBundleWithCachedFiles(new ResourceBundleImpl(bundleFiles.get(0)), bundleFiles);
+  }
+
+  public static boolean isPropertiesFile(@Nullable PsiFile file) {
+    return getPropertiesFile(file) != null;
+  }
+
+  public static @Nullable PropertiesFile getPropertiesFile(@NotNull VirtualFile file, @NotNull Project project) {
+    return getPropertiesFile(PsiManager.getInstance(project).findFile(file));
+  }
+
+  @Contract("null -> null")
+  public static @Nullable PropertiesFile getPropertiesFile(@Nullable PsiFile file) {
+    if (!canBePropertyFile(file)) return null;
+    return file instanceof PropertiesFile ? (PropertiesFile)file : XmlPropertiesFileImpl.getPropertiesFile(file);
+  }
+
+  public static boolean canBePropertyFile(PsiFile file) {
+    return file instanceof PropertiesFile || file instanceof XmlFile && file.getFileType() == XmlFileType.INSTANCE;
+  }
+
+  public static @Nullable PropertiesFile getPropertiesFile(@Nullable PsiElement element) {
+    if (!(element instanceof PsiFile)) return null;
+    return getPropertiesFile((PsiFile)element);
+  }
+
+  public static @NotNull List<IProperty> findPropertiesByKey(final @NotNull Project project, final @NotNull String key) {
+    GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+    List<IProperty> properties = new ArrayList<>(PropertyKeyIndex.getInstance().getProperties(key, project, scope));
+    final Set<VirtualFile> files = new HashSet<>();
+    FileBasedIndex.getInstance().processValues(XmlPropertiesIndex.NAME, new XmlPropertiesIndex.Key(key), null, (file, value) -> {
+      if (files.add(file)) {
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+        if (psiFile != null) {
+          PropertiesFile propertiesFile = XmlPropertiesFileImpl.getPropertiesFile(psiFile);
+          if (propertiesFile != null) {
+            properties.addAll(propertiesFile.findPropertiesByKey(key));
+          }
+        }
+      }
+      return true;
+    }, scope);
+    return properties;
+  }
+
+  public static @Nullable ResourceBundle createByUrl(final @NotNull String url, final @NotNull Project project) {
+    final int idx = url.lastIndexOf('/');
+    if (idx == -1) return null;
+    final String baseDirectoryName = url.substring(0, idx);
+    final String baseName = url.substring(idx + 1);
+    final VirtualFile baseDirectoryVirtualFile = VirtualFileManager.getInstance().findFileByUrl(baseDirectoryName);
+    if (baseDirectoryVirtualFile == null) {
+      return null;
+    }
+    final PsiDirectory baseDirectory = PsiManager.getInstance(project).findDirectory(baseDirectoryVirtualFile);
+    if (baseDirectory == null) {
+      return null;
+    }
+    final ResourceBundleManager bundleBaseNameManager = ResourceBundleManager.getInstance(project);
+
+    for (PsiFile file : baseDirectory.getFiles()) {
+      final PropertiesFile propertiesFile = getPropertiesFile(file);
+      if (propertiesFile == null) continue;
+      final String currBaseName = bundleBaseNameManager.getBaseName(file);
+      if (currBaseName.equals(baseName)) {
+        return getResourceBundle(propertiesFile);
+      }
+    }
+    return null;
+  }
+
+  public static @Nullable IProperty getProperty(@Nullable PsiElement element) {
+    if (element instanceof IProperty) {
+      return (IProperty)element;
+    }
+    if (element instanceof PomTargetPsiElement) {
+      final PomTarget target = ((PomTargetPsiElement)element).getTarget();
+      if (target instanceof XmlProperty) {
+        return (IProperty)target;
+      }
+    }
+    return null;
+  }
+
+  public static final class ResourceBundleWithCachedFiles {
+    private static final ResourceBundleWithCachedFiles EMPTY =
+      new ResourceBundleWithCachedFiles(EmptyResourceBundle.getInstance(), Collections.emptyList());
+
+    private final ResourceBundle myBundle;
+    private final List<PropertiesFile> myFiles;
+
+    private ResourceBundleWithCachedFiles(@NotNull ResourceBundle bundle, @NotNull List<PropertiesFile> files) {
+      myBundle = bundle;
+      myFiles = files;
+    }
+
+    public @NotNull ResourceBundle getBundle() {
+      return myBundle;
+    }
+
+    public @NotNull List<PropertiesFile> getFiles() {
+      return myFiles;
+    }
+  }
+}

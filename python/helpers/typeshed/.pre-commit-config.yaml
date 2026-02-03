@@ -1,0 +1,51 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: check-case-conflict
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.10 # must match requirements-tests.txt
+    hooks:
+      - id: ruff
+        name: Run ruff on stubs, tests and scripts
+        args: ["--exit-non-zero-on-fix"]
+      - id: ruff
+        # Very few rules are useful to run on our test cases;
+        # we explicitly enumerate them here:
+        name: Run ruff on the test cases
+        args:
+          - "--exit-non-zero-on-fix"
+          - "--select=FA,I,ICN001,RUF100"
+          - "--no-force-exclude"
+          - "--unsafe-fixes"
+        files: '.*test_cases/.+\.py$'
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 25.12.0
+    hooks:
+      - id: black
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.3.0
+    hooks:
+      - id: flake8
+        language: python
+        additional_dependencies:
+          - "flake8-pyi==25.5.0"
+        types: [file]
+        types_or: [python, pyi]
+  - repo: meta
+    hooks:
+      - id: check-hooks-apply
+
+ci:
+  autofix_commit_msg: "[pre-commit.ci] auto fixes from pre-commit.com hooks"
+  autofix_prs: true
+  autoupdate_commit_msg: "[pre-commit.ci] pre-commit autoupdate"
+  autoupdate_schedule: quarterly
+  submodules: false

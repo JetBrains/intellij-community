@@ -1,0 +1,3 @@
+fun usageB() {
+    TheClass().getData()
+}

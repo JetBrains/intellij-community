@@ -1,0 +1,9 @@
+// Baseline format: 1.0
+AddedAbstractMethod: org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility#getTrackPaddingExpanded():
+    Binary breaking change: Added method org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.getTrackPaddingExpanded()
+
+
+RemovedMethod: org.jetbrains.jewel.ui.component.ContextMenuItemOption#ContextMenuItemOption(String, org.jetbrains.jewel.ui.icon.IconKey, org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction, boolean, kotlin.jvm.functions.Function0<kotlin.Unit>):
+    Binary breaking change: Removed constructor org.jetbrains.jewel.ui.component.ContextMenuItemOption(String,org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction,boolean,kotlin.jvm.functions.Function0<kotlin.Unit>)
+RemovedMethod: org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.AlwaysVisible#AlwaysVisible(androidx.compose.ui.unit.Dp, androidx.compose.foundation.layout.PaddingValues, androidx.compose.foundation.layout.PaddingValues, kotlin.time.Duration, kotlin.time.Duration, androidx.compose.ui.graphics.Color, androidx.compose.ui.graphics.Color):
+    Source breaking change: Removed constructor org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.AlwaysVisible(androidx.compose.ui.unit.Dp,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.layout.PaddingValues,kotlin.time.Duration,kotlin.time.Duration,androidx.compose.ui.graphics.Color,androidx.compose.ui.graphics.Color)

@@ -1,0 +1,42 @@
+### auto-generated section `build intellij.kotlin.codeInsight.api` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_api",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+  ],
+  x_context_parameters = True
+)
+
+jvm_library(
+  name = "api",
+  module_name = "intellij.kotlin.codeInsight.api",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_api",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlin/reflect",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/code-insight/utils",
+    "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/lang-api:lang",
+    "//java/java-psi-api:psi",
+    "//platform/projectModel-impl",
+    "//plugins/kotlin/base/statistics",
+    "//plugins/kotlin/base/project-structure",
+    "//platform/statistics",
+  ]
+)
+### auto-generated section `build intellij.kotlin.codeInsight.api` end

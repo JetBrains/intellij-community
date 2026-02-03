@@ -1,0 +1,1 @@
+read "var:" v[i]

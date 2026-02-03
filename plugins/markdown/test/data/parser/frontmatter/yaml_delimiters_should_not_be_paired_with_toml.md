@@ -1,0 +1,5 @@
+---
+type: article
++++
+
+Some text

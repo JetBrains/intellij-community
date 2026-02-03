@@ -1,0 +1,35 @@
+### auto-generated section `build intellij.platform.main` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/bootstrap",
+    "//platform/remote-servers/clouds",
+    "//platform/execution.dashboard",
+    "//platform/execution.serviceView",
+    "//platform/kernel/shared:kernel",
+    "//platform/kernel/intellij.platform.kernel.impl:impl",
+    "//platform/platform-impl/ui-inspector:ide-ui-inspector",
+    "//platform/inline-completion/shared:inline-completion",
+    "//platform/bookmarks",
+    "//platform/todo",
+    "//platform/find",
+    "//platform/settings-local",
+    "//platform/xdebugger-impl/shared",
+    "//platform/xdebugger-impl/rpc",
+    "//platform/remote-topics/shared:rpc-topics",
+    "//platform/pluginManager/shared",
+  ]
+)
+
+jvm_library(
+  name = "main_test_lib",
+  module_name = "intellij.platform.main",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":main"]
+)
+### auto-generated section `build intellij.platform.main` end

@@ -1,0 +1,5 @@
+import junit.framework.TestCase
+#parse("File Header.java")
+class ${NAME}: TestCase() {
+  ${BODY}
+}

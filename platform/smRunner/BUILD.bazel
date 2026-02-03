@@ -1,0 +1,97 @@
+### auto-generated section `build intellij.platform.smRunner` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "smRunner_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "smRunner",
+  module_name = "intellij.platform.smRunner",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":smRunner_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
+    "//platform/lvcs-api:lvcs",
+    "//platform/projectModel-api:projectModel",
+    "//platform/testRunner",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:tc_service_messages",
+    "//platform/platform-impl/concurrency",
+    "//platform/lang-api:lang",
+    "//libraries/fastutil",
+    "//platform/core-ui",
+    "//platform/ide-core-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/jdom",
+    "//platform/execution",
+  ],
+  exports = [
+    "//platform/testRunner",
+    "@lib//:tc_service_messages",
+  ]
+)
+
+jvm_library(
+  name = "smRunner_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":smRunner"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
+    "//jps/model-api:model",
+    "//platform/lvcs-api:lvcs",
+    "//platform/projectModel-api:projectModel",
+    "//platform/testRunner",
+    "//platform/testRunner:testRunner_test_lib",
+    "//platform/xdebugger-api:debugger",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:tc_service_messages",
+    "@lib//:objenesis",
+    "//platform/platform-impl/concurrency",
+    "@lib//:easymock",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/lang-api:lang",
+    "//libraries/fastutil",
+    "//platform/core-ui",
+    "//platform/ide-core-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/jdom",
+    "//platform/diff-api:diff",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/execution",
+  ],
+  exports = [
+    "//platform/testRunner",
+    "//platform/testRunner:testRunner_test_lib",
+    "@lib//:tc_service_messages",
+  ]
+)
+### auto-generated section `build intellij.platform.smRunner` end
+
+### auto-generated section `test intellij.platform.smRunner` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "smRunner_test",
+  runtime_deps = [":smRunner_test_lib"]
+)
+### auto-generated section `test intellij.platform.smRunner` end

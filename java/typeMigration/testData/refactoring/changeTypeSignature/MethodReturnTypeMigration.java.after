@@ -1,0 +1,16 @@
+class Test {
+    interface A<T> {
+        T foo();
+    }
+
+    class B implements A<Integer> {
+        public Integer foo() {
+            return null;
+        }
+
+        public void bar() {
+            Integer s = foo();
+        }
+    }
+
+}

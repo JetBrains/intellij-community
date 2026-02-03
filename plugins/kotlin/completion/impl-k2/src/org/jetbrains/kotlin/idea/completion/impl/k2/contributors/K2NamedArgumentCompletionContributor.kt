@@ -1,0 +1,147 @@
+/*
+ * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
+package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
+
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyzeCopy
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
+import org.jetbrains.kotlin.idea.completion.findValueArgument
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2ContributorSectionPriority
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.isAfterRangeOperator
+import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtValueArgumentList
+
+internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContributor<KotlinExpressionNameReferencePositionContext>(
+    positionContextClass = KotlinExpressionNameReferencePositionContext::class,
+    priority = K2ContributorSectionPriority.HEURISTIC,
+) {
+
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinExpressionNameReferencePositionContext>)
+    override fun shouldExecute(): Boolean {
+        return !context.positionContext.isAfterRangeOperator()
+    }
+
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinExpressionNameReferencePositionContext>)
+    override fun complete() {
+        if (context.positionContext.explicitReceiver != null) return
+
+        val valueArgument = findValueArgument(context.positionContext.nameExpression) ?: return
+        val valueArgumentList = valueArgument.parent as? KtValueArgumentList ?: return
+        val currentArgumentIndex = valueArgumentList.arguments.indexOf(valueArgument)
+        val callElement = valueArgumentList.parent as? KtCallElement ?: return
+
+        if (valueArgument.getArgumentName() != null) return
+
+        // with `analyze` invoked on `fakeKtFile`:
+        // - use-site is `fakeKtFile`;
+        // - `collectCallCandidates` collects functions from `originalKtFile`.
+        // if a function has `private` modifier then collected call candidate hav INVISIBLE_REFERENCE diagnostic, which leads to KTIJ-29748;
+        // TODO: when KT-68929 is implemented, rewrite `KotlinFirCompletionProvider` so that it uses `analyzeCopy` with `IGNORE_ORIGIN`
+        // as a temporary workaround, use `analyzeCopy` while collecting call candidate for named argument completion
+        analyzeCopy(callElement, resolutionMode = KaDanglingFileResolutionMode.PREFER_SELF) {
+            val candidates = collectCallCandidates(callElement)
+                .mapNotNull { it.candidate as? KaFunctionCall<*> }
+                .filter { it.partiallyAppliedSymbol.symbol.hasStableParameterNames }
+
+            val namedArgumentInfos = buildList {
+                val (candidatesWithTypeMismatches, candidatesWithNoTypeMismatches) = candidates.partition {
+                    CallParameterInfoProvider.hasTypeMismatchBeforeCurrent(callElement, it.argumentMapping, currentArgumentIndex)
+                }
+
+                val argumentsBeforeCurrent = valueArgumentList.arguments.take(currentArgumentIndex)
+                addAll(collectNamedArgumentInfos(callElement, argumentsBeforeCurrent, candidatesWithNoTypeMismatches))
+                // if no candidates without type mismatches have any candidate parameters, try searching among remaining candidates
+                if (isEmpty()) {
+                    addAll(collectNamedArgumentInfos(callElement, argumentsBeforeCurrent, candidatesWithTypeMismatches))
+                }
+            }
+
+            buildList {
+                for ((name, indexedTypes) in namedArgumentInfos) {
+                    with(KotlinFirLookupElementFactory) {
+                        add(createNamedArgumentLookupElement(name, indexedTypes))
+
+                        // suggest default values only for types from parameters with matching positions to not clutter completion
+                        val typesAtCurrentPosition = indexedTypes.filter { it.index == currentArgumentIndex }
+
+                        val booleanPosition = typesAtCurrentPosition.firstOrNull { it.value.isBooleanType }
+                        if (booleanPosition != null) {
+                            add(createNamedArgumentWithValueLookupElement(name, KtTokens.TRUE_KEYWORD.value, booleanPosition.index))
+                            add(createNamedArgumentWithValueLookupElement(name, KtTokens.FALSE_KEYWORD.value, booleanPosition.index))
+                        }
+
+                        val nullablePosition = typesAtCurrentPosition.firstOrNull { it.value.isMarkedNullable }
+                        if (nullablePosition != null) {
+                            add(createNamedArgumentWithValueLookupElement(name, KtTokens.NULL_KEYWORD.value, nullablePosition.index))
+                        }
+                    }
+                }
+            }
+        }.map { it.applyWeighs() }
+            .forEach { addElement(it) }
+    }
+
+    /**
+     * @property indexedTypes types of all parameter candidates that match [name] with indexes of their positions in signatures
+     */
+    private data class NamedArgumentInfo(
+        val name: Name,
+        val indexedTypes: List<IndexedValue<KaType>>
+    )
+
+    context(_: KaSession)
+    private fun collectNamedArgumentInfos(
+        callElement: KtCallElement,
+        argumentsBeforeCurrent: List<KtValueArgument>,
+        candidates: List<KaFunctionCall<*>>,
+    ): List<NamedArgumentInfo> {
+        val nameToTypes = mutableMapOf<Name, MutableSet<IndexedValue<KaType>>>()
+
+        candidates.flatMap {
+            collectNotUsedIndexedParameterCandidates(callElement, it, argumentsBeforeCurrent)
+        }.forEach { (index, parameter) ->
+            nameToTypes.getOrPut(parameter.name) { HashSet() }.add(IndexedValue(index, parameter.symbol.returnType))
+        }
+        return nameToTypes.map { (name, types) ->
+            NamedArgumentInfo(name, types.toList())
+        }
+    }
+
+    context(_: KaSession)
+    private fun collectNotUsedIndexedParameterCandidates(
+        callElement: KtCallElement,
+        candidate: KaFunctionCall<*>,
+        argumentsBeforeCurrent: List<KtValueArgument>,
+    ): Sequence<IndexedValue<KaVariableSignature<KaValueParameterSymbol>>> {
+        val signature = candidate.partiallyAppliedSymbol.signature
+        val argumentMapping = candidate.argumentMapping
+
+        val argumentToParameterIndex = CallParameterInfoProvider.mapArgumentsToParameterIndices(callElement, signature, argumentMapping)
+        if (argumentsBeforeCurrent.any { it.getArgumentExpression() !in argumentToParameterIndex }) return emptySequence()
+
+        val alreadyPassedParameters = argumentsBeforeCurrent.mapNotNull { argumentMapping[it.getArgumentExpression()] }.toSet()
+        return signature.valueParameters
+            .asSequence()
+            .withIndex()
+            .filterNot { (_, parameter) ->
+                parameter in alreadyPassedParameters
+            }
+    }
+}

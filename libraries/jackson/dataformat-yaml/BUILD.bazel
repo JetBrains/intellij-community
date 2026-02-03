@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.libraries.jackson.dataformat.yaml` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "libraries-jackson-dataformat-yaml_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "libraries-jackson-dataformat-yaml",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":libraries-jackson-dataformat-yaml_resources"],
+  exports = ["@lib//:jackson-dataformat-yaml"],
+  runtime_deps = [
+    "@lib//:jackson-dataformat-yaml",
+    "//libraries/jackson/jackson",
+  ]
+)
+### auto-generated section `build intellij.libraries.jackson.dataformat.yaml` end

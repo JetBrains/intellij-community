@@ -1,0 +1,619 @@
+package pkg;
+
+import java.util.Objects;
+
+public class TestSwitchOnStringsJavac {
+   String s;
+   static final String S = "";
+
+   void noCase() {
+      Objects.requireNonNull(this.getStr());// 8
+   }// 10
+
+   void oneCase(String s) {
+      System.out.println(1);// 13
+      switch (s) {// 14
+         case "xxx":
+            System.out.println(2);// 16
+         default:
+            System.out.println(3);// 19
+      }
+   }// 20
+
+   void oneCaseWithDefault() {
+      System.out.println(1);// 23
+      switch (this.s) {// 24
+         case "xxx" -> System.out.println(2);// 26
+         default -> System.out.println(3);// 29
+      }
+
+      System.out.println(4);// 32
+   }// 33
+
+   void multipleCases1() {
+      System.out.println(1);// 36
+      switch ("") {// 37
+         case "xxx" -> System.out.println(2);// 39
+         case "yyy" -> System.out.println(3);// 42
+      }
+
+      System.out.println(4);// 45
+   }// 46
+
+   void multipleCasesWithDefault1() {
+      System.out.println(1);// 49
+      switch (this.getStr()) {// 50
+         case "xxx" -> System.out.println(2);// 52
+         case "yyy" -> System.out.println(3);// 55
+         default -> System.out.println(4);// 58
+      }
+
+      System.out.println(5);// 61
+   }// 62
+
+   void multipleCases2() {
+      System.out.println(1);// 65
+      switch ("") {// 66
+         case "xxx" -> System.out.println(2);// 68
+         case "yyy" -> System.out.println(3);// 71
+         case "zzz" -> System.out.println(4);// 74
+      }
+
+      System.out.println(5);// 77
+   }// 78
+
+   void multipleCasesWithDefault2() {
+      System.out.println(1);// 81
+      switch (this.getStr()) {// 82
+         case "xxx" -> System.out.println(2);// 84
+         case "yyy" -> System.out.println(3);// 87
+         case "zzz" -> System.out.println(4);// 90
+         default -> System.out.println(5);// 93
+      }
+
+      System.out.println(6);// 96
+   }// 97
+
+   void combined() {
+      System.out.println("started");// 101
+      if (this.s.length() > 0) {// 102
+         System.out.println();// 103
+         switch (this.s) {// 104
+            case "b" -> System.out.println(1);// 105
+            case "d" -> System.out.println(2);// 106
+            case "a" -> System.out.println(3);// 107
+            case "f" -> System.out.println(4);// 108
+            default -> System.out.println(Math.random());// 109
+         }
+
+         System.out.println(this.s);// 111
+         this.combined();// 112
+      } else {
+         try {
+            label111: {
+               switch (this.getStr()) {// 115
+                  case "h":
+                  case "i":
+                     while(this.s != null) {// 118
+                        try {
+                           if (this.s.length() == 1) {// 120
+                              System.out.println(this.s);// 121
+                           }
+                        } catch (NullPointerException e) {// 123
+                           System.out.println(e.getMessage());// 124
+                        }
+                     }
+
+                     System.out.println(5);// 127
+                  case "j":
+                  case "f":
+                     break;
+                  default:
+                     System.out.println(7);// 133
+                     break label111;
+               }
+
+               System.out.println(6);// 130
+               return;// 131
+            }
+         } catch (NullPointerException var6) {// 135
+            NullPointerException e = var6;
+            int i = 0;// 136
+
+            while(i < 10) {
+               switch (this.getStr()) {// 137
+                  case "" -> System.out.println(8);// 138
+                  default -> System.out.println(e.getMessage());// 139
+               }
+
+               ++i;
+            }
+
+            System.out.println(9);// 142
+         }
+      }
+
+      System.out.println("finished");// 145
+   }// 146
+
+   String getStr() {
+      return "";// 150
+   }
+}
+
+class 'pkg/TestSwitchOnStringsJavac' {
+   method 'noCase ()V' {
+      0      9
+      1      9
+      2      9
+      3      9
+      5      9
+      6      9
+      7      9
+      a      10
+   }
+
+   method 'oneCase (Ljava/lang/String;)V' {
+      0      13
+      1      13
+      2      13
+      3      13
+      4      13
+      5      13
+      6      13
+      7      14
+      2c      14
+      40      16
+      41      16
+      42      16
+      43      16
+      44      16
+      47      18
+      48      18
+      49      18
+      4a      18
+      4b      18
+      4c      18
+      4d      18
+      4e      20
+   }
+
+   method 'oneCaseWithDefault ()V' {
+      0      23
+      1      23
+      2      23
+      3      23
+      4      23
+      5      23
+      6      23
+      7      24
+      8      24
+      9      24
+      a      24
+      30      24
+      44      25
+      45      25
+      46      25
+      47      25
+      48      25
+      4e      26
+      4f      26
+      50      26
+      51      26
+      52      26
+      55      29
+      56      29
+      57      29
+      58      29
+      59      29
+      5a      29
+      5b      29
+      5c      30
+   }
+
+   method 'multipleCases1 ()V' {
+      0      33
+      1      33
+      2      33
+      3      33
+      4      33
+      5      33
+      6      33
+      7      34
+      8      34
+      46      34
+      60      35
+      61      35
+      62      35
+      63      35
+      64      35
+      6a      36
+      6b      36
+      6c      36
+      6d      36
+      6e      36
+      71      39
+      72      39
+      73      39
+      74      39
+      75      39
+      76      39
+      77      39
+      78      40
+   }
+
+   method 'multipleCasesWithDefault1 ()V' {
+      0      43
+      1      43
+      2      43
+      3      43
+      4      43
+      5      43
+      6      43
+      7      44
+      8      44
+      9      44
+      a      44
+      46      44
+      60      45
+      61      45
+      62      45
+      63      45
+      64      45
+      6a      46
+      6b      46
+      6c      46
+      6d      46
+      6e      46
+      74      47
+      75      47
+      76      47
+      77      47
+      78      47
+      7b      50
+      7c      50
+      7d      50
+      7e      50
+      7f      50
+      80      50
+      81      50
+      82      51
+   }
+
+   method 'multipleCases2 ()V' {
+      0      54
+      1      54
+      2      54
+      3      54
+      4      54
+      5      54
+      6      54
+      7      55
+      8      55
+      5c      55
+      78      56
+      79      56
+      7a      56
+      7b      56
+      7c      56
+      82      57
+      83      57
+      84      57
+      85      57
+      86      57
+      8c      58
+      8d      58
+      8e      58
+      8f      58
+      90      58
+      93      61
+      94      61
+      95      61
+      96      61
+      97      61
+      98      61
+      99      61
+      9a      62
+   }
+
+   method 'multipleCasesWithDefault2 ()V' {
+      0      65
+      1      65
+      2      65
+      3      65
+      4      65
+      5      65
+      6      65
+      7      66
+      8      66
+      9      66
+      a      66
+      5c      66
+      78      67
+      79      67
+      7a      67
+      7b      67
+      7c      67
+      82      68
+      83      68
+      84      68
+      85      68
+      86      68
+      8c      69
+      8d      69
+      8e      69
+      8f      69
+      90      69
+      96      70
+      97      70
+      98      70
+      99      70
+      9a      70
+      9d      73
+      9e      73
+      9f      73
+      a0      73
+      a1      73
+      a2      73
+      a3      73
+      a4      73
+      a5      74
+   }
+
+   method 'combined ()V' {
+      0      77
+      1      77
+      2      77
+      3      77
+      4      77
+      5      77
+      6      77
+      7      77
+      8      78
+      9      78
+      a      78
+      b      78
+      c      78
+      d      78
+      e      78
+      f      78
+      12      79
+      13      79
+      14      79
+      15      79
+      16      79
+      17      79
+      18      80
+      19      80
+      1a      80
+      1b      80
+      7e      80
+      9c      81
+      9d      81
+      9e      81
+      9f      81
+      a0      81
+      a6      82
+      a7      82
+      a8      82
+      a9      82
+      aa      82
+      b0      83
+      b1      83
+      b2      83
+      b3      83
+      b4      83
+      ba      84
+      bb      84
+      bc      84
+      bd      84
+      be      84
+      c4      85
+      c5      85
+      c6      85
+      c7      85
+      c8      85
+      c9      85
+      ca      85
+      cd      88
+      ce      88
+      cf      88
+      d0      88
+      d1      88
+      d2      88
+      d3      88
+      d4      88
+      d5      88
+      d6      88
+      d7      89
+      d8      89
+      de      93
+      df      93
+      e0      93
+      e1      93
+      142      93
+      160      96
+      161      96
+      162      96
+      163      96
+      164      96
+      167      98
+      168      98
+      169      98
+      16a      98
+      16b      98
+      16c      98
+      16d      98
+      16e      98
+      16f      98
+      172      99
+      173      99
+      174      99
+      175      99
+      176      99
+      177      99
+      178      99
+      179      99
+      17f      101
+      180      102
+      181      102
+      182      102
+      184      102
+      185      102
+      186      102
+      187      102
+      18d      106
+      18e      106
+      18f      106
+      190      106
+      191      106
+      194      115
+      195      115
+      196      115
+      197      115
+      198      115
+      199      115
+      19a      115
+      19b      115
+      19c      116
+      19d      111
+      19e      111
+      19f      111
+      1a0      111
+      1a1      111
+      1a2      111
+      1a8      118
+      1a9      120
+      1aa      120
+      1ab      122
+      1ac      122
+      1ad      122
+      1ae      122
+      1b1      123
+      1b2      123
+      1b3      123
+      1b4      123
+      1de      123
+      1f0      124
+      1f1      124
+      1f2      124
+      1f3      124
+      1f4      124
+      1f5      124
+      1fb      125
+      1fc      125
+      1fd      125
+      1fe      125
+      1ff      125
+      200      125
+      201      125
+      202      125
+      205      128
+      20b      131
+      20c      131
+      20d      131
+      20e      131
+      20f      131
+      210      131
+      213      135
+      214      135
+      215      135
+      216      135
+      217      135
+      218      135
+      219      135
+      21a      135
+      21b      136
+   }
+
+   method 'getStr ()Ljava/lang/String;' {
+      0      139
+      1      139
+      2      139
+   }
+}
+
+Lines mapping:
+8 <-> 10
+10 <-> 11
+13 <-> 14
+14 <-> 15
+16 <-> 17
+19 <-> 19
+20 <-> 21
+23 <-> 24
+24 <-> 25
+26 <-> 26
+29 <-> 27
+32 <-> 30
+33 <-> 31
+36 <-> 34
+37 <-> 35
+39 <-> 36
+42 <-> 37
+45 <-> 40
+46 <-> 41
+49 <-> 44
+50 <-> 45
+52 <-> 46
+55 <-> 47
+58 <-> 48
+61 <-> 51
+62 <-> 52
+65 <-> 55
+66 <-> 56
+68 <-> 57
+71 <-> 58
+74 <-> 59
+77 <-> 62
+78 <-> 63
+81 <-> 66
+82 <-> 67
+84 <-> 68
+87 <-> 69
+90 <-> 70
+93 <-> 71
+96 <-> 74
+97 <-> 75
+101 <-> 78
+102 <-> 79
+103 <-> 80
+104 <-> 81
+105 <-> 82
+106 <-> 83
+107 <-> 84
+108 <-> 85
+109 <-> 86
+111 <-> 89
+112 <-> 90
+115 <-> 94
+118 <-> 97
+120 <-> 99
+121 <-> 100
+123 <-> 102
+124 <-> 103
+127 <-> 107
+130 <-> 116
+131 <-> 117
+133 <-> 112
+135 <-> 119
+136 <-> 121
+137 <-> 124
+138 <-> 125
+139 <-> 126
+142 <-> 132
+145 <-> 136
+146 <-> 137
+150 <-> 140
+Not mapped:
+27
+40
+53
+56
+69
+72
+85
+88
+91
+125
+143

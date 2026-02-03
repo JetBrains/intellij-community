@@ -1,0 +1,4 @@
+"p<caret>\nreved $id medved"
+-----
+"p" +
+    "<caret>\nreved $id medved"

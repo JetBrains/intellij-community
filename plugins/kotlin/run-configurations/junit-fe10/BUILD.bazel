@@ -1,0 +1,40 @@
+### auto-generated section `build kotlin.run-configurations.junit-fe10` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_junit-fe10",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
+
+resourcegroup(
+  name = "junit-fe10_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "junit-fe10",
+  module_name = "kotlin.run-configurations.junit-fe10",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":junit-fe10_resources"],
+  kotlinc_opts = ":custom_junit-fe10",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/core-api:core",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/facet",
+    "//platform/util",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//platform/core-impl",
+    "//java/java-psi-api:psi",
+    "//java/execution/openapi:java-execution",
+  ]
+)
+### auto-generated section `build kotlin.run-configurations.junit-fe10` end

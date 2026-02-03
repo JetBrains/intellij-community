@@ -1,0 +1,4 @@
+The selected package 'foo' is not compatible with the implicit package prefix of the destination: 'implicit'. Performing the refactoring will break the implicit package prefix.
+The selected package 'foo' is not compatible with the implicit package prefix of the destination: 'implicit'. Performing the refactoring will break the implicit package prefix.
+The selected package 'foo' is not compatible with the implicit package prefix of the destination: 'implicit'. Performing the refactoring will break the implicit package prefix.
+The selected package 'foo' is not compatible with the implicit package prefix of the destination: 'implicit'. Performing the refactoring will break the implicit package prefix.

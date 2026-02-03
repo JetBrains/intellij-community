@@ -1,0 +1,11 @@
+[project]
+name = "helpersTests"
+version = "0.1.0"
+description = "PyCharm helpers tests"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "behave",
+    "pytest",
+    "pytest-xdist",
+]

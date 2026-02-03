@@ -1,0 +1,7 @@
+- name: dist.all/lib/intellij.platform.credentialStore.impl.jar
+  modules:
+  - name: intellij.platform.credentialStore.impl
+    libraries:
+      dbus-java:
+      - name: $MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-transport-native-unixsocket/4/dbus-java-transport-native-unixsocket-4.jar
+      - name: $MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-core/4/dbus-java-core-4.jar

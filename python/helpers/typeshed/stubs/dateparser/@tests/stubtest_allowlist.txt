@@ -1,0 +1,8 @@
+dateparser.calendars.hijri
+dateparser.calendars.hijri_parser
+dateparser.calendars.jalali
+dateparser.calendars.jalali_parser
+dateparser.search.detection.BaseLanguageDetector.iterate_applicable_languages
+
+# Timezone and other internal data:
+dateparser.data.date_translation_data.*

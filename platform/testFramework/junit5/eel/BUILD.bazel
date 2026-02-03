@@ -1,0 +1,76 @@
+### auto-generated section `build intellij.platform.testFramework.junit5.eel` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "eel_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "eel",
+  module_name = "intellij.platform.testFramework.junit5.eel",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:junit5Jupiter",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/junit5",
+    "//platform/core-api:core",
+    "//platform/core-nio-fs",
+    "//platform/eel-impl",
+    "//platform/eel-provider",
+    "//platform/ide-core",
+    "//platform/ide-core-impl",
+    "//platform/ijent",
+    "//platform/testFramework/junit5",
+    "//platform/util",
+    "//platform/util/coroutines",
+    "//platform/util-ex",
+    "//platform/projectModel-api:projectModel",
+  ]
+)
+
+jvm_library(
+  name = "eel_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  resources = [":eel_test_resources"],
+  associates = [":eel"],
+  deps = [
+    "@lib//:junit5Jupiter",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:junit5Params",
+    "//libraries/junit5",
+    "//libraries/junit5-pioneer",
+    "//platform/core-api:core",
+    "//platform/core-nio-fs",
+    "//platform/eel-impl",
+    "//platform/eel-provider",
+    "//platform/ide-core",
+    "//platform/ide-core-impl",
+    "//platform/ijent",
+    "//platform/ijent:ijent_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/util",
+    "//platform/util/coroutines",
+    "//platform/util-ex",
+    "//platform/execution",
+    "//platform/projectModel-api:projectModel",
+  ]
+)
+### auto-generated section `build intellij.platform.testFramework.junit5.eel` end
+
+### auto-generated section `test intellij.platform.testFramework.junit5.eel` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "eel_test",
+  runtime_deps = [":eel_test_lib"]
+)
+### auto-generated section `test intellij.platform.testFramework.junit5.eel` end

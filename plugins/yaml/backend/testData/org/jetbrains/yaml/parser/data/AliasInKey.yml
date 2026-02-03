@@ -1,0 +1,5 @@
+# This test data is duplicated in parser and lexer tests
+topics: [&place City, &lang Language]
+*place: Spb
+*lang : &rus Russia
+*rus:

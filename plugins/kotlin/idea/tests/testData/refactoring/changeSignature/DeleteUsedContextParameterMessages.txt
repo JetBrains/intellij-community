@@ -1,0 +1,1 @@
+'param1' is used in declaration body

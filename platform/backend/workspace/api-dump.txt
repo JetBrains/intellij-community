@@ -1,0 +1,19 @@
+f:com.intellij.platform.backend.workspace.VirtualFileUrls
+- sf:getVirtualFile(com.intellij.platform.workspace.storage.url.VirtualFileUrl):com.intellij.openapi.vfs.VirtualFile
+- sf:toVirtualFileUrl(com.intellij.openapi.vfs.VirtualFile,com.intellij.platform.workspace.storage.url.VirtualFileUrlManager):com.intellij.platform.workspace.storage.url.VirtualFileUrl
+com.intellij.platform.backend.workspace.WorkspaceModel
+- sf:Companion:com.intellij.platform.backend.workspace.WorkspaceModel$Companion
+- a:getCurrentSnapshot():com.intellij.platform.workspace.storage.ImmutableEntityStorage
+- a:getEventLog():kotlinx.coroutines.flow.Flow
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.backend.workspace.WorkspaceModel
+- a:getVirtualFileUrlManager():com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+- a:update(java.lang.String,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- a:updateProjectModel(java.lang.String,kotlin.jvm.functions.Function1):V
+f:com.intellij.platform.backend.workspace.WorkspaceModel$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.backend.workspace.WorkspaceModel
+com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+- java.util.EventListener
+- beforeChanged(com.intellij.platform.workspace.storage.VersionedStorageChange):V
+- changed(com.intellij.platform.workspace.storage.VersionedStorageChange):V
+f:com.intellij.platform.backend.workspace.WorkspaceModelKt
+- sf:getWorkspaceModel(com.intellij.openapi.project.Project):com.intellij.platform.backend.workspace.WorkspaceModel

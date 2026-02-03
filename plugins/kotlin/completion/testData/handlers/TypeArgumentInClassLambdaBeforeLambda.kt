@@ -1,0 +1,18 @@
+
+
+inline fun <reified T : Throwable> testing(block: () -> Any?) {
+
+}
+
+open class TestBlock(body: FunSpec.() -> Unit = {}) {
+
+}
+
+class Test: TestBlock({
+    testing<NullPointerExcep<caret> {
+
+    }
+})
+
+// ELEMENT: NullPointerException
+// TAIL_TEXT: " (kotlin)"

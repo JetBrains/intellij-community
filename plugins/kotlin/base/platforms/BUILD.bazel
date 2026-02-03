@@ -1,0 +1,40 @@
+### auto-generated section `build intellij.kotlin.base.platforms` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "platforms_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "platforms",
+  module_name = "intellij.kotlin.base.platforms",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":platforms_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/core-impl",
+    "//platform/projectModel-impl",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+    "//java/idea-ui:ui",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//platform/workspace/storage",
+    "//platform/ide-core",
+  ]
+)
+### auto-generated section `build intellij.kotlin.base.platforms` end

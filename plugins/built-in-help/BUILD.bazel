@@ -1,0 +1,47 @@
+### auto-generated section `build intellij.builtInHelp` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "built-in-help_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "built-in-help",
+  module_name = "intellij.builtInHelp",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":built-in-help_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/netty/codec-http:libraries-netty-codec-http",
+    "@lib//:lucene-codecs",
+    "@lib//:lucene-memory",
+    "@lib//:lucene-queries",
+    "@lib//:lucene-sandbox",
+    "@lib//:lucene-highlighter",
+    "@lib//:lucene-queryparser",
+    "@lib//:lucene-suggest",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//libraries/jsoup",
+    "@lib//:jaxb-api",
+    "//platform/core-api:core",
+    "//platform/credential-store",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/util-ex",
+    "//platform/built-in-server:builtInServer-impl",
+    "//libraries/lucene.common",
+    "//libraries/netty/buffer",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+  ]
+)
+### auto-generated section `build intellij.builtInHelp` end

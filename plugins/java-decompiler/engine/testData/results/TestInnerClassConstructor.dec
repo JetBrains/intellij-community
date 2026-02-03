@@ -1,0 +1,100 @@
+package pkg;
+
+class TestInnerClassConstructor {
+   void l() {
+      new Inner("text");// 5
+   }// 6
+
+   void m() {
+      new Another(3, 4);// 9
+   }// 10
+
+   void n(String var1) {
+      System.out.println("n(): " + var1);// 13
+   }// 14
+
+   final class Inner {
+      private Inner(String var2) {
+         TestInnerClassConstructor.this.n(var2);// 18
+      }// 19
+   }
+
+   private class Another {
+      private Another(int var2, int var3) {
+         TestInnerClassConstructor.this.n(var2 + "+" + var3);// 24
+      }// 25
+   }
+}
+
+class 'pkg/TestInnerClassConstructor' {
+   method 'l ()V' {
+      5      4
+      6      4
+      c      5
+   }
+
+   method 'm ()V' {
+      5      8
+      6      8
+      c      9
+   }
+
+   method 'n (Ljava/lang/String;)V' {
+      0      12
+      1      12
+      2      12
+      a      12
+      b      12
+      f      12
+      13      12
+      14      12
+      15      12
+      16      12
+      17      12
+      18      12
+      19      13
+   }
+}
+
+class 'pkg/TestInnerClassConstructor$Inner' {
+   method '<init> (Lpkg/TestInnerClassConstructor;Ljava/lang/String;)V' {
+      9      17
+      a      17
+      b      17
+      c      17
+      d      17
+      e      18
+   }
+}
+
+class 'pkg/TestInnerClassConstructor$Another' {
+   method '<init> (Lpkg/TestInnerClassConstructor;II)V' {
+      9      23
+      11      23
+      15      23
+      16      23
+      1a      23
+      1e      23
+      1f      23
+      20      23
+      21      23
+      22      23
+      23      23
+      24      24
+   }
+}
+
+Lines mapping:
+5 <-> 5
+6 <-> 6
+9 <-> 9
+10 <-> 10
+13 <-> 13
+14 <-> 14
+18 <-> 18
+19 <-> 19
+24 <-> 24
+25 <-> 25
+Not mapped:
+17
+23

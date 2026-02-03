@@ -1,0 +1,58 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+package org.jetbrains.kotlin.idea.actions.internal.refactoringTesting
+
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileCopyEvent
+import com.intellij.openapi.vfs.VirtualFileEvent
+import com.intellij.openapi.vfs.VirtualFileListener
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFileMoveEvent
+
+internal class FileSystemChangesTracker : Disposable {
+
+    private val trackerListener = object : VirtualFileListener, Disposable {
+
+        val createdFilesMutable = mutableSetOf<VirtualFile>()
+
+        @Volatile
+        private var disposed = false
+
+        init {
+            VirtualFileManager.getInstance().addVirtualFileListener(this, this@FileSystemChangesTracker)
+            Disposer.register(this@FileSystemChangesTracker, this)
+        }
+
+        @Synchronized
+        override fun dispose() {
+            if (!disposed) {
+                disposed = true
+                createdFilesMutable.clear()
+            }
+        }
+
+        override fun fileCreated(event: VirtualFileEvent) {
+            createdFilesMutable.add(event.file)
+        }
+
+        override fun fileCopied(event: VirtualFileCopyEvent) {
+            createdFilesMutable.add(event.file)
+        }
+
+        override fun fileMoved(event: VirtualFileMoveEvent) {
+            createdFilesMutable.add(event.file)
+        }
+    }
+
+    fun reset() {
+        trackerListener.createdFilesMutable.clear()
+    }
+
+    val createdFiles: Set<VirtualFile> = trackerListener.createdFilesMutable
+
+    override fun dispose() {
+        trackerListener.dispose()
+    }
+}

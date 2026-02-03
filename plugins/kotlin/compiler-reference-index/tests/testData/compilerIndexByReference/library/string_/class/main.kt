@@ -1,0 +1,1 @@
+fun foo(): Stri<caret>ng = ""

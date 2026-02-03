@@ -1,0 +1,8 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="com.intellij.modules.xml"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.properties"/>
+  </dependencies>
+</idea-plugin>

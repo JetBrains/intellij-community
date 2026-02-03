@@ -1,0 +1,11 @@
+println("x")
+
+
+println("a")<caret>
+println("b")
+-----
+println("x")
+
+println("a")<caret>
+
+println("b")

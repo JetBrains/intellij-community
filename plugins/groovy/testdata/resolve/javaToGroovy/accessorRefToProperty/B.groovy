@@ -1,0 +1,3 @@
+class B {
+  def  bean
+}

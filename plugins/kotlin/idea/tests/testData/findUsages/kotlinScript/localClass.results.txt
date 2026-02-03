@@ -1,0 +1,1 @@
+New instance creation 7 val x = Local()

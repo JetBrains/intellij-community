@@ -1,0 +1,13 @@
+PsiJavaFile:ParameterizedAnnotation.java
+  PsiAnnotation
+    PsiJavaToken:AT('@')
+    PsiJavaCodeReferenceElement:Nullable
+      PsiIdentifier:Nullable('Nullable')
+      PsiReferenceParameterList
+        <empty list>
+    PsiAnnotationParameterList
+      <empty list>
+  PsiErrorElement:Unparsed tokens
+    PsiJavaToken:LT('<')
+    PsiIdentifier:T('T')
+    PsiJavaToken:GT('>')

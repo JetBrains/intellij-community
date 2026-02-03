@@ -1,0 +1,11 @@
+class C{}
+
+fun foo(c: C){}
+fun foo(c: C, i: Int){}
+
+fun foo() {
+    foo(C()<caret>
+}
+
+// AUTOCOMPLETE_SETTING: true
+// IGNORE_K2

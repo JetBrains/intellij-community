@@ -1,0 +1,35 @@
+### auto-generated section `build intellij.platform.recentFiles` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "recentFiles_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "recentFiles",
+  module_name = "intellij.platform.recentFiles",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":recentFiles_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/project/shared:project",
+    "//platform/object-serializer",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//platform/kernel/shared:kernel",
+    "@lib//:jetbrains-annotations",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/platform-impl/rpc",
+    "//platform/platform-api:ide",
+    "//platform/core-ui",
+    "//platform/util:util-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/ide-core-impl",
+  ]
+)
+### auto-generated section `build intellij.platform.recentFiles` end

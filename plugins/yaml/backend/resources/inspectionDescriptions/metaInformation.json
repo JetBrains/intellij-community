@@ -1,0 +1,32 @@
+{
+  "inspections": [
+    {
+      "id": "YAMLIncompatibleTypes",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "YAMLUnresolvedAlias",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "YAMLDuplicatedKeys",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "YAMLSchemaDeprecation",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "YAMLRecursiveAlias",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "YAMLSchemaValidation",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "YAMLUnusedAnchor",
+      "codeQualityCategory": "Code Style"
+    }
+  ]
+}

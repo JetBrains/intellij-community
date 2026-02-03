@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.xml.parser` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "parser_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "parser",
+  module_name = "intellij.xml.parser",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":parser_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/util",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/syntax/syntax-api:syntax",
+    "//platform/syntax/syntax-psi:psi",
+    "//xml/xml-syntax:syntax",
+    "//platform/syntax/syntax-util:util",
+  ]
+)
+### auto-generated section `build intellij.xml.parser` end

@@ -1,0 +1,2 @@
+> text 
+> <caret>of other

@@ -1,0 +1,194 @@
+<idea-plugin>
+  <id>hg4idea</id>
+  <name>Mercurial</name>
+  <description>
+    <![CDATA[
+      Allows working with <a href="https://www.mercurial-scm.org/">Mercurial version control system</a>.
+      The following features are available:
+        <ul>
+        <li>Dedicated page under the Version Control node in the Settings/Preferences dialog.</li>
+        <li>Ability to browse, check out sources from and import into the available Mercurial repositories, when Mercurial is not enabled.</li>
+        <li>When Mercurial is enabled, the Mercurial node appears on the VCS menu, and on the context menu of the editor.
+        </ul>
+      ]]>
+  </description>
+  <category>Version Controls</category>
+  <vendor>JetBrains</vendor>
+  <depends>com.intellij.modules.vcs</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <search.projectOptionsTopHitProvider implementation="org.zmlx.hg4idea.HgOptionsTopHitProvider"/>
+    <vcs name="hg4idea" vcsClass="org.zmlx.hg4idea.HgVcs" displayName="Mercurial" administrativeAreaName=".hg"/>
+    <projectConfigurable id="vcs.Mercurial" key="hg4idea.mercurial" instance="org.zmlx.hg4idea.HgProjectConfigurable"
+                         parentId="project.propVCSSupport.Mappings" groupWeight="-500"/>
+    <checkoutProvider implementation="org.zmlx.hg4idea.provider.HgCheckoutProvider"/>
+    <vcsRootChecker implementation="org.zmlx.hg4idea.roots.HgRootChecker"/>
+    <vcsRepositoryCreator implementation="org.zmlx.hg4idea.repo.HgRepositoryCreator"/>
+    <pushSupport implementation="org.zmlx.hg4idea.push.HgPushSupport"/>
+    <vcsChangesViewRefresher implementation="org.zmlx.hg4idea.provider.HgIgnoredFileHolder$Provider"/>
+    <vcs.branchStateProvider implementation="org.zmlx.hg4idea.branch.HgBranchStateProvider"/>
+    <cherryPicker implementation="org.zmlx.hg4idea.cherrypick.HgCherryPicker"/>
+    <vcsPopupProvider implementation="org.zmlx.hg4idea.provider.HgQuickListProvider"/>
+    <logProvider implementation="org.zmlx.hg4idea.log.HgLogProvider"/>
+    <vcs.taskHandler implementation="org.zmlx.hg4idea.HgTaskHandler"/>
+    <vcs.ignoredFilesHolder implementation="org.zmlx.hg4idea.provider.HgIgnoredFileHolder$Provider"/>
+    <vcsRepositoryInitializer implementation="org.zmlx.hg4idea.repo.HgRepositoryInitializer"/>
+
+    <applicationService serviceImplementation="org.zmlx.hg4idea.HgGlobalSettings"/>
+    <applicationService serviceImplementation="org.zmlx.hg4idea.HgRememberedInputs"/>
+    <projectService serviceImplementation="org.zmlx.hg4idea.HgProjectSettings"/>
+    <projectService serviceImplementation="org.zmlx.hg4idea.provider.update.HgUpdateConfigurationSettings"/>
+    <ignoredFileContentProvider implementation="org.zmlx.hg4idea.ignore.HgIgnoredFileContentProvider"/>
+
+    <!-- HG ignore lang -->
+    <fileType language="HgIgnore" extensions="hgignore" fieldName="INSTANCE" name="HgIgnore file" implementationClass="org.zmlx.hg4idea.ignore.lang.HgIgnoreFileType"/>
+    <lang.parserDefinition language="HgIgnore"
+                           implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreParserDefinition"/>
+    <codeInsight.lineMarkerProvider language="HgIgnore"
+                                    implementationClass="com.intellij.openapi.vcs.changes.ignore.codeInsight.IgnoreDirectoryMarkerProvider"/>
+    <lang.braceMatcher language="HgIgnore" implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreBraceMatcher"/>
+    <lang.commenter language="HgIgnore" implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreCommenter"/>
+    <!--END HG ignore lang-->
+    <vcs.actions.ScheduleForAdditionActionExtension implementation="org.zmlx.hg4idea.action.HgAdd"/>
+
+    <statusBarWidgetFactory id="hg"
+                            implementation="org.zmlx.hg4idea.status.ui.HgStatusWidget$Factory"
+                            order="after CodeStyleStatusBarWidget,before ReadOnlyAttribute"/>
+    <statusBarWidgetFactory id="InHgIncomingOutgoingWidget"
+                            implementation="org.zmlx.hg4idea.status.ui.HgIncomingOutgoingWidget$IncomingFactory"
+                            order="after hg"/>
+    <statusBarWidgetFactory id="OutHgIncomingOutgoingWidget"
+                            implementation="org.zmlx.hg4idea.status.ui.HgIncomingOutgoingWidget$OutgoingFactory"
+                            order="after InHgIncomingOutgoingWidget"/>
+
+    <statistics.notificationIdsHolder implementation="org.zmlx.hg4idea.HgNotificationIdsHolder"/>
+
+    <history.activityPresentationProvider implementation="org.zmlx.hg4idea.HgActivityPresentationProvider"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="org.zmlx.hg4idea.status.ui.HgStatusWidget$Listener" activeInHeadlessMode="false" activeInTestMode="false"
+              topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
+    <listener class="org.zmlx.hg4idea.status.ui.HgIncomingOutgoingWidget$Listener" activeInHeadlessMode="false" activeInTestMode="false"
+              topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
+    <listener class="org.zmlx.hg4idea.status.ui.HgIncomingOutgoingWidget$Listener" activeInHeadlessMode="false" activeInTestMode="false"
+              topic="org.zmlx.hg4idea.status.ui.HgWidgetUpdater"/>
+  </projectListeners>
+
+  <actions>
+    <action id="Hg.Init" class="org.zmlx.hg4idea.action.HgInit">
+      <add-to-group group-id="Vcs.Import"/>
+      <add-to-group group-id="Vcs.Operations.Popup.NonVcsAware" relative-to-action="Start.Use.Vcs" anchor="before"/>
+    </action>
+
+    <group id="hg4idea.file.menu" popup="true" class="org.zmlx.hg4idea.action.HgMercurialMenu">
+      <reference ref="CheckinFiles"/>
+      <action id="hg4idea.add" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionWithIgnoredFilesConfirmationAction"
+              icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned"/>
+      <reference ref="ChangesView.Revert"/>
+      <reference ref="ChangesView.RevertFiles"/>
+      <separator/>
+
+      <reference ref="Compare.SameVersion"/>
+      <reference ref="Compare.Selected"/>
+      <action id="hg4idea.CompareWithBranch" class="org.zmlx.hg4idea.action.HgCompareWithBranchAction"/>
+      <reference ref="Vcs.ShowTabbedFileHistory"/>
+      <reference ref="Vcs.ShowHistoryForBlock"/>
+      <reference ref="Annotate"/>
+      <separator/>
+
+      <action id="hg4idea.pull" class="org.zmlx.hg4idea.action.HgPullAction" icon="AllIcons.Actions.CheckOut"/>
+      <reference ref="Vcs.Push"/>
+      <separator/>
+      <action id="hg4idea.run.conflict.resolver" class="org.zmlx.hg4idea.action.HgRunConflictResolverAction"/>
+      <action id="hg4idea.merge.files" class="org.zmlx.hg4idea.action.HgMerge" icon="AllIcons.Actions.ShowAsTree"/>
+      <separator/>
+
+      <action id="hg4idea.branches" class="org.zmlx.hg4idea.branch.HgBranchesAction"/>
+      <action id="hg4idea.tag" class="org.zmlx.hg4idea.action.HgCreateTagAction"/>
+      <action id="hg4idea.updateTo" class="org.zmlx.hg4idea.action.HgUpdateToAction"/>
+      <action id="hg4idea.resolve.mark" class="org.zmlx.hg4idea.action.HgMarkResolved"/>
+      <separator/>
+      <action id="hg4idea.Graft.Continue" class="org.zmlx.hg4idea.action.HgContinueGraftAction"/>
+      <action id="hg4idea.Rebase.Abort" class="org.zmlx.hg4idea.action.HgAbortRebaseAction"/>
+      <action id="hg4idea.Rebase.Continue" class="org.zmlx.hg4idea.action.HgContinueRebaseAction"/>
+
+      <separator/>
+      <action class="org.zmlx.hg4idea.action.mq.HgShowUnAppliedPatchesAction" id="hg4idea.mq.ShowUnAppliedPatches"
+              icon="AllIcons.Debugger.Watch"/>
+      <reference ref="ChangesView.Browse"/>
+      <separator/>
+
+      <add-to-group group-id="VcsGroup" anchor="last"/>
+      <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Vcs.Specific"/>
+    </group>
+
+    <action class="org.zmlx.hg4idea.action.HgUpdateToFromLogAction" id="hg4idea.UpdateToRevision"/>
+    <action class="org.zmlx.hg4idea.action.HgCreateTagFromLogAction" id="hg4idea.CreateNewTag"/>
+    <action class="org.zmlx.hg4idea.action.HgCreateNewBranchFromLogAction" id="hg4idea.CreateNewBranch"/>
+    <action class="org.zmlx.hg4idea.action.HgMergeWithRevisionFromLog" id="hg4idea.MergeWithRevision"/>
+    <group id="Hg.Mq" class="com.intellij.ide.actions.NonTrivialActionGroup" popup="true"
+           icon="AllIcons.Actions.Edit">
+      <action class="org.zmlx.hg4idea.action.mq.HgQImportFromLogAction" id="hg4idea.QImport"
+              icon="AllIcons.Duplicates.SendToTheRight"/>
+      <action class="org.zmlx.hg4idea.action.mq.HgQGotoFromLogAction" id="hg4idea.QGoto"
+              icon="AllIcons.Diff.ApplyNotConflicts"/>
+      <action class="org.zmlx.hg4idea.action.mq.HgQRenameFromLogAction" id="hg4idea.QRename"/>
+      <action class="org.zmlx.hg4idea.action.mq.HgQFinishFromLogAction" id="hg4idea.QFinish"
+              icon="AllIcons.Duplicates.SendToTheLeft"/>
+    </group>
+
+    <group id="Hg.MQ.Unapplied">
+      <action class="com.intellij.openapi.actionSystem.EmptyAction" id="hg4idea.QRefresh"
+              icon="AllIcons.Actions.Refresh" use-shortcut-of="Refresh"/>
+      <action class="org.zmlx.hg4idea.action.mq.HgQGotoActionFromMqPatches" id="hg4idea.QGotoFromPatches"
+              icon="AllIcons.Diff.ApplyNotConflicts">
+        <keyboard-shortcut first-keystroke="alt shift G" keymap="$default"/>
+      </action>
+      <action class="org.zmlx.hg4idea.action.mq.HgQPushActionFromPatches" id="hg4idea.QPushAction"
+              icon="AllIcons.Actions.MoveTo2">
+        <keyboard-shortcut first-keystroke="alt shift P" keymap="$default"/>
+      </action>
+      <action class="org.zmlx.hg4idea.action.mq.HgQFoldActionFromPatches" id="hg4idea.QFold"
+              icon="AllIcons.Vcs.Merge">
+        <keyboard-shortcut first-keystroke="alt shift D" keymap="$default"/>
+      </action>
+      <action class="com.intellij.openapi.actionSystem.EmptyAction" id="hg4idea.QDelete"
+              icon="AllIcons.General.Remove" use-shortcut-of="$Delete"/>
+    </group>
+
+
+    <group id="Hg.Log.ContextMenu">
+      <reference ref="hg4idea.UpdateToRevision"/>
+      <reference ref="hg4idea.CreateNewBranch"/>
+      <reference ref="hg4idea.CreateNewTag"/>
+      <reference ref="hg4idea.MergeWithRevision"/>
+      <separator/>
+      <reference ref="Hg.Mq"/>
+      <add-to-group group-id="Vcs.Log.ContextMenu"/>
+    </group>
+
+    <group id="Mq.Patches.Toolbar">
+      <reference ref="Hg.MQ.Unapplied"/>
+    </group>
+
+    <group id="Mq.Patches.ContextMenu">
+      <reference ref="Hg.MQ.Unapplied"/>
+      <separator/>
+      <reference ref="ChangesView.ApplyPatch"/>
+    </group>
+
+    <action id="Hg.Commit.And.Push.Executor" class="org.zmlx.hg4idea.action.HgCommitAndPushExecutorAction">
+      <add-to-group group-id="Vcs.Commit.PrimaryCommitActions"/>
+      <keyboard-shortcut first-keystroke="control alt K" keymap="$default"/>
+    </action>
+
+    <group id="Hg.Ignore.File" class="org.zmlx.hg4idea.ignore.actions.HgIgnoreFileActionGroup">
+      <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="ChangesView.AddUnversioned"/>
+      <add-to-group group-id="hg4idea.file.menu" anchor="after" relative-to-action="hg4idea.add"/>
+      <add-to-group group-id="Unversioned.Files.Dialog.Popup" anchor="after" relative-to-action="$Delete"/>
+    </group>
+  </actions>
+
+  <resource-bundle>messages.HgBundle</resource-bundle>
+</idea-plugin>

@@ -1,0 +1,2 @@
+<caret>a = 'some \
+ string'

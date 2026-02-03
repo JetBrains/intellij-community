@@ -1,0 +1,33 @@
+### auto-generated section `build intellij.platform.remote.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "remote-core_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "remote-core",
+  module_name = "intellij.platform.remote.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":remote-core_resources"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/credential-store",
+    "//platform/util-ex",
+    "//platform/util/jdom",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util",
+    "//platform/projectModel-api:projectModel",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlin/reflect",
+    "//libraries/guava",
+  ],
+  runtime_deps = [
+    "@lib//:slf4j-api",
+    "@lib//:slf4j-jdk14",
+  ]
+)
+### auto-generated section `build intellij.platform.remote.core` end

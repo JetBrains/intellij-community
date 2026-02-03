@@ -1,0 +1,76 @@
+### auto-generated section `build intellij.grid.impl` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_impl",
+  opt_in = [
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+    "kotlin.ExperimentalStdlibApi",
+  ]
+)
+
+kt_javac_options(
+  name = "custom-javac-options",
+  x_ep_disable_all_checks = True,
+  warn = "off",
+  add_exports = ["java.desktop/sun.swing=ALL-UNNAMED"],
+  no_proc = True
+)
+
+resourcegroup(
+  name = "impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "impl",
+  module_name = "intellij.grid.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":impl_resources"],
+  javac_opts = ":custom-javac-options",
+  kotlinc_opts = ":custom_impl",
+  deps = [
+    "//libraries/kotlinx/serialization/core",
+    "//grid/core-impl",
+    "//grid/csv:csv-core-impl",
+    "//grid/types",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/statistics",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-core",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//libraries/fastutil",
+    "//platform/diff-api:diff",
+    "//platform/projectModel-api:projectModel",
+    "//platform/structure-view-impl:structureView-impl",
+    "//xml/xml-parser:parser",
+    "//platform/ide-core-impl",
+    "//platform/refactoring",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//xml/xml-psi-api:psi",
+    "//platform/projectModel-impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/core-impl",
+    "//platform/ide-core/plugins",
+    "//platform/execution-impl",
+    "//platform/platform-api:ide",
+    "//platform/util/jdom",
+    "//platform/util/coroutines",
+    "//libraries/microba",
+    "//platform/platform-impl/ui",
+    "//libraries/kotlinx/html",
+    "//platform/execution",
+    "//platform/lang-api:lang",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
+)
+### auto-generated section `build intellij.grid.impl` end

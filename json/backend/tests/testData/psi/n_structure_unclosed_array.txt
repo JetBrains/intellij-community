@@ -1,0 +1,7 @@
+JsonFile: n_structure_unclosed_array.json
+  JsonArray
+    PsiElement([)('[')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1')
+    PsiErrorElement:',' or ']' expected
+      <empty list>

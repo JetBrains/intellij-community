@@ -1,0 +1,15 @@
+// IDEA-360579
+class Hades {
+  void persephone(boolean xyz, int param) {
+    if(xyz) {
+        boolean result = false;
+        if (param >= 10) {
+          result = param != 20;
+        }
+        if (!result) {
+            System.out.println();
+        }
+    }
+  }
+
+}

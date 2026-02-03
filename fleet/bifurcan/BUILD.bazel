@@ -1,0 +1,33 @@
+### auto-generated section `build fleet.bifurcan` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_bifurcan",
+  opt_in = ["kotlin.concurrent.atomics.ExperimentalAtomicApi"],
+  x_consistent_data_class_copy_visibility = True,
+  x_lambdas = "class"
+)
+
+resourcegroup(
+  name = "bifurcan_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "bifurcan",
+  module_name = "fleet.bifurcan",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  resources = [":bifurcan_resources"],
+  kotlinc_opts = ":custom_bifurcan",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-collections-immutable",
+    "//fleet/util/serialization",
+  ]
+)
+### auto-generated section `build fleet.bifurcan` end

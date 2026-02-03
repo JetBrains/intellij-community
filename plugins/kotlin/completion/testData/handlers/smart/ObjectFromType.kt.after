@@ -1,0 +1,15 @@
+package p
+
+class Outer {
+    interface T {
+        object Null : T { }
+    }
+}
+
+fun foo(): Outer.T {
+    return Outer.T.Null<caret>
+}
+
+// ELEMENT: Null
+
+// IGNORE_K2

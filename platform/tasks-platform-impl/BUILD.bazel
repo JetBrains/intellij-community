@@ -1,0 +1,45 @@
+### auto-generated section `build intellij.platform.tasks.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "tasks-impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "tasks-impl",
+  module_name = "intellij.platform.tasks.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":tasks-impl_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/tasks-platform-api:tasks",
+    "//platform/core-api:core",
+    "//platform/projectModel-impl",
+    "//platform/platform-api:ide",
+    "//platform/vcs-api:vcs",
+    "//libraries/gson",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/execution",
+    "//platform/execution-impl",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-api:debugger",
+    "//platform/vcs-impl",
+    "//platform/core-ui",
+    "//platform/util/jdom",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/util/text-matching",
+    "//platform/statistics",
+    "//platform/bookmarks",
+    "//platform/lang-api:lang",
+    "//platform/xdebugger-impl/shared",
+  ]
+)
+### auto-generated section `build intellij.platform.tasks.impl` end

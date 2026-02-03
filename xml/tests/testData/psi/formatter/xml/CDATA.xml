@@ -1,0 +1,6 @@
+<test>
+  <a>
+    <text><![CDATA[Text with
+a new line]]></text>
+  </a>
+</test>

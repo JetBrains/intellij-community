@@ -1,0 +1,6 @@
+class Foo(p : Int)
+
+var a : Foo = Foo(<caret>)
+
+// AUTOCOMPLETE_SETTING: true
+// IGNORE_K2

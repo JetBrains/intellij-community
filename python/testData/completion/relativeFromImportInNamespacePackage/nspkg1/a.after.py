@@ -1,0 +1,1 @@
+from .nspkg2 import foo

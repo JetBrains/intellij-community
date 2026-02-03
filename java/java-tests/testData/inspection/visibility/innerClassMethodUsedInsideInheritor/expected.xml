@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Foo.java</file>
+    <line>3</line>
+    <description>Can be package-private</description>
+  </problem>
+</problems>
+

@@ -1,0 +1,258 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.intellij.plugins.intelliLang.inject.groovy;
+
+import com.intellij.lang.Language;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiCompiledFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
+import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
+import org.intellij.plugins.intelliLang.inject.InjectorUtils;
+import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
+import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
+import org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteralContainer;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringContent;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
+import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+final class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSupport {
+  public static final @NonNls String GROOVY_SUPPORT_ID = "groovy";
+
+  @Override
+  public @NotNull String getId() {
+    return GROOVY_SUPPORT_ID;
+  }
+
+  @Override
+  public Class @NotNull [] getPatternClasses() {
+    return new Class[] {GroovyPatterns.class};
+  }
+
+  @Override
+  public @Nullable BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<? super PsiElement> commentRef) {
+    PsiFile containingFile = host.getContainingFile();
+    boolean compiled = containingFile != null && containingFile.getOriginalFile() instanceof PsiCompiledFile;
+    return compiled ? null : super.findCommentInjection(host, commentRef);
+  }
+
+  @Override
+  public boolean isApplicableTo(PsiLanguageInjectionHost host) {
+    return host instanceof GroovyPsiElement;
+  }
+
+  @Override
+  public boolean useDefaultInjector(PsiLanguageInjectionHost host) {
+    return true;
+  }
+
+  @Override
+  public String getHelpId() {
+    return "reference.settings.language.injection.groovy";
+  }
+
+  @Override
+  public boolean addInjectionInPlace(Language language, @Nullable PsiLanguageInjectionHost psiElement) {
+    if (language == null) return false;
+    if (!isStringLiteral(psiElement)) return false;
+
+
+    return doInject(language.getID(), psiElement, psiElement);
+  }
+
+  @Override
+  public boolean removeInjectionInPlace(final @Nullable PsiLanguageInjectionHost psiElement) {
+    if (!isStringLiteral(psiElement)) return false;
+
+    GrLiteralContainer host = (GrLiteralContainer)psiElement;
+    final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap = new HashMap<>();
+    final ArrayList<PsiElement> annotations = new ArrayList<>();
+    final Project project = host.getProject();
+    final Configuration configuration = Configuration.getProjectInstance(project);
+    collectInjections(host, configuration, this, injectionsMap, annotations);
+
+    if (injectionsMap.isEmpty() && annotations.isEmpty()) return false;
+    final ArrayList<BaseInjection> originalInjections = new ArrayList<>(injectionsMap.keySet());
+    final List<BaseInjection> newInjections = ContainerUtil.mapNotNull(originalInjections,
+                                                                       (NullableFunction<BaseInjection, BaseInjection>)injection -> {
+                                                                         final Pair<PsiMethod, Integer> pair = injectionsMap.get(injection);
+                                                                         final String placeText = JavaLanguageInjectionSupport.getPatternStringForJavaPlace(pair.first, pair.second);
+                                                                         final BaseInjection newInjection = injection.copy();
+                                                                         newInjection.setPlaceEnabled(placeText, false);
+                                                                         return InjectorUtils.canBeRemoved(newInjection) ? null : newInjection;
+                                                                       });
+    configuration.replaceInjectionsWithUndo(project, psiElement.getContainingFile(), newInjections, originalInjections, annotations);
+    return true;
+  }
+
+  private static void collectInjections(@NotNull GrLiteralContainer host,
+                                        @NotNull Configuration configuration,
+                                        @NotNull LanguageInjectionSupport support,
+                                        final @NotNull HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap,
+                                        final @NotNull ArrayList<PsiElement> annotations) {
+    new GrConcatenationAwareInjector.InjectionProcessor(configuration, support, host) {
+      @Override
+      protected boolean processCommentInjectionInner(PsiVariable owner, PsiElement comment, BaseInjection injection) {
+        ContainerUtil.addAll(annotations, comment);
+        return true;
+      }
+
+      @Override
+      protected boolean processAnnotationInjectionInner(PsiModifierListOwner owner, PsiAnnotation[] annos) {
+        ContainerUtil.addAll(annotations, annos);
+        return true;
+      }
+
+      @Override
+      protected boolean processXmlInjections(BaseInjection injection, PsiModifierListOwner owner, PsiMethod method, int paramIndex) {
+        injectionsMap.put(injection, Pair.create(method, paramIndex));
+        return true;
+      }
+    }.processInjections();
+  }
+
+  private static boolean doInject(@NotNull String languageId,
+                                  @NotNull PsiElement psiElement,
+                                  @NotNull PsiLanguageInjectionHost host) {
+    final PsiElement target = getTopLevelInjectionTarget(psiElement);
+    final PsiElement parent = target.getParent();
+    final Project project = psiElement.getProject();
+
+    if (parent instanceof GrReturnStatement) {
+      final GrControlFlowOwner owner = ControlFlowUtils.findControlFlowOwner(parent);
+      if (owner instanceof GrOpenBlock && owner.getParent() instanceof GrMethod) {
+        return JavaLanguageInjectionSupport.doInjectInJavaMethod(project, (PsiMethod)owner.getParent(), -1, host, languageId);
+      }
+    }
+    else if (parent instanceof GrMethod) {
+      return JavaLanguageInjectionSupport.doInjectInJavaMethod(project, (GrMethod)parent, -1, host, languageId);
+    }
+    else if (parent instanceof GrAnnotationNameValuePair) {
+      final PsiReference ref = parent.getReference();
+      if (ref != null) {
+        final PsiElement resolved = ref.resolve();
+        if (resolved instanceof PsiMethod) {
+          return JavaLanguageInjectionSupport.doInjectInJavaMethod(project, (PsiMethod)resolved, -1, host, languageId);
+        }
+      }
+    }
+    else if (parent instanceof GrArgumentList && parent.getParent() instanceof GrMethodCall) {
+      final PsiMethod method = ((GrMethodCall)parent.getParent()).resolveMethod();
+      if (method != null) {
+        final int index = GrInjectionUtil.findParameterIndex(target, ((GrMethodCall)parent.getParent()));
+        if (index >= 0) {
+          return JavaLanguageInjectionSupport.doInjectInJavaMethod(project, method, index, host, languageId);
+        }
+      }
+    }
+    else if (parent instanceof GrAssignmentExpression) {
+      final GrExpression expr = ((GrAssignmentExpression)parent).getLValue();
+      if (expr instanceof GrReferenceExpression) {
+        final PsiElement element = ((GrReferenceExpression)expr).resolve();
+        if (element != null) {
+          return doInject(languageId, element, host);
+        }
+      }
+    }
+    else {
+
+      if (parent instanceof PsiVariable) {
+        Processor<PsiLanguageInjectionHost> fixer = getAnnotationFixer(project, languageId);
+        if (JavaLanguageInjectionSupport.doAddLanguageAnnotation(project, (PsiModifierListOwner)parent, host, languageId, fixer)) return true;
+      }
+      else if (target instanceof PsiVariable && !(target instanceof LightElement)) {
+        Processor<PsiLanguageInjectionHost> fixer = getAnnotationFixer(project, languageId);
+        if (JavaLanguageInjectionSupport.doAddLanguageAnnotation(project, (PsiModifierListOwner)target, host, languageId, fixer)) return true;
+      }
+    }
+    return false;
+  }
+
+  private static Processor<PsiLanguageInjectionHost> getAnnotationFixer(final @NotNull Project project,
+                                                                        final @NotNull String languageId) {
+    return host -> {
+      if (host == null) return false;
+
+      final Configuration.AdvancedConfiguration configuration = Configuration.getProjectInstance(project).getAdvancedConfiguration();
+      boolean allowed = configuration.isSourceModificationAllowed();
+      configuration.setSourceModificationAllowed(true);
+      try {
+        return doInject(languageId, host, host);
+      }
+      finally {
+        configuration.setSourceModificationAllowed(allowed);
+      }
+    };
+  }
+
+  @Contract("null -> false")
+  private static boolean isStringLiteral(@Nullable PsiLanguageInjectionHost element) {
+    if (element instanceof GrStringContent) {
+      return true;
+    }
+    else if (element instanceof GrLiteral) {
+      final IElementType type = GrLiteralImpl.getLiteralType((GrLiteral)element);
+      return TokenSets.STRING_LITERALS.contains(type);
+    }
+    return false;
+  }
+
+  public static @NotNull PsiElement getTopLevelInjectionTarget(final @NotNull PsiElement host) {
+    PsiElement target = host;
+    PsiElement parent = target.getParent();
+    for (; parent != null; target = parent, parent = target.getParent()) {
+      if (parent instanceof GrBinaryExpression) continue;
+      if (parent instanceof GrString) continue;
+      if (parent instanceof GrParenthesizedExpression) continue;
+      if (parent instanceof GrConditionalExpression && ((GrConditionalExpression)parent).getCondition() != target) continue;
+      if (parent instanceof GrAnnotationArrayInitializer) continue;
+      if (parent instanceof GrListOrMap) {
+        parent = parent.getParent(); continue;
+      }
+      break;
+    }
+    return target;
+  }
+}

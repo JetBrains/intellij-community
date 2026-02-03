@@ -1,0 +1,23 @@
+package pkg;
+
+public class NestedTypeAnnotationsParameters {
+   public static void doSomething(@A Z.Y.X.W w1, Z.@B Y.X.W w2, Z.Y.@C X.W w3, Z.Y.X.@D W w4, @A Z.@B Y.@C X.@D W w5, @L Z.Y.X.W w6, P.@A Q.R r1, P.Q.@B R r2, S.T.@C U u1, T.@A Y.U.I.O o1) {
+   }// 17
+
+   public static void main(String[] args) {
+   }// 21
+}
+
+class 'pkg/NestedTypeAnnotationsParameters' {
+   method 'doSomething (Lpkg/Z$Y$X$W;Lpkg/Z$Y$X$W;Lpkg/Z$Y$X$W;Lpkg/Z$Y$X$W;Lpkg/Z$Y$X$W;Lpkg/Z$Y$X$W;Lpkg/P$Q$R;Lpkg/P$Q$R;Lpkg/S$T$U;Lpkg/T$Y$U$I$O;)V' {
+      0      4
+   }
+
+   method 'main ([Ljava/lang/String;)V' {
+      0      7
+   }
+}
+
+Lines mapping:
+17 <-> 5
+21 <-> 8

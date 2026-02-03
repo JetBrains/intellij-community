@@ -1,0 +1,17 @@
+<html>
+<body>
+Reports any calls to a variable arity method where the call has one primitive-type array in
+the variable arity parameter position.
+Such a primitive-array argument may be confusing, as it will be wrapped in a single-element array argument, rather than each
+element being a separate argument, as may be expected.
+<p><b>Example:</b></p>
+<pre><code>
+  String.format("%s", new int[]{1, 2, 3});
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  String.format("%s", (Object) new int[]{1, 2, 3});
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

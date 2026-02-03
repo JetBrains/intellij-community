@@ -1,0 +1,52 @@
+### auto-generated section `build intellij.kotlin.jvm` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "kotlin-jvm_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-jvm",
+  module_name = "intellij.kotlin.jvm",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-jvm_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/kotlin/jvm/shared",
+    "//platform/util:util-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/lang-api:lang",
+    "//platform/core-ui",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/util/coroutines",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/psi",
+    "//platform/execution",
+    "//java/execution/impl",
+    "//java/java-frontback-psi-api:frontback-psi",
+    "//platform/vcs-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/project-structure",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//plugins/kotlin/base/code-insight",
+    "//java/java-psi-impl:psi-impl",
+    "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "//plugins/kotlin/base/scripting/scripting.shared",
+    "//platform/util/jdom",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "@lib//:kotlinc-kotlin-scripting-common",
+  ]
+)
+### auto-generated section `build intellij.kotlin.jvm` end

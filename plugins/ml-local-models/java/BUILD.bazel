@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.ml.models.local.java` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "java_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "java",
+  module_name = "intellij.ml.models.local.java",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":java_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//java/java-impl:impl",
+    "//platform/analysis-api:analysis",
+    "//platform/backend/workspace",
+    "//plugins/ml-local-models:ml-models-local",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/workspace/storage",
+    "//platform/workspace/jps",
+    "//platform/lang-api:lang",
+  ]
+)
+### auto-generated section `build intellij.ml.models.local.java` end

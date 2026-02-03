@@ -1,0 +1,64 @@
+### auto-generated section `build intellij.python.community.services.shared` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "shared_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+resourcegroup(
+  name = "shared_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "shared",
+  module_name = "intellij.python.community.services.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":shared_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//python/openapi:community",
+    "@lib//:jetbrains-annotations",
+    "//platform/eel-provider",
+    "//python/python-exec-service/execService.python",
+    "//platform/diagnostic",
+    "//platform/util",
+  ]
+)
+
+jvm_library(
+  name = "shared_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  resources = [":shared_test_resources"],
+  associates = [":shared"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//python/openapi:community",
+    "//python/openapi:community_test_lib",
+    "@lib//:jetbrains-annotations",
+    "//platform/eel-provider",
+    "@lib//:junit5",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//libraries/hamcrest",
+    "//python/python-exec-service/execService.python",
+    "//platform/diagnostic",
+    "//platform/util",
+  ]
+)
+### auto-generated section `build intellij.python.community.services.shared` end
+
+### auto-generated section `test intellij.python.community.services.shared` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "shared_test",
+  runtime_deps = [":shared_test_lib"]
+)
+### auto-generated section `test intellij.python.community.services.shared` end

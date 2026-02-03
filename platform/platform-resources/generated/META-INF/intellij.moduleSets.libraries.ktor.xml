@@ -1,0 +1,13 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->
+<!-- Source: see moduleSet("libraries.ktor") function in UltimateModuleSets.kt -->
+<!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
+<idea-plugin>
+  <content namespace="jetbrains">
+    <module name="intellij.libraries.ktor.io" loading="embedded"/>
+    <module name="intellij.libraries.ktor.utils" loading="embedded"/>
+    <module name="intellij.libraries.ktor.network.tls" loading="embedded"/>
+    <module name="intellij.libraries.ktor.client" loading="embedded"/>
+    <module name="intellij.libraries.ktor.client.cio" loading="embedded"/>
+  </content>
+</idea-plugin>

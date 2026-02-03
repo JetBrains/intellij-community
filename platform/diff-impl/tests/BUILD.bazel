@@ -1,0 +1,62 @@
+### auto-generated section `build intellij.platform.diff.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "tests_test_resources",
+  srcs = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
+jvm_library(
+  name = "tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/core-api:core",
+    "//platform/diff-api:diff",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/core-impl",
+    "//platform/core-ui",
+  ]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  module_name = "intellij.platform.diff.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":tests_test_resources"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/diff-api:diff",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/util/diff",
+    "//platform/diff-impl",
+    "//libraries/mockito",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/core-impl",
+    "@lib//:kotlin-test",
+    "//platform/core-ui",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+  ],
+  runtime_deps = [":tests"]
+)
+### auto-generated section `build intellij.platform.diff.tests` end
+
+### auto-generated section `test intellij.platform.diff.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `test intellij.platform.diff.tests` end

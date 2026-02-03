@@ -1,0 +1,8 @@
+# Normalize EOF
+* autocrlf=false
+* eol=lf
+# Set linguist-language to support comments syntax highlight
+**/stubtest_allowlist*.txt linguist-language=ini
+**/stubtest_allowlists/*.txt linguist-language=ini
+pyrightconfig*.json linguist-language=jsonc
+.vscode/*.json linguist-language=jsonc

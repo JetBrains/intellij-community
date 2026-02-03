@@ -1,0 +1,6 @@
+- name: <file>
+  modules:
+  - name: intellij.libraries.rd.text
+    libraries:
+      rd-text:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2026/rd-text-2026.jar

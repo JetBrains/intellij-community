@@ -1,0 +1,17 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.lvcs.impl"/>
+  </dependencies>
+
+  <actions>
+    <group id="Git.Stage.Tree.Menu.LocalHistory">
+      <reference ref="LocalHistory"/>
+      <add-to-group group-id="Git.Stage.Tree.Menu"/>
+    </group>
+
+    <group id="Vcs.ToolbarWidget.CreateRepository.LocalHistory">
+      <reference ref="LocalHistory.ShowProjectHistory"/>
+      <add-to-group group-id="Vcs.ToolbarWidget.CreateRepository"/>
+    </group>
+  </actions>
+</idea-plugin>

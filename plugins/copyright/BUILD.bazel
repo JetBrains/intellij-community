@@ -1,0 +1,90 @@
+### auto-generated section `build intellij.copyright` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "copyright_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "copyright",
+  module_name = "intellij.copyright",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":copyright_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//libraries/velocity",
+    "//xml/impl",
+    "//platform/ide-core-impl",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/external-system-api:externalSystem",
+    "//platform/core-ui",
+    "//xml/xml-psi-api:psi",
+    "//platform/util/jdom",
+    "//platform/core-impl",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
+)
+
+jvm_library(
+  name = "copyright_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":copyright"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//libraries/velocity",
+    "//xml/impl",
+    "//platform/ide-core-impl",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/testFramework/extensions:testExtensions",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/configuration-store-impl:configurationStore-impl",
+    "//platform/external-system-api:externalSystem",
+    "@lib//:assert_j",
+    "//platform/core-ui",
+    "@lib//:junit5",
+    "//xml/xml-psi-api:psi",
+    "//platform/util/jdom",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/testFramework/junit5.jimfs",
+    "//platform/testFramework/junit5.jimfs:junit5.jimfs_test_lib",
+    "//platform/core-impl",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
+)
+### auto-generated section `build intellij.copyright` end
+
+### auto-generated section `test intellij.copyright` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "copyright_test",
+  runtime_deps = [":copyright_test_lib"]
+)
+### auto-generated section `test intellij.copyright` end

@@ -1,0 +1,48 @@
+### auto-generated section `build intellij.kotlin.compilerPlugins.parcelize.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "kotlin-compilerPlugins-parcelize-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "kotlin-compilerPlugins-parcelize-tests_test_lib",
+  module_name = "intellij.kotlin.compilerPlugins.parcelize.tests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fir",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-parcelize-compiler-plugin",
+    "//platform/core-api:core",
+    "//plugins/kotlin/plugin/k2",
+    "//plugins/kotlin/code-insight/inspections-k2/tests:tests_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/compiler-plugins/parcelize/k2:kotlin-compilerPlugins-parcelize",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//java/testFramework",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+    "@lib//:kotlinc-analysis-api-impl-base",
+    "//plugins/kotlin/compiler-plugins/parcelize/tests:tests_test_lib",
+  ],
+  runtime_deps = [":kotlin-compilerPlugins-parcelize-tests"]
+)
+### auto-generated section `build intellij.kotlin.compilerPlugins.parcelize.tests` end
+
+### auto-generated section `test intellij.kotlin.compilerPlugins.parcelize.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "kotlin-compilerPlugins-parcelize-tests_test",
+  runtime_deps = [":kotlin-compilerPlugins-parcelize-tests_test_lib"]
+)
+### auto-generated section `test intellij.kotlin.compilerPlugins.parcelize.tests` end

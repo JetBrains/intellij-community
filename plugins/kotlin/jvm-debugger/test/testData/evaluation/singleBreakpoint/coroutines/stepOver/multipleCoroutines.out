@@ -1,0 +1,12 @@
+LineBreakpoint created at multipleCoroutines.kt:12
+Run Java
+Connected to the target VM
+multipleCoroutines.kt:12
+multipleCoroutines.kt:14
+multipleCoroutines.kt:15
+multipleCoroutines.kt:18
+multipleCoroutines.kt:19
+Compile bytecode for i
+Disconnected from the target VM
+
+Process finished with exit code 0

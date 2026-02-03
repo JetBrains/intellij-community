@@ -1,0 +1,7 @@
+- name: dist.all/lib/intellij.platform.jewel.markdown.extensions.autolink.jar
+  modules:
+  - name: intellij.platform.jewel.markdown.extensions.autolink
+    libraries:
+      commonmark.ext.autolink:
+      - name: $MAVEN_REPOSITORY$/org/commonmark/commonmark-ext-autolink/0/commonmark-ext-autolink-0.jar
+      - name: $MAVEN_REPOSITORY$/org/nibor/autolink/autolink/0/autolink-0.jar

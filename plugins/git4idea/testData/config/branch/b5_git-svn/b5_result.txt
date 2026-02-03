@@ -1,0 +1,12 @@
+BRANCH
+trunk
+. .
+refs/remotes/git-svn
+refs/remotes/git-svn
+merge
+BRANCH
+trunk2
+. .
+refs/remotes/git-svn
+refs/remotes/git-svn
+merge

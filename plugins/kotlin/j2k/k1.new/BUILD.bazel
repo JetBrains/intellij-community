@@ -1,0 +1,45 @@
+### auto-generated section `build kotlin.j2k.k1.new` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_k1.new",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ],
+  x_context_parameters = True
+)
+
+jvm_library(
+  name = "k1.new",
+  module_name = "kotlin.j2k.k1.new",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_k1.new",
+  deps = [
+    "//java/java-indexing-api:indexing",
+    "//platform/core-api:core",
+    "//platform/lang-api:lang",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-analysis-api",
+    "//platform/editor-ui-api:editor-ui",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/project-structure",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/base/fe10/code-insight",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/j2k/shared",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/idea",
+  ]
+)
+### auto-generated section `build kotlin.j2k.k1.new` end

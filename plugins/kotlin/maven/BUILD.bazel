@@ -1,0 +1,59 @@
+### auto-generated section `build intellij.kotlin.maven` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "maven_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "maven",
+  module_name = "intellij.kotlin.maven",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":maven_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//libraries/gson",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/workspace/storage",
+    "//xml/xml-psi-api:psi",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//platform/observable",
+    "//plugins/kotlin/base/util",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/statistics",
+    "//xml/xml-analysis-api:analysis",
+    "//plugins/kotlin/code-insight/descriptions",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/formatter",
+    "//plugins/kotlin/migration",
+    "//plugins/kotlin/inspections",
+    "//jps/model-api:model",
+    "//platform/projectModel-impl",
+    "//java/java-impl:impl",
+    "//plugins/maven",
+    "//platform/util/jdom",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/core-api:core",
+    "//platform/workspace/jps",
+    "//platform/backend/observation",
+    "//platform/util/progress",
+    "//platform/vcs-api/vcs-api-core:vcs-core",
+  ]
+)
+### auto-generated section `build intellij.kotlin.maven` end

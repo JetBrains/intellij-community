@@ -1,0 +1,1 @@
+java.util.ArrayList<javax.swing.JFrame> list = new ArrayList<>()

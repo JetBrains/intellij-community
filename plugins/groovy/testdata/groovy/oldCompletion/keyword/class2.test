@@ -1,0 +1,5 @@
+class A extends B <caret> C {}
+-----
+C
+implements
+permits

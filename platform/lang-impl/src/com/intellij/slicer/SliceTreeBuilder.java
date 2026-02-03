@@ -1,0 +1,77 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.slicer;
+
+import com.intellij.ide.util.treeView.AlphaComparator;
+import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Comparator;
+
+public final class SliceTreeBuilder {
+  private final SliceTreeStructure sliceTreeStructure;
+  public final boolean splitByLeafExpressions;
+  public final boolean dataFlowToThis;
+  public volatile boolean analysisInProgress;
+
+  public static final Comparator<NodeDescriptor<?>> SLICE_NODE_COMPARATOR = (o1, o2) -> {
+    if (!(o1 instanceof SliceNode node1) || !(o2 instanceof SliceNode node2)) {
+      return AlphaComparator.getInstance().compare(o1, o2);
+    }
+    SliceUsage usage1 = node1.getValue();
+    SliceUsage usage2 = node2.getValue();
+
+    PsiElement element1 = usage1 == null ? null : usage1.getElement();
+    PsiElement element2 = usage2 == null ? null : usage2.getElement();
+
+    PsiFile file1 = element1 == null ? null : element1.getContainingFile();
+    PsiFile file2 = element2 == null ? null : element2.getContainingFile();
+
+    if (file1 == null) return file2 == null ? 0 : 1;
+    if (file2 == null) return -1;
+
+    if (file1 == file2) {
+      return element1.getTextOffset() - element2.getTextOffset();
+    }
+
+    return Comparing.compare(file1.getName(), file2.getName());
+  };
+
+  SliceTreeBuilder(@NotNull SliceTreeStructure sliceTreeStructure,
+                   boolean dataFlowToThis,
+                   boolean splitByLeafExpressions) {
+    this.sliceTreeStructure = sliceTreeStructure;
+    this.dataFlowToThis = dataFlowToThis;
+    this.splitByLeafExpressions = splitByLeafExpressions;
+  }
+
+  public SliceTreeStructure getTreeStructure() {
+    return sliceTreeStructure;
+  }
+
+  @Contract(pure = true)
+  public @NotNull SliceRootNode getRootSliceNode() {
+    return sliceTreeStructure.getRootElement();
+  }
+
+  void switchToGroupedByLeavesNodes() {
+    SliceLanguageSupportProvider provider = getRootSliceNode().getProvider();
+    if(provider == null){
+      return;
+    }
+    analysisInProgress = true;
+    provider.startAnalyzeLeafValues(sliceTreeStructure, () -> analysisInProgress = false);
+  }
+
+  public void switchToLeafNulls() {
+    SliceLanguageSupportProvider provider = getRootSliceNode().getProvider();
+    if(provider == null){
+      return;
+    }
+    analysisInProgress = true;
+    provider.startAnalyzeNullness(sliceTreeStructure, () -> analysisInProgress = false);
+  }
+}

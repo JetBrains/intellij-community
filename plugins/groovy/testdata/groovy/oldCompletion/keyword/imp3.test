@@ -1,0 +1,3 @@
+import s<caret> a.b
+-----
+static
