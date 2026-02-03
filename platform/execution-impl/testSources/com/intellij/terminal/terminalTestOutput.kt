@@ -157,17 +157,16 @@ private class TerminalOutputBuilder(
     textBuffer.modify {
       val cursorLineInd = terminal.cursorPosition.y - 1
       for (ind in -textBuffer.historyLinesCount .. cursorLineInd) {
-        addLine(textBuffer.getLine(ind))
+        processLine(textBuffer.getLine(ind))
       }
     }
-    lines.add(TerminalOutputLine(currentLine))
-    return TerminalOutput(if (trimLineEnds) lines.map { trimLineEnd(it) } else lines)
+    addCurrentLine()
+    return TerminalOutput(lines)
   }
 
-  private fun addLine(line: TerminalLine) {
+  private fun processLine(line: TerminalLine) {
     if (!previousLineWrapped) {
-      lines.add(TerminalOutputLine(currentLine))
-      currentLine = mutableListOf()
+      addCurrentLine()
     }
     line.forEachEntry { entry ->
       val text = entry.text.clearDWC()
@@ -177,6 +176,29 @@ private class TerminalOutputBuilder(
       }
     }
     previousLineWrapped = line.isWrapped
+  }
+
+  private fun addCurrentLine() {
+    val mergedChunks = mergeConsecutiveChunksWithSameStyle(currentLine)
+    val line = TerminalOutputLine(mergedChunks)
+    lines.add(if (trimLineEnds) trimLineEnd(line) else line)
+    currentLine = mutableListOf()
+  }
+
+  private fun mergeConsecutiveChunksWithSameStyle(chunks: List<TerminalOutputChunk>): List<TerminalOutputChunk> {
+    var prev = chunks.firstOrNull() ?: return emptyList()
+    return buildList(chunks.size) {
+      for (chunk in chunks.asSequence().drop(1)) {
+        if (prev.style != chunk.style) {
+          add(prev)
+          prev = chunk
+        }
+        else {
+          prev = TerminalOutputChunk(prev.text + chunk.text, chunk.style)
+        }
+      }
+      add(prev)
+    }
   }
 
 }

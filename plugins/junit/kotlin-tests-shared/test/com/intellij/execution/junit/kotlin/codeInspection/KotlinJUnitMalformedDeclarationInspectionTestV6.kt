@@ -20,15 +20,28 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestV6 : KotlinJUnitMalf
   fun `test suspending parameterized test method`() {
     myFixture.testHighlighting(
       JvmLanguage.KOTLIN, """
-          import org.junit.jupiter.api.Test
           import org.junit.jupiter.params.ParameterizedTest
           import org.junit.jupiter.params.provider.ValueSource
         
           class JUnit6Test {
             @ParameterizedTest
             @ValueSource(ints = [1])
-            fun testWithIntValues(i: Int) { }
+            suspend fun testWithIntValues(i: Int) { }
           }
+    """.trimIndent())
+  }
+
+  fun `test suspending test method with @TempDir parameter`() {
+    myFixture.testHighlighting(
+      JvmLanguage.KOTLIN, """
+          import org.junit.jupiter.api.Test
+          import org.junit.jupiter.api.io.TempDir
+          import java.io.File
+        
+          class JUnit6Test {
+            @Test
+            suspend fun testFoo(@TempDir tempFolder: File) { }
+          }    
     """.trimIndent())
   }
 

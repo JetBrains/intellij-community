@@ -16,14 +16,18 @@ import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
 
 internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("terminalShell.settings", 5)
+  private val GROUP = EventLogGroup("terminalShell.settings", 6)
 
   private val NON_DEFAULT_OPTIONS = GROUP.registerEvent(
     "non.default.options",
     EventFields.Enum<BooleanOptions>("option_name") { it.settingName },
     EventFields.Enabled
   )
-  private val NON_DEFAULT_SHELL = GROUP.registerEvent("non.default.shell", "User modified the default shell path")
+  private val NON_DEFAULT_SHELL = GROUP.registerEvent(
+    "non.default.shell",
+    EventFields.String("shell", TerminalShellInfoStatistics.KNOWN_SHELLS.toList()),
+    "User modified the default shell path"
+  )
   private val NON_DEFAULT_TAB_NAME = GROUP.registerEvent("non.default.tab.name", "User modified the default terminal tab name")
   private val NON_DEFAULT_ENGINE = GROUP.registerEvent(
     "non.default.engine",
@@ -65,8 +69,14 @@ internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
     val metrics = mutableSetOf<MetricEvent>()
     addNonDefaultBooleanOptions(metrics)
 
-    addIfNotDefault(metrics, NON_DEFAULT_SHELL, TerminalLocalOptions.getInstance().shellPath, null)
     addIfNotDefault(metrics, NON_DEFAULT_TAB_NAME, TerminalOptionsProvider.instance.tabName, TerminalOptionsProvider.State().myTabName)
+
+    addIfNotDefault(
+      metrics,
+      NON_DEFAULT_SHELL,
+      curValue = TerminalLocalOptions.getInstance().shellPath,
+      defaultValue = null,
+    ) { shellCommandLine -> TerminalShellInfoStatistics.getShellNameForStat(shellCommandLine) }
 
     addIfNotDefault(
       metrics,

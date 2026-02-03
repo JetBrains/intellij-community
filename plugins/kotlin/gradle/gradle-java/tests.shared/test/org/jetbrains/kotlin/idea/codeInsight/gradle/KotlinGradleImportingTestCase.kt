@@ -398,7 +398,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase(),
 
         const val LATEST_STABLE_GRADLE_PLUGIN_VERSION = "2.0.0"
 
-        val SUPPORTED_GRADLE_VERSIONS = arrayOf("6.8.3", "7.6")
+        val SUPPORTED_GRADLE_VERSIONS = arrayOf("6.8.3", "7.6")//, "9.0.0", "9.1.0") // To support them in KTIJ-36754
 
         // https://kotlinlang.org/docs/gradle-configure-project.html#targeting-the-jvm
         val GRADLE_TO_KGP_VERSION = mapOf(

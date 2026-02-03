@@ -2,6 +2,8 @@ package org.jetbrains.jewel.ui.component
 
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.getValue
@@ -15,6 +17,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.MouseButton
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertHasNoClickAction
@@ -37,6 +40,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextClearance
@@ -44,6 +48,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.unit.dp
 import junit.framework.TestCase.assertEquals
+import kotlin.test.assertTrue
 import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.standalone.styling.default
@@ -1023,8 +1028,38 @@ class ListComboBoxUiTest {
         comboBox.assertIsDisplayed().performClick()
         popupMenu.assertIsDisplayed()
 
-        // The popup should have the combobox width (200dp) as minimum, not the smaller popupModifier width (100dp)
+        // The popup should be equal to the 'maxPopupHeight' size
         popupMenu.assertHeightIsEqualTo(500.dp)
+    }
+
+    @Test
+    fun `popup height must be at least as big as the combo box height`() {
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = emptyList(),
+                    selectedIndex = -1,
+                    onSelectedItemChange = {},
+                    modifier = Modifier.testTag("ComboBox").heightIn(48.dp),
+                    style =
+                        ComboBoxStyle(
+                            colors = JewelTheme.comboBoxStyle.colors,
+                            metrics =
+                                ComboBoxMetrics.default(
+                                    popupContentPadding = PaddingValues(vertical = 8.dp)
+                                ), // Small size on theme
+                            icons = JewelTheme.comboBoxStyle.icons,
+                        ),
+                    itemKeys = { index: Int, _: String -> index },
+                )
+            }
+        }
+
+        comboBox.assertIsDisplayed().performClick()
+        popupMenu.assertIsDisplayed()
+
+        // 64 = 48 (Base from the combo box) + 16 from vertical padding from style
+        popupMenu.assertHeightIsEqualTo(64.dp)
     }
 
     @Test
@@ -1102,6 +1137,44 @@ class ListComboBoxUiTest {
         popupMenu.assertDoesNotExist()
         assertEquals(2, selectedIndex)
         composeRule.onNode(hasTestTag("ComboBox")).assertTextEquals("Item 3", includeEditableText = false)
+    }
+
+    @Test
+    fun `popup item click must trigger even for faster taps`() {
+        var selectedItemChangeTriggered = false
+
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = comboBoxItems,
+                    selectedIndex = 0,
+                    onSelectedItemChange = { selectedItemChangeTriggered = true },
+                    modifier = Modifier.testTag("ComboBox"),
+                    itemKeys = { index: Int, _: String -> index },
+                )
+            }
+        }
+
+        comboBox.assertIsDisplayed().performClick()
+        popupMenu.assertIsDisplayed()
+
+        composeRule
+            .onNode(hasAnyAncestor(hasTestTag("Jewel.ComboBox.Popup")) and hasText("Item 2"))
+            .assertExists()
+            .assertIsDisplayed()
+            .performMouseInput {
+                // Move cursor to be on top of the item
+                updatePointerTo(center)
+                advanceEventTime()
+
+                // Press and release in a short period (no advance), like a tap event from macos trackpad
+                press(MouseButton.Primary)
+                release(MouseButton.Primary)
+            }
+
+        composeRule.waitForIdle()
+
+        assertTrue(selectedItemChangeTriggered, "Item click should be detected for faster taps")
     }
 
     private fun editableListComboBox(): SemanticsNodeInteraction {

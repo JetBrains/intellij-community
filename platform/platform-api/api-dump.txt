@@ -1292,8 +1292,6 @@ com.intellij.util.net.ProxySettings
 - s:getInstance():com.intellij.util.net.ProxySettings
 - a:getProxyConfiguration():com.intellij.util.net.ProxyConfiguration
 com.intellij.util.net.ProxySettingsOverrideProvider
-- sf:Companion:com.intellij.util.net.ProxySettingsOverrideProvider$Companion
-- s:areProxySettingsOverridden():Z
 - a:getProxyConfigurationProvider():com.intellij.util.net.ProxyConfigurationProvider
 - a:getShouldUserSettingsBeOverriden():Z
 com.intellij.util.ui.ComponentWithEmptyText

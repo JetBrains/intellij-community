@@ -109,7 +109,8 @@ public class CreatePatchFromDirectoryAction implements AnActionExtensionProvider
       RepositoryLocation changedRepositoryPath = myRevision.getChangedRepositoryPath();
       if (changedRepositoryPath == null) return;
 
-      VcsVirtualFile vf = new VcsVirtualFile(changedRepositoryPath.toPresentableString(), myRevision);
+      FilePath path = VcsUtil.getFilePath(changedRepositoryPath.toPresentableString(), false);
+      VcsVirtualFile vf = new VcsVirtualFile(path, myRevision);
 
       try {
         myList = AbstractVcsHelperImpl.getRemoteList(provider, myRevision.getRevisionNumber(), vf);

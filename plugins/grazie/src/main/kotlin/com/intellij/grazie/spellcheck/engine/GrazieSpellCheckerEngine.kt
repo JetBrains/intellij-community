@@ -5,7 +5,6 @@ package com.intellij.grazie.spellcheck.engine
 
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.LanguageISO
-import ai.grazie.nlp.langs.alphabet.Alphabet
 import ai.grazie.nlp.utils.normalization.StripAccentsNormalizer
 import ai.grazie.spell.GrazieSpeller
 import ai.grazie.spell.GrazieSplittingSpeller
@@ -24,7 +23,6 @@ import com.intellij.grazie.spellcheck.ranker.DiacriticSuggestionRanker
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -56,7 +54,7 @@ class GrazieSpellCheckerEngine(
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): GrazieSpellCheckerEngine = project.service<SpellCheckerEngine>() as GrazieSpellCheckerEngine
+    fun getInstance(project: Project): GrazieSpellCheckerEngine = SpellCheckerEngine.getInstance(project) as GrazieSpellCheckerEngine
 
     val enDictionary: HunspellDictionary by lazy {
       val dic = Resources.text("/dictionary/en.dic")
@@ -117,7 +115,7 @@ class GrazieSpellCheckerEngine(
       ranker = DiacriticSuggestionRanker(LanguageModel.getRanker(Language.ENGLISH, wordList)),
       filter = RadiusSuggestionFilter(0.05),
       normalizer = StripAccentsNormalizer(),
-      isAlien = { !Alphabet.ENGLISH.matchAny(it) && adapter.isAlien(it) }
+      isAlien = { adapter.isAlien(it) }
     ))
   }
 

@@ -37,10 +37,7 @@
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
-    <orderEntry type="library" exported="" name="com.jetbrains.fus.reporting.model" level="project" />
-    <orderEntry type="library" name="com.jetbrains.fus.reporting.serialization.kotlin" level="project" />
-    <orderEntry type="library" name="com.jetbrains.fus.reporting.connection.client" level="project" />
-    <orderEntry type="library" name="com.jetbrains.fus.reporting.configuration" level="project" />
-    <orderEntry type="library" exported="" name="com.jetbrains.fus.reporting.ap.validation" level="project" />
+    <orderEntry type="library" exported="" name="com.jetbrains.fus.reporting.api" level="project" />
+    <orderEntry type="library" exported="" name="com.jetbrains.fus.reporting.ap.validation.all" level="project" />
   </component>
 </module>

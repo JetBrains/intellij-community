@@ -21,7 +21,9 @@ open class JsonParserDefinition : ParserDefinition {
     return JsonLexer()
   }
 
-  override fun createParser(project: Project?): PsiParser {throw UnsupportedOperationException("Should not be called directly")}
+  override fun createParser(project: Project?): PsiParser {throw UnsupportedOperationException("Should not be called directly. " +
+                                                                                               "If you didn't call directly, check your IFileElementType implementation — it should implement " +
+                                                                                               "com.intellij.platform.syntax.psi.SyntaxFileElementType.SyntaxFileElementType")}
 
   override fun getFileNodeType(): IFileElementType {
     return JSON_FILE

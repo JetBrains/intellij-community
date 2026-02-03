@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.spawnProcess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -202,7 +203,7 @@ object ExecUtil {
     val args = builder.command()
     val exe = args.first().let { exe -> runCatching { Path.of(exe).asEelPath().toString() }.getOrNull() ?: exe }
     val rest = args.subList(1, args.size)
-    val env = (if (isPassParentEnvironment) runBlockingMaybeCancellable { fetchLoginShellEnvVariables() } else emptyMap()) + builder.environment()
+    val env = (if (isPassParentEnvironment) runBlockingMaybeCancellable { environmentVariables().eelIt().await() } else emptyMap()) + builder.environment()
     val workingDir = builder.directory()?.toPath()?.asEelPath()
 
     val options = spawnProcess(exe)

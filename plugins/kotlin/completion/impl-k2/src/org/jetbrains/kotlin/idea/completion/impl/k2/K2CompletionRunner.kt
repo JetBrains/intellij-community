@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.KtCompletionExtensi
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2ChainCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.replaceTypeParametersWithStarProjections
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassifierLookupObject
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.getAnnotationLiteralExpectedType
@@ -86,6 +87,12 @@ internal interface K2CompletionRunner {
 
             completionResultSet.runRemainingContributors(parameters.delegate) { completionResult ->
                 val lookupElement = completionResult.lookupElement
+                if (lookupElement.`object` !is KotlinLookupObject) {
+                    // Pass on results from other contributors further down that are not chain completion related
+                    completionResultSet.passResult(completionResult)
+                    return@runRemainingContributors
+                }
+
                 val classifierLookupObject = lookupElement.`object` as? ClassifierLookupObject
                 val nameToImport = when (val importStrategy = classifierLookupObject?.importingStrategy) {
                     is ImportStrategy.AddImport -> importStrategy.nameToImport
@@ -94,7 +101,9 @@ internal interface K2CompletionRunner {
                 }
 
                 if (nameToImport == null) {
-                    completionResultSet.passResult(completionResult)
+                    // We need to filter out (i.e. not pass them on) results from the [KotlinChainCompletionContributor]
+                    // that are only supposed to be added if they can add an import.
+                    // Otherwise, these results would cause unexpected results like KTIJ-35113
                     return@runRemainingContributors
                 }
 
@@ -107,7 +116,6 @@ internal interface K2CompletionRunner {
                 if (receiverExpression == null
                     || nameExpression == null
                 ) {
-                    completionResultSet.passResult(completionResult)
                     return@runRemainingContributors
                 }
 

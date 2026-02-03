@@ -135,7 +135,9 @@ public class JulLogger extends Logger {
   private static Handler configureConsoleHandler(boolean showDateInConsole, IdeaLogRecordFormatter layout, @Nullable Filter filter) {
     OptimizedConsoleHandler consoleHandler = new OptimizedConsoleHandler();
     consoleHandler.setFormatter(new IdeaLogRecordFormatter(showDateInConsole, layout));
-    consoleHandler.setLevel(Level.WARNING);
+    boolean useSevereLogLevel = Boolean.parseBoolean(System.getProperty("intellij.console.use.severe.log.level", "false"));
+    Level level = useSevereLogLevel ? Level.SEVERE : Level.WARNING;
+    consoleHandler.setLevel(level);
     if (filter != null) {
       consoleHandler.setFilter(filter);
     }

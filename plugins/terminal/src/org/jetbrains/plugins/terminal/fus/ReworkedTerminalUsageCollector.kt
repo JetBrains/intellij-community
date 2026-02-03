@@ -25,7 +25,7 @@ private const val GROUP_ID = "terminal"
 object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 10)
+  private val GROUP = EventLogGroup(GROUP_ID, 11)
 
   private val OS_VERSION_FIELD = EventFields.StringValidatedByRegexpReference("os-version", "version")
   private val SHELL_STR_FIELD = EventFields.String("shell", KNOWN_SHELLS.toList())
@@ -180,10 +180,10 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   }
 
   @JvmStatic
-  fun logLocalShellStarted(project: Project, shellCommand: List<String>) {
+  fun logLocalShellStarted(project: Project, shellCommand: String) {
     localShellStartedEvent.log(project,
                                osVersion,
-                               getShellNameForStat(shellCommand.firstOrNull()))
+                               getShellNameForStat(shellCommand))
   }
 
   @JvmStatic

@@ -203,7 +203,7 @@ public fun ComboBoxMetrics.Companion.default(
     minSize: DpSize = DpSize(77.dp, 28.dp),
     cornerSize: CornerSize = CornerSize(4.dp),
     contentPadding: PaddingValues = PaddingValues(9.dp, 1.dp, 6.dp, 1.dp),
-    popupContentPadding: PaddingValues = PaddingValues(vertical = 6.dp),
+    popupContentPadding: PaddingValues = PaddingValues(vertical = 8.dp),
     borderWidth: Dp = 1.dp,
     maxPopupHeight: Dp = 200.dp,
 ): ComboBoxMetrics =
@@ -222,7 +222,7 @@ public fun ComboBoxMetrics.Companion.undecorated(
     minSize: DpSize = DpSize(77.dp, 28.dp),
     cornerSize: CornerSize = CornerSize(4.dp),
     contentPadding: PaddingValues = PaddingValues(9.dp, 1.dp, 6.dp, 1.dp),
-    popupContentPadding: PaddingValues = PaddingValues(vertical = 6.dp),
+    popupContentPadding: PaddingValues = PaddingValues(vertical = 8.dp),
     borderWidth: Dp = 0.dp,
     maxPopupHeight: Dp = 200.dp,
 ): ComboBoxMetrics =

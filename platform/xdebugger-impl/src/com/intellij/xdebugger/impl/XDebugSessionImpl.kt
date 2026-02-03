@@ -780,7 +780,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   override fun updateExecutionPosition() {
     // Actually, it is just a fallback. All information should go via front-end listeners.
     if (myDebuggerManager.currentSession == this) {
-      updateExecutionPosition(myProject, currentSourceKind)
+      updateExecutionPosition(this.asProxy())
     }
   }
 

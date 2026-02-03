@@ -55,6 +55,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/ChainCompletionDontDuplicate/");
     }
 
+    @TestMetadata("ChainCompletionDontShowSameProperty")
+    public void testChainCompletionDontShowSameProperty() throws Exception {
+        runTest("../testData/basic/multifile/ChainCompletionDontShowSameProperty/");
+    }
+
     @TestMetadata("ClassInExcludedPackage")
     public void testClassInExcludedPackage() throws Exception {
         runTest("../testData/basic/multifile/ClassInExcludedPackage/");

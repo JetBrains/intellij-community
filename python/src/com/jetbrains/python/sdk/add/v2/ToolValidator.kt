@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
-import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.jetbrains.python.PyBundle
@@ -38,7 +38,7 @@ class ToolValidator<P : PathHolder>(
       }
       validationJob.cancelAndJoin()
       validationJob = scope.async {
-        withContext(Dispatchers.UI) { isDirtyValue.set(true) }
+        withContext(Dispatchers.EDT) { isDirtyValue.set(true) }
 
         val exec = withContext(Dispatchers.IO) {
           val path = fileSystem.parsePath(input).getOr { error ->
@@ -53,7 +53,7 @@ class ToolValidator<P : PathHolder>(
           ValidatedPath.Executable(path, toolValidationResult)
         }
 
-        withContext(Dispatchers.UI) { backProperty.set(exec) }
+        withContext(Dispatchers.EDT) { backProperty.set(exec) }
       }
       validationJob.invokeOnCompletion {
         isDirtyValue.set(false)
@@ -69,9 +69,9 @@ class ToolValidator<P : PathHolder>(
 
   private fun autodetectExecutableJob(): Deferred<Unit> {
     return scope.async(TraceContext(PyBundle.message("tracecontext.detecting.executable", toolVersionPrefix), scope)) {
-      withContext(Dispatchers.UI) { isDirtyValue.set(true) }
+      withContext(Dispatchers.EDT) { isDirtyValue.set(true) }
       val validatedPath = fileSystem.autodetectWithVersionProbe(toolVersionPrefix, defaultPathSupplier)
-      withContext(Dispatchers.UI) { backProperty.set(validatedPath) }
+      withContext(Dispatchers.EDT) { backProperty.set(validatedPath) }
     }.apply {
       invokeOnCompletion {
         isDirtyValue.set(false)

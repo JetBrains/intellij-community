@@ -42,7 +42,9 @@ public class RemoveUsageAction extends AnAction {
     process(getUsages(e), e.getData(UsageView.USAGE_VIEW_KEY));
   }
 
-  private static void process(Usage @NotNull [] usages, @NotNull UsageView usageView) {
+  // Is used as part of a test routine
+  @ApiStatus.Internal
+  public static void process(Usage @NotNull [] usages, @NotNull UsageView usageView) {
     ThreadingAssertions.assertEventDispatchThread();
     if (usages.length == 0) return;
     Arrays.sort(usages, UsageViewImpl.USAGE_COMPARATOR_BY_FILE_AND_OFFSET);

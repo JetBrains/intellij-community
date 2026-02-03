@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2.hatch
 
-import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.python.community.execService.BinOnEel
@@ -62,7 +62,7 @@ class HatchViewModel<P : PathHolder>(
 
       val binaryToExec = hatchExecutable.pathHolder?.let { fileSystem.getBinaryToExec(it) }
                          ?: return@afterChange
-      scope.launch(Dispatchers.UI) {
+      scope.launch(Dispatchers.EDT) {
         availableEnvironments.value = detectHatchEnvironments(binaryToExec)
       }
     }
@@ -72,7 +72,7 @@ class HatchViewModel<P : PathHolder>(
     val projectPath = projectPathFlows.projectPathWithDefault.first()
     val hatchExecutablePath = (hatchExecutable as? BinOnEel)?.path
                               ?: return@withContext Result.failure(HatchUIError.HatchExecutablePathIsNotValid(hatchExecutable.toString()))
-    val hatchWorkingDirectory = if (projectPath.isDirectory()) projectPath else projectPath.parent
+    val hatchWorkingDirectory = generateSequence(projectPath) { it.parent }.firstOrNull { it.isDirectory() }
     val hatchService = hatchWorkingDirectory.getHatchService(hatchExecutablePath).getOr { return@withContext it }
 
     val hatchEnvironments = hatchService.findVirtualEnvironments().getOr { return@withContext it }

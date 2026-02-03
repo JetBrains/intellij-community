@@ -272,15 +272,18 @@ class PyInvertIfConditionIntention : PsiUpdateModCommandAction<PsiElement>(PsiEl
   private val PyStatementList.isTerminated: Boolean
     get() {
       val controlFlow = ControlFlowCache.getControlFlow(parentsOfType<ScopeOwner>().first())
-      val currentElement = this
-      val currentInstruction = controlFlow.instructions.first { it.element == currentElement }
+      val currentInstruction = controlFlow.instructions.first { it.element == this }
       var result = true
       ControlFlowUtil.iterate(currentInstruction.num(), controlFlow.instructions, { instruction ->
         when {
+          instruction.allSucc().isEmpty() -> {
+            result = false
+            ControlFlowUtil.Operation.BREAK
+          }
           instruction == currentInstruction -> ControlFlowUtil.Operation.NEXT
           instruction is ReadWriteInstruction -> ControlFlowUtil.Operation.NEXT
           instruction.element == null -> ControlFlowUtil.Operation.NEXT
-          !instruction.element!!.parents(false).contains(currentElement) -> {
+          !instruction.element!!.parents(false).contains(this) -> {
             result = false
             ControlFlowUtil.Operation.BREAK
           }

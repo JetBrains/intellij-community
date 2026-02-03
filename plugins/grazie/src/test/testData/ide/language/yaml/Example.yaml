@@ -15,6 +15,9 @@ items:
     quantity:  4
     # A comment (with parentheses
     # on multiple lines)
+
+  - part_no:   C1111
+    key: 本地daemon插件jar
     
   - part_no:   E1628
     'it are error here':   It <GRAMMAR_ERROR descr="IT_VBZ">are</GRAMMAR_ERROR> error here

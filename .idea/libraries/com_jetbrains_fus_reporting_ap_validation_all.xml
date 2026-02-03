@@ -1,0 +1,20 @@
+<component name="libraryTable">
+  <library name="com.jetbrains.fus.reporting.ap.validation.all" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.fus.reporting:ap-validation-all:1.0.205">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/1.0.205/ap-validation-all-1.0.205.jar">
+          <sha256sum>9921601d14966cf0f9231fd2b92ba9a5b65b02c92a3a9ebc2049c8b2710a2eea</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/1.0.205/ap-validation-all-1.0.205.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/1.0.205/ap-validation-all-1.0.205-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/1.0.205/ap-validation-all-1.0.205-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

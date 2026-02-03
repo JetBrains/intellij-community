@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoManagerProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -96,6 +97,10 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
     boolean isActionInProgress,
     boolean isActionPerformed
   ) {
+    for (UndoManagerProvider provider : UndoManagerProvider.EP_NAME.getExtensionList()) {
+      UndoManager providedManager = provider.getUndoManager(dataContext);
+      if (providedManager != null) return providedManager;
+    }
     Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     if (component instanceof JTextComponent && !ClientProperty.isTrue(component, IGNORE_SWING_UNDO_MANAGER)) {
       return SwingUndoManagerWrapper.fromContext(dataContext);

@@ -119,7 +119,9 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
 
   internal suspend fun subscribeToBackendConfigurationTypesUpdates() {
     RunDashboardServiceRpc.getInstance().getConfigurationTypes(project.projectId()).collect { updateFromBackend ->
-      syncTypes(updateFromBackend)
+      // Just update types set on the frontend,
+      // do not filter frontend DTOs since they are synced via subscribeToBackendServicesUpdates().
+      configurationTypes.value = types
     }
   }
 
@@ -170,17 +172,15 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
     return configurationTypes.value.toSet()
   }
 
-  private fun syncTypes(types: Set<String>) {
-    configurationTypes.value = types
+  override fun setTypes(types: Set<String>) {
+    LOG.debug("setTypes(${types.size} types) invoked on frontend;")
 
+    configurationTypes.value = types
+    // Filter frontend DTOs immediately to instantly remove nodes of just removed types.
     frontendDtos.update { currentDtos ->
       currentDtos.filter { dto -> dto.typeId in types }
     }
-  }
 
-  override fun setTypes(types: Set<String>) {
-    LOG.debug("setTypes(${types.size} types) invoked on frontend;")
-    syncTypes(types)
     RunDashboardServiceViewContributorHelper.scheduleSetConfigurationTypes(project, types)
     updateDashboard(true)
   }
@@ -335,6 +335,9 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
   private fun scheduleFetchInitialState(project: Project) {
     val synchronizationScope = RunDashboardCoroutineScopeProvider.getInstance(project).cs.childScope("RunDashboardServiceSynchronizer")
     synchronizationScope.launch {
+      subscribeToBackendConfigurationTypesUpdates()
+    }
+    synchronizationScope.launch {
       subscribeToBackendSettingsUpdates()
     }
     synchronizationScope.launch {
@@ -345,9 +348,6 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
     }
     synchronizationScope.launch {
       subscribeToBackendCustomizationsUpdates()
-    }
-    synchronizationScope.launch {
-      subscribeToBackendConfigurationTypesUpdates()
     }
     synchronizationScope.launch {
       subscribeToBackendAvailableConfigurationUpdates()

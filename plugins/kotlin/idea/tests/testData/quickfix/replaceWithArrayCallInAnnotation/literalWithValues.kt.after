@@ -3,7 +3,7 @@
 
 annotation class Some(vararg val ints: Int)
 
-@Some(ints = [1, 2,<caret> 3])
+@Some(ints = <caret>[1, 2, 3])
 class My
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceWithArrayCallInAnnotationFix

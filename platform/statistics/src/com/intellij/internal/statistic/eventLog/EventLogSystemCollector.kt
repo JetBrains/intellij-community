@@ -34,7 +34,7 @@ internal class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLogge
                                     // Increase the group's versions locally
                                     // and not increase the versions in all StatisticsEventLoggerProvider
                                     // in case of any changes in the groups
-                                    eventLoggerProvider.version + 2,
+                                    eventLoggerProvider.version + 3,
                                     eventLoggerProvider.recorderId,
                                     "Events related to the ${eventLoggerProvider.recorderId} statistics, such as logs sent, metadata updated, etc.")
   override fun getGroup(): EventLogGroup = GROUP
@@ -86,12 +86,26 @@ internal class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLogge
                                                                                       "Calculate the count of logs files to send"
   )
 
-  private val dictionariesLoadedEvent = GROUP.registerEvent("dictionaries.loaded", DICTIONARIES_LOADED_DESCRIPTION)
-  private val dictionariesLoadFailedEvent = GROUP.registerEvent("dictionaries.load.failed",
+  private val dictionaryListLoadFailed = GROUP.registerEvent("dictionary.list.load.failed",
                                                             stageMetadataLoadFailedField,
                                                             errorMetadataLoadFailedField,
                                                             codeMetadataLoadFailedField,
-                                                            DICTIONARIES_LOAD_FAILED_DESCRIPTION)
+                                                            DICTIONARY_LIST_LOAD_FAILED_DESCRIPTION)
+  private val dictionaryListUpdateFailed = GROUP.registerEvent("dictionary.list.update.failed",
+                                                              stageMetadataUpdateFailedField,
+                                                              errorMetadataUpdateFailedField,
+                                                              codeMetadataUpdateFailedField,
+                                                              DICTIONARY_LIST_UPDATE_FAILED_DESCRIPTION)
+  private val dictionaryLoadedEvent = GROUP.registerEvent(
+    "dictionary.loaded",
+    EventFields.Long("dictionary_last_modified"),
+    DICTIONARY_LOADED_DESCRIPTION
+  )
+  private val dictionaryLoadFailedEvent = GROUP.registerEvent("dictionary.load.failed",
+                                                              stageMetadataLoadFailedField,
+                                                              errorMetadataLoadFailedField,
+                                                              codeMetadataLoadFailedField,
+                                                              DICTIONARY_LOAD_FAILED_DESCRIPTION)
   private val dictionaryUpdatedEvent = GROUP.registerEvent(
     "dictionary.updated",
     EventFields.Long("dictionary_last_modified"),
@@ -163,9 +177,15 @@ internal class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLogge
     sentFilesCountCalculated.log(totalFilesCount, maxSentFilesCount,sentFilesCount)
   }
 
-  fun logDictionariesLoaded() = dictionariesLoadedEvent.log()
-  fun logDictionariesLoadFailed(error: EventLogMetadataUpdateError) {
-    dictionariesLoadFailedEvent.log(error.updateStage, error.errorType, error.errorCode)
+  fun logDictionaryListLoadFailed(error: EventLogMetadataUpdateError) {
+    dictionaryListLoadFailed.log(error.updateStage, error.errorType, error.errorCode)
+  }
+  fun logDictionaryListUpdateFailed(error: EventLogMetadataUpdateError) {
+    dictionaryListUpdateFailed.log(error.updateStage, error.errorType, error.errorCode)
+  }
+  fun logDictionaryLoaded(lastModified: Long) = dictionaryLoadedEvent.log(lastModified)
+  fun logDictionaryLoadFailed(error: EventLogMetadataUpdateError) {
+    dictionaryLoadFailedEvent.log(error.updateStage, error.errorType, error.errorCode)
   }
   fun logDictionaryUpdated(lastModified: Long) = dictionaryUpdatedEvent.log(lastModified)
   fun logDictionaryUpdateFailed(error: EventLogMetadataUpdateError) {
@@ -220,9 +240,12 @@ internal class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLogge
                                                                             "it or when creation failed with an error."
     private const val ERROR_TS_LOADING_CONFIG_FAILED_DESCRIPTION = "Error time stamp is added if error happened in external process"
     private const val LOADING_CONFIG_FAILED_DESCRIPTION = "Event is recorded if loading config (i.e. send entrypoint, metadata url, etc) failed."
-    private const val DICTIONARIES_LOAD_FAILED_DESCRIPTION = "The event is recorded when IDE can't load dictionary storage from a local cache. Local storage " +
+    private const val DICTIONARY_LIST_LOAD_FAILED_DESCRIPTION = "The event is recorded when IDE can't load dictionary list from a local cache. Local cache " +
                                                          "is loaded on IDE start or on an explicit test action."
-    private const val DICTIONARIES_LOADED_DESCRIPTION = "The metric is recorded in case dictionary storage was loaded"
+    private const val DICTIONARY_LIST_UPDATE_FAILED_DESCRIPTION = "The event is recorded when IDE can't update dictionary list. Update can be " +
+                                                           "triggered by a scheduler or via an explicit test action."
+    private const val DICTIONARY_LOAD_FAILED_DESCRIPTION = "The event is recorded when IDE can't load a dictionary from local cache or bundled files."
+    private const val DICTIONARY_LOADED_DESCRIPTION = "The metric is recorded in case a dictionary loaded"
     private const val DICTIONARY_UPDATED_DESCRIPTION = "The metric is recorded in case a dictionary was updated"
     private const val DICTIONARY_UPDATE_FAILED_DESCRIPTION = "The event is recorded when IDE can't update a dictionary. Update metadata including dictionaries can be " +
                                                            "triggered by a scheduler or via an explicit test action."

@@ -215,13 +215,7 @@ private class JUnitMalformedSignatureVisitor(
       if (method.uastParameters.isEmpty()) emptyList()
       else if (MetaAnnotationUtil.isMetaAnnotated(method.javaPsi, listOf(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE))) null // handled in parameterized test check
       else if (method.inParameterResolverContext()) method.uastParameters
-      else method.uastParameters.filterIndexed { i, param ->
-        param.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_INFO
-        || param.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_REPORTER
-        || i == 0 && method.suspendModifierIsAllowed() && method.isSuspendFunction()
-        || MetaAnnotationUtil.isMetaAnnotated(param, ignorableAnnotations)
-        || param.inParameterResolverContext()
-      }
+      else method.uastParameters.filterIndexed { index, parameter -> isValidJupiterParameter(method, parameter, index) }
     }
   )
 
@@ -432,7 +426,7 @@ private class JUnitMalformedSignatureVisitor(
   private fun UMethod.isSuspendFunction(): Boolean {
     if (lang != Language.findLanguageByID("kotlin")) return false
     if (!javaPsi.modifierList.text.contains("suspend")) return false
-    return uastParameters.firstOrNull()?.type?.canonicalText == COROUTINES_CONTINUATION_TYPE
+    return uastParameters.lastOrNull()?.type?.canonicalText == COROUTINES_CONTINUATION_TYPE
   }
 
   private fun checkSuspendFunction(method: UMethod): Boolean {
@@ -573,10 +567,10 @@ private class JUnitMalformedSignatureVisitor(
       val message = if (!isSingleParameterProvider) {
         JUnitBundle.message("jvm.inspections.junit.malformed.param.no.sources.are.provided.descriptor")
       }
-      else if (declaration is UMethod && declaration.hasInjectedParameterMismatch()) {
+      else if (declaration is UMethod && declaration.hasProvidedParameterMismatch()) {
         JUnitBundle.message("jvm.inspections.junit.malformed.param.multiple.parameters.descriptor", firstSingleParameterProvider.shortName)
       }
-      else if (declaration is UClass && declaration.hasInjectedParameterMismatch()) {
+      else if (declaration is UClass && declaration.hasProvidedParameterMismatch()) {
         JUnitBundle.message("jvm.inspections.junit.malformed.param.multiple.parameters.descriptor", firstSingleParameterProvider.shortName)
       }
       else return
@@ -791,7 +785,7 @@ private class JUnitMalformedSignatureVisitor(
         )
         holder.registerProblem(anchor.navigationElement, message)
       }
-      else if (declaration.hasInjectedParameterMismatch()
+      else if (declaration.hasProvidedParameterMismatch()
                && !InheritanceUtil.isInheritor(componentType, ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS)
                && !componentType.equalsToText(JAVA_LANG_OBJECT)
                && !componentType.deepComponentType.equalsToText(JAVA_LANG_OBJECT)
@@ -839,7 +833,7 @@ private class JUnitMalformedSignatureVisitor(
         )
         holder.registerProblem(anchor.navigationElement, message)
       }
-      else if (method.hasInjectedParameterMismatch()
+      else if (method.hasProvidedParameterMismatch()
                && !InheritanceUtil.isInheritor(componentType, ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS)
                && !componentType.equalsToText(JAVA_LANG_OBJECT)
                && !componentType.deepComponentType.equalsToText(JAVA_LANG_OBJECT)
@@ -874,30 +868,33 @@ private class JUnitMalformedSignatureVisitor(
     return PsiUtil.substituteTypeParameter(returnType, JAVA_UTIL_ITERATOR, 0, true)
   }
 
-  private fun UDeclaration.hasInjectedParameterMismatch(): Boolean {
-    return !inParameterResolverContext() && injectedParameters().size > 1
+  private fun UDeclaration.hasProvidedParameterMismatch(): Boolean {
+    return !inParameterResolverContext() && providedParameters().size > 1
   }
 
-  private fun UDeclaration.injectedParameters(): List<PsiVariable> = when (this) {
-    is UMethod -> injectedParameters()
-    is UClass -> injectedParameters()
+  private fun UDeclaration.providedParameters(): List<PsiVariable> = when (this) {
+    is UMethod -> providedParameters()
+    is UClass -> providedParameters()
     else -> emptyList()
   }
 
-  private fun UMethod.injectedParameters(): List<PsiParameter> {
-    return javaPsi.parameterList.parameters.filter { param ->
-      !InheritanceUtil.isInheritor(param.type, ORG_JUNIT_JUPITER_API_TEST_INFO) &&
-      !InheritanceUtil.isInheritor(param.type, ORG_JUNIT_JUPITER_API_TEST_REPORTER) &&
-      !param.inParameterResolverContext() &&
-      !MetaAnnotationUtil.isMetaAnnotated(param, ignorableAnnotations)
-    }
+  private fun UMethod.providedParameters(): List<UParameter> {
+    return uastParameters.filterIndexed { index, parameter -> !isValidJupiterParameter(this, parameter, index) }
+  }
+
+  private fun isValidJupiterParameter(method: UMethod, parameter: UParameter, parameterIndex: Int): Boolean {
+    return InheritanceUtil.isInheritor(parameter.type, ORG_JUNIT_JUPITER_API_TEST_INFO)
+           || InheritanceUtil.isInheritor(parameter.type, ORG_JUNIT_JUPITER_API_TEST_REPORTER)
+           || parameterIndex == (method.uastParameters.size - 1) && method.suspendModifierIsAllowed() && method.isSuspendFunction()
+           || (parameter.javaPsi as? PsiModifierListOwner)?.let { MetaAnnotationUtil.isMetaAnnotated(it, ignorableAnnotations) } ?: false
+           || parameter.inParameterResolverContext()
   }
 
   /**
    * Returns parameters of a [UClass], can either be through the constructor or through [ORG_JUNIT_JUPITER_PARAMS_PARAMETER] annotated
    * fields.
    */
-  private fun UClass.injectedParameters(): List<PsiVariable> {
+  private fun UClass.providedParameters(): List<PsiVariable> {
     val constructor = javaPsi.constructors.firstOrNull { constructor -> constructor.parameters.isNotEmpty() }
     return constructor?.parameters?.mapNotNull { it as? PsiVariable }
            ?: fields
@@ -906,11 +903,11 @@ private class JUnitMalformedSignatureVisitor(
   }
 
   private fun checkNullSource(declaration: UDeclaration, annotation: PsiAnnotation) {
-    if (declaration.hasInjectedParameterMismatch()) {
+    if (declaration.hasProvidedParameterMismatch()) {
       val message = JUnitBundle.message("jvm.inspections.junit.malformed.param.multiple.parameters.descriptor", annotation.shortName)
       holder.registerProblem(annotation, message)
     }
-    if (declaration.injectedParameters().isEmpty()) {
+    if (declaration.providedParameters().isEmpty()) {
       val message = when (declaration) {
         is UClass -> JUnitBundle.message("jvm.inspections.junit.malformed.source.without.constructor", annotation.shortName, declaration.javaPsi.name)
         is UMethod -> JUnitBundle.message("jvm.inspections.junit.malformed.source.without.params.descriptor", annotation.shortName)
@@ -921,12 +918,12 @@ private class JUnitMalformedSignatureVisitor(
   }
 
   private fun checkEmptySource(declaration: UDeclaration, annotation: PsiAnnotation) {
-    if (declaration.hasInjectedParameterMismatch()) {
+    if (declaration.hasProvidedParameterMismatch()) {
       val message = JUnitBundle.message("jvm.inspections.junit.malformed.param.multiple.parameters.descriptor", annotation.shortName)
       return holder.registerProblem(annotation.navigationElement, message)
     }
-    val injectedParameters = declaration.injectedParameters()
-    if (injectedParameters.isEmpty()) {
+    val providedParameters = declaration.providedParameters()
+    if (providedParameters.isEmpty()) {
       val message = when (declaration) {
         is UClass -> JUnitBundle.message("jvm.inspections.junit.malformed.source.without.constructor", annotation.shortName, declaration.javaPsi.name)
         is UMethod -> JUnitBundle.message("jvm.inspections.junit.malformed.source.without.params.descriptor", annotation.shortName)
@@ -935,7 +932,7 @@ private class JUnitMalformedSignatureVisitor(
       holder.registerProblem(annotation.navigationElement, message)
     }
     else {
-      val type = injectedParameters.first().type
+      val type = providedParameters.first().type
       if (type is PsiClassType) {
         val psiClass = type.resolve() ?: return
         val version = getUJUnitVersion(declaration) ?: return
@@ -968,7 +965,7 @@ private class JUnitMalformedSignatureVisitor(
   }
 
   private fun checkSourceTypeAndParameterTypeAgree(declaration: UDeclaration, attributeValue: PsiAnnotationMemberValue, componentType: PsiType) {
-    val parameters = declaration.injectedParameters()
+    val parameters = declaration.providedParameters()
     val param = parameters.singleOrNull() ?: return
     val paramType = param.type
     if (!paramType.isAssignableFrom(componentType) && !InheritanceUtil.isInheritor(
@@ -1051,7 +1048,7 @@ private class JUnitMalformedSignatureVisitor(
     if (uMode is UReferenceExpression && ("INCLUDE" == uMode.resolvedName || "EXCLUDE" == uMode.resolvedName)) {
       var validType = enumType
       if (enumType.canonicalText == ORG_JUNIT_JUPITER_PARAMS_PROVIDER_NULL_ENUM) {
-        val parameters = declaration.injectedParameters()
+        val parameters = declaration.providedParameters()
         if (parameters.isNotEmpty()) validType = parameters.first().type
       }
       val allEnumConstants = (PsiUtil.resolveClassInClassTypeOnly(validType) ?: return).fields

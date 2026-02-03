@@ -66,6 +66,14 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
    * is of unknown type (neither class, method, field nor parameter)
    */
   protected static @Nullable String getExternalName(@NotNull PsiModifierListOwner listOwner) {
+    if (listOwner instanceof PsiTypeParameter) {
+      PsiTypeParameter parameter = (PsiTypeParameter)listOwner;
+      PsiTypeParameterListOwner owner = parameter.getOwner();
+      String parameterName = parameter.getName();
+      if (owner == null || parameterName == null) return null;
+      String ownedExternalName = PsiFormatUtil.getExternalName(owner, false, Integer.MAX_VALUE);
+      return ownedExternalName + " <" + parameterName + ">";
+    }
     return PsiFormatUtil.getExternalName(listOwner, false, Integer.MAX_VALUE);
   }
 

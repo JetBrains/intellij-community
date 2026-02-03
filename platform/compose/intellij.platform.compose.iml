@@ -38,6 +38,7 @@
     <orderEntry type="module" module-name="intellij.platform.jewel.ideLafBridge" exported="" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" exported="" name="jetbrains.compose.components.ui.tooling.preview.desktop" level="project" />

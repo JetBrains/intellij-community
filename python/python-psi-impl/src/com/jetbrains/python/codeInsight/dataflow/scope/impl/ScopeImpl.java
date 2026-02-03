@@ -20,7 +20,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyCodeFragmentWithHiddenImports;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PyVersionAwareElementVisitor;
+import com.jetbrains.python.psi.impl.PyTypeCheckedElementVisitor;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -229,7 +229,7 @@ public class ScopeImpl implements Scope {
     if (myFlowOwner instanceof PyCodeFragmentWithHiddenImports fragment) {
       var pseudoImports = fragment.getPseudoImports();
       for (PyImportStatementBase importStmt : pseudoImports) {
-        importStmt.accept(new PyVersionAwareElementVisitor(languageLevel) {
+        importStmt.accept(new PyTypeCheckedElementVisitor(languageLevel) {
           @Override
           public void visitPyElement(@NotNull PyElement node) {
            if (node instanceof PyImportedNameDefiner definer) {
@@ -240,7 +240,7 @@ public class ScopeImpl implements Scope {
         });
       }
     }
-    myFlowOwner.acceptChildren(new PyVersionAwareElementVisitor(languageLevel) {
+    myFlowOwner.acceptChildren(new PyTypeCheckedElementVisitor(languageLevel) {
       @Override
       public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
         targetExpressions.add(node);

@@ -76,6 +76,18 @@ public interface TypeAnnotationContainer {
   @NotNull TypeAnnotationContainer forTypeArgument(int index);
 
   /**
+   * Returns a type annotation container for the given conjunction index.
+   * Used for type parameters.
+   *
+   * @param i type argument index, zero-based
+   * @return type annotation container for a given type argument
+   * (assuming that this type annotation container is used for a class type with type arguments)
+   */
+  default @NotNull TypeAnnotationContainer forConjunction(int i) {
+    return forTypeArgument(i);
+  }
+
+  /**
    * @param parent parent PSI element for context
    * @return TypeAnnotationProvider
    */
@@ -85,4 +97,5 @@ public interface TypeAnnotationContainer {
    * Appends to StringBuilder annotation text that applicable to this element immediately (not to sub-elements)
    */
   void appendImmediateText(@NotNull StringBuilder sb);
+
 }

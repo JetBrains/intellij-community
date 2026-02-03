@@ -148,4 +148,28 @@ public class GroovyHighlighting50Test extends LightGroovyTestCase implements Hig
                        }
                        """);
   }
+
+  public void testAbstractMethodWithBody() {
+    highlightingTest("""
+                         interface A {
+                           def foo()<error descr="Interface abstract methods must not have body">{}</error>
+                         
+                           private def privateMethod() {}
+                         
+                           static def staticMethod() {}
+                         
+                           default def defaultMethod() {}
+                         
+                           <error descr="Interface members are not allowed to be protected">protected</error> def protectedMethod() <error descr="Interface abstract methods must not have body">{}</error>
+                         }
+
+                         abstract class B {
+                           abstract foo()<error descr="Abstract methods must not have body">{}</error>
+                         }
+
+                         class X {
+                           def foo(){}
+                         }
+                         """);
+  }
 }

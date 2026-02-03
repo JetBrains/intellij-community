@@ -19,6 +19,11 @@ object NotificationUtils {
     NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS = false
   }
 
+  @JvmStatic
+  fun enableAllBalloonNotifications() {
+    NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS = true
+  }
+
   private fun disableBalloonNotifications(condition: (NotificationSettings) -> Boolean) {
     val conf = NotificationsConfiguration.getNotificationsConfiguration()
     if (conf is NotificationsConfigurationImpl) {

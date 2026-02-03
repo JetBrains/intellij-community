@@ -29,11 +29,16 @@ class ConvertCollectionLiteralToIntArrayOfFix(
     override fun getFamilyName(): String = KotlinBundle.message("replace.with.arrayof")
 
     companion object {
+        fun createIfApplicable(element: PsiElement): ModCommandAction? {
+            return element
+                .let { it as? KtCollectionLiteralExpression }
+                ?.let(::ConvertCollectionLiteralToIntArrayOfFix)
+        }
+
         fun createIfApplicable(element: PsiElement, unsupportedFeature: String): ModCommandAction? {
             return element
                 .takeIf { unsupportedFeature.startsWith("Collection literals") }
-                ?.let { it as? KtCollectionLiteralExpression }
-                ?.let(::ConvertCollectionLiteralToIntArrayOfFix)
+                ?.let { createIfApplicable(it) }
         }
     }
 }

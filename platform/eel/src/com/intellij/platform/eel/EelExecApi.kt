@@ -136,9 +136,16 @@ sealed interface EelExecApi {
         }!!
         try {
           when {
-            expireAt <= now ->
-              return environmentVariables().loginInteractive().onlyActual(true).eelIt().await()
-
+            expireAt <= now -> {
+              val result = environmentVariables().loginInteractive().onlyActual(true).eelIt().await()
+              cacheForObsoleteEnvVarExpireAt.compute(descriptor) { _, expireAtAndSucceeded ->
+                if (expireAtAndSucceeded == expireAt to true)
+                  now + cacheDuration to true
+                else
+                  expireAtAndSucceeded
+              }
+              return result
+            }
             completedSuccessfullyLastTime ->
               return environmentVariables().loginInteractive().onlyActual(false).eelIt().await()
 

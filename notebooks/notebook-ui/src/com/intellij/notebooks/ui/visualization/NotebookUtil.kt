@@ -11,8 +11,14 @@ import java.awt.Graphics
 import java.awt.Rectangle
 
 object NotebookUtil {
-  /** Marker that added to Editor's UserData that says that Editor is not the MainEditor but a Jupyter Console. */
-  val JUPYTER_CONSOLE_EDITOR_KEY: Key<Boolean> = Key.create("JUPYTER_HISTORY_EDITOR_KEY")
+  private val IS_JUPYTER_CONSOLE_EDITOR_KEY: Key<Boolean> = Key.create("JUPYTER_HISTORY_EDITOR_KEY")
+
+  var Editor.isJupyterConsoleEditor: Boolean
+    get() = getUserData(IS_JUPYTER_CONSOLE_EDITOR_KEY) == true
+    set(value) {
+      putUserData(IS_JUPYTER_CONSOLE_EDITOR_KEY, value)
+    }
+
 
   val Editor.notebookAppearance: NotebookEditorAppearance
     get() = NOTEBOOK_APPEARANCE_KEY.get(this)!!
@@ -49,7 +55,7 @@ object NotebookUtil {
 
   fun Editor.isOrdinaryNotebookEditor(): Boolean = when {
     this.editorKind != EditorKind.MAIN_EDITOR -> false
-    this.getUserData(JUPYTER_CONSOLE_EDITOR_KEY) == true -> false
+    isJupyterConsoleEditor -> false
     else -> true
   }
 

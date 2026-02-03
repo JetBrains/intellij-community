@@ -59,7 +59,7 @@ def remove_imported_pydev_package():
     re-import again (with proper sys.path)
     """
     pydev_module = sys.modules.get('pydevd', None)
-    if pydev_module is not None and 'site-packages' in str(pydev_module):
+    if pydev_module is not None and ('site-packages' in str(pydev_module) or 'debugpy/_vendored' in str(pydev_module)):
         import os
         pydev_dir = os.listdir(os.path.dirname(pydev_module.__file__))
         pydev_dir.append('pydevd')

@@ -21,6 +21,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.jetbrains.annotations.Nls
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle
@@ -49,7 +50,7 @@ import org.jetbrains.jewel.ui.theme.simpleListItemStyle
 @Suppress("ComposableParamOrder") // To fix in JEWEL-926
 @Composable
 public fun SimpleListItem(
-    text: String,
+    @Nls text: String,
     state: ListItemState,
     modifier: Modifier = Modifier,
     textModifier: Modifier = Modifier,
@@ -103,7 +104,7 @@ public fun SimpleListItem(
  */
 @Composable
 public fun SimpleListItem(
-    text: AnnotatedString,
+    @Nls text: AnnotatedString,
     state: ListItemState,
     modifier: Modifier = Modifier,
     textModifier: Modifier = Modifier,
@@ -161,7 +162,7 @@ public fun SimpleListItem(
 @Suppress("ComposableParamOrder") // To fix in JEWEL-926
 @Composable
 public fun SimpleListItem(
-    text: String,
+    @Nls text: String,
     selected: Boolean,
     active: Boolean = true,
     modifier: Modifier = Modifier,
@@ -211,7 +212,7 @@ public fun SimpleListItem(
  */
 @Composable
 public fun SimpleListItem(
-    text: AnnotatedString,
+    @Nls text: AnnotatedString,
     selected: Boolean,
     modifier: Modifier = Modifier,
     textModifier: Modifier = Modifier,
@@ -382,7 +383,7 @@ public fun SimpleListItem(
 @Deprecated("Use the overload with selected, active, colorFilter and hints")
 @Composable
 public fun SimpleListItem(
-    text: String,
+    @Nls text: String,
     isSelected: Boolean,
     modifier: Modifier = Modifier,
     textModifier: Modifier = Modifier,
@@ -407,7 +408,7 @@ public fun SimpleListItem(
 @Deprecated("Use the overload with selected, active, colorFilter and hints")
 @Composable
 public fun SimpleListItem(
-    text: String,
+    @Nls text: String,
     state: ListItemState,
     modifier: Modifier = Modifier,
     textModifier: Modifier = Modifier,

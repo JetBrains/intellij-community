@@ -32,5 +32,9 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.python.common" />
+    <orderEntry type="module" module-name="intellij.python.community.junit5Tests.framework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" />
   </component>
 </module>

@@ -19,12 +19,12 @@ import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IncompleteDependenciesService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.TimeoutUtil
 import it.unimi.dsi.fastutil.objects.Object2LongMaps
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
@@ -65,7 +65,7 @@ class ActionsCollectorImpl : ActionsCollector() {
     ActionsEventLogGroup.ACTION_UPDATED.log(project) {
       val info = getPluginInfo(action.javaClass)
       val actionId = addActionClass(this, action, info)
-      var language = getInjectedOrFileLanguage(project, dataContext)
+      var language = DataContextUtils.getInjectedOrFileLanguage(project, dataContext)
       if (language == null) {
         language = Language.ANY
       }
@@ -92,7 +92,11 @@ class ActionsCollectorImpl : ActionsCollector() {
     /**
      * Language from [InjectedDataKeys.EDITOR], [InjectedDataKeys.PSI_FILE] or [CommonDataKeys.PSI_FILE]
      */
-    var injectedFileLanguage: Language?
+    var injectedFileLanguage: Language?,
+    /**
+     * FileType from [CommonDataKeys.PSI_FILE], [PlatformDataKeys.VIRTUAL_FILE] or [PlatformDataKeys.FILE_EDITOR]
+     */
+    var fileType: FileType?,
   ) {
     /**
      * Action start time in milliseconds, used to report "start_time" field
@@ -146,7 +150,7 @@ class ActionsCollectorImpl : ActionsCollector() {
       ActionsEventLogGroup.ACTION_GROUP_EXPANDED.log(project) {
         val info = getPluginInfo(action.javaClass)
         val size = result?.count { it !is Separator } ?: -1
-        val language = getInjectedOrFileLanguage(project, dataContext) ?: Language.ANY
+        val language = DataContextUtils.getInjectedOrFileLanguage(project, dataContext) ?: Language.ANY
         addActionClass(this, action, info)
         add(EventFields.PluginInfo.with(info))
         add(EventFields.Language.with(language))
@@ -301,7 +305,12 @@ class ActionsCollectorImpl : ActionsCollector() {
     fun onBeforeActionInvoked(action: AnAction, event: AnActionEvent) {
       val project = event.project
       val context = Utils.getCachedOnlyDataContext(event.dataContext)
-      val stats = Stats(project, DataContextUtils.getFileLanguage(context), getInjectedOrFileLanguage(project, context))
+      val stats = Stats(
+        project = project,
+        fileLanguage = DataContextUtils.getFileLanguage(context),
+        injectedFileLanguage = DataContextUtils.getInjectedOrFileLanguage(project, context),
+        fileType = DataContextUtils.getFileType(context)
+      )
       ourStats[event] = stats
     }
 
@@ -321,7 +330,8 @@ class ActionsCollectorImpl : ActionsCollector() {
         eventPairs.add(ActionsEventLogGroup.RESULT.with(reportedResult))
         val contextBefore = stats?.fileLanguage
         val injectedContextBefore = stats?.injectedFileLanguage
-        addLanguageContextFields(project, event, contextBefore, injectedContextBefore, eventPairs)
+        val fileTypeBefore = stats?.fileType
+        addLanguageContextFields(project, event, contextBefore, injectedContextBefore, fileTypeBefore, eventPairs)
         if (action is FusAwareAction) {
           val additionalUsageData = (action as FusAwareAction).getAdditionalUsageData(event)
           eventPairs.add(ActionsEventLogGroup.ADDITIONAL.with(ObjectEventData(additionalUsageData)))
@@ -343,38 +353,15 @@ class ActionsCollectorImpl : ActionsCollector() {
                                          event: AnActionEvent,
                                          contextBefore: Language?,
                                          injectedContextBefore: Language?,
+                                         fileTypeBefore: FileType?,
                                          data: MutableList<EventPair<*>>) {
       val dataContext = Utils.getCachedOnlyDataContext(event.dataContext)
       val language = DataContextUtils.getFileLanguage(dataContext)
       data.add(EventFields.CurrentFile.with(language ?: contextBefore))
-      val injectedLanguage = getInjectedOrFileLanguage(project, dataContext)
+      val injectedLanguage = DataContextUtils.getInjectedOrFileLanguage(project, dataContext)
       data.add(EventFields.Language.with(injectedLanguage ?: injectedContextBefore))
-    }
-
-    /**
-     * Returns language from [InjectedDataKeys.EDITOR], [InjectedDataKeys.PSI_FILE]
-     * or [CommonDataKeys.PSI_FILE] if there's no information about injected fragment
-     */
-    private fun getInjectedOrFileLanguage(project: Project?, dataContext: DataContext): Language? {
-      val injected = getInjectedLanguage(dataContext, project)
-      return injected ?: DataContextUtils.getFileLanguage(dataContext)
-    }
-
-    private fun getInjectedLanguage(dataContext: DataContext, project: Project?): Language? {
-      val file = InjectedDataKeys.PSI_FILE.getData(dataContext)
-      if (file != null) {
-        return file.language
-      }
-      if (project != null) {
-        val editor = InjectedDataKeys.EDITOR.getData(dataContext)
-        if (editor != null && !project.isDisposed) {
-          val injectedFile = runReadAction { PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.document) }
-          if (injectedFile != null) {
-            return injectedFile.language
-          }
-        }
-      }
-      return null
+      val fileType = DataContextUtils.getFileType(dataContext)
+      data.add(EventFields.FileType.with(fileType ?: fileTypeBefore))
     }
   }
 }

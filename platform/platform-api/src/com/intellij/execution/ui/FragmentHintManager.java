@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -30,8 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public class FragmentHintManager {
   private final List<SettingsEditorFragment<?, ?>> myFragments = new ArrayList<>();
@@ -116,6 +116,8 @@ public class FragmentHintManager {
       }
     }
     if (fragment != null) {
+      if (!fragment.isAvailable()) return;
+
       String text = getShortcutText(fragment);
       if (text != null) {
         hint = hint == null ? text : StringUtil.trimEnd(hint, ".") + ". " + text;
@@ -141,7 +143,8 @@ public class FragmentHintManager {
         if (window == null || !window.isFocused()) {
           return;
         }
-        if (fragment.isSelected() &&
+        if (fragment.isAvailable() &&
+            fragment.isSelected() &&
             fragment.getName() != null &&
             component.getRootPane() != null &&
             !myHints.contains(fragment.toString())) {

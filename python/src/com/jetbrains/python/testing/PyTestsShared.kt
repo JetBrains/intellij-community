@@ -35,7 +35,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
-import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.QualifiedName
 import com.intellij.refactoring.listeners.RefactoringElementListener
@@ -115,14 +114,22 @@ fun isTestElement(element: PsiElement, testCaseClassRequired: ThreeState, typeEv
 }
 
 /**
- * If element is a subelement of the folder excplicitly marked as test root -- use it
+ * If an element is a subelement of the folder explicitly marked as test root -- use it
+ *
+ * @param findSource if true, will also check if an element is a subelement of the source root, then use it as working dir
  */
-private fun getExplicitlyConfiguredTestRoot(element: PsiFileSystemItem): VirtualFile? {
+private fun getExplicitlyConfiguredTestRoot(element: PsiFileSystemItem, findSource: Boolean = false): VirtualFile? {
   val vfDirectory = element.virtualFile
   val module = ModuleUtil.findModuleForPsiElement(element) ?: return null
-  return ModuleRootManager.getInstance(module).getSourceRoots(JavaSourceRootType.TEST_SOURCE).firstOrNull {
-    VfsUtil.isAncestor(it, vfDirectory, false)
+  val manager = ModuleRootManager.getInstance(module)
+  val findSourceByType = {type: JavaSourceRootType -> manager.getSourceRoots(type).firstOrNull { VfsUtil.isAncestor(it, vfDirectory, false) } }
+
+  findSourceByType(JavaSourceRootType.TEST_SOURCE)?.let { return it }
+  if (findSource) {
+    findSourceByType(JavaSourceRootType.SOURCE)?.let { return it }
   }
+
+  return null
 }
 
 private fun isTestFolder(element: PsiDirectory,
@@ -184,12 +191,14 @@ private fun getFolderFromMatcher(matcher: Matcher, module: Module): String? {
   }
 }
 
-private fun getElementByUrl(protocol: String,
-                            path: String,
-                            module: Module,
-                            evalContext: TypeEvalContext,
-                            matcher: Matcher = PATH_URL.matcher(protocol),
-                            metainfo: String? = null): Location<out PsiElement>? = runReadAction {
+private fun getElementByUrl(
+  protocol: String,
+  path: String,
+  module: Module,
+  evalContext: TypeEvalContext,
+  matcher: Matcher = PATH_URL.matcher(protocol),
+  metainfo: String? = null,
+): Location<out PsiElement>? = runReadAction {
   val folder = getFolderFromMatcher(matcher, module)?.let { LocalFileSystem.getInstance().findFileByPath(it) }
 
   val qualifiedName = QualifiedName.fromDottedString(path)
@@ -251,9 +260,10 @@ object PyTestsLocator : SMTestLocator {
 }
 
 
-abstract class PyTestExecutionEnvironment<T : PyAbstractTestConfiguration>(configuration: T,
-                                                                           environment: ExecutionEnvironment)
-  : PythonTestCommandLineStateBase<T>(configuration, environment) {
+abstract class PyTestExecutionEnvironment<T : PyAbstractTestConfiguration>(
+  configuration: T,
+  environment: ExecutionEnvironment,
+) : PythonTestCommandLineStateBase<T>(configuration, environment) {
 
   override fun getTestLocator(): SMTestLocator = PyTestsLocator
 
@@ -298,9 +308,10 @@ private const val DEFAULT_PATH = ""
 /**
  * Target depends on target type. It could be path to file/folder or python target
  */
-data class ConfigurationTarget(@ConfigField("runcfg.python_tests.config.target") override var target: String,
-                               @ConfigField(
-                                 "runcfg.python_tests.config.targetType") override var targetType: PyRunTargetVariant) : TargetWithVariant {
+data class ConfigurationTarget(
+  @ConfigField("runcfg.python_tests.config.target") override var target: String,
+  @ConfigField("runcfg.python_tests.config.targetType") override var targetType: PyRunTargetVariant,
+) : TargetWithVariant {
   fun copyTo(dst: ConfigurationTarget) {
     // TODO:  do we have such method it in Kotlin?
     dst.target = target
@@ -810,6 +821,10 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
           val module = configuration.module ?: return null
 
           val elementFile = element.containingFile as? PyFile ?: return null
+
+          // If pytest is the selected framework, ensure the file is a pytest test module by default naming
+          if (!PyTestDiscoveryUtil.isPyTestAllowedForFile(module, elementFile)) return null
+
           val workingDirectory = getDirectoryForFileToBeImportedFrom(elementFile, module) ?: return null
           val context = QNameResolveContext(ModuleBasedContextAnchor(module),
                                             evalContext = TypeEvalContext.userInitiated(configuration.project,
@@ -823,7 +838,12 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
           val virtualFile = element.virtualFile
 
           val workingDirectory: VirtualFile = when (element) {
-                                                is PyFile -> getDirectoryForFileToBeImportedFrom(element, configuration.module)?.virtualFile
+                                                is PyFile -> {
+                                                  val file = element
+                                                  val module = configuration.module
+                                                  if (!PyTestDiscoveryUtil.isPyTestAllowedForFile(module, file)) return null
+                                                  getDirectoryForFileToBeImportedFrom(file, configuration.module)?.virtualFile
+                                                }
                                                 is PsiDirectory -> virtualFile
                                                 else -> return null
                                               } ?: return null
@@ -838,7 +858,7 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
      * Inspect file relative imports, find farthest and return folder with imported file
      */
     private fun getDirectoryForFileToBeImportedFrom(file: PyFile, module: Module?): PsiDirectory? {
-      getExplicitlyConfiguredTestRoot(file)?.let {
+      getExplicitlyConfiguredTestRoot(file, true)?.let {
         return file.manager.findDirectory(it)
       }
 

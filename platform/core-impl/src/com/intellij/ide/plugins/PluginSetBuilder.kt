@@ -348,6 +348,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
           }
         }
       },
+      topologicalComparator = topologicalComparator,
     )
   }
 

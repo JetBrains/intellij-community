@@ -3,13 +3,8 @@ package com.intellij.python.junit5Tests.framework.metaInfo
 
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
-import org.junit.jupiter.api.extension.BeforeAllCallback
-import org.junit.jupiter.api.extension.BeforeEachCallback
-import org.junit.jupiter.api.extension.Extension
-import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.jupiter.api.extension.*
 import org.junit.jupiter.api.extension.ExtensionContext.Namespace
-import org.junit.jupiter.api.extension.ParameterContext
-import org.junit.jupiter.api.extension.ParameterResolver
 import java.nio.file.Path
 import kotlin.io.path.relativeTo
 import kotlin.jvm.optionals.getOrNull
@@ -67,11 +62,14 @@ internal class TestMetaInfoExtension : BeforeAllCallback, BeforeEachCallback, Ex
    * Calculates a real test data path based on class annotations (resolves $CONTENT_ROOT placeholder).
    */
   override fun beforeAll(context: ExtensionContext) {
-    val testClassInfo = getAnnotation(context, TestClassInfo::class.java)
-                        ?: error("Add ${TestClassInfo::class} class level")
-
     val testDataPathWithPlaceholders = getAnnotation(context, TestDataPath::class.java)?.value
-    val testDataPath = testDataPathWithPlaceholders?.let { testClassInfo.resolvePath(it) }
+
+    val testDataPath = testDataPathWithPlaceholders?.let { pathWithPlaceholders ->
+      val testClassInfo = getAnnotation(context, TestClassInfo::class.java)
+                          ?: error("Add ${TestClassInfo::class} class level")
+
+      testClassInfo.resolvePath(pathWithPlaceholders)
+    }
 
     val data = TestClassInfoData(
       testDataPath = testDataPath,

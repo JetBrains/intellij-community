@@ -6,14 +6,27 @@ import com.intellij.openapi.application.PluginPathManager
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.extension.ExtensionContext
 import java.nio.file.Path
+import kotlin.io.path.Path
+import kotlin.io.path.exists
 import kotlin.io.path.listDirectoryEntries
 import kotlin.jvm.optionals.getOrNull
 
 @TestOnly
-enum class Repository(val contentRootResolver: (String) -> String) {
-  PY_COMMUNITY({ "${PathManager.getHomePath()}/community/python/${it}" }),
-  PY_PROFESSIONAL({ "${PathManager.getHomePath()}/python/${it}" }),
-  PLUGINS({ PluginPathManager.getPluginHomePath(it) })
+enum class Repository(internal val contentRootResolver: (String) -> Path) {
+  PY_COMMUNITY({ getContentDir(tryAddingCommunity = true, it) }),
+  PY_PROFESSIONAL({ getContentDir(tryAddingCommunity = false, it) }),
+  PLUGINS({ Path(PluginPathManager.getPluginHomePath(it)) })
+}
+
+private fun getContentDir(tryAddingCommunity: Boolean, content: String): Path {
+  var path = PathManager.getHomeDirFor(Repository::class.java)!!
+  if (tryAddingCommunity) {
+    val community = path.resolve("community") // Community might also be a part of the path in community tests
+    if (community.exists()) {
+      path = community
+    }
+  }
+  return path.resolve("python").resolve(content)
 }
 
 /**
@@ -35,7 +48,7 @@ internal fun TestClassInfo.resolvePath(pathWithPlaceholders: String): Path {
     return Path.of(pathWithPlaceholders)
   }
 
-  val contentRoot = repository.contentRootResolver(contentRootPath)
+  val contentRoot = repository.contentRootResolver(contentRootPath).toString()
   val testDataPath = pathWithPlaceholders.replace(contentRootPlaceholder, contentRoot)
 
   return Path.of(testDataPath)

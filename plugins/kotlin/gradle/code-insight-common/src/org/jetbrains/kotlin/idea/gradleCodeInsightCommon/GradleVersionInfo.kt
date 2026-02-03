@@ -29,7 +29,7 @@ object GradleVersionProvider {
         return OpaqueGradleVersion(raw)
     }
 
-    private class OpaqueGradleVersion(val raw: GradleVersion): GradleVersionInfo {
+    internal class OpaqueGradleVersion(val raw: GradleVersion): GradleVersionInfo {
         override fun compareTo(other: GradleVersionInfo): Int {
             other as? OpaqueGradleVersion ?: error("Can't compare versions from different version providers")
             return raw.compareTo(other.raw)

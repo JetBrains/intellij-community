@@ -21,12 +21,14 @@ import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.isActive
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalFontSettingsListener
 import org.jetbrains.plugins.terminal.TerminalFontSettingsService
 import org.jetbrains.plugins.terminal.TerminalFontSizeProviderImpl
 import org.jetbrains.plugins.terminal.block.ui.*
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
+import java.awt.event.HierarchyEvent
 import javax.swing.JScrollPane
 
 @ApiStatus.Internal
@@ -112,10 +114,21 @@ object TerminalEditorFactory {
     CopyOnSelectionHandler.install(editor, settings)
 
     coroutineScope.awaitCancellationAndInvoke(Dispatchers.UiWithModelAccess) {
-      // It might be already released by the platform logic in case of the project closing.
-      // So use an additional check to avoid double release exceptions.
-      if (!editor.isDisposed) {
+      // Check two things:
+      // 1. If it is already disposed by the platform logic (for example, in case of project closing).
+      // 2. Do not dispose if it is still showing because then it will be painted green.
+      if (!editor.isDisposed && !editor.component.isShowing) {
         EditorFactory.getInstance().releaseEditor(editor)
+      }
+    }
+
+    // Since we do not dispose the editor on scope cancellation if it is still showing,
+    // we need to listen for its hiding and dispose it in case the coroutine scope is canceled.
+    editor.component.addHierarchyListener { e ->
+      if (e.changeFlags and HierarchyEvent.SHOWING_CHANGED.toLong() != 0L) {
+        if (!editor.component.isShowing && !editor.isDisposed && !coroutineScope.coroutineContext.isActive) {
+          EditorFactory.getInstance().releaseEditor(editor)
+        }
       }
     }
     return editor

@@ -4,7 +4,7 @@ import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
 public final class NaturalTextDetector {
-  public static boolean seemsNatural(String text) {
+  public static boolean seemsNatural(CharSequence text) {
     int spaceCount = 0;
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);

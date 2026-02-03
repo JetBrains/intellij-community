@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
 import com.intellij.ide.IdeBundle;
@@ -32,19 +32,6 @@ public class HttpProxyConfigurable extends ConfigurableBase<ConfigurableUi<Proxy
     this.proxySettings = proxySettings;
     this.credentialStore = credentialStore;
     this.disabledProxyAuthPromptsManager = disabledProxyAuthPromptsManager;
-  }
-
-  /**
-   * @deprecated use {@link HttpProxyConfigurable#HttpProxyConfigurable(ProxySettings)}
-   */
-  @Deprecated
-  @SuppressWarnings("removal")
-  public HttpProxyConfigurable(@NotNull HttpConfigurable httpConfigurable) {
-    this(
-      HttpConfigurableMigrationUtilsKt.asProxySettings(() -> httpConfigurable),
-      HttpConfigurableMigrationUtilsKt.asProxyCredentialStore(() -> httpConfigurable),
-      HttpConfigurableMigrationUtilsKt.asDisabledProxyAuthPromptsManager(() -> httpConfigurable)
-    );
   }
 
   @Override

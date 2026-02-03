@@ -98,6 +98,10 @@ public class PyUnusedImportTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
+  public void testSuppressedForUnreachableCode() {
+    doTest();
+  }
+
   private void doTest() {
     doTest(getTestName(true) + ".py");
   }

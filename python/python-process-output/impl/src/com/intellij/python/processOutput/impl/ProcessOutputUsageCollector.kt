@@ -9,9 +9,9 @@ import org.jetbrains.annotations.ApiStatus
 object ProcessOutputUsageCollector : CounterUsagesCollector() {
     private val GROUP: EventLogGroup = EventLogGroup(
         "pycharm.processOutputToolWindow",
-        version = 1,
+        version = 2,
         recorder = "FUS",
-        description = "Statistics for Python's process output toolwindowk",
+        description = "Statistics for PyCharm's Process Output Tool Window",
     )
 
     private val TOGGLED_FIELD = EventFields.Boolean("enabled")
@@ -50,6 +50,14 @@ object ProcessOutputUsageCollector : CounterUsagesCollector() {
     private val OUTPUT_COPY_CLICKED = GROUP.registerVarargEvent(
         "output.copyClicked",
         "Copy clicked",
+    )
+    private val OUTPUT_TAG_SECTION_COPY_CLICKED = GROUP.registerVarargEvent(
+        "output.copyTagSectionClicked",
+        "Copy tag section clicked",
+    )
+    private val OUTPUT_EXIT_INFO_COPY_CLICKED = GROUP.registerVarargEvent(
+        "output.copyExitInfoClicked",
+        "Copy exit info clicked",
     )
     private val OUTPUT_PROCESS_INFO_TOGGLED = GROUP.registerVarargEvent(
         "output.processInfoToggled",
@@ -104,6 +112,14 @@ object ProcessOutputUsageCollector : CounterUsagesCollector() {
 
     fun outputCopyClicked() {
         OUTPUT_COPY_CLICKED.log()
+    }
+
+    fun outputTagSectionCopyClicked() {
+        OUTPUT_TAG_SECTION_COPY_CLICKED.log()
+    }
+
+    fun outputExitInfoCopyClicked() {
+        OUTPUT_EXIT_INFO_COPY_CLICKED.log()
     }
 
     fun outputProcessInfoToggled(enabled: Boolean) {

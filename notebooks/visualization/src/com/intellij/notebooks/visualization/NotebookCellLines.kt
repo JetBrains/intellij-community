@@ -9,18 +9,19 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
+import com.intellij.util.ObjectUtils
 import com.intellij.util.keyFMap.KeyFMap
 import java.util.*
 
 /**
- * Incrementally iterates over Notebook document, calculates line ranges of cells using lexer.
+ * Incrementally iterates over a Notebook document, calculates line ranges of cells using lexer.
  * Fast enough for running in EDT, but could be used in any other thread.
  *
  * Note: there's a difference between this model and the PSI model.
- * If a document starts not with a cell marker, this class treat the text before the first cell marker as a raw cell.
- * PSI model treats such cell as a special "stem" cell which is not a Jupyter cell at all.
+ * If a document starts not with a cell marker, this class treats the text before the first cell marker as a raw cell.
+ * PSI model treats such cells as a special "stem" cell, which is not a Jupyter cell at all.
  * We haven't decided which model is correct and which should be fixed. So, for now avoid using stem cells in tests,
- * while UI of PyCharm DS doesn't allow to create a stem cell at all.
+ * while the UI of PyCharm DS doesn't allow creating a stem cell at all.
  */
 interface NotebookCellLines {
 
@@ -28,7 +29,6 @@ interface NotebookCellLines {
     NO(false, false),
     TOP(true, false),
     BOTTOM(false, true),
-    TOP_AND_BOTTOM(true, true)
   }
 
   data class Interval(
@@ -38,7 +38,8 @@ interface NotebookCellLines {
     val markers: MarkersAtLines,
     val data: KeyFMap, // different notebook implementations could store their own values in this map
   ) : Comparable<Interval> {
-    val language: Language = data.get(INTERVAL_LANGUAGE_KEY)!!
+    val language: Language
+      get() = data.get(INTERVAL_LANGUAGE_KEY)!!
 
     val firstContentLine: Int
       get() =
@@ -101,8 +102,17 @@ interface NotebookCellLines {
       return getContentText(document).toString()
     }
 
-    fun getContentText(file: VirtualFile): String {
+    fun getOffsetInInterval(editor: Editor, offset: Int): Int? {
+      val document = editor.document
+      val contentRange = getContentRange(document)
+      return if (contentRange.containsOffset(offset))
+        offset - contentRange.startOffset
+      else
+        null
+    }
 
+
+    fun getContentText(file: VirtualFile): String {
       val document = FileDocumentManager.getInstance().getDocument(file)!!
       return getContentText(document).toString()
     }
@@ -128,7 +138,7 @@ interface NotebookCellLines {
 
   interface IntervalListener : EventListener {
     /**
-     * Called each time when document is changed, even if intervals are the same.
+     * Called each time when a document is changed, even if intervals are the same.
      * Contains DocumentEvent and additional information about intervals.
      * Components which work with intervals can simply listen for NotebookCellLinesEvent and don't subscribe for DocumentEvent.
      * Listener shouldn't throw exceptions
@@ -136,7 +146,7 @@ interface NotebookCellLines {
     fun documentChanged(event: NotebookCellLinesEvent)
 
     /**
-     * Called each time before document is changed.
+     * Called each time before a document is changed.
      * Listener shouldn't throw exceptions
      */
     fun beforeDocumentChange(event: NotebookCellLinesEventBeforeChange) {}
@@ -145,7 +155,27 @@ interface NotebookCellLines {
 
   fun intervalsIterator(startLine: Int = 0): ListIterator<Interval>
 
-  fun getCell(line: Int): Interval? = intervals.firstOrNull { it.lines.contains(line) }
+  @Deprecated("Use getCellByLineNumber(Int) instead", ReplaceWith("getCellByLineNumber(lineNumber)"))
+  fun getCell(line: Int): Interval? = getCellByLineNumber(line)
+
+  /**
+   * Finds the cell associated with the specified line number by performing a binary search on the intervals.
+   */
+  fun getCellByLineNumber(lineNumber: Int): Interval? {
+    if (intervals.isEmpty()) return null
+
+    ObjectUtils.binarySearch(0, intervals.size) { index ->
+      val interval = intervals[index]
+      when {
+        lineNumber < interval.lines.first -> 1
+        lineNumber > interval.lines.last -> -1
+        else -> 0
+      }
+    }.let { foundIndex ->
+      if (foundIndex >= 0) return intervals[foundIndex]
+    }
+    return null
+  }
 
   val intervals: List<Interval>
 

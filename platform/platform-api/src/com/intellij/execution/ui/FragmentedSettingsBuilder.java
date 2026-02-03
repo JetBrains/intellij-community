@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.ide.DataManager;
@@ -38,8 +38,8 @@ import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> implements CompositeSettingsBuilder<Settings>, Disposable {
 
@@ -344,7 +344,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
   }
 
   private DefaultActionGroup buildGroup(Ref<? super JComponent> lastSelected) {
-    return buildGroup(ContainerUtil.filter(myFragments, fragment -> fragment.getName() != null), lastSelected);
+    return buildGroup(ContainerUtil.filter(myFragments, fragment -> fragment.getName() != null && fragment.isAvailable()), lastSelected);
   }
 
   private List<SettingsEditorFragment<Settings, ?>> restoreGroups(List<? extends SettingsEditorFragment<Settings, ?>> fragments) {

@@ -34,6 +34,15 @@ internal object JavaTestRunnerForMaven {
         }
       }
 
+    val tests = moduleTests
+      .flatMap { it.tests }
+      .map {
+        val parts = it.split(".")
+        // maven runs tests normally only on classes, not methods
+        if (parts.lastOrNull()?.firstOrNull()?.isLowerCase() == true) parts.dropLast(1).joinToString(".") else it
+      }
+      .distinct()
+
     val runnerSettings = MavenRunnerSettings().also {
       it.mavenProperties = mapOf(
         "surefire.reportFormat" to "plain",
@@ -41,7 +50,7 @@ internal object JavaTestRunnerForMaven {
         "surefire.failIfNoSpecifiedTests" to "false",
         "failIfNoTests" to "false",
         "maven.gitcommitid.skip" to "true",
-        "test" to moduleTests.flatMap { it.tests }.joinToString(separator = ",")
+        "test" to tests.joinToString(separator = ",")
       )
     }
 
@@ -57,7 +66,7 @@ internal object JavaTestRunnerForMaven {
       results.exitCode,
       passed,
       failed,
-      moduleTests.flatMap { it.tests },
+      tests,
       compilationSuccessful,
       projectIsResolvable,
       output

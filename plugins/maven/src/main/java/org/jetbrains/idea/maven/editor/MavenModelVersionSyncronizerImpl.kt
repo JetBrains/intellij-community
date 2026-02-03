@@ -134,11 +134,9 @@ class MavenModelVersionSyncronizerImpl(
   private fun createLeaderMarker(psiFile: XmlFile, document: Document, offset: Int): SynchronizationData? {
     val projectElement = psiFile.rootTag
     val xmlnsElement = projectElement?.getAttribute("xmlns")?.valueElement
-    val schemaElement = projectElement?.getAttribute("xsi:schemaLocation")?.valueElement
     val modelElement = projectElement?.findSubTags("modelVersion")?.firstOrNull()?.children?.filterIsInstance<XmlText>()?.first()
     if (xmlnsElement?.textRange?.contains(offset) == true) return fromXmlns(xmlnsElement, document)
     if (modelElement?.textRange?.contains(offset) == true) return fromModel(modelElement, document)
-    if (schemaElement?.textRange?.contains(offset) == true) return fromSchema(schemaElement, document)?.firstOrNull { it.rangeMarker.contains(offset) }
     return null
   }
 

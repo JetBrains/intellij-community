@@ -268,12 +268,12 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     myTerminalWidget.createTerminalSession(ttyConnector);
     myTerminalWidget.start();
     if (attachToProcessOutput) {
-      boolean convertLfToCrlf = shouldConvertLfToCrlf(processHandler);
+      boolean isProcessWithPty = isProcessWithPty(processHandler);
       if (processHandler instanceof ColoredProcessHandler coloredProcessHandler) {
         coloredProcessHandler.addRawTextListener(new ColoredProcessHandler.RawTextListener() {
           @Override
           public void onRawTextAvailable(@NotNull String text, @NotNull Key<?> outputType) {
-            processProcessOutputText(text, outputType, convertLfToCrlf);
+            processProcessOutputText(text, outputType, isProcessWithPty);
           }
         });
       }
@@ -281,7 +281,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
         processHandler.addProcessListener(new ProcessListener() {
           @Override
           public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-            processProcessOutputText(event.getText(), outputType, convertLfToCrlf);
+            processProcessOutputText(event.getText(), outputType, isProcessWithPty);
           }
         });
       }
@@ -297,7 +297,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     });
   }
 
-  private void processProcessOutputText(@NotNull String text, @NotNull Key<?> outputType, boolean convertLfToCrlf) {
+  private void processProcessOutputText(@NotNull String text, @NotNull Key<?> outputType, boolean isProcessWithPty) {
     try {
       ConsoleViewContentType contentType = null;
       if (outputType != ProcessOutputTypes.STDOUT) {
@@ -306,7 +306,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
       if (outputType == ProcessOutputTypes.SYSTEM) {
         text = StringUtil.convertLineSeparators(text, LineSeparator.CRLF.getSeparatorString());
       }
-      else if (convertLfToCrlf) {
+      else if (!isProcessWithPty && myConvertLfToCrlfForNonPtyProcess) {
         text = convertTextToCRLF(text);
       }
       ConsoleViewContentType notNullContentType = ObjectUtils.notNull(contentType, ConsoleViewContentType.NORMAL_OUTPUT);
@@ -327,16 +327,13 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     }
   }
 
-  private boolean shouldConvertLfToCrlf(@NotNull ProcessHandler processHandler) {
-    return myConvertLfToCrlfForNonPtyProcess && isNonPtyProcess(processHandler);
-  }
-
-  private static boolean isNonPtyProcess(@NotNull ProcessHandler processHandler) {
-    if (processHandler instanceof BaseProcessHandler) {
-      Process process = ((BaseProcessHandler<?>)processHandler).getProcess();
-      return !(process instanceof PtyProcess);
+  private static boolean isProcessWithPty(@NotNull ProcessHandler processHandler) {
+    if (processHandler instanceof BaseProcessHandler<?> baseProcessHandler) {
+      Process process = baseProcessHandler.getProcess();
+      return process instanceof PtyProcess ||
+             (process instanceof PtyBasedProcess ptyBasedProcess && ptyBasedProcess.hasPty());
     }
-    return true;
+    return false;
   }
 
   @Override
@@ -415,12 +412,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   }
 
   public static boolean isAcceptable(@NotNull ProcessHandler processHandler) {
-    if (processHandler instanceof BaseProcessHandler<?> baseProcessHandler) {
-      Process process = baseProcessHandler.getProcess();
-      return process instanceof PtyProcess ||
-             (process instanceof PtyBasedProcess && ((PtyBasedProcess)process).hasPty());
-    }
-    return false;
+    return isProcessWithPty(processHandler);
   }
 
   private final class ConsoleTerminalWidget extends JBTerminalWidget {

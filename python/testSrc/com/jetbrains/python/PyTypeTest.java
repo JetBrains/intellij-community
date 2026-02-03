@@ -2059,7 +2059,7 @@ public class PyTypeTest extends PyTestCase {
 
     doTest("Union[bool, int]",
            """
-             if True:
+             if input():
                  a = True
              else:
                  a = 5

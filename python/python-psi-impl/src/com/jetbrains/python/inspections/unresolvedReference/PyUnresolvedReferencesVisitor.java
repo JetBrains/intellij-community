@@ -25,6 +25,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
 import com.jetbrains.python.codeInsight.controlflow.PyDataFlowKt;
+import com.jetbrains.python.codeInsight.controlflow.Reachability;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringParameterReference;
@@ -54,7 +55,6 @@ import java.util.*;
 
 import static com.jetbrains.python.PyNames.END_WILDCARD;
 import static com.jetbrains.python.psi.PyUtil.as;
-import static com.jetbrains.python.psi.impl.stubs.PyVersionSpecificStubBaseKt.evaluateVersionsForElement;
 
 public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor {
   private final ImmutableSet<String> myIgnoredIdentifiers;
@@ -134,7 +134,8 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       unresolved = (target == null);
     }
     if (unresolved) {
-      boolean ignoreUnresolved = ignoreUnresolved(node, reference) || !evaluateVersionsForElement(node).contains(myVersion);
+      boolean ignoreUnresolved = ignoreUnresolved(node, reference) ||
+                                 PyDataFlowKt.getReachabilityForInspection(node, myTypeEvalContext) != Reachability.REACHABLE;
       if (!ignoreUnresolved) {
         HighlightSeverity severity = reference instanceof PsiReferenceEx
                                            ? ((PsiReferenceEx)reference).getUnresolvedHighlightSeverity(myTypeEvalContext)
@@ -156,7 +157,13 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     }
     else if (PyUnionType.isStrictSemanticsEnabled() && node instanceof PyQualifiedExpression qualifiedExpression) {
       String referencedName = qualifiedExpression.getReferencedName();
-      PyExpression qualifier = qualifiedExpression.getQualifier();
+      PyExpression qualifier;
+      if (qualifiedExpression instanceof PyCallSiteExpression callSiteExpression && target instanceof PyCallable callable) {
+        qualifier = callSiteExpression.getReceiver(callable);
+      }
+      else {
+        qualifier = qualifiedExpression.getQualifier();
+      }
       if (referencedName != null && qualifier != null) {
         PyType qualifierType = myTypeEvalContext.getType(qualifier);
         if (qualifierType instanceof PyUnionType unionType) {
@@ -243,7 +250,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
         return;
       }
       if (!expr.isQualified()) {
-        if (PyDataFlowKt.isUnreachableForInspection(expr, myTypeEvalContext)) {
+        if (PyDataFlowKt.getReachabilityForInspection(expr, myTypeEvalContext) != Reachability.REACHABLE) {
           return;
         }
         ContainerUtil.addIfNotNull(fixes, getTrueFalseQuickFix(refText));

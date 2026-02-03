@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvid
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
 import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2ContributorSectionPriority
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.isAfterRangeOperator
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
@@ -28,7 +29,8 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContributor<KotlinExpressionNameReferencePositionContext>(
-    KotlinExpressionNameReferencePositionContext::class
+    positionContextClass = KotlinExpressionNameReferencePositionContext::class,
+    priority = K2ContributorSectionPriority.HEURISTIC,
 ) {
 
     context(_: KaSession, context: K2CompletionSectionContext<KotlinExpressionNameReferencePositionContext>)

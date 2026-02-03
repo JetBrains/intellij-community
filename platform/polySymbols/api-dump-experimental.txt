@@ -271,6 +271,8 @@
 - a:withCompleteAfterChar(C):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 - a:withCompleteAfterCharsAdded(java.util.List):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 - a:withCompleteAfterInsert(Z):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+- a:withCompletionRestartedOnAnyPrefixChange():com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+- a:withCompletionRestartedOnPrefixChange(java.lang.String):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 - a:withDisplayName(java.lang.String):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 - a:withIcon(javax.swing.Icon):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 - a:withInsertHandlerAdded(com.intellij.codeInsight.completion.InsertHandler,com.intellij.polySymbols.PolySymbol$Priority):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
@@ -325,6 +327,8 @@
 - a:offset(I):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
 - a:priority(com.intellij.polySymbols.PolySymbol$Priority):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
 - a:proximity(java.lang.Integer):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
+- a:restartCompletionOnAnyPrefixChange():com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
+- a:restartCompletionOnPrefixChange(java.lang.String):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
 - a:symbol(com.intellij.polySymbols.PolySymbol):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
 - a:tailText(java.lang.String):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
 - a:typeText(java.lang.String):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder

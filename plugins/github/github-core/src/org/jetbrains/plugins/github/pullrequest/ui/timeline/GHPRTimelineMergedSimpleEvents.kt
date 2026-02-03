@@ -31,8 +31,8 @@ class GHPRTimelineMergedSimpleEvents : GHPRTimelineMergedEvents<GHPRTimelineEven
       is GHPRLabeledEvent -> if (!_removedLabels.remove(event.label)) _addedLabels.add(event.label)
       is GHPRUnlabeledEvent -> if (!_addedLabels.remove(event.label)) _removedLabels.add(event.label)
 
-      is GHPRAssignedEvent -> if (!_unassignedPeople.remove(event.user)) _assignedPeople.add(event.user)
-      is GHPRUnassignedEvent -> if (!_assignedPeople.remove(event.user)) _unassignedPeople.add(event.user)
+      is GHPRAssignedEvent -> if (event.user != null && !_unassignedPeople.remove(event.user)) _assignedPeople.add(event.user)
+      is GHPRUnassignedEvent -> if (event.user != null && !_assignedPeople.remove(event.user)) _unassignedPeople.add(event.user)
 
       is GHPRReviewRequestedEvent -> {
         val reviewer = event.requestedReviewer

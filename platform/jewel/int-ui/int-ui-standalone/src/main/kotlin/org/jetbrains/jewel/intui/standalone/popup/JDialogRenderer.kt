@@ -182,8 +182,10 @@ private fun JPopupImpl(
         content = {},
         modifier =
             Modifier.onGloballyPositioned { childCoordinates ->
-                childCoordinates.parentCoordinates?.let {
-                    parentBoundsInRoot = it.boundsInRoot().roundToIntRect().fromRelativeToScreen(component)
+                if (component.isShowing) {
+                    childCoordinates.parentCoordinates?.let {
+                        parentBoundsInRoot = it.boundsInRoot().roundToIntRect().fromRelativeToScreen(component)
+                    }
                 }
             },
         measurePolicy = { _, _ -> layout(0, 0) {} },
@@ -268,31 +270,45 @@ private fun JPopupImpl(
     }
 
     DisposableEffect(composePanel) {
+        // The following conditions should be considered for mouse events to dismiss the popup:
+        // - The current properties allow for the popup to be dismissed on click outside;
+        // - The popup is not focusable (focusable case is handled by the `window lost focus` event when clicking
+        // outside);
+        // - The click event is a down event (other events like "mouse up" should be ignored to prevent
+        //   auto-dismissal from the event that triggered this popup);
+        // - The event is not triggered in a child component (like menus/submenus);
+        // - The mouse position is outside the popup bounds;
+        fun shouldDismissPopup(event: MouseEvent, dialog: Window, currentProperties: PopupProperties): Boolean =
+            currentProperties.dismissOnClickOutside &&
+                !currentProperties.focusable &&
+                event.id == MouseEvent.MOUSE_PRESSED &&
+                !dialog.isAncestorOf(event.component) &&
+                !dialog.bounds.contains(event.locationOnScreen)
+
+        // The following conditions should be considered for the "window lost focus" event to dismiss the popup:
+        // - The event must be targeting the dialog rendering this popup (This listener get events for all windows in
+        // the running application);
+        // - The current window must be focusable;
+        // - The current properties allow for the popup to be dismissed on click outside;
+        // - The event must be a "WINDOW_LOST_FOCUS" event;
+        // - The window receiving the focus should not be a child of this dialog;
+        fun shouldDismissPopup(event: WindowEvent, dialog: Window, currentProperties: PopupProperties): Boolean =
+            event.window == dialog &&
+                currentProperties.focusable &&
+                currentProperties.dismissOnClickOutside &&
+                event.id == WindowEvent.WINDOW_LOST_FOCUS &&
+                !dialog.isAncestorOf(event.oppositeWindow)
+
         val listener = AWTEventListener { event ->
             when (event) {
                 is MouseEvent -> {
-                    if (event.button != MouseEvent.NOBUTTON && currentProperties.dismissOnClickOutside) {
-                        if (dialog.isAncestorOf(event.component)) {
-                            // When clicking a child popup (like a submenu), skip the click outside callback
-                            return@AWTEventListener
-                        }
-
-                        val mousePosition = event.locationOnScreen
-                        if (!dialog.bounds.contains(mousePosition)) {
-                            currentOnDismissRequest?.invoke()
-                            event.consume()
-                        }
+                    if (shouldDismissPopup(event, dialog, currentProperties)) {
+                        currentOnDismissRequest?.invoke()
+                        event.consume()
                     }
                 }
                 is WindowEvent -> {
-                    // Ignore events from other windows
-                    if (event.window != dialog) return@AWTEventListener
-
-                    if (
-                        event.id == WindowEvent.WINDOW_LOST_FOCUS &&
-                            !dialog.isAncestorOf(event.oppositeWindow) &&
-                            currentProperties.dismissOnClickOutside
-                    ) {
+                    if (shouldDismissPopup(event, dialog, currentProperties)) {
                         currentOnDismissRequest?.invoke()
                     }
                 }

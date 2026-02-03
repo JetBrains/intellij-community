@@ -17,6 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions
 import java.lang.management.ThreadInfo
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -53,14 +54,37 @@ class TerminalExecutionConsoleTest : BasePlatformTestCase() {
     return threadInfos.find { it.threadName.startsWith("TerminalEmulator-") }
   }
 
+  fun `test convert LF to CRLF for processes without PTY`(): Unit = timeoutRunBlocking(DEFAULT_TEST_TIMEOUT) {
+    val processHandler = OSProcessHandler(MockPtyBasedProcess(false), "my command", Charsets.UTF_8)
+    val console = withContext(Dispatchers.UI) {
+      TerminalExecutionConsole(project, processHandler)
+    }
+    console.withConvertLfToCrlfForNonPtyProcess(true)
+    TestProcessTerminationMessage.attach(processHandler)
+    processHandler.startNotify()
+    processHandler.notifyTextAvailable("Foo\nBar\nBaz", ProcessOutputTypes.STDOUT)
+    processHandler.destroyProcess()
+    console.awaitOutputContainsSubstring(substringToFind = TestProcessTerminationMessage.getMessage(MockPtyBasedProcess.EXIT_CODE))
+    val output = TerminalOutput.collect(console.terminalWidget)
+    output.assertLinesAre(listOf(
+      "my command",
+      "Foo",
+      "Bar",
+      "Baz",
+      TestProcessTerminationMessage.getMessage(MockPtyBasedProcess.EXIT_CODE)
+    ))
+    withContext(Dispatchers.UI) {
+      Disposer.dispose(console)
+    }
+  }
+
   fun `test support ColoredProcessHandler`(): Unit = timeoutRunBlockingWithConsole { console ->
-    val processHandler = ColoredProcessHandler(MockPtyBasedProcess(), "my command line", Charsets.UTF_8)
+    val processHandler = ColoredProcessHandler(MockPtyBasedProcess(true), "my command line", Charsets.UTF_8)
     assertTrue(TerminalExecutionConsole.isAcceptable(processHandler))
     console.attachToProcess(processHandler)
     processHandler.startNotify()
     processHandler.notifyTextAvailable("\u001b[0m", ProcessOutputTypes.STDOUT)
     processHandler.notifyTextAvailable("\u001b[32mFoo\u001b[0m", ProcessOutputTypes.STDOUT)
-    processHandler.setShouldDestroyProcessRecursively(false)
     TestProcessTerminationMessage.attach(processHandler)
     processHandler.destroyProcess()
     console.awaitOutputContainsSubstring(substringToFind = TestProcessTerminationMessage.getMessage(MockPtyBasedProcess.EXIT_CODE))
@@ -74,7 +98,7 @@ class TerminalExecutionConsoleTest : BasePlatformTestCase() {
   }
 
   fun `test support OSProcessHandler`(): Unit = timeoutRunBlockingWithConsole { console ->
-    val processHandler = OSProcessHandler(MockPtyBasedProcess(), "command line", Charsets.UTF_8)
+    val processHandler = OSProcessHandler(MockPtyBasedProcess(true), "command line", Charsets.UTF_8)
     assertTrue(TerminalExecutionConsole.isAcceptable(processHandler))
     console.attachToProcess(processHandler)
     processHandler.startNotify()
@@ -86,6 +110,26 @@ class TerminalExecutionConsoleTest : BasePlatformTestCase() {
     val output = TerminalOutput.collect(console.terminalWidget)
     output.assertContainsChunk(TerminalOutputChunk("Foo", TextStyle(TerminalColor(2), null)))
     output.assertContainsChunk(TerminalOutputChunk("Bar", TextStyle(null, TerminalColor(3))))
+  }
+
+  fun `test same styled consecutive texts are merged`(): Unit = timeoutRunBlockingWithConsole { console ->
+    val processHandler = NopProcessHandler()
+    console.attachToProcess(processHandler)
+    processHandler.startNotify()
+    processHandler.notifyTextAvailable("\u001b[0m", ProcessOutputTypes.STDOUT)
+    processHandler.notifyTextAvailable("\u001b[32mThis", ProcessOutputTypes.STDOUT)
+    processHandler.notifyTextAvailable(" is", ProcessOutputTypes.STDOUT)
+    processHandler.notifyTextAvailable(" the first\u001b[0m", ProcessOutputTypes.STDOUT)
+    processHandler.notifyTextAvailable("\u001b[32m chu", ProcessOutputTypes.STDOUT)
+    processHandler.notifyTextAvailable("nk.\u001b[0m", ProcessOutputTypes.STDOUT)
+    console.awaitOutputContainsSubstring(substringToFind = "This is the first chunk.")
+    processHandler.notifyTextAvailable("\u001b[33m This is a different chunk.", ProcessOutputTypes.STDOUT)
+    console.awaitOutputContainsSubstring(substringToFind = " This is a different chunk.")
+
+    val output = TerminalOutput.collect(console.terminalWidget)
+    Assertions.assertThat(output.contains("This is the first chunk. This is a different chunk."))
+      .describedAs(output.lines.flatMap { it.outputChunks }.toString())
+      .isFalse
   }
 
   fun `test basic SimpleCliApp java process`(): Unit = timeoutRunBlockingWithConsole { console ->

@@ -532,7 +532,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   @Override
   public final @Nullable NullabilityAnnotationInfo findEffectiveNullabilityInfo(@NotNull PsiModifierListOwner owner) {
     PsiType type = PsiUtil.getTypeByPsiElement(owner);
-    if (type == null || TypeConversionUtil.isPrimitiveAndNotNull(type)) return null;
+    if ((type == null && !(owner instanceof PsiTypeParameter)) || TypeConversionUtil.isPrimitiveAndNotNull(type)) return null;
 
     return CachedValuesManager.getCachedValue(owner, () -> {
       NullabilityAnnotationInfo info = doFindEffectiveNullabilityAnnotation(owner);

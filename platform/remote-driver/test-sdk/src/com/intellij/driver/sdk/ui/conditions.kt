@@ -6,6 +6,7 @@ import com.intellij.driver.sdk.ui.components.common.JEditorUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JComboBoxUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JListUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JTextFieldUI
+import com.intellij.driver.sdk.ui.components.elements.PopupMenuUiComponent
 import com.intellij.driver.sdk.waitFor
 import kotlin.time.Duration
 
@@ -108,6 +109,14 @@ fun JComboBoxUiComponent.selectedValueShouldBeEqualTo(expected: String, message:
 fun JEditorUiComponent.shouldContainText(expectedText: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): JEditorUiComponent {
   return should(message ?: "Editor should contain text: $expectedText", timeout) {
     text.contains(expectedText)
+  }
+}
+
+fun PopupMenuUiComponent.selectedPathShouldBe(path: List<String>, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): PopupMenuUiComponent {
+  var lastSelectedPath: List<String>? = null
+  return should(message ?: "Selected menu path should be $path", timeout, { "expected: $path, but found: $lastSelectedPath" }) {
+    lastSelectedPath = getSelectedPath()
+    lastSelectedPath == path
   }
 }
 

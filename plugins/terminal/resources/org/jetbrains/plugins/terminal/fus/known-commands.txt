@@ -25,6 +25,8 @@ abrt-watch-log
 abrt-xorg
 ac
 ack
+acli
+acli rovodev
 act
 adb
 add-apt-repository
@@ -40,6 +42,7 @@ agent
 aggregate
 aglio
 agrippa
+aider
 aircrack-ng
 airflow
 airspec
@@ -146,6 +149,7 @@ atop
 attrib
 audacity
 augeas
+auggie
 aurora
 authchanger
 autoexpect
@@ -403,6 +407,7 @@ clang
 clang++
 clangd
 class-dump
+claude
 claudia
 claws-mail
 clay
@@ -413,6 +418,7 @@ clerk
 clif
 cliff-jumper
 clilol
+cline
 clinfo
 clion
 clj
@@ -445,7 +451,9 @@ code
 code-insiders
 codeceptjs
 codesign
+codex
 codium
+cody
 coffee
 coffeescript
 cog
@@ -1030,6 +1038,7 @@ gem list
 gem push
 gem uninstall
 gem update
+gemini
 genkernel
 genymotion
 geoiplookup
@@ -1408,7 +1417,9 @@ jstack
 jstat
 jstatd
 juju
+jules
 julia
+junie
 jupyter
 jupyter notebook
 just
@@ -1437,9 +1448,11 @@ keytool
 kibana
 kill
 killall
+kilocode
 kind
 kindctl
 kinit
+kiro-cli
 kitchen
 kitten
 kitty
@@ -1875,6 +1888,7 @@ open
 open-vm-tools
 openapi
 openapi-generator-cli
+opencode
 openconnect
 opencpu
 openebs
@@ -2074,6 +2088,7 @@ quick
 quickmail
 quilt
 qutebrowser
+qwen
 r
 rack
 rackspace-cli
@@ -2555,6 +2570,7 @@ ver
 vercel
 verif
 vi
+vibe
 vim
 vimdiff
 vimr

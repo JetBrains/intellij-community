@@ -263,9 +263,9 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       myProjectsTree.read(path);
       applyStateToTree(myProjectsTree, this);
       myProjectsTree.addListener(myProjectsTreeDispatcher.getMulticaster(), this);
-      projectsTreeInitialized.set(true);
     }
     finally {
+      projectsTreeInitialized.set(true);
       initLock.unlock();
     }
   }

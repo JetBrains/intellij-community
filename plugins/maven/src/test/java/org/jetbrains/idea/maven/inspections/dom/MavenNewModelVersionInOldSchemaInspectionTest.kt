@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.inspections.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.dom.MavenDomBundle
 import org.jetbrains.idea.maven.dom.inspections.MavenNewModelVersionInOldSchemaInspection
 import org.junit.Test
 
@@ -28,7 +29,7 @@ class MavenNewModelVersionInOldSchemaInspectionTest: MavenDomTestCase()  {
       <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-       <modelVersion><error descr="Model version 4.1.0 is required for projects with 4.1.0 schema">4.1.0</error></modelVersion>
+       <modelVersion><error descr="${MavenDomBundle.message("inspection.new.model.version.in.old.schema")}">4.1.0</error></modelVersion>
         <groupId>my.group</groupId>
         <artifactId>artifact</artifactId>
         <version>1.0</version>
@@ -126,7 +127,7 @@ class MavenNewModelVersionInOldSchemaInspectionTest: MavenDomTestCase()  {
       <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-        <modelVersion><error descr="Model version 4.1.0 is required for projects with 4.1.0 schema"><caret>4.1.0</error></modelVersion>
+        <modelVersion><error descr="${MavenDomBundle.message("inspection.new.model.version.in.old.schema")}"><caret>4.1.0</error></modelVersion>
         <groupId>my.group</groupId>
         <artifactId>artifact</artifactId>
         <version>1.0</version>
@@ -156,7 +157,7 @@ class MavenNewModelVersionInOldSchemaInspectionTest: MavenDomTestCase()  {
     assumeModel_4_0_0("testing only for model 4.0.0")
     setRawPomFile("""<?xml version="1.0"?>
       <project>
-       <modelVersion><error descr="Model version 4.1.0 is required for projects with 4.1.0 schema"><caret>4.1.0</error></modelVersion>
+       <modelVersion><error descr="${MavenDomBundle.message("inspection.new.model.version.in.old.schema")}"><caret>4.1.0</error></modelVersion>
         <groupId>my.group</groupId>
         <artifactId>artifact</artifactId>
         <version>1.0</version>
@@ -185,7 +186,7 @@ class MavenNewModelVersionInOldSchemaInspectionTest: MavenDomTestCase()  {
     assumeModel_4_0_0("testing only for model 4.0.0")
     setRawPomFile("""<?xml version="1.0"?>
       <project xmlns="https://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-        <modelVersion><error descr="Model version 4.1.0 is required for projects with 4.1.0 schema"><caret>4.1.0</error></modelVersion>
+        <modelVersion><error descr="${MavenDomBundle.message("inspection.new.model.version.in.old.schema")}"><caret>4.1.0</error></modelVersion>
         <groupId>my.group</groupId>
         <artifactId>artifact</artifactId>
         <version>1.0</version>

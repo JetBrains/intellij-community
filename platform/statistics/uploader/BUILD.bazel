@@ -20,11 +20,8 @@ jvm_library(
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
-    "@lib//:com-jetbrains-fus-reporting-model",
-    "@lib//:com-jetbrains-fus-reporting-serialization-kotlin",
-    "@lib//:com-jetbrains-fus-reporting-configuration",
-    "@lib//:com-jetbrains-fus-reporting-ap-validation",
-    "@lib//:com-jetbrains-fus-reporting-connection-client",
+    "@lib//:com-jetbrains-fus-reporting-api",
+    "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
   ],
   exports = ["//platform/statistics/config"]
 )

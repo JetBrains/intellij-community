@@ -1,6 +1,7 @@
 package com.jetbrains.python.inspections
 
-import com.jetbrains.python.codeInsight.controlflow.isUnreachableForInspection
+import com.jetbrains.python.codeInsight.controlflow.Reachability
+import com.jetbrains.python.codeInsight.controlflow.getReachabilityForInspection
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyElementVisitor
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -10,7 +11,7 @@ class PyReachableElementVisitor(
   private val context: TypeEvalContext
 ) : PyElementVisitor() {
   override fun visitPyElement(node: PyElement) {
-    if (!node.isUnreachableForInspection(context)) {
+    if (node.getReachabilityForInspection(context) == Reachability.REACHABLE) {
       node.accept(delegate)
     }
   }

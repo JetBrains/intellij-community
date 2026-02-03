@@ -268,7 +268,7 @@ class KotlinBuildScriptManipulator(
 
     override fun getKotlinStdlibVersion(): String? = scriptFile.getKotlinStdlibVersion()
 
-    override fun addFoojayPlugin(changedFiles: ChangedConfiguratorFiles) {
+    override fun addFoojayPlugin(changedFiles: ChangedConfiguratorFiles, foojayVersion: String) {
         val settingsFile = scriptFile.module?.let {
             it.getTopLevelBuildScriptSettingsPsiFile() as? KtFile
         } ?: return
@@ -277,15 +277,14 @@ class KotlinBuildScriptManipulator(
         if (!settingsFile.canBeConfigured()) {
             return
         }
-        addFoojayPlugin(settingsFile)
+        addFoojayPlugin(settingsFile, foojayVersion)
     }
 
-    override fun addFoojayPlugin(settingsFile: PsiFile) {
+    override fun addFoojayPlugin(settingsFile: PsiFile, foojayVersion: String) {
         if (settingsFile !is KtFile) return
         val pluginBlock = settingsFile.getSettingsPluginsBlock() ?: return
         if (pluginBlock.findPluginInPluginsGroup("id(\"$FOOJAY_RESOLVER_NAME\")") != null) return
         if (pluginBlock.findPluginInPluginsGroup("id(\"$FOOJAY_RESOLVER_CONVENTION_NAME\")") != null) return
-        val foojayVersion = Versions.GRADLE_PLUGINS.FOOJAY_VERSION
         pluginBlock.addExpressionIfMissing("id(\"$FOOJAY_RESOLVER_CONVENTION_NAME\") version \"$foojayVersion\"")
     }
 

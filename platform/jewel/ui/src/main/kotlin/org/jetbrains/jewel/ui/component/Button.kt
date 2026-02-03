@@ -18,7 +18,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.onClick
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -65,6 +65,7 @@ import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.styling.ButtonStyle
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
 import org.jetbrains.jewel.ui.component.styling.SplitButtonStyle
+import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.hints.Stroke as PainterHintStroke
@@ -688,31 +689,32 @@ private fun SplitButtonImpl(
     var buttonState by remember(interactionSource) { mutableStateOf(ButtonState.of(enabled = enabled)) }
     val focusRequester = remember { FocusRequester() }
 
-    Box(
-        modifier
-            .onSizeChanged { buttonWidth = with(density) { it.width.toDp() } }
-            .onFocusChanged {
-                if (!it.isFocused) {
-                    popupVisible = false
-                }
-            }
-            .thenIf(enabled) {
-                onPreviewKeyEvent { keyEvent ->
-                    if (keyEvent.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                    when {
-                        keyEvent.key == Key.DirectionDown -> {
-                            popupVisible = true
-                            true
-                        }
-
-                        else -> false
-                    }
-                }
-            }
-    ) {
+    Box {
+        @Suppress("ModifierNotUsedAtRoot") // This is the "true" root, the box is only for the popup
         ButtonImpl(
             onClick = { if (enabled) onClick() },
-            modifier = Modifier.focusRequester(focusRequester),
+            modifier =
+                modifier
+                    .onSizeChanged { buttonWidth = with(density) { it.width.toDp() } }
+                    .onFocusChanged {
+                        if (!it.isFocused) {
+                            popupVisible = false
+                        }
+                    }
+                    .thenIf(enabled) {
+                        onPreviewKeyEvent { keyEvent ->
+                            if (keyEvent.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                            when {
+                                keyEvent.key == Key.DirectionDown -> {
+                                    popupVisible = true
+                                    true
+                                }
+
+                                else -> false
+                            }
+                        }
+                    }
+                    .focusRequester(focusRequester),
             enabled = enabled,
             forceFocused = popupVisible,
             onStateChange = { state -> buttonState = state },
@@ -779,7 +781,7 @@ private fun SplitButtonChevron(
 ) {
     Box(
         modifier
-            .size(style.button.metrics.minSize.height)
+            .width(style.button.metrics.minSize.height)
             .focusable(false)
             .focusProperties { canFocus = false }
             .clickable(
@@ -787,6 +789,7 @@ private fun SplitButtonChevron(
                 onClick = onChevronClick,
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
+                role = Role.Button,
             )
     ) {
         Divider(
@@ -799,7 +802,7 @@ private fun SplitButtonChevron(
         Icon(
             key = AllIconsKeys.General.ChevronDown,
             contentDescription = "Chevron",
-            modifier = Modifier.align(Alignment.Center),
+            modifier = Modifier.align(Alignment.Center).thenIf(!enabled) { disabledAppearance() },
             hints =
                 if (isDefault && enabled) {
                     arrayOf(PainterHintStroke(style.colors.chevronColor))
@@ -895,7 +898,13 @@ private fun ButtonImpl(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(Modifier.padding(style.metrics.padding)) { content() }
+                Box(
+                    Modifier.padding(style.metrics.padding).thenIf(secondaryContent != null) {
+                        weight(1f, fill = false)
+                    }
+                ) {
+                    content()
+                }
                 secondaryContent?.invoke()
             }
         }

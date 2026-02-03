@@ -1,10 +1,10 @@
 // WITH_STDLIB
-internal fun bug(<warning descr="[EXPOSED_PACKAGE_PRIVATE_TYPE_FROM_INTERNAL_WARNING] 'internal' declaration exposes 'public/*package*/' type 'Storage'. This will become an error in language version 2.4. See https://youtrack.jetbrains.com/issue/KTLC-271.">storage: Storage</warning>) {
-    if (storage is FileStorageAnnotation) {
+internal fun bug() {
+    if (<error descr="[UNRESOLVED_REFERENCE] Unresolved reference 'storage'.">storage</error> is FileStorageAnnotation) {
         println(true)
     }
 }
 
 fun main() {
-    bug(FileStorageAnnotation()) // true
+    bug(<error descr="[TOO_MANY_ARGUMENTS] Too many arguments for 'fun bug(): Unit'.">FileStorageAnnotation()</error>) // true
 }

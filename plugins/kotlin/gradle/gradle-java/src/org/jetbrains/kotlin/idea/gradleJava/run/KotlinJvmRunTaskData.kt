@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleJava.run
 
+import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
+import com.intellij.openapi.externalSystem.model.project.ModuleData
+import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinTargetData
@@ -13,7 +16,8 @@ import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 
 class KotlinJvmRunTaskData(val targetName: String, val taskName: String) {
     companion object {
-        private const val KOTLIN_JVM_RUN_CLASS_NAME = "org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmRun"
+        private const val KOTLIN_KMP_JVM_RUN_CLASS_NAME = "org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmRun"
+        private const val KOTLIN_JVM_RUN_CLASS_NAME = "org.gradle.api.tasks.JavaExec"
 
         /**
          * Will return the *first* suitable KotlinJvmRun task that is suitable for this module.
@@ -27,16 +31,44 @@ class KotlinJvmRunTaskData(val targetName: String, val taskName: String) {
         fun findSuitableKotlinJvmRunTask(module: Module): KotlinJvmRunTaskData? {
             val mainModuleDataNode = CachedModuleDataFinder.findMainModuleData(module) ?: return null
 
+            val kotlinGradlePluginType = KotlinGradlePluginType.getPluginType(mainModuleDataNode) ?: return null
+            val kotlinRunClassName = when (kotlinGradlePluginType) {
+                KotlinGradlePluginType.Jvm -> {
+                    KOTLIN_JVM_RUN_CLASS_NAME.takeIf {
+                        // For modules using jvm plugin, only continue if CMP plugin is also used,
+                        // since CMP plugin adds the required Gradle tasks
+                        getGradleExtensions(mainModuleDataNode)?.any {
+                            it.name == "compose" && it.typeFqn == "org.jetbrains.compose.ComposeExtension"
+                        } == true
+                    } ?: return null
+                }
+
+                KotlinGradlePluginType.Multiplatform -> KOTLIN_KMP_JVM_RUN_CLASS_NAME
+            }
+
             /* Find all run carrier tasks (tasks implementing KotlinJvmRun */
             val allKotlinJvmRunTasks = ExternalSystemApiUtil.findAll(mainModuleDataNode, ProjectKeys.TASK)
-                .filter { it.data.type == KOTLIN_JVM_RUN_CLASS_NAME }
+                .filter { it.data.type == kotlinRunClassName }
                 .ifEmpty { return null }
+
+            return when (kotlinGradlePluginType) {
+                KotlinGradlePluginType.Multiplatform -> getKmpPluginRunTask(module, mainModuleDataNode, allKotlinJvmRunTasks)
+                KotlinGradlePluginType.Jvm -> getJvmPluginRunTask(allKotlinJvmRunTasks)
+            }
+
+        }
+
+        private fun getKmpPluginRunTask(
+            module: Module,
+            mainModuleDataNode: DataNode<out ModuleData>,
+            allKotlinJvmRunTasks: List<DataNode<TaskData>>
+        ): KotlinJvmRunTaskData? {
 
             /*
             As the passed 'module' can also be a common Source Set (like commonMain),
             We collect all SourceSets that declare a dependsOn as well. If any of those Source Sets can be executed
             by the run task, then the Source Set represented by 'module' can also!
-             */
+            */
             val sourceSetDataNode = CachedModuleDataFinder.findModuleData(module)?.safeCastDataNode<GradleSourceSetData>() ?: return null
             val allSourceSetDataNodes = ExternalSystemApiUtil.findAll(mainModuleDataNode, GradleSourceSetData.KEY)
             val sourceSetWithDependingSourceSetDataNodes = sourceSetDataNode.withClosure { currentSourceSetDataNode ->
@@ -71,5 +103,13 @@ class KotlinJvmRunTaskData(val targetName: String, val taskName: String) {
                 KotlinJvmRunTaskData(target.data.externalName, taskNameWithoutLocation)
             }
         }
+
+        private fun getJvmPluginRunTask(allKotlinJvmRunTasks: List<DataNode<TaskData>>): KotlinJvmRunTaskData? =
+            allKotlinJvmRunTasks.firstNotNullOfOrNull { runTask ->
+                val taskNameWithoutLocation = runTask.data.name.substringAfterLast(':')
+                if (taskNameWithoutLocation != "run") return@firstNotNullOfOrNull null
+                return KotlinJvmRunTaskData("jvm", "run")
+            }
+
     }
 }

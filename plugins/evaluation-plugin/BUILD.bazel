@@ -42,6 +42,7 @@ jvm_library(
     "//platform/warmup",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",
+    "//platform/backend/observation",
   ]
 )
 ### auto-generated section `build intellij.evaluationPlugin` end

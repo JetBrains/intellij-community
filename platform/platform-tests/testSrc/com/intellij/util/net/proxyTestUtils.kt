@@ -5,7 +5,6 @@ import com.intellij.credentialStore.Credentials
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
-import com.intellij.testFramework.registerExtension
 import java.net.Authenticator
 import java.net.ProxySelector
 import kotlin.test.assertEquals
@@ -18,7 +17,9 @@ internal fun <T> withCustomProxySelector(proxySelector: ProxySelector, body: () 
 
 internal fun <T> withProxySettingsOverride(proxySettingsOverrideProvider: ProxySettingsOverrideProvider, body: () -> T): T {
   Disposer.newDisposable().use { disposable ->
-    ApplicationManager.getApplication().registerExtension(ProxySettingsOverrideProvider.EP_NAME, proxySettingsOverrideProvider, disposable)
+    ApplicationManager.getApplication().extensionArea
+      .getExtensionPoint<ProxySettingsOverrideProvider>("com.intellij.proxySettingsOverrideProvider")
+      .registerExtension(proxySettingsOverrideProvider, disposable)
     return body()
   }
 }
@@ -48,4 +49,5 @@ internal fun <T> withKnownProxyCredentials(host: String, port: Int, credentials:
   }
 }
 
-internal fun createResetPlatformAuthenticator(): Authenticator = IdeProxyAuthenticator(PlatformProxyAuthentication(ProxyCredentialStore::getInstance, DisabledProxyAuthPromptsManager::getInstance))
+internal fun createResetPlatformAuthenticator(): Authenticator =
+  IdeProxyAuthenticator(PlatformProxyAuthentication(ProxyCredentialStore::getInstance, DisabledProxyAuthPromptsManager::getInstance))

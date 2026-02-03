@@ -235,8 +235,17 @@ class _BehaveRunner(_bdd_utils.BddRunner):
         return isinstance(expected_tags, TagExpression) and expected_tags.check(scenario.tags)
 
     def _get_features_to_run(self):
+        old_modules = sys.modules.copy()
         self.__real_runner.dry_run = True
         self.__real_runner.run()
+        # During the dry run we can import some modules with steps in nested
+        # directories. And since we then clear step registry, there's no way to
+        # get those steps back without reimport. So we clear up the modules that
+        # were imported during the dry run to support such scenario.
+        new_modules = sys.modules.copy()
+        for module in new_modules.keys():
+            if module not in old_modules:
+                del sys.modules[module]
         features_to_run = self.__real_runner.features
         self.__real_runner.clean()  # To make sure nothing left after dry run
 

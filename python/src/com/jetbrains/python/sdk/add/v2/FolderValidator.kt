@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
-import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
@@ -40,10 +40,10 @@ class FolderValidator<P : PathHolder>(
 
   private fun autodetectFolderPath(): Deferred<Unit> {
     return scope.async(TraceContext(PyBundle.message("python.sdk.validating.environment"), scope)) {
-      withContext(Dispatchers.UI) { isDirtyValue.set(true) }
+      withContext(Dispatchers.EDT) { isDirtyValue.set(true) }
       val pathResult = defaultPathSupplier.invoke()
       val path = runValidation(pathResult)
-      withContext(Dispatchers.UI) { backProperty.set(path) }
+      withContext(Dispatchers.EDT) { backProperty.set(path) }
     }.apply {
       invokeOnCompletion {
         isDirtyValue.set(false)
@@ -71,7 +71,7 @@ class FolderValidator<P : PathHolder>(
 
       validationJob.cancelAndJoin()
       validationJob = scope.async {
-        withContext(Dispatchers.UI) { isDirtyValue.set(true) }
+        withContext(Dispatchers.EDT) { isDirtyValue.set(true) }
 
         val validatedFolderPath = withContext(Dispatchers.IO) {
           for (validator in arrayOf(CHECK_NON_EMPTY, CHECK_NO_RESERVED_WORDS)) {
@@ -86,7 +86,7 @@ class FolderValidator<P : PathHolder>(
 
           ValidatedPath.Folder(path, pathValidator.invoke(path))
         }
-        withContext(Dispatchers.UI) { backProperty.set(validatedFolderPath) }
+        withContext(Dispatchers.EDT) { backProperty.set(validatedFolderPath) }
       }
       validationJob.invokeOnCompletion {
         isDirtyValue.set(false)

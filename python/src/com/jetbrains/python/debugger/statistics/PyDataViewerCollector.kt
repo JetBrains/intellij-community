@@ -61,7 +61,7 @@ internal object PyDataViewerCollector : CounterUsagesCollector() {
     UNKNOWN;
 
     companion object {
-      fun getDataDimensions(dimensions: Int?): DataDimensions {
+      fun getDataDimensions(dimensions: Int): DataDimensions {
         return when (dimensions) {
           0 -> UNKNOWN
           1 -> ONE

@@ -256,6 +256,12 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testFlatMapSideEffect() { doTest(); }
   public void testOptionalValueTracking() { doTest(); }
   public void testOptionalAsQualifier() { doTest(); }
+  public void testDelegateClassTypeParameter() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
   public void testClearZeroesSize() { doTest(); }
   public void testLambdaInlineReassignReturnWithDeeperEquality() { doTest(); }
 
@@ -367,5 +373,10 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testFieldWriteInLambda() { doTest(); }
   public void testNewMethodReferenceMustBeNonNull() {
     doTestWith((insp, __) -> insp.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true); 
+  }
+  public void testExternalTypeParameterAnnotations() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
   }
 }

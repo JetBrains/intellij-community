@@ -133,7 +133,7 @@ Android Studio: b/282808067 -->
     <applicationInitializedListener implementation="com.intellij.util.net.OverrideDefaultJdkProxy"/>
     <applicationService serviceImplementation="com.intellij.util.net.HttpConfigurable"/>
     <applicationService serviceInterface="com.intellij.util.net.ProxySettings"
-                        serviceImplementation="com.intellij.util.net.OverrideCapableProxySettingsImpl"/>
+                        serviceImplementation="com.intellij.util.net.OverrideCapableProxySettings"/>
     <applicationService serviceInterface="com.intellij.util.net.internal.ProxyMigrationService"
                         serviceImplementation="com.intellij.util.net.internal.ProxyMigrationServiceImpl"/>
 
@@ -1143,6 +1143,8 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.build.BuildToolsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.environment.EditorsCollector"/>
 
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.psi.IElementTypeUsageCollector"/>
+
     <fileTypeUsageSchemaDescriptor schema="DotBazelFile"
                                    implementationClass="com.intellij.internal.statistic.collectors.fus.build.DotBazelFileTypeUsageSchemaDescriptor"/>
     <fileTypeUsageSchemaDescriptor schema="BazelBuildFile"
@@ -1660,6 +1662,7 @@ Android Studio: b/285867050 -->
     <notificationGroup id="Ultimate Installed" displayType="BALLOON" bundle="messages.IdeBundle"
                        key="notification.group.advertiser.try.ultimate.installed"/>
     <notificationGroup id="Mac15 Local Network" displayType="BALLOON" bundle="messages.IdeCoreBundle" key="mac15.local.network.issue.title"/>
+    <notificationGroup id="proxy.auth.failed" displayType="STICKY_BALLOON" bundle="messages.UIBundle" key="proxy.auth.notification.title"/>
 
     <defaultHighlightingSettingProvider implementation="com.intellij.codeInsight.actions.ReaderModeHighlightingSettingsProvider"/>
     <registryKey key="html.editor.timeout" defaultValue="15000" description="HTML editor content loading timeout, ms"/>

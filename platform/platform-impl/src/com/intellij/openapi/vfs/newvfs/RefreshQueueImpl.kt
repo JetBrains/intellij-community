@@ -135,8 +135,12 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     // suspending vfs refresh works in the context of the caller
     // however, we must maintain an invariant that no more than one scanning part of refresh is running
     // hence we limit ourselves with a semaphore
-    val events = eventScanSemaphore.withPermit {
-      collectEventsSuspending(session, -1L)
+    val events = if (session.isEventSession) {
+      session.events
+    } else {
+      eventScanSemaphore.withPermit {
+        collectEventsSuspending(session, -1L)
+      }
     }
     executeWithParallelizationGuard(session) {
       processEventsSuspending(session, events)

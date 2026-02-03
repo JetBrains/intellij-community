@@ -128,7 +128,7 @@ internal class CompletionEvaluationStarter : ModernApplicationStarter() {
     override suspend fun asyncRun() {
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the $featureName")
       val config = loadConfig(Paths.get(configPath), feature.getStrategySerializer())
-      val workspace = EvaluationWorkspace.create(config, SetupStatsCollectorStep.statsCollectorLogsDirectory, debug = true)
+      val workspace = EvaluationWorkspace.create(config, SetupStatsCollectorStep.statsCollectorLogsDirectory)
       val datasetContext = DatasetContext(workspace, workspace, configPath)
       runPreliminarySteps(feature, workspace)
       feature.prepareEnvironment(config, workspace).use { environment ->

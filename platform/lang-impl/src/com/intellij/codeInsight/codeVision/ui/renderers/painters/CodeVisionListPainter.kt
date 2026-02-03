@@ -69,7 +69,7 @@ open class CodeVisionListPainter(
   ) {
 
     var x = point.x + theme.left
-    val y = point.y + theme.top + (inlayTextAscent(editor) ?: (editor as EditorImpl).ascent)
+    val y = point.y + theme.top + (inlayTextAscent(editor, value?.inlay) ?: (editor as EditorImpl).ascent)
 
     if (value == null || value.visibleLens.isEmpty()) {
       loadingPainter.paint(editor, textAttributes, g, Point(x, y), state, hovered)
@@ -137,7 +137,7 @@ open class CodeVisionListPainter(
     return null
   }
 
-  open fun inlayTextAscent(editor: Editor): Int? {
+  open fun inlayTextAscent(editor: Editor, inlay: Inlay<*>?): Int? {
     return editor.ascent
   }
 

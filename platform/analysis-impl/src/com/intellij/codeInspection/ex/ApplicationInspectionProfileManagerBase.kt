@@ -53,11 +53,25 @@ open class ApplicationInspectionProfileManagerBase @Internal @NonInjectable cons
     schemeManagerFactory.create(InspectionProfileManager.INSPECTION_DIR, object : InspectionProfileProcessor() {
       override fun getSchemeKey(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String) = fileNameWithoutExtension
 
-      override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>,
-                                name: String,
-                                attributeProvider: (String) -> String?,
-                                isBundled: Boolean): InspectionProfileImpl =
-        InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ApplicationInspectionProfileManagerBase, dataHolder)
+      override fun createScheme(
+        dataHolder: SchemeDataHolder<InspectionProfileImpl>,
+        name: String,
+        attributeProvider: (String) -> String?,
+        isBundled: Boolean,
+      ): InspectionProfileImpl {
+        val scheme = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ApplicationInspectionProfileManagerBase, dataHolder)
+        if (isBundled) { // WI-83115: allow bundled profiles to be reset to their base version, rather than the InspectionProfileImpl.BASE_PROFILE profile
+          return InspectionProfileImpl(
+            name,
+            InspectionToolRegistrar.getInstance(),
+            this@ApplicationInspectionProfileManagerBase,
+            scheme,
+            dataHolder
+          )
+        }
+
+        return scheme
+      }
 
       override fun onSchemeAdded(scheme: InspectionProfileImpl) {
         fireProfileChanged(scheme)

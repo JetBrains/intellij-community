@@ -272,6 +272,20 @@
       }
     },
 
+    "Banner": {
+      "errorBackground": "#800002",
+      "errorBorderColor": "#E6194B",
+
+      "warningBackground": "#804605",
+      "warningBorderColor": "#F58231",
+
+      "infoBackground": "#450073",
+      "infoBorderColor": "#e6e6e6",
+
+      "successBackground": "Actions.Green",
+      "successBorderColor": "#6FA574"
+    },
+
     "NotificationsToolwindow": {
       "newNotification.background": "#450073",
       "newNotification.hoverBackground": "#450073"

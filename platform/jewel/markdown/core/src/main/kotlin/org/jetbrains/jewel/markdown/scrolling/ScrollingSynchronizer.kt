@@ -85,8 +85,22 @@ import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public abstract class ScrollingSynchronizer {
-    /** Scroll the preview to the position that match the given [sourceLine] the best. */
-    public abstract suspend fun scrollToLine(sourceLine: Int, animationSpec: AnimationSpec<Float> = SpringSpec())
+    /**
+     * Scroll the preview to the position that matches the given [sourceLine] the best.
+     *
+     * Don't extend this function, implement [scrollToCoordinate] and [findYCoordinateToScroll] instead. `open` is
+     * preserved for compatibility reasons and will be removed in the future.
+     */
+    @ApiStatus.NonExtendable
+    public open suspend fun scrollToLine(sourceLine: Int, animationSpec: AnimationSpec<Float> = SpringSpec()) {
+        scrollToCoordinate(findYCoordinateToScroll(sourceLine), animationSpec)
+    }
+
+    /** Scroll the preview to the given vertical position [y] using given [animationSpec]. */
+    protected abstract suspend fun scrollToCoordinate(y: Int, animationSpec: AnimationSpec<Float> = SpringSpec())
+
+    /** Find the vertical position in the preview that matches the given [sourceLine] the best. */
+    protected abstract suspend fun findYCoordinateToScroll(sourceLine: Int): Int
 
     /**
      * Called when [MarkdownProcessor] processes the raw markdown text. The processing itself is passed as an [action].
@@ -185,28 +199,56 @@ public abstract class ScrollingSynchronizer {
         // so this map always keeps relevant information.
         private val blocks2TextOffsets = mutableMapOf<MarkdownBlock, List<Int>>()
 
-        override suspend fun scrollToLine(sourceLine: Int, animationSpec: AnimationSpec<Float>) {
-            val block = findBestBlockForLine(sourceLine) ?: return
-            val y = blocks2Top[block] ?: return
-            if (y < 0) return
-            val lineRange = (block as? LocatableMarkdownBlock)?.lines ?: return
-            val textOffsets = blocks2TextOffsets[block]
+        override suspend fun scrollToCoordinate(y: Int, animationSpec: AnimationSpec<Float>) {
+            scrollState.animateScrollTo(y, animationSpec)
+        }
+
+        override suspend fun findYCoordinateToScroll(sourceLine: Int): Int {
+            blocksSortedByPreference(sourceLine).forEach { block ->
+                val positionToScroll = block.positionToScroll(sourceLine)
+                if (positionToScroll != null) {
+                    return positionToScroll
+                }
+            }
+            return 0
+        }
+
+        private fun blocksSortedByPreference(sourceLine: Int) = iterator {
+            val blockOnLine = lines2Blocks[sourceLine]
+            if (blockOnLine != null) {
+                yield(blockOnLine)
+            } else {
+                // If there is no block that covers the line,
+                // the next best block is the one **after** the line.
+                // Otherwise, when scrolling down the source,
+                // on empty lines the preview will scroll
+                // in the opposite direction
+                val firstBlockAfterLine = lines2Blocks.higherEntry(sourceLine)?.value
+                if (firstBlockAfterLine != null) {
+                    yield(firstBlockAfterLine)
+                }
+            }
+            // Otherwise, look for the closest block positioned before the line.
+            // This way, the corresponding preview line will be located
+            // below the viewport's top point (and the user still has a chance
+            // to see it in the visible area)
+            val blocksBeforeLine = lines2Blocks.headMap(sourceLine)
+            val blocksBeforeLineClosestFirst = blocksBeforeLine.values.reversed()
+            for (block in blocksBeforeLineClosestFirst) {
+                yield(block)
+            }
+        }
+
+        private fun MarkdownBlock.positionToScroll(sourceLine: Int): Int? {
+            val y = blocks2Top[this] ?: return null
+            val lineRange = (this as? LocatableMarkdownBlock)?.lines ?: return y
+
             // The line may be empty and represent no block,
             // in this case scroll to the first line of the first block positioned after the line
             val lineIndexInBlock = maxOf(0, sourceLine - lineRange.first)
-            val lineOffset = textOffsets?.get(lineIndexInBlock) ?: 0
-            scrollState.animateScrollTo(y + lineOffset, animationSpec)
-        }
+            val textOffsets = blocks2TextOffsets[this]
 
-        private fun findBestBlockForLine(line: Int): MarkdownBlock? {
-            // The best block is the one **below** the line if there is no block that covers the
-            // line.
-            // Otherwise, when scrolling down the source, on empty lines preview will scroll in the
-            // opposite direction
-            val sm = lines2Blocks.subMap(line, Int.MAX_VALUE)
-            if (sm.isEmpty()) return null
-            // TODO use firstEntry() after switching to JDK 21
-            return sm.getValue(sm.firstKey())
+            return y + (textOffsets?.getOrNull(lineIndexInBlock) ?: 0)
         }
 
         override fun beforeProcessing() {

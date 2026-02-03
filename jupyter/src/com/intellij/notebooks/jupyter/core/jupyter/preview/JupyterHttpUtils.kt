@@ -5,16 +5,18 @@ import org.apache.http.client.utils.URIBuilder
 import org.jetbrains.ide.BuiltInServerManager
 import java.net.URI
 
+const val JUPYTER_WS_HOST: String = "127.0.0.1"
+
 /**
  * Url for HTTP and WS Jupyter services
  */
 fun getJupyterBaseUrl(scheme: String): URIBuilder =
-  URIBuilder().setScheme(scheme).setHost("127.0.0.1").setPort(BuiltInServerManager.getInstance().port)
+  URIBuilder().setScheme(scheme).setHost(JUPYTER_WS_HOST).setPort(BuiltInServerManager.getInstance().port)
 
-fun URIBuilder.addPathSegment(string: String): URIBuilder = setPath("${path ?: ""}/${string.trimStart('/')}")
+fun URIBuilder.addPathSegment(string: String): URIBuilder = setPath("${(path ?: "").removeSuffix("/") ?: ""}/${string.trimStart('/')}")
 fun URIBuilder.addParameter(name: String, value: Boolean): URIBuilder = addParameter(name, value.toString())
 fun URIBuilder.dropLastPathSegment(): URIBuilder {
-  val newPath = path.removeSuffix("/").dropLastWhile { it != '/' }.removeSuffix("/")
+  val newPath = (path ?: "").removeSuffix("/").dropLastWhile { it != '/' }.removeSuffix("/")
   return setPath(newPath)
 }
 

@@ -23,5 +23,5 @@ public interface ImageRendererExtension {
      * @param image The image data, containing information like the image URL and alt text.
      * @return An [InlineTextContent] that will be embedded in the text flow, which will be used to display the image.
      */
-    @Composable public fun renderImageContent(image: InlineMarkdown.Image): InlineTextContent
+    @Composable public fun renderImageContent(image: InlineMarkdown.Image): InlineTextContent?
 }

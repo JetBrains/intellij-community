@@ -3,15 +3,26 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.Url;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 @ApiStatus.Internal
 public interface UpdateRequestParametersProvider {
-  @NotNull Url amendUpdateRequest(@NotNull Url url);
+  void amendUpdateRequest(@NotNull Map<String, String> parameters);
 
   static @NotNull Url passUpdateParameters(@NotNull Url url) {
-    UpdateRequestParametersProvider provider = ApplicationManager.getApplication().getService(UpdateRequestParametersProvider.class);
-    return provider.amendUpdateRequest(url);
+    if (URLUtil.FILE_PROTOCOL.equals(url.getScheme())) {
+      return url;
+    }
+
+    var parameters = new LinkedHashMap<String, String>();
+    ApplicationManager.getApplication()
+      .getService(UpdateRequestParametersProvider.class)
+      .amendUpdateRequest(parameters);
+    return url.addParameters(parameters);
   }
 }

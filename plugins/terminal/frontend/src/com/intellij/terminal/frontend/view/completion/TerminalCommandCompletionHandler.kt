@@ -114,7 +114,7 @@ internal class TerminalCommandCompletionHandler(
       }
     }
     val lookup = LookupManager.getInstance(project).createLookup(editor, LookupElement.EMPTY_ARRAY, "", arranger) as LookupImpl
-    lookup.setLookupFocusDegree(if (autopopup) LookupFocusDegree.UNFOCUSED else LookupFocusDegree.FOCUSED)
+    lookup.setLookupFocusDegree(if (autopopup) LookupFocusDegree.SEMI_FOCUSED else LookupFocusDegree.FOCUSED)
     return lookup
   }
 

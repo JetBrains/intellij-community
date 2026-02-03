@@ -4,7 +4,6 @@ package com.intellij.ide.startup;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.io.Decompressor;
-import kotlin.text.StringsKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -172,14 +171,11 @@ public final class StartupActionScriptManager {
       var commands = loadActionScript(scriptFile);
 
       var partitioned = commands.stream().collect(Collectors.partitioningBy(command -> {
-        if (command instanceof CopyCommand copyCommand) {
-          return hasMarketplaceInPath(copyCommand.getSource());
-        }
-        else if (command instanceof UnzipCommand unzipCommand) {
-          return hasMarketplaceInPath(unzipCommand.getSource());
+        if (command instanceof UnzipCommand unzipCommand) {
+          return Path.of(unzipCommand.mySource).getFileName().toString().startsWith("marketplace");
         }
         else if (command instanceof DeleteCommand deleteCommand) {
-          return hasMarketplaceInPath(deleteCommand.mySource);
+          return Path.of(deleteCommand.mySource).getFileName().toString().equals("marketplace");
         }
         return false;
       }));
@@ -199,10 +195,6 @@ public final class StartupActionScriptManager {
         saveActionScript(remainingCommands, scriptFile);
       }
     }
-  }
-
-  private static boolean hasMarketplaceInPath(@NotNull String path) {
-    return StringsKt.contains(path, "marketplace", true);
   }
 
   public interface ActionCommand {

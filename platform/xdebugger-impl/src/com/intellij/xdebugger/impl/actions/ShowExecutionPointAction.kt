@@ -33,7 +33,7 @@ private val ourHandler = object : XDebuggerProxySuspendedActionHandler() {
       //  and the frontend should make an exception for this particular case
       //  and run the `stackFrameChanged` even if the stack frame wasn't changed.
       //  See IJPL-214299 for details.
-      updateExecutionPosition(session.project)
+      updateExecutionPosition(session)
     }
   }
 }

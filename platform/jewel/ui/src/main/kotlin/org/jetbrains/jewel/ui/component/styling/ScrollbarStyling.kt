@@ -198,6 +198,9 @@ public sealed interface ScrollbarVisibility {
     /** The padding around the scrollbar track. */
     public val trackPadding: PaddingValues
 
+    /** The padding around the scrollbar track when expanded (e.g., on hover). */
+    public val trackPaddingExpanded: PaddingValues
+
     /** The padding around the scrollbar track when a border is visible. */
     public val trackPaddingWithBorder: PaddingValues
 
@@ -217,6 +220,8 @@ public sealed interface ScrollbarVisibility {
      * the user stops moving the mouse over the content.
      */
     public val lingerDuration: Duration
+
+    public companion object
 
     /**
      * A [ScrollbarVisibility] that keeps the scrollbar always visible.
@@ -249,10 +254,33 @@ public sealed interface ScrollbarVisibility {
         public override val trackColorAnimationDuration: Duration,
         public val scrollbarBackgroundColorLight: Color,
         public val scrollbarBackgroundColorDark: Color,
+        public override val trackThicknessExpanded: Dp = trackThickness,
+        public override val trackPaddingExpanded: PaddingValues = trackPadding,
+        public override val expandAnimationDuration: Duration = 0.milliseconds,
+        public override val lingerDuration: Duration = 0.milliseconds,
     ) : ScrollbarVisibility {
-        public override val trackThicknessExpanded: Dp = trackThickness
-        public override val expandAnimationDuration: Duration = 0.milliseconds
-        public override val lingerDuration: Duration = 0.milliseconds
+        @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+        public constructor(
+            trackThickness: Dp,
+            trackPadding: PaddingValues,
+            trackPaddingWithBorder: PaddingValues,
+            thumbColorAnimationDuration: Duration,
+            trackColorAnimationDuration: Duration,
+            scrollbarBackgroundColorLight: Color,
+            scrollbarBackgroundColorDark: Color,
+        ) : this(
+            trackThickness = trackThickness,
+            trackPadding = trackPadding,
+            trackPaddingWithBorder = trackPaddingWithBorder,
+            thumbColorAnimationDuration = thumbColorAnimationDuration,
+            trackColorAnimationDuration = trackColorAnimationDuration,
+            scrollbarBackgroundColorLight = scrollbarBackgroundColorLight,
+            scrollbarBackgroundColorDark = scrollbarBackgroundColorDark,
+            trackThicknessExpanded = trackThickness,
+            trackPaddingExpanded = trackPadding,
+            expandAnimationDuration = 0.milliseconds,
+            lingerDuration = 0.milliseconds,
+        )
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -270,6 +298,7 @@ public sealed interface ScrollbarVisibility {
             if (trackThicknessExpanded != other.trackThicknessExpanded) return false
             if (expandAnimationDuration != other.expandAnimationDuration) return false
             if (lingerDuration != other.lingerDuration) return false
+            if (trackPaddingExpanded != other.trackPaddingExpanded) return false
 
             return true
         }
@@ -285,6 +314,7 @@ public sealed interface ScrollbarVisibility {
             result = 31 * result + trackThicknessExpanded.hashCode()
             result = 31 * result + expandAnimationDuration.hashCode()
             result = 31 * result + lingerDuration.hashCode()
+            result = 31 * result + trackPaddingExpanded.hashCode()
             return result
         }
 
@@ -299,7 +329,8 @@ public sealed interface ScrollbarVisibility {
                 "scrollbarBackgroundColorDark=$scrollbarBackgroundColorDark, " +
                 "trackThicknessExpanded=$trackThicknessExpanded, " +
                 "expandAnimationDuration=$expandAnimationDuration, " +
-                "lingerDuration=$lingerDuration" +
+                "lingerDuration=$lingerDuration, " +
+                "trackPaddingExpanded=$trackPaddingExpanded" +
                 ")"
         }
 
@@ -333,6 +364,8 @@ public sealed interface ScrollbarVisibility {
         public override val thumbColorAnimationDuration: Duration,
         public override val lingerDuration: Duration,
     ) : ScrollbarVisibility {
+        public override val trackPaddingExpanded: PaddingValues = trackPadding
+
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (javaClass != other?.javaClass) return false
@@ -347,6 +380,7 @@ public sealed interface ScrollbarVisibility {
             if (expandAnimationDuration != other.expandAnimationDuration) return false
             if (thumbColorAnimationDuration != other.thumbColorAnimationDuration) return false
             if (lingerDuration != other.lingerDuration) return false
+            if (trackPaddingExpanded != other.trackPaddingExpanded) return false
 
             return true
         }
@@ -360,6 +394,7 @@ public sealed interface ScrollbarVisibility {
             result = 31 * result + expandAnimationDuration.hashCode()
             result = 31 * result + thumbColorAnimationDuration.hashCode()
             result = 31 * result + lingerDuration.hashCode()
+            result = 31 * result + trackPaddingExpanded.hashCode()
             return result
         }
 
@@ -372,7 +407,8 @@ public sealed interface ScrollbarVisibility {
                 "trackColorAnimationDuration=$trackColorAnimationDuration, " +
                 "expandAnimationDuration=$expandAnimationDuration, " +
                 "thumbColorAnimationDuration=$thumbColorAnimationDuration, " +
-                "lingerDuration=$lingerDuration" +
+                "lingerDuration=$lingerDuration, " +
+                "trackPaddingExpanded=$trackPaddingExpanded" +
                 ")"
         }
 

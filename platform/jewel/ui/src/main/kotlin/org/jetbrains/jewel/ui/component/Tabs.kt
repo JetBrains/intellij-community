@@ -40,6 +40,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import org.jetbrains.annotations.Nls
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Active
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Enabled
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Hovered
@@ -65,7 +66,7 @@ internal class TabContentScopeContainer : TabContentScope
 
 @Composable
 public fun TabContentScope.SimpleTabContent(
-    label: String,
+    @Nls label: String,
     state: TabState,
     modifier: Modifier = Modifier,
     icon: Painter? = null,
@@ -81,7 +82,7 @@ public fun TabContentScope.SimpleTabContent(
 @Suppress("ComposableParamOrder") // It dislikes the vararg
 @Composable
 public fun TabContentScope.SimpleTabContent(
-    label: String,
+    @Nls label: String,
     state: TabState,
     modifier: Modifier = Modifier,
     iconKey: IconKey? = null,

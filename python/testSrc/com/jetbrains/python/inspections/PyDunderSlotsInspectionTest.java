@@ -407,6 +407,19 @@ public class PyDunderSlotsInspectionTest extends PyInspectionTestCase {
     return cls;
   }
 
+  public void testDataclassSlotsAttrIsWritable() {
+    doTestByText("""
+      from dataclasses import dataclass
+      
+      @dataclass(slots=True)
+      class DataClassWithSlots:
+          first_value: int = 0
+      
+      def fun(x : DataClassWithSlots) :
+          x.first_value = 10
+      """);
+  }
+
 
   private void doTestPy2() {
     runWithLanguageLevel(LanguageLevel.PYTHON27, this::doTest);

@@ -99,6 +99,12 @@ class GrammarCheckerTest : GrazieTestBase() {
     assertOneElement(check(plain(text))).assertTypoIs(IntRange(15, 15), listOf("."))
   }
 
+  @Test
+  fun `test Russian text`() {
+    GrazieConfig.update { it.copy(enabledLanguages = setOf(Lang.RUSSIAN)) }
+    assertIsEmpty(check(plain("Времено отключен, т.к. не работает.")))
+  }
+
   private fun plain(vararg texts: String) = plain(texts.toList())
 
   private fun plain(texts: List<String>): Collection<PsiElement> {

@@ -115,7 +115,7 @@ import java.util.stream.Stream;
 import jdk.internal.ValueBased;
 
 @ValueBased
-public final class Optional<T> {
+public final class Optional</*<# @NotNull #>*/T> {
     private static final Optional<?> EMPTY = new Optional((Object)null);
     private final T value;
 

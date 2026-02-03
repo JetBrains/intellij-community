@@ -389,7 +389,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       }
       return null;
     }
-    return PyUnionType.union(types);
+    return PyUnionType.unionOrNever(types);
   }
 
   @Override
@@ -402,7 +402,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       boolean collectImplicitReturn = true;
 
       ControlFlowUtil.Operation checkInstruction(@NotNull Instruction instruction) {
-        if (dataFlow.isUnreachable(instruction)) {
+        if (dataFlow.getReachability(instruction) != Reachability.REACHABLE) {
           return ControlFlowUtil.Operation.CONTINUE;
         }
         if (instruction instanceof PyFinallyFailExitInstruction exitInstruction) {

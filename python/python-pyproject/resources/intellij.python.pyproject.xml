@@ -16,6 +16,8 @@
     <projectOpenProcessor implementation="com.intellij.python.pyproject.model.internal.PyProjectOpenProcessor"/>
 
     <postStartupActivity implementation="com.intellij.python.pyproject.model.internal.PyProjectSyncActivity"/>
+
+    <statistics.projectUsagesCollector implementation="com.intellij.python.pyproject.statistics.PythonTomlStatsUsagesCollector"/>
   </extensions>
   <actions>
     <action class="com.intellij.python.pyproject.model.internal.PyProjectTomlSyncAction" id="PyProjectTomlSyncAction"/>

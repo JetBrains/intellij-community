@@ -38,6 +38,8 @@ jvm_library(
     "//libraries/fastutil",
     "@lib//:platform-credential_store-impl-dbus-java",
     "//libraries/caffeine",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-api:ide",
   ]
 )
 
@@ -77,6 +79,8 @@ jvm_library(
     "//platform/testFramework/extensions:testExtensions",
     "@lib//:assert_j",
     "@lib//:junit4",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-api:ide",
   ]
 )
 ### auto-generated section `build intellij.platform.credentialStore.impl` end

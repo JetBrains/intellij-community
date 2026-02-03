@@ -57,19 +57,23 @@ abstract class BasePasswordSafe : PasswordSafe() {
     }
 
     _currentProvider.drop()
-    if (isSave && store is KeePassCredentialStore) {
-      try {
-        store.save(createMainKeyEncryptionSpec())
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Exception) {
-        LOG.warn(e)
+    try {
+      if (isSave && store is KeePassCredentialStore) {
+        try {
+          store.save(createMainKeyEncryptionSpec())
+        }
+        catch (e: ProcessCanceledException) {
+          throw e
+        }
+        catch (e: Exception) {
+          LOG.warn(e)
+        }
       }
     }
-    else if (store is Closeable) {
-      store.close()
+    finally {
+      if (store is Closeable) {
+        store.close()
+      }
     }
   }
 

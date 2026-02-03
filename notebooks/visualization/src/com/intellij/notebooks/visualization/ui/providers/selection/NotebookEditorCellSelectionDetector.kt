@@ -24,15 +24,13 @@ class NotebookEditorCellSelectionDetector(private val manager: NotebookCellInlay
   }
 
   init {
-    manager.addCellEventsListener(object : EditorCellEventListener {
-      override fun onEditorCellEvents(events: List<EditorCellEventListener.EditorCellEvent>) {
+    manager.addCellEventsListener(
+      { events ->
         val removedCells = events.filterIsInstance<EditorCellEventListener.CellRemoved>()
         for (event in removedCells) {
           selectionModel.removeCell(event.cell)
         }
-      }
-    }, this)
-
+      }, this)
 
     editorImpl.caretModel.addCaretListener(object : CaretListener {
       override fun caretAdded(event: CaretEvent) = scheduleSelectionUpdate()

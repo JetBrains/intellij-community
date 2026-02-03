@@ -173,10 +173,16 @@ class EchoTeamCityMessages(object):
 
     def format_location(self, location):
         if type(location) is tuple and len(location) == 3:
-            return "%s:%s (%s)" % (str(location[0]), str(location[1]), str(location[2]))
+            # Pytest internal location uses 0-based line numbers; display 1-based for humans
+            lineno = location[1]
+            if lineno is not None:
+                lineno = lineno + 1
+            return "%s:%s (%s)" % (str(location[0]), str(lineno), str(location[2]))
         return str(location)
 
     def pytest_sessionfinish(self, session, exitstatus):
+        if sys.version_info[0] == 2:
+            return
         if exitstatus > pytest.ExitCode.TESTS_FAILED and self.current_test_item:
             test_id = self.format_test_id(self.current_test_item.nodeid, self.current_test_item.location)
             self.teamcity.testStopped(
@@ -268,7 +274,8 @@ class EchoTeamCityMessages(object):
                     left, right = right, left
                 diff_error = diff_tools.EqualsAssertionError(expected=right, actual=left)
             else:
-                if m := re.search("AssertionError: Expected <(.*)> to .*? <(.*)>, but .*", err_message):
+                m = re.search("AssertionError: Expected <(.*)> to .*? <(.*)>, but .*", err_message)
+                if m:
                     left, right = m.group(1), m.group(2)
                     if self.swap_diff:
                         left, right = right, left
@@ -281,16 +288,14 @@ class EchoTeamCityMessages(object):
             diff_error = get_exception()
 
         if diff_error:
-            # Cut everything after postfix: it is internal view of DiffError
+            # Keep full pytest traceback; do not truncate by underscore separators to avoid losing frames.
             strace = str(report.longrepr)
-            data_postfix = "_ _ _ _ _"
-            # Error message in pytest must be in "file.py:22 AssertionError" format
-            # This message goes to strace
-            # With custom error we must add real exception class explicitly
-            if data_postfix in strace:
-                strace = strace[0:strace.index(data_postfix)].strip()
-                if strace.endswith(":") and diff_error.real_exception:
+            # If the message ends with ":", append the real exception class for clarity.
+            try:
+                if strace.endswith(":") and getattr(diff_error, "real_exception", None):
                     strace += " " + type(diff_error.real_exception).__name__
+            except Exception:
+                pass
             self.teamcity.testFailed(test_id, diff_error.msg or message, strace,
                                      flowId=test_id,
                                      comparison_failure=diff_error

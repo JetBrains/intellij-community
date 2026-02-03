@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "OVERRIDE_DEPRECATION", "ReplacePutWithAssignment", "LeakingThis")
 
 package com.intellij.openapi.wm.impl.status
@@ -124,6 +124,50 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     const val NAVBAR_WIDGET_KEY: String = "NavBar"
 
     private val LOG = logger<IdeStatusBarImpl>()
+
+    internal fun paintHover(
+      g: Graphics,
+      component: JComponent,
+      highlightBounds: Rectangle,
+      bg: Color,
+      statusBar: StatusBar
+    ) {
+      if (!ExperimentalUI.isNewUI() && (statusBar as? JComponent)?.getUI() is StatusBarUI) {
+        highlightBounds.y += StatusBarUI.BORDER_WIDTH.get()
+        highlightBounds.height -= StatusBarUI.BORDER_WIDTH.get()
+      }
+      g.color = bg
+      if (ExperimentalUI.isNewUI()) {
+        JBInsets.removeFrom(highlightBounds, calcHoverInsetsCorrection(component))
+        val g2 = g.create() as Graphics2D
+        try {
+          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+          g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
+          val arc = scale(4).toFloat()
+          val shape: RoundRectangle2D = RoundRectangle2D.Float(highlightBounds.x.toFloat(), highlightBounds.y.toFloat(), highlightBounds.width.toFloat(), highlightBounds.height.toFloat(), arc, arc)
+          g2.fill(shape)
+        }
+        finally {
+          g2.dispose()
+        }
+      }
+      else {
+        g.fillRect(highlightBounds.x, highlightBounds.y, highlightBounds.width, highlightBounds.height)
+      }
+    }
+
+    private fun calcHoverInsetsCorrection(effectComponent: JComponent): Insets {
+      val comp = effectComponent.insets
+      val hover = JBUI.CurrentTheme.StatusBar.hoverInsets()
+
+      // Don't allow hover be outside the component
+      @Suppress("UseDPIAwareInsets")
+      return Insets(
+        max(0, comp.top - hover.top),
+        max(0, comp.left - hover.left),
+        max(0, comp.bottom - hover.bottom),
+        max(0, comp.right - hover.right))
+    }
   }
 
   override fun findChild(c: Component): StatusBar {
@@ -587,6 +631,8 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
 
     val highlightBounds = effectComponent.bounds
     val point = RelativePoint(effectComponent.parent, highlightBounds.location).getPoint(this)
+    highlightBounds.location = point
+
     val widgetEffect = ClientProperty.get(effectComponent, WIDGET_EFFECT_KEY)
     val bg = if (widgetEffect == WidgetEffect.PRESSED) {
       JBUI.CurrentTheme.StatusBar.Widget.PRESSED_BACKGROUND
@@ -594,42 +640,8 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     else {
       JBUI.CurrentTheme.StatusBar.Widget.HOVER_BACKGROUND
     }
-    if (!ExperimentalUI.isNewUI() && getUI() is StatusBarUI) {
-      point.y += StatusBarUI.BORDER_WIDTH.get()
-      highlightBounds.height -= StatusBarUI.BORDER_WIDTH.get()
-    }
-    highlightBounds.location = point
-    g.color = bg
-    if (ExperimentalUI.isNewUI()) {
-      JBInsets.removeFrom(highlightBounds, calcHoverInsetsCorrection(effectComponent))
-      val g2 = g.create() as Graphics2D
-      try {
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
-        val arc = scale(4).toFloat()
-        val shape: RoundRectangle2D = RoundRectangle2D.Float(highlightBounds.x.toFloat(), highlightBounds.y.toFloat(), highlightBounds.width.toFloat(), highlightBounds.height.toFloat(), arc, arc)
-        g2.fill(shape)
-      }
-      finally {
-        g2.dispose()
-      }
-    }
-    else {
-      g.fillRect(highlightBounds.x, highlightBounds.y, highlightBounds.width, highlightBounds.height)
-    }
-  }
 
-  private fun calcHoverInsetsCorrection(effectComponent: JComponent): Insets {
-    val comp = effectComponent.insets
-    val hover = JBUI.CurrentTheme.StatusBar.hoverInsets()
-
-    // Don't allow hover be outside the component
-    @Suppress("UseDPIAwareInsets")
-    return Insets(
-      max(0, comp.top - hover.top),
-      max(0, comp.left - hover.left),
-      max(0, comp.bottom - hover.bottom),
-      max(0, comp.right - hover.right))
+    paintHover(g, effectComponent, highlightBounds, bg, this)
   }
 
   override fun paintChildren(g: Graphics) {

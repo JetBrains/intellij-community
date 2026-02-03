@@ -44,5 +44,8 @@ interface PolySymbolCodeCompletionItemBuilder {
   fun insertHandler(value: PolySymbolCodeCompletionItemInsertHandler?): PolySymbolCodeCompletionItemBuilder
   fun insertHandler(value: InsertHandler<LookupElement>?): PolySymbolCodeCompletionItemBuilder
 
+  fun restartCompletionOnPrefixChange(prefix: String): PolySymbolCodeCompletionItemBuilder
+  fun restartCompletionOnAnyPrefixChange(): PolySymbolCodeCompletionItemBuilder
+
   fun build(): PolySymbolCodeCompletionItem
 }

@@ -181,7 +181,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       }
       val productWorkspaceFile = basePath.resolve("$CONFIG_WORKSPACE_DIR/$projectWorkspaceId.xml")
       // storageManager.setMacros(macros) was called before, because we need to read a `ProjectIdManager` state to get projectWorkspaceId
-      macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, machineWorkspacePath ?: productWorkspaceFile))
+      macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, productWorkspaceFile))
     }
     isStoreInitialized = true
     LOG.info("Project store initialized with paths: $macros")
@@ -293,10 +293,10 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
   private fun getMachineWorkspacePath(storeDescriptor: ProjectStoreDescriptor): Path? {
     val projectPath = storeDescriptor.historicalProjectBasePath
     if (projectPath.fileSystem != FileSystems.getDefault()) return null
-    val machine = projectPath.asEelPath().descriptor.machine
-    if (machine is LocalEelMachine) return null
+    val descriptor = projectPath.asEelPath().descriptor
+    if (descriptor::class.simpleName != "DockerEelDescriptor") return null
     val pathHash = FileUtilRt.pathHashCode(projectBasePath.invariantSeparatorsPathString)
-    return PathManager.getOriginalConfigDir().resolve("$CONFIG_WORKSPACE_DIR/${sanitizeFileName(machine.name)}.${pathHash.toHexString()}.xml")
+    return PathManager.getOriginalConfigDir().resolve("$CONFIG_WORKSPACE_DIR/${sanitizeFileName(descriptor.machine.name)}.${pathHash.toHexString()}.xml")
   }
 }
 

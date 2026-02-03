@@ -12,12 +12,10 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -30,37 +28,6 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
 
   protected @NlsSafe String myRevision;
   protected int myModificationStamp = 0;
-
-  /**
-   * @deprecated {@link VcsFileSystem} cannot be overwritten
-   */
-  @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
-  protected AbstractVcsVirtualFile(@NotNull @NlsSafe String path, @NotNull VirtualFileSystem ignored) {
-    this(path);
-  }
-
-  protected AbstractVcsVirtualFile(@NotNull @NlsSafe String path) {
-    myPath = path;
-    File file = new File(myPath);
-    myName = file.getName();
-    if (!isDirectory()) {
-      myParent = new VcsVirtualFolder(file.getParent(), this);
-    }
-    else
-      myParent = null;
-
-    SyntheticPsiFileSupport.markFile(this);
-  }
-
-  /**
-   * @deprecated {@link VcsFileSystem} cannot be overwritten
-   */
-  @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
-  protected AbstractVcsVirtualFile(@Nullable VirtualFile parent, @NotNull String name, @NotNull VirtualFileSystem ignored) {
-    this(parent, name);
-  }
 
   protected AbstractVcsVirtualFile(@Nullable VirtualFile parent, @NotNull String name) {
     myPath = parent != null && !StringUtil.isEmpty(parent.getPath()) ? parent.getPath() + "/" + name : name;

@@ -19,12 +19,15 @@ package org.jetbrains.plugins.github.api
 import com.apollographql.apollo.annotations.ApolloExperimental
 import com.apollographql.apollo.ast.*
 import com.fasterxml.jackson.databind.JavaType
+import com.fasterxml.jackson.databind.exc.InvalidNullException
+import com.fasterxml.jackson.databind.introspect.AnnotatedClass
 import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition
 import com.fasterxml.jackson.databind.type.ArrayType
 import com.fasterxml.jackson.databind.type.CollectionLikeType
 import com.intellij.collaboration.api.data.GraphQLRequestPagination
 import com.intellij.diff.util.Side
 import com.intellij.idea.IJIgnore
+import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.github.api.GithubApiRequest.Post.GQLQuery
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
@@ -32,6 +35,7 @@ import org.jetbrains.plugins.github.api.data.GHReactionContent
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.assertThrows
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -266,7 +270,7 @@ class GHGQLDTOTest(val testCase: TestCase) {
       // Need to check if the type is nullable if the query is non-null
       if (pluginQuery is GQLQuery.TraversedParsed &&
           resolvedGqlType !is GQLNonNullType && resolvedGqlType !is GQLListType) {
-        // TODO: Add an assumption test to check this
+        // TODO: Assumptions tests added, but too many errors caused by the check
         //errors += "Field `${path}` in ${resolvedGqlType.toGQLString()} is nullable, but is expected to be non-null"
       }
 
@@ -286,27 +290,56 @@ class GHGQLDTOTest(val testCase: TestCase) {
     return gqlTypedef to fragment
   }
 
-  private fun verifyDtoClass(gqlTypedef: GQLTypeDefinition, gqlFields: List<GQLSelection>, javaType: JavaType) {
-    val beanDescription = mapper.serializationConfig.introspect(javaType)
+  private fun verifyDtoClass(gqlTypedef: GQLTypeDefinition, gqlFields: List<GQLSelection>, baseJavaType: JavaType) {
     val fragmentFields = listAllFragmentFields(gqlTypedef, gqlFields).associateBy { it.field.alias ?: it.field.name }
+    val baseBeanDescription = mapper.serializationConfig.introspect(baseJavaType)
 
-    for (field in beanDescription.findProperties()) {
-      if (field.name in ALWAYS_VALID_FIELD_NAMES) continue
+    val allSubtypes = getAllSubtypes(baseJavaType, baseBeanDescription.classInfo)
+    for (javaType in allSubtypes) {
+      val beanDescription = mapper.serializationConfig.introspect(javaType)
 
-      // Check that the field exists in the fragment
-      val fragmentFieldAndParent = fragmentFields[field.name]
-      if (fragmentFieldAndParent == null) {
-        errors.add("Field is defined in class, but not in fragment: `${field.name}` in `${javaType}`")
-        continue
+      for (field in beanDescription.findProperties()) {
+        if (field.name in ALWAYS_VALID_FIELD_NAMES) continue
+
+        // Skip fields which are not set by a constructor since they usually have computed values
+        if (field.constructorParameter == null) {
+          continue
+        }
+
+        // Check that the field exists in the fragment
+        val fragmentFieldAndParent = fragmentFields[field.name]
+        if (fragmentFieldAndParent == null) {
+          errors.add("Field is defined in class, but not in fragment: `${field.name}` in `${javaType}`")
+          continue
+        }
+        val (fieldParentTypedef, fragmentField) = fragmentFieldAndParent
+
+        // Check that the field's DTO type matches with the schema
+        val fieldDef = fieldParentTypedef.resolveFieldDefinition(fragmentField)
+        if (fieldDef == null) continue
+
+        verifyDtoField(fragmentField, fieldDef, field)
       }
-      val (fieldParentTypedef, fragmentField) = fragmentFieldAndParent
-
-      // Check that the field's DTO type matches with the schema
-      val fieldDef = fieldParentTypedef.resolveFieldDefinition(fragmentField)
-      if (fieldDef == null) continue
-
-      verifyDtoField(fragmentField, fieldDef, field)
     }
+  }
+
+  /**
+   * Find all possible subtypes (e.g., @JsonSubTypes) to make sure that they also will be resolved correctly
+   */
+  private fun getAllSubtypes(javaType: JavaType, annotatedClass: AnnotatedClass): List<JavaType> {
+    val config = mapper.serializationConfig
+    val namedSubtypes = config.subtypeResolver.collectAndResolveSubtypesByTypeId(config, annotatedClass)
+
+    val subtypeJavaTypes = namedSubtypes
+      .mapNotNull { it.type }
+      .filter { subtypeClass -> javaType.rawClass.isAssignableFrom(subtypeClass) }
+      .mapNotNull { subtypeClass -> mapper.typeFactory.constructSpecializedType(javaType, subtypeClass) }
+      .toList()
+
+    val result = mutableListOf<JavaType>()
+    result.add(javaType)
+    result.addAll(subtypeJavaTypes)
+    return result
   }
 
   private fun verifyDtoField(gqlField: GQLField, gqlFieldDef: GQLFieldDefinition, javaField: BeanPropertyDefinition) {
@@ -375,7 +408,7 @@ class GHGQLDTOTest(val testCase: TestCase) {
     // if the GQL field is non-null, again not a problem, it will just never be null
     if (gqlFieldDef.type is GQLNonNullType) return
 
-    errors.add("Field `${javaField.name}` is non-null (`${javaField.primaryType}`), but nullable according to the schema (`${gqlFieldDef.type.toGQLString()}`)")
+    errors.add("Field `${javaField.name}` is non-null (`${javaField.primaryType}, ${kClass.simpleName}`), but nullable according to the schema (`${gqlFieldDef.type.toGQLString()}`)")
   }
 
   private fun validateEnumField(name: String, type: JavaType, gqlTypedef: GQLEnumTypeDefinition) {
@@ -386,7 +419,8 @@ class GHGQLDTOTest(val testCase: TestCase) {
 
     val javaEnumValues = type.rawClass.enumConstants.map { it.toString() }.toSet()
     for (gqlValue in gqlTypedef.enumValues) {
-      if (gqlValue.name !in javaEnumValues) {
+      // todo: why do we use lowercased enum values?
+      if (gqlValue.name !in javaEnumValues && gqlValue.name.lowercase() !in javaEnumValues) {
         errors.add("Enum value `${gqlValue.name}` missing in type `${type.rawClass.name}` for field `$name`")
       }
     }
@@ -574,6 +608,7 @@ private object TestCases {
  */
 class GHGQLDeserializationAssumptionsTest {
   companion object {
+    private const val DEFAULT_VALUE = "My default string"
     private val mapper = GithubApiContentHelper.getObjectMapper(gqlNaming = true)
   }
 
@@ -582,27 +617,111 @@ class GHGQLDeserializationAssumptionsTest {
   )
 
   data class ListHolderWithDefault(
-    val l: List<String> = emptyList(),
+    val l: List<String> = listOf(DEFAULT_VALUE),
+  )
+
+  data class ListHolderNullable(
+    val l: List<String>?,
+  )
+
+  data class StringHolder(
+    val s: String,
+  )
+
+  data class StringHolderWithDefault(
+    val s: String = DEFAULT_VALUE,
+  )
+
+  data class StringHolderWithNullable(
+    val s: String?,
   )
 
   @Test
-  fun `deserializing a missing value instead of a list is not fine`() {
-    assertThrows<Exception> { mapper.readValue("""{}""", ListHolder::class.java) }
+  fun `deserializing a missing value instead of a list is fine`() {
+    val result = assertDoesNotThrow { mapper.readValue("""{}""", ListHolder::class.java) }
+    CollectionAssertions.assertEqualsOrdered(result.l, emptyList())
   }
 
   @Test
   fun `deserializing a missing value instead of a list is fine with default`() {
-    assertDoesNotThrow { mapper.readValue("""{}""", ListHolderWithDefault::class.java) }
+    val result = assertDoesNotThrow { mapper.readValue("""{}""", ListHolderWithDefault::class.java) }
+    CollectionAssertions.assertEqualsOrdered(result.l, listOf(DEFAULT_VALUE))
+  }
+
+  @Test
+  fun `deserializing a missing value instead of a list is fine with nullable`() {
+    val result = assertDoesNotThrow { mapper.readValue("""{}""", ListHolderNullable::class.java) }
+    assertNull(result.l)
   }
 
   @Test
   fun `deserializing a null instead of a list is fine`() {
-    assertDoesNotThrow { mapper.readValue("""{"l":null}""", ListHolder::class.java) }
+    val result = assertDoesNotThrow { mapper.readValue("""{"l":null}""", ListHolder::class.java) }
+    CollectionAssertions.assertEqualsOrdered(result.l, emptyList())
+  }
+
+  @Test
+  fun `deserializing a null instead of a list is fine with default`() {
+    val result = assertDoesNotThrow { mapper.readValue("""{"l":null}""", ListHolderWithDefault::class.java) }
+    CollectionAssertions.assertEqualsOrdered(result.l, emptyList())
+  }
+
+  // todo: that's a counter-intuitive behaviour, maybe we should reconsider this configuration?
+  @Test
+  fun `deserializing a null instead of a list is fine with nullable`() {
+    val result = assertDoesNotThrow { mapper.readValue("""{"l":null}""", ListHolderNullable::class.java) }
+    CollectionAssertions.assertEqualsOrdered(result.l, emptyList())
   }
 
   @Test
   fun `deserializing a null inside a list is fine`() {
-    assertDoesNotThrow { mapper.readValue("""{"l":[null]}""", ListHolder::class.java) }
+    val result = assertDoesNotThrow { mapper.readValue("""{"l":[null]}""", ListHolder::class.java) }
+    CollectionAssertions.assertEqualsOrdered(result.l, listOf(null))
+  }
+
+  @Test
+  fun `deserializing a null inside a list is fine with default`() {
+    val result = assertDoesNotThrow { mapper.readValue("""{"l":[null]}""", ListHolderWithDefault::class.java) }
+    CollectionAssertions.assertEqualsOrdered(result.l, listOf(null))
+  }
+
+  @Test
+  fun `deserializing a null inside a list is fine with nullable`() {
+    val result = assertDoesNotThrow { mapper.readValue("""{"l":[null]}""", ListHolderNullable::class.java) }
+    CollectionAssertions.assertEqualsOrdered(result.l, listOf(null))
+  }
+
+  @Test
+  fun `deserializing a null string`() {
+    assertThrows<InvalidNullException> { mapper.readValue("""{"s":null}""", StringHolder::class.java) }
+  }
+
+  @Test
+  fun `deserializing a null string with default`() {
+    assertThrows<InvalidNullException> { mapper.readValue("""{"s":null}""", StringHolderWithDefault::class.java) }
+  }
+
+  @Test
+  fun `deserializing a null string with nullable`() {
+    val result = assertDoesNotThrow { mapper.readValue("""{"s":null}""", StringHolderWithNullable::class.java) }
+    assertNull(result.s)
+  }
+
+  @Test
+  fun `deserializing an absent field to not nullable string`() {
+    assertThrows<InvalidNullException> { mapper.readValue("""{}""", StringHolder::class.java) }
+  }
+
+  @Test
+  fun `deserializing an absent field to not nullable string with default`() {
+    val result = assertDoesNotThrow { mapper.readValue("""{}""", StringHolderWithDefault::class.java) }
+    assertThat(result.s).isEqualTo(DEFAULT_VALUE)
+  }
+
+  @Test
+  fun `deserializing an absent field to nullable string`() {
+    val result = assertDoesNotThrow { mapper.readValue("""{}""", StringHolderWithNullable::class.java) }
+    assertNull(result.s)
   }
 }
 
@@ -740,7 +859,7 @@ internal class MetaTest {
         }
       """.trimIndent(),
       expectedErrors = listOf(
-        "Field `l` is non-null (`[simple type, class java.lang.String]`), but nullable according to the schema (`String`)"
+        "Field `l` is non-null (`[simple type, class java.lang.String], StringHolder`), but nullable according to the schema (`String`)"
       )
     )
   }
@@ -841,7 +960,7 @@ internal class MetaTest {
         }
       """.trimIndent(),
       expectedErrors = listOf(
-        "Field `l` is non-null (`[collection type; class java.util.List, contains [simple type, class java.lang.String]]`), but nullable according to the schema (`[String!]`)"
+        "Field `l` is non-null (`[collection type; class java.util.List, contains [simple type, class java.lang.String]], ListHolderWithoutDefault`), but nullable according to the schema (`[String!]`)"
       )
     )
   }

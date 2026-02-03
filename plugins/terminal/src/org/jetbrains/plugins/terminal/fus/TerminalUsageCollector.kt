@@ -20,7 +20,7 @@ import kotlin.time.Duration
 object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 30)
+  private val GROUP = EventLogGroup(GROUP_ID, 31)
 
   private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.Class("terminalCommandHandler")
   private val RUN_ANYTHING_PROVIDER_FIELD = EventFields.Class("runAnythingProvider")
@@ -128,10 +128,10 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   }
 
   @JvmStatic
-  fun triggerLocalShellStarted(project: Project, shellCommand: List<String>, isBlockTerminal: Boolean) {
+  fun triggerLocalShellStarted(project: Project, shellCommand: String, isBlockTerminal: Boolean) {
     localExecEvent.log(project,
                        Version.parseVersion(SystemInfo.OS_VERSION)?.toCompactString() ?: "unknown",
-                       TerminalShellInfoStatistics.getShellNameForStat(shellCommand.firstOrNull()),
+                       TerminalShellInfoStatistics.getShellNameForStat(shellCommand),
                        isBlockTerminal)
     if (isBlockTerminal) {
       val propertiesComponent = PropertiesComponent.getInstance()

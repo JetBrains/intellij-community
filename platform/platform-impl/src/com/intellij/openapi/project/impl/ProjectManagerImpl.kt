@@ -102,6 +102,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.LinkOption
 import java.nio.file.Path
@@ -684,7 +685,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
                 throw CancellationException("beforeOpen callback returned false")
               }
 
-              configureWorkspace(project, projectIdentityFile, options)
+              val projectStoreBaseDir = projectIdentityFile.takeIf { Files.isDirectory(it) }
+                                        ?: options.projectRootDir
+              if (projectStoreBaseDir != null) {
+                configureWorkspace(project, projectStoreBaseDir, options)
+              }
             }
 
             if (Registry.`is`("ide.create.project.root.entity") && options.projectRootDir != null) {

@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.codeVision
 
 import com.intellij.codeInsight.codeVision.ui.CodeVisionView
+import com.intellij.codeInsight.codeVision.ui.model.CodeVisionVisualVerticalPositionKeeper
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -100,6 +101,19 @@ open class EditorCodeVisionContext(
   // used externally
   @Suppress("MemberVisibilityCanBePrivate")
   fun resubmitThings() {
+    // RIDER-133722
+    editor.scrollingModel.disableAnimation()
+    val keeper = CodeVisionVisualVerticalPositionKeeper(editor)
+    try {
+      resubmitThingsInternal()
+    }
+    finally {
+      keeper.restoreOriginalLocation()
+      editor.scrollingModel.enableAnimation()
+    }
+  }
+
+  private fun resubmitThingsInternal() {
     val project = editor.project
     if (project == null) {
       LOG.warn("Project wasn't available from editor during code vision calculation")

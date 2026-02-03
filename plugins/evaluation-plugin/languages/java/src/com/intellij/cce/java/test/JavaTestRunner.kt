@@ -55,8 +55,8 @@ class JavaTestRunner : TestRunner {
 
 internal data class ModuleTests(val module: String?, val tests: List<String>)
 
-private fun isMaven(project: Project): Boolean =
+internal fun isMaven(project: Project): Boolean =
   MavenProjectsManager.getInstance(project).hasProjects()
 
-private fun isGradle(project: Project): Boolean =
+internal fun isGradle(project: Project): Boolean =
   ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID).getLinkedProjectsSettings().isNotEmpty()

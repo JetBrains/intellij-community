@@ -9,12 +9,10 @@ import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinWizardVersio
  * DO NOT EDIT IT BY HAND, run "Generate Kotlin Wizard Default Data" configuration instead
  */
 internal val DEFAULT_KOTLIN_WIZARD_VERSIONS = KotlinWizardVersionState(
-    kotlinPluginVersion = "2.2.21",
+    kotlinPluginVersion = "2.3.0",
     kotlinForComposeVersion = "1.7.20",
     composeCompilerExtension = "1.4.3",
-    minGradleFoojayVersion = "7.6",
     minKotlinFoojayVersion = "1.5.30",
-    foojayVersion = "1.0.0",
     failsafeVersion = "2.22.2",
     surefireVersion = "2.22.2",
     gradleAndroidVersion = "8.1.0",

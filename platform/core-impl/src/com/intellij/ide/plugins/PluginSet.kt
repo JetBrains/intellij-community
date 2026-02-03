@@ -17,6 +17,7 @@ class PluginSet internal constructor(
   private val enabledModuleMap: Map<PluginModuleId, ContentModuleDescriptor>,
   private val enabledPluginAndV1ModuleMap: Map<PluginId, PluginModuleDescriptor>,
   private val enabledModules: List<PluginModuleDescriptor>,
+  private val topologicalComparator: Comparator<PluginModuleDescriptor>,
 ) {
   /**
    * You must not use this method before [ClassLoaderConfigurator.configure].
@@ -26,6 +27,8 @@ class PluginSet internal constructor(
   internal fun getSortedDependencies(moduleDescriptor: PluginModuleDescriptor): List<PluginModuleDescriptor> {
     return sortedModulesWithDependencies.directDependencies.getOrDefault(moduleDescriptor, Collections.emptyList())
   }
+
+  fun getModuleTopologicalComparator(): Comparator<PluginModuleDescriptor> = topologicalComparator
 
   @TestOnly
   fun getUnsortedEnabledModules(): Collection<ContentModuleDescriptor> = Java11Shim.INSTANCE.copyOf(enabledModuleMap.values)

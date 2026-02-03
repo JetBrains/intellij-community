@@ -35,6 +35,8 @@ internal data class PolySymbolCodeCompletionItemImpl(
   override val insertHandler: PolySymbolCodeCompletionItemInsertHandler? = null,
   @get:ApiStatus.Internal
   val stopSequencePatternEvaluation: Boolean = false,
+  val restartCompletionOnAnyPrefixChange: Boolean = false,
+  val restartCompletionOnPrefixChange: Set<String> = emptySet(),
 ) : PolySymbolCodeCompletionItem {
 
   override val typeText: String? get() = typeTextProvider?.invoke() ?: typeTextStatic
@@ -95,8 +97,17 @@ internal data class PolySymbolCodeCompletionItemImpl(
       }.let {
         PrioritizedLookupElement.withExplicitProximity(it, proximity ?: 0)
       }.let {
-        (if (offset > 0) result.withPrefixMatcher(completionPrefixMatcher.cloneWithPrefix(completionPrefix.substring(offset)))
-        else result).addElement(it)
+        val result =
+          if (offset > 0)
+            result.withPrefixMatcher(completionPrefixMatcher.cloneWithPrefix(completionPrefix.substring(offset)))
+          else
+            result
+        if (restartCompletionOnAnyPrefixChange) {
+          result.restartCompletionOnAnyPrefixChange()
+        } else if (restartCompletionOnPrefixChange.isNotEmpty()) {
+          restartCompletionOnPrefixChange.forEach { prefix -> result.restartCompletionOnPrefixChange(prefix) }
+        }
+        result.addElement(it)
       }
   }
 
@@ -184,6 +195,11 @@ internal data class PolySymbolCodeCompletionItemImpl(
   override fun withInsertHandlerAdded(insertHandler: PolySymbolCodeCompletionItemInsertHandler): PolySymbolCodeCompletionItem =
     copy(insertHandler = CompoundInsertHandler.merge(this.insertHandler, insertHandler))
 
+  override fun withCompletionRestartedOnAnyPrefixChange(): PolySymbolCodeCompletionItem =
+    copy(restartCompletionOnAnyPrefixChange = true)
+
+  override fun withCompletionRestartedOnPrefixChange(prefix: String): PolySymbolCodeCompletionItem =
+    copy(restartCompletionOnPrefixChange = restartCompletionOnPrefixChange + prefix)
 
   fun with(
     name: String = this.name,
@@ -229,6 +245,8 @@ internal data class PolySymbolCodeCompletionItemImpl(
     override var caseSensitive: Boolean = true
     override var insertHandler: PolySymbolCodeCompletionItemInsertHandler? = null
     private var stopSequencePatternEvaluation: Boolean = false
+    private var restartCompletionOnAnyPrefixChange: Boolean = false
+    private var restartCompletionOnPrefixChange: MutableSet<String> = mutableSetOf()
 
     override val typeText: String? get() = typeTextProvider?.invoke() ?: typeTextStatic
 
@@ -313,6 +331,16 @@ internal data class PolySymbolCodeCompletionItemImpl(
 
     override fun insertHandler(value: InsertHandler<LookupElement>?): PolySymbolCodeCompletionItemBuilder {
       insertHandler = value?.let { PolySymbolCodeCompletionItemInsertHandler.adapt(it, PolySymbol.Priority.NORMAL) }
+      return this
+    }
+
+    override fun restartCompletionOnPrefixChange(prefix: String): PolySymbolCodeCompletionItemBuilder {
+      restartCompletionOnPrefixChange.add(prefix)
+      return this
+    }
+
+    override fun restartCompletionOnAnyPrefixChange(): PolySymbolCodeCompletionItemBuilder {
+      restartCompletionOnAnyPrefixChange = true
       return this
     }
 

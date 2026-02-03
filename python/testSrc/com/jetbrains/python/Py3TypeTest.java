@@ -18,7 +18,7 @@ import java.util.Map;
 
 public class Py3TypeTest extends PyTestCase {
   public static final String TEST_DIRECTORY = "/types/";
-  
+
   // See PyReferenceExpressionImpl.getQualifiedReferenceType for explanations.
   public void testQualifiedNameResolution() {
     doTest("str", """
@@ -51,7 +51,7 @@ public class Py3TypeTest extends PyTestCase {
           expr = self.t
       """);
   }
-  
+
   // PY-83047
   public void testQualifiedReferenceTypeNarrowing() {
     doTest("int | None", """
@@ -87,7 +87,7 @@ public class Py3TypeTest extends PyTestCase {
       """);
 
     // Same, but as a separate function
-    
+
     doTest("int | None", """
       class C:
           def __init__(self):
@@ -121,7 +121,7 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
-  /** 
+  /**
   Overload signatures for dict.get and dict.pop in builtins.pyi differ slightly,
   dict.get has default value for "default" parameter. This affect the logic of overload resolution.
   Therefore it makes sense to test both.
@@ -151,7 +151,7 @@ public class Py3TypeTest extends PyTestCase {
              d = {}
              expr = d.pop("abc", None)""");
   }
-  
+
   // PY-83351
   public void testWhileStatementNarrowing() {
     doTest("int",
@@ -169,7 +169,7 @@ public class Py3TypeTest extends PyTestCase {
                      x = None
              """);
   }
-  
+
   // PY-83597
   public void testAndExpressionNarrowing() {
     doTest("int", """
@@ -177,7 +177,7 @@ public class Py3TypeTest extends PyTestCase {
                  x and (expr := x)
              """);
   }
-  
+
   // PY-83348
   public void testOrExpressionType() {
     doTest("int | str", """
@@ -199,7 +199,7 @@ public class Py3TypeTest extends PyTestCase {
              expr = foo()
              """);
   }
-  
+
   // PY-21069
   public void testDunderGetattr() {
     doTest("MyClass", """
@@ -3305,6 +3305,49 @@ public class Py3TypeTest extends PyTestCase {
     });
   }
 
+  // PY-50642
+  public void testTypeChecking() {
+    doTest("int", """
+      from typing import TYPE_CHECKING
+      
+      if not not TYPE_CHECKING:
+          v: int = -1
+      else:
+          v: str = 'ab'
+      expr = v
+      """);
+  }
+
+  // PY-50642
+  public void testTypeCheckingInClassBody() {
+    doTest("int", """
+      from typing import TYPE_CHECKING
+      
+      class A:
+          if not not TYPE_CHECKING:
+              def foo(self) -> int: ...
+          else:
+              def foo(self) -> str: ...
+      expr = A().foo()
+      """);
+  }
+
+  // PY-50642
+  public void testTypeCheckingMultiFile() {
+    myFixture.addFileToProject("mod.py", """
+      import typing
+
+      if not not typing.TYPE_CHECKING:
+          v: int = -1
+      else:
+          v: str = 'ab'
+      """);
+
+    doTest("int", """
+      from mod import v
+      expr = v
+      """);
+  }
 
   // PY-73958
   public void testNoStackOverflow() {
@@ -4026,7 +4069,7 @@ public class Py3TypeTest extends PyTestCase {
              a = []
 
              def fun():
-                 if True:
+                 if input():
                      a = True
                  else:
                      a = 5
@@ -4145,6 +4188,25 @@ public class Py3TypeTest extends PyTestCase {
       from lib import f
       
       expr = f()
+      """);
+  }
+
+  // PY-81684
+  public void testFunctionAlwaysRaisesReturnsNever() {
+    // The function actually returns NoReturn, but its get converted to Never upon assignment to expr
+    doTest("Never", """
+      def f():
+          raise Exception()
+    
+      expr = f()
+    """);
+  }
+
+  // PY-85078
+  public void testComprehensionIfClauseNarrows() {
+    doTest("str", """
+      messages = ["a", None, "b"]
+      ((expr := msg) for msg in messages if msg)
       """);
   }
 

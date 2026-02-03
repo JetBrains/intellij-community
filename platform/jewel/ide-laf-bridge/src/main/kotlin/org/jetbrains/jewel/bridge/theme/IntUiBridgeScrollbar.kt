@@ -33,6 +33,27 @@ internal fun readScrollbarStyle(isDark: Boolean): ScrollbarStyle =
         scrollbarVisibility = readScrollbarVisibility(),
     )
 
+internal fun readTabStripScrollbarStyle(isDark: Boolean): ScrollbarStyle =
+    ScrollbarStyle(
+        colors = readScrollbarColors(isDark),
+        metrics = readScrollbarMetrics(),
+        trackClickBehavior = TrackClickBehavior.JumpToSpot,
+        scrollbarVisibility =
+            ScrollbarVisibility.AlwaysVisible(
+                trackThickness = 5.dp,
+                trackThicknessExpanded = 5.dp,
+                trackPadding = PaddingValues(1.dp),
+                trackPaddingExpanded = PaddingValues(),
+                trackPaddingWithBorder = PaddingValues(1.dp),
+                trackColorAnimationDuration = 125.milliseconds,
+                expandAnimationDuration = 125.milliseconds,
+                thumbColorAnimationDuration = 125.milliseconds,
+                lingerDuration = 700.milliseconds,
+                scrollbarBackgroundColorLight = Color.Unspecified,
+                scrollbarBackgroundColorDark = Color.Unspecified,
+            ),
+    )
+
 private fun readScrollbarColors(isDark: Boolean) =
     if (hostOs.isMacOS) {
         readScrollbarMacColors(isDark)

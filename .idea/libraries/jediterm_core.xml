@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="jediterm-core" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.jediterm:jediterm-core:3.57">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.jediterm:jediterm-core:3.59">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-core/3.57/jediterm-core-3.57.jar">
-          <sha256sum>e3d7c60adfdebe47732889d1ff21bc936ddf9990609ac54501c7cf749b0fe640</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-core/3.59/jediterm-core-3.59.jar">
+          <sha256sum>83247c676405d5c5c1764454d35f2bec4f70b72f1b75046d4c43bdbc49eb9587</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-core/3.57/jediterm-core-3.57.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-core/3.59/jediterm-core-3.59.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-core/3.57/jediterm-core-3.57-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-core/3.59/jediterm-core-3.59-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

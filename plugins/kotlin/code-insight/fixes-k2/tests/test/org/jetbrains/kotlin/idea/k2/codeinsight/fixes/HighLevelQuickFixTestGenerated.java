@@ -3430,6 +3430,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("annotationCallOutsideOfAnnotation.kt")
+        public void testAnnotationCallOutsideOfAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertCollectionLiteralToIntArrayOf/annotationCallOutsideOfAnnotation.kt");
+        }
+
         @TestMetadata("companionObject.kt")
         public void testCompanionObject() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/convertCollectionLiteralToIntArrayOf/companionObject.kt");

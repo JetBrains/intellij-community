@@ -64,6 +64,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
     val installedButton = x { and(byType(JButton::class.java), byAccessibleName("Installed")) }
     val enabledCheckBox = checkBox { and(byType(JCheckBox::class.java), byAccessibleName("Enabled")) }
     val ultimateTagLabel = x { and(byType("com.intellij.ide.plugins.newui.TagComponent"), byAccessibleName("Ultimate")) }
+    val proTagLabel = x { and(byType("com.intellij.ide.plugins.newui.TagComponent"), byAccessibleName("Pro")) }
     val errorNotice = x { byType("com.intellij.ide.plugins.newui.ErrorComponent") }
     val updateButton = x { byAccessibleName("Update") }
     val restartIdeButton = x { byAccessibleName("Restart IDE") }

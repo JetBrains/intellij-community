@@ -3542,7 +3542,6 @@ a:com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile
 - p:<init>(com.intellij.openapi.vcs.FilePath):V
 - p:<init>(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath):V
 - p:<init>(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
-- p:<init>(java.lang.String):V
 - a:contentsToByteArray():B[]
 - getChildren():com.intellij.openapi.vfs.VirtualFile[]
 - getFileSystem():com.intellij.openapi.vfs.VirtualFileSystem
@@ -3590,11 +3589,6 @@ c:com.intellij.openapi.vcs.vfs.VcsVirtualFile
 - <init>(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.history.VcsFileRevision):V
 - <init>(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.history.VcsFileRevision):V
 - <init>(com.intellij.openapi.vfs.VirtualFile,java.lang.String,com.intellij.openapi.vcs.history.VcsFileRevision):V
-- <init>(com.intellij.openapi.vfs.VirtualFile,java.lang.String,com.intellij.openapi.vcs.history.VcsFileRevision,com.intellij.openapi.vfs.VirtualFileSystem):V
-- <init>(java.lang.String,com.intellij.openapi.vcs.history.VcsFileRevision):V
-- <init>(java.lang.String,com.intellij.openapi.vcs.history.VcsFileRevision,com.intellij.openapi.vfs.VirtualFileSystem):V
-- <init>(java.lang.String,B[],java.lang.String):V
-- <init>(java.lang.String,B[],java.lang.String,com.intellij.openapi.vfs.VirtualFileSystem):V
 - contentsToByteArray():B[]
 - getCharset():java.nio.charset.Charset
 - getFileRevision():com.intellij.openapi.vcs.history.VcsFileRevision
@@ -3604,8 +3598,6 @@ c:com.intellij.openapi.vcs.vfs.VcsVirtualFile
 c:com.intellij.openapi.vcs.vfs.VcsVirtualFolder
 - com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile
 - <init>(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vfs.VirtualFile):V
-- <init>(java.lang.String,com.intellij.openapi.vfs.VirtualFile):V
-- <init>(java.lang.String,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFileSystem):V
 - contentsToByteArray():B[]
 - getChildren():com.intellij.openapi.vfs.VirtualFile[]
 - isDirectory():Z

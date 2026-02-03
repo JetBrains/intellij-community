@@ -8,15 +8,19 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 import org.jetbrains.idea.maven.server.security.TokenReader;
 
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
 
 public final class MavenServerUtil {
   private static final Properties mySystemPropertiesCache;
   private static MavenToken ourToken;
-
-
 
   static {
     Properties res = new Properties();
@@ -52,8 +56,7 @@ public final class MavenServerUtil {
     File baseDir = workingDir;
     File dir = workingDir;
     while (dir != null) {
-      MavenServerStatsCollector.fileRead(new File(dir, ".mvn"));
-      if (new File(dir, ".mvn").exists()) {
+      if (isDotMvnRoot(dir) || isPomXmlRoot(dir)) {
         baseDir = dir;
         break;
       }
@@ -67,6 +70,31 @@ public final class MavenServerUtil {
     }
   }
 
+  private static boolean isPomXmlRoot(File dir) {
+    File pom = new File(dir, "pom.xml");
+    //we cannot use any maven models here, just good old XML parsing
+    try (BufferedInputStream is = new BufferedInputStream(new FileInputStream(pom))) {
+      XMLStreamReader parser = XMLInputFactory.newFactory().createXMLStreamReader(is);
+      if (parser.nextTag() != XMLStreamConstants.START_ELEMENT || !parser.getLocalName().equals("project")) {
+        return false;
+      }
+      for (int i = 0; i < parser.getAttributeCount(); i++) {
+        String attributeName = parser.getAttributeLocalName(i);
+        String attributeValue = parser.getAttributeValue(i);
+        if ("root".equals(attributeName) && Boolean.parseBoolean(attributeValue)) {
+          return true;
+        }
+      }
+    }
+    catch (IOException | XMLStreamException ignore) {
+      return false;
+    }
+    return false;
+  }
+
+  private static boolean isDotMvnRoot(File dir) {
+    return new File(dir, ".mvn").isDirectory();
+  }
 
   private static boolean isMagicalProperty(String key) {
     return key.startsWith("=");
@@ -99,7 +127,8 @@ public final class MavenServerUtil {
   public static void readToken() {
     try {
       ourToken = new TokenReader(new Scanner(System.in), 10000).getToken();
-    } catch (Throwable e) {
+    }
+    catch (Throwable e) {
       ExceptionUtilRt.rethrowUnchecked(e);
     }
   }

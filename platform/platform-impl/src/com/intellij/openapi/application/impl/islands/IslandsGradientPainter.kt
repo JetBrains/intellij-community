@@ -4,10 +4,10 @@ package com.intellij.openapi.application.impl.islands
 import com.intellij.ide.ProjectWidgetGradientLocationService
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.ui.GradientTextureCache
-import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.AbstractPainter
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx
@@ -74,16 +74,18 @@ internal fun islandsGradientPaint(frame: IdeFrame, mainColor: Color, projectWind
     doColorGradientPaint(project, projectWindowCustomizer, component, g)
   }
   else {
-    doGradientPaint(frame, mainColor, project, projectWindowCustomizer, component, g)
+    doGradientPaint(frame, mainColor, project, projectWindowCustomizer, g)
   }
 }
 
-private fun doGradientPaint(frame: IdeFrame, mainColor: Color, project: Project, projectWindowCustomizer: ProjectWindowCustomizerService, component: Component, g: Graphics2D) {
+private fun doGradientPaint(frame: IdeFrame, mainColor: Color, project: Project, projectWindowCustomizer: ProjectWindowCustomizerService, g: Graphics2D) {
+  val cache = getGradientCache(frame.component, "GradientCache")
+
   val centerColor = projectWindowCustomizer.getGradientProjectColor(project)
 
   val centerX = project.service<ProjectWidgetGradientLocationService>().gradientOffsetRelativeToRootPane
 
-  val blendedColor = ColorUtil.blendColorsInRgb(mainColor, centerColor, 0.85 * (centerColor.alpha.toDouble() / 255))
+  val blendedColor = cache.getBlendedColor(mainColor, centerColor)
 
   val ctx = ScaleContext.create(g)
 
@@ -94,12 +96,8 @@ private fun doGradientPaint(frame: IdeFrame, mainColor: Color, project: Project,
   val rightWidth = alignIntToInt(length, ctx, PaintUtil.RoundingMode.CEIL, null)
   val totalWidth = alignIntToInt(leftWidth + rightWidth, ctx, PaintUtil.RoundingMode.CEIL, null)
 
-  val root = frame.component
-  val leftGradientTexture = getGradientCache(root, "LeftGradientCache").getHorizontalTexture(g, leftWidth, mainColor, blendedColor)
-  val rightGradientTexture = getGradientCache(root, "RightGradientCache").getHorizontalTexture(g, rightWidth, blendedColor, mainColor, leftWidth)
-
-  g.color = mainColor
-  g.fillRect(0, 0, component.width, component.height)
+  val leftGradientTexture = cache.left.getHorizontalTexture(g, leftWidth, mainColor, blendedColor)
+  val rightGradientTexture = cache.right.getHorizontalTexture(g, rightWidth, blendedColor, mainColor, leftWidth)
 
   g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
 
@@ -113,18 +111,36 @@ private fun doGradientPaint(frame: IdeFrame, mainColor: Color, project: Project,
 
   alignTxToInt(g, null, false, true, PaintUtil.RoundingMode.FLOOR)
 
-  val startColor = if (ClientSystemInfo.isMac()) Gray.TRANSPARENT else ColorUtil.toAlpha(mainColor, 0)
+  val startColor = if (SystemInfo.isMac) Gray.TRANSPARENT else ColorUtil.toAlpha(mainColor, 0)
   g.paint = GradientPaint(0f, 0f, startColor, 0f, height.toFloat(), mainColor)
   g.fillRect(0, 0, totalWidth, height)
 }
 
-private fun getGradientCache(root: JComponent, key: String): GradientTextureCache {
+private class GradientCache {
+  val left = GradientTextureCache()
+  val right = GradientTextureCache()
+
+  private var mainRgb = 0
+  private var centerRgb = 0
+  private var blendedColor: Color? = null
+
+  fun getBlendedColor(mainColor: Color, centerColor: Color): Color {
+    if (blendedColor == null || mainRgb != mainColor.rgb || centerRgb != centerColor.rgb) {
+      mainRgb = mainColor.rgb
+      centerRgb = centerColor.rgb
+      blendedColor = ColorUtil.blendColorsInRgb(mainColor, centerColor, 0.85 * (centerColor.alpha.toDouble() / 255))
+    }
+    return blendedColor!!
+  }
+}
+
+private fun getGradientCache(root: JComponent, key: String): GradientCache {
   val gradientCache = root.getClientProperty(key)
-  if (gradientCache is GradientTextureCache) {
+  if (gradientCache is GradientCache) {
     return gradientCache
   }
 
-  val newValue = GradientTextureCache()
+  val newValue = GradientCache()
   root.putClientProperty(key, newValue)
   return newValue
 }

@@ -10,7 +10,7 @@ import org.jetbrains.jewel.ui.util.MessageResourceResolver
  * associated with specific keys. It can be used to retrieve action text for UI elements, like buttons or menu items
  * based on the string keys from IntelliJ Platform resource bundle.
  */
-internal class IntUiMessageResourceResolver : MessageResourceResolver {
+internal object IntUiMessageResourceResolver : MessageResourceResolver {
     /**
      * Fetches the string associated with a given key.
      *
@@ -19,13 +19,8 @@ internal class IntUiMessageResourceResolver : MessageResourceResolver {
      *
      * @param key The key representing the string to fetch. This key typically corresponds to a message ID in the IDE's
      *   message bundle (e.g, ""action.text.copy.link.address").
-     * @return The string associated with the provided key. If the key is not found, an empty string is returned.
+     * @return The string associated with the provided key. If the key is not found, it will return a placeholder value
+     *   in the '!${key}!' format, e.g., "!action.text.copy.link.address!".
      */
-    override fun resolveIdeBundleMessage(key: String): String =
-        when (key) {
-            "action.text.open.link.in.browser" -> "Open Link in Browser"
-            "action.text.copy.link.address" -> "Copy Link Address"
-            "action.text.more" -> "More"
-            else -> ""
-        }
+    override fun resolveIdeBundleMessage(key: String): String = JewelIntUIBundle.getMessage(key)
 }

@@ -1271,6 +1271,38 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
     });
   }
 
+  /**
+   * Test that parametrized tests with zero-length string arguments are rendered correctly
+   */
+  @Test
+  public void testParametrizedWithEmptyString() {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/parametrized", SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() {
+          return new PyTestTestProcessRunner("test_empty_param.py", 0);
+        }
+
+        @Override
+        protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all,
+                                        int exitCode) {
+          assertEquals("Parametrized test with empty string produced bad tree", """
+                      Test tree:
+                      [root](+)
+                      .test_empty_param(+)
+                      ..test_params(+)
+                      ...()(+)
+                      ...(other)(+)
+                      """, runner.getFormattedTestTree());
+        }
+      });
+  }
+
   @NotNull
   private static String getFrameworkId() {
     return PyTestFactory.id;

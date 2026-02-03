@@ -13,6 +13,7 @@ import com.intellij.ide.Region
 import com.intellij.ide.RegionSettings
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
@@ -68,40 +69,42 @@ class GrazieLoginManager(coroutineScope: CoroutineScope) {
   private val initialized = AtomicBoolean(false)
 
   init {
-    coroutineScope.launch {
-      val aiService = service<ProvisionedServiceRegistry>().getServiceById("ai")
-      if (aiService == null) {
-        logger.trace("No AI service is provisioned")
-        enterpriseState.value = noAIEnterprise
-      }
-      else {
-        aiService.configurationFlow.collect { result ->
-          logger.trace("Provisioner state changed: $result")
-          computeEnterpriseState(result)
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      coroutineScope.launch {
+        val aiService = service<ProvisionedServiceRegistry>().getServiceById("ai")
+        if (aiService == null) {
+          logger.trace("No AI service is provisioned")
+          enterpriseState.value = noAIEnterprise
+        }
+        else {
+          aiService.configurationFlow.collect { result ->
+            logger.trace("Provisioner state changed: $result")
+            computeEnterpriseState(result)
+          }
         }
       }
-    }
 
-    coroutineScope.launch {
-      enterpriseState.collectLatest {
-        computeLoginState()
-        initialized.set(true)
+      coroutineScope.launch {
+        enterpriseState.collectLatest {
+          computeLoginState()
+          initialized.set(true)
+        }
       }
-    }
 
-    coroutineScope.launch {
-      updateLicense()
+      coroutineScope.launch {
+        updateLicense()
 
-      licenseState.collectLatest { license ->
-        logger.trace("License state changed: $license")
-        computeLoginState()
-        initialized.set(true)
+        licenseState.collectLatest { license ->
+          logger.trace("License state changed: $license")
+          computeLoginState()
+          initialized.set(true)
+        }
       }
+      application.messageBus.connect(coroutineScope).subscribe(AuthStateListener.TOPIC, AuthStateListener {
+        logger.debug { "Scheduling license and login manager updates on licensing state change" }
+        coroutineScope.launch { updateLicense() }
+      })
     }
-    application.messageBus.connect(coroutineScope).subscribe(AuthStateListener.TOPIC, AuthStateListener {
-      logger.debug { "Scheduling license and login manager updates on licensing state change" }
-      coroutineScope.launch { updateLicense() }
-    })
   }
 
   private suspend fun computeEnterpriseState(result: ProvisionedServiceConfigurationResult) {

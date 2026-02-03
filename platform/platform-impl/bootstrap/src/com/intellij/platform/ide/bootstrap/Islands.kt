@@ -55,20 +55,24 @@ suspend fun applyIslandsTheme(afterImportSettings: Boolean) {
   properties.setValue("ide.islands.ab3", true)
 
   withContext(Dispatchers.EDT) {
-    enableTheme()
+    enableTheme(properties)
   }
 }
 
-private suspend fun enableTheme() {
+private suspend fun enableTheme(properties: PropertiesComponent) {
   val lafManager = serviceAsync<LafManager>()
-
   val currentTheme = lafManager.currentUIThemeLookAndFeel?.id ?: return
+
   if (currentTheme != "ExperimentalDark" && currentTheme != "ExperimentalLight" && currentTheme != "ExperimentalLightWithLightHeader") {
+    if (currentTheme == "Islands Light" || currentTheme == "Islands Dark") {
+      resetLafSettingsToDefault(lafManager, serviceAsync<UiThemeProviderListManager>())
+    }
     return
   }
 
-  val colorsManager = EditorColorsManager.getInstance()
+  val colorsManager = serviceAsync<EditorColorsManager>()
   val currentEditorTheme = colorsManager.globalScheme.displayName
+
   if (currentEditorTheme != "Light" && currentEditorTheme != "Dark" && currentEditorTheme != "Rider Light" && currentEditorTheme != "Rider Dark") {
     return
   }
@@ -80,9 +84,10 @@ private suspend fun enableTheme() {
 
   val isLight = JBColor.isBright()
 
-  val newTheme = UiThemeProviderListManager.getInstance().findThemeById(if (isLight) "Islands Light" else "Islands Dark") ?: return
+  val themeManager = serviceAsync<UiThemeProviderListManager>()
+  val newTheme = themeManager.findThemeById(if (isLight) "Islands Light" else "Islands Dark") ?: return
 
-  PropertiesComponent.getInstance().setValue("ide.islands.show.feedback3", "done")
+  properties.setValue("ide.islands.show.feedback3", "done")
 
   lafManager.setCurrentLookAndFeel(newTheme, true)
 
@@ -95,14 +100,16 @@ private suspend fun enableTheme() {
 
   newTheme.installEditorScheme(colorsManager.getScheme(editorScheme) ?: colorsManager.defaultScheme)
 
+  resetLafSettingsToDefault(lafManager, themeManager)
+
   lafManager.updateUI()
 }
 
 private suspend fun changeColorSchemeForRiderIslandsDarkTheme(afterImportSettings: Boolean): Boolean {
-  val colorsManager = EditorColorsManager.getInstance()
   val lafManager = serviceAsync<LafManager>()
   val currentLaf = lafManager.currentUIThemeLookAndFeel ?: return false
 
+  val colorsManager = serviceAsync<EditorColorsManager>()
   val colorScheme = if (afterImportSettings) "Islands Dark" else "Rider Dark"
 
   if (currentLaf.id != "Islands Dark" || colorsManager.globalScheme.displayName != colorScheme) {
@@ -114,4 +121,13 @@ private suspend fun changeColorSchemeForRiderIslandsDarkTheme(afterImportSetting
   lafManager.updateUI()
 
   return true
+}
+
+private fun resetLafSettingsToDefault(lafManager: LafManager, themeManager: UiThemeProviderListManager) {
+  val defaultLightLaf = themeManager.findThemeById("Islands Light") ?: return
+  val defaultDarkLaf = themeManager.findThemeById("Islands Dark") ?: return
+
+  lafManager.setPreferredLightLaf(defaultLightLaf)
+  lafManager.setPreferredDarkLaf(defaultDarkLaf)
+  lafManager.resetPreferredEditorColorScheme()
 }

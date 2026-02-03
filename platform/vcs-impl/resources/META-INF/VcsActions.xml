@@ -182,7 +182,7 @@
       <reference ref="ChangesView.Move"/>
       <reference ref="Diff.ShowDiff"/>
       <reference ref="Diff.ShowStandaloneDiff"/>
-      <reference ref="EditSource"/>
+      <action id="ChangesView.EditSource" class="com.intellij.openapi.vcs.actions.ChangesViewPopupJumpToSourceAction"/>
       <separator/>
       <reference ref="$Delete"/>
       <action id="ChangesView.AddUnversioned"
