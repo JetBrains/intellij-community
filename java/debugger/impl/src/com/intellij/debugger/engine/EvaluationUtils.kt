@@ -9,6 +9,7 @@ import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.debugger.ui.breakpoints.FilteredRequestor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.util.Key
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties
@@ -163,6 +164,10 @@ fun <Self : XBreakpoint<P>, P : XBreakpointProperties<*>, S : BreakpointState> s
   val isConditionalBp = xB.conditionExpression != null && xB.isConditionEnabled
   return (isLoggingBp || isConditionalBp) && !(isLoggingBp && isConditionalBp)
 }
+
+@ApiStatus.Internal
+@JvmField
+val INSTRUMENTATION_CONDITION_HIT_CALLBACK = Key.create<(SuspendContextImpl) -> Unit>("INSTRUMENTATION_CONDITION_HIT_CALLBACK")
 
 @ApiStatus.Internal
 enum class ClientEvaluationExceptionType {
