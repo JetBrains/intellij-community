@@ -22,6 +22,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertInstanceOf
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
@@ -356,29 +358,51 @@ class ServiceContainerTest {
     assertThat(error.message).contains("ServiceWithUnsupportedConstructor")
   }
 
-  @Test
-  fun `test dynamically overridden service forwards calls`() {
+  data class DynamicOverrideTestConfig<T>(
+    val ifc: Class<T>, val invokeGreet: (T) -> String,
+    val impl1: Class<out T>, val greet1: String,
+    val impl2: Class<out T>, val greet2: String,
+  )
+
+  private val testCases = mapOf(
+    "interface" to DynamicOverrideTestConfig(
+      IfcService::class.java, IfcService::greet,
+      IfcServiceImpl1::class.java, "IfcServiceImpl1",
+      IfcServiceImpl2::class.java, "IfcServiceImpl2",
+    ),
+    "class" to DynamicOverrideTestConfig(
+      ClsService::class.java, ClsService::greet,
+      ClsServiceImpl1::class.java, "ClsServiceImpl1",
+      ClsServiceImpl2::class.java, "ClsServiceImpl2",
+    ))
+
+  @ParameterizedTest
+  @ValueSource(strings = ["interface", "class"])
+  fun `test dynamically overridden service forwards calls`(configName: String) {
+    val c = testCases[configName]!!
+
+    `test dynamically overridden service forwards calls`(c)
+  }
+
+  private fun <T : Any> `test dynamically overridden service forwards calls`(c: DynamicOverrideTestConfig<T>) {
     val componentManager = TestComponentManager()
     componentManager.useProxiesForOpenServices = true
 
     val pluginDescriptor1 = IdeaPluginDescriptorForServiceRegistration("testPlugin1")
     val pluginDescriptor2 = IdeaPluginDescriptorForServiceRegistration("testPlugin2")
-    componentManager.registerService(serviceDescriptor(IfcService::class.java, IfcServiceImpl1::class.java, open = true), pluginDescriptor1)
-    val ref1 = componentManager.getService(IfcService::class.java)!!
-    assertEquals("IfcServiceImpl1", ref1.greet())
-    assertNotEquals(IfcServiceImpl1::class.java.name,
-                    ref1.javaClass.name,
+    componentManager.registerService(serviceDescriptor(c.ifc, c.impl1, open = true), pluginDescriptor1)
+    val ref1 = componentManager.getService(c.ifc)!!
+    assertEquals(c.greet1, c.invokeGreet(ref1))
+    assertNotEquals(c.impl1.name, ref1.javaClass.name,
                     "Should be a proxy class, not the service itself (because the service is open).")
 
-    componentManager.registerService(serviceDescriptor(IfcService::class.java, IfcServiceImpl2::class.java, overrides = true),
-                                     pluginDescriptor2)
-    val ref2 = componentManager.getService(IfcService::class.java)!!
+    componentManager.registerService(serviceDescriptor(c.ifc, c.impl2, overrides = true), pluginDescriptor2)
+    val ref2 = componentManager.getService(c.ifc)!!
     assertNotSame(ref1, ref2)
-    assertEquals(IfcServiceImpl2::class.java.name,
-                 ref2.javaClass.name,
+    assertEquals(c.impl2.name, ref2.javaClass.name,
                  "Should be the service itself, not a proxy class (because the service is not open).")
-    assertEquals("IfcServiceImpl2", ref2.greet())
-    assertEquals("IfcServiceImpl2", ref1.greet(), "Old reference should redirect calls to new instance")
+    assertEquals(c.greet2, c.invokeGreet(ref2))
+    assertEquals(c.greet2, c.invokeGreet(ref1), "Old reference should redirect calls to new instance")
   }
 
   @Test
@@ -445,6 +469,10 @@ internal interface IfcService {
   fun greet(): String
 }
 
+internal open class ClsService {
+  open fun greet(): String = "ClsService"
+}
+
 internal interface IfcServiceNotAllowed {
   fun greet(): String
 }
@@ -459,6 +487,14 @@ private class IfcServiceImpl1 : IfcService {
 
 private class IfcServiceImpl2 : IfcService {
   override fun greet(): String = "IfcServiceImpl2"
+}
+
+private class ClsServiceImpl1 : ClsService() {
+  override fun greet(): String = "ClsServiceImpl1"
+}
+
+private class ClsServiceImpl2 : ClsService() {
+  override fun greet(): String = "ClsServiceImpl2"
 }
 
 private class C1(componentManager: ComponentManager) {

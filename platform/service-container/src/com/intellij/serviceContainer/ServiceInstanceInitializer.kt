@@ -8,7 +8,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceDescriptor
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Disposer
@@ -83,14 +82,7 @@ internal abstract class ServiceInstanceInitializer(
     return if (canBeDynamicallyOverridden(keyClassName)) {
       // TODO: is there a better way to get the service interface type here?
       val keyClass = instance.javaClass.classLoader.loadClass(keyClassName)
-
-      if (keyClass.isInterface) {
-        ServiceProxyGenerator.createInstance(keyClass, instance)
-      }
-      else {
-        thisLogger().error("Only proxies for interfaces are supported now. Actual: $keyClass")
-        instance
-      }
+      ServiceProxyGenerator.createInstance(keyClass, instance)
     }
     else {
       instance
