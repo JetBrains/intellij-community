@@ -13,7 +13,7 @@ sealed class ServerConfig
 class CursorNetworkConfig(val url: String, val type: String) : ServerConfig()
 
 @Serializable
-class WindsurfSSEConfig(val serverUrl: String) : ServerConfig()
+class WindsurfNetworkConfig(val serverUrl: String, val type: String) : ServerConfig()
 
 @Serializable
 class VSCodeNetworkConfig(val url: String, val type: String) : ServerConfig()
