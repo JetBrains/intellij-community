@@ -174,8 +174,6 @@ a:com.intellij.codeInsight.completion.CompletionContributor
 - duringCompletion(com.intellij.codeInsight.completion.CompletionInitializationContext):V
 - f:extend(com.intellij.codeInsight.completion.CompletionType,com.intellij.patterns.ElementPattern,com.intellij.codeInsight.completion.CompletionProvider):V
 - fillCompletionVariants(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionResultSet):V
-- s:forLanguage(com.intellij.lang.Language):java.util.List
-- s:forLanguageHonorDumbness(com.intellij.lang.Language,com.intellij.openapi.project.Project):java.util.List
 - s:forParameters(com.intellij.codeInsight.completion.CompletionParameters):java.util.List
 - handleAutoCompletionPossibility(com.intellij.codeInsight.completion.AutoCompletionContext):com.intellij.codeInsight.completion.AutoCompletionDecision
 - handleEmptyLookup(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.openapi.editor.Editor):java.lang.String
