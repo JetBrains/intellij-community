@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.TopGap
@@ -121,6 +122,24 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
             val autoconfiguredPressed = ValueComponentPredicate(false)
             val errorDuringConfiguration = ValueComponentPredicate(false)
             val configExists = ValueComponentPredicate(mcpClient.configPath.exists() && mcpClient.configPath.isRegularFile())
+            
+            val transportTypeKnown = ValueComponentPredicate(false)
+            lateinit var configuredTextCell: Cell<javax.swing.JEditorPane>
+            lateinit var restartInfoTextCell: Cell<javax.swing.JEditorPane>
+            
+            // Function to refresh transport message
+            fun refreshTransportMessage() {
+              val transportType = mcpClient.getTransportTypesDisplayString()
+              transportTypeKnown.set(transportType != null)
+              val configuredMessage = if (transportType != null) {
+                McpServerBundle.message("mcp.server.configured.with.transport", transportType)
+              } else {
+                McpServerBundle.message("mcp.server.configured")
+              }
+              configuredTextCell.component.text = configuredMessage
+              restartInfoTextCell.component.text = McpServerBundle.message("mcp.server.client.restart.info.settings", configuredMessage)
+            }
+            
             row {
               cell(JBOptionButton(object : AbstractAction(McpServerBundle.message("autoconfigure.mcp.server")) {
                 override fun actionPerformed(e: ActionEvent?) {
@@ -135,6 +154,7 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
                     isPortCorrect.set(true)
                     configExists.set(true)
                     autoconfiguredPressed.set(true)
+                    refreshTransportMessage()
                   }
                 }
               }, options = arrayOf(object : AbstractAction(McpServerBundle.message("open.settings.json")) {
@@ -152,10 +172,10 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
                 addSeparator = false
               })
               icon(McpserverIcons.Expui.StatusEnabled).gap(RightGap.SMALL).visibleIf(isConfigured.and(isPortCorrect).and(autoconfiguredPressed.not()))
-              text(McpServerBundle.message("mcp.server.configured")).visibleIf(isConfigured.and(isPortCorrect).and(autoconfiguredPressed.not()))
+              configuredTextCell = text("").visibleIf(isConfigured.and(isPortCorrect).and(autoconfiguredPressed.not()))
 
               icon(McpserverIcons.Expui.StatusEnabled).gap(RightGap.SMALL).visibleIf(autoconfiguredPressed)
-              text(McpServerBundle.message("mcp.server.client.restart.info.settings")).visibleIf(autoconfiguredPressed)
+              restartInfoTextCell = text("").visibleIf(autoconfiguredPressed.and(transportTypeKnown))
 
               icon(ColorizeProxyIcon.Simple(McpserverIcons.Expui.StatusDisabled, JBColor.GRAY)).gap(RightGap.SMALL).visibleIf(isConfigured.not())
               comment(McpServerBundle.message("mcp.server.not.configured")).visibleIf(isConfigured.not())
@@ -166,6 +186,9 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
               icon(AllIcons.General.Error).gap(RightGap.SMALL).visibleIf(errorDuringConfiguration)
               comment(McpServerBundle.message("mcp.server.client.autoconfig.error")).visibleIf(errorDuringConfiguration)
             }
+            
+            // Call initially to populate the text
+            refreshTransportMessage()
           }
         }
       }.visibleIf(enabledCheckboxState!!)

@@ -85,7 +85,7 @@ abstract class McpClient(
     }
   }
 
-  protected fun isSSEConfigured(): Boolean? {
+  protected fun isSSEOrStreamConfigured(): Boolean? {
     val mcpServers = readMcpServers()
     if (mcpServers?.isEmpty() ?: true) return null
     return mcpServers.any { (_, serverConfig) ->
@@ -98,6 +98,39 @@ abstract class McpClient(
     val currentPort = McpServerService.getInstance().port
     val servers = readMcpServers() ?: return true
     return servers.any { (_, serverConfig) -> isPortMatching(serverConfig, currentPort) }
+  }
+
+  fun getConfiguredTransportTypes(): Set<TransportType> {
+    val mcpServers = readMcpServers() ?: return emptySet()
+    if (mcpServers.isEmpty()) return emptySet()
+
+    val result = mutableSetOf<TransportType>()
+
+    for ((_, serverConfig) in mcpServers) {
+      if (serverConfig.command != null) {
+        result.add(TransportType.STDIO)
+      }
+
+      when (serverConfig.type) {
+        "sse" -> result.add(TransportType.SSE)
+        "http" -> result.add(TransportType.STREAMABLE_HTTP)
+      }
+    }
+
+    return result
+  }
+
+  fun getTransportTypesDisplayString(): String? {
+    val types = getConfiguredTransportTypes()
+    if (types.isEmpty()) return null
+
+    return types.joinToString(", ") { type ->
+      when (type) {
+        TransportType.STDIO -> "Stdio"
+        TransportType.SSE -> "SSE"
+        TransportType.STREAMABLE_HTTP -> "HTTP Stream"
+      }
+    }
   }
 
   private fun isPortMatching(serverConfig: ExistingConfig, targetPort: Int): Boolean {
@@ -212,6 +245,12 @@ abstract class McpClient(
   private data class ParsedServerUrl(val host: String, val port: Int, val path: String)
 
   companion object {
+    enum class TransportType {
+      STDIO,
+      SSE,
+      STREAMABLE_HTTP
+    }
+
     private val STREAM_PATHS: Set<String> = setOf("/sse", "/stream")
 
     @Volatile

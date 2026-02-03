@@ -23,8 +23,8 @@ open class VSCodeClient(scope: McpClientInfo.Scope, configPath: Path) : McpClien
 ) {
   override fun isConfigured(): Boolean? {
     val stdio = isStdIOConfigured() ?: return null
-    val sse = isSSEConfigured() ?: return null
-    return stdio || sse
+    val network = isSSEOrStreamConfigured() ?: return null
+    return stdio || network
   }
 
   override fun getSSEConfig(): ServerConfig = VSCodeSSEConfig(url = sseUrl, type = "sse")

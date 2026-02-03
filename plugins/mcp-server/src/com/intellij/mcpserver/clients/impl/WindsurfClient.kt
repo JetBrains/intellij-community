@@ -13,8 +13,8 @@ class WindsurfClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient(
 ) {
   override fun isConfigured(): Boolean? {
     val stdio = isStdIOConfigured() ?: return null
-    val sse = isSSEConfigured() ?: return null
-    return stdio || sse
+    val network = isSSEOrStreamConfigured() ?: return null
+    return stdio || network
   }
 
   override fun getSSEConfig(): ServerConfig = WindsurfSSEConfig(serverUrl = sseUrl)
