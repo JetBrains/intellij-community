@@ -179,8 +179,7 @@ suspend fun GitLabApi.Rest.mergeRequestSetReviewers(
   mrIid: String,
   reviewers: List<GitLabUserDTO>
 ): HttpResponse<out Unit> {
-  // Dumb hack: IDs are of course URLs rather than numbers, but this endpoint requires a number.
-  val reviewerIds = reviewers.joinToString(",") { GitLabGidData(it.id).guessRestId() }
+  val reviewerIds = reviewers.map { GitLabGidData(it.id).guessRestId() }
   val uri = project.restApiUri
     .resolveRelative("merge_requests")
     .resolveRelative(mrIid)
