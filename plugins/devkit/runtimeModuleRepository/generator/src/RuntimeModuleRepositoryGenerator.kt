@@ -12,7 +12,6 @@ import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
-import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsDependencyElement
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
@@ -30,30 +29,30 @@ object RuntimeModuleRepositoryGenerator {
    * Generates the runtime module descriptors for all modules and libraries in [project].
    */
   fun generateRuntimeModuleDescriptorsForWholeProject(project: JpsProject, resourcePathsSchema: ResourcePathsSchema): List<RawRuntimeModuleDescriptor> {
-    val libraries = LinkedHashSet<JpsLibrary>()
+    val projectLibraries = LinkedHashSet<JpsLibrary>()
     for (module in project.modules) {
-      libraries.addAll(enumerateRuntimeDependencies(module).libraries)
+      projectLibraries.addAll(enumerateRuntimeDependencies(module).libraries.filter { it.isProjectLevel })
     }
     return generateRuntimeModuleDescriptors(
       includedProduction = project.modules,
       includedTests = project.modules,
-      includedLibraries = libraries,
+      includedProjectLibraries = projectLibraries,
       resourcePathsSchema = resourcePathsSchema
     )
   }
 
   /**
    * Generates the runtime module descriptors for production parts of [includedProduction], test parts of [includedTests] and 
-   * [includedLibraries]. 
+   * [includedProjectLibraries].
    */
   fun generateRuntimeModuleDescriptors(includedProduction: Collection<JpsModule>,
                                        includedTests: Collection<JpsModule>,
-                                       includedLibraries: Collection<JpsLibrary>,
+                                       includedProjectLibraries: Collection<JpsLibrary>,
                                        resourcePathsSchema: ResourcePathsSchema): List<RawRuntimeModuleDescriptor> {
     val descriptors = ArrayList<RawRuntimeModuleDescriptor>()
     generateDescriptorsForModules(descriptors, includedProduction, includedTests, resourcePathsSchema)
-    for (library in includedLibraries) {
-      val moduleId = getLibraryId(library)
+    for (library in includedProjectLibraries) {
+      val moduleId = getProjectLibraryId(library) ?: error("Project-level library expected, but found: $library")
       descriptors.add(RawRuntimeModuleDescriptor.create(moduleId.stringId, resourcePathsSchema.libraryPaths(library), emptyList()))
     }
     return descriptors
@@ -119,8 +118,8 @@ private fun generateDescriptorsForModules(
     }
   }
   if (includedTests.isNotEmpty()) {
-    val additionalDependenciesForTestsCache = HashMap<JpsModule, Set<RuntimeModuleId>>()
-    val productionDependenciesCache = HashMap<JpsModule, Set<RuntimeModuleId>>()
+    val additionalDependenciesForTestsCache = HashMap<JpsModule, DependenciesAndResources>()
+    val productionDependenciesCache = HashMap<JpsModule, DependenciesAndResources>()
     for (module in includedTests) {
       if (module.hasTestSources) {
         descriptors.add(createTestPartDescriptor(module = module,
@@ -145,12 +144,20 @@ private val JpsModule.hasProductionSources
 
 private fun createProductionPartDescriptor(module: JpsModule, runtimeModuleNameGenerator: (JpsModule, Boolean) -> String, resourcePathsSchema: ResourcePathsSchema): RawRuntimeModuleDescriptor {
   val dependencies = LinkedHashSet<String>()
+  val resourcePaths = if (module.hasProductionSources) resourcePathsSchema.moduleOutputPaths(module).toMutableSet() else mutableSetOf()
   enumerateRuntimeDependencies(module).productionOnly().processModuleAndLibraries(
     { dependencies.add(runtimeModuleNameGenerator(it, false)) },
-    { dependencies.add(getLibraryId(it).stringId) }
+    { library ->
+      val projectLibraryId = getProjectLibraryId(library)
+      if (projectLibraryId != null) {
+        dependencies.add(projectLibraryId.stringId)
+      }
+      else {
+        resourcePaths.addAll(resourcePathsSchema.libraryPaths(library))
+      }
+    }
   )
-  val resourcePaths = if (module.hasProductionSources) resourcePathsSchema.moduleOutputPaths(module) else emptyList()
-  return RawRuntimeModuleDescriptor.create(runtimeModuleNameGenerator(module, false), resourcePaths, dependencies.toList())
+  return RawRuntimeModuleDescriptor.create(runtimeModuleNameGenerator(module, false), resourcePaths.toList(), dependencies.toList())
 }
 
 /**
@@ -163,15 +170,24 @@ private fun createProductionPartDescriptor(module: JpsModule, runtimeModuleNameG
 private fun createTestPartDescriptor(
   module: JpsModule,
   runtimeModuleNameGenerator: (JpsModule, Boolean) -> String,
-  additionalDependenciesForTestsCache: MutableMap<JpsModule, Set<RuntimeModuleId>>,
-  productionDependenciesCache: MutableMap<JpsModule, Set<RuntimeModuleId>>,
+  additionalDependenciesForTestsCache: MutableMap<JpsModule, DependenciesAndResources>,
+  productionDependenciesCache: MutableMap<JpsModule, DependenciesAndResources>,
   resourcePathsSchema: ResourcePathsSchema,
 ): RawRuntimeModuleDescriptor {
+  val resourcePaths = if (module.hasTestSources) resourcePathsSchema.moduleTestOutputPaths(module).toMutableSet() else mutableSetOf()
   val dependencies = LinkedHashSet<RuntimeModuleId>()
-  dependencies.addAll(collectProductionDependenciesForModule(module, productionDependenciesCache, runtimeModuleNameGenerator))
-  dependencies.addAll(collectAdditionalRuntimeDependenciesForTests(module, productionDependenciesCache, additionalDependenciesForTestsCache, runtimeModuleNameGenerator))
-  val resourcePaths = if (module.hasTestSources) resourcePathsSchema.moduleTestOutputPaths(module) else emptyList()
-  return RawRuntimeModuleDescriptor.create(runtimeModuleNameGenerator(module, true), resourcePaths, dependencies.map { it.stringId })
+  val forProduction = collectProductionDependenciesForModule(module, productionDependenciesCache, runtimeModuleNameGenerator, resourcePathsSchema)
+  forProduction.copyTo(dependencies, resourcePaths)
+
+  val forTests = collectAdditionalRuntimeDependenciesAndResourcesForTests(
+    module,
+    productionDependenciesCache,
+    additionalDependenciesForTestsCache,
+    runtimeModuleNameGenerator,
+    resourcePathsSchema
+  )
+  forTests.copyTo(dependencies, resourcePaths)
+  return RawRuntimeModuleDescriptor.create(runtimeModuleNameGenerator(module, true), resourcePaths.toList(), dependencies.map { it.stringId })
 }
 
 /**
@@ -179,48 +195,77 @@ private fun createTestPartDescriptor(
  */
 private fun collectProductionDependenciesForModule(
   module: JpsModule,
-  productionDependenciesCache: MutableMap<JpsModule, Set<RuntimeModuleId>>,
+  productionDependenciesCache: MutableMap<JpsModule, DependenciesAndResources>,
   runtimeModuleNameGenerator: (JpsModule, Boolean) -> String,
-): Set<RuntimeModuleId> {
+  resourcePathsSchema: ResourcePathsSchema,
+) : DependenciesAndResources {
   val cached = productionDependenciesCache[module]
   if (cached != null) {
     return cached
   }
   if (module.hasDescriptorForProduction) {
-    val result = setOf(RuntimeModuleId.raw(runtimeModuleNameGenerator(module, false)))
+    val result = DependenciesAndResources(setOf(RuntimeModuleId.raw(runtimeModuleNameGenerator(module, false))), emptySet())
     productionDependenciesCache[module] = result
     return result
   }
   
   //if a module doesn't have its own descriptor, its dependencies should be added instead
-  productionDependenciesCache[module] = emptySet() //to prevent StackOverflowError in case of circular dependencies
-  val result = LinkedHashSet<RuntimeModuleId>()
+  productionDependenciesCache[module] = emptyDependenciesAndResources //to prevent StackOverflowError in case of circular dependencies
+  val dependencies = LinkedHashSet<RuntimeModuleId>()
+  val resourcePaths = LinkedHashSet<String>()
   enumerateRuntimeDependencies(module).productionOnly().processModuleAndLibraries(
     { dependency ->
-      result.addAll(collectProductionDependenciesForModule(dependency, productionDependenciesCache, runtimeModuleNameGenerator))
+      collectProductionDependenciesForModule(
+        dependency,
+        productionDependenciesCache,
+        runtimeModuleNameGenerator,
+        resourcePathsSchema
+      ).copyTo(dependencies, resourcePaths)
     },
-    { result.add(getLibraryId(it)) }
+    { dependency ->
+      val projectLibraryId = getProjectLibraryId(dependency)
+      if (projectLibraryId != null) {
+        dependencies.add(projectLibraryId)
+      }
+      else {
+        resourcePaths.addAll(resourcePathsSchema.libraryPaths(dependency))
+      }
+    }
   )
+  val result = DependenciesAndResources(dependencies, resourcePaths)
   productionDependenciesCache[module] = result
   return result
 }
 
+private data class DependenciesAndResources(
+  val dependencies: Set<RuntimeModuleId>,
+  val resourcePaths: Set<String>,
+) {
+  fun copyTo(dependencies: MutableSet<RuntimeModuleId>, resourcePaths: MutableCollection<String>) {
+    dependencies.addAll(this.dependencies)
+    resourcePaths.addAll(this.resourcePaths)
+  }
+}
+
+private val emptyDependenciesAndResources = DependenciesAndResources(emptySet(), emptySet())
 
 /**
  * Returns IDs of descriptors which should be added to tests dependencies of [module] in addition to production dependencies. 
  */
-private fun collectAdditionalRuntimeDependenciesForTests(
+private fun collectAdditionalRuntimeDependenciesAndResourcesForTests(
   module: JpsModule,
-  productionDependenciesCache: MutableMap<JpsModule, Set<RuntimeModuleId>>,
-  additionalDependenciesForTestsCache: MutableMap<JpsModule, Set<RuntimeModuleId>>,
-  runtimeModuleNameGenerator: (JpsModule, Boolean) -> String
-): Collection<RuntimeModuleId> {
+  productionDependenciesCache: MutableMap<JpsModule, DependenciesAndResources>,
+  additionalDependenciesForTestsCache: MutableMap<JpsModule, DependenciesAndResources>,
+  runtimeModuleNameGenerator: (JpsModule, Boolean) -> String,
+  resourcePathsSchema: ResourcePathsSchema
+): DependenciesAndResources {
   val cached = additionalDependenciesForTestsCache[module]
   if (cached != null) {
     return cached
   }
-  additionalDependenciesForTestsCache[module] = emptySet() ////to prevent StackOverflowError in case of circular dependencies 
-  val result = LinkedHashSet<RuntimeModuleId>()
+  additionalDependenciesForTestsCache[module] = emptyDependenciesAndResources ////to prevent StackOverflowError in case of circular dependencies
+  val dependencies = LinkedHashSet<RuntimeModuleId>()
+  val resourcePaths = LinkedHashSet<String>()
   for (dependency in module.dependenciesList.dependencies) {
     when (dependency) {
       is JpsModuleDependency -> {
@@ -229,38 +274,55 @@ private fun collectAdditionalRuntimeDependenciesForTests(
         if (scope == JpsJavaDependencyScope.PROVIDED) continue
 
         if (dependencyModule.hasTestSources) {
-          result.add(RuntimeModuleId.raw(runtimeModuleNameGenerator(dependencyModule, true)))
+          dependencies.add(RuntimeModuleId.raw(runtimeModuleNameGenerator(dependencyModule, true)))
         }
         else {
           if (scope == JpsJavaDependencyScope.TEST) {
-            result.addAll(collectProductionDependenciesForModule(dependencyModule, productionDependenciesCache, runtimeModuleNameGenerator))
+            collectProductionDependenciesForModule(
+              dependencyModule,
+              productionDependenciesCache,
+              runtimeModuleNameGenerator,
+              resourcePathsSchema
+            ).copyTo(dependencies, resourcePaths)
           }
-          result.addAll(collectAdditionalRuntimeDependenciesForTests(dependencyModule, productionDependenciesCache, additionalDependenciesForTestsCache, runtimeModuleNameGenerator))
+          collectAdditionalRuntimeDependenciesAndResourcesForTests(
+            dependencyModule,
+            productionDependenciesCache,
+            additionalDependenciesForTestsCache,
+            runtimeModuleNameGenerator,
+            resourcePathsSchema
+          ).copyTo(dependencies, resourcePaths)
         }
       }
       is JpsLibraryDependency -> {
         if (dependency.scope == JpsJavaDependencyScope.TEST) {
-          dependency.library?.let { result.add(getLibraryId(it)) }
+          dependency.library?.let { library ->
+            val projectLibraryId = getProjectLibraryId(library)
+            if (projectLibraryId != null) {
+              dependencies.add(projectLibraryId)
+            }
+            else {
+              resourcePaths.addAll(resourcePathsSchema.libraryPaths(library))
+            }
+          }
         }
       }
     }
   }
-  additionalDependenciesForTestsCache[module] = result
-  return result
+  val dependenciesAndResources = DependenciesAndResources(dependencies, resourcePaths)
+  additionalDependenciesForTestsCache[module] = dependenciesAndResources
+  return dependenciesAndResources
 }
 
 private val JpsDependencyElement.scope: JpsJavaDependencyScope?
   get() = JpsJavaExtensionService.getInstance().getDependencyExtension(this)?.scope
 
-private fun getLibraryId(library: JpsLibrary): RuntimeModuleId {
-  var name = library.name
-  val element = (library as JpsElementBase<*>).parent.parent
-  if (element is JpsModule) {
-    val files = library.getFiles(JpsOrderRootType.COMPILED)
-    if (name.startsWith("#") && files.size == 1) {
-      name = files[0].name
-    }
-    return RuntimeModuleId.moduleLibrary((element as JpsModule).name, name)
+private fun getProjectLibraryId(library: JpsLibrary): RuntimeModuleId? {
+  if (library.isProjectLevel) {
+    return RuntimeModuleId.projectLibrary(library.name)
   }
-  return RuntimeModuleId.projectLibrary(name)
+  return null
 }
+
+val JpsLibrary.isProjectLevel: Boolean
+  get() = (this as JpsElementBase<*>).parent.parent is JpsProject
