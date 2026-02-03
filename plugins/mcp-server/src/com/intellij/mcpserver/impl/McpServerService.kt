@@ -392,13 +392,24 @@ class McpServerService(val cs: CoroutineScope) {
         session.onInitialized {
           val clientCapabilities = session.clientCapabilities
           if (clientCapabilities?.roots != null) {
-            session.onClose { sessionRoots.remove(session.sessionId) }
+            session.onClose {
+              logger.trace {
+                "Roots for session ${session.sessionId} cleared"
+              }
+              sessionRoots.remove(session.sessionId)
+            }
             session.setNotificationHandler<RootsListChangedNotification>(Method.Defined.NotificationsRootsListChanged) {
               async {
+                logger.trace {
+                  "Received roots list changed notification for session ${session.sessionId}: ${session.roots()} roots"
+                }
                 sessionRoots[session.sessionId] = session.roots()
               }
             }
             launch {
+              logger.trace {
+                "Initialized roots for session ${session.sessionId}: ${session.roots()} roots"
+              }
               sessionRoots[session.sessionId] = session.roots()
             }
           }
@@ -438,8 +449,9 @@ class McpServerService(val cs: CoroutineScope) {
       val project = try {
         val sessionRoots = sessionRoots[session.sessionId]
         val projectFromRootList = sessionRoots?.let { findMostRelevantProjectForRoots(sessionRoots) }
+        logger.trace { "Locating project for session: ${session.sessionId}, roots: $sessionRoots, $projectPathParameterName: $projectPathFromMcpRequest, projectPathFromHeaders: $projectPathFromHeaders" }
         if (projectFromRootList != null) {
-          logger.trace { "Project from roots list: $sessionRoots" }
+          logger.trace { "Project $projectFromRootList from roots list: $sessionRoots" }
           // prefer project from list of roots
           projectFromRootList
         } else if (!projectPathFromMcpRequest.isNullOrBlank()) {
