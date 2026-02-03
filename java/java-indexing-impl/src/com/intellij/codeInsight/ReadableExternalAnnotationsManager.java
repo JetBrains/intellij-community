@@ -3,20 +3,22 @@ package com.intellij.codeInsight;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
+import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
-import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.PersistentOrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.workspace.VirtualFileUrls;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +27,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsManager {
@@ -62,11 +65,31 @@ public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsM
     }
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myPsiManager.getProject()).getFileIndex();
     Set<VirtualFile> result = new LinkedHashSet<>();
-    for (OrderEntry entry : fileIndex.getOrderEntriesForFile(libraryFile)) {
-      ProgressManager.checkCanceled();
-      if (!(entry instanceof ModuleOrderEntry)) {
-        Collections.addAll(result, AnnotationOrderRootType.getFiles(entry));
-      }
+    var libraryRootType = LibraryBridgeImpl.Companion.toLibraryRootType(AnnotationOrderRootType.getInstance());
+    var sdkRootName = ((PersistentOrderRootType) AnnotationOrderRootType.getInstance()).getSdkRootName();
+
+    var module = fileIndex.getModuleForFile(libraryFile);
+
+    if (module != null) {
+      Collections.addAll(result, ModuleRootManager.getInstance(module).getModuleExtension(JavaModuleExternalPaths.class).getExternalAnnotationsRoots());
+    }
+
+    for (var library : fileIndex.findContainingLibraries(libraryFile)) {
+      library.getRoots().stream()
+        .filter((root) -> root.getType().equals(libraryRootType))
+        .map((root) -> root.getUrl())
+        .map((url) -> VirtualFileUrls.getVirtualFile(url))
+        .filter(Objects::nonNull)
+        .forEach(result::add);
+    }
+
+    for (var sdk : fileIndex.findContainingSdks(libraryFile)) {
+      sdk.getRoots().stream()
+        .filter((root) -> root.getType().getName().equals(sdkRootName))
+        .map((root) -> root.getUrl())
+        .map((url) -> VirtualFileUrls.getVirtualFile(url))
+        .filter(Objects::nonNull)
+        .forEach(result::add);
     }
     ContainerUtil.addIfNotNull(result, getAdditionalAnnotationRoot());
     return new ArrayList<>(result);
