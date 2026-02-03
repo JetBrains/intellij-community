@@ -28,6 +28,11 @@ private sealed class DepEntry {
   data class Module(val name: String) : DepEntry()
 }
 
+internal data class ParsedDependenciesEntries(
+  @JvmField val moduleNames: List<String>,
+  @JvmField val pluginIds: List<String>,
+)
+
 private class DependenciesInfo(
   @JvmField val startOffset: Int,
   @JvmField val endOffset: Int,
@@ -194,6 +199,17 @@ internal fun updateXmlDependencies(
   }
 
   return strategy.writeIfChanged(path = path, oldContent = content, newContent = content.substring(0, info.startOffset) + replacement + content.substring(info.endOffset))
+}
+
+/**
+ * Extracts dependency entries from the first <dependencies> section using the same parsing
+ * logic as [updateXmlDependencies]. Returns null if no <dependencies> section exists.
+ */
+internal fun extractDependenciesEntries(content: String): ParsedDependenciesEntries? {
+  val info = parseDependenciesInfo(content) ?: return null
+  val moduleNames = info.entries.filterIsInstance<DepEntry.Module>().map { it.name }
+  val pluginIds = info.entries.filterIsInstance<DepEntry.Plugin>().map { it.id }
+  return ParsedDependenciesEntries(moduleNames = moduleNames, pluginIds = pluginIds)
 }
 
 private fun parseDependenciesInfo(content: String): DependenciesInfo? {

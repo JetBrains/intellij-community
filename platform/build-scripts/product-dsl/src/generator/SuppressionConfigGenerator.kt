@@ -98,6 +98,13 @@ internal object SuppressionConfigGenerator : PipelineNode {
     // From DSL test plugin dependency traversal
     allUsages.addAll(model.dslTestPluginSuppressionUsages)
 
+    if (model.updateSuppressions) {
+      val usageByType = allUsages.groupingBy { it.type }.eachCount()
+      debug("suppressions") {
+        "updateSuppressions: usages=${allUsages.size} byType=$usageByType contentModules=${contentModuleOutput.files.size} pluginXmls=${pluginXmlOutput.detailedResults.size}"
+      }
+    }
+
     // Extract scope from generator outputs - these are the modules processed in this run
     val processedContentModules = contentModuleOutput.files.mapTo(HashSet()) { it.contentModuleName }
     processedContentModules.addAll(productModuleOutput.files.map { it.contentModuleName })

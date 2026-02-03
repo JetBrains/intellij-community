@@ -22,6 +22,7 @@ import org.jetbrains.intellij.build.productLayout.stats.DependencyFileResult
 import org.jetbrains.intellij.build.productLayout.stats.FileChangeStatus
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionType
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionUsage
+import org.jetbrains.intellij.build.productLayout.xml.extractDependenciesEntries
 import org.jetbrains.intellij.build.productLayout.xml.updateXmlDependencies
 import org.jetbrains.intellij.build.productLayout.xml.visitAllModules
 
@@ -76,7 +77,12 @@ internal object ProductModuleDependencyGenerator : PipelineNode {
           // Compute dependencies from graph (only content modules - those with descriptors)
           val dependencies = computeProductModuleDeps(graph, moduleName, model.config.libraryModuleFilter).map(::ContentModuleName)
           val dependencyNames = dependencies.mapTo(HashSet()) { it.value }
-          val existingXmlModules = info.existingModuleDependencies.toSet()
+          val existingXmlModules = if (updateSuppressions) {
+            extractDependenciesEntries(info.content)?.moduleNames?.toSet() ?: info.existingModuleDependencies.toSet()
+          }
+          else {
+            info.existingModuleDependencies.toSet()
+          }
           val existingXmlModulesAsContentModuleName = existingXmlModules.mapTo(HashSet(), ::ContentModuleName)
           val suppressionUsages = ArrayList<SuppressionUsage>()
           val moduleDeps = collectModuleDepsWithSuppressions(
