@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiClass;
@@ -34,6 +35,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.PsiVariable;
+import com.intellij.psi.util.AccessModifier;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -233,8 +235,8 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
 
     if (myMakeVarargs != null && myMakeVarargs.isSelected()) {
       final VariableData data = myInputVariables[myInputVariables.length - 1];
-      if (data.type instanceof PsiArrayType) {
-        data.type = new PsiEllipsisType(((PsiArrayType)data.type).getComponentType());
+      if (data.type instanceof PsiArrayType arrayType) {
+        data.type = new PsiEllipsisType(arrayType.getComponentType());
       }
     }
     PropertiesComponent.getInstance().setValue(EXTRACT_METHOD_DEFAULT_VISIBILITY, getVisibility());
@@ -255,15 +257,14 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     namePanel.add(nameLabel, BorderLayout.NORTH);
     namePanel.add(myNameField, BorderLayout.SOUTH);
     nameLabel.setLabelFor(myNameField);
-
     myNameField.addDataChangedListener(this::update);
 
-    myVisibilityPanel = createVisibilityPanel();
-    if (!myNameField.hasSuggestions()) {
-      myVisibilityPanel.registerUpDownActionsFor(myNameField);
-    }
     final JPanel visibilityAndReturnType = new JPanel(new BorderLayout(2, 0));
-    if (!myTargetClass.isInterface()) {
+    if (!myTargetClass.isInterface() || JavaFeature.PRIVATE_INTERFACE_METHODS.isSufficient(PsiUtil.getLanguageLevel(myTargetClass))) {
+      myVisibilityPanel = createVisibilityPanel();
+      if (!myNameField.hasSuggestions()) {
+        myVisibilityPanel.registerUpDownActionsFor(myNameField);
+      }
       visibilityAndReturnType.add(myVisibilityPanel, BorderLayout.WEST);
     }
     final JPanel returnTypePanel = createReturnTypePanel();
@@ -424,13 +425,15 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
           myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[0]);
           updateVarargsEnabled();
           createParametersPanel();
-        } else {
+        }
+        else {
           JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = myMakeStatic.isSelected();
         }
         updateSignature();
       });
       optionsPanel.add(myMakeStatic);
-    } else {
+    }
+    else {
       myMakeStatic.setSelected(false);
       myMakeStatic.setEnabled(false);
     }
@@ -438,7 +441,9 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   }
 
   private ComboBoxVisibilityPanel<String> createVisibilityPanel() {
-    final JavaComboBoxVisibilityPanel panel = new JavaComboBoxVisibilityPanel();
+    final JavaComboBoxVisibilityPanel panel = myTargetClass.isInterface() 
+                                              ? new JavaComboBoxVisibilityPanel(List.of(AccessModifier.PUBLIC, AccessModifier.PRIVATE)) 
+                                              : new JavaComboBoxVisibilityPanel();
     panel.setVisibility(getDefaultVisibility());
     panel.addListener(e -> {
       updateSignature();
@@ -470,8 +475,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
 
   @Override
   public @NotNull String getVisibility() {
-    return myTargetClass.isInterface() || myVisibilityPanel == null
-           ? PsiModifier.PUBLIC : ObjectUtils.notNull(myVisibilityPanel.getVisibility(), PsiModifier.PUBLIC);
+    return myVisibilityPanel == null ? PsiModifier.PUBLIC : ObjectUtils.notNull(myVisibilityPanel.getVisibility(), PsiModifier.PUBLIC);
   }
 
   @Override
@@ -609,25 +613,26 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     final @NonNls StringBuilder buffer = new StringBuilder();
     if (myGenerateAnnotations != null && myGenerateAnnotations.isSelected() && myNullability != null) {
       final NullableNotNullManager nullManager = NullableNotNullManager.getInstance(myProject);
-      buffer.append("@");
-      buffer.append(
-        StringUtil.getShortName(nullManager.getDefaultAnnotation(myNullability, myTargetClass)));
-      buffer.append("\n");
+      buffer.append("@").append(StringUtil.getShortName(nullManager.getDefaultAnnotation(myNullability, myTargetClass))).append("\n");
     }
     final int declarationOffset = buffer.length();
-    final String visibilityString = VisibilityUtil.getVisibilityString(getVisibility());
-    buffer.append(visibilityString);
+    String visibility = VisibilityUtil.getVisibilityString(getVisibility());
+    buffer.append(visibility);
     if (!buffer.isEmpty()) {
       buffer.append(" ");
     }
-    if (isMakeStatic() && !isChainedConstructor()) {
-      buffer.append("static ");
+    if (isMakeStatic()) {
+      if (!isChainedConstructor()) {
+        buffer.append("static ");
+      }
+    }
+    else if (myTargetClass.isInterface() && PsiModifier.PUBLIC.equals(visibility)) {
+      buffer.append("default ");
     }
     if (myTypeParameterList != null) {
       final String typeParamsText = myTypeParameterList.getText();
       if (!typeParamsText.isEmpty()) {
-        buffer.append(typeParamsText);
-        buffer.append(" ");
+        buffer.append(typeParamsText).append(" ");
       }
     }
 
@@ -636,13 +641,11 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     }
     else {
       buffer.append(PsiFormatUtil.formatType(mySelector != null ? mySelector.getSelectedType() : myReturnType, 0, PsiSubstitutor.EMPTY));
-      buffer.append(" ");
-      buffer.append(myNameField.getEnteredName());
+      buffer.append(" ").append(myNameField.getEnteredName());
     }
+    
     buffer.append("(");
-
     final String INDENT = StringUtil.repeatSymbol(' ', buffer.length() - declarationOffset);
-
     final VariableData[] datas = myInputVariables;
     int count = 0;
     for (int i = 0; i < datas.length; i++) {
@@ -651,25 +654,21 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
         //String typeAndModifiers = PsiFormatUtil.formatVariable(data.variable,
         //  PsiFormatUtil.SHOW_MODIFIERS | PsiFormatUtil.SHOW_TYPE);
         PsiType type = data.type;
-        if (i == datas.length - 1 && type instanceof PsiArrayType && myMakeVarargs != null && myMakeVarargs.isSelected()) {
-          type = new PsiEllipsisType(((PsiArrayType)type).getComponentType());
+        if (i == datas.length - 1 && type instanceof PsiArrayType arrayType && myMakeVarargs != null && myMakeVarargs.isSelected()) {
+          type = new PsiEllipsisType(arrayType.getComponentType());
         }
 
         String typeText = type.getPresentableText();
         if (count > 0) {
-          buffer.append(",\n");
-          buffer.append(INDENT);
+          buffer.append(",\n").append(INDENT);
         }
-        buffer.append(typeText);
-        buffer.append(" ");
-        buffer.append(data.name);
+        buffer.append(typeText).append(" ").append(data.name);
         count++;
       }
     }
     buffer.append(")");
     if (myExceptions.length > 0) {
-      buffer.append("\n");
-      buffer.append("throws ");
+      buffer.append("\nthrows ");
       boolean printSeparator = false;
       for (PsiType exception : myExceptions) {
         if (printSeparator) {
@@ -701,7 +700,8 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
       }
       // set the modifiers with which the method is supposed to be created
       PsiUtil.setModifierProperty(prototype, PsiModifier.PRIVATE, true);
-    } catch (IncorrectOperationException e) {
+    }
+    catch (IncorrectOperationException e) {
       return;
     }
 
@@ -725,8 +725,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   @Override
   public void show() {
     super.show();
-    final List<EventPair<?>> listData = collectStatistics();
-    JavaExtractMethodCollector.logDialogClosed(myProject, listData);
+    JavaExtractMethodCollector.logDialogClosed(myProject, collectStatistics());
   }
 
   private static final class ParameterInfo {
@@ -743,9 +742,9 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     }
   }
 
-  private static Map<PsiVariable, ParameterInfo> getParameterInfos(VariableData[] parameters){
+  private static Map<PsiVariable, ParameterInfo> getParameterInfos(VariableData[] parameters) {
     final Map<PsiVariable, ParameterInfo> map = new HashMap<>();
-    for (int index=0; index<parameters.length; index++) {
+    for (int index = 0; index<parameters.length; index++) {
       map.put(parameters[index].variable, new ParameterInfo(index, parameters[index]));
     }
     return map;
