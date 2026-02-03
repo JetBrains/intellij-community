@@ -1,2 +1,16 @@
 com.intellij.serviceContainer.IfcService
 com.intellij.serviceContainer.ClsService
+com.intellij.find.impl.FindAndReplaceExecutor
+com.intellij.find.impl.FindPopupScopeUIProvider
+com.intellij.openapi.vfs.FileIdAdapter
+com.intellij.ide.actions.ReportFeedbackService
+com.intellij.codeInsight.actions.AbstractLayoutCodeProcessorWriteInterceptor
+com.intellij.openapi.actionSystem.ActionUpdaterInterceptor
+com.intellij.util.ui.RestartDialog
+com.intellij.openapi.options.newEditor.SettingsDialogFactory
+com.intellij.platform.ide.core.customization.IdeLifecycleUiCustomization
+com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
+com.intellij.openapi.editor.HoverDocPopupLocationProvider
+com.intellij.frontend.HostIdeInfoService
+com.intellij.configurationStore.defaults.DefaultSettingsService
+com.intellij.ui.IdeUICustomization
