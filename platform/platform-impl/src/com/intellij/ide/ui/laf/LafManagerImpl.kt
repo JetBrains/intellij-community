@@ -64,6 +64,7 @@ import com.intellij.ui.svg.setSelectionColorPatcherProvider
 import com.intellij.util.EventDispatcher
 import com.intellij.util.FontUtil
 import com.intellij.util.IJSwingUtilities
+import com.intellij.util.PlatformUtils
 import com.intellij.util.SVGLoader.colorPatcherProvider
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.*
@@ -460,7 +461,16 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private fun Element.getThemeNameWithReplacingDeprecated(): String? {
     val currentTheme = this.getAttributeValue(ATTRIBUTE_THEME_NAME)
     if (ExperimentalUI.isNewUI() && currentTheme == "JetBrainsLightTheme") {
-      val newThemeId = "ExperimentalLightWithLightHeader"
+      val newThemeId = "Islands Light"
+      this.setAttribute(ATTRIBUTE_THEME_NAME, newThemeId)
+      return newThemeId
+    }
+    else if (ExperimentalUI.isNewUI()
+             && ExperimentalUI.switchedFromClassicToIslandsLafMigration
+             && PlatformUtils.isRider()
+             && currentTheme == "RiderLight") {
+      ExperimentalUI.switchedFromClassicToIslandsLafMigration = false
+      val newThemeId = "Islands Light"
       this.setAttribute(ATTRIBUTE_THEME_NAME, newThemeId)
       return newThemeId
     }

@@ -8,7 +8,12 @@ import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
-import com.intellij.ide.ui.*
+import com.intellij.ide.ui.IconMapLoader
+import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.MainMenuDisplayMode
+import com.intellij.ide.ui.NotPatchedIconRegistry
+import com.intellij.ide.ui.NotRoamableUiSettings
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.ide.ui.laf.isDefaultForTheme
 import com.intellij.ide.util.PropertiesComponent
@@ -175,8 +180,14 @@ private class ExperimentalUiAppLifecycleListener : AppLifecycleListener {
       }
       settings.compactMode = true
 
-      // There is no Intellij Light theme in new UI
-      switchDarculaIfNeeded()
+      if (PlatformUtils.isRider()) {
+        switchSchemeToDefaultIfNeeded("Islands Light", "Rider Light")
+        switchSchemeToDefaultIfNeeded("Islands Dark", "Rider Dark")
+      }
+      else {
+        // There is no Intellij Light theme in new UI
+        switchSchemeToDefaultIfNeeded("Islands Dark", "Darcula")
+      }
     }
   }
 
@@ -188,14 +199,14 @@ private class ExperimentalUiAppLifecycleListener : AppLifecycleListener {
     (ExperimentalUI.getInstance() as? ExperimentalUIImpl)?.appClosing()
   }
 
-  private fun switchDarculaIfNeeded() {
+  private fun switchSchemeToDefaultIfNeeded(expectedLafId: String, expectedScheme: String) {
     val lookAndFeel = LafManager.getInstance().getCurrentUIThemeLookAndFeel()
-    if (lookAndFeel.id != "Islands Dark") {
+    if (lookAndFeel.id != expectedLafId) {
       return
     }
 
     val editorColorsManager = EditorColorsManager.getInstance() as EditorColorsManagerImpl
-    if (editorColorsManager.globalScheme.name != Scheme.EDITABLE_COPY_PREFIX + "Darcula") {
+    if (editorColorsManager.globalScheme.name != Scheme.EDITABLE_COPY_PREFIX + expectedScheme) {
       return
     }
 
@@ -248,6 +259,7 @@ private const val iconPathPrefix = "expui/"
 private fun createPathPatcher(paths: Map<ClassLoader, Map<String, String>>): IconPathPatcher {
   return object : IconPathPatcher() {
     private val dumpNotPatchedIcons = System.getProperty("ide.experimental.ui.dump.not.patched.icons").toBoolean()
+
     // https://youtrack.jetbrains.com/issue/IDEA-335974
     private val useReflectivePath
       get() = System.getProperty("ide.experimental.ui.use.reflective.path", "true").toBoolean()
