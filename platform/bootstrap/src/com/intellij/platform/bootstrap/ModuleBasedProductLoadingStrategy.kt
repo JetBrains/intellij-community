@@ -17,6 +17,7 @@ import com.intellij.ide.plugins.deprecatedLoadCorePluginForModuleBasedLoader
 import com.intellij.ide.plugins.loadDescriptorFromDir
 import com.intellij.ide.plugins.loadDescriptorFromFileOrDir
 import com.intellij.ide.plugins.loadDescriptorFromJar
+import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
@@ -333,11 +334,10 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     isBundled: Boolean,
     pluginDir: Path?,
   ): PluginMainDescriptor? {
-    val mainResourceRoot = pluginModuleGroup.mainModule.resourceRootPaths.singleOrNull()
-    if (mainResourceRoot == null) {
+    val resourceRoots = pluginModuleGroup.mainModule.resourceRootPaths
+    if (resourceRoots.isEmpty()) {
       thisLogger().warn(
-        "Main plugin module must have single resource root, so '${pluginModuleGroup.mainModule.moduleId.stringId}'" +
-        " with roots ${pluginModuleGroup.mainModule.resourceRootPaths} won't be loaded"
+        "Main plugin module must have at least one resource root, so '${pluginModuleGroup.mainModule.moduleId.stringId}' won't be loaded"
       )
       return null
     }
@@ -354,9 +354,10 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     }
     val allResourceRootsList = allResourceRoots.toList()
 
-    val descriptor =
-      tryLoadingPluginDescriptorFromJarOrDirectory(mainResourceRoot, allResourceRootsList, zipFilePool,
+    val descriptor = resourceRoots.firstNotNullOfOrNull { resourceRoot ->
+      tryLoadingPluginDescriptorFromJarOrDirectory(resourceRoot, allResourceRootsList, zipFilePool,
                                                    pluginModuleGroup, context, isBundled, pluginDir)
+    }
     val modulesWithJarFiles = descriptor?.contentModules?.flatMap { moduleItem ->
       val jarFiles = moduleItem.jarFiles
       if (moduleItem.moduleLoadingRule != ModuleLoadingRule.EMBEDDED && jarFiles != null) jarFiles else emptyList()
@@ -453,8 +454,15 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     }
 
     val paths = resolvedModule.resourceRootPaths
-    return paths.singleOrNull() 
-           ?: error("Content modules are supposed to have only one resource root, but $moduleId have multiple: $paths")
+    val singlePath = paths.singleOrNull()
+    /* when running from sources without dev build, resources of a content module may include the module output directory and paths to its
+       module-level libraries, so this function may return null so resolveModuleFile and resolveCustomModuleClassesRoots from
+       ModuleBasedPluginXmlPathResolver will be used to load the module */
+    if (singlePath == null && !(PluginManagerCore.isRunningFromSources() && !AppMode.isRunningFromDevBuild())) {
+      error("Content modules are supposed to have only one resource root, but $moduleId have multiple: $paths")
+    }
+
+    return singlePath
   }
 }
 
