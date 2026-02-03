@@ -4,7 +4,6 @@ import kotlin.io.path.exists
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.fus.FeatureUsageStatisticsProperties
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import java.nio.file.Files
@@ -14,9 +13,16 @@ import java.nio.file.StandardCopyOption
 class MPSBuilder {
 
     companion object {
+        internal val MPS_HOME: Path = BuildPaths.COMMUNITY_ROOT.communityRoot.resolve("mps/build")
+
         @JvmStatic
         fun main(args: Array<String>) {
-            val home = args[0]
+            val home = if (args.any()) {
+              Path.of(args[0])
+            }
+            else {
+              BuildPaths.MAYBE_ULTIMATE_HOME ?: BuildPaths.COMMUNITY_ROOT.communityRoot
+            }
 
             val options = BuildOptions(
                 validateImplicitPlatformModule = false,
@@ -32,11 +38,11 @@ class MPSBuilder {
                     scrambleTool = null, artifactsServer = null,
                     featureUsageStatisticsProperties = listOf(fusp), licenseServerHost = null
             )
-
+            @Suppress("RAW_RUN_BLOCKING")
             runBlocking(Dispatchers.Default) {
 
                 val buildContext = BuildContextImpl.createContext(
-                    projectHome = Path.of(home),
+                    projectHome = home,
                     productProperties = MPSProperties(),
                     proprietaryBuildTools = buildTools,
                     options = options

@@ -168,8 +168,8 @@ class MPSProperties : JetBrainsProductProperties() {
 
     override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "platform"
 
-    override fun createWindowsCustomizer(projectHome: Path): WindowsDistributionCustomizer? {
-        return MPSWindowsDistributionCustomizer(projectHome)
+    override fun createWindowsCustomizer(projectHome: Path): WindowsDistributionCustomizer {
+        return MPSWindowsDistributionCustomizer(MPSBuilder.MPS_HOME)
     }
 
     override fun createLinuxCustomizer(projectHome: String): LinuxDistributionCustomizer? {
