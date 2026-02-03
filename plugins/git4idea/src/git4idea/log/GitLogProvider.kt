@@ -75,6 +75,8 @@ import git4idea.history.GitLogUtil
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
+import git4idea.repo.GitRepositoryTagsHolder
+import git4idea.repo.GitTagsHolderListener
 import git4idea.repo.asSubmodule
 import git4idea.telemetry.GitBackendTelemetrySpan.LogProvider.LoadingCommitsOnTaggedBranch
 import git4idea.telemetry.GitBackendTelemetrySpan.LogProvider.ReadingBranches
@@ -251,15 +253,22 @@ class GitLogProvider(private val project: Project) : VcsLogProvider, VcsIndexabl
 
   override fun subscribeToRootRefreshEvents(roots: Collection<VirtualFile>, refresher: VcsLogRefresher): Disposable {
     val connection = project.messageBus.connect()
+    connection.subscribe(GitRepositoryTagsHolder.TAGS_UPDATED, GitTagsHolderListener { repository ->
+      refreshOnRepoUpdate(repository, roots, refresher)
+    })
     connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { repository ->
-      project.trackActivityBlocking(VcsActivityKey) {
-        val root = repository.root
-        if (roots.contains(root)) {
-          refresher.refresh(root)
-        }
-      }
+      refreshOnRepoUpdate(repository, roots, refresher)
     })
     return connection
+  }
+
+  private fun refreshOnRepoUpdate(repository: GitRepository, registeredRoots: Collection<VirtualFile>, refresher: VcsLogRefresher) {
+    project.trackActivityBlocking(VcsActivityKey) {
+      val root = repository.root
+      if (registeredRoots.contains(root)) {
+        refresher.refresh(root)
+      }
+    }
   }
 
   @Throws(VcsException::class)
