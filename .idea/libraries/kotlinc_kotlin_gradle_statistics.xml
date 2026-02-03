@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-gradle-statistics" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-gradle-statistics-for-ide:2.3.20-ij253-100">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-gradle-statistics-for-ide:2.3.20-ij253-105">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.3.20-ij253-100/kotlin-gradle-statistics-for-ide-2.3.20-ij253-100.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.3.20-ij253-105/kotlin-gradle-statistics-for-ide-2.3.20-ij253-105.jar">
           <sha256sum>5ed51fde2e2c308a5e51c93f0c306e2df361d995358fe320e0fee3eafd88d0a7</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.3.20-ij253-100/kotlin-gradle-statistics-for-ide-2.3.20-ij253-100.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.3.20-ij253-105/kotlin-gradle-statistics-for-ide-2.3.20-ij253-105.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.3.20-ij253-100/kotlin-gradle-statistics-for-ide-2.3.20-ij253-100-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2.3.20-ij253-105/kotlin-gradle-statistics-for-ide-2.3.20-ij253-105-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

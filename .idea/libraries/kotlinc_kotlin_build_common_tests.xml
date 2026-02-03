@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-build-common-tests" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-build-common-tests-for-ide:2.3.20-ij253-100">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-build-common-tests-for-ide:2.3.20-ij253-105">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.3.20-ij253-100/kotlin-build-common-tests-for-ide-2.3.20-ij253-100.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.3.20-ij253-105/kotlin-build-common-tests-for-ide-2.3.20-ij253-105.jar">
           <sha256sum>d0d925a63436683c9ba594cdef82902d0186c38b28d40489f358ca94989012f1</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.3.20-ij253-100/kotlin-build-common-tests-for-ide-2.3.20-ij253-100.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.3.20-ij253-105/kotlin-build-common-tests-for-ide-2.3.20-ij253-105.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.3.20-ij253-100/kotlin-build-common-tests-for-ide-2.3.20-ij253-100-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.3.20-ij253-105/kotlin-build-common-tests-for-ide-2.3.20-ij253-105-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
