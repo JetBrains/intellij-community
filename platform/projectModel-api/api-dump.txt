@@ -1024,6 +1024,7 @@ a:com.intellij.openapi.roots.libraries.PersistentLibraryKind
 - getAdditionalRootTypes():com.intellij.openapi.roots.OrderRootType[]
 f:com.intellij.workspaceModel.ide.LibraryEntities
 - sf:getPresentableName(com.intellij.platform.workspace.jps.entities.LibraryEntity):java.lang.String
+f:com.intellij.workspaceModel.ide.SdkEntities
 com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry
 - sf:Companion:com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry$Companion
 - a:findTypeById(com.intellij.platform.workspace.jps.entities.SourceRootTypeId):org.jetbrains.jps.model.module.JpsModuleSourceRootType
