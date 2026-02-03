@@ -136,7 +136,7 @@ public class RenameTo extends IntentionAndQuickFixAction implements Iconable, Ev
 
   private void generateSuggestions(String name, PsiElement element) {
     if (suggestions == null) {
-      TextRange range = restoreRange(name);
+      TextRange range = restoreRange();
       if (range == null) return;
       this.suggestions = SpellCheckerManager.getInstance(pointer.getProject()).getSuggestions(typo)
         .stream()
@@ -147,15 +147,13 @@ public class RenameTo extends IntentionAndQuickFixAction implements Iconable, Ev
     }
   }
 
-  private @Nullable TextRange restoreRange(String currentElementName) {
+  private @Nullable TextRange restoreRange() {
     PsiElement element = pointer.getElement();
     Segment rangeRelativeToFile = this.rangeRelativeToFile.getRange();
     if (element == null || rangeRelativeToFile == null) return null;
 
-    int offset = element.getText().indexOf(currentElementName);
     return TextRange.create(rangeRelativeToFile)
-      .shiftLeft(element.getTextRange().getStartOffset())
-      .shiftLeft(offset);
+      .shiftLeft(element.getTextRange().getStartOffset());
   }
 
   private void runRenamer(PsiElement element, String suggestion) {
