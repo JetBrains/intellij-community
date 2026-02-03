@@ -10,13 +10,31 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.editor.impl.findEditorOrNull
-import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.rpc.XBreakpointEvent
+import com.intellij.platform.debugger.impl.rpc.XBreakpointsSetDto
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionDataDto
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionDto
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionState
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionsList
+import com.intellij.platform.debugger.impl.rpc.XDebuggerEditorsProviderDto
+import com.intellij.platform.debugger.impl.rpc.XDebuggerManagerApi
+import com.intellij.platform.debugger.impl.rpc.XDebuggerManagerSessionEvent
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionEvent
+import com.intellij.platform.debugger.impl.rpc.XFrontendDebuggerCapabilities
+import com.intellij.platform.debugger.impl.rpc.XSmartStepIntoHandlerDto
+import com.intellij.platform.debugger.impl.rpc.toRpc
 import com.intellij.platform.execution.impl.backend.createProcessHandlerDto
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.util.asDisposable
-import com.intellij.xdebugger.*
+import com.intellij.xdebugger.SplitDebuggerMode
+import com.intellij.xdebugger.XDebugProcess
+import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.XDebugSessionListener
+import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.XDebuggerManagerListener
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointListener
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
@@ -28,7 +46,9 @@ import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.rpc.models.storeGlobally
 import com.intellij.xdebugger.impl.rpc.toRpc
 import fleet.rpc.core.toRpc
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.consumeEach
@@ -36,6 +56,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {

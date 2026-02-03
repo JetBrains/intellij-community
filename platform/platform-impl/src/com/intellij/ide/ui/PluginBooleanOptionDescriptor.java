@@ -2,7 +2,15 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.ContentModuleDescriptor;
+import com.intellij.ide.plugins.DisabledPluginsState;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginEnabler;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginModuleId;
+import com.intellij.ide.plugins.PluginUtils;
 import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController;
 import com.intellij.ide.plugins.newui.MyPluginModel;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
@@ -25,7 +33,12 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.FileVisitResult;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**

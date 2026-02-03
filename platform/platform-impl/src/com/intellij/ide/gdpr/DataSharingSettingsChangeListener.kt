@@ -3,7 +3,7 @@ package com.intellij.ide.gdpr
 
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 
 @ApiStatus.Internal
 interface DataSharingSettingsChangeListener : EventListener {

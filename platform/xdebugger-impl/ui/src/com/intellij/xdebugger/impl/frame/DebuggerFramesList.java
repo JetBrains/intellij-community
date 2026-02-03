@@ -10,9 +10,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.ListCellRenderer;
+import javax.swing.ListModel;
+import javax.swing.ListSelectionModel;
 import javax.swing.text.Position;
-import java.awt.*;
+import java.awt.Point;
 
 @ApiStatus.Internal
 public abstract class DebuggerFramesList extends JBList implements OccurenceNavigator {

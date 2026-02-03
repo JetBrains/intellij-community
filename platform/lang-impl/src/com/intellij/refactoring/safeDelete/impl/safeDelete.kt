@@ -3,7 +3,11 @@ package com.intellij.refactoring.safeDelete.impl
 
 import com.intellij.model.Pointer
 import com.intellij.model.search.SearchService
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.impl.search.runSearch
@@ -13,10 +17,22 @@ import com.intellij.refactoring.rename.api.FileOperation
 import com.intellij.refactoring.rename.impl.FileUpdates
 import com.intellij.refactoring.rename.ui.withBackgroundIndicator
 import com.intellij.refactoring.safeDelete.UnsafeUsagesDialog
-import com.intellij.refactoring.safeDelete.api.*
+import com.intellij.refactoring.safeDelete.api.PsiSafeDeleteDeclarationUsage
+import com.intellij.refactoring.safeDelete.api.PsiSafeDeleteUsage
+import com.intellij.refactoring.safeDelete.api.SafeDeleteAdditionalTargetsSearchParameters
+import com.intellij.refactoring.safeDelete.api.SafeDeleteSearchParameters
+import com.intellij.refactoring.safeDelete.api.SafeDeleteTarget
+import com.intellij.refactoring.safeDelete.api.SafeDeleteUsage
 import com.intellij.util.Query
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 

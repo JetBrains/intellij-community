@@ -16,7 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import javax.swing.FocusManager;
-import java.awt.*;
+import java.awt.Component;
 
 class MockFocusManager extends FocusManager {
   private final Component myFocusOwner;

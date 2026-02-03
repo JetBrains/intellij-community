@@ -13,7 +13,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.ArrayUtilRt.EMPTY_STRING_ARRAY
 import com.intellij.util.containers.toArray
 import com.intellij.util.io.URLUtil
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.atomic.AtomicReference
 
 internal class FileContainerDescription(val urls: List<VirtualFileUrl>, private val jarDirectories: List<JarDirectoryDescription>) {

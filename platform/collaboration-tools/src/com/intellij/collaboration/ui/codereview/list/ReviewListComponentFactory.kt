@@ -14,7 +14,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.*
+import javax.swing.JList
+import javax.swing.JScrollPane
+import javax.swing.ListModel
+import javax.swing.ListSelectionModel
+import javax.swing.ScrollPaneConstants
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener

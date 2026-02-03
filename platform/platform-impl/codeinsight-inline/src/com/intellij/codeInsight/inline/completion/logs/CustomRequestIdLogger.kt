@@ -10,8 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
 import org.jetbrains.annotations.ApiStatus
-import kotlin.collections.component1
-import kotlin.collections.component2
 
 
 // TODO: This class was introduced for handling legal issues related to sensitive statistic collectors (specifically for ML_FED collector).

@@ -9,7 +9,10 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.NlsContexts.*
+import com.intellij.openapi.util.NlsContexts.DialogMessage
+import com.intellij.openapi.util.NlsContexts.DialogTitle
+import com.intellij.openapi.util.NlsContexts.NotificationContent
+import com.intellij.openapi.util.NlsContexts.NotificationTitle
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM

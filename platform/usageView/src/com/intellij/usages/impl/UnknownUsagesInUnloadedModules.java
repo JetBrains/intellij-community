@@ -12,7 +12,7 @@ import com.intellij.usages.UsagePresentation;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 import java.util.stream.Collectors;
 

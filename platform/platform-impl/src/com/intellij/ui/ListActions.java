@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JList;
 
 @ApiStatus.Internal
 public abstract class ListActions extends SwingActionDelegate implements ActionRemoteBehaviorSpecification.Frontend {

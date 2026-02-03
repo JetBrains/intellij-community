@@ -17,7 +17,11 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.bind
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.PlatformUtils
 
 internal class ReaderModeConfigurable(private val project: Project) : BoundSearchableConfigurable(

@@ -16,11 +16,11 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.extensions.getQName
-import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
-import com.jetbrains.python.psi.resolve.isPackageAvailable
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
+import com.jetbrains.python.psi.resolve.isPackageAvailable
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration.Companion.TEST_NAME_PARTS_SPLITTER
 import org.jetbrains.annotations.ApiStatus.Internal

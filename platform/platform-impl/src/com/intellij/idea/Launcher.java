@@ -3,7 +3,12 @@ package com.intellij.idea;
 
 import org.jetbrains.annotations.ApiStatus;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 
 @ApiStatus.Internal

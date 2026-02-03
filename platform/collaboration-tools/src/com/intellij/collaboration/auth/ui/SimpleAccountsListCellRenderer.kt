@@ -9,13 +9,21 @@ import com.intellij.collaboration.ui.codereview.avatar.Avatar
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.ListLayout
-import com.intellij.util.ui.*
+import com.intellij.util.ui.GridBag
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.ListUiUtil
+import com.intellij.util.ui.NamedColorUtil
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Font
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.ListCellRenderer
 
 internal class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
   private val defaultPredicate: (A) -> Boolean,

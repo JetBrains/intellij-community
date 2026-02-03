@@ -6,7 +6,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JPanel;
 
 public abstract class AbstractActionWithPanel extends AnAction implements DumbAware, Disposable {
   public abstract JPanel createPanel();

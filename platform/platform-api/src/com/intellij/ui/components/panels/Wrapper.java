@@ -5,8 +5,11 @@ import com.intellij.openapi.ui.NullableComponent;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.LayoutManager;
 
 public class Wrapper extends JPanel implements NullableComponent {
   private JComponent myVerticalSizeReferent;

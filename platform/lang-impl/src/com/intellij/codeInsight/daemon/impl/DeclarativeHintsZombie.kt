@@ -1,8 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
-import com.intellij.codeInsight.hints.declarative.*
-import com.intellij.codeInsight.hints.declarative.impl.*
+import com.intellij.codeInsight.hints.declarative.InlayActionPayload
+import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
+import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
+import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
+import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
+import com.intellij.codeInsight.hints.declarative.SymbolPointerInlayActionPayload
+import com.intellij.codeInsight.hints.declarative.impl.InlayData
+import com.intellij.codeInsight.hints.declarative.impl.InlayDataExternalizer
+import com.intellij.codeInsight.hints.declarative.impl.PresentationTreeExternalizer
+import com.intellij.codeInsight.hints.declarative.impl.ZombieSmartPointer
+import com.intellij.codeInsight.hints.declarative.impl.ZombieSymbolPointer
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.zombie.LimbedNecromancy
 import com.intellij.openapi.editor.impl.zombie.LimbedZombie

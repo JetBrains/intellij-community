@@ -9,10 +9,15 @@ import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandlerAdapter;
 import org.intellij.lang.annotations.Language;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.jupiter.api.Disabled;
 
-import javax.swing.*;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 import java.awt.event.InputMethodEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;

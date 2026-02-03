@@ -21,7 +21,10 @@ import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.frame.XFullValueEvaluator
-import com.intellij.xdebugger.impl.ui.*
+import com.intellij.xdebugger.impl.ui.CustomComponentEvaluator
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
+import com.intellij.xdebugger.impl.ui.TextViewer
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants
 import com.intellij.xdebugger.ui.TextValueVisualizer
 import com.intellij.xdebugger.ui.VisualizedContentTab
 import org.jetbrains.annotations.ApiStatus

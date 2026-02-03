@@ -6,7 +6,14 @@ package com.intellij.util.io
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.io.impl.*
+import com.intellij.util.io.impl.DirectoryContentBuilderImpl
+import com.intellij.util.io.impl.DirectoryContentSpecImpl
+import com.intellij.util.io.impl.DirectorySpec
+import com.intellij.util.io.impl.FileTextMatchers
+import com.intellij.util.io.impl.JarSpec
+import com.intellij.util.io.impl.ZipSpec
+import com.intellij.util.io.impl.assertContentUnderFileMatches
+import com.intellij.util.io.impl.fillSpecFromDirectory
 import org.junit.rules.ErrorCollector
 import java.io.File
 import java.nio.file.Path

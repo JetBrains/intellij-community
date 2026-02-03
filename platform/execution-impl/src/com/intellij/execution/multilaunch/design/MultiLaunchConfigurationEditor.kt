@@ -3,6 +3,10 @@ package com.intellij.execution.multilaunch.design
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunManagerListener
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.multilaunch.MultiLaunchConfiguration
+import com.intellij.execution.multilaunch.execution.executables.Executable
+import com.intellij.execution.multilaunch.state.toSnapshot
+import com.intellij.execution.options.LifetimedSettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.HtmlChunk
@@ -17,10 +21,6 @@ import com.intellij.ui.components.JBViewport
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.EditableModel
 import com.intellij.util.ui.JBUI
-import com.intellij.execution.multilaunch.MultiLaunchConfiguration
-import com.intellij.execution.multilaunch.execution.executables.Executable
-import com.intellij.execution.multilaunch.state.toSnapshot
-import com.intellij.execution.options.LifetimedSettingsEditor
 import com.jetbrains.rd.util.lifetime.Lifetime
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.ApiStatus

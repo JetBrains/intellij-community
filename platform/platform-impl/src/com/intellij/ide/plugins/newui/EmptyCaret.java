@@ -4,7 +4,8 @@ package com.intellij.ide.plugins.newui;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.Caret;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Graphics;
+import java.awt.Point;
 
 /**
  * @author Alexander Lobas

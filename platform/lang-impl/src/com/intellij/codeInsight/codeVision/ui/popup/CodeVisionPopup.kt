@@ -4,7 +4,13 @@ package com.intellij.codeInsight.codeVision.ui.popup
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
 import com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel
-import com.intellij.codeInsight.codeVision.ui.popup.layouter.*
+import com.intellij.codeInsight.codeVision.ui.popup.layouter.Anchoring
+import com.intellij.codeInsight.codeVision.ui.popup.layouter.Anchoring2D
+import com.intellij.codeInsight.codeVision.ui.popup.layouter.AnchoringRect
+import com.intellij.codeInsight.codeVision.ui.popup.layouter.DockingLayouter
+import com.intellij.codeInsight.codeVision.ui.popup.layouter.EditorAnchoringRect
+import com.intellij.codeInsight.codeVision.ui.popup.layouter.SimplePopupLayouterSource
+import com.intellij.codeInsight.codeVision.ui.popup.layouter.map
 import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionInlayRenderer
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay

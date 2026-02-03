@@ -11,7 +11,6 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.CustomRuleProducer
 import com.intellij.internal.statistic.eventLog.validator.storage.FusComponentProvider
-import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase

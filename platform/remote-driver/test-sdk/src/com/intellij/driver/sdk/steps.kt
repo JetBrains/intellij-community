@@ -2,7 +2,7 @@ package com.intellij.driver.sdk
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.sdk.ui.Finder
-import java.util.*
+import java.util.ServiceLoader
 
 
 interface StepsProvider {

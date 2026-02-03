@@ -1,13 +1,26 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
-import com.intellij.build.*;
+import com.intellij.build.BuildBundle;
+import com.intellij.build.BuildConsoleUtils;
+import com.intellij.build.BuildEventDispatcher;
+import com.intellij.build.BuildProgressListener;
+import com.intellij.build.BuildTreeFilters;
+import com.intellij.build.BuildView;
+import com.intellij.build.BuildViewSettingsProvider;
+import com.intellij.build.BuildViewSettingsProviderAdapter;
+import com.intellij.build.DefaultBuildDescriptor;
+import com.intellij.build.WeakFilterableSupplier;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.FinishBuildEventImpl;
 import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.build.events.impl.SuccessResultImpl;
-import com.intellij.execution.*;
+import com.intellij.execution.DefaultExecutionResult;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.Executor;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.SimpleJavaParameters;
@@ -60,11 +73,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.*;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.ServerSocket;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Enumeration;
 
-import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.*;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.convert;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.createFailureResult;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getConsoleManagerFor;
 import static com.intellij.openapi.util.text.StringUtil.nullize;
 
 public class ExternalSystemRunnableState extends UserDataHolderBase implements RunProfileState {

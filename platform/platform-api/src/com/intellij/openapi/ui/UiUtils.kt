@@ -32,7 +32,13 @@ import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.awt.event.MouseEvent
 import java.io.File
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.InputMap
+import javax.swing.JComponent
+import javax.swing.JEditorPane
+import javax.swing.KeyStroke
+import javax.swing.ListModel
+import javax.swing.SwingUtilities
 import javax.swing.text.DefaultCaret
 import javax.swing.text.JTextComponent
 import javax.swing.tree.DefaultMutableTreeNode

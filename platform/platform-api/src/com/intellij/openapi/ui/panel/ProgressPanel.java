@@ -6,7 +6,9 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JProgressBar;
 
 /**
  * <code>ProgressPanel</code> is an object associated with each <code>JProgressBar</code> after

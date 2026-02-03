@@ -15,7 +15,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.ComponentInlayAlignment
+import com.intellij.openapi.editor.ComponentInlayRenderer
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.InlayProperties
+import com.intellij.openapi.editor.addComponentInlay
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.DumbService

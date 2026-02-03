@@ -3,7 +3,10 @@ package com.intellij.ide.wizard.comment
 
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.HyperlinkEventAction
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Row
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import javax.swing.event.HyperlinkEvent

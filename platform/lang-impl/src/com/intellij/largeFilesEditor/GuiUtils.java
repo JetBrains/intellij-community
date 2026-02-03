@@ -5,7 +5,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.ui.JBDimension;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public final class GuiUtils {
 

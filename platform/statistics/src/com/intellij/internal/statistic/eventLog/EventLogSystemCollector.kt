@@ -15,7 +15,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.internal.statistic.uploader.EventLogExternalSendConfig
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Locale
 
 /**
  * The event log group records internal events of metadata event-log for each recorder.

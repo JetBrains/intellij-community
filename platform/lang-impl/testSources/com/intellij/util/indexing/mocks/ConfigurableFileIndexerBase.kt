@@ -10,7 +10,7 @@ import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.IOUtil
 import java.io.DataInput
 import java.io.DataOutput
-import java.util.*
+import java.util.Queue
 import java.util.concurrent.ConcurrentLinkedQueue
 
 abstract class ConfigurableFileIndexerBase : SingleEntryFileBasedIndexExtension<String>() {

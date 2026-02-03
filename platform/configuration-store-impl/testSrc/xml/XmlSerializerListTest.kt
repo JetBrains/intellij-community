@@ -2,9 +2,15 @@
 package com.intellij.configurationStore.xml
 
 import com.intellij.openapi.components.BaseState
-import com.intellij.util.xmlb.annotations.*
+import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.OptionTag
+import com.intellij.util.xmlb.annotations.Property
+import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.Transient
+import com.intellij.util.xmlb.annotations.XCollection
 import org.junit.jupiter.api.Test
-import java.util.*
+import java.util.Collections
+import java.util.Random
 
 class XmlSerializerListTest {
   @Test

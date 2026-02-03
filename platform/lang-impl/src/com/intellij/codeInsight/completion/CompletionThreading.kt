@@ -12,7 +12,13 @@ import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.Semaphore
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit

@@ -5,7 +5,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.remoteDev.tests.LambdaIdeContext
 import java.io.File
 import java.io.Serializable
-import kotlin.jvm.javaClass
 
 class SerializedLambdaWithIdeContextHelper: SerializedLambdaHelper() {
   fun interface SuspendingSerializableConsumer<T : LambdaIdeContext, R> : Serializable {

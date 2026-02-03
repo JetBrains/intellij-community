@@ -3,7 +3,7 @@ package com.intellij.ui.treeStructure.treetable;
 
 import com.intellij.openapi.util.NlsContexts;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.TreeModel;
 
 /**

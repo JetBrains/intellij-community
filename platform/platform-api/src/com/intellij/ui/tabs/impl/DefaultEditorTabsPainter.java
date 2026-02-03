@@ -3,7 +3,9 @@ package com.intellij.ui.tabs.impl;
 
 import org.jetbrains.annotations.ApiStatus;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 
 /**
  * @author Konstantin Bulenkov

@@ -3,7 +3,6 @@ package com.intellij.ide.actions
 
 import com.intellij.application.options.codeStyle.cache.TooFrequentCodeStyleComputationWatcher
 import com.intellij.ide.IdeBundle
-import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -12,7 +11,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import java.io.IOException

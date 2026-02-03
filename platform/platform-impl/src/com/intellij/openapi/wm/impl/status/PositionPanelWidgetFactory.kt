@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status
 
-import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.StatusBarWidgetFactory
+import com.intellij.openapi.wm.WidgetPresentation
+import com.intellij.openapi.wm.WidgetPresentationDataContext
+import com.intellij.openapi.wm.WidgetPresentationFactory
 import com.intellij.ui.UIBundle
 import kotlinx.coroutines.CoroutineScope
 

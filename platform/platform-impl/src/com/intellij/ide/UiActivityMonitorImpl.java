@@ -15,8 +15,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.SwingUtilities;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 @ApiStatus.Internal
 public final class UiActivityMonitorImpl extends UiActivityMonitor implements ModalityStateListener, Disposable {

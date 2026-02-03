@@ -8,7 +8,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.InteractiveCourseFactory
-import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.*
+import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.HeightLimitedPane
+import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.HelpAndResourcesPanel
+import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnButton
+import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnIdeContentColorsAndFonts
+import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.getBrowseCoursesAction
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.jbAcademy.JBAcademyWelcomeScreenBundle
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.Align

@@ -3,10 +3,15 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.PasteProvider;
 import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.platform.ide.core.permissions.Permission;
 import com.intellij.platform.ide.core.permissions.RequiresPermissions;
-import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

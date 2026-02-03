@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.richcopy.model;
 
 import org.jetbrains.annotations.ApiStatus;
 
-import java.awt.*;
+import java.awt.Color;
 
 @ApiStatus.Internal
 public final class ColorRegistry extends AbstractRegistry<Color> {

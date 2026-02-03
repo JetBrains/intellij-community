@@ -3,7 +3,18 @@ package com.intellij.execution.process.mediator.common.grpc
 
 import com.intellij.execution.process.mediator.common.QuotaExceededException
 import io.grpc.Status
-import io.grpc.Status.Code.*
+import io.grpc.Status.Code.CANCELLED
+import io.grpc.Status.Code.DATA_LOSS
+import io.grpc.Status.Code.FAILED_PRECONDITION
+import io.grpc.Status.Code.INTERNAL
+import io.grpc.Status.Code.INVALID_ARGUMENT
+import io.grpc.Status.Code.NOT_FOUND
+import io.grpc.Status.Code.OK
+import io.grpc.Status.Code.OUT_OF_RANGE
+import io.grpc.Status.Code.RESOURCE_EXHAUSTED
+import io.grpc.Status.Code.UNAUTHENTICATED
+import io.grpc.Status.Code.UNIMPLEMENTED
+import io.grpc.Status.Code.UNKNOWN
 import io.grpc.StatusException
 import io.grpc.StatusRuntimeException
 import org.jetbrains.annotations.VisibleForTesting

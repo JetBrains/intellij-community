@@ -2,7 +2,10 @@
 package com.intellij.openapi.editor.impl.zombie
 
 import org.junit.jupiter.api.Test
-import java.io.*
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.DataInputStream
+import java.io.DataOutputStream
 import kotlin.test.assertEquals
 
 internal class LimbedNecromancyTest {

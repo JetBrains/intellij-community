@@ -1,7 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl.target.wizard
 
-import com.intellij.execution.target.*
+import com.intellij.execution.target.ContributedConfigurationsList
+import com.intellij.execution.target.LanguageRuntimeConfiguration
+import com.intellij.execution.target.LanguageRuntimeType
+import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.TargetEnvironmentLanguagesPanel
+import com.intellij.execution.target.TargetEnvironmentWizard
+import com.intellij.execution.target.getRuntimeType
+import com.intellij.execution.target.getTargetType
 import com.intellij.ide.IdeBundle
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel

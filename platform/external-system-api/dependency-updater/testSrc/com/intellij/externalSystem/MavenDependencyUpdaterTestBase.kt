@@ -25,7 +25,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.*
+import java.util.Arrays
 
 abstract class MavenDependencyUpdaterTestBase : MavenMultiVersionImportingTestCase() {
   private var myTestDataDir: File? = null

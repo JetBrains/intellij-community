@@ -4,9 +4,10 @@ import com.michaelbaranov.microba.calendar.ui.basic.BasicCalendarPaneUI;
 import com.michaelbaranov.microba.calendar.ui.basic.BasicDatePickerUI;
 import com.michaelbaranov.microba.common.MicrobaComponent;
 
-import javax.swing.*;
+import javax.swing.LookAndFeel;
+import javax.swing.UIManager;
 import java.applet.Applet;
-import java.awt.*;
+import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashMap;

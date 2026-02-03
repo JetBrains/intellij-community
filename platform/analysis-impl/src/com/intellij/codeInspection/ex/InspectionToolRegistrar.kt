@@ -3,7 +3,11 @@ package com.intellij.codeInspection.ex
 
 import com.intellij.analysis.AnalysisBundle
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.InspectionEP
+import com.intellij.codeInspection.InspectionToolProvider
+import com.intellij.codeInspection.InspectionWrapperUtil
+import com.intellij.codeInspection.LocalInspectionEP
+import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager

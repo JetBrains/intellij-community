@@ -16,14 +16,31 @@ import com.intellij.ui.ScreenUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.EventDispatcher
-import com.intellij.util.ui.*
-import java.awt.*
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.FocusUtil
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import java.awt.AWTEvent
+import java.awt.Color
+import java.awt.Component
+import java.awt.Container
+import java.awt.Cursor
+import java.awt.Dimension
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
+import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.ComponentEvent
 import java.awt.event.ComponentListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.function.Predicate
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.LayoutFocusTraversalPolicy
+import javax.swing.SwingUtilities
 import kotlin.math.max
 
 open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean = false,

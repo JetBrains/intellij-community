@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.serialization.SerializationConstants
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Internal

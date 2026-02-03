@@ -2,6 +2,9 @@
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.impl.SnapshotBuildNumber.PATH
+import org.jetbrains.intellij.build.impl.SnapshotBuildNumber.SNAPSHOT_SUFFIX
+import org.jetbrains.intellij.build.impl.SnapshotBuildNumber.VALUE
 import java.nio.file.Files
 import java.nio.file.Path
 

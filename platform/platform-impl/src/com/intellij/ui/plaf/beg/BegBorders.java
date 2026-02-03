@@ -4,14 +4,15 @@ package com.intellij.ui.plaf.beg;
 
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Graphics;
 
 /**
  * @author Eugene Belyaev

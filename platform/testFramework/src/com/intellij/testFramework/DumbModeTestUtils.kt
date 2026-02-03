@@ -13,7 +13,12 @@ import com.intellij.testFramework.DumbModeTestUtils.endEternalDumbModeTaskAndWai
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.application
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import java.util.concurrent.ConcurrentHashMap

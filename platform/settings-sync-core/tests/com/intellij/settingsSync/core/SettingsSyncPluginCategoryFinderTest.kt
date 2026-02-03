@@ -12,8 +12,8 @@ import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.settingsSync.core.plugins.SettingsSyncPluginCategoryFinder
 import com.intellij.testFramework.rules.InMemoryFsExtension
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
 class SettingsSyncPluginCategoryFinderTest {
 

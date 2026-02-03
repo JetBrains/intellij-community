@@ -6,7 +6,16 @@ import com.intellij.ui.paint.RectanglePainter
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Obsolete
-import java.awt.*
+import java.awt.AlphaComposite
+import java.awt.Cursor
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Insets
+import java.awt.LayoutManager
+import java.awt.Rectangle
+import java.awt.Shape
+import java.awt.Transparency
 import java.awt.geom.Path2D
 import java.awt.geom.RoundRectangle2D
 import javax.swing.JPanel

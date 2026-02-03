@@ -4,7 +4,8 @@ package com.intellij.util.ui;
 import com.intellij.openapi.ui.ComboBox;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
+import javax.swing.JPanel;
 
 public abstract class ReloadableComboBoxPanel<T> extends ReloadablePanel<T> {
   protected JComboBox<T> myComboBox;

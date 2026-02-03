@@ -14,7 +14,11 @@ import com.jetbrains.fus.reporting.model.lion3.LogEventAction
 import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.*
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 
 @ApiStatus.Internal
 val LICENSE_CODE_KEY: Key<Char> = Key("LICENSE_CODE")

@@ -4,7 +4,7 @@ package com.intellij.xdebugger.impl.evaluate;
 import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 
 public abstract class EvaluationInputComponent {
   private final String myTitle;

@@ -30,7 +30,11 @@ import java.io.IOException;
 import java.util.List;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 public class WindowsCaseSensitivityTest extends BareTestFixtureTestCase {

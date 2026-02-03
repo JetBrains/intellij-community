@@ -5,17 +5,16 @@ package com.intellij.internal.jcef.test.detailed.dialog;
 import org.cef.callback.CefStringVisitor;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.awt.BorderLayout;
-import java.awt.Frame;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import java.awt.BorderLayout;
+import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 @ApiStatus.Internal
 public class  ShowTextDialog extends JDialog implements CefStringVisitor {

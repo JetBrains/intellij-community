@@ -17,8 +17,13 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import java.awt.*
-import java.util.*
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.Insets
+import java.awt.Point
+import java.awt.Rectangle
+import java.util.Collections
 import javax.swing.JLayeredPane
 import javax.swing.JPanel
 import javax.swing.JRootPane

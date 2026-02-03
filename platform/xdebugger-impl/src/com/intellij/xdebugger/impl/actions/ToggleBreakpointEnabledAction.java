@@ -10,16 +10,20 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction;
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy;
 import com.intellij.util.Range;
-import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy;
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 @ApiStatus.Internal
 public class ToggleBreakpointEnabledAction extends DumbAwareAction implements SplitDebuggerAction {

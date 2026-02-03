@@ -3,7 +3,8 @@ package com.intellij.ui.roots;
 
 import com.intellij.util.ui.FilePathSplittingPolicy;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.io.File;

@@ -1,7 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures
 
-import com.intellij.build.*
+import com.intellij.build.BuildContentManager
+import com.intellij.build.BuildContentManagerImpl
+import com.intellij.build.BuildDescriptor
+import com.intellij.build.BuildView
+import com.intellij.build.BuildViewManager
+import com.intellij.build.SyncViewManager
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction

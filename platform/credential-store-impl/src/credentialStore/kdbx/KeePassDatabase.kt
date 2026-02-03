@@ -18,7 +18,8 @@ import java.security.SecureRandom
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.Base64
+import java.util.UUID
 
 @Suppress("ConstPropertyName")
 internal object KdbxDbElementNames {

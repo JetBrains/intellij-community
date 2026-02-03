@@ -8,7 +8,14 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.ad.document.AdTextDocument
-import com.intellij.openapi.editor.markup.*
+import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
+import com.intellij.openapi.editor.markup.GutterIconRenderer
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.LineMarkerRenderer
+import com.intellij.openapi.editor.markup.LineSeparatorRenderer
+import com.intellij.openapi.editor.markup.MarkupEditorFilter
+import com.intellij.openapi.editor.markup.SeparatorPlacement
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import kotlinx.serialization.Serializable

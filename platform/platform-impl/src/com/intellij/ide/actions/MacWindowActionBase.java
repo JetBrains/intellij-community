@@ -13,7 +13,8 @@ import com.intellij.ui.mac.MacMainFrameDecorator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JFrame;
+import javax.swing.JRootPane;
 
 /**
  * @author ignatov

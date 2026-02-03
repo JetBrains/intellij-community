@@ -2,10 +2,14 @@
 package com.intellij.platform.lvcs.impl.settings
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.SimplePersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.platform.lvcs.impl.DirectoryDiffMode
 import com.intellij.util.EventDispatcher
-import java.util.*
+import java.util.EventListener
 
 @State(name = "Lvcs.Activity.App.Settings", storages = [Storage("lvcs.xml")], category = SettingsCategory.UI)
 internal class ActivityViewApplicationSettings : SimplePersistentStateComponent<ActivityViewApplicationSettings.State>(State()) {

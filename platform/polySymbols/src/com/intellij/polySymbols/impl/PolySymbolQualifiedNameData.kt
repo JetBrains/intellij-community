@@ -3,7 +3,6 @@ package com.intellij.polySymbols.impl
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.polySymbols.PolySymbolKind
-import com.intellij.polySymbols.PolySymbolKindName
 import com.intellij.polySymbols.PolySymbolNamespace
 import com.intellij.polySymbols.PolySymbolQualifiedName
 

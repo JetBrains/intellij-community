@@ -3,7 +3,11 @@ package com.intellij.openapi.roots.ui;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.roots.ui.util.*;
+import com.intellij.openapi.roots.ui.util.CompositeAppearance;
+import com.intellij.openapi.roots.ui.util.HttpUrlCellAppearance;
+import com.intellij.openapi.roots.ui.util.JarSubfileCellAppearance;
+import com.intellij.openapi.roots.ui.util.SimpleTextCellAppearance;
+import com.intellij.openapi.roots.ui.util.ValidFileCellAppearance;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;

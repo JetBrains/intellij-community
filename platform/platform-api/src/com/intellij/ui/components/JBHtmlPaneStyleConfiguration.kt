@@ -10,7 +10,7 @@ import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.Companion.default
 import com.intellij.ui.scale.JBUIScale
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
-import java.util.*
+import java.util.Objects
 
 @Experimental
 /**

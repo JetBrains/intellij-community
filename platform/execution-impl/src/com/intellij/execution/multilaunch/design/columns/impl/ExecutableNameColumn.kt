@@ -23,7 +23,12 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.AbstractTableCellEditor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.Container
+import java.awt.Cursor
+import java.awt.Dimension
+import java.awt.Rectangle
 import java.awt.event.ActionEvent
 import javax.swing.JLabel
 import javax.swing.JPanel

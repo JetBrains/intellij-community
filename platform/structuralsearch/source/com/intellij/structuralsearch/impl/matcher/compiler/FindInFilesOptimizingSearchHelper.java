@@ -12,7 +12,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.intellij.psi.search.UsageSearchContext.*;
+import static com.intellij.psi.search.UsageSearchContext.IN_CODE;
+import static com.intellij.psi.search.UsageSearchContext.IN_COMMENTS;
+import static com.intellij.psi.search.UsageSearchContext.IN_PLAIN_TEXT;
+import static com.intellij.psi.search.UsageSearchContext.IN_STRINGS;
 
 /**
  * @author Maxim.Mossienko

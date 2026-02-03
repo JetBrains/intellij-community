@@ -1,7 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
-import com.intellij.ide.*;
+import com.intellij.ide.CopyProvider;
+import com.intellij.ide.CutProvider;
+import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.ExporterToTextFile;
+import com.intellij.ide.PasteProvider;
+import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.PopupLocator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
@@ -12,7 +17,8 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 /**
  * @see PlatformCoreDataKeys

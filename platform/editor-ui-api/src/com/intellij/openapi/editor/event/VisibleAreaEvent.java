@@ -4,7 +4,7 @@ package com.intellij.openapi.editor.event;
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Rectangle;
 import java.util.EventObject;
 
 public final class VisibleAreaEvent extends EventObject {

@@ -17,7 +17,13 @@ import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-import com.intellij.ui.dsl.listCellRenderer.*
+import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRendererComponent
+import com.intellij.ui.dsl.listCellRenderer.LcrIconInitParams
+import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
+import com.intellij.ui.dsl.listCellRenderer.LcrRow
+import com.intellij.ui.dsl.listCellRenderer.LcrSeparator
+import com.intellij.ui.dsl.listCellRenderer.LcrSwitchInitParams
+import com.intellij.ui.dsl.listCellRenderer.LcrTextInitParams
 import com.intellij.ui.popup.list.ComboBoxPopup
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
@@ -36,7 +42,13 @@ import java.awt.Component
 import javax.accessibility.Accessible
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComboBox
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.ListCellRenderer
 import javax.swing.plaf.basic.BasicComboPopup
 import kotlin.math.max
 

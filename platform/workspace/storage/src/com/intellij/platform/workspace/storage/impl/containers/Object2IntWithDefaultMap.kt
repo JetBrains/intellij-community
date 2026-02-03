@@ -4,8 +4,8 @@
 package com.intellij.platform.workspace.storage.impl.containers
 
 import com.intellij.platform.workspace.storage.impl.containers.Object2IntWithDefaultMap.Companion.DEFAULT_VALUE
-import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.ints.IntCollection
+import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import java.util.function.BiConsumer
 import java.util.function.ToIntFunction

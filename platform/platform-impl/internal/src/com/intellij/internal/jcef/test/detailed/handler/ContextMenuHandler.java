@@ -12,10 +12,9 @@ import org.cef.callback.CefMenuModel.MenuId;
 import org.cef.handler.CefContextMenuHandlerAdapter;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.awt.*;
+import java.awt.Frame;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Vector;
 
 
 @ApiStatus.Internal

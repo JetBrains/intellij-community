@@ -15,7 +15,8 @@
  */
 package com.intellij.testFramework;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.Shape;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphJustificationInfo;
 import java.awt.font.GlyphMetrics;

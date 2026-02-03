@@ -3,7 +3,11 @@ package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.richcopy.model.ColorRegistry;
@@ -19,7 +23,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.ui.JBColor;
 
-import java.awt.*;
+import java.awt.Color;
 
 public class SyntaxInfoConstructionTest extends BasePlatformTestCase {
   public void testBlockSelection() {

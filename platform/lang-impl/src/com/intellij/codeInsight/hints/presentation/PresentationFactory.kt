@@ -6,7 +6,10 @@ import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.hints.InlayPresentationFactory
-import com.intellij.codeInsight.hints.InlayPresentationFactory.*
+import com.intellij.codeInsight.hints.InlayPresentationFactory.ClickListener
+import com.intellij.codeInsight.hints.InlayPresentationFactory.HoverListener
+import com.intellij.codeInsight.hints.InlayPresentationFactory.Padding
+import com.intellij.codeInsight.hints.InlayPresentationFactory.RoundedCorners
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
@@ -26,9 +29,12 @@ import com.intellij.ui.LightweightHint
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Cursor
+import java.awt.Point
 import java.awt.event.MouseEvent
-import java.util.*
+import java.util.EnumSet
 import javax.swing.Icon
 import kotlin.math.max
 

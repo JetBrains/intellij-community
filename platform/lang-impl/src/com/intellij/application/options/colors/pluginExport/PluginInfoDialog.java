@@ -6,8 +6,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
 
 public final class PluginInfoDialog extends DialogWrapper {
   private final PluginExportData myExportData;

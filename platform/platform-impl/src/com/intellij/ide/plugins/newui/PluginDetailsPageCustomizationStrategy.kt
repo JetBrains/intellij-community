@@ -3,7 +3,6 @@ package com.intellij.ide.plugins.newui
 
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 
 // Interface that allows to modify PluginDetailsPageComponent. Needed because the component is used in many dialogs (Plugin Advertiser, Plugin Manager, Plugin Updater, etc.).
 @ApiStatus.Internal

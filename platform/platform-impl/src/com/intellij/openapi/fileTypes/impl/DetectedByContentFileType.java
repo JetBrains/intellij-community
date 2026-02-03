@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class DetectedByContentFileType implements FileType {
   public static final DetectedByContentFileType INSTANCE = new DetectedByContentFileType();

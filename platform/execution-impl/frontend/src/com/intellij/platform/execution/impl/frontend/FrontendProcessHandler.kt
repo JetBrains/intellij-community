@@ -5,7 +5,11 @@ import com.intellij.execution.KillableProcess
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
-import com.intellij.execution.rpc.*
+import com.intellij.execution.rpc.KillableProcessInfo
+import com.intellij.execution.rpc.ProcessHandlerApi
+import com.intellij.execution.rpc.ProcessHandlerDto
+import com.intellij.execution.rpc.ProcessHandlerEvent
+import com.intellij.execution.rpc.ProcessHandlerId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service

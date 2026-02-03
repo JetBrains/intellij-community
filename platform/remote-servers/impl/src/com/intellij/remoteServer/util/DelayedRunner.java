@@ -22,7 +22,7 @@ import com.intellij.util.Alarm;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 @ApiStatus.Internal
 public abstract class DelayedRunner implements Disposable {

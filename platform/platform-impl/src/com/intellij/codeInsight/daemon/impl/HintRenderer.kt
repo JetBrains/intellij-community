@@ -23,7 +23,13 @@ import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import org.intellij.lang.annotations.JdkConstants
-import java.awt.*
+import java.awt.Color
+import java.awt.Font
+import java.awt.FontMetrics
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Rectangle
+import java.awt.RenderingHints
 import java.awt.font.FontRenderContext
 import javax.swing.UIManager
 import kotlin.math.abs

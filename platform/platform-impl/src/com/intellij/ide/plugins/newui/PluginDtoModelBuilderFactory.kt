@@ -10,7 +10,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Locale
 
 @ApiStatus.Internal
 @IntellijInternalApi

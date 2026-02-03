@@ -5,7 +5,7 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.ui.treeStructure.ProjectViewUpdateCause
-import java.util.*
+import java.util.EnumSet
 import kotlin.streams.asSequence
 
 private object LocalPackageNameAccessor

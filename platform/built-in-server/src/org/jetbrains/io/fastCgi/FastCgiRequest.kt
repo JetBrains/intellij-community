@@ -12,7 +12,7 @@ import org.jetbrains.builtInWebServer.PathInfo
 import org.jetbrains.io.serverHeaderValue
 import java.net.InetSocketAddress
 import java.nio.CharBuffer
-import java.util.*
+import java.util.Locale
 import kotlin.math.min
 
 private const val PARAMS = 4

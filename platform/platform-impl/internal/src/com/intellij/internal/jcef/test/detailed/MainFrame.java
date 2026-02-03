@@ -3,7 +3,13 @@
 package com.intellij.internal.jcef.test.detailed;
 
 import com.intellij.internal.jcef.test.detailed.dialog.DownloadDialog;
-import com.intellij.internal.jcef.test.detailed.handler.*;
+import com.intellij.internal.jcef.test.detailed.handler.ContextMenuHandler;
+import com.intellij.internal.jcef.test.detailed.handler.DragHandler;
+import com.intellij.internal.jcef.test.detailed.handler.JSDialogHandler;
+import com.intellij.internal.jcef.test.detailed.handler.KeyboardHandler;
+import com.intellij.internal.jcef.test.detailed.handler.MessageRouterHandler;
+import com.intellij.internal.jcef.test.detailed.handler.MessageRouterHandlerEx;
+import com.intellij.internal.jcef.test.detailed.handler.RequestHandler;
 import com.intellij.internal.jcef.test.detailed.ui.ControlPanel;
 import com.intellij.internal.jcef.test.detailed.ui.MenuBar;
 import com.intellij.internal.jcef.test.detailed.ui.StatusPanel;
@@ -24,8 +30,14 @@ import org.cef.network.CefCookieManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.GraphicsConfiguration;
+import java.awt.KeyboardFocusManager;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.lang.reflect.Method;

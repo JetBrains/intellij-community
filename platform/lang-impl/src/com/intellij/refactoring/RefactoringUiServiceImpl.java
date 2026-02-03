@@ -32,7 +32,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static com.intellij.openapi.util.NlsContexts.*;
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+import static com.intellij.openapi.util.NlsContexts.DialogTitle;
+import static com.intellij.openapi.util.NlsContexts.StatusBarText;
 
 @ApiStatus.Internal
 public final class RefactoringUiServiceImpl extends RefactoringUiService {

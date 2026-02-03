@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.List;

@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.fus
 
-import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.EmptyStatisticsEventLogger
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
+import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
+import com.intellij.internal.statistic.eventLog.StatisticsFileEventLogger
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import java.util.concurrent.CompletableFuture

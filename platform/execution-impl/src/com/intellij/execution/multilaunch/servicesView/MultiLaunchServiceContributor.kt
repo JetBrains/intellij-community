@@ -1,13 +1,13 @@
 package com.intellij.execution.multilaunch.servicesView
 
 import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.multilaunch.execution.ExecutionModel
 import com.intellij.execution.services.ServiceViewContributor
 import com.intellij.execution.services.ServiceViewDescriptor
 import com.intellij.execution.services.SimpleServiceViewDescriptor
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBPanelWithEmptyText
-import com.intellij.execution.multilaunch.execution.ExecutionModel
-import com.intellij.icons.AllIcons
 import javax.swing.JComponent
 
 class MultiLaunchServiceContributor : ServiceViewContributor<ConfigurationServiceContributor> {

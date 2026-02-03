@@ -2,7 +2,11 @@
 package com.intellij.ui.tree
 
 import com.intellij.ide.projectView.PresentationData
-import com.intellij.ide.util.treeView.*
+import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.ide.util.treeView.AbstractTreeStructure
+import com.intellij.ide.util.treeView.NodeDescriptor
+import com.intellij.ide.util.treeView.PresentableNodeDescriptor
+import com.intellij.ide.util.treeView.ValidateableNode
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme

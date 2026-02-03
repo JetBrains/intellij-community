@@ -5,10 +5,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.platform.externalSystem.impl.ExternalSystemImplCoroutineScope.esCoroutineScope
 import com.intellij.openapi.externalSystem.autolink.launch
 import com.intellij.openapi.externalSystem.service.ui.completion.cache.AsyncLocalCache
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.platform.externalSystem.impl.ExternalSystemImplCoroutineScope.esCoroutineScope
 import com.intellij.util.application
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

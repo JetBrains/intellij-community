@@ -14,8 +14,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.concurrent.ExecutionException;
+import javax.swing.Icon;
 
 public final class TestLookupElementPresentation extends LookupElementPresentation {
   public static @NotNull TestLookupElementPresentation renderReal(@NotNull LookupElement e) {

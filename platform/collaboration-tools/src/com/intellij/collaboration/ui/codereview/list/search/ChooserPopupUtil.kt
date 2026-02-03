@@ -5,7 +5,13 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.details.SelectableWrapper
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.util.name
-import com.intellij.collaboration.ui.util.popup.*
+import com.intellij.collaboration.ui.util.popup.CollaborationToolsPopupUtil
+import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
+import com.intellij.collaboration.ui.util.popup.SelectablePopupItemPresentation
+import com.intellij.collaboration.ui.util.popup.SimplePopupItemRenderer
+import com.intellij.collaboration.ui.util.popup.SimpleSelectablePopupItemRenderer
+import com.intellij.collaboration.ui.util.popup.showAndAwaitSubmission
+import com.intellij.collaboration.ui.util.popup.showAndAwaitSubmissions
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.PopupChooserBuilder

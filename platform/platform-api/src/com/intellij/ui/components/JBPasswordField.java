@@ -10,8 +10,8 @@ import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPasswordField;
+import java.awt.Graphics;
 
 public class JBPasswordField extends JPasswordField implements ComponentWithEmptyText {
   private final TextComponentEmptyText myEmptyText;

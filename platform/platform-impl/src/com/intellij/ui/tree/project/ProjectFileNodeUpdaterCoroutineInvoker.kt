@@ -2,9 +2,15 @@
 package com.intellij.ui.tree.project
 
 import com.intellij.openapi.util.Disposer
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.yield
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.asPromise
 

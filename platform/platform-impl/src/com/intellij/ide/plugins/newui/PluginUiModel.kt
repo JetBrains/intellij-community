@@ -19,7 +19,8 @@ import com.intellij.util.PlatformUtils
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.text.DecimalFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 /**
  * A lightweight model for representing plugin information in the UI.

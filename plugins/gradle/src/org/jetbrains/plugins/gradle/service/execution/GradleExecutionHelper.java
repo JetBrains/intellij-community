@@ -3,8 +3,6 @@ package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.BuildIssueEventImpl;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.application.Application;
@@ -25,7 +23,6 @@ import com.intellij.openapi.externalSystem.util.OutputWrapper;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ExceptionUtil;

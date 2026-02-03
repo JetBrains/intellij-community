@@ -5,7 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import sun.awt.DisplayChangedListener;
 
-import java.awt.*;
+import java.awt.GraphicsEnvironment;
+import java.awt.HeadlessException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 

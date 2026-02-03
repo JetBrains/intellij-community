@@ -1,6 +1,10 @@
 package com.intellij.notebooks.visualization.settings
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.util.xmlb.XmlSerializerUtil
 
 /** General UI settings for all notebooks, R/Kotlin/Jupyter. */

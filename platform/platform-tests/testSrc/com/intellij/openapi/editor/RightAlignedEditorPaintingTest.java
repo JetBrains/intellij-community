@@ -25,7 +25,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 
 @TestDataPath("$CONTENT_ROOT/testData/editor/painting/right")
 public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {

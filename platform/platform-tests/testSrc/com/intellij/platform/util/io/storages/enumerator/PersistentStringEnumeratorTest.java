@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.enumerator;
 
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.StorageLockContext;
+import com.intellij.util.io.StringEnumeratorTestBase;
 import com.intellij.util.io.keyStorage.AppendableStorageBackedByResizableMappedFile;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;

@@ -20,7 +20,11 @@ import com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.ui.RawSwingDispatcher
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 fun preloadCriticalServices(

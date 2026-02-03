@@ -28,7 +28,7 @@ import java.nio.ByteBuffer
 import java.security.DigestInputStream
 import java.security.DigestOutputStream
 import java.security.SecureRandom
-import java.util.*
+import java.util.UUID
 import java.util.zip.GZIPOutputStream
 import javax.crypto.Cipher
 import javax.crypto.CipherInputStream

@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ObjectUtils
 import com.intellij.util.keyFMap.KeyFMap
-import java.util.*
+import java.util.EventListener
 
 /**
  * Incrementally iterates over a Notebook document, calculates line ranges of cells using lexer.

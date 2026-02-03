@@ -19,8 +19,10 @@ import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
+import java.awt.Font;
 
 public class ExpressionInputComponent extends EvaluationInputComponent {
   private final XDebuggerEditorBase myExpressionEditor;

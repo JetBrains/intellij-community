@@ -20,7 +20,10 @@ import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.concurrency.ConcurrentCollectionFactory.createConcurrentIntObjectMap;
-import static com.intellij.util.indexing.events.VfsEventsMerger.ChangeInfo.*;
+import static com.intellij.util.indexing.events.VfsEventsMerger.ChangeInfo.EventMask;
+import static com.intellij.util.indexing.events.VfsEventsMerger.ChangeInfo.FILE_ADDED;
+import static com.intellij.util.indexing.events.VfsEventsMerger.ChangeInfo.FILE_CONTENT_CHANGED;
+import static com.intellij.util.indexing.events.VfsEventsMerger.ChangeInfo.FILE_REMOVED;
 
 /**
  * Accumulates VFS file-change events [file, change: (ADDED | REMOVED | CONTENT_CHANGED | TRANSIENT_STATE_CHANGED)]

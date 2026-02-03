@@ -21,7 +21,12 @@ import junit.framework.TestCase;
 
 import java.util.Arrays;
 
-import static com.intellij.patterns.StandardPatterns.*;
+import static com.intellij.patterns.StandardPatterns.and;
+import static com.intellij.patterns.StandardPatterns.collection;
+import static com.intellij.patterns.StandardPatterns.not;
+import static com.intellij.patterns.StandardPatterns.object;
+import static com.intellij.patterns.StandardPatterns.or;
+import static com.intellij.patterns.StandardPatterns.string;
 
 public class StandardPatternsTest extends TestCase {
 

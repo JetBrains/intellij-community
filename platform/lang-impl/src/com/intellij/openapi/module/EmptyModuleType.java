@@ -7,7 +7,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class EmptyModuleType extends ModuleType<EmptyModuleBuilder> {
   public static final @NonNls String EMPTY_MODULE = "EMPTY_MODULE";

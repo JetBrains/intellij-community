@@ -3,7 +3,19 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.declarati
 
 import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.hints.InlayHintsUtils.getDefaultInlayHintsProviderPopupActions
-import com.intellij.codeInsight.hints.presentation.*
+import com.intellij.codeInsight.hints.presentation.BasePresentation
+import com.intellij.codeInsight.hints.presentation.ChangeOnHoverPresentation
+import com.intellij.codeInsight.hints.presentation.InlayPresentation
+import com.intellij.codeInsight.hints.presentation.InlayTextMetrics
+import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
+import com.intellij.codeInsight.hints.presentation.InsetPresentation
+import com.intellij.codeInsight.hints.presentation.MouseButton
+import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.codeInsight.hints.presentation.RoundWithBackgroundPresentation
+import com.intellij.codeInsight.hints.presentation.SequencePresentation
+import com.intellij.codeInsight.hints.presentation.SpacePresentation
+import com.intellij.codeInsight.hints.presentation.VerticalListInlayPresentation
+import com.intellij.codeInsight.hints.presentation.getFontRenderContext
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.AntialiasingType
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -18,7 +30,13 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import java.awt.*
+import org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.declaration.EditorFontMetricsCache.getMetrics
+import java.awt.AlphaComposite
+import java.awt.Component
+import java.awt.Cursor
+import java.awt.Graphics2D
+import java.awt.Point
+import java.awt.RenderingHints
 import java.awt.event.MouseEvent
 import java.util.WeakHashMap
 import javax.swing.Icon

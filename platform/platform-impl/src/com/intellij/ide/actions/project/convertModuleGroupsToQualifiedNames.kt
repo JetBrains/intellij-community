@@ -32,7 +32,11 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.ui.*
+import com.intellij.ui.EditorCustomization
+import com.intellij.ui.EditorTextField
+import com.intellij.ui.EditorTextFieldProvider
+import com.intellij.ui.JBColor
+import com.intellij.ui.MonospaceEditorCustomization
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil

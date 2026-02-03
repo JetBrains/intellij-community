@@ -5,8 +5,8 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
+import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
 
 class ToggleBreakpointGutterIconAction extends DumbAwareAction {

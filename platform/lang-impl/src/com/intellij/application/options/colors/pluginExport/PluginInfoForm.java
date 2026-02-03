@@ -8,8 +8,10 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.ScrollPaneConstants;
+import java.awt.Dimension;
 
 public final class PluginInfoForm {
   private JTextField myVendorMailField;

@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.util.containers.ContainerUtil
-import java.util.*
 import javax.swing.JList
 
 class WslDistributionComboBox(initial: WSLDistribution?,

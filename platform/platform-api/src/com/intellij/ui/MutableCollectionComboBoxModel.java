@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.MutableComboBoxModel;
 import java.util.List;
 
 public class MutableCollectionComboBoxModel<T> extends CollectionComboBoxModel<T> implements MutableComboBoxModel<T> {

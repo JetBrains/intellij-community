@@ -9,7 +9,11 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class ExternalClasspathClassLoader {
   public static final String CLASSPATH_FILE_PROPERTY = "classpath.file";

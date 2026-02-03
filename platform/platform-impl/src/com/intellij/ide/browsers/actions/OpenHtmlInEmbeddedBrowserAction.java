@@ -3,7 +3,11 @@ package com.intellij.ide.browsers.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.OpenInRightSplitAction;
-import com.intellij.ide.browsers.*;
+import com.intellij.ide.browsers.OpenInBrowserRequest;
+import com.intellij.ide.browsers.WebBrowserManager;
+import com.intellij.ide.browsers.WebBrowserService;
+import com.intellij.ide.browsers.WebBrowserUrlProvider;
+import com.intellij.ide.browsers.WebBrowserXmlService;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;

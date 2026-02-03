@@ -3,8 +3,12 @@ package com.intellij.application.options;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.module.LoadedModuleDescription;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.ModuleDescription;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -14,7 +18,7 @@ import com.intellij.ui.SortedComboBoxModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;

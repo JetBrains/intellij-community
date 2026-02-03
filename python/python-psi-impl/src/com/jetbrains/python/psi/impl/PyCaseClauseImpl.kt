@@ -3,7 +3,11 @@ package com.jetbrains.python.psi.impl
 import com.intellij.lang.ASTNode
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyCaseClause
+import com.jetbrains.python.psi.PyElementVisitor
+import com.jetbrains.python.psi.PyMatchStatement
+import com.jetbrains.python.psi.PyPattern
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.PyNeverType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext

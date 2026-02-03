@@ -13,12 +13,11 @@ import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.runner.RunWith;
 
-import java.awt.*;
+import java.awt.GraphicsEnvironment;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.List;
-import java.util.Objects;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class TestFrameworkUtil {

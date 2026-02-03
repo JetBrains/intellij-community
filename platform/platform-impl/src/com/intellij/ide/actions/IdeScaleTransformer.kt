@@ -3,7 +3,12 @@ package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ui.ideScaleIndicator.IdeScaleIndicatorManager
-import com.intellij.ide.ui.*
+import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsListener
+import com.intellij.ide.ui.UISettingsUtils
+import com.intellij.ide.ui.percentStringValue
+import com.intellij.ide.ui.percentValue
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated

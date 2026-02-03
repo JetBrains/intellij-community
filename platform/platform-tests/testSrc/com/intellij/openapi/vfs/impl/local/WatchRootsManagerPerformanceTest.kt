@@ -13,18 +13,18 @@ import com.intellij.openapi.vfs.local.FileWatcherTestUtil.shutdown
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.startup
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.wait
 import com.intellij.testFramework.PerformanceUnitTest
-import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Files
-import java.util.*
+import java.util.TreeSet
 import kotlin.test.assertFalse
 
 @SkipSlowTestLocally

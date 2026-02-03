@@ -3,7 +3,6 @@ package com.intellij.ide.impl;
 
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeCoreBundle;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DoNotAskOption;
 import org.jetbrains.annotations.NotNull;
 

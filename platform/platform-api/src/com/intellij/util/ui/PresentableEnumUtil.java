@@ -6,7 +6,8 @@ import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.SimpleListCellRenderer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
+import javax.swing.JList;
 
 public final class PresentableEnumUtil {
   private PresentableEnumUtil() {}

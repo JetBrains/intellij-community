@@ -19,7 +19,7 @@ import com.intellij.framework.FrameworkType;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class MockFrameworkType extends FrameworkType {
   public MockFrameworkType(@NotNull String id) {

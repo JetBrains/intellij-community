@@ -3,7 +3,7 @@ package com.intellij.openapi.wm.impl;
 
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeEvent;

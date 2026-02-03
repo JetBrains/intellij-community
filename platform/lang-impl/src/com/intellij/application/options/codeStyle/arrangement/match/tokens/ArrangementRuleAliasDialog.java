@@ -11,7 +11,7 @@ import com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

@@ -13,7 +13,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTextArea;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;

@@ -6,7 +6,9 @@ import com.intellij.ui.tabs.impl.TabLabel;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 /**
  * @author Alexander Lobas

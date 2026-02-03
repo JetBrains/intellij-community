@@ -5,7 +5,9 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.InputValidator
 import com.intellij.openapi.ui.Messages.InputDialog
-import com.intellij.openapi.util.NlsContexts.*
+import com.intellij.openapi.util.NlsContexts.Button
+import com.intellij.openapi.util.NlsContexts.DialogMessage
+import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 import org.jetbrains.annotations.ApiStatus

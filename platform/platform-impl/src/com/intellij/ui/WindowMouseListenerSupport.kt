@@ -4,12 +4,19 @@ package com.intellij.ui
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.util.ui.StartupUiUtil
 import com.intellij.ui.wayland.getValidBoundsForPopup
+import com.intellij.util.ui.StartupUiUtil
 import com.jetbrains.JBR
 import org.intellij.lang.annotations.JdkConstants
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.Component
+import java.awt.Cursor
+import java.awt.Dialog
+import java.awt.Frame
+import java.awt.Insets
+import java.awt.Point
+import java.awt.Rectangle
+import java.awt.Window
 import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
 

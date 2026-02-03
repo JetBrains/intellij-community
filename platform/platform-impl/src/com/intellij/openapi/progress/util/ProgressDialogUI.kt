@@ -18,16 +18,35 @@ import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.uiDesigner.core.GridConstraints
-import com.intellij.uiDesigner.core.GridConstraints.*
+import com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER
+import com.intellij.uiDesigner.core.GridConstraints.ANCHOR_NORTHWEST
+import com.intellij.uiDesigner.core.GridConstraints.ANCHOR_WEST
+import com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH
+import com.intellij.uiDesigner.core.GridConstraints.FILL_HORIZONTAL
+import com.intellij.uiDesigner.core.GridConstraints.FILL_NONE
+import com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW
+import com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK
+import com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED
+import com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_WANT_GROW
 import com.intellij.uiDesigner.core.GridLayoutManager
-import com.intellij.util.ui.*
+import com.intellij.util.ui.DialogUtil
+import com.intellij.util.ui.EDT
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Contract
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
 import java.io.File
-import javax.swing.*
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JProgressBar
+import javax.swing.KeyStroke
+import javax.swing.SwingUtilities
 
 internal class ProgressDialogUI : Disposable {
   val panel: JPanel = JPanel()

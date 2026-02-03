@@ -10,7 +10,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 

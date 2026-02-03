@@ -5,7 +5,8 @@ import com.intellij.openapi.editor.impl.FontInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.Graphics2D;
 import java.util.Arrays;
 import java.util.function.Consumer;
 

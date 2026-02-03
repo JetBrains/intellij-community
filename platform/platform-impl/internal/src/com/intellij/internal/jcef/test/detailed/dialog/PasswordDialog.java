@@ -5,16 +5,15 @@ package com.intellij.internal.jcef.test.detailed.dialog;
 import org.cef.callback.CefAuthCallback;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.awt.Frame;
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
+import java.awt.Frame;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 @ApiStatus.Internal
 public class  PasswordDialog extends JDialog implements Runnable {

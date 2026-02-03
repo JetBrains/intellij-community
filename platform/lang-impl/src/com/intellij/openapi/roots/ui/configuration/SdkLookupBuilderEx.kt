@@ -3,7 +3,7 @@ package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.openapi.projectRoots.Sdk
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.IdentityHashMap
 
 @ApiStatus.Internal
 @ApiStatus.Experimental

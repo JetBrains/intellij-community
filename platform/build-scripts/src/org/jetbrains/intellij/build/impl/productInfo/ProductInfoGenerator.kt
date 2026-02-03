@@ -17,8 +17,8 @@ import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.impl.Git
 import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.intellij.build.impl.client.createFrontendContextForLaunchers
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime

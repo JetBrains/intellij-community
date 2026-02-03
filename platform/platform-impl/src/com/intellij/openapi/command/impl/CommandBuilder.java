@@ -3,7 +3,11 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.command.impl.cmd.*;
+import com.intellij.openapi.command.impl.cmd.CmdEvent;
+import com.intellij.openapi.command.impl.cmd.CmdMeta;
+import com.intellij.openapi.command.impl.cmd.MutableCmdMeta;
+import com.intellij.openapi.command.impl.cmd.UndoMeta;
+import com.intellij.openapi.command.impl.cmd.UndoableActionMeta;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;

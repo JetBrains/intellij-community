@@ -6,30 +6,38 @@ import com.intellij.CommonBundle;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.core.Content;
 import com.intellij.history.core.Paths;
-import com.intellij.history.core.changes.*;
-import com.intellij.history.integration.LocalHistoryBundle;
+import com.intellij.history.core.changes.Change;
+import com.intellij.history.core.changes.ChangeVisitor;
+import com.intellij.history.core.changes.ContentChange;
+import com.intellij.history.core.changes.CreateEntryChange;
+import com.intellij.history.core.changes.DeleteChange;
+import com.intellij.history.core.changes.MoveChange;
+import com.intellij.history.core.changes.ROStatusChange;
+import com.intellij.history.core.changes.RenameChange;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
+import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.impl.DocumentUndoProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 @ApiStatus.Internal
 public final class UndoChangeRevertingVisitor extends ChangeVisitor {

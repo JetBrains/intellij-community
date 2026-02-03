@@ -5,8 +5,13 @@ import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PathManager.getSystemDir
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.components.StateStorageOperation
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.stateStore
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx

@@ -3,13 +3,22 @@ package com.intellij.ui.dsl.gridLayout.impl
 
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.checkTrue
-import com.intellij.ui.dsl.gridLayout.*
+import com.intellij.ui.dsl.gridLayout.Constraints
+import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.Grid
+import com.intellij.ui.dsl.gridLayout.GridLayout
+import com.intellij.ui.dsl.gridLayout.GridLayoutComponentProperty
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsX
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.scale.JBUIScale
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Insets
 import java.awt.Rectangle
-import java.util.*
+import java.util.EnumMap
 import javax.swing.JComponent
 import kotlin.math.max
 import kotlin.math.min

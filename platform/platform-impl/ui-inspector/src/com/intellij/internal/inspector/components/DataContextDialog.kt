@@ -5,7 +5,11 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.impl.DataManagerImpl
 import com.intellij.ide.impl.DataValidators
 import com.intellij.internal.inspector.UiInspectorUtil.getComponentName
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.CompositeDataProvider
+import com.intellij.openapi.actionSystem.CustomizedDataContext
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project

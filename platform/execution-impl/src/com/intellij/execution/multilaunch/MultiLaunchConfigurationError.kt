@@ -2,8 +2,8 @@ package com.intellij.execution.multilaunch
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.RuntimeConfigurationError
-import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.execution.multilaunch.execution.executables.Executable
+import com.intellij.openapi.util.NlsContexts.DialogMessage
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

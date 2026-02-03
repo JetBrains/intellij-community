@@ -7,8 +7,8 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
 
 /**
  * A custom component provider and updater for actions in toolbars.

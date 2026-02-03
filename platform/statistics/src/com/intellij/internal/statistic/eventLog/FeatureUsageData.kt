@@ -22,7 +22,7 @@ import org.jetbrains.annotations.TestOnly
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
-import java.util.*
+import java.util.Collections
 
 private val LOG = logger<FeatureUsageData>()
 

@@ -8,7 +8,13 @@ import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.SearchContext
 import com.intellij.driver.sdk.ui.UiRobot
 import com.intellij.driver.sdk.ui.components.UiComponent
-import com.intellij.driver.sdk.ui.remote.*
+import com.intellij.driver.sdk.ui.remote.AccessibleContextRef
+import com.intellij.driver.sdk.ui.remote.Class
+import com.intellij.driver.sdk.ui.remote.ColorRef
+import com.intellij.driver.sdk.ui.remote.Component
+import com.intellij.driver.sdk.ui.remote.RobotProvider
+import com.intellij.driver.sdk.ui.remote.SearchService
+import com.intellij.driver.sdk.ui.remote.SwingHierarchyService
 import org.w3c.dom.Element
 import java.awt.Point
 import java.awt.Rectangle

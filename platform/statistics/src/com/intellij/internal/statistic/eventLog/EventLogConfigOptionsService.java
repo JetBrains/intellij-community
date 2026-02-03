@@ -11,7 +11,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-import static com.intellij.internal.statistic.config.EventLogOptions.*;
+import static com.intellij.internal.statistic.config.EventLogOptions.DATA_THRESHOLD;
+import static com.intellij.internal.statistic.config.EventLogOptions.GROUP_ALERT_THRESHOLD;
+import static com.intellij.internal.statistic.config.EventLogOptions.GROUP_THRESHOLD;
+import static com.intellij.internal.statistic.config.EventLogOptions.tryParseInt;
 
 @Service
 public final class EventLogConfigOptionsService {

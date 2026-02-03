@@ -9,8 +9,16 @@ import com.intellij.util.containers.HashingStrategy;
 import com.sun.management.OperatingSystemMXBean;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.management.*;
-import java.util.*;
+import java.lang.management.CompilationMXBean;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 

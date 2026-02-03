@@ -1,7 +1,12 @@
 package com.intellij.settingsSync.core
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
-import com.intellij.configurationStore.*
+import com.intellij.configurationStore.ComponentStoreImpl
+import com.intellij.configurationStore.StreamProvider
+import com.intellij.configurationStore.getExportableComponentsMap
+import com.intellij.configurationStore.getExportableItemsFromLocalStorage
+import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
+import com.intellij.configurationStore.reloadComponents
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
 import com.intellij.openapi.components.RoamingType
@@ -25,7 +30,15 @@ import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Predicate
 import kotlin.concurrent.withLock
-import kotlin.io.path.*
+import kotlin.io.path.deleteExisting
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.exists
+import kotlin.io.path.inputStream
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.name
+import kotlin.io.path.pathString
+import kotlin.io.path.readText
 
 internal class SettingsSyncIdeMediatorImpl(private val componentStore: ComponentStoreImpl,
                                            private val rootConfig: Path,

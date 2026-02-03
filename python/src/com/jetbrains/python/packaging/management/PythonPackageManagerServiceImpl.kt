@@ -11,7 +11,7 @@ import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import kotlinx.coroutines.CoroutineScope
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 internal class PythonPackageManagerServiceImpl(private val serviceScope: CoroutineScope) : PythonPackageManagerService, Disposable {

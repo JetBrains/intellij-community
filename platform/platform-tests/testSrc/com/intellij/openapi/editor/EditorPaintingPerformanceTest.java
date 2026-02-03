@@ -22,7 +22,7 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 
-import java.awt.*;
+import java.awt.Rectangle;
 
 @PerformanceUnitTest
 public class EditorPaintingPerformanceTest extends AbstractEditorTest {

@@ -4,7 +4,7 @@ package com.intellij.openapi.options;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public abstract class SettingsEditorConfigurable<Settings> extends BaseConfigurable {
   private SettingsEditor<Settings> myEditor;

@@ -8,7 +8,11 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.microservices.url.references.UrlSegmentReference
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.ContributedReferenceHost
+import com.intellij.psi.ElementManipulators
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.PsiReference
 import com.intellij.psi.templateLanguages.OuterLanguageElement
 import com.intellij.psi.util.childrenOfType
 import com.intellij.psi.util.startOffset

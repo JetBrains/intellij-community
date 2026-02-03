@@ -17,7 +17,7 @@ package com.intellij.application.options.codeStyle.arrangement.ui;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public interface ArrangementRepresentationAware {
   

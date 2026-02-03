@@ -3,8 +3,8 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.module.Module
@@ -19,8 +19,15 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ActiveStoreRule
+import com.intellij.testFramework.DisposeModulesRule
+import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.RuleChain
+import com.intellij.testFramework.RunsInActiveStoreMode
+import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.loadAndUseProjectInLoadComponentStateMode
+import com.intellij.testFramework.writeChild
 import com.intellij.util.io.Ksuid
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap

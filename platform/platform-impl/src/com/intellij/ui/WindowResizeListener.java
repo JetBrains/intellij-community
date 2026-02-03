@@ -5,10 +5,26 @@ package com.intellij.ui;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
+import java.awt.Dialog;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
 
-import static java.awt.Cursor.*;
+import static java.awt.Cursor.CUSTOM_CURSOR;
+import static java.awt.Cursor.DEFAULT_CURSOR;
+import static java.awt.Cursor.E_RESIZE_CURSOR;
+import static java.awt.Cursor.NE_RESIZE_CURSOR;
+import static java.awt.Cursor.NW_RESIZE_CURSOR;
+import static java.awt.Cursor.N_RESIZE_CURSOR;
+import static java.awt.Cursor.SE_RESIZE_CURSOR;
+import static java.awt.Cursor.SW_RESIZE_CURSOR;
+import static java.awt.Cursor.S_RESIZE_CURSOR;
+import static java.awt.Cursor.W_RESIZE_CURSOR;
 import static javax.swing.SwingUtilities.convertPointFromScreen;
 
 public class WindowResizeListener extends WindowMouseListener {

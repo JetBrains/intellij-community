@@ -17,8 +17,8 @@ package com.intellij.openapi.ui;
 
 import junit.framework.TestCase;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.Dimension;
 
 public class SplitterTest extends TestCase{
 

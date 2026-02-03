@@ -2,7 +2,7 @@ package com.intellij.driver.model;
 
 import com.intellij.driver.model.transport.PassByValue;
 
-import java.awt.*;
+import java.awt.Point;
 import java.io.Serializable;
 
 public final class TextData implements Serializable, PassByValue {

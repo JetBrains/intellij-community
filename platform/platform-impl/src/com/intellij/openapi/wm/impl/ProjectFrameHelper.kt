@@ -47,7 +47,15 @@ import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.menu.installAppMenuIfNeeded
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.ui.*
+import com.intellij.ui.ActionCenterBalloonLayout
+import com.intellij.ui.BalloonLayout
+import com.intellij.ui.BalloonLayoutImpl
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.JBColor
+import com.intellij.ui.ScreenUtil
+import com.intellij.ui.WindowResizeListenerEx
+import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.SuperUserStatus.isSuperUser
 import com.intellij.util.ui.JBUI
@@ -55,7 +63,17 @@ import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
 import com.jetbrains.WindowDecorations.CustomTitleBar
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.BorderLayout
@@ -67,7 +85,12 @@ import java.awt.event.WindowEvent
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.accessibility.AccessibleContext
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JFrame
+import javax.swing.JPanel
+import javax.swing.RootPaneContainer
+import javax.swing.SwingUtilities
+import javax.swing.WindowConstants
 
 private const val INIT_BOUNDS_KEY = "InitBounds"
 

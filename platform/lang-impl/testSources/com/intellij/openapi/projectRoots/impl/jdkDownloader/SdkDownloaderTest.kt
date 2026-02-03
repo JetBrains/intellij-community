@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.util.ui.UIUtil.dispatchAllInvocationEvents
 import org.jetbrains.annotations.NotNull
 import org.junit.Assert
 import org.junit.Test

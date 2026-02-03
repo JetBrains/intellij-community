@@ -4,7 +4,11 @@ package com.intellij.platform.workspace.storage.tests.trace
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.asBase
 import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
-import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
+import com.intellij.platform.workspace.storage.testEntities.entities.NameId
+import com.intellij.platform.workspace.storage.testEntities.entities.NamedChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.NamedEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.WithSoftLinkEntity
 import com.intellij.platform.workspace.storage.tests.builderFrom
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
 import com.intellij.platform.workspace.storage.toBuilder

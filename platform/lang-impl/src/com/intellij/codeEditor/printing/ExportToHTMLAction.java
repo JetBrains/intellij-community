@@ -3,7 +3,12 @@
 package com.intellij.codeEditor.printing;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -11,7 +16,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JOptionPane;
 import java.nio.file.NoSuchFileException;
 
 @ApiStatus.Internal

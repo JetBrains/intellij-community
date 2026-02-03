@@ -4,7 +4,8 @@ package com.intellij.openapi.ui;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.ComboBoxModel;
+import javax.swing.ListModel;
 
 /**
  * A {@link ComboBox}'s model may implement

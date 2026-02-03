@@ -11,7 +11,7 @@ import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 

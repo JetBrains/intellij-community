@@ -25,7 +25,7 @@ import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public final class CopyHandler {
   private CopyHandler() {

@@ -9,7 +9,7 @@ import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.suspendLazy
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.UUID
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 

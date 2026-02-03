@@ -17,10 +17,15 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
-import com.intellij.platform.lvcs.impl.*
+import com.intellij.platform.lvcs.impl.ActivityScope
+import com.intellij.platform.lvcs.impl.ChangeSetActivityItem
+import com.intellij.platform.lvcs.impl.ChangeSetSelection
+import com.intellij.platform.lvcs.impl.RevisionId
+import com.intellij.platform.lvcs.impl.presentableName
+import com.intellij.platform.lvcs.impl.revisionId
 import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.Objects
 
 internal abstract class DifferenceDiffRequestProducer(protected val project: Project?,
                                                       protected val gateway: IdeaGateway,

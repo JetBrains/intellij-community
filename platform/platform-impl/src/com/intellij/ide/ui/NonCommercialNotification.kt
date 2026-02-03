@@ -32,7 +32,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Point
 import java.awt.event.MouseEvent
-import java.util.*
+import java.util.Locale
 import javax.accessibility.AccessibleContext
 import javax.swing.JEditorPane
 import javax.swing.LayoutFocusTraversalPolicy

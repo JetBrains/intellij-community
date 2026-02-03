@@ -6,10 +6,16 @@ package com.intellij.serialization
 import com.amazon.ion.Timestamp
 import it.unimi.dsi.fastutil.ints.Int2IntMap
 import java.io.File
-import java.lang.reflect.*
+import java.lang.reflect.GenericArrayType
+import java.lang.reflect.Modifier
+import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Proxy
+import java.lang.reflect.Type
+import java.lang.reflect.TypeVariable
 import java.nio.file.FileSystems
 import java.nio.file.Path
-import java.util.*
+import java.util.Date
+import java.util.IdentityHashMap
 
 internal typealias NestedBindingFactory = (accessor: MutableAccessor) -> Binding
 internal typealias RootBindingFactory = () -> Binding

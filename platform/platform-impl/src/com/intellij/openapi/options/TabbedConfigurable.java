@@ -6,7 +6,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ui.JBUI;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 import static com.intellij.openapi.options.ex.ConfigurableCardPanel.createConfigurableComponent;
 

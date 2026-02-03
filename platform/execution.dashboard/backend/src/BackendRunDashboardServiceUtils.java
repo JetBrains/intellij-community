@@ -3,11 +3,11 @@ package com.intellij.platform.execution.dashboard.backend;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.dashboard.RunDashboardCustomizer;
+import com.intellij.execution.dashboard.RunDashboardService;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.services.ServiceViewDnDDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.execution.dashboard.RunDashboardManagerImpl;
-import com.intellij.execution.dashboard.RunDashboardService;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;

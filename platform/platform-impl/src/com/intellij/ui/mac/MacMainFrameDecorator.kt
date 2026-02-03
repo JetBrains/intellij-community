@@ -31,7 +31,7 @@ import kotlinx.coroutines.withContext
 import java.awt.Frame
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.util.*
+import java.util.EventListener
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.SwingUtilities
 import kotlin.coroutines.resume

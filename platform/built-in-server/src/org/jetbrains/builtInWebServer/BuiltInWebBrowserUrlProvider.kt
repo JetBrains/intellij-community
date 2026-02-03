@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer
 
-import com.intellij.ide.browsers.*
+import com.intellij.ide.browsers.OpenInBrowserRequest
+import com.intellij.ide.browsers.ReloadMode
+import com.intellij.ide.browsers.WebBrowserManager
+import com.intellij.ide.browsers.WebBrowserUrlProvider
+import com.intellij.ide.browsers.WebBrowserXmlService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project

@@ -6,7 +6,9 @@ import com.intellij.ui.paint.LinePainter2D;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 
 /**
  * Encapsulates the logic of drawing arrows at graphics buffer (primary usage is to draw tabulation symbols representation arrows).

@@ -13,7 +13,6 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.JBUI
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.awt.event.ActionEvent
 import java.io.File

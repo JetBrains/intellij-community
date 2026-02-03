@@ -5,7 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.util.registry.RegistryManager;
 
-import javax.swing.*;
+import javax.swing.SwingConstants;
 
 public final class DistractionFreeModeController {
   static final String KEY = "editor.distraction.free.mode";

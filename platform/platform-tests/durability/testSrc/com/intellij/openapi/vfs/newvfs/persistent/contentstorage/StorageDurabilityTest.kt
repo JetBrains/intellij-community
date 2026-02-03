@@ -3,11 +3,20 @@ package com.intellij.openapi.vfs.newvfs.persistent.contentstorage
 
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.openapi.vfs.newvfs.persistent.*
+import com.intellij.openapi.vfs.newvfs.persistent.App
+import com.intellij.openapi.vfs.newvfs.persistent.AppAgent
+import com.intellij.openapi.vfs.newvfs.persistent.AppController
+import com.intellij.openapi.vfs.newvfs.persistent.InteractionResult
+import com.intellij.openapi.vfs.newvfs.persistent.User
+import com.intellij.openapi.vfs.newvfs.persistent.UserAgent
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.content.CompressingAlgo.Lz4Algo
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.content.VFSContentStorageOverMMappedFile
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.EOFException

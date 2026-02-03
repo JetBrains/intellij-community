@@ -16,7 +16,11 @@ import java.awt.image.BufferedImage
 import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JLabel
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class SegmentedButtonTest {
 

@@ -11,7 +11,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.function.Consumer;
 
-import static com.intellij.openapi.vfs.VFileProperty.*;
+import static com.intellij.openapi.vfs.VFileProperty.HIDDEN;
+import static com.intellij.openapi.vfs.VFileProperty.SPECIAL;
+import static com.intellij.openapi.vfs.VFileProperty.SYMLINK;
 import static com.intellij.openapi.vfs.newvfs.persistent.FSRecords.MIN_REGULAR_FILE_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;

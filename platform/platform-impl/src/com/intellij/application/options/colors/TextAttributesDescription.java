@@ -22,8 +22,8 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
 
 public abstract class TextAttributesDescription extends ColorAndFontDescription {
   private final TextAttributes myAttributes;

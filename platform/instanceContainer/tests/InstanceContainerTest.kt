@@ -4,15 +4,30 @@ package com.intellij.platform.instanceContainer.tests
 import com.intellij.platform.instanceContainer.CycleInitializationException
 import com.intellij.platform.instanceContainer.InstanceNotOverridableException
 import com.intellij.platform.instanceContainer.InstanceNotRegisteredException
-import com.intellij.platform.instanceContainer.internal.*
+import com.intellij.platform.instanceContainer.internal.ContainerDisposedException
+import com.intellij.platform.instanceContainer.internal.InstanceAlreadyRegisteredException
+import com.intellij.platform.instanceContainer.internal.InstanceContainerImpl
+import com.intellij.platform.instanceContainer.internal.InstanceHolder
+import com.intellij.platform.instanceContainer.internal.InstanceInitializer
+import com.intellij.platform.instanceContainer.internal.InstanceRegistrar
+import com.intellij.platform.instanceContainer.internal.ScopeHolder
 import com.intellij.testFramework.assertErrorLogged
 import com.intellij.testFramework.common.timeoutRunBlocking
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.job
+import kotlinx.coroutines.yield
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.assertThrows
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.test.*
+import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 class InstanceContainerTest {
 

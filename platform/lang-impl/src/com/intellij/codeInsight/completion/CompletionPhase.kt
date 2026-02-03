@@ -1,7 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion
 
-import com.intellij.codeInsight.completion.CompletionPhase.CommittingDocuments.CommittingState.*
+import com.intellij.codeInsight.completion.CompletionPhase.CommittingDocuments.CommittingState.Cancelled
+import com.intellij.codeInsight.completion.CompletionPhase.CommittingDocuments.CommittingState.Disposed
+import com.intellij.codeInsight.completion.CompletionPhase.CommittingDocuments.CommittingState.InProgress
+import com.intellij.codeInsight.completion.CompletionPhase.CommittingDocuments.CommittingState.Success
 import com.intellij.codeInsight.completion.CompletionPhase.Companion.NoCompletion
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl.Companion.assertPhase
@@ -17,7 +20,12 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.event.*
+import com.intellij.openapi.editor.event.CaretEvent
+import com.intellij.openapi.editor.event.CaretListener
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.event.SelectionEvent
+import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.project.IndexNotReadyException

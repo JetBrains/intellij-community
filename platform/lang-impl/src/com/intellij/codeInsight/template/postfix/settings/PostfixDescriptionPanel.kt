@@ -2,7 +2,11 @@
 package com.intellij.codeInsight.template.postfix.settings
 
 import com.intellij.codeInsight.CodeInsightBundle
-import com.intellij.codeInsight.intention.impl.config.*
+import com.intellij.codeInsight.intention.impl.config.ActionUsagePanel
+import com.intellij.codeInsight.intention.impl.config.BeforeAfterMetaData
+import com.intellij.codeInsight.intention.impl.config.IntentionDescriptionPanel
+import com.intellij.codeInsight.intention.impl.config.PlainTextDescriptor
+import com.intellij.codeInsight.intention.impl.config.TextDescriptor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileType

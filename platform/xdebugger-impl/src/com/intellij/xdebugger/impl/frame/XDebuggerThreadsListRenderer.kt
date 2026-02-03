@@ -15,7 +15,10 @@ import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.ListCellRenderer
+import javax.swing.SwingConstants
 
 internal class XDebuggerThreadsListRenderer : ColoredListCellRenderer<StackInfo>() {
 

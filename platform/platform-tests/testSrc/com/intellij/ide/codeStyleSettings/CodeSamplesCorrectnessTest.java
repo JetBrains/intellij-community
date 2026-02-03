@@ -12,7 +12,11 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.assertj.core.description.LazyTextDescription;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;

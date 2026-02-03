@@ -13,7 +13,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.testFramework.UsefulTestCase.*;
+import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
+import static com.intellij.testFramework.UsefulTestCase.assertNotEmpty;
+import static com.intellij.testFramework.UsefulTestCase.assertOrderedEquals;
 
 public class ProcessListUtilTest extends TestCase {
   public void testWorksOnAllPlatforms() {

@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.Caret
@@ -12,7 +11,6 @@ import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.editor.impl.CaretImpl
-import com.intellij.openapi.editor.impl.CaretModelImpl
 import com.intellij.openapi.project.DumbAware
 import org.jetbrains.annotations.ApiStatus
 

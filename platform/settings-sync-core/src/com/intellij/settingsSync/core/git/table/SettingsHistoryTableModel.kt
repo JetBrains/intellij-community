@@ -8,8 +8,8 @@ import com.intellij.settingsSync.core.git.record.HistoryRecord
 import com.intellij.settingsSync.core.git.record.RecordService
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsFullCommitDetails
-import com.intellij.vcs.log.VcsLogDataProvider
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.VcsLogDataProvider
 import com.intellij.vcs.log.data.AbstractDataGetter.Companion.getCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.ui.table.VcsLogCommitListModel

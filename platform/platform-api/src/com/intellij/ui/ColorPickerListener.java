@@ -3,7 +3,7 @@ package com.intellij.ui;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 public interface ColorPickerListener {
 

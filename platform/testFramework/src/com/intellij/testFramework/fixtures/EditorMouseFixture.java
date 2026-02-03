@@ -7,8 +7,9 @@ import com.intellij.openapi.util.SystemInfo;
 import org.intellij.lang.annotations.MagicConstant;
 import org.junit.Assert;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
+import java.awt.Point;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 

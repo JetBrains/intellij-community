@@ -3,8 +3,8 @@ package com.intellij.execution.filters;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Rectangle;
 
 public interface HyperlinkWithHoverInfo extends HyperlinkInfo {
   /**

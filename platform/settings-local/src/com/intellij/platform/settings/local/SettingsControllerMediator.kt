@@ -6,7 +6,13 @@ package com.intellij.platform.settings.local
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.platform.settings.*
+import com.intellij.platform.settings.CacheTag
+import com.intellij.platform.settings.DelegatedSettingsController
+import com.intellij.platform.settings.GetResult
+import com.intellij.platform.settings.ReadOnlySettingException
+import com.intellij.platform.settings.SetResult
+import com.intellij.platform.settings.SettingDescriptor
+import com.intellij.platform.settings.SettingsController
 import com.intellij.util.xmlb.SettingsInternalApi
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly

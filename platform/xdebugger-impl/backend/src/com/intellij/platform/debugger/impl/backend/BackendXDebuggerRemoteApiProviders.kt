@@ -2,7 +2,21 @@
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.platform.debugger.impl.backend.hotswap.BackendXDebuggerHotSwapApi
-import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.rpc.InternalSplitConfigurationApi
+import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
+import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeApi
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionApi
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionTabApi
+import com.intellij.platform.debugger.impl.rpc.XDebuggerEvaluatorApi
+import com.intellij.platform.debugger.impl.rpc.XDebuggerHotSwapApi
+import com.intellij.platform.debugger.impl.rpc.XDebuggerManagerApi
+import com.intellij.platform.debugger.impl.rpc.XDebuggerNavigationApi
+import com.intellij.platform.debugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi
+import com.intellij.platform.debugger.impl.rpc.XDebuggerValueMarkupApi
+import com.intellij.platform.debugger.impl.rpc.XDebuggerValueModifierApi
+import com.intellij.platform.debugger.impl.rpc.XDependentBreakpointManagerApi
+import com.intellij.platform.debugger.impl.rpc.XExecutionStackApi
+import com.intellij.platform.debugger.impl.rpc.XValueApi
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import fleet.rpc.remoteApiDescriptor
 import org.jetbrains.annotations.ApiStatus

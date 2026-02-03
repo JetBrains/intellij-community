@@ -6,7 +6,8 @@ package com.intellij.serialization
 import com.amazon.ion.IonType
 import com.intellij.util.ArrayUtil
 import java.lang.reflect.Type
-import java.util.*
+import java.util.Arrays
+import java.util.SortedMap
 
 internal class MapBinding(keyType: Type, valueType: Type, context: BindingInitializationContext) : Binding {
   private val keyBinding = createElementBindingByType(keyType, context)

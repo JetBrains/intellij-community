@@ -12,8 +12,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JLayeredPane;
+import javax.swing.JPanel;
+import java.awt.Container;
+import java.awt.Dimension;
 
 @ApiStatus.Internal
 public final class MyDiffContainer extends JBLayeredPane implements Disposable {

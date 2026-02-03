@@ -4,8 +4,25 @@ package com.intellij.platform.workspace.storage.trace
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
-import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.impl.*
+import com.intellij.platform.workspace.storage.ConnectionId
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.ExternalEntityMapping
+import com.intellij.platform.workspace.storage.ExternalMappingKey
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
+import com.intellij.platform.workspace.storage.SymbolicEntityId
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+import com.intellij.platform.workspace.storage.impl.ChangeEntry
+import com.intellij.platform.workspace.storage.impl.ChangeLog
+import com.intellij.platform.workspace.storage.impl.EntityId
+import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
+import com.intellij.platform.workspace.storage.impl.SoftLinkable
+import com.intellij.platform.workspace.storage.impl.asBase
+import com.intellij.platform.workspace.storage.impl.asString
+import com.intellij.platform.workspace.storage.impl.clazz
+import com.intellij.platform.workspace.storage.impl.findWorkspaceEntity
+import com.intellij.platform.workspace.storage.impl.toClassId
 import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 import it.unimi.dsi.fastutil.longs.LongArrayList

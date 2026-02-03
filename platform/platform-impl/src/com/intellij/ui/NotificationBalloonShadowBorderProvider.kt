@@ -7,7 +7,13 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.BalloonImpl.ShadowBorderProvider
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.ui.StartupUiUtil
-import java.awt.*
+import java.awt.Color
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Insets
+import java.awt.Point
+import java.awt.Polygon
+import java.awt.Rectangle
 import java.awt.geom.Rectangle2D
 import java.awt.geom.RoundRectangle2D
 import javax.swing.Icon

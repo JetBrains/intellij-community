@@ -9,7 +9,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 /**
  * @author Konstantin Bulenkov

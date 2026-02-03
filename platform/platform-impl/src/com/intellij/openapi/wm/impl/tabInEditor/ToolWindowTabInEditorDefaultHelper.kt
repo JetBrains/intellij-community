@@ -22,7 +22,7 @@ import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.content.Content
 import com.intellij.util.application
 import java.awt.event.KeyEvent
-import java.util.*
+import java.util.Collections
 import javax.swing.JComponent
 import javax.swing.KeyStroke
 

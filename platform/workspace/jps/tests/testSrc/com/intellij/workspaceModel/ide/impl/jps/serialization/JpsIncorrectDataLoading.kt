@@ -3,12 +3,12 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.testFramework.HeavyPlatformTestCase
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.sourceRoots
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.testFramework.HeavyPlatformTestCase
 import org.junit.Before
 import org.junit.Test
 import java.io.File

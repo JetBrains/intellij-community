@@ -19,7 +19,12 @@ import com.intellij.ui.content.Content
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.frame.*
+import com.intellij.xdebugger.impl.frame.XDebugView
+import com.intellij.xdebugger.impl.frame.XFramesView
+import com.intellij.xdebugger.impl.frame.XSplitterWatchesViewImpl
+import com.intellij.xdebugger.impl.frame.XVariablesView
+import com.intellij.xdebugger.impl.frame.XVariablesViewBase
+import com.intellij.xdebugger.impl.frame.XWatchesViewImpl
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Dimension
 import javax.swing.Icon

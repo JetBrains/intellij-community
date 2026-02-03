@@ -9,8 +9,10 @@ import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.util.EnumMap;
 import java.util.Map;
 

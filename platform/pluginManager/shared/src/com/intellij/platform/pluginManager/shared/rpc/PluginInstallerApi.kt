@@ -2,12 +2,13 @@
 package com.intellij.platform.pluginManager.shared.rpc
 
 import com.intellij.ide.plugins.api.PluginDto
-import com.intellij.ide.plugins.marketplace.*
-import com.intellij.openapi.extensions.PluginId
+import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
+import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.marketplace.InstallPluginResult
 import com.intellij.ide.plugins.marketplace.PluginInstalledFromDiskResult
 import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.project.ProjectId

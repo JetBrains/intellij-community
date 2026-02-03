@@ -9,7 +9,6 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.name
-import kotlin.text.startsWith
 
 object VmOptionsGenerator {
   private const val DEFAULT_MIN_HEAP = "128m"

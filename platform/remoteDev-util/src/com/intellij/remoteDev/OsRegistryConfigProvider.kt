@@ -4,7 +4,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.system.CpuArch
-import com.sun.jna.platform.win32.*
+import com.sun.jna.platform.win32.Advapi32Util
+import com.sun.jna.platform.win32.Win32Exception
+import com.sun.jna.platform.win32.WinError
+import com.sun.jna.platform.win32.WinNT
+import com.sun.jna.platform.win32.WinReg
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive

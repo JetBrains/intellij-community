@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization
 
-import com.intellij.platform.workspace.jps.serialization.impl.*
+import com.intellij.platform.workspace.jps.serialization.impl.CustomFacetRelatedEntitySerializer
+import com.intellij.platform.workspace.jps.serialization.impl.CustomModuleComponentSerializer
+import com.intellij.platform.workspace.jps.serialization.impl.CustomModuleRootsSerializer
+import com.intellij.platform.workspace.jps.serialization.impl.FileInDirectorySourceNames
+import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 

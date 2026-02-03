@@ -4,10 +4,10 @@ package com.intellij.xdebugger.impl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.inline.InlineValuePopupProvider;
 import com.intellij.xdebugger.impl.inline.XDebuggerTextInlayPopup;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Point;
 
 import static com.intellij.xdebugger.impl.inline.InlineDebugRenderer.getXValueDescriptor;
 

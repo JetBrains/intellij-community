@@ -2,7 +2,14 @@
 
 package com.intellij.formatting;
 
-import com.intellij.formatting.engine.*;
+import com.intellij.formatting.engine.AdjustWhiteSpacesState;
+import com.intellij.formatting.engine.ApplyChangesState;
+import com.intellij.formatting.engine.BlockIndentOptions;
+import com.intellij.formatting.engine.BlockRangesMap;
+import com.intellij.formatting.engine.ExpandChildrenIndentState;
+import com.intellij.formatting.engine.IndentAdjuster;
+import com.intellij.formatting.engine.StateProcessor;
+import com.intellij.formatting.engine.WrapBlocksState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.codeStyle.CodeStyleSettings;

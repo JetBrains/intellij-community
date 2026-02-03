@@ -10,8 +10,8 @@ import com.intellij.execution.target.TargetEnvironmentsManager;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Comparing;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JTextField;
+import java.awt.BorderLayout;
 
 public final class TargetPathFragment<T extends TargetEnvironmentAwareRunProfile> extends SettingsEditorFragment<T, LabeledComponent<JTextField>> {
 

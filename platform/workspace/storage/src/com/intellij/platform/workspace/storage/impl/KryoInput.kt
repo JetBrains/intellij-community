@@ -10,7 +10,7 @@ import java.nio.ByteOrder
 import java.nio.channels.FileChannel
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.util.*
+import java.util.EnumSet
 
 internal class KryoInput(file: Path) : ByteBufferInput() {
   init {

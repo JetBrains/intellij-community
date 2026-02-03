@@ -11,7 +11,11 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import org.junit.jupiter.api.assertThrows
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 internal inline fun ScopeHolder.use(action: (ScopeHolder) -> Unit) {
   try {

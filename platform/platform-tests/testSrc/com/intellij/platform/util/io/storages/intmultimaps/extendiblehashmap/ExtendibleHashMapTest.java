@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap;
 
+import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import com.intellij.platform.util.io.storages.intmultimaps.DurableIntToMultiIntMapTestBase;
 import com.intellij.util.io.CorruptedException;
-import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
@@ -15,8 +15,14 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.DROP_AND_CREATE_EMPTY_MAP;
+import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.FAIL_SPECTACULARLY;
+import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.IGNORE_AND_HOPE_FOR_THE_BEST;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 //TODO RC: move to platform.util.storage module's tests (DurableIntToMultiIntMapTestBase prevents it now)
 public class ExtendibleHashMapTest extends DurableIntToMultiIntMapTestBase<ExtendibleHashMap> {

@@ -9,7 +9,11 @@ import com.intellij.util.containers.Interner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 public final class LibraryData extends AbstractNamedData implements Named, ProjectCoordinate {
   private static final Interner<String> ourPathInterner = Interner.createWeakInterner();

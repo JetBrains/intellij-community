@@ -9,7 +9,15 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelMachine
+import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.EelPosixApi
+import com.intellij.platform.eel.EelWindowsApi
+import com.intellij.platform.eel.LocalEelApi
+import com.intellij.platform.eel.ThrowsChecked
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.util.coroutines.mapNotNullConcurrent
 import com.intellij.util.system.OS

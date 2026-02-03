@@ -19,8 +19,8 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ClickListener;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Cursor;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 

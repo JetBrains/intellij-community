@@ -22,7 +22,9 @@ import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts;
 import org.jetbrains.kotlin.test.TestJdkKind;
 
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static org.jetbrains.kotlin.idea.test.KotlinTestUtils.getCurrentProcessJdkHome;
 

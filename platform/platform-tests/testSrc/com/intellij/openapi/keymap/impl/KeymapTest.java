@@ -9,7 +9,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.testFramework.LightPlatformTestCase;
 import one.util.streamex.StreamEx;
 
-import javax.swing.*;
+import javax.swing.KeyStroke;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;

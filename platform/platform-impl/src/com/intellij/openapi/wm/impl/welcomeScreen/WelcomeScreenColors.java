@@ -5,7 +5,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.awt.*;
+import java.awt.Color;
 
 @ApiStatus.Internal
 public final class WelcomeScreenColors {

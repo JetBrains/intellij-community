@@ -2,7 +2,11 @@
 package com.intellij.usages.impl.rules;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.usages.*;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageGroup;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageViewPresentation;
+import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.impl.FileStructureGroupRuleProvider;
 import com.intellij.usages.impl.PackageGroupRuleProvider;
 import com.intellij.usages.rules.UsageGroupingRule;

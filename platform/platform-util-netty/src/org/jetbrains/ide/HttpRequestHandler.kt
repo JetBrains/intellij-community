@@ -8,14 +8,25 @@ import com.intellij.util.io.isLocalOrigin
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.http.*
+import io.netty.handler.codec.http.DefaultHttpResponse
+import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpHeaderNames
+import io.netty.handler.codec.http.HttpHeaders
+import io.netty.handler.codec.http.HttpMethod
+import io.netty.handler.codec.http.HttpRequest
+import io.netty.handler.codec.http.HttpResponseStatus
+import io.netty.handler.codec.http.HttpUtil
+import io.netty.handler.codec.http.HttpVersion
+import io.netty.handler.codec.http.LastHttpContent
+import io.netty.handler.codec.http.QueryStringDecoder
 import io.netty.handler.stream.ChunkedStream
 import org.jetbrains.io.FileResponses
 import org.jetbrains.io.addCommonHeaders
 import org.jetbrains.io.addKeepAliveIfNeeded
 import java.io.ByteArrayInputStream
 import java.io.IOException
-import java.util.*
+import java.util.Calendar
+import java.util.Date
 
 /**
  * See [Remote Communication](https://youtrack.jetbrains.com/articles/IDEA-A-63/Remote-Communication).

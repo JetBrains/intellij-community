@@ -11,7 +11,12 @@ import com.intellij.openapi.util.NlsContexts.Command
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.api.RenameTarget
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import java.util.concurrent.locks.LockSupport
 
 /**

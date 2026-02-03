@@ -10,7 +10,11 @@ import com.intellij.openapi.util.registry.Registry
 import java.awt.Component
 import java.awt.Container
 import java.awt.Window
-import javax.swing.*
+import javax.swing.JDialog
+import javax.swing.JScrollBar
+import javax.swing.JTable
+import javax.swing.JViewport
+import javax.swing.RootPaneContainer
 
 internal object ScrollSettings {
   @JvmStatic

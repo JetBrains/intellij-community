@@ -1,8 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.eel
 
-import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelConnectionError
+import com.intellij.platform.eel.EelProcess
+import com.intellij.platform.eel.EelTunnelsApi
+import com.intellij.platform.eel.ReadResult
 import com.intellij.platform.eel.channels.sendWholeBuffer
+import com.intellij.platform.eel.getAcceptorForRemotePort
+import com.intellij.platform.eel.getConnectionToRemotePort
+import com.intellij.platform.eel.listenOnUnixSocket
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.utils.consumeAsInputStream

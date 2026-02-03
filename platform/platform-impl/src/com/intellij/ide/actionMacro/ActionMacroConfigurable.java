@@ -6,7 +6,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Disposer;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public final class ActionMacroConfigurable implements Configurable {
   private ActionMacroConfigurationPanel myPanel;

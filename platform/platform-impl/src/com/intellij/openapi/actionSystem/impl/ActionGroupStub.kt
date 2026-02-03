@@ -3,7 +3,12 @@ package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionStub
+import com.intellij.openapi.actionSystem.ActionStubBase
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.Constraints
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import java.util.function.Function
 
 internal class ActionGroupStub(override val id: String,

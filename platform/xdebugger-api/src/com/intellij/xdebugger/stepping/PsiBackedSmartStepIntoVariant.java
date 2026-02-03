@@ -7,7 +7,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
 * @author Maxim.Mossienko

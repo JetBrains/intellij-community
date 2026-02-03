@@ -12,11 +12,11 @@ import com.intellij.openapi.util.Version
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonFileType
-import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
-import com.jetbrains.python.psi.resolve.isPackageAvailable
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
+import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
+import com.jetbrains.python.psi.resolve.isPackageAvailable
 import com.jetbrains.python.pyi.PyiFileType
 import org.jetbrains.annotations.SystemDependent
 import java.nio.file.Path

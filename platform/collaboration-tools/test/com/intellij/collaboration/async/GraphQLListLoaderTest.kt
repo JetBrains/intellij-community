@@ -2,7 +2,6 @@
 package com.intellij.collaboration.async
 
 import app.cash.turbine.test
-import app.cash.turbine.turbineScope
 import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import io.mockk.coEvery

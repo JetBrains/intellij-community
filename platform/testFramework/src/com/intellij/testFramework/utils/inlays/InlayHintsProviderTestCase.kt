@@ -1,7 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.utils.inlays
 
-import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.CollectorWithSettings
+import com.intellij.codeInsight.hints.InlayDumpUtil
+import com.intellij.codeInsight.hints.InlayHintsProvider
+import com.intellij.codeInsight.hints.InlayHintsSinkImpl
+import com.intellij.codeInsight.hints.LinearOrderInlayRenderer
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.containers.isEmpty

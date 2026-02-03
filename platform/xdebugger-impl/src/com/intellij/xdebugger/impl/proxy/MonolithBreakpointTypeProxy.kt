@@ -19,7 +19,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EnumSet
 import javax.swing.Icon
 
 internal open class MonolithBreakpointTypeProxy @Deprecated("Use type.asProxy() instead") internal constructor(

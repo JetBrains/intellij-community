@@ -13,7 +13,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * @author Konstantin Bulenkov

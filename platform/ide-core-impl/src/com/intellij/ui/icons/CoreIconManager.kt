@@ -24,7 +24,14 @@ import com.intellij.openapi.util.findIconUsingNewImplementation
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.impl.ElementBase
-import com.intellij.ui.*
+import com.intellij.ui.BadgeIcon
+import com.intellij.ui.CoreAwareIconManager
+import com.intellij.ui.IconDeferrer
+import com.intellij.ui.IconDescriptionBundleEP
+import com.intellij.ui.IconManager
+import com.intellij.ui.LayeredIcon
+import com.intellij.ui.OffsetIcon
+import com.intellij.ui.PlatformIcons
 import com.intellij.ui.RowIcon
 import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.ui.svg.SvgAttributePatcher

@@ -6,15 +6,21 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JScrollBar;
 import java.awt.event.MouseWheelEvent;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static com.intellij.ui.scroll.MouseWheelSmoothScroll.*;
-import static com.intellij.ui.scroll.SmoothScrollUtil.*;
+import static com.intellij.ui.scroll.MouseWheelSmoothScroll.AnimationSettings;
+import static com.intellij.ui.scroll.MouseWheelSmoothScroll.CubicBezierEasing;
+import static com.intellij.ui.scroll.MouseWheelSmoothScroll.Easing;
+import static com.intellij.ui.scroll.MouseWheelSmoothScroll.InertialAnimator;
+import static com.intellij.ui.scroll.SmoothScrollUtil.getEventHorizontalScrollBar;
+import static com.intellij.ui.scroll.SmoothScrollUtil.getEventScrollBar;
+import static com.intellij.ui.scroll.SmoothScrollUtil.getEventVerticalScrollBar;
+import static com.intellij.ui.scroll.SmoothScrollUtil.isHorizontalScroll;
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
 

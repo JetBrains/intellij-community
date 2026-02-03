@@ -4,8 +4,18 @@ package com.intellij.internal.jcef.test.cases
 import com.intellij.internal.jcef.test.JBCefTestAppFrame
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.ui.components.JBScrollPane
-import java.awt.*
-import javax.swing.*
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.FlowLayout
+import java.awt.Font
+import java.awt.Graphics
+import javax.swing.BorderFactory
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JScrollPane
+import javax.swing.UIManager
 
 
 internal class PerformanceTest : JBCefTestAppFrame.TestCase() {

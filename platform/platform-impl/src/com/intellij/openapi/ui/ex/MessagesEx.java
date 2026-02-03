@@ -15,8 +15,9 @@ import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComboBox;
+import java.awt.Component;
 
 public final class MessagesEx extends Messages {
   public static MessageInfo fileIsReadOnly(Project project, String filePath) {

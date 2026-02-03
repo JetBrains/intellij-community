@@ -7,8 +7,12 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.net.NetUtils.isLocalhost
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-import java.net.*
-import java.util.*
+import java.net.Proxy
+import java.net.ProxySelector
+import java.net.SocketAddress
+import java.net.URI
+import java.net.URL
+import java.util.Collections
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate

@@ -23,7 +23,10 @@ import java.util.List;
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.DEFRAGMENTATION_REQUESTED;
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.IMPL_VERSION_MISMATCH;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Test VFS version management, rebuild on implementation version change, and other initialization aspects

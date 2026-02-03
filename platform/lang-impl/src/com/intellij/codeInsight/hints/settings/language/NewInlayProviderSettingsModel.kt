@@ -1,9 +1,22 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.settings.language
 
-import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.BlockConstrainedPresentation
+import com.intellij.codeInsight.hints.HintsBuffer
+import com.intellij.codeInsight.hints.HorizontalConstrainedPresentation
+import com.intellij.codeInsight.hints.ImmediateConfigurable
+import com.intellij.codeInsight.hints.InlayGroup
+import com.intellij.codeInsight.hints.InlayHintsProvider
+import com.intellij.codeInsight.hints.InlayHintsSettings
+import com.intellij.codeInsight.hints.InlayHintsSinkImpl
+import com.intellij.codeInsight.hints.ProviderWithSettings
+import com.intellij.codeInsight.hints.addStrikeout
+import com.intellij.codeInsight.hints.getActualSettings
+import com.intellij.codeInsight.hints.getCollectorWrapperFor
 import com.intellij.codeInsight.hints.settings.CASE_KEY
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
+import com.intellij.codeInsight.hints.strikeOutBuilder
+import com.intellij.codeInsight.hints.withSettingsCopy
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language

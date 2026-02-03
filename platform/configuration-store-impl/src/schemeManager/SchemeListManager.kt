@@ -9,7 +9,8 @@ import com.intellij.openapi.options.ExternalizableScheme
 import com.intellij.openapi.options.Scheme
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.UniqueNameGenerator
-import java.util.*
+import java.util.Collections
+import java.util.IdentityHashMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 

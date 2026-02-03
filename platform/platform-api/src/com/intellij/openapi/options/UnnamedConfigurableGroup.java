@@ -18,7 +18,8 @@ package com.intellij.openapi.options;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import java.util.ArrayList;
 import java.util.List;
 

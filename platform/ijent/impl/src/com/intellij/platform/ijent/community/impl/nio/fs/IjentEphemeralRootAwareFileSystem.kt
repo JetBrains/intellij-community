@@ -3,7 +3,11 @@ package com.intellij.platform.ijent.community.impl.nio.fs
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
-import com.intellij.platform.core.nio.fs.*
+import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
+import com.intellij.platform.core.nio.fs.DelegatingFileSystem
+import com.intellij.platform.core.nio.fs.DelegatingFileSystemProvider
+import com.intellij.platform.core.nio.fs.MultiRoutingFsPath
+import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
@@ -11,7 +15,18 @@ import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.net.URI
-import java.nio.file.*
+import java.nio.file.CopyOption
+import java.nio.file.FileStore
+import java.nio.file.FileSystem
+import java.nio.file.Files
+import java.nio.file.LinkOption
+import java.nio.file.Path
+import java.nio.file.PathMatcher
+import java.nio.file.ProviderMismatchException
+import java.nio.file.StandardCopyOption
+import java.nio.file.WatchEvent
+import java.nio.file.WatchKey
+import java.nio.file.WatchService
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileAttributeView
 import java.nio.file.attribute.UserPrincipalLookupService

@@ -16,7 +16,12 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.BDDAssertions.then
 import org.junit.Test
 import java.io.IOException
-import kotlin.io.path.*
+import kotlin.io.path.createTempDirectory
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.exists
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 import kotlin.reflect.jvm.jvmName
 
 class ExternalProjectsDataStorageTest : UsefulTestCase() {

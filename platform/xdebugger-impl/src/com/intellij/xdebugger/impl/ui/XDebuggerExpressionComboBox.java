@@ -38,8 +38,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.ComboBoxEditor;
+import javax.swing.JComponent;
+import java.awt.Dimension;
 import java.awt.event.ActionListener;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;

@@ -10,7 +10,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public abstract class FileChooserAction extends AnAction implements DumbAware {
   protected FileChooserAction() {

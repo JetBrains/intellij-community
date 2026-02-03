@@ -12,7 +12,12 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.TimerUtil
 import java.awt.event.ActionEvent
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Box
+import javax.swing.BoxLayout
+import javax.swing.JPanel
+import javax.swing.JProgressBar
+import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 import kotlin.math.pow
 

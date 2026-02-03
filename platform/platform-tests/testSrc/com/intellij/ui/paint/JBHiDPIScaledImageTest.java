@@ -9,8 +9,12 @@ import com.intellij.util.ui.StartupUiUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
+import java.awt.Transparency;
 import java.awt.image.BufferedImage;
 
 public class JBHiDPIScaledImageTest {

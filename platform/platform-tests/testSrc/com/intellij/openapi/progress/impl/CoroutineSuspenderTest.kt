@@ -7,9 +7,16 @@ import com.intellij.openapi.progress.coroutineSuspender
 import com.intellij.testFramework.UsefulTestCase.assertSize
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.ConcurrencyUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
-import org.junit.jupiter.api.Assertions.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 

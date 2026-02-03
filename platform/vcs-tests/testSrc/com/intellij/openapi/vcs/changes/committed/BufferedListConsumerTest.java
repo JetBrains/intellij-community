@@ -9,7 +9,11 @@ import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.Future;
 
 import static java.util.Collections.synchronizedList;

@@ -3,7 +3,9 @@ package com.intellij.psi.stubs
 
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NotNull
-import java.io.*
+import java.io.DataOutputStream
+import java.io.InputStream
+import java.io.OutputStream
 
 @Internal
 class ShareableStubTreeSerializer : StubTreeSerializer {

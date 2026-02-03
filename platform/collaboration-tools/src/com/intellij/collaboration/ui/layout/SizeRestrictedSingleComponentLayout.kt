@@ -3,7 +3,11 @@ package com.intellij.collaboration.ui.layout
 
 import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.util.ui.JBInsets
-import java.awt.*
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.LayoutManager2
+import java.awt.Rectangle
 import kotlin.math.min
 import kotlin.properties.Delegates.observable
 

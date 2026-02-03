@@ -4,7 +4,8 @@ package com.intellij.internal.inspector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
 import java.util.List;
 
 /**

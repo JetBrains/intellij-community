@@ -3,7 +3,11 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.AppLifecycleListener
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope

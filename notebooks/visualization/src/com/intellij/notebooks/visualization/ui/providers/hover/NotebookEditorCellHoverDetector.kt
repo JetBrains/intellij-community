@@ -2,9 +2,13 @@
 package com.intellij.notebooks.visualization.ui.providers.hover
 
 import com.intellij.notebooks.visualization.NotebookCellInlayManager
-import com.intellij.notebooks.visualization.ui.*
+import com.intellij.notebooks.visualization.ui.EditorCell
+import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener
 import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.CellViewRemoved
 import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.EditorCellViewEvent
+import com.intellij.notebooks.visualization.ui.EditorComponentWrapper
+import com.intellij.notebooks.visualization.ui.NotebookUiUtils
+import com.intellij.notebooks.visualization.ui.notebookEditor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import java.awt.GraphicsEnvironment

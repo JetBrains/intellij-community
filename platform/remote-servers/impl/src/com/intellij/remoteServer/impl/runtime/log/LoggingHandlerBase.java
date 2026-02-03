@@ -17,7 +17,7 @@ package com.intellij.remoteServer.impl.runtime.log;
 
 import com.intellij.openapi.Disposable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public abstract class LoggingHandlerBase implements Disposable {
 

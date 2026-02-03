@@ -10,8 +10,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.JViewport;
+import javax.swing.Scrollable;
+import java.awt.Adjustable;
+import java.awt.Rectangle;
 import java.awt.event.MouseWheelEvent;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -20,7 +24,10 @@ import java.util.function.Supplier;
 
 import static com.intellij.ui.scroll.SmoothScrollUtil.getEventScrollBar;
 import static com.intellij.ui.scroll.SmoothScrollUtil.isHorizontalScroll;
-import static java.lang.Math.*;
+import static java.lang.Math.abs;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+import static java.lang.Math.round;
 
 @ApiStatus.Internal
 public final class MouseWheelSmoothScroll {

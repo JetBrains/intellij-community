@@ -40,7 +40,8 @@ import com.intellij.util.MemoryDumpHelper
 import java.nio.file.Files
 import java.nio.file.Path
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 import kotlin.io.path.exists
 import kotlin.math.max
 

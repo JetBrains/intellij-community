@@ -1,14 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow
 
-import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
-import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.toolWindow.ToolWindowEventSource

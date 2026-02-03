@@ -4,10 +4,9 @@ package com.intellij.ui.navigation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public final class ForwardAction extends NavigationAction {
   public ForwardAction(JComponent c, @NotNull Disposable parentDisposable) {

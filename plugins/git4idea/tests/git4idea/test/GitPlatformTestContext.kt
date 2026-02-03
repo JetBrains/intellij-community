@@ -33,12 +33,16 @@ import git4idea.DialogManager
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.commands.Git
-import git4idea.config.*
+import git4idea.config.GitExecutableManager
+import git4idea.config.GitSaveChangesPolicy
+import git4idea.config.GitVcsApplicationSettings
+import git4idea.config.GitVcsSettings
+import git4idea.config.GitVersion
 import git4idea.log.GitLogProvider
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import org.junit.jupiter.api.Assertions.fail
-import java.util.*
+import java.util.Locale
 
 interface GitPlatformTestContext : VcsPlatformTestContext {
   val repositoryManager: GitRepositoryManager

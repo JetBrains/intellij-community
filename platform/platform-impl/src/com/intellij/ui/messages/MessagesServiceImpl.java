@@ -4,7 +4,15 @@ package com.intellij.ui.messages;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DialogWrapperPeer;
+import com.intellij.openapi.ui.DoNotAskOption;
+import com.intellij.openapi.ui.ExitActionType;
+import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.MessageMultilineInputDialog;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.ui.messages.TwoStepConfirmationDialog;
@@ -22,15 +30,20 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JCheckBox;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Component;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
 
 import static com.intellij.credentialStore.CredentialPromptDialog.getTrimmedChars;
-import static com.intellij.openapi.ui.Messages.*;
+import static com.intellij.openapi.ui.Messages.InputDialog;
+import static com.intellij.openapi.ui.Messages.getCancelButton;
+import static com.intellij.openapi.ui.Messages.getOkButton;
 
 public class MessagesServiceImpl implements MessagesService {
   @Override

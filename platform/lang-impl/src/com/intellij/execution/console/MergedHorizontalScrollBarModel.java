@@ -4,8 +4,10 @@ package com.intellij.execution.console;
 import com.intellij.openapi.editor.ex.EditorEx;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultBoundedRangeModel;
+import javax.swing.JScrollBar;
+import javax.swing.JViewport;
+import java.awt.Point;
 
 public final class MergedHorizontalScrollBarModel extends DefaultBoundedRangeModel {
   private volatile boolean myInternalChange;

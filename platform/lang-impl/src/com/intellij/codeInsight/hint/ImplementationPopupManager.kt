@@ -29,7 +29,7 @@ import com.intellij.usages.UsageView
 import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
-import java.util.*
+import java.util.Collections
 import java.util.function.Consumer
 
 @ApiStatus.Internal

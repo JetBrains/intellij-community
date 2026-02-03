@@ -3,7 +3,11 @@ package com.intellij.configurationStore
 
 import com.intellij.util.io.IOUtil
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import org.jdom.*
+import org.jdom.Attribute
+import org.jdom.CDATA
+import org.jdom.Element
+import org.jdom.Text
+import org.jdom.Verifier
 import java.io.DataOutputStream
 
 internal class BinaryXmlWriter(private val out: DataOutputStream) {

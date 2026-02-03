@@ -3,7 +3,7 @@ package com.intellij.remoteDev.tests
 import com.intellij.remoteDev.tests.modelGenerated.RdAgentInfo
 import org.jetbrains.annotations.ApiStatus
 import java.lang.reflect.Method
-import java.util.*
+import java.util.Queue
 
 /**
  * This internal interface should be implemented by distributed tests

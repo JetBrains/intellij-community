@@ -19,7 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class ToggleInvertedBooleanProperty extends ToggleBooleanProperty {
   public ToggleInvertedBooleanProperty(@NlsActions.ActionText String text,

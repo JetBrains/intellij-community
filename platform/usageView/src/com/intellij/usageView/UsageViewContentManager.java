@@ -6,7 +6,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 
 public abstract class UsageViewContentManager {

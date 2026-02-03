@@ -4,7 +4,7 @@ package com.intellij.openapi.wm;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JRootPane;
 
 /**
  * @author Konstantin Bulenkov

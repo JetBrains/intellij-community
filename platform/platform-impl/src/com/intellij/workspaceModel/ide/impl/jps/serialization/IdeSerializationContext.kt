@@ -7,7 +7,11 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity
 import com.intellij.platform.workspace.jps.serialization.SerializationContext
-import com.intellij.platform.workspace.jps.serialization.impl.*
+import com.intellij.platform.workspace.jps.serialization.impl.CustomFacetRelatedEntitySerializer
+import com.intellij.platform.workspace.jps.serialization.impl.CustomModuleComponentSerializer
+import com.intellij.platform.workspace.jps.serialization.impl.CustomModuleRootsSerializer
+import com.intellij.platform.workspace.jps.serialization.impl.FileInDirectorySourceNames
+import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 
 abstract class BaseIdeSerializationContext : SerializationContext {

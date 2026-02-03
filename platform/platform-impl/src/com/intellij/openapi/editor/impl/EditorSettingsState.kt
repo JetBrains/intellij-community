@@ -4,7 +4,12 @@ package com.intellij.openapi.editor.impl
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeWithMe.ClientId
 import com.intellij.lang.Language
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -36,7 +41,11 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.util.PatternUtil
 import com.intellij.util.SlowOperations
 import com.intellij.util.cancelOnDispose
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener

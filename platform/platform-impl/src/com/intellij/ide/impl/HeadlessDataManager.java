@@ -17,7 +17,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
-import java.awt.*;
+import java.awt.Component;
 import java.util.Map;
 import java.util.function.Supplier;
 

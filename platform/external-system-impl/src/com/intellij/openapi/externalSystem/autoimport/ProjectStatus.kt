@@ -3,9 +3,20 @@ package com.intellij.openapi.externalSystem.autoimport
 
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.*
-import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.*
-import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectState.*
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.HIDDEN
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.INTERNAL
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.UNKNOWN
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Break
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Invalidate
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Modify
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Revert
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Synchronize
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectState.Broken
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectState.Dirty
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectState.Modified
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectState.Reverted
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectState.Synchronized
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference

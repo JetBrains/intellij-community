@@ -5,7 +5,8 @@ import com.intellij.diff.DiffTestCase
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ui.UIUtil
-import java.util.*
+import java.util.BitSet
+import java.util.Random
 import java.util.concurrent.atomic.AtomicLong
 
 class LineStatusTrackerRevertAutoTest : BaseLineStatusTrackerTestCase() {

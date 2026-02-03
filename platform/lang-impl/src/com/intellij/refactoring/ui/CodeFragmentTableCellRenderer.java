@@ -26,9 +26,11 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.ui.JBUI;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
 
 public class CodeFragmentTableCellRenderer implements TableCellRenderer {
   private final Project myProject;

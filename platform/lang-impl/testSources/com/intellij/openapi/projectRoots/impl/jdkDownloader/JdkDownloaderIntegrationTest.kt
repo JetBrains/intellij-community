@@ -7,7 +7,6 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.system.CpuArch
 import org.junit.Assert
 import org.junit.Test
-import java.lang.RuntimeException
 
 class JdkDownloaderIntegrationTest : BasePlatformTestCase() {
   @Test

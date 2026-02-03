@@ -8,18 +8,32 @@ import com.intellij.ide.actions.ToolwindowFusEventFields
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.internal.statistic.collectors.fus.DataContextUtils
 import com.intellij.internal.statistic.collectors.fus.actions.ProjectStateObserver
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.events.FusInputEvent
 import com.intellij.internal.statistic.eventLog.events.FusInputEvent.Companion.from
+import com.intellij.internal.statistic.eventLog.events.ObjectEventData
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.StatisticsUtil.roundDuration
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.lang.Language
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionWithDelegate
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionResult
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.InjectedDataKeys
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.actionSystem.impl.Utils
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.keymap.Keymap
@@ -32,7 +46,7 @@ import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.InputEvent
 import java.lang.ref.WeakReference
-import java.util.*
+import java.util.WeakHashMap
 
 @ApiStatus.Internal
 class ActionsCollectorImpl : ActionsCollector() {

@@ -6,7 +6,7 @@ import io.opentelemetry.api.trace.Span
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.net.URI
 import java.nio.file.Path
-import java.util.*
+import java.util.Base64
 
 /**
  * URL for read-only operations

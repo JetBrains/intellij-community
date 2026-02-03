@@ -11,7 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import sun.awt.AWTAutoShutdown;
 
-import java.awt.*;
+import java.awt.EventQueue;
+import java.awt.Toolkit;
 import java.lang.reflect.InvocationTargetException;
 
 @TestOnly

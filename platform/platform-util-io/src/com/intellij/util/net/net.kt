@@ -5,8 +5,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.BazelEnvironmentUtil
 import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
-import java.net.*
-import kotlin.jvm.javaClass
+import java.net.InetAddress
+import java.net.InetSocketAddress
 
 /**
  * Default local inet address to listen on or connect to.

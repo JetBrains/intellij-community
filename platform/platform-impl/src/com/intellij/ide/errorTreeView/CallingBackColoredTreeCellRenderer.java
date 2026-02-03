@@ -5,7 +5,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.CustomizeColoredTreeCellRenderer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 public final class CallingBackColoredTreeCellRenderer extends ColoredTreeCellRenderer {
   private CustomizeColoredTreeCellRenderer myCurrentCallback;

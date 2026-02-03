@@ -5,12 +5,13 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
+import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSplitActionBase.Companion.getSelectedNodes
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import org.jetbrains.annotations.ApiStatus
-import com.intellij.xdebugger.XDebugProcess
 
 /**
  * Base class for actions that operate on [XValueNodeImpl] tree nodes.

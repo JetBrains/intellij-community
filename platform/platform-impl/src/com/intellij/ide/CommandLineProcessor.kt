@@ -15,7 +15,12 @@ import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.idea.ApplicationStartArguments
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ApplicationStarter
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -40,8 +45,12 @@ import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.URLUtil
 import io.netty.handler.codec.http.QueryStringDecoder
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.asDeferred
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Frame
@@ -50,22 +59,6 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.text.ParseException
 import java.util.concurrent.CancellationException
-import kotlin.Boolean
-import kotlin.Deprecated
-import kotlin.DeprecationLevel
-import kotlin.Int
-import kotlin.Result
-import kotlin.String
-import kotlin.Suppress
-import kotlin.Throwable
-import kotlin.check
-import kotlin.collections.any
-import kotlin.collections.count
-import kotlin.error
-import kotlin.let
-import kotlin.require
-import kotlin.requireNotNull
-import kotlin.use
 
 object CommandLineProcessor {
   private val LOG = logger<CommandLineProcessor>()

@@ -4,7 +4,15 @@ package com.intellij.platform.completion.common.protocol
 import com.intellij.codeInsight.completion.serialization.FrontendFriendlyPrefixConditionSerializer
 import com.intellij.codeInsight.completion.serialization.PrefixConditionDescriptor
 import com.intellij.codeInsight.completion.serialization.PrefixConditionDescriptorConverter
-import com.intellij.patterns.*
+import com.intellij.patterns.CaseInsensitiveValuePatternCondition
+import com.intellij.patterns.ElementPattern
+import com.intellij.patterns.InitialPatternConditionPlus
+import com.intellij.patterns.ObjectPattern
+import com.intellij.patterns.PatternCondition
+import com.intellij.patterns.PatternConditionPlus
+import com.intellij.patterns.StandardPatterns
+import com.intellij.patterns.StringPattern
+import com.intellij.patterns.ValuePatternCondition
 import kotlinx.serialization.Serializable
 
 // ============================================================================

@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.core.fileIndex
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 
 /**
  * Defines a listener for changes that occur in the [WorkspaceFileIndex].

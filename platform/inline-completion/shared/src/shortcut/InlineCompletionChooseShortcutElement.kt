@@ -8,7 +8,12 @@ import com.intellij.codeInsight.inline.completion.tooltip.ChangeToCustomInlineCo
 import com.intellij.codeInsight.inline.completion.tooltip.InplaceChangeInlineCompletionShortcutAction
 import com.intellij.codeInsight.inline.hint.InlineShortcutHintRendererBase
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay

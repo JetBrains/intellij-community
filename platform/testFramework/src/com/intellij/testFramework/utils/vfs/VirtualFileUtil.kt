@@ -4,7 +4,15 @@ package com.intellij.testFramework.utils.vfs
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.getResolvedPath
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findDirectory
+import com.intellij.openapi.vfs.findDocument
+import com.intellij.openapi.vfs.findFile
+import com.intellij.openapi.vfs.findFileOrDirectory
+import com.intellij.openapi.vfs.findOrCreateDirectory
+import com.intellij.openapi.vfs.findOrCreateFile
+import com.intellij.openapi.vfs.refreshAndFindVirtualDirectory
+import com.intellij.openapi.vfs.refreshAndFindVirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.concurrency.annotations.RequiresReadLock

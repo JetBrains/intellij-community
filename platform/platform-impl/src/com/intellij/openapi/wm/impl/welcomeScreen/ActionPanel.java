@@ -5,8 +5,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.LayoutManager;
 import java.util.ArrayList;
 import java.util.List;
 

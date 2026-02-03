@@ -13,7 +13,9 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Window;
 
 /**
  * @author Konstantin Bulenkov

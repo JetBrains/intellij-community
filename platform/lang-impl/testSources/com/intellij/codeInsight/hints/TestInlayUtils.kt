@@ -7,7 +7,9 @@ import com.intellij.codeInsight.hints.presentation.PresentationListener
 import com.intellij.codeInsight.hints.presentation.RootInlayPresentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.TextAttributes
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import java.awt.Dimension
 import java.awt.Graphics2D
 import java.awt.Point

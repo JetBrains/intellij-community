@@ -5,7 +5,11 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil.getCustomEditorTabTitle
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil.getCustomEditorTabTitleAsync
-import com.intellij.openapi.project.*
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.appendModuleName
+import com.intellij.openapi.project.decorateWithLibraryName
+import com.intellij.openapi.project.displayUrlRelativeToProject
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil

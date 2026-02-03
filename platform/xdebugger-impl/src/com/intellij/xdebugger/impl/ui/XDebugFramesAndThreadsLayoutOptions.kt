@@ -8,7 +8,10 @@ import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.ui.content.custom.options.PersistentContentCustomLayoutOption
 import com.intellij.ui.content.custom.options.PersistentContentCustomLayoutOptions
 import com.intellij.xdebugger.XDebuggerBundle
-import com.intellij.xdebugger.impl.frame.*
+import com.intellij.xdebugger.impl.frame.XDebugView
+import com.intellij.xdebugger.impl.frame.XFramesView
+import com.intellij.xdebugger.impl.frame.XThreadsFramesView
+import com.intellij.xdebugger.impl.frame.XThreadsView
 import org.jetbrains.annotations.ApiStatus.Internal
 
 internal object ThreadsViewConstants {

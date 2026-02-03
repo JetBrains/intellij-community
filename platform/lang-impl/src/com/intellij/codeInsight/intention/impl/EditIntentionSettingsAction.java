@@ -16,7 +16,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 
 @ApiStatus.Internal
 public final class EditIntentionSettingsAction extends AbstractEditIntentionSettingsAction implements HighPriorityAction {

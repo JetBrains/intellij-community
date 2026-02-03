@@ -20,7 +20,8 @@ import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 
 final class CheckRegExpIntentionAction extends QuickEditAction implements Iconable {
   @Override

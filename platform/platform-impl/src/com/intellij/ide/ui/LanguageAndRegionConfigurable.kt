@@ -39,7 +39,7 @@ import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.RestartDialog
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.net.URL
-import java.util.*
+import java.util.Locale
 import javax.swing.JComponent
 import javax.swing.ListCellRenderer
 import javax.swing.event.HyperlinkEvent

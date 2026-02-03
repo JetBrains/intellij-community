@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.junit5.eel.showcase
 
-import com.intellij.platform.testFramework.junit5.eel.params.api.*
+import com.intellij.platform.testFramework.junit5.eel.params.api.Docker
+import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
+import com.intellij.platform.testFramework.junit5.eel.params.api.Local
+import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
+import com.intellij.platform.testFramework.junit5.eel.params.api.Wsl
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

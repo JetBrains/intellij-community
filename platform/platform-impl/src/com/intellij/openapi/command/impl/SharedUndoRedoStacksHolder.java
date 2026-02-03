@@ -9,7 +9,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Set;
 
 @ApiStatus.Internal
 final class SharedUndoRedoStacksHolder extends UndoRedoStacksHolderBase<ImmutableActionChangeRange> {

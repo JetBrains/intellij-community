@@ -41,7 +41,6 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.impl.inModalContext
 import com.intellij.openapi.components.ComponentManagerEx
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -82,7 +81,11 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.serviceContainer.getComponentManagerImpl
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.mac.touchbar.TouchbarSupport
-import com.intellij.util.*
+import com.intellij.util.CachedValuesManagerImpl
+import com.intellij.util.MemoryDumpHelper
+import com.intellij.util.ObjectUtils
+import com.intellij.util.ReflectionUtil
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.WeakList
 import com.intellij.util.messages.impl.DynamicPluginUnloaderCompatibilityLayer
@@ -97,7 +100,9 @@ import java.nio.channels.FileChannel
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Collections
+import java.util.Date
+import java.util.IdentityHashMap
 import java.util.function.Predicate
 import javax.swing.JComponent
 import javax.swing.ToolTipManager

@@ -5,14 +5,21 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.ui.tree.ui.DefaultTreeLayoutCache
 import com.intellij.ui.treeStructure.CachingTreePath
 import org.assertj.core.api.AbstractBooleanAssert
-import org.easymock.EasyMock.*
+import org.easymock.EasyMock.niceMock
+import org.easymock.EasyMock.replay
+import org.easymock.EasyMock.strictMock
+import org.easymock.EasyMock.verify
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.awt.Rectangle
 import javax.swing.event.TreeModelEvent
 import javax.swing.event.TreeModelListener
-import javax.swing.tree.*
+import javax.swing.tree.AbstractLayoutCache
 import javax.swing.tree.AbstractLayoutCache.NodeDimensions
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreePath
+import javax.swing.tree.TreeSelectionModel
 
 private const val defaultRowHeight = 22
 private const val indent = 5

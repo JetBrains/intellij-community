@@ -12,7 +12,6 @@ import com.intellij.platform.eel.isPosix
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.FileSystems
 import java.nio.file.Path
 
 /**

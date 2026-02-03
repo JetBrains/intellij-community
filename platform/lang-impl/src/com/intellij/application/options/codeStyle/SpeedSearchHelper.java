@@ -9,7 +9,7 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 public final class SpeedSearchHelper {
   private final @Nullable SpeedSearchSupply mySpeedSearch;

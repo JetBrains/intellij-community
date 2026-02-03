@@ -1,13 +1,13 @@
 package com.intellij.execution.multilaunch.design.dialogs
 
 import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.multilaunch.MultiLaunchConfiguration
+import com.intellij.execution.multilaunch.design.components.IconCheckBoxList
+import com.intellij.execution.multilaunch.execution.executables.Executable
+import com.intellij.execution.multilaunch.execution.executables.impl.RunConfigurationExecutableManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.execution.multilaunch.MultiLaunchConfiguration
-import com.intellij.execution.multilaunch.execution.executables.Executable
-import com.intellij.execution.multilaunch.design.components.IconCheckBoxList
-import com.intellij.execution.multilaunch.execution.executables.impl.RunConfigurationExecutableManager
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
 import java.awt.Dimension

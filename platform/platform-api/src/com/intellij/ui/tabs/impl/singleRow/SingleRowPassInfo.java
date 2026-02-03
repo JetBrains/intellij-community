@@ -8,8 +8,10 @@ import com.intellij.ui.tabs.impl.LayoutPassInfo;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;

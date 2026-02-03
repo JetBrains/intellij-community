@@ -8,7 +8,8 @@ import com.intellij.openapi.ui.DialogWrapperPeerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Window;
 
 public class DialogWrapperPeerFactoryImpl extends DialogWrapperPeerFactory {
   @Override

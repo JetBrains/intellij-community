@@ -8,10 +8,11 @@ import com.intellij.ide.TooltipEvent;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import java.awt.*;
+import java.awt.Point;
 
 /**
  * Custom tooltip implementation which supports clickable links in HTML text

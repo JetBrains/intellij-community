@@ -5,7 +5,6 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.platform.buildData.productInfo.ProductInfoLayoutItemKind
 import io.opentelemetry.api.trace.Span
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.jetbrains.intellij.build.BuiltinModulesFileData

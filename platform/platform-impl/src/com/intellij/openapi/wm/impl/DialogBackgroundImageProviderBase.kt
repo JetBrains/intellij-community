@@ -4,8 +4,8 @@ package com.intellij.openapi.wm.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogBackgroundImageProvider
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry

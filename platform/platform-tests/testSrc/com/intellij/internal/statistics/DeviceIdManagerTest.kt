@@ -5,7 +5,7 @@ import com.intellij.internal.statistic.DeviceIdManager
 import org.junit.Test
 import java.time.LocalDate
 import java.time.Month
-import java.util.*
+import java.util.Locale
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 

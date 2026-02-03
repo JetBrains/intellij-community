@@ -3,8 +3,14 @@ package com.intellij.openapi.progress.util
 
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.impl.concurrencyTest
+import com.intellij.openapi.application.installSuvorovProgress
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.locking.impl.NestedLocksThreadingSupport
@@ -15,8 +21,13 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.application
 import com.intellij.util.concurrency.TransferredWriteActionService
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test

@@ -7,7 +7,26 @@ import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.CollectionFieldEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.Container
+import com.intellij.platform.workspace.storage.testEntities.entities.DeepContainer
+import com.intellij.platform.workspace.storage.testEntities.entities.DeepSealedOne
+import com.intellij.platform.workspace.storage.testEntities.entities.DescriptorInstance
+import com.intellij.platform.workspace.storage.testEntities.entities.EntityWithSoftLinks
+import com.intellij.platform.workspace.storage.testEntities.entities.MySealedClassOne
+import com.intellij.platform.workspace.storage.testEntities.entities.MySealedClassTwo
+import com.intellij.platform.workspace.storage.testEntities.entities.MySealedInterfaceOne
+import com.intellij.platform.workspace.storage.testEntities.entities.MySealedInterfaceTwo
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
+import com.intellij.platform.workspace.storage.testEntities.entities.OneEntityWithSymbolicId
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ProjectModelTestEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
+import com.intellij.platform.workspace.storage.testEntities.entities.SealedContainer
+import com.intellij.platform.workspace.storage.testEntities.entities.TooDeepContainer
+import com.intellij.platform.workspace.storage.testEntities.entities.WithSealedEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver
 import org.junit.jupiter.api.Assertions
@@ -16,8 +35,12 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
-import kotlin.test.*
+import java.util.UUID
+import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class EntityStorageSerializationTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager

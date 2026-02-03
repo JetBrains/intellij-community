@@ -11,7 +11,15 @@ import com.intellij.microservices.url.parameters.PathVariableDefinitionsSearcher
 import com.intellij.microservices.url.parameters.PathVariablePsiElement
 import com.intellij.microservices.url.parameters.PathVariableUsagesProvider
 import com.intellij.microservices.url.parameters.QueryParameterNameTarget
-import com.intellij.microservices.url.references.*
+import com.intellij.microservices.url.references.AuthorityPomTarget
+import com.intellij.microservices.url.references.AuthorityReferenceFakeElement
+import com.intellij.microservices.url.references.QueryParameterNamePomTarget
+import com.intellij.microservices.url.references.UrlPathContext
+import com.intellij.microservices.url.references.UrlPathReference
+import com.intellij.microservices.url.references.UrlPathReferenceTarget
+import com.intellij.microservices.url.references.UrlPathReferenceUnifiedPomTarget
+import com.intellij.microservices.url.references.UrlSegmentReference
+import com.intellij.microservices.url.references.UrlTargetInfoFakeElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.pom.PomTargetPsiElement

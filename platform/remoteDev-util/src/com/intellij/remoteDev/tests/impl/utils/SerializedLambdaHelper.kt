@@ -1,7 +1,13 @@
 package com.intellij.remoteDev.tests.impl.utils
 
-import java.io.*
-import java.util.*
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.InputStream
+import java.io.ObjectInputStream
+import java.io.ObjectOutputStream
+import java.io.ObjectStreamClass
+import java.io.Serializable
+import java.util.Base64
 import kotlin.io.inputStream
 import kotlin.use
 

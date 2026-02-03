@@ -3,7 +3,11 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.TextRangeScalarUtil;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;

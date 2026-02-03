@@ -10,12 +10,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.ActualCodeInsightContextInfo;
+import com.intellij.psi.search.CodeInsightContextAwareSearchScope;
+import com.intellij.psi.search.CodeInsightContextAwareSearchScopes;
+import com.intellij.psi.search.CodeInsightContextFileInfo;
+import com.intellij.psi.search.CodeInsightContextInfo;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 public class ModulesScope extends GlobalSearchScope implements CodeInsightContextAwareSearchScope, ActualCodeInsightContextInfo {
   private final ProjectFileIndex myProjectFileIndex;

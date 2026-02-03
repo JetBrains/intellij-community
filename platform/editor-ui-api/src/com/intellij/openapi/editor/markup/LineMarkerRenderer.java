@@ -18,7 +18,8 @@ package com.intellij.openapi.editor.markup;
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 
 /**
  * Interface which should be implemented in order to paint custom markers in the line

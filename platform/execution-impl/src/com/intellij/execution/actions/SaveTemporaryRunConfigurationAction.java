@@ -6,7 +6,6 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.ide.core.permissions.Permission;
 import com.intellij.platform.ide.core.permissions.RequiresPermissions;

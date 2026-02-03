@@ -14,9 +14,17 @@ import com.intellij.psi.PsiFile;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.CommonProcessors;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static junit.framework.TestCase.*;
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertNull;
+import static junit.framework.TestCase.assertTrue;
+import static junit.framework.TestCase.fail;
 
 public final class SliceTestUtil {
 

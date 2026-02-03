@@ -17,7 +17,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.plaf.ComponentUI;
 
 /**

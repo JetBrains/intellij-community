@@ -9,13 +9,24 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.*;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.*;
+import static com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.ByteFileAttributeAccessor;
+import static com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.IntFileAttributeAccessor;
+import static com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.LongFileAttributeAccessor;
+import static com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.ShortFileAttributeAccessor;
+import static com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.specializeAsByte;
+import static com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.specializeAsFastByte;
+import static com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.specializeAsFastInt;
+import static com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.specializeAsFastLong;
+import static com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.specializeAsFastShort;
+import static com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.specializeAsInt;
+import static com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.specializeAsLong;
+import static com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.specializeAsShort;
 import static java.util.stream.Collectors.joining;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

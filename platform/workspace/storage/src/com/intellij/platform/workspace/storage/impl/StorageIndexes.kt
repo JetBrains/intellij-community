@@ -2,11 +2,20 @@
 package com.intellij.platform.workspace.storage.impl
 
 import com.google.common.collect.HashBiMap
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.ExternalMappingKey
+import com.intellij.platform.workspace.storage.SymbolicEntityId
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.impl.external.AbstractExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.external.ImmutableExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.external.MutableExternalEntityMappingImpl
-import com.intellij.platform.workspace.storage.impl.indices.*
+import com.intellij.platform.workspace.storage.impl.indices.AbstractMultimapStorageIndex
+import com.intellij.platform.workspace.storage.impl.indices.EntityStorageInternalIndex
+import com.intellij.platform.workspace.storage.impl.indices.ImmutableMultimapStorageIndex
+import com.intellij.platform.workspace.storage.impl.indices.MutableMultimapStorageIndex
+import com.intellij.platform.workspace.storage.impl.indices.SymbolicIdInternalIndex
+import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
 import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 
 internal sealed class AbstractStorageIndexes() {

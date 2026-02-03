@@ -25,9 +25,9 @@ import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.packaging.PyPackageUtil
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
 import com.jetbrains.python.psi.resolve.isPackageAvailable
-import com.jetbrains.python.psi.PyUtil
 import java.util.function.Supplier
 
 class CreateSetupPyAction : CreateFromTemplateAction(

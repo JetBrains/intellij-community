@@ -14,7 +14,11 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
-import com.intellij.util.indexing.testEntities.*
+import com.intellij.util.indexing.testEntities.IndexableKind2FileSetTestContributor
+import com.intellij.util.indexing.testEntities.IndexableKindFileSetTestContributor
+import com.intellij.util.indexing.testEntities.IndexingTestEntity
+import com.intellij.util.indexing.testEntities.IndexingTestEntity2
+import com.intellij.util.indexing.testEntities.ParentTestEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import kotlinx.coroutines.runBlocking

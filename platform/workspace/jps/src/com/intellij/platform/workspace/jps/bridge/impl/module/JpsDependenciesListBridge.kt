@@ -4,12 +4,22 @@ package com.intellij.platform.workspace.jps.bridge.impl.module
 import com.intellij.platform.workspace.jps.bridge.impl.JpsProjectBridge
 import com.intellij.platform.workspace.jps.bridge.impl.library.sdk.JpsSdkBridge
 import com.intellij.platform.workspace.jps.bridge.impl.reportModificationAttempt
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
+import com.intellij.platform.workspace.jps.entities.ModuleDependency
+import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
+import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
+import com.intellij.platform.workspace.jps.entities.SdkDependency
 import org.jetbrains.jps.model.ex.JpsCompositeElementBase
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsLibraryReference
 import org.jetbrains.jps.model.library.sdk.JpsSdkType
-import org.jetbrains.jps.model.module.*
+import org.jetbrains.jps.model.module.JpsDependenciesList
+import org.jetbrains.jps.model.module.JpsDependencyElement
+import org.jetbrains.jps.model.module.JpsLibraryDependency
+import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleDependency
+import org.jetbrains.jps.model.module.JpsModuleReference
 
 internal class JpsDependenciesListBridge(dependencyItems: List<ModuleDependencyItem>, parentElement: JpsModuleBridge) 
   : JpsCompositeElementBase<JpsDependenciesListBridge>(), JpsDependenciesList {

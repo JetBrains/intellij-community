@@ -4,8 +4,8 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.openapi.wm.IdeGlassPane;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JRootPane;
+import java.awt.Component;
 
 public interface IdeGlassPaneEx extends IdeGlassPane {
   Component add(Component comp);

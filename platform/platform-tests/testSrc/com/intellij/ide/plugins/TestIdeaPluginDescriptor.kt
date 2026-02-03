@@ -5,7 +5,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
-import java.util.*
+import java.util.Date
 
 abstract class TestIdeaPluginDescriptor : IdeaPluginDescriptor {
   override fun getDependencies(): List<IdeaPluginDependency> {

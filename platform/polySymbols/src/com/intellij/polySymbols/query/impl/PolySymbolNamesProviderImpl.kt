@@ -13,9 +13,12 @@ import com.intellij.polySymbols.html.NAMESPACE_HTML
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolNameConverter
 import com.intellij.polySymbols.query.PolySymbolNamesProvider
-import com.intellij.polySymbols.query.PolySymbolNamesProvider.Target.*
+import com.intellij.polySymbols.query.PolySymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS
+import com.intellij.polySymbols.query.PolySymbolNamesProvider.Target.NAMES_MAP_STORAGE
+import com.intellij.polySymbols.query.PolySymbolNamesProvider.Target.NAMES_QUERY
+import com.intellij.polySymbols.query.PolySymbolNamesProvider.Target.RENAME_QUERY
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Locale
 
 @ApiStatus.Internal
 class PolySymbolNamesProviderImpl(

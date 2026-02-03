@@ -9,7 +9,9 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
+import javax.swing.JPanel;
 
 class ServersToolWindowMessagePanel implements RemoteServersDeploymentManager.MessagePanel {
   private JPanel myPanel;

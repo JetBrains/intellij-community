@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.enumerator;
 
-import com.intellij.util.io.StringEnumeratorTestBase;
 import com.intellij.platform.util.io.storages.StorageTestingUtils;
+import com.intellij.util.io.StringEnumeratorTestBase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8;
 import static org.junit.Assert.assertEquals;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 //TODO RC: move to platform.util.storage module's tests
 public class DurableEnumeratorOfStringsWithDurableMapTest extends StringEnumeratorTestBase<DurableEnumerator<String>> {

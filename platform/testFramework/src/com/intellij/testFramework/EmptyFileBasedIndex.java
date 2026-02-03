@@ -11,7 +11,16 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.FileBasedIndexEx;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.FileIndexingStateWithExplanation;
+import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.IdFilter;
+import com.intellij.util.indexing.IndexExtension;
+import com.intellij.util.indexing.IndexedFile;
+import com.intellij.util.indexing.StorageUpdate;
+import com.intellij.util.indexing.UpdatableIndex;
+import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.UpdateData;
@@ -20,7 +29,11 @@ import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.IntPredicate;
 
 public final class EmptyFileBasedIndex extends FileBasedIndexEx {

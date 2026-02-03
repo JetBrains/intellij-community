@@ -12,7 +12,11 @@ import com.intellij.openapi.ui.popup.PopupCornerType
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeGlassPaneUtil
-import com.intellij.openapi.wm.impl.content.*
+import com.intellij.openapi.wm.impl.content.BaseLabel
+import com.intellij.openapi.wm.impl.content.ContentTabLabel
+import com.intellij.openapi.wm.impl.content.SingleContentLayout
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.openapi.wm.impl.content.ToolWindowInEditorSupport
 import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createDropTargetHighlightComponent
 import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createThumbnailDragImage
 import com.intellij.ui.ComponentUtil
@@ -37,7 +41,11 @@ import java.awt.Rectangle
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.image.BufferedImage
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JDialog
+import javax.swing.JLabel
+import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
 
 internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponent) : MouseDragHelper<JComponent>(parent, pane) {
   private var sourceDecorator = null as InternalDecoratorImpl?

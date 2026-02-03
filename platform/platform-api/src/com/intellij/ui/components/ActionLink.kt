@@ -11,7 +11,11 @@ import java.awt.event.ActionListener
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole.HYPERLINK
 import javax.accessibility.AccessibleValue
-import javax.swing.*
+import javax.swing.Action
+import javax.swing.Icon
+import javax.swing.JButton
+import javax.swing.SwingConstants
+import javax.swing.UIManager
 
 open class ActionLink() : JButton() {
   override fun getUIClassID(): String = "LinkButtonUI"

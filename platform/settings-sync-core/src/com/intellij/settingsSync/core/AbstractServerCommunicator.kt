@@ -8,7 +8,7 @@ import com.intellij.util.io.delete
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.io.InputStream
-import java.util.*
+import java.util.UUID
 import kotlin.io.path.inputStream
 
 private val LOG = logger<AbstractServerCommunicator>()

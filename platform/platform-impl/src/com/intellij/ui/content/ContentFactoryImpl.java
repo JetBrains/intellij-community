@@ -8,7 +8,7 @@ import com.intellij.ui.content.impl.ContentManagerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public final class ContentFactoryImpl implements ContentFactory {
   @Override

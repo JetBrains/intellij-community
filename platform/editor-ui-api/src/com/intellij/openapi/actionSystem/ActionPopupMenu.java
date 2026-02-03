@@ -18,7 +18,8 @@ package com.intellij.openapi.actionSystem;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPopupMenu;
 import java.util.function.Supplier;
 
 /**

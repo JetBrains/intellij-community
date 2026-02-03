@@ -15,7 +15,13 @@ import com.intellij.ui.CheckBoxWithColorChooser
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.toNullableProperty
 import org.jetbrains.annotations.ApiStatus
 
 internal class SetCaretVisualAttributesAction : AnAction(), DumbAware {

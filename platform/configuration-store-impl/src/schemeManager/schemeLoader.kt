@@ -5,7 +5,11 @@ package com.intellij.configurationStore.schemeManager
 
 import com.dynatrace.hash4j.hashing.HashStream64
 import com.dynatrace.hash4j.hashing.Hashing
-import com.intellij.configurationStore.*
+import com.intellij.configurationStore.LOG
+import com.intellij.configurationStore.LazySchemeProcessor
+import com.intellij.configurationStore.StorageManagerFileWriteRequestor
+import com.intellij.configurationStore.hashElement
+import com.intellij.configurationStore.runAsWriteActionIfNeeded
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.options.NonLazySchemeProcessor
 import com.intellij.openapi.options.Scheme
@@ -21,7 +25,7 @@ import org.jetbrains.annotations.NonNls
 import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Path
-import java.util.*
+import java.util.IdentityHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamReader

@@ -1,7 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ml.completion
 
-import com.intellij.internal.ml.*
+import com.intellij.internal.ml.DecisionFunction
+import com.intellij.internal.ml.FeaturesInfo
+import com.intellij.internal.ml.InconsistentMetadataException
+import com.intellij.internal.ml.ModelMetadata
+import com.intellij.internal.ml.ResourcesModelMetadataReader
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls

@@ -7,7 +7,7 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import javax.swing.*;
+import javax.swing.ListCellRenderer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;

@@ -10,7 +10,7 @@ import com.intellij.openapi.externalSystem.view.ProjectNode;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import java.util.List;
 
 public final class ExternalSystemDataKeys {

@@ -2,9 +2,9 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.platform.workspace.jps.serialization.impl.ApplicationLevelUrlRelativizer
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
-import com.intellij.platform.workspace.jps.serialization.impl.ApplicationLevelUrlRelativizer
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.junit.ClassRule
 import org.junit.Test

@@ -20,7 +20,11 @@ import com.intellij.platform.execution.serviceView.splitApi.ServiceViewConfigura
 import com.intellij.platform.execution.serviceView.splitApi.ServiceViewConfigurationTypeSettings
 import com.intellij.platform.execution.serviceView.splitApi.ServiceViewRpc
 import com.intellij.platform.project.projectId
-import com.intellij.ui.*
+import com.intellij.ui.ColoredTreeCellRenderer
+import com.intellij.ui.DoubleClickListener
+import com.intellij.ui.IdeUICustomization
+import com.intellij.ui.JBColor
+import com.intellij.ui.TreeSpeedSearch
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
@@ -34,7 +38,11 @@ import java.awt.BorderLayout
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.MutableTreeNode

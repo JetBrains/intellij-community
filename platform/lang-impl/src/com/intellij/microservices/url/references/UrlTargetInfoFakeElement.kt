@@ -7,7 +7,12 @@ import com.intellij.microservices.url.UrlPath
 import com.intellij.microservices.url.UrlResolveRequest
 import com.intellij.microservices.url.UrlResolverManager
 import com.intellij.microservices.url.UrlTargetInfo
-import com.intellij.microservices.url.parameters.*
+import com.intellij.microservices.url.parameters.QUERY_PARAMETER_SEM_KEY
+import com.intellij.microservices.url.parameters.QueryParameterNameReference
+import com.intellij.microservices.url.parameters.QueryParameterNameTarget
+import com.intellij.microservices.url.parameters.QueryParameterSem
+import com.intellij.microservices.url.parameters.RenameableSemElementSupport
+import com.intellij.microservices.url.parameters.getSemElement
 import com.intellij.microservices.utils.CommonFakeNavigatablePomTarget
 import com.intellij.microservices.utils.MicroservicesUsageCollector.URL_PATH_SEGMENT_NAVIGATE_EVENT
 import com.intellij.microservices.utils.MicroservicesUsageCollector.URL_PATH_VARIANTS_EVENT

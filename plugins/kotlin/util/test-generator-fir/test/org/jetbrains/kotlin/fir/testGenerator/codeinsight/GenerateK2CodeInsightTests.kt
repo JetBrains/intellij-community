@@ -16,13 +16,13 @@ import org.jetbrains.kotlin.idea.k2.generate.AbstractFirGenerateTestSupportMetho
 import org.jetbrains.kotlin.idea.k2.generate.AbstractFirGenerateToStringActionTest
 import org.jetbrains.kotlin.idea.k2.hierarchy.AbstractFirHierarchyTest
 import org.jetbrains.kotlin.idea.k2.hierarchy.AbstractFirHierarchyWithLibTest
-import org.jetbrains.kotlin.idea.k2.hints.compilerPlugins.AbstractCompilerPluginDeclarationHighlighterTest
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtCallChainHintsProviderTest
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtDefaultParameterInlayHintsProviderTest
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtLambdasHintsProvider
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtParameterHintsProviderTest
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtReferenceTypeHintsProviderTest
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtValuesHintsProviderTest
+import org.jetbrains.kotlin.idea.k2.hints.compilerPlugins.AbstractCompilerPluginDeclarationHighlighterTest
 import org.jetbrains.kotlin.idea.k2.hints.compilerPlugins.AbstractKtCompilerDeclarationsHintProviderTest
 import org.jetbrains.kotlin.idea.k2.hints.compilerPlugins.AbstractKtCompilerPluginModalityHintProviderTest
 import org.jetbrains.kotlin.idea.k2.hints.compilerPlugins.AbstractKtCompilerSupertypesHintProviderTest

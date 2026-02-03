@@ -4,7 +4,12 @@ package com.intellij.codeInsight.documentation;
 import javax.swing.text.Highlighter.HighlightPainter;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
-import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.Stroke;
 
 import static com.intellij.codeInsight.documentation.DocumentationManager.LOG;
 

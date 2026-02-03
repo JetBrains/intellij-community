@@ -6,8 +6,25 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
-import com.intellij.platform.workspace.jps.*
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.JpsEntitySourceFactory
+import com.intellij.platform.workspace.jps.JpsFileEntitySource
+import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
+import com.intellij.platform.workspace.jps.JpsImportedEntitySource
+import com.intellij.platform.workspace.jps.JpsMetrics
+import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryEntityBuilder
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
+import com.intellij.platform.workspace.jps.entities.LibraryRoot
+import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.LibraryTypeId
+import com.intellij.platform.workspace.jps.entities.libraryProperties
+import com.intellij.platform.workspace.jps.entities.modifyLibraryEntity
+import com.intellij.platform.workspace.jps.entities.modifyLibraryPropertiesEntity
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -20,7 +37,13 @@ import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
-import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer.*
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer.JAR_DIRECTORY_TAG
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer.LIBRARY_TAG
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer.NAME_ATTRIBUTE
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer.PROPERTIES_TAG
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer.RECURSIVE_ATTRIBUTE
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer.ROOT_TAG
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer.TYPE_ATTRIBUTE
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 
 internal class JpsLibrariesDirectorySerializerFactory(override val directoryUrl: String) : JpsDirectoryEntitiesSerializerFactory<LibraryEntity> {

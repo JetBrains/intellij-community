@@ -14,7 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.*
+import java.util.Locale
 
 private const val VIMRC_ID = ".vimrc"
 private const val VSCODE_ID = ".vscode"

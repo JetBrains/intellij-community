@@ -2,7 +2,11 @@ package com.jetbrains.lsp.test
 
 import com.jetbrains.lsp.implementation.ByteReader
 import com.jetbrains.lsp.implementation.readUTF8Line
-import io.ktor.utils.io.*
+import io.ktor.utils.io.ByteChannel
+import io.ktor.utils.io.ByteWriteChannel
+import io.ktor.utils.io.InternalAPI
+import io.ktor.utils.io.writeByte
+import io.ktor.utils.io.writeStringUtf8
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.withIndex

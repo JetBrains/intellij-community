@@ -11,7 +11,8 @@ import com.intellij.util.SystemProperties
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.io.ByteArrayInputStream
-import java.util.*
+import java.util.Arrays
+import java.util.TreeMap
 import java.util.concurrent.atomic.AtomicReferenceArray
 
 @ApiStatus.Internal

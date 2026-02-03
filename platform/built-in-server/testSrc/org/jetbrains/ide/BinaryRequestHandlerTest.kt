@@ -17,7 +17,7 @@ import org.jetbrains.io.Decoder
 import org.jetbrains.io.MessageDecoder
 import org.junit.ClassRule
 import org.junit.Test
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 // we don't handle String in efficient way - because we want to test readContent/readChars also

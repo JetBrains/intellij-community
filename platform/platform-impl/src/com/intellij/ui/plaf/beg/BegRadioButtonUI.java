@@ -4,10 +4,12 @@ package com.intellij.ui.plaf.beg;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.metal.MetalRadioButtonUI;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 
 @ApiStatus.Internal
 public final class BegRadioButtonUI extends MetalRadioButtonUI {

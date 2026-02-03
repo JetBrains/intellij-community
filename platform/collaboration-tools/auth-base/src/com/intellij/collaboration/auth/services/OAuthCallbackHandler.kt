@@ -10,7 +10,11 @@ import com.intellij.util.Url
 import com.intellij.util.concurrency.AppExecutorUtil
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.http.*
+import io.netty.handler.codec.http.DefaultHttpHeaders
+import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpHeaderNames
+import io.netty.handler.codec.http.HttpResponseStatus
+import io.netty.handler.codec.http.QueryStringDecoder
 import org.jetbrains.io.response
 import org.jetbrains.io.responseStatus
 import org.jetbrains.io.send

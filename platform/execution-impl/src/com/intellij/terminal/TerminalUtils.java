@@ -4,7 +4,7 @@ package com.intellij.terminal;
 import com.jediterm.terminal.ui.TerminalPanel;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 
 public final class TerminalUtils {
 

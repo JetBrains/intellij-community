@@ -6,7 +6,7 @@ import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.extension.BeforeTestExecutionCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.TestWatcher
-import java.util.*
+import java.util.Optional
 
 /**
  * This extension re-throws logged errors after the test has ended.

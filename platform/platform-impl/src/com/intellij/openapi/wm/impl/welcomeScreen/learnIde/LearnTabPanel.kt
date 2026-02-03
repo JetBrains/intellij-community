@@ -3,7 +3,12 @@ package com.intellij.openapi.wm.impl.welcomeScreen.learnIde
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.coursesInProgress.*
+import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.coursesInProgress.COURSE_DELETED
+import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.coursesInProgress.CourseDeletedListener
+import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.coursesInProgress.CourseInfo
+import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.coursesInProgress.CoursesInProgressPanel
+import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.coursesInProgress.CoursesStorageProvider
+import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.coursesInProgress.mainBackgroundColor
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus

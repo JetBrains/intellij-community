@@ -8,12 +8,11 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Rectangle
-import java.util.*
+import java.util.Enumeration
 import javax.swing.event.TreeModelEvent
 import javax.swing.tree.AbstractLayoutCache
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
-import kotlin.collections.ArrayDeque
 import kotlin.math.max
 
 @ApiStatus.Internal

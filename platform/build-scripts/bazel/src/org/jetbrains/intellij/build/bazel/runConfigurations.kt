@@ -9,7 +9,6 @@ import java.nio.file.Path
 import java.text.Normalizer
 import java.util.stream.Collectors
 import kotlin.io.path.name
-import kotlin.text.split
 
 // Lightweight model of an IntelliJ Run Configuration as stored under .idea/runConfigurations/*.xml
 // The XML format is intentionally not fully modeled. We capture common fields and keep the raw element for advanced usage.

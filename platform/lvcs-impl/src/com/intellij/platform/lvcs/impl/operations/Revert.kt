@@ -10,9 +10,15 @@ import com.intellij.history.integration.revertion.Reverter
 import com.intellij.history.integration.revertion.SelectionReverter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.lvcs.impl.*
+import com.intellij.platform.lvcs.impl.ActivityScope
+import com.intellij.platform.lvcs.impl.ChangeSetActivityItem
+import com.intellij.platform.lvcs.impl.ChangeSetSelection
+import com.intellij.platform.lvcs.impl.DirectoryDiffMode
+import com.intellij.platform.lvcs.impl.RevisionId
 import com.intellij.platform.lvcs.impl.diff.getDiff
 import com.intellij.platform.lvcs.impl.diff.getEntryPath
+import com.intellij.platform.lvcs.impl.getSelectionCalculator
+import com.intellij.platform.lvcs.impl.leftRevision
 import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier

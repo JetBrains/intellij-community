@@ -25,7 +25,14 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import sun.awt.image.ToolkitImage
-import java.awt.*
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.MouseInfo
+import java.awt.Point
+import java.awt.Rectangle
+import java.awt.Robot
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.image.ColorModel

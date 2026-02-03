@@ -12,8 +12,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import java.awt.Color;
 
 /**
  * Inherit from this class and register the implementation as {@code projectStructure.sourceRootEditHandler} extension in plugin.xml to

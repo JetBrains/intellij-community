@@ -20,7 +20,7 @@ import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * Toggles new evaluate expression field visibility in the watches panel.

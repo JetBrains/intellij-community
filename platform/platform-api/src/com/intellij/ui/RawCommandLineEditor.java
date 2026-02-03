@@ -12,9 +12,12 @@ import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.text.Document;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.util.List;
 
 import static com.intellij.ui.dsl.gridLayout.UnscaledGapsKt.toUnscaledGaps;

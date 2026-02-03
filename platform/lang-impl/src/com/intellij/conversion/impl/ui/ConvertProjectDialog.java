@@ -17,10 +17,12 @@ import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextPane;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import java.awt.*;
+import java.awt.Dimension;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashSet;

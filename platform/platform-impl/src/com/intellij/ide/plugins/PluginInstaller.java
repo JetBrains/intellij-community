@@ -36,7 +36,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -48,7 +48,12 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
-import static com.intellij.ide.startup.StartupActionScriptManager.*;
+import static com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
+import static com.intellij.ide.startup.StartupActionScriptManager.CopyCommand;
+import static com.intellij.ide.startup.StartupActionScriptManager.DeleteCommand;
+import static com.intellij.ide.startup.StartupActionScriptManager.UnzipCommand;
+import static com.intellij.ide.startup.StartupActionScriptManager.addActionCommands;
+import static com.intellij.ide.startup.StartupActionScriptManager.addActionCommandsToBeginning;
 
 public final class PluginInstaller {
   private static final Logger LOG = Logger.getInstance(PluginInstaller.class);

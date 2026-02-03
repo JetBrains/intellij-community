@@ -3,12 +3,12 @@ package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.impl.zombie.LimbedZombie
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.editor.impl.zombie.LimbedZombie
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.*
+import java.util.Objects
 import javax.swing.Icon
 
 @Internal

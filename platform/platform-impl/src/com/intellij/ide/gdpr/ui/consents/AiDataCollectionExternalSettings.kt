@@ -4,7 +4,6 @@ package com.intellij.ide.gdpr.ui.consents
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
-import kotlin.jvm.javaClass
 
 @ApiStatus.Internal
 interface AiDataCollectionExternalSettings {

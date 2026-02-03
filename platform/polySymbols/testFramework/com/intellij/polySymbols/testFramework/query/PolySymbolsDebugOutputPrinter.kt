@@ -23,7 +23,7 @@ import com.intellij.polySymbols.utils.unwrapMatchedSymbols
 import com.intellij.polySymbols.webTypes.WebTypesSymbol
 import com.intellij.util.applyIf
 import com.intellij.util.asSafely
-import java.util.*
+import java.util.Stack
 
 open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
 

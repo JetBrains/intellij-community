@@ -2,9 +2,9 @@
 package com.intellij.util.io.keyStorage;
 
 
+import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.StorageLockContext;
-import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -12,7 +12,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class AppendableObjectStorageBackedByResizableMappedFileTest extends AppendableObjectStorageTestBase<String> {
 

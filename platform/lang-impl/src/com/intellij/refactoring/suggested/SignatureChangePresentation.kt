@@ -8,12 +8,26 @@ import com.intellij.refactoring.suggested.SignatureChangePresentationModel.Effec
 import com.intellij.refactoring.suggested.SignatureChangePresentationModel.TextFragment
 import com.intellij.ui.JBColor
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.BasicStroke
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.Font
+import java.awt.Graphics2D
+import java.awt.Point
+import java.awt.Rectangle
 import java.awt.font.FontRenderContext
 import java.awt.geom.Arc2D
 import java.awt.geom.GeneralPath
 import java.awt.geom.Point2D
-import kotlin.math.*
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.absoluteValue
+import kotlin.math.atan
+import kotlin.math.ceil
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
+import kotlin.math.sin
 
 @ApiStatus.Internal
 class SignatureChangePresentation(

@@ -8,7 +8,13 @@ import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
-import com.intellij.platform.ide.progress.*
+import com.intellij.platform.ide.progress.CancellableTaskCancellation
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.TaskInfoEntity
+import com.intellij.platform.ide.progress.TaskManager
+import com.intellij.platform.ide.progress.TaskStatus
+import com.intellij.platform.ide.progress.statuses
+import com.intellij.platform.ide.progress.updates
 import fleet.kernel.rete.collect
 import fleet.kernel.tryWithEntities
 import kotlinx.coroutines.CoroutineScope

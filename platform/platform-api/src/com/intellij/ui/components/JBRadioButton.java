@@ -4,8 +4,11 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.AnchorableComponent;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JRadioButton;
+import java.awt.Dimension;
 
 /**
  * @author evgeny.zakrevsky

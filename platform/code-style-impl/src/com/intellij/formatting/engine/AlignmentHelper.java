@@ -2,7 +2,15 @@
 package com.intellij.formatting.engine;
 
 import com.intellij.diagnostic.CoreAttachmentFactory;
-import com.intellij.formatting.*;
+import com.intellij.formatting.AbstractBlockWrapper;
+import com.intellij.formatting.Alignment;
+import com.intellij.formatting.AlignmentCyclesDetector;
+import com.intellij.formatting.AlignmentImpl;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.BlockAlignmentProcessor;
+import com.intellij.formatting.LeafBlockWrapper;
+import com.intellij.formatting.LeftEdgeAlignmentProcessor;
+import com.intellij.formatting.RightEdgeAlignmentProcessor;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,7 +18,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.util.*;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 @ApiStatus.Internal
 public final class AlignmentHelper {

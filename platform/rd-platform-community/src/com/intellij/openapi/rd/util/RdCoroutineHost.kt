@@ -5,12 +5,23 @@ package com.intellij.openapi.rd.util
 
 import com.intellij.codeWithMe.ClientIdContextElementPrecursor
 import com.intellij.execution.process.ProcessIOExecutorService
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.jetbrains.rd.util.threading.coroutines.RdCoroutineScope
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExecutorCoroutineDispatcher
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.asCoroutineDispatcher
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 

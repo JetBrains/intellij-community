@@ -8,12 +8,11 @@ import com.intellij.codeInsight.hints.declarative.HintFormat
 import com.intellij.codeInsight.hints.declarative.HintMarginPadding
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.codeInsight.hints.declarative.impl.util.DeclarativeHintsDumpUtil
-import com.intellij.codeInsight.hints.declarative.impl.util.DeclarativeHintsDumpUtil.ExtractedHintInfo.*
+import com.intellij.codeInsight.hints.declarative.impl.util.DeclarativeHintsDumpUtil.ExtractedHintInfo.ActiveOptionDiff
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import kotlin.collections.emptyList
 
 class ExtractDeclarativeHintsTest {
   @Test

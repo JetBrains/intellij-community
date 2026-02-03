@@ -4,7 +4,10 @@ package com.intellij.ui
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.COLUMNS_LARGE
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
 import java.awt.Component
 import javax.swing.JComponent
 

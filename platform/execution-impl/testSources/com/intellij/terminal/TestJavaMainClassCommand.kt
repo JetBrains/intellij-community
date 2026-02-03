@@ -3,9 +3,13 @@ package com.intellij.terminal
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelExecApiHelpers
+import com.intellij.platform.eel.isWindows
+import com.intellij.platform.eel.pathSeparator
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.eel.spawnProcess
 import com.intellij.util.execution.ParametersListUtil
 import java.nio.file.Path
 import kotlin.io.path.Path

@@ -14,7 +14,7 @@ import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import java.util.*
+import java.util.Locale
 
 private const val IGNORE_LANGUAGE_DETECTOR_PROPERTY_NAME = "LANGUAGE_DETECTOR_ASKED_BEFORE"
 private const val SWITCH_BACK_LANGUAGE_DETECTOR_PROPERTY_NAME = "LANGUAGE_DETECTOR_ASKED_AFTER"

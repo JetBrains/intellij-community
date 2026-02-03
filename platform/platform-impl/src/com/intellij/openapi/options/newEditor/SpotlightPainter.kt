@@ -23,7 +23,6 @@ import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Graphics2D
-import java.util.HashMap
 import javax.swing.CellRendererPane
 import javax.swing.JComponent
 import javax.swing.JScrollPane

@@ -19,8 +19,12 @@ import com.intellij.util.ui.ImageUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.KeyboardFocusManager;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;

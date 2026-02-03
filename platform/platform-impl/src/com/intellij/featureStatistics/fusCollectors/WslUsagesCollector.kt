@@ -17,7 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
 import kotlin.io.path.invariantSeparatorsPathString
 
 @ApiStatus.Internal

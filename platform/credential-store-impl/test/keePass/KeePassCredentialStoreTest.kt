@@ -1,9 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore.keePass
 
-import com.intellij.credentialStore.*
+import com.intellij.credentialStore.CredentialAttributes
+import com.intellij.credentialStore.Credentials
+import com.intellij.credentialStore.EncryptionSpec
+import com.intellij.credentialStore.createSecureRandom
+import com.intellij.credentialStore.getDefaultEncryptionType
 import com.intellij.credentialStore.kdbx.IncorrectMainPasswordException
-
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.ApplicationRule
@@ -18,7 +21,7 @@ import org.junit.jupiter.api.assertNotNull
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.util.*
+import java.util.UUID
 
 // part of specific tests in the IcsCredentialTest
 class KeePassCredentialStoreTest {

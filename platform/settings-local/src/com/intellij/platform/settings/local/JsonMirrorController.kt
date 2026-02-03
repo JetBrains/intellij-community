@@ -11,11 +11,14 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.platform.settings.*
+import com.intellij.platform.settings.DelegatedSettingsController
+import com.intellij.platform.settings.GetResult
+import com.intellij.platform.settings.OldLocalValueSupplierTag
+import com.intellij.platform.settings.SetResult
+import com.intellij.platform.settings.SettingDescriptor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject

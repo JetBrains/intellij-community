@@ -28,7 +28,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FileStatusListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.findProjectOrNull
-import com.intellij.platform.recentFiles.shared.*
+import com.intellij.platform.recentFiles.shared.FileChangeKind
+import com.intellij.platform.recentFiles.shared.RecentFileKind
+import com.intellij.platform.recentFiles.shared.RecentFilesBackendRequest
+import com.intellij.platform.recentFiles.shared.RecentFilesEvent
+import com.intellij.platform.recentFiles.shared.SwitcherRpcDto
 import com.intellij.problems.ProblemListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.awaitCancellation

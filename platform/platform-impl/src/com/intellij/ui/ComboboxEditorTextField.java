@@ -12,8 +12,10 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComboBox;
+import javax.swing.UIManager;
+import java.awt.Component;
+import java.awt.Dimension;
 
 public class ComboboxEditorTextField extends EditorTextField {
 

@@ -1,11 +1,26 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.util;
 
-import com.intellij.build.*;
+import com.intellij.build.BuildBundle;
+import com.intellij.build.BuildConsoleUtils;
+import com.intellij.build.BuildContentDescriptor;
+import com.intellij.build.BuildEventDispatcher;
+import com.intellij.build.DefaultBuildDescriptor;
+import com.intellij.build.SyncViewManager;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.FinishBuildEvent;
-import com.intellij.build.events.impl.*;
-import com.intellij.execution.*;
+import com.intellij.build.events.impl.FailureImpl;
+import com.intellij.build.events.impl.FailureResultImpl;
+import com.intellij.build.events.impl.FinishBuildEventImpl;
+import com.intellij.build.events.impl.OutputBuildEventImpl;
+import com.intellij.build.events.impl.StartBuildEventImpl;
+import com.intellij.build.events.impl.SuccessResultImpl;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionListener;
+import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessHandler;
@@ -34,13 +49,26 @@ import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionCons
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.issue.BuildIssueException;
-import com.intellij.openapi.externalSystem.model.*;
+import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
+import com.intellij.openapi.externalSystem.model.ExternalSystemException;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.model.task.*;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
 import com.intellij.openapi.externalSystem.service.ImportCanceledException;
-import com.intellij.openapi.externalSystem.service.execution.*;
+import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemTaskConfigurationType;
+import com.intellij.openapi.externalSystem.service.execution.DefaultExternalSystemExecutionConsoleManager;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemEventDispatcher;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemProcessHandler;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState;
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
@@ -48,7 +76,11 @@ import com.intellij.openapi.externalSystem.service.notification.NotificationData
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
-import com.intellij.openapi.externalSystem.service.project.manage.*;
+import com.intellij.openapi.externalSystem.service.project.manage.ContentRootDataService;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl;
 import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog;
 import com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelectorDialog;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
@@ -98,12 +130,20 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager.createNotification;
-import static com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType.*;
+import static com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType.IMPORT;
+import static com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType.PREVIEW;
+import static com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType.RE_IMPORT;
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public final class ExternalSystemUtil {

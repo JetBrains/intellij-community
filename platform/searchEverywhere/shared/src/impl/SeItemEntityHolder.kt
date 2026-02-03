@@ -2,7 +2,11 @@
 package com.intellij.platform.searchEverywhere.impl
 
 import com.intellij.platform.searchEverywhere.SeItem
-import com.jetbrains.rhizomedb.*
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.EntityType
+import com.jetbrains.rhizomedb.RefFlags
+import com.jetbrains.rhizomedb.get
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 

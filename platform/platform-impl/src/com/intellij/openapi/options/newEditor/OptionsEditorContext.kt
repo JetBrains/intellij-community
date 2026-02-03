@@ -12,7 +12,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.all
 import org.jetbrains.concurrency.rejectedPromise
 import org.jetbrains.concurrency.resolvedPromise
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.CopyOnWriteArraySet
 
 internal class OptionsEditorContext {

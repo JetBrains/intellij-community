@@ -11,8 +11,8 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
+import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 

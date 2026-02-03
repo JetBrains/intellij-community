@@ -6,7 +6,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.Registry.Companion.get
 import com.intellij.openapi.util.registry.Registry.Companion.stringValue
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.MutableProperty
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import org.jetbrains.annotations.ApiStatus

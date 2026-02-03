@@ -6,7 +6,10 @@ import com.intellij.platform.testFramework.junit5.eel.params.impl.junit5.EelCart
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.params.provider.ArgumentsSource
 import org.junitpioneer.jupiter.cartesian.CartesianArgumentsSource
-import kotlin.annotation.AnnotationTarget.*
+import kotlin.annotation.AnnotationTarget.ANNOTATION_CLASS
+import kotlin.annotation.AnnotationTarget.CONSTRUCTOR
+import kotlin.annotation.AnnotationTarget.FUNCTION
+import kotlin.annotation.AnnotationTarget.VALUE_PARAMETER
 
 /**
  * Mark your parametrized test that accepts [EelHolder]

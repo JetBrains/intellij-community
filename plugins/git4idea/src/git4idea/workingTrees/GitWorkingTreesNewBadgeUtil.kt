@@ -9,6 +9,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil.isWorkingTreesFeatureEnabled
+import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil.NUMBER_OF_PROJECTS_WITH_GIT_KEY
+import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil.STOP_SHOWING_NEW_BADGE_KEY
 
 internal object GitWorkingTreesNewBadgeUtil {
   /**

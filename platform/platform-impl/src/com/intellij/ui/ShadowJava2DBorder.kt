@@ -6,7 +6,12 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ui.util.height
 import com.intellij.ui.util.width
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Insets
+import java.awt.Rectangle
 import javax.swing.border.Border
 
 @ApiStatus.Internal

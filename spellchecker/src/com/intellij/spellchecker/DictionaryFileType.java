@@ -7,7 +7,7 @@ import icons.SpellcheckerIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class DictionaryFileType implements FileType {
   public static final DictionaryFileType INSTANCE = new DictionaryFileType();

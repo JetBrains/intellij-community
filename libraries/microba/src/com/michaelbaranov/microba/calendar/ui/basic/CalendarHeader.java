@@ -5,8 +5,14 @@ import com.michaelbaranov.microba.calendar.CalendarColors;
 import com.michaelbaranov.microba.calendar.CalendarPane;
 import com.michaelbaranov.microba.calendar.HolidayPolicy;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.GridLayout;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;

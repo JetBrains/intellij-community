@@ -2,7 +2,13 @@
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.testEntities.entities.ChainedEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.CompositeChildAbstractEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
+import com.intellij.platform.workspace.storage.testEntities.entities.TreeEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyChainedEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyCompositeChildAbstractEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyTreeEntity
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows

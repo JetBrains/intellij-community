@@ -11,7 +11,7 @@ import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointCustomGroup;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 class BreakpointsTreeCellRenderer  {
   private static final Logger LOG = Logger.getInstance(BreakpointsTreeCellRenderer.class);

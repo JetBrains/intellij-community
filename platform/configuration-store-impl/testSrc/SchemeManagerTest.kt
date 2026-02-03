@@ -1,7 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
-import com.intellij.configurationStore.schemeManager.*
+import com.intellij.configurationStore.schemeManager.RemoveAllSchemes
+import com.intellij.configurationStore.schemeManager.RemoveScheme
+import com.intellij.configurationStore.schemeManager.SchemeChangeApplicator
+import com.intellij.configurationStore.schemeManager.SchemeChangeEvent
+import com.intellij.configurationStore.schemeManager.SchemeFileTracker
+import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
+import com.intellij.configurationStore.schemeManager.UpdateScheme
+import com.intellij.configurationStore.schemeManager.sortSchemeChangeEvents
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.diagnostic.DefaultLogger
@@ -13,9 +20,15 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.testFramework.*
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.LightVirtualFile
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.rethrowLoggedErrorsIn
 import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
@@ -28,7 +41,12 @@ import org.junit.Test
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.inputStream
+import kotlin.io.path.readText
+import kotlin.io.path.writeBytes
+import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.minutes
 
 /**

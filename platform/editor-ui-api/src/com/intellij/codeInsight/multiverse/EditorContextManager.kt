@@ -11,7 +11,7 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 
 interface EditorContextManager {
   companion object {

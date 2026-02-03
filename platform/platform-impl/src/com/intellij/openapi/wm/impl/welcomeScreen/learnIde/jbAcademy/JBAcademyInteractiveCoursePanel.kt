@@ -31,7 +31,12 @@ import java.awt.Dimension
 import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JProgressBar
+import javax.swing.SwingUtilities
 
 private const val BUTTON_ID = "Button"
 private const val PROGRESS_ID = "Progress"

@@ -6,7 +6,8 @@ import com.intellij.driver.model.RdTarget;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Duration;

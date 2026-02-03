@@ -2,6 +2,8 @@
 // This is a slightly modified version of test 'tests.detailed.MainFrame' from repository https://github.com/JetBrains/jcef.git
 package com.intellij.internal.jcef.test.detailed.handler;
 
+import com.intellij.internal.jcef.test.detailed.dialog.CertErrorDialog;
+import com.intellij.internal.jcef.test.detailed.dialog.PasswordDialog;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.callback.CefAuthCallback;
@@ -15,18 +17,14 @@ import org.cef.misc.BoolRef;
 import org.cef.network.CefPostData;
 import org.cef.network.CefPostDataElement;
 import org.cef.network.CefRequest;
-
-import java.awt.Frame;
-import java.util.HashMap;
-import java.util.Vector;
+import org.cef.security.CefSSLInfo;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-
-import org.cef.security.CefSSLInfo;
-import com.intellij.internal.jcef.test.detailed.dialog.CertErrorDialog;
-import com.intellij.internal.jcef.test.detailed.dialog.PasswordDialog;
-import org.jetbrains.annotations.ApiStatus;
+import java.awt.Frame;
+import java.util.HashMap;
+import java.util.Vector;
 
 @SuppressWarnings("ALL")
 @ApiStatus.Internal

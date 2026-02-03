@@ -3,6 +3,9 @@ package com.intellij.execution.multilaunch.servicesView
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.multilaunch.execution.ExecutableExecutionModel
 import com.intellij.execution.multilaunch.execution.MultiLaunchExecutionModel
+import com.intellij.execution.multilaunch.servicesView.actions.configuration.DebugMultiLaunchAction
+import com.intellij.execution.multilaunch.servicesView.actions.configuration.RunMultiLaunchAction
+import com.intellij.execution.multilaunch.servicesView.actions.configuration.StopMultiLaunchAction
 import com.intellij.execution.services.ServiceViewDescriptor
 import com.intellij.execution.services.ServiceViewProvidingContributor
 import com.intellij.execution.services.SimpleServiceViewDescriptor
@@ -10,9 +13,6 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBPanelWithEmptyText
-import com.intellij.execution.multilaunch.servicesView.actions.configuration.DebugMultiLaunchAction
-import com.intellij.execution.multilaunch.servicesView.actions.configuration.RunMultiLaunchAction
-import com.intellij.execution.multilaunch.servicesView.actions.configuration.StopMultiLaunchAction
 import javax.swing.JComponent
 
 class ConfigurationServiceContributor internal constructor(

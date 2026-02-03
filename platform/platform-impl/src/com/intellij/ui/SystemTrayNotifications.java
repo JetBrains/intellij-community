@@ -11,8 +11,12 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.AWTException;
+import java.awt.Image;
+import java.awt.SystemTray;
+import java.awt.TrayIcon;
+import java.awt.Window;
 
 final class SystemTrayNotifications implements SystemNotificationsImpl.Notifier {
   private static SystemTrayNotifications ourWin10Instance;

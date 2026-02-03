@@ -5,7 +5,8 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.util.SmartList;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-import javax.swing.*;
+import javax.swing.AbstractListModel;
+import javax.swing.ComboBoxModel;
 import java.util.List;
 
 final class MacroComboBoxModel extends AbstractListModel<String> implements ComboBoxModel<String> {

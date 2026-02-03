@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collections;
 import java.util.List;
 

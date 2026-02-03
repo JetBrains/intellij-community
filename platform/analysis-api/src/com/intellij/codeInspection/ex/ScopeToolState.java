@@ -19,9 +19,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.*;
+import javax.swing.JComponent;
+import java.awt.Component;
+import java.awt.Container;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 public final class ScopeToolState {
   private static final Logger LOG = Logger.getInstance(ScopeToolState.class);

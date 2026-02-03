@@ -8,7 +8,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 @ApiStatus.Internal
 public final class CustomizationConfigurable implements SearchableConfigurable, Configurable.NoScroll {

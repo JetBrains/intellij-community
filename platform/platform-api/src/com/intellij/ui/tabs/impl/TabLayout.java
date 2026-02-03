@@ -9,8 +9,10 @@ import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.SwingConstants;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 public abstract class TabLayout {
 

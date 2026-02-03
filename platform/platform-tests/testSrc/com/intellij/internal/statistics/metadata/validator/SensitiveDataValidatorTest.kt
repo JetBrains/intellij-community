@@ -23,7 +23,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import org.junit.Assert
 import org.junit.Test
-import java.util.*
+import java.util.Collections
 
 @Suppress("SameParameterValue")
 class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {

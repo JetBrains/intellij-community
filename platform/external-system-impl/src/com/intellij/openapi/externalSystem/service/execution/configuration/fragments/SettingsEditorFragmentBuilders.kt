@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution.configuration.fragments
 
-import com.intellij.execution.ui.*
+import com.intellij.execution.ui.CommonParameterFragments
+import com.intellij.execution.ui.SettingsEditorFragment
+import com.intellij.execution.ui.SettingsEditorFragmentType
+import com.intellij.execution.ui.TagButton
+import com.intellij.execution.ui.VariantTagFragment
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.service.ui.util.LabeledSettingsFragmentInfo
 import com.intellij.openapi.externalSystem.service.ui.util.SettingsFragmentInfo
@@ -14,7 +18,7 @@ import com.intellij.ui.TextAccessor
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.TextComponentEmptyText
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.EnumSet
 import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.text.JTextComponent

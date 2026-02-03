@@ -2,7 +2,15 @@
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.openapi.application.EDT
-import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionAdditionalTabComponentManagerId
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionDataId
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionTabApi
+import com.intellij.platform.debugger.impl.rpc.XDebugTabLayouterEvent
+import com.intellij.platform.debugger.impl.rpc.XDebugTabLayouterId
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionAdditionalTabEvent
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabDto
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabInfoCallback
 import com.intellij.xdebugger.impl.findValue
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import fleet.rpc.core.toRpc

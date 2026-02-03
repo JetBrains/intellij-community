@@ -4,7 +4,9 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Frame;
+import java.awt.KeyboardFocusManager;
+import java.awt.Window;
 
 final class MinimizeCurrentWindowAction extends MacWindowActionBase {
   @Override

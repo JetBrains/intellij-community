@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.jvm.k1.scratch.compile
 
+import com.intellij.execution.JavaParametersBuilder
 import com.intellij.execution.configurations.JavaCommandLineState
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.target.TargetEnvironmentRequest
@@ -19,11 +20,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
 import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnostic
+import org.jetbrains.kotlin.cli.extensionsStorage
+import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.idea.base.codeInsight.compiler.compileToDirectory
@@ -35,11 +40,6 @@ import org.jetbrains.kotlin.idea.jvm.shared.scratch.LOG
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchExpression
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.printDebugMessage
-import com.intellij.execution.JavaParametersBuilder
-import org.jetbrains.kotlin.K1Deprecation
-import org.jetbrains.kotlin.cli.extensionsStorage
-import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
-import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider

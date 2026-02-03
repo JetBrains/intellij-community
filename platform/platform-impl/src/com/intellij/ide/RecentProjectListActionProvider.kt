@@ -4,7 +4,11 @@ package com.intellij.ide
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.vcs.RecentProjectsBranchesProvider
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName

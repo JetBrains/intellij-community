@@ -29,14 +29,19 @@ import com.intellij.platform.externalSystem.testFramework.TestExternalSystemExec
 import com.intellij.platform.externalSystem.testFramework.TestExternalSystemManager;
 import com.intellij.task.ProjectTaskManager;
 import com.intellij.task.ProjectTaskRunner;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.ExtensionTestUtil;
+import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.Collections;
 
-import static com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator.Phase.*;
+import static com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator.Phase.AFTER_COMPILE;
+import static com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator.Phase.AFTER_REBUILD;
+import static com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator.Phase.BEFORE_COMPILE;
+import static com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator.Phase.BEFORE_REBUILD;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemConstants.USE_IN_PROCESS_COMMUNICATION_REGISTRY_KEY_SUFFIX;
 import static com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID;
 

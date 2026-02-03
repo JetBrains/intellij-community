@@ -4,8 +4,8 @@ package com.intellij.usages.impl.rules
 import com.intellij.openapi.project.Project
 import com.intellij.usages.Usage
 import com.intellij.usages.UsageTarget
-import com.intellij.usages.rules.UsageFilteringRule
 import com.intellij.usages.rules.GeneratedSourceUsageFilter
+import com.intellij.usages.rules.UsageFilteringRule
 
 internal class UsageInGeneratedCodeFilteringRule(private val project: Project) : UsageFilteringRule {
 

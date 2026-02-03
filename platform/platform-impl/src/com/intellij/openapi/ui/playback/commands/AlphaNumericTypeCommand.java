@@ -11,7 +11,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
+import java.awt.Robot;
 import java.awt.event.KeyEvent;
 
 public class AlphaNumericTypeCommand extends TypeCommand {

@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.wm.ex;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.FocusTraversalPolicy;
 
 public class AbstractDelegatingToRootTraversalPolicy extends FocusTraversalPolicy {
 

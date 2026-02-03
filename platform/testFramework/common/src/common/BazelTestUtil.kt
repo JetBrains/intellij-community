@@ -5,7 +5,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.bazelEnvironment.BazelLabel
 import org.jetbrains.intellij.bazelEnvironment.BazelRunfiles
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.absolute
+import kotlin.io.path.isDirectory
 
 @ApiStatus.Experimental
 object BazelTestUtil {

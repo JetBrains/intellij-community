@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.CancellablePromise;
 
-import java.awt.*;
+import java.awt.Rectangle;
 import java.util.concurrent.atomic.AtomicReference;
 
 final class CancelProgressOnScrolling implements VisibleAreaListener {

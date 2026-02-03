@@ -1,10 +1,10 @@
 package com.intellij.polySymbols.search
 
 import com.intellij.find.usages.api.SearchTarget
+import com.intellij.find.usages.api.UsageSearcher
 import com.intellij.model.Pointer
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.search.impl.PolySymbolSearchTargetImpl
-import com.intellij.find.usages.api.UsageSearcher
 
 /**
  * A specialized [SearchTarget], which provides the [PolySymbol],

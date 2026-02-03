@@ -1,7 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.ServiceDescriptor
+import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.StateStorageOperation
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.extensions.PluginId
 import kotlinx.coroutines.CoroutineScope

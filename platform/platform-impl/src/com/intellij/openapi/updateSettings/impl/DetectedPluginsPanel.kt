@@ -3,7 +3,11 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.plugins.PluginHeaderPanel
 import com.intellij.ide.plugins.PluginManagerCore.getPlugin
-import com.intellij.ide.plugins.newui.*
+import com.intellij.ide.plugins.newui.MyPluginModel
+import com.intellij.ide.plugins.newui.PluginDetailsPageComponent
+import com.intellij.ide.plugins.newui.PluginModelFacade
+import com.intellij.ide.plugins.newui.PluginUiModelAdapter
+import com.intellij.ide.plugins.newui.PluginUpdatesService
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -15,7 +19,12 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
-import com.intellij.ui.*
+import com.intellij.ui.ColoredTableCellRenderer
+import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.OrderPanel
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.TableUtil
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil

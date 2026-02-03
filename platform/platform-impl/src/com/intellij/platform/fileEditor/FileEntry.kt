@@ -4,7 +4,15 @@
 package com.intellij.platform.fileEditor
 
 import com.intellij.ide.util.treeView.findCachedImageIcon
-import com.intellij.openapi.fileEditor.impl.*
+import com.intellij.openapi.fileEditor.impl.EDITOR_TYPE_ID_ATTRIBUTE
+import com.intellij.openapi.fileEditor.impl.EditorComposite
+import com.intellij.openapi.fileEditor.impl.EditorWindow
+import com.intellij.openapi.fileEditor.impl.HistoryEntry
+import com.intellij.openapi.fileEditor.impl.PREVIEW_ATTRIBUTE
+import com.intellij.openapi.fileEditor.impl.PROVIDER_ELEMENT
+import com.intellij.openapi.fileEditor.impl.SELECTED_ATTRIBUTE_VALUE
+import com.intellij.openapi.fileEditor.impl.STATE_ELEMENT
+import com.intellij.openapi.fileEditor.impl.composite
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.FileIdAdapter
 import com.intellij.platform.ide.IdeFingerprint

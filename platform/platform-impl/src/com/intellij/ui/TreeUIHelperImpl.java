@@ -6,7 +6,8 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.containers.Convertor;
 
-import javax.swing.*;
+import javax.swing.JList;
+import javax.swing.JTree;
 import javax.swing.tree.TreePath;
 
 

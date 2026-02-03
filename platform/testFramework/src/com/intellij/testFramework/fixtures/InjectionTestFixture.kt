@@ -17,8 +17,12 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
-import org.junit.Assert.*
-import java.util.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
+import java.util.LinkedList
 
 class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
 

@@ -16,7 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
 
 final class ServiceViewDeleteProvider implements ServiceViewDefaultDeleteProvider {

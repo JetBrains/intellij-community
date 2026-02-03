@@ -3,7 +3,12 @@ package com.intellij.lang.fakeLang
 
 import com.intellij.extapi.psi.PsiFileBase
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.lang.*
+import com.intellij.lang.ASTNode
+import com.intellij.lang.Language
+import com.intellij.lang.LanguageParserDefinitions
+import com.intellij.lang.ParserDefinition
+import com.intellij.lang.PsiBuilder
+import com.intellij.lang.PsiParser
 import com.intellij.lexer.EmptyLexer
 import com.intellij.lexer.Lexer
 import com.intellij.model.psi.PsiExternalReferenceHost

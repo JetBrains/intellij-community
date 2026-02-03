@@ -6,7 +6,9 @@ import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.Chunk
 import com.jetbrains.plugin.blockmap.core.ChunkMerger
 import org.jetbrains.annotations.ApiStatus
-import java.io.*
+import java.io.File
+import java.io.OutputStream
+import java.io.RandomAccessFile
 
 
 @ApiStatus.Internal

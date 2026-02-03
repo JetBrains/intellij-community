@@ -2,15 +2,25 @@
 package com.intellij.microservices.url.inlay
 
 import com.intellij.codeInsight.hint.HintManager
-import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.ChangeListener
+import com.intellij.codeInsight.hints.FactoryInlayHintsCollector
+import com.intellij.codeInsight.hints.ImmediateConfigurable
+import com.intellij.codeInsight.hints.InlayGroup
+import com.intellij.codeInsight.hints.InlayHintsCollector
+import com.intellij.codeInsight.hints.InlayHintsProvider
+import com.intellij.codeInsight.hints.InlayHintsSettings
+import com.intellij.codeInsight.hints.InlayHintsSink
+import com.intellij.codeInsight.hints.InlayPresentationFactory
+import com.intellij.codeInsight.hints.NoSettings
+import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.codeInsight.hints.presentation.ScaleAwarePresentationFactory
 import com.intellij.codeInsight.hints.settings.showInlaySettings
 import com.intellij.lang.Language
 import com.intellij.microservices.MicroservicesBundle
-import com.intellij.microservices.utils.MicroservicesUsageCollector.URL_INLAY_ACTIONS_EVENT
 import com.intellij.microservices.url.references.forbidExpensiveUrlContext
+import com.intellij.microservices.utils.MicroservicesUsageCollector.URL_INLAY_ACTIONS_EVENT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.DumbService

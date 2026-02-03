@@ -8,7 +8,7 @@ import com.intellij.ui.RestoreScaleExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * Tests {@link com.intellij.ui.OffsetIcon} painting.

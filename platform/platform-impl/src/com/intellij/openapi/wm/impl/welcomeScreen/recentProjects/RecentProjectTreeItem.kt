@@ -3,7 +3,13 @@ package com.intellij.openapi.wm.impl.welcomeScreen.recentProjects
 
 import com.intellij.CommonBundle
 import com.intellij.codeWithMe.ClientId
-import com.intellij.ide.*
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.ProjectGroup
+import com.intellij.ide.RecentProject
+import com.intellij.ide.RecentProjectListActionProvider
+import com.intellij.ide.RecentProjectsManager
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.actionSystem.ActionPlaces

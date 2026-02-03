@@ -3,7 +3,11 @@ package com.intellij.internal.ui.sandbox.tests.dsl
 
 import com.intellij.internal.ui.sandbox.UISandboxPanel
 import com.intellij.openapi.Disposable
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.plus
 import javax.swing.JComponent
 
 internal class CommentRightTestPanel : UISandboxPanel {

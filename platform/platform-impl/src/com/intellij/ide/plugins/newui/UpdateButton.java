@@ -4,7 +4,7 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ui.JBColor;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * @author Alexander Lobas

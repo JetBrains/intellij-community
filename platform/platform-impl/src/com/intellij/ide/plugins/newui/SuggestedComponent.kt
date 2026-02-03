@@ -2,7 +2,9 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.HtmlChunk.*
+import com.intellij.openapi.util.text.HtmlChunk.div
+import com.intellij.openapi.util.text.HtmlChunk.html
+import com.intellij.openapi.util.text.HtmlChunk.tag
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.UIUtil

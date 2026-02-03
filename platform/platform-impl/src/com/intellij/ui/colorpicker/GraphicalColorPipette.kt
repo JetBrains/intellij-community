@@ -25,14 +25,33 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.AlphaComposite
+import java.awt.Color
+import java.awt.Dialog
+import java.awt.Dimension
+import java.awt.Frame
+import java.awt.Graphics2D
+import java.awt.Image
+import java.awt.MouseInfo
+import java.awt.Point
+import java.awt.Rectangle
+import java.awt.RenderingHints
+import java.awt.Robot
+import java.awt.Toolkit
+import java.awt.Transparency
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.image.BufferedImage
 import java.awt.image.ImageObserver
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JDialog
+import javax.swing.JFrame
+import javax.swing.SwingUtilities
+import javax.swing.Timer
+import javax.swing.WindowConstants
 
 /**
  * The size of captured screen area. It is same as the number of pixels are caught.<br>

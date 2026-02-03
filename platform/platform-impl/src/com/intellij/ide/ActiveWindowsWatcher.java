@@ -10,7 +10,9 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Dialog;
+import java.awt.Frame;
+import java.awt.Window;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 

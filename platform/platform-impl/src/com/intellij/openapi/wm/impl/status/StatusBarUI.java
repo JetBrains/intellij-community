@@ -7,9 +7,13 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.plaf.ComponentUI;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 
 public class StatusBarUI extends ComponentUI {
   public static final JBValue BORDER_WIDTH = new JBValue.Float(1.0f);

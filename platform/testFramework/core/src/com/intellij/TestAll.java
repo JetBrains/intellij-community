@@ -8,8 +8,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.platform.testFramework.teamCity.TeamCityPrinterKt;
-import com.intellij.teamcity.TeamCityClient;
 import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestFrameworkUtil;
@@ -22,7 +20,14 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.lang.UrlClassLoader;
-import junit.framework.*;
+import junit.framework.JUnit4TestAdapter;
+import junit.framework.JUnit4TestAdapterCache;
+import junit.framework.Test;
+import junit.framework.TestCase;
+import junit.framework.TestFailure;
+import junit.framework.TestListener;
+import junit.framework.TestResult;
+import junit.framework.TestSuite;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -43,10 +48,18 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static com.intellij.TestCaseLoader.*;
+import static com.intellij.TestCaseLoader.Builder;
+import static com.intellij.TestCaseLoader.getClassLoader;
+import static com.intellij.TestCaseLoader.isIncludingPerformanceTestsRun;
+import static com.intellij.TestCaseLoader.isPerformanceTest;
+import static com.intellij.TestCaseLoader.isPerformanceTestsRun;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class TestAll implements Test {

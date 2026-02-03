@@ -22,7 +22,11 @@ import java.awt.Font
 import java.awt.Point
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JTextArea
+import javax.swing.Timer
 
 /**
  * Popup that shows a two-line glyph comparison between [firstFont] and [secondFont].

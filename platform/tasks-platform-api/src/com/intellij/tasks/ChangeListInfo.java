@@ -5,8 +5,9 @@ package com.intellij.tasks;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 /**
  * @author Dmitry Avdeev

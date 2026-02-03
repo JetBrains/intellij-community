@@ -23,7 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Graphics;
 
 /**
  * Specifies custom representation for an editor highlighter.

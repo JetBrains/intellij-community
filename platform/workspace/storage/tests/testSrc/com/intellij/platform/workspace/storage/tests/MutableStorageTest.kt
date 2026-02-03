@@ -2,7 +2,20 @@
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildMultipleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.LeftEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
+import com.intellij.platform.workspace.storage.testEntities.entities.NamedChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.NamedEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentMultipleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentMultipleEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity2
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity2Builder
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyLeftEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyNamedEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyParentMultipleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifySampleEntity2
 import com.intellij.platform.workspace.storage.toBuilder
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows

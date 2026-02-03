@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class ToggleBooleanProperty extends ToggleAction {
   private final AbstractProperty.AbstractPropertyContainer myProperties;

@@ -3,8 +3,17 @@ package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl
-import com.intellij.openapi.editor.impl.zombie.*
-import com.intellij.openapi.editor.markup.*
+import com.intellij.openapi.editor.impl.zombie.GravingNecromancer
+import com.intellij.openapi.editor.impl.zombie.Necromancer
+import com.intellij.openapi.editor.impl.zombie.NecromancerAwaker
+import com.intellij.openapi.editor.impl.zombie.Recipe
+import com.intellij.openapi.editor.impl.zombie.SpawnRecipe
+import com.intellij.openapi.editor.impl.zombie.TurningRecipe
+import com.intellij.openapi.editor.markup.AnalyzerStatus
+import com.intellij.openapi.editor.markup.AnalyzingType
+import com.intellij.openapi.editor.markup.InspectionsLevel
+import com.intellij.openapi.editor.markup.LanguageHighlightLevel
+import com.intellij.openapi.editor.markup.UIController
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ui.GridBag

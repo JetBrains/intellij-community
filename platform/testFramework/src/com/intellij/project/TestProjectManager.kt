@@ -36,7 +36,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
-import java.util.*
+import java.util.WeakHashMap
 import java.util.concurrent.TimeUnit
 
 private const val MAX_LEAKY_PROJECTS = 5

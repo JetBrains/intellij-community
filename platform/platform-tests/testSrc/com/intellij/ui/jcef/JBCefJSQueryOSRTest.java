@@ -13,7 +13,8 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CountDownLatch;
 

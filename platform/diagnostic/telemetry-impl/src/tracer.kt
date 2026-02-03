@@ -6,7 +6,13 @@ package com.intellij.platform.diagnostic.telemetry.impl
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.StartUpMeasurer
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CopyableThreadContextElement
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.job
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.VarHandle

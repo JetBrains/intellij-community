@@ -17,7 +17,7 @@ package com.intellij.openapi.wm.impl;
 
 import org.jetbrains.annotations.ApiStatus;
 
-import java.awt.*;
+import java.awt.Component;
 import java.lang.ref.WeakReference;
 
 /**

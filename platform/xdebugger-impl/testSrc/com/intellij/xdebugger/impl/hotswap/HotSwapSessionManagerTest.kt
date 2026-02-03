@@ -6,13 +6,24 @@ package com.intellij.xdebugger.impl.hotswap
 import com.intellij.mock.MockVirtualFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.HeavyPlatformTestCase
-import com.intellij.xdebugger.hotswap.*
 import com.intellij.platform.debugger.impl.rpc.HotSwapVisibleStatus
-import kotlinx.coroutines.*
+import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.xdebugger.hotswap.HotSwapProvider
+import com.intellij.xdebugger.hotswap.HotSwapSession
+import com.intellij.xdebugger.hotswap.HotSwapSessionManager
+import com.intellij.xdebugger.hotswap.SourceFileChangesCollector
+import com.intellij.xdebugger.hotswap.SourceFileChangesListener
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertTrue
 
 class HotSwapSessionManagerTest : HeavyPlatformTestCase() {

@@ -1,7 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
-import com.intellij.java.workspace.entities.*
+import com.intellij.java.workspace.entities.ArchivePackagingElementEntity
+import com.intellij.java.workspace.entities.ArtifactEntity
+import com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity
+import com.intellij.java.workspace.entities.CustomPackagingElementEntity
+import com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity
+import com.intellij.java.workspace.entities.DirectoryPackagingElementEntity
+import com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity
+import com.intellij.java.workspace.entities.FileCopyPackagingElementEntity
+import com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity
+import com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity
+import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runWriteActionAndWait
@@ -10,7 +20,19 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleSourceOrderEntry
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.DependencyScope
+import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
+import com.intellij.platform.workspace.jps.entities.LibraryRoot
+import com.intellij.platform.workspace.jps.entities.ModuleDependency
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
+import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
+import com.intellij.platform.workspace.jps.entities.customImlData
+import com.intellij.platform.workspace.jps.entities.customSourceRootProperties
+import com.intellij.platform.workspace.jps.entities.getModuleLibraries
+import com.intellij.platform.workspace.jps.entities.projectLibraries
+import com.intellij.platform.workspace.jps.entities.sourceRoots
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl

@@ -10,9 +10,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.RepaintManager;
 import java.applet.Applet;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Image;
+import java.awt.Rectangle;
+import java.awt.Window;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.util.List;

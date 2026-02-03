@@ -15,7 +15,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
 
 public abstract class UnixAttachOSHandler extends AttachOSHandler {
   private static final String PTRACE_SCOPE_PATH = "/proc/sys/kernel/yama/ptrace_scope";

@@ -3,7 +3,13 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.plugins.marketplace.InitSessionResult
-import com.intellij.ide.plugins.newui.*
+import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
+import com.intellij.ide.plugins.newui.FrontendRpcCoroutineContext
+import com.intellij.ide.plugins.newui.ListPluginComponent
+import com.intellij.ide.plugins.newui.PluginDetailsPageComponent
+import com.intellij.ide.plugins.newui.PluginUiModel
+import com.intellij.ide.plugins.newui.PluginsGroup
+import com.intellij.ide.plugins.newui.UiPluginManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -13,10 +19,15 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import java.util.*
+import java.util.UUID
 import java.util.function.Consumer
 
 @ApiStatus.Internal

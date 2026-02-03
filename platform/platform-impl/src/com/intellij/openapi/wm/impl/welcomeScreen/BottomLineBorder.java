@@ -6,7 +6,8 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Graphics;
 
 public final class BottomLineBorder extends EmptyBorder {
   public BottomLineBorder() {

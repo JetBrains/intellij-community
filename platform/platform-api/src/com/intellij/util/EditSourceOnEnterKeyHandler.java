@@ -15,7 +15,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTree;
+import javax.swing.KeyStroke;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.Collections;

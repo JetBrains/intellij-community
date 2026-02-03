@@ -18,8 +18,8 @@ import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 public class CodeFragmentInputComponent extends EvaluationInputComponent {
   private final XDebuggerExpressionEditor myMultilineEditor;

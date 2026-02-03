@@ -4,9 +4,15 @@ package com.intellij.psi.codeStyle.arrangement
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings
-import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*
-import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*
-import java.util.*
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.FIELD
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.INTERFACE
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.METHOD
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.GETTER
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.OVERRIDDEN
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PROTECTED
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.SETTER
+import java.util.Collections
 
 class ArrangementSettingsRulesPriorityTest : AbstractRearrangerTest() {
 

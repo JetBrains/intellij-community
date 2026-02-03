@@ -9,7 +9,6 @@ import com.intellij.history.core.changes.Change;
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.changes.ChangeVisitor;
 import com.intellij.history.core.changes.ContentChange;
-import com.intellij.history.integration.revertion.UndoChangeRevertingVisitor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Pair;

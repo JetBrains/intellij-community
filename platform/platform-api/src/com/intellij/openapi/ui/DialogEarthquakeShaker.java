@@ -5,7 +5,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.Animator;
 
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Window;
 
 /**
  * @author Konstantin Bulenkov

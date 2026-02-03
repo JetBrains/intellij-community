@@ -9,7 +9,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 @ApiStatus.Internal
 public final class FixedHotfixGroupElement extends GroupingElement {

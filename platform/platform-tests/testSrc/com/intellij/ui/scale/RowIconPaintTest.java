@@ -5,7 +5,7 @@ import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.RowIcon;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
 

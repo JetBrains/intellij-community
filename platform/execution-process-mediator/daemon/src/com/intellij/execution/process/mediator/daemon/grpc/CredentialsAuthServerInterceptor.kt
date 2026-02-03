@@ -2,7 +2,11 @@
 package com.intellij.execution.process.mediator.daemon.grpc
 
 import com.intellij.execution.process.mediator.common.DaemonClientCredentials
-import io.grpc.*
+import io.grpc.Metadata
+import io.grpc.ServerCall
+import io.grpc.ServerCallHandler
+import io.grpc.ServerInterceptor
+import io.grpc.Status
 
 internal class CredentialsAuthServerInterceptor(private val credentials: DaemonClientCredentials) : ServerInterceptor {
   init {

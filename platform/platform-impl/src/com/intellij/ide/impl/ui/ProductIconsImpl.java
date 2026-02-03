@@ -9,7 +9,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 import static com.intellij.openapi.util.NotNullLazyValue.lazy;
 

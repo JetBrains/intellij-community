@@ -13,7 +13,9 @@ import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.DefaultListModel;
+import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
 import java.util.ArrayList;
 import java.util.List;
 

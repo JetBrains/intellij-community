@@ -1,7 +1,8 @@
 package com.michaelbaranov.microba.calendar.ui.basic;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JList;
+import java.awt.Component;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;

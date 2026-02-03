@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import java.io.OutputStream
-import java.util.*
+import java.util.Objects
 import java.util.concurrent.atomic.AtomicLong
 
 @Suppress("EXPERIMENTAL_API_USAGE")

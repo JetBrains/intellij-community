@@ -3,8 +3,9 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.diagnostic.Logger;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLayeredPane;
+import java.awt.Component;
+import java.awt.Dimension;
 
 public class JBLayeredPane extends JLayeredPane {
   private boolean myFullOverlayLayout;

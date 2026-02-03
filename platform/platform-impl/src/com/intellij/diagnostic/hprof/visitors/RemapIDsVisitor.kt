@@ -15,7 +15,12 @@
  */
 package com.intellij.diagnostic.hprof.visitors
 
-import com.intellij.diagnostic.hprof.parser.*
+import com.intellij.diagnostic.hprof.parser.ConstantPoolEntry
+import com.intellij.diagnostic.hprof.parser.HProfVisitor
+import com.intellij.diagnostic.hprof.parser.HeapDumpRecordType
+import com.intellij.diagnostic.hprof.parser.InstanceFieldEntry
+import com.intellij.diagnostic.hprof.parser.StaticFieldEntry
+import com.intellij.diagnostic.hprof.parser.Type
 import com.intellij.diagnostic.hprof.util.FileBackedHashMap
 import com.intellij.diagnostic.hprof.util.IDMapper
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap

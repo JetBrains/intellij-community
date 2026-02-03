@@ -14,8 +14,8 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.SwingConstants;
+import java.awt.Component;
 
 import static com.intellij.platform.execution.serviceView.ServiceViewActionProvider.getSelectedItems;
 import static com.intellij.platform.execution.serviceView.ServiceViewActionProvider.getSelectedView;

@@ -10,7 +10,11 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.testFramework.LightPlatformTestCase;
 
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class ActionsWithoutUpdateMethodTest extends LightPlatformTestCase {
   private static final List<String> PLATFORM_WIDE_ACTIONS = Arrays.asList(

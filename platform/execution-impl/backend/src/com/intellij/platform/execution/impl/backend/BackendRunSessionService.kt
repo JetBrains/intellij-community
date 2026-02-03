@@ -3,9 +3,9 @@ package com.intellij.platform.execution.impl.backend
 
 import com.intellij.execution.RunSessionService
 import com.intellij.execution.rpc.RunSession
-import com.intellij.execution.rpc.RunSessionId
 import com.intellij.execution.rpc.RunSessionEvent
 import com.intellij.execution.rpc.RunSessionEvent.SessionStarted
+import com.intellij.execution.rpc.RunSessionId
 import com.intellij.execution.rpc.toDto
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor

@@ -13,8 +13,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.SwingConstants;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.util.List;
 import java.util.concurrent.Future;
 

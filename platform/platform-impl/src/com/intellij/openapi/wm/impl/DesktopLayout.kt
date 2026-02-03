@@ -7,7 +7,11 @@ import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.serialize
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.RegisterToolWindowTaskData
+import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+import com.intellij.openapi.wm.WindowInfo
+import com.intellij.openapi.wm.safeToolWindowPaneId
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls

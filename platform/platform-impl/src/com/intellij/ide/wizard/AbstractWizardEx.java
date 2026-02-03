@@ -13,7 +13,8 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
 import java.util.List;
 
 public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {

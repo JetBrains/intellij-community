@@ -11,7 +11,11 @@ import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.containers.CollectionFactory
 import io.opentelemetry.api.metrics.Meter
-import kotlinx.collections.immutable.*
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.persistentHashMapOf
+import kotlinx.collections.immutable.persistentHashSetOf
+import kotlinx.collections.immutable.persistentSetOf
 
 internal typealias ChangeLog = MutableMap<EntityId, ChangeEntry>
 

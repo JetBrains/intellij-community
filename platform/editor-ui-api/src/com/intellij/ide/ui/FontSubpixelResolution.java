@@ -4,7 +4,7 @@ package com.intellij.ide.ui;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.awt.*;
+import java.awt.Dimension;
 import java.lang.reflect.Field;
 
 @ApiStatus.Internal

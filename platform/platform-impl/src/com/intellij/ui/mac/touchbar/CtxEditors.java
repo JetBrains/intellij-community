@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.WeakHashMap;

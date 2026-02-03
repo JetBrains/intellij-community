@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget.ENUM_ENTRY
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget.FILE
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget.FUNCTION
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget.INTERFACE
-import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget.LOCAL_VARIABLE
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget.MEMBER_FUNCTION
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget.MEMBER_PROPERTY
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget.OBJECT

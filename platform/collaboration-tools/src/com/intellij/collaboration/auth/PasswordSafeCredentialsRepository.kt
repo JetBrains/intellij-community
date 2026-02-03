@@ -1,7 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.auth
 
-import com.intellij.credentialStore.*
+import com.intellij.credentialStore.CredentialAttributes
+import com.intellij.credentialStore.Credentials
+import com.intellij.credentialStore.PasswordSafeSettings
+import com.intellij.credentialStore.PasswordSafeSettingsListener
+import com.intellij.credentialStore.ProviderType
+import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.application.ApplicationManager
 import kotlinx.coroutines.Dispatchers

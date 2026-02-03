@@ -3,7 +3,22 @@ package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.assertConsistency
-import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.testEntities.entities.ComposedIdSoftRefEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ComposedLinkEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.Container
+import com.intellij.platform.workspace.storage.testEntities.entities.DeepContainer
+import com.intellij.platform.workspace.storage.testEntities.entities.DeepSealedOne
+import com.intellij.platform.workspace.storage.testEntities.entities.EntityWithSoftLinks
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
+import com.intellij.platform.workspace.storage.testEntities.entities.NameId
+import com.intellij.platform.workspace.storage.testEntities.entities.NamedEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.OneEntityWithSymbolicId
+import com.intellij.platform.workspace.storage.testEntities.entities.OneEntityWithSymbolicIdBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.SealedContainer
+import com.intellij.platform.workspace.storage.testEntities.entities.TooDeepContainer
+import com.intellij.platform.workspace.storage.testEntities.entities.WithListSoftLinksEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.WithSoftLinkEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyNamedEntity
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals

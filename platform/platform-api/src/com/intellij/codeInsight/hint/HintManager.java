@@ -3,13 +3,13 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.openapi.util.NlsContexts.HintText;
+import com.intellij.ui.awt.RelativePoint;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.event.HyperlinkListener;
 
 public abstract class HintManager {

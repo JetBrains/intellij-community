@@ -7,7 +7,11 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 final class NoUpdatesDialog extends AbstractUpdateDialog {
   NoUpdatesDialog(boolean addConfigureUpdatesLink) {

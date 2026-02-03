@@ -3,8 +3,8 @@ package com.intellij.platform.ijent.tcp
 
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentSession
-import com.intellij.platform.ijent.spi.IjentDeployingStrategy
 import com.intellij.platform.ijent.spi.IjentConnectionContext
+import com.intellij.platform.ijent.spi.IjentDeployingStrategy
 import com.intellij.platform.ijent.spi.createIjentSession
 
 /**

@@ -22,7 +22,11 @@ import javax.swing.event.HyperlinkEvent
 import javax.swing.text.DefaultCaret
 import javax.swing.text.Element
 import javax.swing.text.View
-import javax.swing.text.html.*
+import javax.swing.text.html.HTML
+import javax.swing.text.html.HTMLDocument
+import javax.swing.text.html.ImageView
+import javax.swing.text.html.InlineView
+import javax.swing.text.html.StyleSheet
 
 /**
  * Read-only editor pane intended to display simple HTML snippet

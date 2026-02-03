@@ -11,13 +11,16 @@ import com.intellij.python.test.env.uv.getOrDownloadUvExecutable
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.jetbrains.python.getOrThrow
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.baseDir
+import com.jetbrains.python.sdk.persist
+import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.runExecutableWithProgress
+import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
 import com.jetbrains.python.tools.createUvPipVenvSdk
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.nio.file.Path
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.minutes
 

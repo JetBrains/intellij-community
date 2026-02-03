@@ -12,7 +12,8 @@ import com.intellij.openapi.editor.impl.stickyLines.VisualStickyLines;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -41,7 +41,9 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 
-import static com.intellij.codeInsight.completion.CompletionPhase.*;
+import static com.intellij.codeInsight.completion.CompletionPhase.CommittingDocuments;
+import static com.intellij.codeInsight.completion.CompletionPhase.EmptyAutoPopup;
+import static com.intellij.codeInsight.completion.CompletionPhase.NoCompletion;
 
 @ApiStatus.Internal
 class AutoPopupControllerImpl extends AutoPopupController {

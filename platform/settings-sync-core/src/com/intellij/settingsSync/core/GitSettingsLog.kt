@@ -22,8 +22,15 @@ import org.eclipse.jgit.api.MergeResult.MergeStatus.CONFLICTING
 import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.api.errors.EmptyCommitException
 import org.eclipse.jgit.api.errors.GitAPIException
-import org.eclipse.jgit.lib.*
+import org.eclipse.jgit.lib.CommitBuilder
+import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.Constants.R_HEADS
+import org.eclipse.jgit.lib.FileMode
+import org.eclipse.jgit.lib.GpgSigner
+import org.eclipse.jgit.lib.ObjectId
+import org.eclipse.jgit.lib.PersonIdent
+import org.eclipse.jgit.lib.Ref
+import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.revwalk.filter.RevFilter
@@ -38,7 +45,12 @@ import java.nio.file.Path
 import java.time.Instant
 import java.util.function.Consumer
 import java.util.regex.Pattern
-import kotlin.io.path.*
+import kotlin.io.path.createFile
+import kotlin.io.path.div
+import kotlin.io.path.exists
+import kotlin.io.path.getLastModifiedTime
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.readText
 
 @Internal
 class GitSettingsLog(private val settingsSyncStorage: Path,

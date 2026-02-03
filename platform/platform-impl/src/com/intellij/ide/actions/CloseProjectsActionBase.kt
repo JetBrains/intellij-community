@@ -5,8 +5,6 @@ import com.intellij.ide.RecentProjectsManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ExitStarter
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -15,7 +13,6 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.ComponentUtil
-import com.intellij.util.PlatformUtils
 
 /**
  * @author Konstantin Bulenkov

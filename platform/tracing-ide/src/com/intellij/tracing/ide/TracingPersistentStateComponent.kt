@@ -2,7 +2,10 @@
 package com.intellij.tracing.ide
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.SimplePersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 
 @State(name = "tracing", storages = [(Storage(value = "tracing.xml"))])
 internal class TracingPersistentStateComponent : SimplePersistentStateComponent<TracingPersistentStateComponent.State>(State()) {

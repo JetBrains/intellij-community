@@ -4,10 +4,10 @@ package com.intellij.platform.debugger.impl.frontend.frame
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.FrameNotificationRequest
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.rpc.topics.ProjectRemoteTopic
 import com.intellij.platform.rpc.topics.ProjectRemoteTopicListener
 import com.intellij.xdebugger.impl.frame.FrameNotificationUtils
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 
 internal class FrameNotificationRemoteTopicListener : ProjectRemoteTopicListener<FrameNotificationRequest> {
   override val topic: ProjectRemoteTopic<FrameNotificationRequest> = FrameNotificationUtils.FRAME_NOTIFICATION_REMOTE_TOPIC

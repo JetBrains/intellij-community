@@ -59,7 +59,6 @@ import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentLinkedQueue
-import kotlin.collections.flatten
 
 internal suspend fun buildNonBundledPlugins(
   pluginsToPublish: Set<PluginLayout>,

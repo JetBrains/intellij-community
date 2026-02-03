@@ -13,7 +13,14 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Insets
+import java.awt.Point
+import java.awt.Rectangle
+import java.awt.RenderingHints
 import java.awt.event.ActionEvent
 import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener

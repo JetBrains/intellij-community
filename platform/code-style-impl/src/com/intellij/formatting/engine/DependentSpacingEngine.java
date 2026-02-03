@@ -7,7 +7,12 @@ import com.intellij.formatting.WhiteSpace;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * Formatter provides a notion of {@link DependantSpacingImpl dependent spacing}, i.e. spacing that insist on line feed if target

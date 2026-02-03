@@ -6,7 +6,7 @@ import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public abstract class XSmartStepIntoVariant {
   public @Nullable Icon getIcon() {

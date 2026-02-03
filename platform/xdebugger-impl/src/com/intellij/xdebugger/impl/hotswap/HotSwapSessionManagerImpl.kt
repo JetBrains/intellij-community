@@ -6,9 +6,14 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.util.coroutines.childScope
-import com.intellij.xdebugger.hotswap.*
 import com.intellij.platform.debugger.impl.rpc.HotSwapVisibleStatus
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.xdebugger.hotswap.HotSwapProvider
+import com.intellij.xdebugger.hotswap.HotSwapResultListener
+import com.intellij.xdebugger.hotswap.HotSwapSession
+import com.intellij.xdebugger.hotswap.HotSwapSessionManager
+import com.intellij.xdebugger.hotswap.SourceFileChangesCollector
+import com.intellij.xdebugger.hotswap.SourceFileChangesListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow

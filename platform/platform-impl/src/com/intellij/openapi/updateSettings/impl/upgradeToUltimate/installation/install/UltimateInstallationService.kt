@@ -16,7 +16,11 @@ import com.intellij.openapi.ui.messages.MessagesService
 import com.intellij.openapi.updateSettings.impl.BuildInfo
 import com.intellij.openapi.updateSettings.impl.ChannelStatus
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.*
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.OpenAnotherToolHandler
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.SuggestedIde
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.disableTryUltimate
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.enableTryUltimate
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.linux.LinuxInstaller
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.mac.MacOsInstaller
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.windows.WindowsInstaller
@@ -27,9 +31,13 @@ import com.intellij.ui.EditorNotifications
 import com.intellij.util.PlatformUtils
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.net.URI
 import java.net.http.HttpClient

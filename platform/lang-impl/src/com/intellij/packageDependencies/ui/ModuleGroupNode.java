@@ -10,7 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Set;
 
 public final class ModuleGroupNode extends PackageDependenciesNode {

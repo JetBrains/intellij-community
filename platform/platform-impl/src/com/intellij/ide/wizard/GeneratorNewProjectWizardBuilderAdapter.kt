@@ -2,6 +2,7 @@
 package com.intellij.ide.wizard
 
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.GeneratorNewProjectWizardBuilderAdapter.Companion.NPW_PREFIX
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 

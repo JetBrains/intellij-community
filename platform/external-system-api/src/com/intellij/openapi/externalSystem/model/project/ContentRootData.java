@@ -11,7 +11,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeSet;
 
 public final class ContentRootData extends AbstractExternalEntityData {
   private final @NotNull Map<ExternalSystemSourceType, Collection<SourceRoot>> data = new HashMap<>();

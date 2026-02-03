@@ -21,7 +21,7 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
 
-import java.awt.*;
+import java.awt.Point;
 
 public interface Magnificator {
   Key<Magnificator> CLIENT_PROPERTY_KEY = Key.create("MagnifiableComponent");

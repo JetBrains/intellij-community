@@ -25,7 +25,13 @@ import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.util.SystemProperties
 import com.intellij.util.system.OS
 import com.intellij.util.text.DateTimeFormatManager
-import com.intellij.util.ui.*
+import com.intellij.util.ui.HTMLEditorKitBuilder
+import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBSwingUtilities
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.RawSwingDispatcher
+import com.intellij.util.ui.UIUtil
 import com.sun.jna.platform.win32.Advapi32Util
 import com.sun.jna.platform.win32.WinReg
 import kotlinx.coroutines.withContext
@@ -34,10 +40,15 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.Graphics
 import java.io.File
-import java.util.*
+import java.util.Locale
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
-import javax.swing.*
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JEditorPane
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.SwingConstants
 import javax.swing.border.Border
 import javax.swing.event.HyperlinkEvent
 

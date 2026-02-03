@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.function.Supplier;
 
 /** @deprecated Use regular {@link com.intellij.openapi.actionSystem.ToggleAction} instead */

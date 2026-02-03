@@ -2,7 +2,11 @@
 package com.intellij.internal;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.formatting.*;
+import com.intellij.formatting.CoreFormatterUtil;
+import com.intellij.formatting.FormattingMode;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.FormattingModelDumper;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;

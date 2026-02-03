@@ -21,7 +21,16 @@ import com.intellij.ui.paint.PaintUtil.alignIntToInt
 import com.intellij.ui.paint.PaintUtil.alignTxToInt
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.ui.JBUI
-import java.awt.*
+import java.awt.AlphaComposite
+import java.awt.Color
+import java.awt.Component
+import java.awt.GradientPaint
+import java.awt.Graphics2D
+import java.awt.LinearGradientPaint
+import java.awt.Paint
+import java.awt.RadialGradientPaint
+import java.awt.Rectangle
+import java.awt.RenderingHints
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 

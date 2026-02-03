@@ -16,7 +16,14 @@ import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.context.PolyContextKindRules
 import com.intellij.polySymbols.context.PolyContextRulesProvider
 import com.intellij.polySymbols.context.impl.buildPolyContext
-import com.intellij.polySymbols.query.*
+import com.intellij.polySymbols.query.PolySymbolNameConversionRules
+import com.intellij.polySymbols.query.PolySymbolNameConversionRulesProvider
+import com.intellij.polySymbols.query.PolySymbolNamesProvider
+import com.intellij.polySymbols.query.PolySymbolQueryConfigurator
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
+import com.intellij.polySymbols.query.PolySymbolQueryResultsCustomizerFactory
+import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.utils.PolySymbolPrioritizedScope
 import com.intellij.polySymbols.utils.createModificationTracker
 import com.intellij.polySymbols.utils.findOriginalFile

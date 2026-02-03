@@ -4,7 +4,7 @@ package com.intellij.packageDependencies.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Set;
 
 public final class GeneralGroupNode extends PackageDependenciesNode {

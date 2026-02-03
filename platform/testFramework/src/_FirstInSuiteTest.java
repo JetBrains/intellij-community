@@ -15,7 +15,7 @@ import com.intellij.util.SystemProperties;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.List;

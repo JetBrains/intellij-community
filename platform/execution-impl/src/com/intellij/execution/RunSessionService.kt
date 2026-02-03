@@ -2,8 +2,8 @@
 package com.intellij.execution
 
 import com.intellij.execution.rpc.RunSession
-import com.intellij.execution.rpc.RunSessionId
 import com.intellij.execution.rpc.RunSessionEvent
+import com.intellij.execution.rpc.RunSessionId
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.extensions.ExtensionPointName

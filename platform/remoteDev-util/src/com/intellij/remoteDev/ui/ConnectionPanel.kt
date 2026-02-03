@@ -20,7 +20,13 @@ import java.awt.event.ActionEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.beans.PropertyChangeListener
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.BorderFactory
+import javax.swing.JButton
+import javax.swing.JRootPane
+import javax.swing.SwingConstants
+import javax.swing.UIManager
 
 @Suppress("LeakingThis")
 @ApiStatus.Experimental

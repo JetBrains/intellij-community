@@ -20,7 +20,8 @@ import com.intellij.ui.LightweightHint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.lang.ref.WeakReference;
 
 public final class ShowContainerInfoHandler implements CodeInsightActionHandler {

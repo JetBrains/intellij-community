@@ -3,7 +3,6 @@ package org.jetbrains.protocolReader
 
 import org.jetbrains.jsonProtocol.JsonObjectBased
 import java.lang.reflect.Method
-import java.util.*
 
 internal const val FIELD_PREFIX = '_'
 

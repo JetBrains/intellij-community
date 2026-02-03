@@ -19,7 +19,7 @@ import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleState;
 import javax.accessibility.AccessibleStateSet;
-import javax.swing.*;
+import javax.swing.JMenu;
 
 public class JBMenu extends JMenu implements Accessible {
   @Override

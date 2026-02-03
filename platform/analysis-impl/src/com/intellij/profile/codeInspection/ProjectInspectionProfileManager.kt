@@ -3,11 +3,23 @@ package com.intellij.profile.codeInspection
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.ProjectInspectionToolRegistrar
-import com.intellij.configurationStore.*
+import com.intellij.configurationStore.OLD_NAME_CONVERTER
+import com.intellij.configurationStore.SchemeDataHolder
+import com.intellij.configurationStore.SchemeManagerIprProvider
+import com.intellij.configurationStore.deserializeInto
+import com.intellij.configurationStore.hashElement
+import com.intellij.configurationStore.serializeObjectInto
+import com.intellij.configurationStore.unwrapState
+import com.intellij.configurationStore.wrapState
 import com.intellij.diagnostic.runActivity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory

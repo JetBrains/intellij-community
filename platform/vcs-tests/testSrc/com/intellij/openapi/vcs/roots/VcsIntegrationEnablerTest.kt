@@ -5,7 +5,11 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.TestVcsNotifier
+import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.VcsRoot
+import com.intellij.openapi.vcs.VcsTestUtil
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile

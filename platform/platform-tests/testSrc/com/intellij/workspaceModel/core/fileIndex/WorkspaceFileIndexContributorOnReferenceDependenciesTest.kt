@@ -13,7 +13,13 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
-import com.intellij.util.indexing.testEntities.*
+import com.intellij.util.indexing.testEntities.DependencyItem
+import com.intellij.util.indexing.testEntities.OneMoreWithReferenceTestEntity
+import com.intellij.util.indexing.testEntities.ReferredTestEntity
+import com.intellij.util.indexing.testEntities.ReferredTestEntityBuilder
+import com.intellij.util.indexing.testEntities.ReferredTestEntityId
+import com.intellij.util.indexing.testEntities.WithReferenceTestEntity
+import com.intellij.util.indexing.testEntities.WithReferenceTestEntityBuilder
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl

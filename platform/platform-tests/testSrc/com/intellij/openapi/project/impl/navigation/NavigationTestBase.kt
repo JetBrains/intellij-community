@@ -19,7 +19,11 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.*
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.ProjectTrackingRule
+import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.createOrLoadProject
 import com.intellij.util.io.sanitizeFileName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking

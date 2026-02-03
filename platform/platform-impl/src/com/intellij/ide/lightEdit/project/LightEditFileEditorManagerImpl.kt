@@ -3,7 +3,11 @@
 
 package com.intellij.ide.lightEdit.project
 
-import com.intellij.ide.lightEdit.*
+import com.intellij.ide.lightEdit.LightEditService
+import com.intellij.ide.lightEdit.LightEditUtil
+import com.intellij.ide.lightEdit.LightEditorInfo
+import com.intellij.ide.lightEdit.LightEditorInfoImpl
+import com.intellij.ide.lightEdit.LightEditorManagerImpl
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorComposite

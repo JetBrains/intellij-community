@@ -10,7 +10,7 @@ import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
 import org.jdom.Element
 import org.junit.Test
-import java.util.*
+import java.util.Collections
 
 internal class XmlSerializerCollectionTest {
   @Test fun jdomExternalizableStringList() {

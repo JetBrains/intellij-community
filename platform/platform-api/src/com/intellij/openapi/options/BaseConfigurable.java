@@ -3,7 +3,7 @@ package com.intellij.openapi.options;
 
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public abstract class BaseConfigurable implements Configurable {
   protected boolean myModified;

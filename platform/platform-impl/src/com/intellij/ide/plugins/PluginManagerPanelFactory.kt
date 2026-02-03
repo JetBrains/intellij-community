@@ -6,8 +6,9 @@ import com.intellij.ide.plugins.newui.MyPluginModel
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginLogo
 import com.intellij.ide.plugins.newui.PluginUiModel
+import com.intellij.ide.plugins.newui.PluginsViewCustomizer
 import com.intellij.ide.plugins.newui.UiPluginManager
-import com.intellij.ide.plugins.newui.*
+import com.intellij.ide.plugins.newui.getPluginsViewCustomizer
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement

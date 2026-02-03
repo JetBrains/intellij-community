@@ -14,11 +14,19 @@ import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.MathUtil.clamp
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 import java.awt.geom.Point2D
-import kotlin.math.*
+import kotlin.math.abs
+import kotlin.math.cbrt
+import kotlin.math.ceil
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.pow
 
 private data class CaretUpdate(
   val finalPos: Point2D,

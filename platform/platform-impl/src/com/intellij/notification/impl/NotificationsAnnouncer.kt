@@ -2,7 +2,11 @@
 package com.intellij.notification.impl
 
 import com.intellij.ide.IdeBundle
-import com.intellij.notification.*
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAnnouncingMode
+import com.intellij.notification.NotificationDisplayType
+import com.intellij.notification.Notifications
+import com.intellij.notification.NotificationsConfiguration
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug

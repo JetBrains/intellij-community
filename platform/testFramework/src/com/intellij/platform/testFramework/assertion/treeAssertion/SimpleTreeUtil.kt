@@ -1,8 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.assertion.treeAssertion
 
-import java.util.*
-import kotlin.collections.ArrayDeque
+import java.util.StringJoiner
 
 fun <T> SimpleTree<T>.deepCopyTree(): SimpleMutableTree<T> {
   val queue = ArrayDeque<Pair<SimpleTree.Node<T>, SimpleMutableTree.Node<T>>>()

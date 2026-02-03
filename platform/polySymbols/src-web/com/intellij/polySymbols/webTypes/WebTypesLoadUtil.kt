@@ -1,12 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.webTypes
 
-import com.intellij.util.text.SemVer
 import com.intellij.polySymbols.impl.objectMapper
 import com.intellij.polySymbols.webTypes.json.WebTypes
+import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
-import java.util.*
+import java.util.SortedMap
+import java.util.TreeMap
 
 @ApiStatus.Internal
 fun InputStream.readWebTypes(): WebTypes =

@@ -3,7 +3,7 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 
 /**
  * Discussion about this listener: IDEA-330045

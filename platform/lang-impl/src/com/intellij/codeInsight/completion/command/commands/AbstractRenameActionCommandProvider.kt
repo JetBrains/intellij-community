@@ -8,7 +8,11 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.psi.*
+import com.intellij.psi.PsiCompiledElement
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.psi.PsiNamedElement
 
 abstract class AbstractRenameActionCommandProvider : ActionCommandProvider(actionId = IdeActions.ACTION_RENAME,
                                                                            presentableName = ActionsBundle.message("action.RenameElement.text"),

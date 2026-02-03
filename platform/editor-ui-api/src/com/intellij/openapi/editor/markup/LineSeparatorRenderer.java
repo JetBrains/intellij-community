@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.editor.markup;
 
-import java.awt.*;
+import java.awt.Graphics;
 
 public interface LineSeparatorRenderer {
   void drawLine(final Graphics g, final int x1, final int x2, final int y);

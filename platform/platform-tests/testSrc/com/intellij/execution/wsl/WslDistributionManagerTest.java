@@ -2,7 +2,6 @@
 package com.intellij.execution.wsl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
@@ -16,7 +15,9 @@ import org.junit.Test;
 
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public final class WslDistributionManagerTest {
   @Rule

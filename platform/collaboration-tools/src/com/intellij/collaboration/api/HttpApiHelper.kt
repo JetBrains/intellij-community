@@ -1,9 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.api
 
-import com.intellij.collaboration.api.httpclient.*
+import com.intellij.collaboration.api.httpclient.CommonHeadersConfigurer
+import com.intellij.collaboration.api.httpclient.CompoundRequestConfigurer
+import com.intellij.collaboration.api.httpclient.HttpClientFactory
+import com.intellij.collaboration.api.httpclient.HttpClientFactoryBase
 import com.intellij.collaboration.api.httpclient.HttpClientUtil.checkStatusCodeWithLogging
 import com.intellij.collaboration.api.httpclient.HttpClientUtil.inflateAndReadWithErrorHandlingAndLogging
+import com.intellij.collaboration.api.httpclient.HttpRequestConfigurer
+import com.intellij.collaboration.api.httpclient.InflatedStreamReadingBodyHandler
+import com.intellij.collaboration.api.httpclient.LazyBodyHandler
+import com.intellij.collaboration.api.httpclient.RequestTimeoutConfigurer
 import com.intellij.collaboration.api.httpclient.response.CancellableWrappingBodyHandler
 import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.CancellationException
@@ -15,7 +22,7 @@ import java.net.http.HttpClient
 import java.net.http.HttpHeaders
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
-import java.util.*
+import java.util.Optional
 import javax.imageio.ImageIO
 import javax.net.ssl.SSLSession
 

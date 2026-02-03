@@ -7,7 +7,7 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.psi.PsiFile;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Set;
 
 public final class LibraryNode extends PackageDependenciesNode {

@@ -1,9 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.menuBar
 
-import com.intellij.ide.lightEdit.actions.*
+import com.intellij.ide.lightEdit.actions.LightEditExitAction
+import com.intellij.ide.lightEdit.actions.LightEditNewFileAction
+import com.intellij.ide.lightEdit.actions.LightEditOpenFileInProjectAction
+import com.intellij.ide.lightEdit.actions.LightEditReloadFileAction
+import com.intellij.ide.lightEdit.actions.LightEditSaveAsAction
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.util.NlsActions
 
 internal fun getLightEditMainMenuActionGroup(): ActionGroup {

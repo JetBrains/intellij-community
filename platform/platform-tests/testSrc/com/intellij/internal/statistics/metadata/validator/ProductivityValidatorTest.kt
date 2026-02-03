@@ -1,7 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.metadata.validator
 
-import com.intellij.featureStatistics.*
+import com.intellij.featureStatistics.FeatureDescriptor
+import com.intellij.featureStatistics.FeatureUsageTrackerImpl
+import com.intellij.featureStatistics.GroupDescriptor
+import com.intellij.featureStatistics.ProductivityFeaturesProvider
+import com.intellij.featureStatistics.ProductivityFeaturesTest
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext

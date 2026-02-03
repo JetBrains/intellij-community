@@ -3,7 +3,7 @@ package com.intellij.xdebugger.impl.frame;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 public interface XStackFrameWithCustomBackgroundColor {
   @Nullable

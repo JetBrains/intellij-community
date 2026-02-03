@@ -8,7 +8,8 @@ import com.intellij.openapi.editor.impl.view.EditorPainter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.paint.LinePainter2D
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.*
+import java.awt.Font
+import java.awt.Graphics2D
 import java.awt.geom.Rectangle2D
 import kotlin.math.roundToInt
 

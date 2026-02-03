@@ -4,7 +4,7 @@ package com.intellij.openapi.util.text;
 import org.junit.Test;
 
 import static com.intellij.openapi.util.text.PastParticiple.pastParticiple;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Bas Leijdekkers

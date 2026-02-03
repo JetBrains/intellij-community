@@ -4,12 +4,12 @@ package org.jetbrains.intellij.build
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.intellij.build.impl.BUILT_IN_HELP_MODULE_NAME
+import org.jetbrains.intellij.build.impl.DescriptorCacheWriter
 import org.jetbrains.intellij.build.impl.JarPackager
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
-import org.jetbrains.intellij.build.impl.DescriptorCacheWriter
 import org.jetbrains.intellij.build.impl.contentModuleNameToDescriptorFileName
 import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 

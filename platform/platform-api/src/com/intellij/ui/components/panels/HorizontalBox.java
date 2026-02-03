@@ -17,8 +17,12 @@ package com.intellij.ui.components.panels;
 
 import com.intellij.ui.components.JBBox;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Component;
 
 public class HorizontalBox extends JPanel {
 

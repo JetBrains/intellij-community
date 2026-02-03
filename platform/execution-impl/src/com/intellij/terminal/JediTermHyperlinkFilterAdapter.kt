@@ -29,9 +29,13 @@ import com.jediterm.terminal.ui.TerminalAction
 import com.jediterm.terminal.ui.hyperlinks.LinkInfoEx
 import com.jediterm.terminal.ui.hyperlinks.LinkInfoEx.HoverConsumer
 import com.jediterm.terminal.ui.hyperlinks.LinkInfoEx.PopupMenuGroupProvider
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import java.util.concurrent.CompletableFuture

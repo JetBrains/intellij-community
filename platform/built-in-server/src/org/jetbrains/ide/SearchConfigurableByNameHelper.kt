@@ -5,7 +5,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableGroup
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 import com.intellij.openapi.project.Project
-import java.util.*
+import java.util.ArrayDeque
 
 // search by full name, not partially (not by words)
 class SearchConfigurableByNameHelper(name: String, private val rootGroup: ConfigurableGroup) {

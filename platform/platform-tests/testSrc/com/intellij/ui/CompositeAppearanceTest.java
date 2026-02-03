@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import junit.framework.TestCase;
 
-import java.awt.*;
+import java.awt.Font;
 
 import static org.junit.Assert.assertNotEquals;
 

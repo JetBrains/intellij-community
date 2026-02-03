@@ -5,9 +5,9 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.HintInfo.MethodInfo
-import com.intellij.codeInsight.hints.settings.Diff
 import com.intellij.codeInsight.hints.parameters.ParameterHintsExcludeListService
 import com.intellij.codeInsight.hints.parameters.collectExcludeListConfig
+import com.intellij.codeInsight.hints.settings.Diff
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.codeInsight.hints.settings.language.ParameterInlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.showInlaySettings

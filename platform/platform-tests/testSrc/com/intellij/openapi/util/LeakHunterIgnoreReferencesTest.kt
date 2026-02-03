@@ -6,21 +6,16 @@ import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.PairProcessor
-import com.intellij.util.ref.GCUtil
 import com.intellij.util.ref.IgnoredTraverseEntry
 import com.intellij.util.ref.IgnoredTraverseReference
-import org.junit.Assert.assertTrue
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
-import java.util.IdentityHashMap
 import java.util.WeakHashMap
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
 import java.util.function.Supplier
-import java.util.stream.Stream
-import kotlin.test.assertFalse
 import kotlin.time.Duration.Companion.seconds
 
 @TestApplication

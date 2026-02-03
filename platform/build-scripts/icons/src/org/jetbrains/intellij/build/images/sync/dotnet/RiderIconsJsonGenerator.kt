@@ -4,7 +4,11 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.intellij.openapi.util.io.FileUtil
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.name
+import kotlin.io.path.relativeTo
+import kotlin.io.path.writeText
 
 object RiderIconsJsonGenerator {
 

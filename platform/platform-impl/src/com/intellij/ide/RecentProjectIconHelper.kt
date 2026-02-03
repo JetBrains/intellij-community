@@ -24,7 +24,13 @@ import com.intellij.ui.svg.loadWithSizes
 import com.intellij.util.IconUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.basicAttributesIfExists
-import com.intellij.util.ui.*
+import com.intellij.util.ui.AvatarIcon
+import com.intellij.util.ui.AvatarPresentation
+import com.intellij.util.ui.AvatarUtils
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.JBCachingScalableIcon
+import com.intellij.util.ui.JBImageIcon
+import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.imgscalr.Scalr
@@ -38,7 +44,7 @@ import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
 import kotlin.io.path.nameWithoutExtension

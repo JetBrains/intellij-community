@@ -15,7 +15,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Graphics;
 import java.util.Objects;
 
 @ApiStatus.Internal

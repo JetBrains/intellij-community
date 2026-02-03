@@ -1,7 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.largeFilesEditor;
 
-import com.intellij.largeFilesEditor.actions.*;
+import com.intellij.largeFilesEditor.actions.LfeActionDisabled;
+import com.intellij.largeFilesEditor.actions.LfeBaseEditorActionHandler;
+import com.intellij.largeFilesEditor.actions.LfeBaseProxyAction;
+import com.intellij.largeFilesEditor.actions.LfeEditorActionHandlerDisabled;
+import com.intellij.largeFilesEditor.actions.LfeEditorActionHandlerEscape;
+import com.intellij.largeFilesEditor.actions.LfeEditorActionHandlerFind;
+import com.intellij.largeFilesEditor.actions.LfeEditorActionSearchAgainHandler;
+import com.intellij.largeFilesEditor.actions.LfeEditorActionSearchBackHandler;
 import com.intellij.largeFilesEditor.editor.actions.LfeEditorActionTextStartEndHandler;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;

@@ -21,7 +21,7 @@ import com.intellij.util.ui.JBUI;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.plaf.UIResource;
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * @author Konstantin Bulenkov

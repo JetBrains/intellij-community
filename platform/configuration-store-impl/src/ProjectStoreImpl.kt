@@ -8,11 +8,23 @@ import com.intellij.ide.highlighter.WorkspaceFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.StateStorageOperation
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.impl.stores.stateStore
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.getOrLogException
-import com.intellij.openapi.project.*
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCoreUtil
+import com.intellij.openapi.project.getProjectCacheFileName
+import com.intellij.openapi.project.isExternalStorageEnabled
+import com.intellij.openapi.project.projectsDataDir
 import com.intellij.openapi.util.io.FileUtil.sanitizeFileName
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
@@ -33,7 +45,7 @@ import org.jetbrains.annotations.CalledInAny
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
 import kotlin.io.path.invariantSeparatorsPathString
 
 internal const val VERSION_OPTION: String = "version"

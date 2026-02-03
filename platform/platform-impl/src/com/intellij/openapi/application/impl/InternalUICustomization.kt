@@ -28,7 +28,12 @@ import com.intellij.ui.tabs.impl.TabPainterAdapter
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Insets
+import java.awt.Paint
+import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.JPanel

@@ -31,7 +31,11 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.ComponentManagerImpl.Companion.createAllServices2
 import com.intellij.serviceContainer.getComponentManagerImpl
 import com.intellij.util.lang.CompoundRuntimeException
-import io.github.classgraph.*
+import io.github.classgraph.AnnotationEnumValue
+import io.github.classgraph.AnnotationParameterValue
+import io.github.classgraph.ClassGraph
+import io.github.classgraph.ClassInfo
+import io.github.classgraph.ScanResult
 import java.awt.Component
 import java.lang.reflect.Constructor
 import kotlin.properties.Delegates.notNull

@@ -3,9 +3,7 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.EditorThreading
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.application
-import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus
 

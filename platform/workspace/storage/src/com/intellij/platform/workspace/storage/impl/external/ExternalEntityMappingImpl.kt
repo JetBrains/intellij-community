@@ -8,10 +8,18 @@ import com.intellij.platform.workspace.storage.ExternalEntityMapping
 import com.intellij.platform.workspace.storage.ExternalMappingKey
 import com.intellij.platform.workspace.storage.MutableExternalEntityMapping
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.impl.*
+import com.intellij.platform.workspace.storage.impl.AbstractEntityStorage
+import com.intellij.platform.workspace.storage.impl.EntityId
+import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
+import com.intellij.platform.workspace.storage.impl.NotThisEntityId
+import com.intellij.platform.workspace.storage.impl.ThisEntityId
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.asString
+import com.intellij.platform.workspace.storage.impl.asThis
 import com.intellij.platform.workspace.storage.impl.containers.PersistentBidirectionalMap
 import com.intellij.platform.workspace.storage.impl.containers.PersistentBidirectionalMapImpl
-import java.util.*
+import com.intellij.platform.workspace.storage.impl.notThis
+import java.util.Collections
 
 internal sealed class AbstractExternalEntityMappingImpl<T> : ExternalEntityMapping<T> {
   internal abstract val index: PersistentBidirectionalMap<EntityId, T>

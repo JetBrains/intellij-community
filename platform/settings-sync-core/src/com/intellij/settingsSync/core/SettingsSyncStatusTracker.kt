@@ -7,7 +7,7 @@ import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.Nls
 import java.awt.Component
-import java.util.*
+import java.util.EventListener
 
 @Service
 class SettingsSyncStatusTracker {

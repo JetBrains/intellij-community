@@ -10,7 +10,6 @@ import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.ProcessCloseConfirmation;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ArrayUtil;

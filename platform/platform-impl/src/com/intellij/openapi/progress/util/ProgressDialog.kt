@@ -20,19 +20,29 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.ui.PopupBorder
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Window
 import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
-import java.lang.Runnable
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JOptionPane
+import javax.swing.JPanel
+import javax.swing.JRootPane
+import javax.swing.KeyStroke
+import javax.swing.SwingUtilities
 import javax.swing.border.Border
 
 @Internal

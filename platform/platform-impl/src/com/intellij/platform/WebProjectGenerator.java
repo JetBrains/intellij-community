@@ -9,7 +9,7 @@ import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * Extend this class to contribute web project generator to IDEA (available via File -> 'Add Module...' -> 'Web Module')

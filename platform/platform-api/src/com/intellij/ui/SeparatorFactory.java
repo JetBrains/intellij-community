@@ -5,7 +5,7 @@ package com.intellij.ui;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 
 public final class SeparatorFactory {

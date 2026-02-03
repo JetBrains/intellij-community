@@ -5,7 +5,14 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInsight.intention.impl.*;
+import com.intellij.codeInsight.intention.impl.AssignShortcutToIntentionAction;
+import com.intellij.codeInsight.intention.impl.CachedIntentions;
+import com.intellij.codeInsight.intention.impl.EditIntentionSettingsAction;
+import com.intellij.codeInsight.intention.impl.EditShortcutToIntentionAction;
+import com.intellij.codeInsight.intention.impl.EnableDisableIntentionAction;
+import com.intellij.codeInsight.intention.impl.IntentionShortcutManager;
+import com.intellij.codeInsight.intention.impl.RemoveIntentionActionShortcut;
+import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewUnsupportedOperationException;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
@@ -45,7 +52,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 public final class ShowIntentionsPass extends TextEditorHighlightingPass implements DumbAware {
   private final Editor myEditor;

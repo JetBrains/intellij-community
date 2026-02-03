@@ -5,7 +5,10 @@ import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;

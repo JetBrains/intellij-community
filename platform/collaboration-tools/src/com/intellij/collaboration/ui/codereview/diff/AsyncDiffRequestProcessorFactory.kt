@@ -8,14 +8,23 @@ import com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffProcess
 import com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest
 import com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequestProducer
 import com.intellij.collaboration.ui.util.selectedItem
-import com.intellij.collaboration.util.*
+import com.intellij.collaboration.util.KeyValuePair
+import com.intellij.collaboration.util.clearData
+import com.intellij.collaboration.util.onFailure
+import com.intellij.collaboration.util.onInProgress
+import com.intellij.collaboration.util.onSuccess
+import com.intellij.collaboration.util.putData
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.requests.ErrorDiffRequest
 import com.intellij.diff.requests.LoadingDiffRequest
 import com.intellij.diff.requests.NoDiffRequest
-import com.intellij.diff.tools.combined.*
+import com.intellij.diff.tools.combined.COMBINED_DIFF_VIEWER_KEY
+import com.intellij.diff.tools.combined.CombinedBlockProducer
+import com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
+import com.intellij.diff.tools.combined.CombinedDiffManager
+import com.intellij.diff.tools.combined.CombinedPathBlockId
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.application.EdtImmediate
 import com.intellij.openapi.progress.ProgressIndicator
@@ -28,11 +37,17 @@ import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.withContext
 
 object AsyncDiffRequestProcessorFactory {
   //region Classic Diff

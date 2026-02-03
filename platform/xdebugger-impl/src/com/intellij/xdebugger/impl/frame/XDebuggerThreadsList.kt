@@ -6,13 +6,13 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.ui.popup.ListItemDescriptor
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy.Companion.getInstance
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XExecutionStack.AdditionalDisplayInfo
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy.Companion.getInstance
 import com.intellij.xdebugger.impl.ui.SplitDebuggerUIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -20,7 +20,13 @@ import java.awt.Component
 import java.awt.Point
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionListener
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JList
+import javax.swing.ListCellRenderer
+import javax.swing.ListModel
+import javax.swing.ListSelectionModel
+import javax.swing.SwingUtilities
 import javax.swing.plaf.FontUIResource
 
 

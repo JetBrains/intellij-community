@@ -2,7 +2,11 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.DynamicBundle;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.LiveTemplateContextService;
+import com.intellij.codeInsight.template.LiveTemplateContextsSnapshot;
+import com.intellij.codeInsight.template.Macro;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -41,7 +45,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.ResourceBundle;
 
 import static com.intellij.codeInsight.template.impl.TemplateContext.contextsEqual;
 
