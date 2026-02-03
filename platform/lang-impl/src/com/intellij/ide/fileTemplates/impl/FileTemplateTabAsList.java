@@ -71,7 +71,9 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
   protected void initSelection(FileTemplate selection) {
     myModel = new MyListModel();
     myList.setModel(myModel);
-    for (FileTemplate template : templates) {
+    List<FileTemplate> sortedTemplates = new ArrayList<>(templates);
+    sortedTemplates.sort((t1, t2) -> t1.getName().compareToIgnoreCase(t2.getName()));
+    for (FileTemplate template : sortedTemplates) {
       myModel.addElement(template);
     }
     if (selection != null) {
