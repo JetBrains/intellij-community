@@ -24,13 +24,29 @@ private const val FIELD_NAME_FORWARD_TO = "forwardTo"
 private const val FIELD_NAME_ORIGINAL_DELEGATE = "originalDelegate"
 
 /**
- * ASM-based proxy generator for service interfaces.
- * Generates a class that:
- * - implements the requested service interface (or extends given base class) and implements [ServiceProxyInstrumentation]
- * - forwards all class/interface calls to an underlying delegate instance
- * - can be switched to forward to another delegate via [ServiceProxyInstrumentation.setForwarding]
+ * Proxy generator for services.
+ *
+ * Generates a proxy class that:
+ * - implements the requested service interface (or extends the given base class)
+ * - implements [ServiceProxyInstrumentation]
+ * - forwards all method calls to an underlying delegate instance
+ * - can be dynamically reconfigured to forward to a different delegate via
+ *   [ServiceProxyInstrumentation.setForwarding]
+ *
+ * Generated proxies are intended to be used as service instances when dynamic
+ * service overrides are enabled (i.e., the service is open and the JVM flags
+ * allows overrides).
+ *
+ * The primary purpose of these proxies is to tolerate leaked service references.
+ * When a service is overridden, an existing (“old”) instance can be updated so
+ * that all of its public method calls are forwarded to the new instance. This
+ * allows existing references to continue functioning correctly.
+ *
+ * Additionally, the forwarding mechanism (`forwardTo: Lazy<Any>?`) can be instrumented
+ * to log stack traces when the old instance is accessed,
+ * helping identify and fix the underlying reference leak.
  */
-internal object ServiceProxy {
+internal object ServiceProxyGenerator {
   fun <T> createInstance(
     superClass: Class<T>,
     delegate: Any,

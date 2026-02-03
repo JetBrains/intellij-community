@@ -4,7 +4,7 @@ package com.intellij.serviceContainer
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
-class ServiceProxyTest {
+class ServiceProxyGeneratorTest {
   interface MyService {
     fun hello(name: String): String
   }
@@ -16,7 +16,7 @@ class ServiceProxyTest {
   @Test
   fun testProxyDelegation() {
     val impl = MyServiceImpl()
-    val proxy = ServiceProxy.createInstance(MyService::class.java, impl)
+    val proxy = ServiceProxyGenerator.createInstance(MyService::class.java, impl)
 
     assertEquals("Hello, World", proxy.hello("World"))
   }
@@ -24,7 +24,7 @@ class ServiceProxyTest {
   @Test
   fun testInstrumentation() {
     val impl1 = MyServiceImpl()
-    val proxy = ServiceProxy.createInstance(MyService::class.java, impl1)
+    val proxy = ServiceProxyGenerator.createInstance(MyService::class.java, impl1)
 
     assertTrue(proxy is ServiceProxyInstrumentation)
     val instrumentation = proxy as ServiceProxyInstrumentation
@@ -52,7 +52,7 @@ class ServiceProxyTest {
   @Test
   fun testAbstractClassProxy() {
     val impl = MyAbstractServiceImpl()
-    val proxy = ServiceProxy.createInstance(MyAbstractService::class.java, impl)
+    val proxy = ServiceProxyGenerator.createInstance(MyAbstractService::class.java, impl)
 
     assertEquals("Greetings, Alice", proxy.greet("Alice"))
     assertEquals("Welcome", proxy.welcome())
@@ -69,7 +69,7 @@ class ServiceProxyTest {
   @Test
   fun testNonAbstractClassProxy() {
     val impl = MyBaseClassImpl()
-    val proxy = ServiceProxy.createInstance(MyBaseClass::class.java, impl)
+    val proxy = ServiceProxyGenerator.createInstance(MyBaseClass::class.java, impl)
 
     assertEquals("Hi from impl", proxy.sayHi())
   }
@@ -99,7 +99,7 @@ class ServiceProxyTest {
   @Test
   fun testComplexService() {
     val impl = ComplexServiceImpl()
-    val proxy = ServiceProxy.createInstance(ComplexService::class.java, impl)
+    val proxy = ServiceProxyGenerator.createInstance(ComplexService::class.java, impl)
 
     val list = mutableListOf<String>()
     proxy.voidMethod(list)
@@ -116,7 +116,7 @@ class ServiceProxyTest {
   @Test
   fun testVisibilityMethods() {
     val impl = TestVisibilityServiceImpl()
-    val proxy = ServiceProxy.createInstance(TestVisibilityService::class.java, impl)
+    val proxy = ServiceProxyGenerator.createInstance(TestVisibilityService::class.java, impl)
 
     assertEquals("public_impl", proxy.publicMethod(), "public methods are proxied")
     assertEquals("protected", proxy.callProtected(), "protected methods are not proxied")
@@ -147,7 +147,7 @@ class ServiceProxyTest {
   @Test
   fun testPrimitiveReturns() {
     val impl = PrimitiveServiceImpl()
-    val proxy = ServiceProxy.createInstance(PrimitiveService::class.java, impl)
+    val proxy = ServiceProxyGenerator.createInstance(PrimitiveService::class.java, impl)
 
     assertEquals(1L, proxy.getLong())
     assertEquals(2.0f, proxy.getFloat())
@@ -174,7 +174,7 @@ class ServiceProxyTest {
   @Test
   fun testInterfaceHierarchy() {
     val impl = ExtendedInterfaceImpl()
-    val proxy = ServiceProxy.createInstance(ExtendedInterface::class.java, impl)
+    val proxy = ServiceProxyGenerator.createInstance(ExtendedInterface::class.java, impl)
 
     assertEquals("base", proxy.baseMethod())
     assertEquals("extended", proxy.extendedMethod())
@@ -197,7 +197,7 @@ class ServiceProxyTest {
   fun testClassWithInterface() {
     val impl = ClassWithInterfaceImpl()
     // Proxying the class, which also happens to implement an interface
-    val proxy = ServiceProxy.createInstance(BaseServiceClass::class.java, impl)
+    val proxy = ServiceProxyGenerator.createInstance(BaseServiceClass::class.java, impl)
 
     assertEquals("class_impl", proxy.classMethod())
     // Even if we proxy BaseServiceClass, if we cast it to SideInterface it should ideally work if the proxy implements it
@@ -208,7 +208,7 @@ class ServiceProxyTest {
   @Test
   fun testClassWithInterfaceProxiedAsInterface() {
     val impl = ClassWithInterfaceImpl()
-    val proxy = ServiceProxy.createInstance(SideInterface::class.java, impl)
+    val proxy = ServiceProxyGenerator.createInstance(SideInterface::class.java, impl)
 
     assertEquals(42, proxy.sideMethod())
   }
@@ -227,7 +227,7 @@ class ServiceProxyTest {
   @Test
   fun testBaseServiceClassWithSeveralInterfaces() {
     val impl = ClassWithSeveralInterfacesImpl()
-    val proxy = ServiceProxy.createInstance(BaseServiceClassWithSeveralInterfaces::class.java, impl)
+    val proxy = ServiceProxyGenerator.createInstance(BaseServiceClassWithSeveralInterfaces::class.java, impl)
 
     assertEquals(42, proxy.sideMethod())
     assertEquals("class_impl", proxy.classMethod())
@@ -250,7 +250,7 @@ class ServiceProxyTest {
   @Test
   fun testOverriddenMethodsWithMoreSpecificReturnTypes() {
     val impl = IntService()
-    val proxy = ServiceProxy.createInstance(NumberServiceInterface::class.java, impl)
+    val proxy = ServiceProxyGenerator.createInstance(NumberServiceInterface::class.java, impl)
     assertEquals(42, proxy.baseMethod())
   }
 }

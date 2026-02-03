@@ -85,7 +85,7 @@ internal abstract class ServiceInstanceInitializer(
       val keyClass = instance.javaClass.classLoader.loadClass(keyClassName)
 
       if (keyClass.isInterface) {
-        ServiceProxy.createInstance(keyClass, instance)
+        ServiceProxyGenerator.createInstance(keyClass, instance)
       }
       else {
         thisLogger().error("Only proxies for interfaces are supported now. Actual: $keyClass")
