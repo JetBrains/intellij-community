@@ -15,29 +15,34 @@ import java.util.function.Consumer;
 final class SimpleTextFragment extends TextFragment {
   private final char @NotNull [] myText;
   private final @NotNull Font myFont;
-  private float @Nullable [] myCharAlignment = null;
+  private final float @Nullable [] myCharAlignment;
 
   SimpleTextFragment(char @NotNull [] lineChars, int start, int end, @NotNull FontInfo fontInfo, @Nullable EditorView view) {
     super(end - start, view);
     myText = Arrays.copyOfRange(lineChars, start, end);
     myFont = fontInfo.getFont();
     float x = 0;
-    for (int i = 0; i < myText.length; i++) {
-      int codePoint = myText[i]; // SimpleTextFragment only handles BMP characters, so no need for codePointAt here
-      var charWidth = fontInfo.charWidth2D(codePoint);
-      if (isGridCellAlignmentEnabled()) {
-        var newWidth = adjustedWidthOrNull(codePoint, charWidth);
-        if (newWidth != null) {
-          if (myCharAlignment == null) {
-            myCharAlignment = new float[myText.length];
+    char[] text = myText;
+    float[] charAlignment = null;
+    float[] charPositions = myCharPositions;
+    boolean gridCellAlignmentEnabled = text.length == 0 || isGridCellAlignmentEnabled();
+    for (int i = 0; i < text.length; i++) {
+      int codePoint = text[i]; // SimpleTextFragment only handles BMP characters, so no need for codePointAt here
+      float charWidth = fontInfo.charWidth2D(codePoint);
+      if (gridCellAlignmentEnabled) {
+        float newWidth = adjustedWidth(codePoint);
+        if (!isTooClose(charWidth, newWidth)) {
+          if (charAlignment == null) {
+            charAlignment = new float[text.length];
           }
-          myCharAlignment[i] = newWidth - charWidth;
+          charAlignment[i] = newWidth - charWidth;
           charWidth = newWidth;
         }
       }
       x += charWidth;
-      myCharPositions[i] = x;
+      charPositions[i] = x;
     }
+    myCharAlignment = charAlignment;
   }
 
   @Override
