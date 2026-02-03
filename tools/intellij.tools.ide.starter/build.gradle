@@ -54,8 +54,8 @@ dependencies {
   implementation "io.opentelemetry:opentelemetry-sdk:$otel_version"
 
   implementation 'io.qameta.allure:allure-java-commons:2.25.0'
+  // it is ok to have dependency with LATEST-TRUNK-SNAPSHOT version, as starter is not intended to be build by clients and we want the most recent changes and put them int fat jar
   api("com.jetbrains.intellij.tools:ide-starter-bus:LATEST-TRUNK-SNAPSHOT")
-  // TODO: change versions to LATEST-EAP-SNAPSHOT or remove completely in next EAP
 
   implementation("com.jetbrains.intellij.tools:ide-util-common:LATEST-TRUNK-SNAPSHOT")
   implementation("com.jetbrains.intellij.tools:ide-performance-testing-commands:LATEST-TRUNK-SNAPSHOT")
