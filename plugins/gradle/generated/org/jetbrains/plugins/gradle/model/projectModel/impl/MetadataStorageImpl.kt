@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model.projectModel.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -169,6 +169,155 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     addMetadata(typeMetadata)
 
     typeMetadata =
+      FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeFinalizerDataService\$DataServiceEntitySource",
+                                       properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                               isKey = false,
+                                                                               isOpen = false,
+                                                                               name = "phase",
+                                                                               valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                 isNullable = false,
+                                                                                 typeMetadata = ExtendableClassMetadata.AbstractClassMetadata(
+                                                                                   fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase",
+                                                                                   subclasses = listOf(FinalClassMetadata.ObjectMetadata(
+                                                                                     fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleBaseScriptSyncPhase",
+                                                                                     properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                                                                             isKey = false,
+                                                                                                                             isOpen = false,
+                                                                                                                             name = "name",
+                                                                                                                             valueType = primitiveTypeStringNotNullable,
+                                                                                                                             withDefault = false)),
+                                                                                     supertypes = listOf("kotlin.Comparable",
+                                                                                                         "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase",
+                                                                                                         "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$BaseScript",
+                                                                                                         "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.BaseScript")),
+                                                                                                       FinalClassMetadata.ClassMetadata(
+                                                                                                         fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleDynamicSyncPhase",
+                                                                                                         properties = listOf(
+                                                                                                           OwnPropertyMetadata(isComputable = false,
+                                                                                                                               isKey = false,
+                                                                                                                               isOpen = false,
+                                                                                                                               name = "modelFetchPhase",
+                                                                                                                               valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                                                                 isNullable = false,
+                                                                                                                                 typeMetadata = ExtendableClassMetadata.AbstractClassMetadata(
+                                                                                                                                   fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
+                                                                                                                                   subclasses = listOf(
+                                                                                                                                     FinalClassMetadata.ClassMetadata(
+                                                                                                                                       fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleBuildFinishedModelFetchPhase",
+                                                                                                                                       properties = listOf(
+                                                                                                                                         OwnPropertyMetadata(
+                                                                                                                                           isComputable = false,
+                                                                                                                                           isKey = false,
+                                                                                                                                           isOpen = false,
+                                                                                                                                           name = "name",
+                                                                                                                                           valueType = primitiveTypeStringNotNullable,
+                                                                                                                                           withDefault = false),
+                                                                                                                                         OwnPropertyMetadata(
+                                                                                                                                           isComputable = false,
+                                                                                                                                           isKey = false,
+                                                                                                                                           isOpen = false,
+                                                                                                                                           name = "order",
+                                                                                                                                           valueType = primitiveTypeIntNotNullable,
+                                                                                                                                           withDefault = false)),
+                                                                                                                                       supertypes = listOf(
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase\$BuildFinished",
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.BuildFinished",
+                                                                                                                                         "java.io.Serializable",
+                                                                                                                                         "kotlin.Comparable")),
+                                                                                                                                     FinalClassMetadata.ClassMetadata(
+                                                                                                                                       fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleProjectLoadedModelFetchPhase",
+                                                                                                                                       properties = listOf(
+                                                                                                                                         OwnPropertyMetadata(
+                                                                                                                                           isComputable = false,
+                                                                                                                                           isKey = false,
+                                                                                                                                           isOpen = false,
+                                                                                                                                           name = "name",
+                                                                                                                                           valueType = primitiveTypeStringNotNullable,
+                                                                                                                                           withDefault = false),
+                                                                                                                                         OwnPropertyMetadata(
+                                                                                                                                           isComputable = false,
+                                                                                                                                           isKey = false,
+                                                                                                                                           isOpen = false,
+                                                                                                                                           name = "order",
+                                                                                                                                           valueType = primitiveTypeIntNotNullable,
+                                                                                                                                           withDefault = false)),
+                                                                                                                                       supertypes = listOf(
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase\$ProjectLoaded",
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.ProjectLoaded",
+                                                                                                                                         "java.io.Serializable",
+                                                                                                                                         "kotlin.Comparable"))),
+                                                                                                                                   supertypes = listOf(
+                                                                                                                                     "java.io.Serializable",
+                                                                                                                                     "java.lang.Comparable",
+                                                                                                                                     "kotlin.Comparable"))),
+                                                                                                                               withDefault = false),
+                                                                                                           OwnPropertyMetadata(isComputable = false,
+                                                                                                                               isKey = false,
+                                                                                                                               isOpen = false,
+                                                                                                                               name = "name",
+                                                                                                                               valueType = primitiveTypeStringNotNullable,
+                                                                                                                               withDefault = false)),
+                                                                                                         supertypes = listOf("kotlin.Comparable",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$Dynamic",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Dynamic")),
+                                                                                                       FinalClassMetadata.ClassMetadata(
+                                                                                                         fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleDataServicesSyncPhase",
+                                                                                                         properties = listOf(
+                                                                                                           OwnPropertyMetadata(isComputable = false,
+                                                                                                                               isKey = false,
+                                                                                                                               isOpen = false,
+                                                                                                                               name = "name",
+                                                                                                                               valueType = primitiveTypeStringNotNullable,
+                                                                                                                               withDefault = false)),
+                                                                                                         supertypes = listOf("kotlin.Comparable",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$DataServices",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.DataServices")),
+                                                                                                       FinalClassMetadata.ClassMetadata(
+                                                                                                         fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleStaticSyncPhase",
+                                                                                                         properties = listOf(
+                                                                                                           OwnPropertyMetadata(isComputable = false,
+                                                                                                                               isKey = false,
+                                                                                                                               isOpen = false,
+                                                                                                                               name = "name",
+                                                                                                                               valueType = primitiveTypeStringNotNullable,
+                                                                                                                               withDefault = false),
+                                                                                                           OwnPropertyMetadata(isComputable = false,
+                                                                                                                               isKey = false,
+                                                                                                                               isOpen = false,
+                                                                                                                               name = "order",
+                                                                                                                               valueType = primitiveTypeIntNotNullable,
+                                                                                                                               withDefault = false)),
+                                                                                                         supertypes = listOf("kotlin.Comparable",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$Static",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Static"))),
+                                                                                   supertypes = listOf("java.lang.Comparable",
+                                                                                                       "kotlin.Comparable"))),
+                                                                               withDefault = false),
+                                                           OwnPropertyMetadata(isComputable = false,
+                                                                               isKey = false,
+                                                                               isOpen = false,
+                                                                               name = "projectPath",
+                                                                               valueType = primitiveTypeStringNotNullable,
+                                                                               withDefault = false),
+                                                           OwnPropertyMetadata(isComputable = false,
+                                                                               isKey = false,
+                                                                               isOpen = false,
+                                                                               name = "virtualFileUrl",
+                                                                               valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                 isNullable = true,
+                                                                                 typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                                                                               withDefault = false)),
+                                       supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource",
+                                                           "org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource"))
+
+    addMetadata(typeMetadata)
+
+    typeMetadata =
       FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeModuleDataService\$GradleBridgeModuleEntitySource",
                                        properties = listOf(OwnPropertyMetadata(isComputable = false,
                                                                                isKey = false,
@@ -192,69 +341,9 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                  isNullable = false,
                                                                                  typeMetadata = ExtendableClassMetadata.AbstractClassMetadata(
                                                                                    fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase",
-                                                                                   subclasses = listOf(FinalClassMetadata.ClassMetadata(
-                                                                                     fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleDynamicSyncPhase",
+                                                                                   subclasses = listOf(FinalClassMetadata.ObjectMetadata(
+                                                                                     fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleBaseScriptSyncPhase",
                                                                                      properties = listOf(OwnPropertyMetadata(isComputable = false,
-                                                                                                                             isKey = false,
-                                                                                                                             isOpen = false,
-                                                                                                                             name = "modelFetchPhase",
-                                                                                                                             valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                                                                                                               isNullable = false,
-                                                                                                                               typeMetadata = ExtendableClassMetadata.AbstractClassMetadata(
-                                                                                                                                 fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
-                                                                                                                                 subclasses = listOf(
-                                                                                                                                   FinalClassMetadata.ClassMetadata(
-                                                                                                                                     fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleBuildFinishedModelFetchPhase",
-                                                                                                                                     properties = listOf(
-                                                                                                                                       OwnPropertyMetadata(
-                                                                                                                                         isComputable = false,
-                                                                                                                                         isKey = false,
-                                                                                                                                         isOpen = false,
-                                                                                                                                         name = "name",
-                                                                                                                                         valueType = primitiveTypeStringNotNullable,
-                                                                                                                                         withDefault = false),
-                                                                                                                                       OwnPropertyMetadata(
-                                                                                                                                         isComputable = false,
-                                                                                                                                         isKey = false,
-                                                                                                                                         isOpen = false,
-                                                                                                                                         name = "order",
-                                                                                                                                         valueType = primitiveTypeIntNotNullable,
-                                                                                                                                         withDefault = false)),
-                                                                                                                                     supertypes = listOf(
-                                                                                                                                       "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
-                                                                                                                                       "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase\$BuildFinished",
-                                                                                                                                       "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.BuildFinished",
-                                                                                                                                       "java.io.Serializable",
-                                                                                                                                       "kotlin.Comparable")),
-                                                                                                                                   FinalClassMetadata.ClassMetadata(
-                                                                                                                                     fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleProjectLoadedModelFetchPhase",
-                                                                                                                                     properties = listOf(
-                                                                                                                                       OwnPropertyMetadata(
-                                                                                                                                         isComputable = false,
-                                                                                                                                         isKey = false,
-                                                                                                                                         isOpen = false,
-                                                                                                                                         name = "name",
-                                                                                                                                         valueType = primitiveTypeStringNotNullable,
-                                                                                                                                         withDefault = false),
-                                                                                                                                       OwnPropertyMetadata(
-                                                                                                                                         isComputable = false,
-                                                                                                                                         isKey = false,
-                                                                                                                                         isOpen = false,
-                                                                                                                                         name = "order",
-                                                                                                                                         valueType = primitiveTypeIntNotNullable,
-                                                                                                                                         withDefault = false)),
-                                                                                                                                     supertypes = listOf(
-                                                                                                                                       "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
-                                                                                                                                       "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase\$ProjectLoaded",
-                                                                                                                                       "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.ProjectLoaded",
-                                                                                                                                       "java.io.Serializable",
-                                                                                                                                       "kotlin.Comparable"))),
-                                                                                                                                 supertypes = listOf(
-                                                                                                                                   "java.io.Serializable",
-                                                                                                                                   "java.lang.Comparable",
-                                                                                                                                   "kotlin.Comparable"))),
-                                                                                                                             withDefault = false),
-                                                                                                         OwnPropertyMetadata(isComputable = false,
                                                                                                                              isKey = false,
                                                                                                                              isOpen = false,
                                                                                                                              name = "name",
@@ -262,10 +351,83 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                                              withDefault = false)),
                                                                                      supertypes = listOf("kotlin.Comparable",
                                                                                                          "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase",
-                                                                                                         "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$Dynamic",
-                                                                                                         "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Dynamic")),
-                                                                                                       FinalClassMetadata.ObjectMetadata(
-                                                                                                         fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleBaseScriptSyncPhase",
+                                                                                                         "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$BaseScript",
+                                                                                                         "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.BaseScript")),
+                                                                                                       FinalClassMetadata.ClassMetadata(
+                                                                                                         fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleDynamicSyncPhase",
+                                                                                                         properties = listOf(
+                                                                                                           OwnPropertyMetadata(isComputable = false,
+                                                                                                                               isKey = false,
+                                                                                                                               isOpen = false,
+                                                                                                                               name = "modelFetchPhase",
+                                                                                                                               valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                                                                 isNullable = false,
+                                                                                                                                 typeMetadata = ExtendableClassMetadata.AbstractClassMetadata(
+                                                                                                                                   fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
+                                                                                                                                   subclasses = listOf(
+                                                                                                                                     FinalClassMetadata.ClassMetadata(
+                                                                                                                                       fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleBuildFinishedModelFetchPhase",
+                                                                                                                                       properties = listOf(
+                                                                                                                                         OwnPropertyMetadata(
+                                                                                                                                           isComputable = false,
+                                                                                                                                           isKey = false,
+                                                                                                                                           isOpen = false,
+                                                                                                                                           name = "name",
+                                                                                                                                           valueType = primitiveTypeStringNotNullable,
+                                                                                                                                           withDefault = false),
+                                                                                                                                         OwnPropertyMetadata(
+                                                                                                                                           isComputable = false,
+                                                                                                                                           isKey = false,
+                                                                                                                                           isOpen = false,
+                                                                                                                                           name = "order",
+                                                                                                                                           valueType = primitiveTypeIntNotNullable,
+                                                                                                                                           withDefault = false)),
+                                                                                                                                       supertypes = listOf(
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase\$BuildFinished",
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.BuildFinished",
+                                                                                                                                         "java.io.Serializable",
+                                                                                                                                         "kotlin.Comparable")),
+                                                                                                                                     FinalClassMetadata.ClassMetadata(
+                                                                                                                                       fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleProjectLoadedModelFetchPhase",
+                                                                                                                                       properties = listOf(
+                                                                                                                                         OwnPropertyMetadata(
+                                                                                                                                           isComputable = false,
+                                                                                                                                           isKey = false,
+                                                                                                                                           isOpen = false,
+                                                                                                                                           name = "name",
+                                                                                                                                           valueType = primitiveTypeStringNotNullable,
+                                                                                                                                           withDefault = false),
+                                                                                                                                         OwnPropertyMetadata(
+                                                                                                                                           isComputable = false,
+                                                                                                                                           isKey = false,
+                                                                                                                                           isOpen = false,
+                                                                                                                                           name = "order",
+                                                                                                                                           valueType = primitiveTypeIntNotNullable,
+                                                                                                                                           withDefault = false)),
+                                                                                                                                       supertypes = listOf(
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase\$ProjectLoaded",
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.ProjectLoaded",
+                                                                                                                                         "java.io.Serializable",
+                                                                                                                                         "kotlin.Comparable"))),
+                                                                                                                                   supertypes = listOf(
+                                                                                                                                     "java.io.Serializable",
+                                                                                                                                     "java.lang.Comparable",
+                                                                                                                                     "kotlin.Comparable"))),
+                                                                                                                               withDefault = false),
+                                                                                                           OwnPropertyMetadata(isComputable = false,
+                                                                                                                               isKey = false,
+                                                                                                                               isOpen = false,
+                                                                                                                               name = "name",
+                                                                                                                               valueType = primitiveTypeStringNotNullable,
+                                                                                                                               withDefault = false)),
+                                                                                                         supertypes = listOf("kotlin.Comparable",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$Dynamic",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Dynamic")),
+                                                                                                       FinalClassMetadata.ClassMetadata(
+                                                                                                         fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleDataServicesSyncPhase",
                                                                                                          properties = listOf(
                                                                                                            OwnPropertyMetadata(isComputable = false,
                                                                                                                                isKey = false,
@@ -275,8 +437,8 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                                                withDefault = false)),
                                                                                                          supertypes = listOf("kotlin.Comparable",
                                                                                                                              "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase",
-                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$BaseScript",
-                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.BaseScript")),
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$DataServices",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.DataServices")),
                                                                                                        FinalClassMetadata.ClassMetadata(
                                                                                                          fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleStaticSyncPhase",
                                                                                                          properties = listOf(
@@ -328,69 +490,9 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                  isNullable = false,
                                                                                  typeMetadata = ExtendableClassMetadata.AbstractClassMetadata(
                                                                                    fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase",
-                                                                                   subclasses = listOf(FinalClassMetadata.ClassMetadata(
-                                                                                     fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleDynamicSyncPhase",
+                                                                                   subclasses = listOf(FinalClassMetadata.ObjectMetadata(
+                                                                                     fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleBaseScriptSyncPhase",
                                                                                      properties = listOf(OwnPropertyMetadata(isComputable = false,
-                                                                                                                             isKey = false,
-                                                                                                                             isOpen = false,
-                                                                                                                             name = "modelFetchPhase",
-                                                                                                                             valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                                                                                                               isNullable = false,
-                                                                                                                               typeMetadata = ExtendableClassMetadata.AbstractClassMetadata(
-                                                                                                                                 fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
-                                                                                                                                 subclasses = listOf(
-                                                                                                                                   FinalClassMetadata.ClassMetadata(
-                                                                                                                                     fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleBuildFinishedModelFetchPhase",
-                                                                                                                                     properties = listOf(
-                                                                                                                                       OwnPropertyMetadata(
-                                                                                                                                         isComputable = false,
-                                                                                                                                         isKey = false,
-                                                                                                                                         isOpen = false,
-                                                                                                                                         name = "name",
-                                                                                                                                         valueType = primitiveTypeStringNotNullable,
-                                                                                                                                         withDefault = false),
-                                                                                                                                       OwnPropertyMetadata(
-                                                                                                                                         isComputable = false,
-                                                                                                                                         isKey = false,
-                                                                                                                                         isOpen = false,
-                                                                                                                                         name = "order",
-                                                                                                                                         valueType = primitiveTypeIntNotNullable,
-                                                                                                                                         withDefault = false)),
-                                                                                                                                     supertypes = listOf(
-                                                                                                                                       "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
-                                                                                                                                       "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase\$BuildFinished",
-                                                                                                                                       "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.BuildFinished",
-                                                                                                                                       "java.io.Serializable",
-                                                                                                                                       "kotlin.Comparable")),
-                                                                                                                                   FinalClassMetadata.ClassMetadata(
-                                                                                                                                     fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleProjectLoadedModelFetchPhase",
-                                                                                                                                     properties = listOf(
-                                                                                                                                       OwnPropertyMetadata(
-                                                                                                                                         isComputable = false,
-                                                                                                                                         isKey = false,
-                                                                                                                                         isOpen = false,
-                                                                                                                                         name = "name",
-                                                                                                                                         valueType = primitiveTypeStringNotNullable,
-                                                                                                                                         withDefault = false),
-                                                                                                                                       OwnPropertyMetadata(
-                                                                                                                                         isComputable = false,
-                                                                                                                                         isKey = false,
-                                                                                                                                         isOpen = false,
-                                                                                                                                         name = "order",
-                                                                                                                                         valueType = primitiveTypeIntNotNullable,
-                                                                                                                                         withDefault = false)),
-                                                                                                                                     supertypes = listOf(
-                                                                                                                                       "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
-                                                                                                                                       "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase\$ProjectLoaded",
-                                                                                                                                       "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.ProjectLoaded",
-                                                                                                                                       "java.io.Serializable",
-                                                                                                                                       "kotlin.Comparable"))),
-                                                                                                                                 supertypes = listOf(
-                                                                                                                                   "java.io.Serializable",
-                                                                                                                                   "java.lang.Comparable",
-                                                                                                                                   "kotlin.Comparable"))),
-                                                                                                                             withDefault = false),
-                                                                                                         OwnPropertyMetadata(isComputable = false,
                                                                                                                              isKey = false,
                                                                                                                              isOpen = false,
                                                                                                                              name = "name",
@@ -398,10 +500,83 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                                              withDefault = false)),
                                                                                      supertypes = listOf("kotlin.Comparable",
                                                                                                          "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase",
-                                                                                                         "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$Dynamic",
-                                                                                                         "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Dynamic")),
-                                                                                                       FinalClassMetadata.ObjectMetadata(
-                                                                                                         fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleBaseScriptSyncPhase",
+                                                                                                         "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$BaseScript",
+                                                                                                         "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.BaseScript")),
+                                                                                                       FinalClassMetadata.ClassMetadata(
+                                                                                                         fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleDynamicSyncPhase",
+                                                                                                         properties = listOf(
+                                                                                                           OwnPropertyMetadata(isComputable = false,
+                                                                                                                               isKey = false,
+                                                                                                                               isOpen = false,
+                                                                                                                               name = "modelFetchPhase",
+                                                                                                                               valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                                                                 isNullable = false,
+                                                                                                                                 typeMetadata = ExtendableClassMetadata.AbstractClassMetadata(
+                                                                                                                                   fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
+                                                                                                                                   subclasses = listOf(
+                                                                                                                                     FinalClassMetadata.ClassMetadata(
+                                                                                                                                       fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleBuildFinishedModelFetchPhase",
+                                                                                                                                       properties = listOf(
+                                                                                                                                         OwnPropertyMetadata(
+                                                                                                                                           isComputable = false,
+                                                                                                                                           isKey = false,
+                                                                                                                                           isOpen = false,
+                                                                                                                                           name = "name",
+                                                                                                                                           valueType = primitiveTypeStringNotNullable,
+                                                                                                                                           withDefault = false),
+                                                                                                                                         OwnPropertyMetadata(
+                                                                                                                                           isComputable = false,
+                                                                                                                                           isKey = false,
+                                                                                                                                           isOpen = false,
+                                                                                                                                           name = "order",
+                                                                                                                                           valueType = primitiveTypeIntNotNullable,
+                                                                                                                                           withDefault = false)),
+                                                                                                                                       supertypes = listOf(
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase\$BuildFinished",
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.BuildFinished",
+                                                                                                                                         "java.io.Serializable",
+                                                                                                                                         "kotlin.Comparable")),
+                                                                                                                                     FinalClassMetadata.ClassMetadata(
+                                                                                                                                       fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleProjectLoadedModelFetchPhase",
+                                                                                                                                       properties = listOf(
+                                                                                                                                         OwnPropertyMetadata(
+                                                                                                                                           isComputable = false,
+                                                                                                                                           isKey = false,
+                                                                                                                                           isOpen = false,
+                                                                                                                                           name = "name",
+                                                                                                                                           valueType = primitiveTypeStringNotNullable,
+                                                                                                                                           withDefault = false),
+                                                                                                                                         OwnPropertyMetadata(
+                                                                                                                                           isComputable = false,
+                                                                                                                                           isKey = false,
+                                                                                                                                           isOpen = false,
+                                                                                                                                           name = "order",
+                                                                                                                                           valueType = primitiveTypeIntNotNullable,
+                                                                                                                                           withDefault = false)),
+                                                                                                                                       supertypes = listOf(
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase\$ProjectLoaded",
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.ProjectLoaded",
+                                                                                                                                         "java.io.Serializable",
+                                                                                                                                         "kotlin.Comparable"))),
+                                                                                                                                   supertypes = listOf(
+                                                                                                                                     "java.io.Serializable",
+                                                                                                                                     "java.lang.Comparable",
+                                                                                                                                     "kotlin.Comparable"))),
+                                                                                                                               withDefault = false),
+                                                                                                           OwnPropertyMetadata(isComputable = false,
+                                                                                                                               isKey = false,
+                                                                                                                               isOpen = false,
+                                                                                                                               name = "name",
+                                                                                                                               valueType = primitiveTypeStringNotNullable,
+                                                                                                                               withDefault = false)),
+                                                                                                         supertypes = listOf("kotlin.Comparable",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$Dynamic",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Dynamic")),
+                                                                                                       FinalClassMetadata.ClassMetadata(
+                                                                                                         fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleDataServicesSyncPhase",
                                                                                                          properties = listOf(
                                                                                                            OwnPropertyMetadata(isComputable = false,
                                                                                                                                isKey = false,
@@ -411,8 +586,8 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                                                withDefault = false)),
                                                                                                          supertypes = listOf("kotlin.Comparable",
                                                                                                                              "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase",
-                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$BaseScript",
-                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.BaseScript")),
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$DataServices",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.DataServices")),
                                                                                                        FinalClassMetadata.ClassMetadata(
                                                                                                          fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleStaticSyncPhase",
                                                                                                          properties = listOf(
@@ -465,69 +640,9 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                  isNullable = false,
                                                                                  typeMetadata = ExtendableClassMetadata.AbstractClassMetadata(
                                                                                    fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase",
-                                                                                   subclasses = listOf(FinalClassMetadata.ClassMetadata(
-                                                                                     fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleDynamicSyncPhase",
+                                                                                   subclasses = listOf(FinalClassMetadata.ObjectMetadata(
+                                                                                     fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleBaseScriptSyncPhase",
                                                                                      properties = listOf(OwnPropertyMetadata(isComputable = false,
-                                                                                                                             isKey = false,
-                                                                                                                             isOpen = false,
-                                                                                                                             name = "modelFetchPhase",
-                                                                                                                             valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                                                                                                               isNullable = false,
-                                                                                                                               typeMetadata = ExtendableClassMetadata.AbstractClassMetadata(
-                                                                                                                                 fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
-                                                                                                                                 subclasses = listOf(
-                                                                                                                                   FinalClassMetadata.ClassMetadata(
-                                                                                                                                     fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleBuildFinishedModelFetchPhase",
-                                                                                                                                     properties = listOf(
-                                                                                                                                       OwnPropertyMetadata(
-                                                                                                                                         isComputable = false,
-                                                                                                                                         isKey = false,
-                                                                                                                                         isOpen = false,
-                                                                                                                                         name = "name",
-                                                                                                                                         valueType = primitiveTypeStringNotNullable,
-                                                                                                                                         withDefault = false),
-                                                                                                                                       OwnPropertyMetadata(
-                                                                                                                                         isComputable = false,
-                                                                                                                                         isKey = false,
-                                                                                                                                         isOpen = false,
-                                                                                                                                         name = "order",
-                                                                                                                                         valueType = primitiveTypeIntNotNullable,
-                                                                                                                                         withDefault = false)),
-                                                                                                                                     supertypes = listOf(
-                                                                                                                                       "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
-                                                                                                                                       "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase\$BuildFinished",
-                                                                                                                                       "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.BuildFinished",
-                                                                                                                                       "java.io.Serializable",
-                                                                                                                                       "kotlin.Comparable")),
-                                                                                                                                   FinalClassMetadata.ClassMetadata(
-                                                                                                                                     fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleProjectLoadedModelFetchPhase",
-                                                                                                                                     properties = listOf(
-                                                                                                                                       OwnPropertyMetadata(
-                                                                                                                                         isComputable = false,
-                                                                                                                                         isKey = false,
-                                                                                                                                         isOpen = false,
-                                                                                                                                         name = "name",
-                                                                                                                                         valueType = primitiveTypeStringNotNullable,
-                                                                                                                                         withDefault = false),
-                                                                                                                                       OwnPropertyMetadata(
-                                                                                                                                         isComputable = false,
-                                                                                                                                         isKey = false,
-                                                                                                                                         isOpen = false,
-                                                                                                                                         name = "order",
-                                                                                                                                         valueType = primitiveTypeIntNotNullable,
-                                                                                                                                         withDefault = false)),
-                                                                                                                                     supertypes = listOf(
-                                                                                                                                       "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
-                                                                                                                                       "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase\$ProjectLoaded",
-                                                                                                                                       "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.ProjectLoaded",
-                                                                                                                                       "java.io.Serializable",
-                                                                                                                                       "kotlin.Comparable"))),
-                                                                                                                                 supertypes = listOf(
-                                                                                                                                   "java.io.Serializable",
-                                                                                                                                   "java.lang.Comparable",
-                                                                                                                                   "kotlin.Comparable"))),
-                                                                                                                             withDefault = false),
-                                                                                                         OwnPropertyMetadata(isComputable = false,
                                                                                                                              isKey = false,
                                                                                                                              isOpen = false,
                                                                                                                              name = "name",
@@ -535,10 +650,83 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                                              withDefault = false)),
                                                                                      supertypes = listOf("kotlin.Comparable",
                                                                                                          "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase",
-                                                                                                         "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$Dynamic",
-                                                                                                         "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Dynamic")),
-                                                                                                       FinalClassMetadata.ObjectMetadata(
-                                                                                                         fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleBaseScriptSyncPhase",
+                                                                                                         "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$BaseScript",
+                                                                                                         "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.BaseScript")),
+                                                                                                       FinalClassMetadata.ClassMetadata(
+                                                                                                         fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleDynamicSyncPhase",
+                                                                                                         properties = listOf(
+                                                                                                           OwnPropertyMetadata(isComputable = false,
+                                                                                                                               isKey = false,
+                                                                                                                               isOpen = false,
+                                                                                                                               name = "modelFetchPhase",
+                                                                                                                               valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                                                                 isNullable = false,
+                                                                                                                                 typeMetadata = ExtendableClassMetadata.AbstractClassMetadata(
+                                                                                                                                   fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
+                                                                                                                                   subclasses = listOf(
+                                                                                                                                     FinalClassMetadata.ClassMetadata(
+                                                                                                                                       fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleBuildFinishedModelFetchPhase",
+                                                                                                                                       properties = listOf(
+                                                                                                                                         OwnPropertyMetadata(
+                                                                                                                                           isComputable = false,
+                                                                                                                                           isKey = false,
+                                                                                                                                           isOpen = false,
+                                                                                                                                           name = "name",
+                                                                                                                                           valueType = primitiveTypeStringNotNullable,
+                                                                                                                                           withDefault = false),
+                                                                                                                                         OwnPropertyMetadata(
+                                                                                                                                           isComputable = false,
+                                                                                                                                           isKey = false,
+                                                                                                                                           isOpen = false,
+                                                                                                                                           name = "order",
+                                                                                                                                           valueType = primitiveTypeIntNotNullable,
+                                                                                                                                           withDefault = false)),
+                                                                                                                                       supertypes = listOf(
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase\$BuildFinished",
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.BuildFinished",
+                                                                                                                                         "java.io.Serializable",
+                                                                                                                                         "kotlin.Comparable")),
+                                                                                                                                     FinalClassMetadata.ClassMetadata(
+                                                                                                                                       fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleProjectLoadedModelFetchPhase",
+                                                                                                                                       properties = listOf(
+                                                                                                                                         OwnPropertyMetadata(
+                                                                                                                                           isComputable = false,
+                                                                                                                                           isKey = false,
+                                                                                                                                           isOpen = false,
+                                                                                                                                           name = "name",
+                                                                                                                                           valueType = primitiveTypeStringNotNullable,
+                                                                                                                                           withDefault = false),
+                                                                                                                                         OwnPropertyMetadata(
+                                                                                                                                           isComputable = false,
+                                                                                                                                           isKey = false,
+                                                                                                                                           isOpen = false,
+                                                                                                                                           name = "order",
+                                                                                                                                           valueType = primitiveTypeIntNotNullable,
+                                                                                                                                           withDefault = false)),
+                                                                                                                                       supertypes = listOf(
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase\$ProjectLoaded",
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.ProjectLoaded",
+                                                                                                                                         "java.io.Serializable",
+                                                                                                                                         "kotlin.Comparable"))),
+                                                                                                                                   supertypes = listOf(
+                                                                                                                                     "java.io.Serializable",
+                                                                                                                                     "java.lang.Comparable",
+                                                                                                                                     "kotlin.Comparable"))),
+                                                                                                                               withDefault = false),
+                                                                                                           OwnPropertyMetadata(isComputable = false,
+                                                                                                                               isKey = false,
+                                                                                                                               isOpen = false,
+                                                                                                                               name = "name",
+                                                                                                                               valueType = primitiveTypeStringNotNullable,
+                                                                                                                               withDefault = false)),
+                                                                                                         supertypes = listOf("kotlin.Comparable",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$Dynamic",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Dynamic")),
+                                                                                                       FinalClassMetadata.ClassMetadata(
+                                                                                                         fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleDataServicesSyncPhase",
                                                                                                          properties = listOf(
                                                                                                            OwnPropertyMetadata(isComputable = false,
                                                                                                                                isKey = false,
@@ -548,8 +736,8 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                                                withDefault = false)),
                                                                                                          supertypes = listOf("kotlin.Comparable",
                                                                                                                              "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase",
-                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$BaseScript",
-                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.BaseScript")),
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$DataServices",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.DataServices")),
                                                                                                        FinalClassMetadata.ClassMetadata(
                                                                                                          fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleStaticSyncPhase",
                                                                                                          properties = listOf(
@@ -601,69 +789,9 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                  isNullable = false,
                                                                                  typeMetadata = ExtendableClassMetadata.AbstractClassMetadata(
                                                                                    fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase",
-                                                                                   subclasses = listOf(FinalClassMetadata.ClassMetadata(
-                                                                                     fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleDynamicSyncPhase",
+                                                                                   subclasses = listOf(FinalClassMetadata.ObjectMetadata(
+                                                                                     fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleBaseScriptSyncPhase",
                                                                                      properties = listOf(OwnPropertyMetadata(isComputable = false,
-                                                                                                                             isKey = false,
-                                                                                                                             isOpen = false,
-                                                                                                                             name = "modelFetchPhase",
-                                                                                                                             valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                                                                                                               isNullable = false,
-                                                                                                                               typeMetadata = ExtendableClassMetadata.AbstractClassMetadata(
-                                                                                                                                 fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
-                                                                                                                                 subclasses = listOf(
-                                                                                                                                   FinalClassMetadata.ClassMetadata(
-                                                                                                                                     fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleBuildFinishedModelFetchPhase",
-                                                                                                                                     properties = listOf(
-                                                                                                                                       OwnPropertyMetadata(
-                                                                                                                                         isComputable = false,
-                                                                                                                                         isKey = false,
-                                                                                                                                         isOpen = false,
-                                                                                                                                         name = "name",
-                                                                                                                                         valueType = primitiveTypeStringNotNullable,
-                                                                                                                                         withDefault = false),
-                                                                                                                                       OwnPropertyMetadata(
-                                                                                                                                         isComputable = false,
-                                                                                                                                         isKey = false,
-                                                                                                                                         isOpen = false,
-                                                                                                                                         name = "order",
-                                                                                                                                         valueType = primitiveTypeIntNotNullable,
-                                                                                                                                         withDefault = false)),
-                                                                                                                                     supertypes = listOf(
-                                                                                                                                       "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
-                                                                                                                                       "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase\$BuildFinished",
-                                                                                                                                       "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.BuildFinished",
-                                                                                                                                       "java.io.Serializable",
-                                                                                                                                       "kotlin.Comparable")),
-                                                                                                                                   FinalClassMetadata.ClassMetadata(
-                                                                                                                                     fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleProjectLoadedModelFetchPhase",
-                                                                                                                                     properties = listOf(
-                                                                                                                                       OwnPropertyMetadata(
-                                                                                                                                         isComputable = false,
-                                                                                                                                         isKey = false,
-                                                                                                                                         isOpen = false,
-                                                                                                                                         name = "name",
-                                                                                                                                         valueType = primitiveTypeStringNotNullable,
-                                                                                                                                         withDefault = false),
-                                                                                                                                       OwnPropertyMetadata(
-                                                                                                                                         isComputable = false,
-                                                                                                                                         isKey = false,
-                                                                                                                                         isOpen = false,
-                                                                                                                                         name = "order",
-                                                                                                                                         valueType = primitiveTypeIntNotNullable,
-                                                                                                                                         withDefault = false)),
-                                                                                                                                     supertypes = listOf(
-                                                                                                                                       "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
-                                                                                                                                       "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase\$ProjectLoaded",
-                                                                                                                                       "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.ProjectLoaded",
-                                                                                                                                       "java.io.Serializable",
-                                                                                                                                       "kotlin.Comparable"))),
-                                                                                                                                 supertypes = listOf(
-                                                                                                                                   "java.io.Serializable",
-                                                                                                                                   "java.lang.Comparable",
-                                                                                                                                   "kotlin.Comparable"))),
-                                                                                                                             withDefault = false),
-                                                                                                         OwnPropertyMetadata(isComputable = false,
                                                                                                                              isKey = false,
                                                                                                                              isOpen = false,
                                                                                                                              name = "name",
@@ -671,10 +799,83 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                                              withDefault = false)),
                                                                                      supertypes = listOf("kotlin.Comparable",
                                                                                                          "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase",
-                                                                                                         "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$Dynamic",
-                                                                                                         "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Dynamic")),
-                                                                                                       FinalClassMetadata.ObjectMetadata(
-                                                                                                         fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleBaseScriptSyncPhase",
+                                                                                                         "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$BaseScript",
+                                                                                                         "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.BaseScript")),
+                                                                                                       FinalClassMetadata.ClassMetadata(
+                                                                                                         fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleDynamicSyncPhase",
+                                                                                                         properties = listOf(
+                                                                                                           OwnPropertyMetadata(isComputable = false,
+                                                                                                                               isKey = false,
+                                                                                                                               isOpen = false,
+                                                                                                                               name = "modelFetchPhase",
+                                                                                                                               valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                                                                 isNullable = false,
+                                                                                                                                 typeMetadata = ExtendableClassMetadata.AbstractClassMetadata(
+                                                                                                                                   fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
+                                                                                                                                   subclasses = listOf(
+                                                                                                                                     FinalClassMetadata.ClassMetadata(
+                                                                                                                                       fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleBuildFinishedModelFetchPhase",
+                                                                                                                                       properties = listOf(
+                                                                                                                                         OwnPropertyMetadata(
+                                                                                                                                           isComputable = false,
+                                                                                                                                           isKey = false,
+                                                                                                                                           isOpen = false,
+                                                                                                                                           name = "name",
+                                                                                                                                           valueType = primitiveTypeStringNotNullable,
+                                                                                                                                           withDefault = false),
+                                                                                                                                         OwnPropertyMetadata(
+                                                                                                                                           isComputable = false,
+                                                                                                                                           isKey = false,
+                                                                                                                                           isOpen = false,
+                                                                                                                                           name = "order",
+                                                                                                                                           valueType = primitiveTypeIntNotNullable,
+                                                                                                                                           withDefault = false)),
+                                                                                                                                       supertypes = listOf(
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase\$BuildFinished",
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.BuildFinished",
+                                                                                                                                         "java.io.Serializable",
+                                                                                                                                         "kotlin.Comparable")),
+                                                                                                                                     FinalClassMetadata.ClassMetadata(
+                                                                                                                                       fqName = "com.intellij.gradle.toolingExtension.modelAction.GradleProjectLoadedModelFetchPhase",
+                                                                                                                                       properties = listOf(
+                                                                                                                                         OwnPropertyMetadata(
+                                                                                                                                           isComputable = false,
+                                                                                                                                           isKey = false,
+                                                                                                                                           isOpen = false,
+                                                                                                                                           name = "name",
+                                                                                                                                           valueType = primitiveTypeStringNotNullable,
+                                                                                                                                           withDefault = false),
+                                                                                                                                         OwnPropertyMetadata(
+                                                                                                                                           isComputable = false,
+                                                                                                                                           isKey = false,
+                                                                                                                                           isOpen = false,
+                                                                                                                                           name = "order",
+                                                                                                                                           valueType = primitiveTypeIntNotNullable,
+                                                                                                                                           withDefault = false)),
+                                                                                                                                       supertypes = listOf(
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase",
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase\$ProjectLoaded",
+                                                                                                                                         "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.ProjectLoaded",
+                                                                                                                                         "java.io.Serializable",
+                                                                                                                                         "kotlin.Comparable"))),
+                                                                                                                                   supertypes = listOf(
+                                                                                                                                     "java.io.Serializable",
+                                                                                                                                     "java.lang.Comparable",
+                                                                                                                                     "kotlin.Comparable"))),
+                                                                                                                               withDefault = false),
+                                                                                                           OwnPropertyMetadata(isComputable = false,
+                                                                                                                               isKey = false,
+                                                                                                                               isOpen = false,
+                                                                                                                               name = "name",
+                                                                                                                               valueType = primitiveTypeStringNotNullable,
+                                                                                                                               withDefault = false)),
+                                                                                                         supertypes = listOf("kotlin.Comparable",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$Dynamic",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Dynamic")),
+                                                                                                       FinalClassMetadata.ClassMetadata(
+                                                                                                         fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleDataServicesSyncPhase",
                                                                                                          properties = listOf(
                                                                                                            OwnPropertyMetadata(isComputable = false,
                                                                                                                                isKey = false,
@@ -684,8 +885,8 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                                                withDefault = false)),
                                                                                                          supertypes = listOf("kotlin.Comparable",
                                                                                                                              "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase",
-                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$BaseScript",
-                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.BaseScript")),
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$DataServices",
+                                                                                                                             "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.DataServices")),
                                                                                                        FinalClassMetadata.ClassMetadata(
                                                                                                          fqName = "org.jetbrains.plugins.gradle.service.syncAction.GradleStaticSyncPhase",
                                                                                                          properties = listOf(
@@ -1310,17 +1511,17 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityId", metadataHash = 843983143)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntityId", metadataHash = -443877510)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = -1894859879)
-    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 2073262779)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 1674457967)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource", metadataHash = -565169080)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeEntitySource",
                     metadataHash = 1645182578)
-    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeModuleDataService\$GradleBridgeModuleEntitySource",
-                    metadataHash = -118266230)
-    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleContentRootSyncContributor\$GradleContentRootEntitySource",
-                    metadataHash = 1983541119)
-    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase", metadataHash = 1282916161)
+    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeFinalizerDataService\$DataServiceEntitySource",
+                    metadataHash = -1359272613)
+    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase", metadataHash = -754421906)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$BaseScript", metadataHash = -142884038)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleBaseScriptSyncPhase", metadataHash = -1450037938)
+    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$DataServices", metadataHash = -1256475695)
+    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleDataServicesSyncPhase", metadataHash = -1556399787)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$Dynamic", metadataHash = -784456624)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleDynamicSyncPhase", metadataHash = -2088811711)
     addMetadataHash(typeFqn = "com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase", metadataHash = -407549003)
@@ -1334,11 +1535,15 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                     metadataHash = -1086434639)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase\$Static", metadataHash = -1839677424)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleStaticSyncPhase", metadataHash = -181947250)
+    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeModuleDataService\$GradleBridgeModuleEntitySource",
+                    metadataHash = -118266230)
+    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleContentRootSyncContributor\$GradleContentRootEntitySource",
+                    metadataHash = -754914382)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleContentRootSyncContributor\$GradleProjectModelEntitySource",
-                    metadataHash = -1431664922)
+                    metadataHash = 421132051)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleProjectRootSyncContributor\$GradleProjectRootEntitySource",
-                    metadataHash = -1079364417)
+                    metadataHash = 2014769394)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleVersionCatalogSyncContributor\$GradleVersionCatalogEntitySource",
-                    metadataHash = 722050163)
+                    metadataHash = 1457290656)
   }
 }
