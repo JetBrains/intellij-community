@@ -41,6 +41,15 @@ class MPSProperties : JetBrainsProductProperties() {
             "intellij.idea.community.customization",
             "intellij.java.ide.resources",
             "intellij.platform.whatsNew",
+            "intellij.platform.configurationStore.impl",
+            "intellij.platform.resources",
+            "intellij.platform.resources.en",
+            "intellij.platform.ide.codeinsight.inline",
+            "intellij.platform.ide.recentProjects",
+            "intellij.platform.ide.util.netty",
+            "intellij.platform.util.diff",
+            "intellij.platform.syntax.psi",
+            "intellij.json.syntax",
         )
 
         productLayout.addPlatformSpec(javaCompiler)
