@@ -35,11 +35,15 @@ open class CodexClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient
     val existingContent = if (configPath.exists()) configPath.readText() else ""
     val productServerKey = productSpecificServerKey()
 
+    if (config !is CodexStreamableHttpConfig) {
+      throw IllegalArgumentException("Unexpected config type: ${config::class.java}")
+    }
+
     val updatedContent = updateCodexConfig(
       existing = existingContent,
       productServerKey = productServerKey,
       legacyKeys = LEGACY_SERVER_KEYS,
-      url = streamableHttpUrl
+      url = config.url
     )
 
     configPath.parent?.createParentDirectories()
