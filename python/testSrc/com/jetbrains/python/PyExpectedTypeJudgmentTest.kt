@@ -868,6 +868,21 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
       """)
   }
 
+  fun testDoubleStarredExpressionElementAsArgumentCombiningUnpackedTypedDictAndOtherParameterTypes() {
+    doTest("expr", "str", """
+      from typing import TypedDict, Unpack
+      
+      class FArgs(TypedDict):
+          s: str
+          n: int
+    
+      def f(a: str, **kwargs: Unpack[FArgs]):
+          pass
+      
+      f(**{"s": "foo", "n": 123, "a": expr})
+      """)
+  }
+
   fun testGenericMethodArgument() {
     doTest("expr", "str", """
       class Box[T]:
