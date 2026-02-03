@@ -9,7 +9,7 @@ import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.dto.GitLabAwardEmojiRestDTO
 import org.jetbrains.plugins.gitlab.api.restApiUri
 import org.jetbrains.plugins.gitlab.api.withErrorStats
-import org.jetbrains.plugins.gitlab.api.withParams
+import org.jetbrains.plugins.gitlab.api.withQuery
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
 import java.net.http.HttpRequest
@@ -31,9 +31,9 @@ suspend fun GitLabApi.Rest.addAwardEmoji(
   noteId: String,
   name: String,
 ): HttpResponse<out GitLabAwardEmojiRestDTO> {
-  val params = mapOf("name" to name)
-  val uri = getMRNotesAwardEmojiUri(project, mrIid, noteId)
-    .withParams(params)
+  val uri = getMRNotesAwardEmojiUri(project, mrIid, noteId).withQuery {
+    "name" eq name
+  }
   val request = request(uri).POST(HttpRequest.BodyPublishers.noBody()).build()
   return withErrorStats(GitLabApiRequestName.REST_CREATE_NOTE_AWARD_EMOJI) {
     loadJsonValue(request)

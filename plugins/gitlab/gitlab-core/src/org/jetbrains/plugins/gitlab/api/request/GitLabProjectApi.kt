@@ -36,7 +36,7 @@ import org.jetbrains.plugins.gitlab.api.dto.WithGitLabNamespace
 import org.jetbrains.plugins.gitlab.api.gitLabQuery
 import org.jetbrains.plugins.gitlab.api.restApiUri
 import org.jetbrains.plugins.gitlab.api.withErrorStats
-import org.jetbrains.plugins.gitlab.api.withParams
+import org.jetbrains.plugins.gitlab.api.withQuery
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
@@ -55,16 +55,17 @@ suspend fun GitLabApi.GraphQL.findProject(project: GitLabProjectCoordinates): Ht
 }
 
 suspend fun GitLabApi.Rest.createProject(
-  namespaceId: GitLabId?, name: String,
-  isPrivate: Boolean, description: String,
+  namespaceId: GitLabId?,
+  name: String,
+  isPrivate: Boolean,
+  description: String,
 ): HttpResponse<out GitLabRepositoryCreationRestDTO> {
-  val uri = server.restApiUri.resolveRelative("projects")
-    .withParams(listOfNotNull(
-      namespaceId?.guessRestId()?.let { "namespace_id" to it },
-      "name" to name,
-      "visibility" to if (isPrivate) "private" else "public",
-      "description" to description,
-    ).toMap())
+  val uri = server.restApiUri.resolveRelative("projects").withQuery {
+    "namespace_id" eq namespaceId?.guessRestId()
+    "name" eq name
+    "visibility" eq if (isPrivate) "private" else "public"
+    "description" eq description
+  }
   val request = request(uri).POST(BodyPublishers.noBody()).build()
   return withErrorStats(GitLabApiRequestName.REST_CREATE_PROJECT) {
     loadJsonValue<GitLabRepositoryCreationRestDTO>(request)
