@@ -2,7 +2,7 @@ package com.intellij.mcpserver.clients.impl
 
 import com.intellij.mcpserver.clients.McpClient
 import com.intellij.mcpserver.clients.McpClientInfo
-import com.intellij.mcpserver.clients.configs.CursorSSEConfig
+import com.intellij.mcpserver.clients.configs.CursorNetworkConfig
 import com.intellij.mcpserver.clients.configs.ServerConfig
 import java.nio.file.Path
 
@@ -18,5 +18,7 @@ class CursorClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient(
     return stdio || network
   }
 
-  override fun getSSEConfig(): ServerConfig = CursorSSEConfig(url = sseUrl)
+  override fun getSSEConfig(): ServerConfig = CursorNetworkConfig(url = sseUrl, type = "sse")
+
+  override fun getStreamableHttpConfig(): ServerConfig = CursorNetworkConfig(url = streamableHttpUrl, type = "http")
 }
