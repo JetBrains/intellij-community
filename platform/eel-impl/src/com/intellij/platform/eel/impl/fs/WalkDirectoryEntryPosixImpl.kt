@@ -4,9 +4,11 @@ package com.intellij.platform.eel.impl.fs
 import com.intellij.platform.eel.fs.WalkDirectoryEntry
 import com.intellij.platform.eel.fs.WalkDirectoryEntryPosix
 import com.intellij.platform.eel.path.EelPath
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.attribute.PosixFilePermission
 import java.time.ZonedDateTime
 
+@ApiStatus.Internal
 data class WalkDirectoryEntryPosixImpl(
   override val path: EelPath,
   override val type: WalkDirectoryEntry.Type,

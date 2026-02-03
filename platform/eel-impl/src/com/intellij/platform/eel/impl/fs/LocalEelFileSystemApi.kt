@@ -32,6 +32,7 @@ import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.utils.EelPathUtils
+import com.intellij.platform.eel.provider.utils.EelPathUtils.convertPosixPermissionsToMask
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -624,7 +625,7 @@ private fun getPosixFileAttributes(child: Path, symlinkPolicy: EelFileSystemApi.
     permissions = EelPosixFileInfoImpl.Permissions(
       owner = Files.getAttribute(child, "unix:uid") as Int,
       group = Files.getAttribute(child, "unix:gid") as Int,
-      mask = convertPermissionsToMask(s.permissions()),
+      mask = convertPosixPermissionsToMask(s.permissions()),
     ),
 
     creationTime = ZonedDateTime.ofInstant(s.creationTime().toInstant(), ZoneId.systemDefault()),
@@ -663,20 +664,6 @@ private fun getWindowsFileAttributes(child: Path): EelWindowsFileInfo {
     override val lastAccessTime =
       ZonedDateTime.ofInstant(s.lastAccessTime().toInstant(), ZoneId.systemDefault())
   }
-}
-
-private fun convertPermissionsToMask(permissions: Set<PosixFilePermission>): Int {
-  var mask = 0
-  if (PosixFilePermission.OWNER_READ in permissions) mask = mask or 0b100000000
-  if (PosixFilePermission.OWNER_WRITE in permissions) mask = mask or 0b010000000
-  if (PosixFilePermission.OWNER_EXECUTE in permissions) mask = mask or 0b001000000
-  if (PosixFilePermission.GROUP_READ in permissions) mask = mask or 0b000100000
-  if (PosixFilePermission.GROUP_WRITE in permissions) mask = mask or 0b000010000
-  if (PosixFilePermission.GROUP_EXECUTE in permissions) mask = mask or 0b000001000
-  if (PosixFilePermission.OTHERS_READ in permissions) mask = mask or 0b000000100
-  if (PosixFilePermission.OTHERS_WRITE in permissions) mask = mask or 0b000000010
-  if (PosixFilePermission.OTHERS_EXECUTE in permissions) mask = mask or 0b000000001
-  return mask
 }
 
 private suspend fun doStreamingWrite(chunks: Flow<ByteBuffer>, targetFileOpenOptions: EelFileSystemApi.WriteOptions): StreamingWriteResult {
@@ -908,7 +895,7 @@ private fun walkDirectoryProcessFile(
       WalkDirectoryEntryPosixImpl.Permissions(
         owner = Files.getAttribute(currentItem, "unix:uid", LinkOption.NOFOLLOW_LINKS) as Int,
         group = Files.getAttribute(currentItem, "unix:gid", LinkOption.NOFOLLOW_LINKS) as Int,
-        mask = convertPermissionsToMask(posixAttributes.permissions()),
+        mask = convertPosixPermissionsToMask(posixAttributes.permissions()),
         permissionsSet = posixAttributes.permissions()
       )
     }
