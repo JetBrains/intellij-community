@@ -883,6 +883,17 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
       """)
   }
 
+  fun testDoubleStarredExpressionElementAsArgumentBothKwargsAndNamedParameter() {
+    fixme("Requires constructing an anonymous TypedDict with `extra_items=int`", ComparisonFailure::class.java) {
+      doTest("expr", "str", """
+      def f(a: str, **kwargs: int):
+          pass
+      
+      f(**{"a": expr, "n": 123})
+      """)
+    }
+  }
+
   fun testGenericMethodArgument() {
     doTest("expr", "str", """
       class Box[T]:
