@@ -312,7 +312,6 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     override fun substituteArtifactsVersions(str: String): String {
         var result = str
 
-        result = substituteVersionForArtifact(result, "kotlin-maven-plugin", needMoreSpaces = true)
         result = substituteVersionForArtifact(result, "maven-surefire-plugin", needMoreSpaces = true)
         result = substituteVersionForArtifact(result, "maven-failsafe-plugin", needMoreSpaces = true)
         result = substituteVersionForArtifact(result, "junit-jupiter")
