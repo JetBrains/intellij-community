@@ -16,11 +16,11 @@ import com.intellij.openapi.project.Project
  * Logs how many runs are started via a run tool and the tool id.
  */
 internal object PyRunToolUsageCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("python.run.tool", 1, "FUS", "Tracks Python run configurations executed with specific run tools (e.g., uv run)")
+  private val GROUP = EventLogGroup("python.run.tool", 1)
 
   private val TOOL_ID = EventFields.StringValidatedByCustomRule("run_tool_id", PyRunToolIdValidator::class.java)
 
-  private val RUN_USED: EventId1<String?> = GROUP.registerEvent("run.used", TOOL_ID, "Execution of Python run configurations with specific run tool")
+  private val RUN_USED: EventId1<String?> = GROUP.registerEvent("run.used", TOOL_ID)
 
   @JvmStatic
   fun logRun(project: Project, runToolId: String) {

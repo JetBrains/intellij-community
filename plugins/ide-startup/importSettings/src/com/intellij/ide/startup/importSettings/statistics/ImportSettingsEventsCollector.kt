@@ -11,12 +11,11 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.components.SettingsCategory
 
-
 object ImportSettingsEventsCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("import.settings", 6)
   override fun getGroup(): EventLogGroup = GROUP
-  private val UNKNOWN = "UNKNOWN"
-  private val FOLDER = "FOLDER"
+  private const val UNKNOWN = "UNKNOWN"
+  private const val FOLDER = "FOLDER"
 
   // Lists/enums:
   private val ALLOWED_JB_IDES: List<String> = IDEData.IDE_MAP.keys.plus(UNKNOWN).toList()
@@ -73,7 +72,6 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
     CONNECTION_ERROR,
   }
 
-
   private val JB_IDE_VALUES = EventFields.StringList("jbIdeValues", ALLOWED_JB_IDES, "Supported JB IDEs")
   private val EXTERNAL_IDE_VALUES = EventFields.EnumList<TransferableIdeId>("externalIdeValues", "Supported external IDEs")
   private val FIRST_PAGE_BUTTONS = EventFields.Enum<ProductPageButton>("productPageButton", "Buttons on the first page")
@@ -93,62 +91,43 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
   // before first page - preparations and performance
 
   // first page (product) - select import source or skip
-  private val productPageShown = GROUP.registerEvent("page.product.shown", EventFields.Boolean("shown"),
-                                                     "indicates whether initial import settings page was shown to user, if not, then import was skipped completely")
-  private val jbIdeActualValues = GROUP.registerEvent("jb.ide.actual.values", JB_IDE_VALUES, "JB IDEs in the main dropdown")
-  private val jbIdeOldValues = GROUP.registerEvent("jb.ide.old.values", JB_IDE_VALUES, "JB IDEs in the other dropdown")
-  private val externalIdeValues = GROUP.registerEvent("external.ide.values", EXTERNAL_IDE_VALUES, "external IDEs available for import")
-  private val productPageButton = GROUP.registerEvent("page.product.button", FIRST_PAGE_BUTTONS, "Button pressed on the product page")
-  private val jbIdeSelectedValue = GROUP.registerEvent("page.product.selected.jb.ide", EventFields.String("jbIde", ALLOWED_JB_IDES), "JB IDE selected")
-  private val externalIdeSelectedValue = GROUP.registerEvent("external.ide.selected.value", EventFields.Enum<TransferableIdeId>("externalIde"), "External IDE selected")
+  private val productPageShown = GROUP.registerEvent("page.product.shown", EventFields.Boolean("shown"))
+  private val jbIdeActualValues = GROUP.registerEvent("jb.ide.actual.values", JB_IDE_VALUES)
+  private val jbIdeOldValues = GROUP.registerEvent("jb.ide.old.values", JB_IDE_VALUES)
+  private val externalIdeValues = GROUP.registerEvent("external.ide.values", EXTERNAL_IDE_VALUES)
+  private val productPageButton = GROUP.registerEvent("page.product.button", FIRST_PAGE_BUTTONS)
+  private val jbIdeSelectedValue = GROUP.registerEvent("page.product.selected.jb.ide", EventFields.String("jbIde", ALLOWED_JB_IDES))
+  private val externalIdeSelectedValue = GROUP.registerEvent("external.ide.selected.value", EventFields.Enum<TransferableIdeId>("externalIde"))
   private val productPageTimeSpent = GROUP.registerEvent("page.product.time.spent", EventFields.DurationMs)
 
-  private val productPageDropdownClicked = GROUP.registerEvent("page.product.dropdown.clicked",
-                                                               EventFields.Enum<ProductPageDropdown>("dropdownId"),
-                                                               "User clicked to the JB IDEs dropdown")
+  private val productPageDropdownClicked = GROUP.registerEvent("page.product.dropdown.clicked", EventFields.Enum<ProductPageDropdown>("dropdownId"))
 
   //second page (configure) - JB IDE - select import details
   private val configurePageShown = GROUP.registerEvent("page.configure.shown", IMPORT_TYPES)
-  private val jbIdeDisabledOptions = GROUP.registerEvent("page.configure.jb.disabled.categories",
-                                                         JB_IMPORT_CATEGORIES,
-                                                         "unselected options when importing from JB IDE")
+  private val jbIdeDisabledOptions = GROUP.registerEvent("page.configure.jb.disabled.categories", JB_IMPORT_CATEGORIES)
   private val jbIdePlugins = GROUP.registerEvent(
     "page.configure.jb.ide.plugins",
     EventFields.Int("totalCount", "Total number of plugins that we've found during scanning"),
-    EventFields.Int("unselectedCount", "number of unselected plugins"),
-    "number of plugins and number of unselected plugins")
-  private val configurePageExpandClicked = GROUP.registerEvent("page.configure.expand.clicked",
-                                                               EventFields.String("itemId", ITEMS_MULTIPLE_IDS),
-                                                               "User clicked on configure/show all link")
-  private val configurePageButton = GROUP.registerEvent("page.configure.button", SECOND_PAGE_BUTTONS, "Button pressed on the second page")
+    EventFields.Int("unselectedCount", "number of unselected plugins"))
+  private val configurePageExpandClicked = GROUP.registerEvent("page.configure.expand.clicked", EventFields.String("itemId", ITEMS_MULTIPLE_IDS))
+  private val configurePageButton = GROUP.registerEvent("page.configure.button", SECOND_PAGE_BUTTONS)
   private val configurePageTimeSpent = GROUP.registerEvent("page.configure.time.spent", EventFields.DurationMs)
 
-  private val featuredPluginsPageShown = GROUP.registerEvent("page.featured.plugins.shown",
-                                                    "Indicates whether the Featured Plugins page was shown. Only for certain products (Rider) that include it.")
+  private val featuredPluginsPageShown = GROUP.registerEvent("page.featured.plugins.shown")
 
   // third page - (import) progress dialog
-  private val importPageShown = GROUP.registerEvent("page.import.shown",
-                                                    "Indicates whether the third page (import progress dialog) was shown. It's common for all import types")
-  private val importPageClosed = GROUP.registerEvent("page.import.closed",
-                                                     "Indicates whether the third page (import progress dialog) was closed manually via button. " +
-                                                     "That typically indicates a problem, because user doesn't want to wait for the import to finish")
-  private val importType = GROUP.registerEvent("import.type",
-                                               IMPORT_TYPES,
-                                               IMPORT_SOURCE,
-                                               "Which type of import is used (JB/NONJB/SYNC) and the source name")
-  private val pluginsImportTime = GROUP.registerEvent("import.plugins.time.spent", EventFields.DurationMs, "How long did it take to import plugins")
-  private val pluginsCounts = GROUP.registerEvent("import.plugins.counts",
-                                                  EventFields.Long("imported"),
-                                                  EventFields.Long("skipped"),
-                                                  "How many plugins were imported during imported or skipped")
-  private val jbPluginImportType = GROUP.registerEvent("import.plugins.import.type", EventFields.Boolean("isNew"), "What plugin import type is used (new or legacy)")
+  private val importPageShown = GROUP.registerEvent("page.import.shown")
+  private val importPageClosed = GROUP.registerEvent("page.import.closed")
+  private val importType = GROUP.registerEvent("import.type", IMPORT_TYPES, IMPORT_SOURCE)
+  private val pluginsImportTime = GROUP.registerEvent("import.plugins.time.spent", EventFields.DurationMs)
+  private val pluginsCounts = GROUP.registerEvent("import.plugins.counts", EventFields.Long("imported"), EventFields.Long("skipped"))
+  private val jbPluginImportType = GROUP.registerEvent("import.plugins.import.type", EventFields.Boolean("isNew"))
   private val jbPluginCantImport = GROUP.registerEvent("import.plugins.cant.import.reason", PLUGIN_CANT_IMPORT_REASONS)
-  private val optionsImportTime = GROUP.registerEvent("import.options.time.spent", EventFields.DurationMs, "How long did it take to import options and schemas")
-  private val totalImportTime = GROUP.registerEvent("import.total.time.spent", EventFields.DurationMs, "how long did it take to import everything")
+  private val optionsImportTime = GROUP.registerEvent("import.options.time.spent", EventFields.DurationMs)
+  private val totalImportTime = GROUP.registerEvent("import.total.time.spent", EventFields.DurationMs)
 
   // after restart, but before showing welcome screen - reload last settings
-  private val afterImportRestartTime = GROUP.registerEvent("after.import.restart.time", EventFields.DurationMs, "How long did it take to restart")
-
+  private val afterImportRestartTime = GROUP.registerEvent("after.import.restart.time", EventFields.DurationMs)
 
   /////// Methods
 
@@ -266,10 +245,11 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
     changePage(3)
   }
 
-  fun jbImportStarted(jbIde: String,
-                      selectedCategories: Collection<SettingsCategory>,
-                      selectedPlugins: List<String>,
-                      unselectedPlugins: List<String>
+  fun jbImportStarted(
+    jbIde: String,
+    selectedCategories: Collection<SettingsCategory>,
+    selectedPlugins: List<String>,
+    unselectedPlugins: List<String>,
   ) {
     importType.log(ImportType.JB, jbIde)
     changePage(3)

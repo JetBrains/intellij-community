@@ -32,8 +32,7 @@ public final class DebuggerSettingsStatisticsCollector extends ApplicationUsages
   private static final VarargEventId RESUME_ONLY_CURRENT_THREAD = GROUP.registerVarargEvent("resumeOnlyCurrentThread", EventFields.Enabled);
   private static final VarargEventId HIDE_STACK_FRAMES_USING_STEPPING_FILTER = GROUP.registerVarargEvent("hideStackFramesUsingSteppingFilter", EventFields.Enabled);
   private static final VarargEventId INSTRUMENTING_AGENT = GROUP.registerVarargEvent("instrumentingAgent", EventFields.Enabled);
-  private static final VarargEventId AGENT_THROTTLING =
-    GROUP.registerVarargEvent("agentThrottling", "Debugger agent throttling in case of detected overhead", EventFields.Enabled);
+  private static final VarargEventId AGENT_THROTTLING = GROUP.registerVarargEvent("agentThrottling", EventFields.Enabled);
 
   @Override
   public EventLogGroup getGroup() {

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object LogSystemCollector : CounterUsagesCollector() {
   private const val ID = "system.log"
-  private val GROUP = EventLogGroup(ID, 2, "FUS", "Events related to external FUS log uploader.")
+  private val GROUP = EventLogGroup(ID, 2)
   override fun getGroup(): EventLogGroup = GROUP
 
   val restartField: BooleanEventField = EventFields.Boolean("restart", "Don't start external uploader because there is restarted")
@@ -24,13 +24,9 @@ object LogSystemCollector : CounterUsagesCollector() {
   val sendingForAllRecordersDisabledField: BooleanEventField = EventFields.Boolean("sending_disabled_for_all_recorders", "Don't start external uploader because sending logs is disabled for all recorders")
   val failedToStartField: BooleanEventField = EventFields.Boolean("failed_to_start", "Failed to start external log uploader")
 
-  val externalUploaderLaunched: VarargEventId = GROUP.registerVarargEvent("external.uploader.launched",
-                                                                          "Send the reason why external log uploader wasn't launched",
-                                                                          restartField,
-                                                                          runningFromSourcesField,
-                                                                          sendingOnExitDisabledField,
-                                                                          notEnabledLoggerProvidersField,
-                                                                          updateInProgressField,
-                                                                          sendingForAllRecordersDisabledField,
-                                                                          failedToStartField)
+  val externalUploaderLaunched: VarargEventId = GROUP.registerVarargEvent(
+    "external.uploader.launched",
+    restartField, runningFromSourcesField, sendingOnExitDisabledField, notEnabledLoggerProvidersField, updateInProgressField,
+    sendingForAllRecordersDisabledField, failedToStartField
+  )
 }

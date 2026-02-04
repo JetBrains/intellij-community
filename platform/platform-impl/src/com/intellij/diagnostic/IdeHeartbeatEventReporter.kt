@@ -190,7 +190,6 @@ internal object UILatencyLogger : CounterUsagesCollector() {
                                                                       COLD_START,
                                                                       EventFields.Language)
 
-  @Suppress("SpellCheckingInspection")
   @JvmField
   val MAIN_MENU_LATENCY: EventId1<Long> = GROUP.registerEvent("mainmenu.latency", EventFields.DurationMs)
 
@@ -283,7 +282,6 @@ internal object UILatencyLogger : CounterUsagesCollector() {
 
   private val UI_RESPONSIVENESS: VarargEventId = GROUP.registerVarargEvent(
     eventId = "ui.responsiveness",
-    description = "Aggregated distribution of latencies for execution and queueing of UI events. We also gather information about the Read/Write lock acquisitions on UI thread in this event.",
     UI_EVENTS_COUNT,
     WINDOW_LENGTH_MS,
     UI_EXECUTION_TIME_TOTAL_MS,
@@ -397,7 +395,6 @@ internal object UILatencyLogger : CounterUsagesCollector() {
   )
   private val MEM_HEARTBEAT_EVENT = GROUP.registerVarargEvent(
     "heartbeat.memory",
-    description = "Reported every hour; sampled every second",
     MEM_XMX_FIELD,
     MEM_SAMPLES_FIELD,
     MEM_HISTOGRAM_TOTAL1_FIELD,

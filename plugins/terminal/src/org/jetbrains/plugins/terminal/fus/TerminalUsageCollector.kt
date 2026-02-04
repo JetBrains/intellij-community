@@ -32,59 +32,52 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   private val EXECUTION_TIME_FIELD = EventFields.Long("execution_time", "Time in milliseconds")
 
   private val sshExecEvent = GROUP.registerEvent("ssh.exec")
-  private val terminalSmartCommandExecutedEvent = GROUP.registerVarargEvent("terminal.smart.command.executed",
-                                                                            TERMINAL_COMMAND_HANDLER_FIELD,
-                                                                            RUN_ANYTHING_PROVIDER_FIELD)
-  private val terminalSmartCommandNotExecutedEvent = GROUP.registerVarargEvent("terminal.smart.command.not.executed",
-                                                                               TERMINAL_COMMAND_HANDLER_FIELD,
-                                                                               RUN_ANYTHING_PROVIDER_FIELD)
-  private val localExecEvent = GROUP.registerEvent("local.exec",
-                                                   OS_VERSION_FIELD,
-                                                   SHELL_STR_FIELD,
-                                                   BLOCK_TERMINAL_FIELD)
+  private val terminalSmartCommandExecutedEvent = GROUP.registerVarargEvent(
+    "terminal.smart.command.executed",
+    TERMINAL_COMMAND_HANDLER_FIELD, RUN_ANYTHING_PROVIDER_FIELD
+  )
+  private val terminalSmartCommandNotExecutedEvent = GROUP.registerVarargEvent(
+    "terminal.smart.command.not.executed",
+    TERMINAL_COMMAND_HANDLER_FIELD, RUN_ANYTHING_PROVIDER_FIELD
+  )
+  private val localExecEvent = GROUP.registerEvent(
+    "local.exec",
+    OS_VERSION_FIELD, SHELL_STR_FIELD, BLOCK_TERMINAL_FIELD
+  )
 
   /** New Terminal only event with additional information about shell version and plugins */
-  private val shellStartedEvent = GROUP.registerVarargEvent("local.shell.started",
-                                                            OS_VERSION_FIELD,
-                                                            SHELL_STR_FIELD,
-                                                            TerminalShellInfoStatistics.shellVersionField,
-                                                            TerminalShellInfoStatistics.promptThemeField,
-                                                            TerminalShellInfoStatistics.isOhMyZshField,
-                                                            TerminalShellInfoStatistics.isOhMyPoshField,
-                                                            TerminalShellInfoStatistics.isP10KField,
-                                                            TerminalShellInfoStatistics.isStarshipField,
-                                                            TerminalShellInfoStatistics.isSpaceshipField,
-                                                            TerminalShellInfoStatistics.isPreztoField,
-                                                            TerminalShellInfoStatistics.isOhMyBashField,
-                                                            TerminalShellInfoStatistics.isBashItField)
+  private val shellStartedEvent = GROUP.registerVarargEvent(
+    "local.shell.started",
+    OS_VERSION_FIELD, SHELL_STR_FIELD,
+    TerminalShellInfoStatistics.shellVersionField, TerminalShellInfoStatistics.promptThemeField, TerminalShellInfoStatistics.isOhMyZshField,
+    TerminalShellInfoStatistics.isOhMyPoshField, TerminalShellInfoStatistics.isP10KField, TerminalShellInfoStatistics.isStarshipField,
+    TerminalShellInfoStatistics.isSpaceshipField, TerminalShellInfoStatistics.isPreztoField, TerminalShellInfoStatistics.isOhMyBashField,
+    TerminalShellInfoStatistics.isBashItField
+  )
 
+  private val commandStartedEvent = GROUP.registerEvent(
+    "terminal.command.executed",
+    TerminalCommandUsageStatistics.commandExecutableField, TerminalCommandUsageStatistics.subCommandField, BLOCK_TERMINAL_FIELD
+  )
 
-  private val commandStartedEvent = GROUP.registerEvent("terminal.command.executed",
-                                                        TerminalCommandUsageStatistics.commandExecutableField,
-                                                        TerminalCommandUsageStatistics.subCommandField,
-                                                        BLOCK_TERMINAL_FIELD,
-                                                        "Fired each time when command is started")
+  private val timespanFinishedEvent = GROUP.registerEvent(
+    "terminal.timespan.finished",
+    SHELL_TYPE_FIELD, EventFields.Enum<TimeSpanType>("time_span_type"), EventFields.DurationMs
+  )
 
+  private val commandFinishedEvent = GROUP.registerVarargEvent(
+    "terminal.command.finished",
+    TerminalCommandUsageStatistics.commandExecutableField, TerminalCommandUsageStatistics.subCommandField,
+    EXIT_CODE_FIELD, EXECUTION_TIME_FIELD
+  )
 
-  private val timespanFinishedEvent = GROUP.registerEvent("terminal.timespan.finished",
-                                                          SHELL_TYPE_FIELD,
-                                                          EventFields.Enum<TimeSpanType>("time_span_type"),
-                                                          EventFields.DurationMs,
-                                                          "Logs performance/responsiveness metrics")
-
-  private val commandFinishedEvent = GROUP.registerVarargEvent("terminal.command.finished",
-                                                               "Fired each time when command is finished. New Terminal only.",
-                                                               TerminalCommandUsageStatistics.commandExecutableField,
-                                                               TerminalCommandUsageStatistics.subCommandField,
-                                                               EXIT_CODE_FIELD,
-                                                               EXECUTION_TIME_FIELD)
-
-  private val commandGenerationEvent = GROUP.registerEvent("command.generation.event.happened",
-                                                           EventFields.Enum<TerminalCommandGenerationEvent>("event_type"),
-                                                           "Events related to generate command from natural language feature of New Terminal")
+  private val commandGenerationEvent = GROUP.registerEvent(
+    "command.generation.event.happened",
+    EventFields.Enum<TerminalCommandGenerationEvent>("event_type")
+  )
 
   @JvmStatic
-  fun triggerSshShellStarted(project: Project) = sshExecEvent.log(project)
+  fun triggerSshShellStarted(project: Project): Unit = sshExecEvent.log(project)
 
   @JvmStatic
   fun triggerCommandStarted(project: Project, userCommandLine: String, isBlockTerminal: Boolean) {
@@ -99,20 +92,24 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
 
   fun triggerCommandFinished(project: Project, userCommandLine: String, exitCode: Int, executionTime: Duration) {
     val commandData = TerminalCommandUsageStatistics.getLoggableCommandData(userCommandLine)
-    commandFinishedEvent.log(project,
-                             TerminalCommandUsageStatistics.commandExecutableField with commandData?.command,
-                             TerminalCommandUsageStatistics.subCommandField with commandData?.subCommand,
-                             EXIT_CODE_FIELD with exitCode,
-                             EXECUTION_TIME_FIELD with executionTime.inWholeMilliseconds)
+    commandFinishedEvent.log(
+      project,
+      TerminalCommandUsageStatistics.commandExecutableField with commandData?.command,
+      TerminalCommandUsageStatistics.subCommandField with commandData?.subCommand,
+      EXIT_CODE_FIELD with exitCode,
+      EXECUTION_TIME_FIELD with executionTime.inWholeMilliseconds
+    )
   }
 
   @JvmStatic
-  fun triggerSmartCommand(project: Project,
-                          workingDirectory: String?,
-                          localSession: Boolean,
-                          command: String,
-                          handler: TerminalShellCommandHandler,
-                          executed: Boolean) {
+  fun triggerSmartCommand(
+    project: Project,
+    workingDirectory: String?,
+    localSession: Boolean,
+    command: String,
+    handler: TerminalShellCommandHandler,
+    executed: Boolean,
+  ) {
     val data: MutableList<EventPair<*>> = mutableListOf(TERMINAL_COMMAND_HANDLER_FIELD.with(handler::class.java))
 
     if (handler is TerminalFusAwareHandler) {
@@ -129,10 +126,12 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
 
   @JvmStatic
   fun triggerLocalShellStarted(project: Project, shellCommand: String, isBlockTerminal: Boolean) {
-    localExecEvent.log(project,
-                       Version.parseVersion(SystemInfo.OS_VERSION)?.toCompactString() ?: "unknown",
-                       TerminalShellInfoStatistics.getShellNameForStat(shellCommand),
-                       isBlockTerminal)
+    localExecEvent.log(
+      project,
+      Version.parseVersion(SystemInfo.OS_VERSION)?.toCompactString() ?: "unknown",
+      TerminalShellInfoStatistics.getShellNameForStat(shellCommand),
+      isBlockTerminal
+    )
     if (isBlockTerminal) {
       val propertiesComponent = PropertiesComponent.getInstance()
       val version = ApplicationInfo.getInstance().build.asStringWithoutProductCodeAndSnapshot()
@@ -144,19 +143,21 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   /** New Terminal only event with additional information about shell version and plugins */
   internal fun triggerLocalShellStarted(project: Project, shellName: String, shellInfo: TerminalShellInfoStatistics.LoggableShellInfo) {
     val osVersion = Version.parseVersion(SystemInfo.OS_VERSION)?.toCompactString() ?: "unknown"
-    shellStartedEvent.log(project,
-                          OS_VERSION_FIELD with osVersion,
-                          SHELL_STR_FIELD with shellName.lowercase(),
-                          TerminalShellInfoStatistics.shellVersionField with shellInfo.shellVersion,
-                          TerminalShellInfoStatistics.promptThemeField with shellInfo.promptTheme,
-                          TerminalShellInfoStatistics.isOhMyZshField with shellInfo.isOhMyZsh,
-                          TerminalShellInfoStatistics.isOhMyPoshField with shellInfo.isOhMyPosh,
-                          TerminalShellInfoStatistics.isP10KField with shellInfo.isP10K,
-                          TerminalShellInfoStatistics.isStarshipField with shellInfo.isStarship,
-                          TerminalShellInfoStatistics.isSpaceshipField with shellInfo.isSpaceship,
-                          TerminalShellInfoStatistics.isPreztoField with shellInfo.isPrezto,
-                          TerminalShellInfoStatistics.isOhMyBashField with shellInfo.isOhMyBash,
-                          TerminalShellInfoStatistics.isBashItField with shellInfo.isBashIt)
+    shellStartedEvent.log(
+      project,
+      OS_VERSION_FIELD with osVersion,
+      SHELL_STR_FIELD with shellName.lowercase(),
+      TerminalShellInfoStatistics.shellVersionField with shellInfo.shellVersion,
+      TerminalShellInfoStatistics.promptThemeField with shellInfo.promptTheme,
+      TerminalShellInfoStatistics.isOhMyZshField with shellInfo.isOhMyZsh,
+      TerminalShellInfoStatistics.isOhMyPoshField with shellInfo.isOhMyPosh,
+      TerminalShellInfoStatistics.isP10KField with shellInfo.isP10K,
+      TerminalShellInfoStatistics.isStarshipField with shellInfo.isStarship,
+      TerminalShellInfoStatistics.isSpaceshipField with shellInfo.isSpaceship,
+      TerminalShellInfoStatistics.isPreztoField with shellInfo.isPrezto,
+      TerminalShellInfoStatistics.isOhMyBashField with shellInfo.isOhMyBash,
+      TerminalShellInfoStatistics.isBashItField with shellInfo.isBashIt
+    )
   }
 
   fun triggerCommandGenerationEvent(project: Project, event: TerminalCommandGenerationEvent) {

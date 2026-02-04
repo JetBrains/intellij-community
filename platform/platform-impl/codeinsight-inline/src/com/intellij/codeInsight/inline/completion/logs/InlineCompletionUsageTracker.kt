@@ -146,7 +146,6 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   @Deprecated("Superseded by INSERTED_STATE_EVENT")
   internal val INSERTED_STATE_EVENT_OLD: VarargEventId = GROUP.registerVarargEvent(
     eventId = INSERTED_STATE_EVENT_ID,
-    description = "State of the inserted inline proposal in the editor after some time",
     ShownEvents.REQUEST_ID,
     EventFields.Language,
     EventFields.CurrentFile,

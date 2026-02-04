@@ -27,11 +27,7 @@ import java.nio.file.Paths
 import kotlin.math.min
 
 internal object AttachDirectoryUsagesCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup(
-    id = "attach.directory.statistics",
-    version = 1,
-    description = "Reports file count in attached directories"
-  )
+  private val GROUP = EventLogGroup("attach.directory.statistics", 1)
 
   enum class SpecialDirectory {
     HOME {
@@ -102,17 +98,13 @@ internal object AttachDirectoryUsagesCollector : CounterUsagesCollector() {
   }
 
   private val ATTACHED_DIRECTORY_EVENT = GROUP.registerEvent(
-    eventId = "attached.directory",
-    eventField1 = EventFields.LogarithmicInt("files_count"),
-    eventField2 = EventFields.Int("files_count_limit"),
-    eventField3 = EventFields.Boolean("limit_reached"),
-    description = "Reports the file count under an attached directory"
+    "attached.directory",
+    EventFields.LogarithmicInt("files_count"), EventFields.Int("files_count_limit"), EventFields.Boolean("limit_reached")
   )
 
   private val ATTACHED_SPECIAL_DIRECTORY_EVENT = GROUP.registerEvent(
-    eventId = "attached.special.directory",
-    eventField1 = EventFields.Enum<SpecialDirectory>("type"),
-    description = "Reports an attached special directory type"
+    "attached.special.directory",
+    EventFields.Enum<SpecialDirectory>("type")
   )
 
   override fun getGroup() = GROUP

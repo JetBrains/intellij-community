@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 object CsvFileUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("csv.file.usage", 1, description = "Statistics for CSV files opened in different modes")
+  private val GROUP = EventLogGroup("csv.file.usage", 1)
   private val FILE_SIZE_FIELD = EventFields.RoundedLong("file_size_bytes")
   private val OPEN_MODE_FIELD = EventFields.Enum<OpenMode>("open_mode")
   private val OPEN_CSV_FILE_EVENT = GROUP.registerVarargEvent("opened", FILE_SIZE_FIELD, OPEN_MODE_FIELD)

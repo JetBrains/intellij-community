@@ -3,7 +3,6 @@ package com.intellij.python.pyproject.statistics
 
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.FUS_RECORDER
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.project.Project
@@ -23,31 +22,30 @@ import org.toml.lang.psi.TomlLiteral
 import org.toml.lang.psi.TomlTable
 import java.util.concurrent.atomic.AtomicInteger
 
-
 internal val PYTHON_TOOL_MARKERS: Map<String, Set<String>> = mapOf(
-    "bandit" to setOf(".bandit"),
-    "black" to setOf("black.toml"),
-    "codespell" to setOf(".codespellrc"),
-    "coverage" to setOf(".coveragerc"),
-    "flit" to setOf("flit.ini"),
-    "flake8" to setOf(".flake8"),
-    "great-expectations" to setOf("great_expectations.yml"),
-    "hatch" to setOf("hatch.toml", "hatch.lock"),
-    "hypothesis" to setOf(".hypothesis"),
-    "isort" to setOf(".isort.cfg"),
-    "mypy" to setOf("mypy.ini", ".mypy.ini"),
-    "nox" to setOf("noxfile.py"),
-    "pdm" to setOf("pdm.lock"),
-    "pixi" to setOf("pixi.toml", "pixi.lock"),
-    "poetry" to setOf("poetry.lock"),
-    "prefect" to setOf("prefect.yaml"),
-    "pyright" to setOf("pyrightconfig.json"),
-    "pytest" to setOf("pytest.toml", ".pytest.toml", "pytest.ini", ".pytest.ini"),
-    "ruff" to setOf("ruff.toml", ".ruff.toml"),
-    "setuptools" to setOf("setup.py", "setup.cfg"),
-    "tox" to setOf("tox.ini", "tox.toml"),
-    "uv" to setOf("uv.lock"),
-    "yapf" to setOf(".style.yapf")
+  "bandit" to setOf(".bandit"),
+  "black" to setOf("black.toml"),
+  "codespell" to setOf(".codespellrc"),
+  "coverage" to setOf(".coveragerc"),
+  "flit" to setOf("flit.ini"),
+  "flake8" to setOf(".flake8"),
+  "great-expectations" to setOf("great_expectations.yml"),
+  "hatch" to setOf("hatch.toml", "hatch.lock"),
+  "hypothesis" to setOf(".hypothesis"),
+  "isort" to setOf(".isort.cfg"),
+  "mypy" to setOf("mypy.ini", ".mypy.ini"),
+  "nox" to setOf("noxfile.py"),
+  "pdm" to setOf("pdm.lock"),
+  "pixi" to setOf("pixi.toml", "pixi.lock"),
+  "poetry" to setOf("poetry.lock"),
+  "prefect" to setOf("prefect.yaml"),
+  "pyright" to setOf("pyrightconfig.json"),
+  "pytest" to setOf("pytest.toml", ".pytest.toml", "pytest.ini", ".pytest.ini"),
+  "ruff" to setOf("ruff.toml", ".ruff.toml"),
+  "setuptools" to setOf("setup.py", "setup.cfg"),
+  "tox" to setOf("tox.ini", "tox.toml"),
+  "uv" to setOf("uv.lock"),
+  "yapf" to setOf(".style.yapf")
 )
 
 internal val TRACKED_DEPENDENCY_GROUPS = listOf(
@@ -59,42 +57,24 @@ internal val TRACKED_DEPENDENCY_GROUPS = listOf(
 )
 internal const val DEPENDENCY_GROUP_OTHER = "other"
 
-private val GROUP = EventLogGroup("python.toml.stats", 3, FUS_RECORDER, "Python Project Statistics")
+private val GROUP = EventLogGroup("python.toml.stats", 3)
 private val PACKAGE_NAME_FIELD = EventFields.StringValidatedByDictionary("name", "python_packages.ndjson")
 
-internal val PYTHON_PYPROJECT_TOOLS = GROUP.registerEvent(
-  "python.pyproject.tools",
-  PACKAGE_NAME_FIELD,
-  "A Python tool defined in the [tool.*] table of pyproject.toml"
-)
+internal val PYTHON_PYPROJECT_TOOLS = GROUP.registerEvent("python.pyproject.tools", PACKAGE_NAME_FIELD)
 
 // https://peps.python.org/pep-0518/
-internal val PYTHON_PYPROJECT_BUILDSYSTEM = GROUP.registerEvent(
-  "python.pyproject.buildsystem",
-  PACKAGE_NAME_FIELD,
-  "A Python tool defined in build-system.requires of pyproject.toml"
-)
+internal val PYTHON_PYPROJECT_BUILDSYSTEM = GROUP.registerEvent("python.pyproject.buildsystem", PACKAGE_NAME_FIELD)
 
-internal val PYTHON_TOOL_MARKERS_DETECTED = GROUP.registerEvent(
-  "python.tool.markers.detected",
-  PACKAGE_NAME_FIELD,
-  "A Python tool detected via tool marker files (e.g., uv.lock, hatch.toml)"
-)
+internal val PYTHON_TOOL_MARKERS_DETECTED = GROUP.registerEvent("python.tool.markers.detected", PACKAGE_NAME_FIELD)
 
 internal val PYTHON_PYPROJECT_DEPENDENCY_GROUP = GROUP.registerEvent(
   "python.pyproject.dependency.group",
-  EventFields.String("name", TRACKED_DEPENDENCY_GROUPS + DEPENDENCY_GROUP_OTHER),
-  "A dependency group from pyproject.toml"
+  EventFields.String("name", TRACKED_DEPENDENCY_GROUPS + DEPENDENCY_GROUP_OTHER)
 )
 
-internal val PYTHON_PYPROJECT_COUNT = GROUP.registerEvent(
-  "python.pyproject.count",
-  EventFields.Int("count"),
-  "Number of pyproject.toml files (python projects) in the workspace"
-)
+internal val PYTHON_PYPROJECT_COUNT = GROUP.registerEvent("python.pyproject.count", EventFields.Int("count"))
 
 internal class PythonTomlStatsUsagesCollector : ProjectUsagesCollector() {
-
   override fun getGroup(): EventLogGroup = GROUP
 
   override fun requiresReadAccess() = true

@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public final class ProjectViewPerformanceCollector extends CounterUsagesCollector {
-
   private static final EventLogGroup GROUP = new EventLogGroup("project.view.performance", 4);
 
   private static final EventId1<Long> EXPAND_DIR_DURATION = GROUP.registerEvent("dir.expanded", EventFields.DurationMs);
@@ -29,7 +28,6 @@ public final class ProjectViewPerformanceCollector extends CounterUsagesCollecto
 
   private static final VarargEventId UPDATED = GROUP.registerVarargEvent(
     "updated",
-    "Information about Project View updates per minute",
     UPDATE_CAUSE_ID,
     EventFields.PluginInfo,
     NODE_COUNT,
@@ -40,7 +38,6 @@ public final class ProjectViewPerformanceCollector extends CounterUsagesCollecto
 
   private static final VarargEventId STUCK_REQUEST_DETECTED = GROUP.registerVarargEvent(
     "stuck.request.detected",
-    "Some Project View update requests have been running for more than one minute",
     UPDATE_CAUSE_ID,
     EventFields.PluginInfo,
     REQUEST_COUNT,
@@ -83,5 +80,4 @@ public final class ProjectViewPerformanceCollector extends CounterUsagesCollecto
       EventFields.DurationMs.with(durationMs)
     );
   }
-
 }

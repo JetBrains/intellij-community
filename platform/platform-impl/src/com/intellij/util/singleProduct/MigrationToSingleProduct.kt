@@ -189,10 +189,10 @@ private object MigrateToSingleProductCollector : CounterUsagesCollector() {
   private val GROUP = @Suppress("DEPRECATION") EventLogGroup("migrate.to.single.product", 1)
 
   @JvmField
-  val WELCOME_PAGE_SHOWN: EventId = GROUP.registerEvent("vision.page.shown", "How many times button on welcome vision page was shown after patch update to SID")
+  val WELCOME_PAGE_SHOWN: EventId = GROUP.registerEvent("vision.page.shown")
 
   @JvmField
-  val BUTTON_CLICKED: EventId = GROUP.registerEvent("vision.button.clicked", "How many times button on welcome vision page was clicked")
+  val BUTTON_CLICKED: EventId = GROUP.registerEvent("vision.button.clicked")
 
   override fun getGroup(): EventLogGroup = GROUP
 }

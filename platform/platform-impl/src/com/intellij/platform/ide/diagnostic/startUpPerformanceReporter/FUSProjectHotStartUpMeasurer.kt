@@ -678,26 +678,21 @@ object FUSProjectHotStartUpMeasurer {
   }
 }
 
-private val WELCOME_SCREEN_GROUP = EventLogGroup("welcome.screen.startup.performance", 1,
-                                                 description = "Performance metrics for the Welcome Screen.")
+private val WELCOME_SCREEN_GROUP = EventLogGroup("welcome.screen.startup.performance", 1)
 
 private val SPLASH_SCREEN_WAS_SHOWN = EventFields.Boolean("splash_screen_was_shown")
 private val SPLASH_SCREEN_VISIBLE_DURATION = createDurationField(DurationUnit.MILLISECONDS, "splash_screen_became_visible_duration_ms")
 private val DURATION = createDurationField(DurationUnit.MILLISECONDS, "duration_ms")
 private val WELCOME_SCREEN_EVENT = WELCOME_SCREEN_GROUP.registerVarargEvent(
   "welcome.screen.shown",
-  description = "Welcome Screen dialog was shown.",
-  DURATION, SPLASH_SCREEN_WAS_SHOWN,
-  SPLASH_SCREEN_VISIBLE_DURATION,
+  DURATION, SPLASH_SCREEN_WAS_SHOWN, SPLASH_SCREEN_VISIBLE_DURATION,
 )
 
 internal class WelcomeScreenPerformanceCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = WELCOME_SCREEN_GROUP
 }
 
-private val GROUP = EventLogGroup("reopen.project.startup.performance", 3,
-                                  description = "Startup duration on reopened projects. [Detailed description]" +
-                                                "(https://youtrack.jetbrains.com/articles/IJPL-A-285/reopen.project.startup.performance)")
+private val GROUP = EventLogGroup("reopen.project.startup.performance", 3)
 
 private enum class UIResponseType {
   Splash,
@@ -708,8 +703,6 @@ private val UI_RESPONSE_TYPE = EventFields.Enum("type", UIResponseType::class.ja
 private val FIRST_UI_SHOWN_EVENT: EventId2<Duration, UIResponseType> = GROUP.registerEvent(
   "first.ui.shown",
   DURATION, UI_RESPONSE_TYPE,
-  description = "First UI shown to user. Reports the moment when user saw IDE's UI for the very first time, " +
-                "and if it was splash screen or IDE frame.",
 )
 
 private val PROJECT_ORDER_FIELD = EventFields.Int("project_order")
@@ -720,25 +713,20 @@ private val PROJECTS_TYPE: EnumEventField<FUSProjectHotStartUpMeasurer.ProjectsT
 private val HAS_SETTINGS: BooleanEventField = EventFields.Boolean("has_settings")
 private val VIOLATION: EnumEventField<FUSProjectHotStartUpMeasurer.Violation> =
   EventFields.Enum("violation", FUSProjectHotStartUpMeasurer.Violation::class.java)
-private val FRAME_BECAME_VISIBLE_EVENT = GROUP.registerVarargEvent("frame.became.visible",
-                                                                   description = "IDE frame first became visible to the user.",
-                                                                   DURATION, HAS_SETTINGS, PROJECTS_TYPE, VIOLATION)
-private val MULTIPLE_PROJECT_FRAME_BECAME_VISIBLE_EVENT = GROUP.registerVarargEvent("multiple.project.frame.became.visible",
-                                                                                    description = "Multiple Project Frame Became Visible",
-                                                                                    DURATION, HAS_SETTINGS, PROJECTS_TYPE, VIOLATION,
-                                                                                    PROJECT_ORDER_FIELD, NUMBER_OF_PROJECTS_FIELD)
+private val FRAME_BECAME_VISIBLE_EVENT = GROUP.registerVarargEvent(
+  "frame.became.visible",
+  DURATION, HAS_SETTINGS, PROJECTS_TYPE, VIOLATION
+)
+private val MULTIPLE_PROJECT_FRAME_BECAME_VISIBLE_EVENT = GROUP.registerVarargEvent(
+  "multiple.project.frame.became.visible",
+  DURATION, HAS_SETTINGS, PROJECTS_TYPE, VIOLATION, PROJECT_ORDER_FIELD, NUMBER_OF_PROJECTS_FIELD
+)
 
-private val FRAME_BECAME_INTERACTIVE_EVENT =
-  GROUP.registerEvent("frame.became.interactive",
-                      DURATION,
-                      description = "It is possible, that IDE frame is already visible, but IDE is not ready to function yet. " +
-                                    "Then the frame is covered with transparent rectangle, " +
-                                    "so that user sees it and rotating progress over it, but can't invoke anything. " +
-                                    "Once IDE is ready to function, that rectangle is removed, and user is finally able to use IDE. " +
-                                    "That's the moment event frame.became.interactive is saved.")
-private val MULTIPLE_PROJECT_FRAME_BECAME_INTERACTIVE_EVENT = GROUP.registerEvent("multiple.project.frame.became.interactive",
-                                                                                  DURATION, PROJECT_ORDER_FIELD, NUMBER_OF_PROJECTS_FIELD,
-                                                                                  description = "Multiple Project Frame Became Interactive")
+private val FRAME_BECAME_INTERACTIVE_EVENT = GROUP.registerEvent("frame.became.interactive", DURATION)
+private val MULTIPLE_PROJECT_FRAME_BECAME_INTERACTIVE_EVENT = GROUP.registerEvent(
+  "multiple.project.frame.became.interactive",
+  DURATION, PROJECT_ORDER_FIELD, NUMBER_OF_PROJECTS_FIELD
+)
 
 private enum class SourceOfSelectedEditor {
   TextEditor,
@@ -755,22 +743,15 @@ private val LOADED_CACHED_DOC_RENDER_MARKUP_FIELD = EventFields.Boolean("loaded_
 private val SOURCE_OF_SELECTED_EDITOR_FIELD: EnumEventField<SourceOfSelectedEditor> =
   EventFields.Enum("source_of_selected_editor", SourceOfSelectedEditor::class.java)
 private val NO_EDITORS_TO_OPEN_FIELD = EventFields.Boolean("no_editors_to_open")
-private val CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT =
-  GROUP.registerVarargEvent("code.loaded.and.visible.in.editor",
-                            description = "Initial editors are reopened. Based on project settings IDE might reopen editors " +
-                                          "that were opened in previous session. " +
-                                          "If there are none of them, IDE might open README.md file. " +
-                                          "Event reports the moment when such editor is opened and focused, or when IDE finds " +
-                                          "that there is no such editor. Full highlight of editor may happen later. " +
-                                          "Also files opened due to passing them as command line parameters are not reported here " +
-                                          "(those cases are filtered out on frame.became.visible event " +
-                                          "with violation = MightBeLightEditProject.",
-                            *createCodeLoadedEventFields(false))
+private val CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT = GROUP.registerVarargEvent(
+  "code.loaded.and.visible.in.editor",
+  *createCodeLoadedEventFields(false)
+)
 
-private val MULTIPLE_PROJECT_CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT =
-  GROUP.registerVarargEvent("multiple.project.code.loaded.and.visible.in.editor",
-                            description = "Multiple Project Code Loaded And Visible In Editor",
-                            *createCodeLoadedEventFields(true))
+private val MULTIPLE_PROJECT_CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT = GROUP.registerVarargEvent(
+  "multiple.project.code.loaded.and.visible.in.editor",
+  *createCodeLoadedEventFields(true)
+)
 
 private fun getField(type: MarkupType): EventField<Boolean> {
   return when (type) {

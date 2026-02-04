@@ -15,8 +15,7 @@ internal object WelcomeScreenTabUsageCollector : CounterUsagesCollector() {
   fun logWelcomeScreenTabClosed(): Unit = WELCOME_SCREEN_TAB_CLOSED.log()
 
   private val welcomeTabIsEnabled: BooleanEventField = EventFields.Boolean("isEnabled")
-  private val WELCOME_SCREEN_TAB_VISIBILITY_CHANGED = GROUP.registerEvent("welcome.screen.tab.visibility.changed", welcomeTabIsEnabled,
-                                                                          description = "Event logged when the visibility of the welcome screen tab is changed by 'Show this page on startup' checkbox. Also could be changed via Advanced settings, but will be logged only if the current project is welcome screen.")
+  private val WELCOME_SCREEN_TAB_VISIBILITY_CHANGED = GROUP.registerEvent("welcome.screen.tab.visibility.changed", welcomeTabIsEnabled)
   fun logWelcomeScreenTabEnabled(): Unit = WELCOME_SCREEN_TAB_VISIBILITY_CHANGED.log(true)
   fun logWelcomeScreenTabDisabled(): Unit = WELCOME_SCREEN_TAB_VISIBILITY_CHANGED.log(false)
 

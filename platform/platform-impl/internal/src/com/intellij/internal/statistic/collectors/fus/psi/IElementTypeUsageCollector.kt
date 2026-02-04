@@ -32,22 +32,14 @@ internal class IElementTypeUsageCollector : ApplicationUsagesCollector() {
   }
 }
 
-private val GROUP = EventLogGroup(
-  id = "ielement.type",
-  version = 2,
-  description = "Collects usage statistics for various aspects of registered IElementTypes"
-)
+private val GROUP = EventLogGroup("ielement.type", 2)
 
 private val ELEMENT_TYPES = GROUP.registerEvent(
-  eventId = "element_types",
-  eventField1 = EventFields.RoundedInt("all_element_type_count"),
-  eventField2 = EventFields.RoundedInt("tombstone_count"),
-  description = "Registered IElementTypes"
+  "element_types",
+  EventFields.RoundedInt("all_element_type_count"), EventFields.RoundedInt("tombstone_count")
 )
 
 private val ELEMENT_TYPES_BY_LANGUAGE_COUNT = GROUP.registerEvent(
-  eventId = "element_type_by_language",
-  eventField1 = EventFields.Language,
-  eventField2 = EventFields.RoundedInt("count"),
-  description = "Number of registered IElementTypes per Language"
+  "element_type_by_language",
+  EventFields.Language, EventFields.RoundedInt("count")
 )

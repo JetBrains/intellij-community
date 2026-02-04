@@ -35,7 +35,7 @@ internal class ScriptingSettingsFUSCollector: ProjectUsagesCollector() {
         return metrics
     }
 
-    private val GROUP = EventLogGroup("kotlin.ide.script.settings", 1, recorder = "FUS", "Kotlin statistics on script usages")
+    private val GROUP = EventLogGroup("kotlin.ide.script.settings", 1)
 
     // scriptingAutoReloadEnabled Event
     private val scriptingAREnabledField = EventFields.Boolean("enabled")

@@ -54,13 +54,10 @@ public final class TypingEventsLogger extends CounterUsagesCollector {
   private static final IntEventField LATENCY_MAX = EventFields.Int("latency_max_ms");
   private static final IntEventField LATENCY_90 = EventFields.Int("latency_90_ms");
   private static final EventId3<Integer, Integer, FileType> LATENCY = GROUP.registerEvent("latency", LATENCY_MAX, LATENCY_90, EventFields.FileType);
-  private static final EventId2<Language, Language> TYPED_IN_INJECTED =
-    GROUP.registerEvent("typed.in.injected.language",
-                        EventFields.Language("original_lang"),
-                        EventFields.Language("injected_lang"),
-                        "Logs typing when the first language is the original language and the second language is injected language. " +
-                        "In case of multiple carets, logged for each caret individually"
-    );
+  private static final EventId2<Language, Language> TYPED_IN_INJECTED = GROUP.registerEvent(
+    "typed.in.injected.language",
+    EventFields.Language("original_lang"), EventFields.Language("injected_lang")
+  );
   private static final EventId TOO_MANY_INJECTED_EVENTS = GROUP.registerEvent("too.many.injected.events");
 
   private static final EventsRateWindowThrottle ourThrottle =
