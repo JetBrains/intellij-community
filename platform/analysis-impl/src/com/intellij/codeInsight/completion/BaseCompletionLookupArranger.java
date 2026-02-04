@@ -266,19 +266,23 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     synchronized (this) {
       if (myItems.size() < myLimit) return;
 
-      List<LookupElement> items = getMatchingItems();
-      Iterator<LookupElement> iterator = sortByRelevance(groupItemsBySorter(items)).iterator();
-
       Set<LookupElement> retainedSet = new ReferenceOpenHashSet<>();
       retainedSet.addAll(getTopPriorityItems());
       retainedSet.addAll(getPrefixItems(true));
       retainedSet.addAll(getPrefixItems(false));
       retainedSet.addAll(myFrozenItems);
-      while (retainedSet.size() < myLimit / 2 && iterator.hasNext()) {
-        retainedSet.add(iterator.next());
-      }
 
-      if (!iterator.hasNext()) return;
+      int halfLimit = myLimit / 2;
+      if (retainedSet.size() < halfLimit) {
+        List<LookupElement> items = getMatchingItems();
+        Iterator<LookupElement> iterator = sortByRelevance(groupItemsBySorter(items)).iterator();
+
+        while (retainedSet.size() < halfLimit && iterator.hasNext()) {
+          retainedSet.add(iterator.next());
+        }
+
+        if (!iterator.hasNext()) return;
+      }
 
       removed = retainItems(retainedSet);
       if (!myOverflow) {
