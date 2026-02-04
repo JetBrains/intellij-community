@@ -1,5 +1,3 @@
-// IGNORE_K2
-
 fun main() {
     emptyList<String>().map(String::<caret>)
 }
