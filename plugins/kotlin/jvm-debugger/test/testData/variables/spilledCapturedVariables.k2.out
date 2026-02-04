@@ -11,9 +11,10 @@ CoroutinePreflightFrame invokeSuspend (spilledCapturedVariables.kt:16)
     JavaValue[local] z: int = 1 (spilledCapturedVariables.kt:14)
 spilledCapturedVariables.kt:19
 CoroutinePreflightFrame invokeSuspend (spilledCapturedVariables.kt:19)
+    JavaValue[local] this (@A): spilledCapturedVariables.A = spilledCapturedVariables.A@hashCode
+    JavaValue[local] y: int = 1 (spilledCapturedVariables.kt:12)
+    JavaValue[local] x: int = 1 (spilledCapturedVariables.kt:10)
     JavaValue[continuation] this_: A@uniqueID = spilledCapturedVariables.A@hashCode
-    JavaValue[continuation] x = 1
-    JavaValue[continuation] y = 1
     JavaValue[continuation] z = 1
 spilledCapturedVariables.kt:22
 CoroutinePreflightFrame invokeSuspend (spilledCapturedVariables.kt:22)
