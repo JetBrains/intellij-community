@@ -7,23 +7,15 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import org.jetbrains.idea.reposearch.statistics.TopPackageIdValidationRule
 
 object MavenDependencyInsertionCollector : CounterUsagesCollector() {
-  override fun getGroup() = GROUP
-
-  private const val GROUP_ID = "gradle.maven.count"
-  private const val VERSION = 1
-
-  private val GROUP = EventLogGroup(GROUP_ID, VERSION)
+  private val GROUP = EventLogGroup("gradle.maven.count", 2)
 
   private const val PACKAGE_ID = "package_id"
   private const val PACKAGE_VERSION = "package_version"
   private const val BUILD_SYSTEM = "build_system"
   private const val DEPENDENCY_DECLARATION_NOTATION = "dependency_declaration_notation"
-
   private const val COMPLETION_PREFIX_LENGTH = "completion_prefix_length"
   private const val SELECTED_LOOKUP_INDEX = "selected_lookup_index"
-
   private const val PACKAGE_AUTOCOMPLETED = "package_autocompleted"
-  private const val PACKAGE_COPYPASTED = "package_copypasted"
 
   enum class BuildSystem {
     @JvmField
@@ -49,8 +41,7 @@ object MavenDependencyInsertionCollector : CounterUsagesCollector() {
   private val completionPrefixLengthField = EventFields.Int(COMPLETION_PREFIX_LENGTH)
   private val selectedLookupIndexField = EventFields.Int(SELECTED_LOOKUP_INDEX)
   private val buildSystemField = EventFields.Enum<BuildSystem>(BUILD_SYSTEM)
-  private val dependencyDeclarationNotationField =
-    EventFields.Enum<DependencyDeclarationNotation>(DEPENDENCY_DECLARATION_NOTATION)
+  private val dependencyDeclarationNotationField = EventFields.Enum<DependencyDeclarationNotation>(DEPENDENCY_DECLARATION_NOTATION)
 
   private val packageAutoCompleted = GROUP.registerVarargEvent(
     eventId = PACKAGE_AUTOCOMPLETED,
@@ -60,14 +51,6 @@ object MavenDependencyInsertionCollector : CounterUsagesCollector() {
     dependencyDeclarationNotationField,
     completionPrefixLengthField,
     selectedLookupIndexField
-  )
-
-  private val packageCopyPasted = GROUP.registerVarargEvent(
-    eventId = PACKAGE_COPYPASTED,
-    packageIdField,
-    packageVersionField,
-    buildSystemField,
-    dependencyDeclarationNotationField
   )
 
   @JvmStatic
@@ -91,20 +74,5 @@ object MavenDependencyInsertionCollector : CounterUsagesCollector() {
     )
   }
 
-  @JvmStatic
-  fun logPackageCopyPasted(
-    groupId: String,
-    artifactId: String,
-    version: String,
-    buildSystem: BuildSystem,
-    dependencyDeclarationNotation: DependencyDeclarationNotation
-  ) {
-    val packageId = "$groupId:$artifactId"
-    packageCopyPasted.log(
-      packageIdField.with(packageId),
-      packageVersionField.with(version),
-      buildSystemField.with(buildSystem),
-      dependencyDeclarationNotationField.with(dependencyDeclarationNotation)
-    )
-  }
+  override fun getGroup(): EventLogGroup = GROUP
 }
