@@ -57,10 +57,16 @@ open class FileSearchEverywhereContributor(event: AnActionEvent, contributorModu
   companion object {
     @JvmStatic
     fun createFileTypeFilter(project: Project): PersistentSearchEverywhereContributorFilter<FileTypeRef> {
-      val items = forAllFileTypes().toMutableList()
-      items.add(0, GotoFileModel.DIRECTORY_FILE_TYPE_REF)
+      val items = getAllFileTypes()
       return PersistentSearchEverywhereContributorFilter(items, GotoFileConfiguration.getInstance(project), FileTypeRef::displayName,
                                                          FileTypeRef::icon)
+    }
+
+    @Internal
+    fun getAllFileTypes(): List<FileTypeRef> {
+      val items = forAllFileTypes().toMutableList()
+      items.add(0, GotoFileModel.DIRECTORY_FILE_TYPE_REF)
+      return items
     }
   }
 
