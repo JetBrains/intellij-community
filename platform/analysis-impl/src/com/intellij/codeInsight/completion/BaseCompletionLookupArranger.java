@@ -214,7 +214,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
         }
         super.addElement(element, presentation);
       }
-      trimToLimit(context);
+      trimToHalfLimit(context);
     }
   }
 
@@ -245,7 +245,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
       }
       batchItems.clear();
     }
-    trimToLimit(createContext());
+    trimToHalfLimit(createContext());
   }
 
   @Override
@@ -258,7 +258,10 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     myProcess.itemSelected(lookupItem, completionChar);
   }
 
-  private void trimToLimit(@NotNull ProcessingContext context) {
+  /**
+   * If the number of items exceeds the limit, trim the list to half the limit.
+   */
+  private void trimToHalfLimit(@NotNull ProcessingContext context) {
     List<LookupElement> removed;
     synchronized (this) {
       if (myItems.size() < myLimit) return;
