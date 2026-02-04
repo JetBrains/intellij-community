@@ -4,6 +4,8 @@ package org.jetbrains.jewel.intui.standalone.theme
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.Color
@@ -20,6 +22,7 @@ import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.intui.standalone.IntUiMessageResourceResolver
 import org.jetbrains.jewel.intui.standalone.IntUiTypography
+import org.jetbrains.jewel.intui.standalone.ScrollbarHelper
 import org.jetbrains.jewel.intui.standalone.StandalonePainterHintsProvider
 import org.jetbrains.jewel.intui.standalone.StandalonePlatformCursorController
 import org.jetbrains.jewel.intui.standalone.icon.StandaloneIconManager
@@ -35,6 +38,8 @@ import org.jetbrains.jewel.intui.standalone.styling.dark
 import org.jetbrains.jewel.intui.standalone.styling.darkTransparentBackground
 import org.jetbrains.jewel.intui.standalone.styling.light
 import org.jetbrains.jewel.intui.standalone.styling.lightTransparentBackground
+import org.jetbrains.jewel.intui.standalone.window.macos.LocalMacPlatformServices
+import org.jetbrains.jewel.intui.standalone.window.macos.MacPlatformServicesDefaultImpl
 import org.jetbrains.jewel.ui.ComponentStyling
 import org.jetbrains.jewel.ui.DefaultComponentStyling
 import org.jetbrains.jewel.ui.LocalMenuItemShortcutHintProvider
@@ -234,7 +239,11 @@ public fun ComponentStyling.default(): ComponentStyling = with {
     // It's ok to use isDark here instead of instanceUuid, since we're building
     // defaults that do not change except when isDark changes
     val isDark = JewelTheme.isDark
-    remember(isDark) {
+    val scrollbarHelper = remember { ScrollbarHelper }
+    val scrollbarVisibility by scrollbarHelper.scrollbarVisibilityStyleFlow.collectAsState()
+    val trackClickBehavior by scrollbarHelper.trackClickBehaviorFlow.collectAsState()
+
+    remember(isDark, scrollbarVisibility, trackClickBehavior) {
         if (isDark) {
             dark(
                 transparentIconButtonStyle = IconButtonStyle.darkTransparentBackground(),
@@ -1261,6 +1270,8 @@ public fun IntUiTheme(
 ) {
     val managerScope = rememberCoroutineScope()
     IconManager.activate(StandaloneIconManager(managerScope))
+    val standaloneCursorController = remember { StandalonePlatformCursorController() }
+
     BaseJewelTheme(theme, ComponentStyling.default().with(styling), swingCompatMode) {
         CompositionLocalProvider(
             LocalPainterHintsProvider provides remember(theme) { StandalonePainterHintsProvider(theme) },
@@ -1269,7 +1280,8 @@ public fun IntUiTheme(
             LocalMenuItemShortcutHintProvider provides StandaloneMenuItemShortcutHintProvider,
             LocalTypography provides IntUiTypography,
             LocalMessageResourceResolverProvider provides IntUiMessageResourceResolver,
-            LocalPlatformCursorController provides StandalonePlatformCursorController,
+            LocalPlatformCursorController provides standaloneCursorController,
+            LocalMacPlatformServices provides MacPlatformServicesDefaultImpl,
         ) {
             content()
         }

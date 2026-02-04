@@ -1,4 +1,5 @@
-package org.jetbrains.jewel.window.utils
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.jewel.intui.standalone.window
 
 import java.lang.reflect.AccessibleObject
 import java.util.logging.Level
