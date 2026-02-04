@@ -217,7 +217,14 @@ public abstract class LookupArranger implements WeighingContext {
     return Collections.unmodifiableList(myTopPriorityItems);
   }
 
-  protected boolean isPrefixItem(@NotNull LookupElement item, final boolean exactly) {
+  /**
+   * Returns true if one of the item's lookup strings equals to the prefix exactly or in a case-insensitive manner if `exactly` is false.
+   *
+   * @param item    lookup element to check
+   * @param exactly whether to match exactly or in a case-insensitive manner
+   * @return true if the item matches the prefix, false otherwise
+   */
+  protected boolean isPrefixItem(@NotNull LookupElement item, boolean exactly) {
     final String pattern = itemPattern(item);
     for (String s : item.getAllLookupStrings()) {
       if (!s.equalsIgnoreCase(pattern)) continue;
