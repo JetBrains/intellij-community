@@ -117,6 +117,7 @@
     <spellchecker.lifecycle implementation="com.intellij.grazie.spellcheck.GrazieSpellcheckerLifecycle"/>
     <nameSuggestionProvider id="SpellcheckingSuggestionProvider" implementation="com.intellij.grazie.spellcheck.suggestion.SpellcheckingNameSuggestionProvider" order="first"/>
 
+    <registryKey key="spellchecker.suggestion.provider.enabled" defaultValue="true" description="Enables spellchecking name suggestion provider"/>
     <registryKey key="spellchecker.grazie.enabled" defaultValue="true" description="Enables Grazie text-level spellchecking"/>
     <registryKey key="spellchecker.cloud.enabled" defaultValue="true" description="Enables spellchecking via Cloud when it is available"/>
     <registryKey key="grazie.enable.status.bar.widget" defaultValue="true" description="Controls if the new Grazie status bar widget is available"/>
