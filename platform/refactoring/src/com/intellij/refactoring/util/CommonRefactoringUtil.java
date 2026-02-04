@@ -19,7 +19,12 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.psi.*;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
@@ -30,7 +35,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.function.Predicate;
 
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
@@ -241,6 +250,12 @@ public final class CommonRefactoringUtil {
           list.add(file);
         }
         return !ignored;
+      }
+
+      @Override
+      @Nullable
+      public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
+        return file.isDirectory() && file instanceof NewVirtualFile ? ((NewVirtualFile)file).iterInDbChildren() : null;
       }
     });
   }
