@@ -94,6 +94,8 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
   private Boolean myPluginsAutoUpdateEnabled;
   private volatile Boolean myDisposeStarted = false;
+  private final Object myCallbackLock = new Object();
+  private boolean myShutdownCallbackExecuted = false;
 
   public PluginManagerConfigurablePanel() {
     myPluginModelFacade = new PluginModelFacade(new MyPluginModel(null));
@@ -437,7 +439,10 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
   @Override
   public void dispose() {
-    myDisposeStarted = true;
+    synchronized (myCallbackLock) {
+      myDisposeStarted = true;
+    }
+
     if (ComponentUtil.getParentOfType(WelcomeScreen.class, myCardPanel) != null && isModified()) {
       scheduleApply();
     }
@@ -489,8 +494,10 @@ public final class PluginManagerConfigurablePanel implements Disposable {
       try {
         apply();
         WelcomeScreenEventCollector.logPluginsModified();
-        if (myDisposeStarted) { //To avoid race condition when dispose is called before apply callback gets called
-          InstalledPluginsState.getInstance().runShutdownCallback();
+        synchronized (myCallbackLock) {
+          if (myDisposeStarted && !myShutdownCallbackExecuted) {
+            InstalledPluginsState.getInstance().runShutdownCallback();
+          }
         }
       }
       catch (ConfigurationException exception) {
@@ -510,22 +517,38 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     myPluginModelFacade.getModel().applyWithCallback(myCardPanel, (installedWithoutRestart) -> {
       if (installedWithoutRestart) return;
       InstalledPluginsState installedPluginsState = InstalledPluginsState.getInstance();
-      if (myPluginModelFacade.getModel().createShutdownCallback) {
-        installedPluginsState.setShutdownCallback(() -> {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            if (ApplicationManager.getApplication().isExitInProgress()) return; // already shutting down
-            if (myPluginManagerCustomizer != null) {
-              myPluginManagerCustomizer.requestRestart(myPluginModelFacade, myTabHeaderComponent);
-              return;
+
+      synchronized (myCallbackLock) {
+        if (myShutdownCallbackExecuted) {
+          return;
+        }
+
+        if (myPluginModelFacade.getModel().createShutdownCallback) {
+          installedPluginsState.setShutdownCallback(() -> {
+            synchronized (myCallbackLock) {
+              if (myShutdownCallbackExecuted) {
+                return;
+              }
+              myShutdownCallbackExecuted = true;
             }
-            myPluginModelFacade.closeSession();
-            shutdownOrRestartApp();
+
+            ApplicationManager.getApplication().invokeLater(() -> {
+              if (ApplicationManager.getApplication().isExitInProgress()) return; // already shutting down
+              if (myPluginManagerCustomizer != null) {
+                myPluginManagerCustomizer.requestRestart(myPluginModelFacade, myTabHeaderComponent);
+                return;
+              }
+              myPluginModelFacade.closeSession();
+              shutdownOrRestartApp();
+            });
           });
-        });
+        }
       }
 
-      if (myDisposeStarted) {
-        installedPluginsState.runShutdownCallback();
+      synchronized (myCallbackLock) {
+        if (myDisposeStarted && !myShutdownCallbackExecuted) {
+          installedPluginsState.runShutdownCallback();
+        }
       }
     });
   }
