@@ -28,6 +28,7 @@ fun runTestBuildForFrontend(
       val rootModule = frontendProperties.rootModuleForModularLoader
       assertNotNull(rootModule) { "Root module for the modular loader is not specified in $frontendProperties" }
       RuntimeModuleRepositoryChecker.checkProductModules(rootModule!!, context, softly)
+      RuntimeModuleRepositoryChecker.checkBundledPluginsArePresent(rootModule, context, isEmbeddedVariant = false, softly)
     }
   )
 }
