@@ -72,9 +72,9 @@ abstract class AbstractMemberPullPushTest : KotlinLightCodeInsightFixtureTestCas
         }
     }
 
-    private enum class TestFileExtension(val value: String) {
-        MESSAGES("messages"),
-        DIALOG("dialog"),
+    private object TestFileExtension {
+        const val MESSAGES = "messages"
+        const val DIALOG = "dialog"
     }
 
     private fun getConflictFile(path: String): File =
@@ -83,10 +83,10 @@ abstract class AbstractMemberPullPushTest : KotlinLightCodeInsightFixtureTestCas
     private fun getDialogFile(path: String): File =
         getTestFile(path, TestFileExtension.DIALOG)
 
-    private fun getTestFile(path: String, extension: TestFileExtension): File {
+    private fun getTestFile(path: String, extension: String): File {
         val suffix = getSuffix()
-        val testFile = if (suffix != null) File("$path.${extension.value}.$suffix") else null
-        return testFile?.takeIf { it.exists() } ?: File("$path.${extension.value}")
+        val testFile = if (suffix != null) File("$path.${extension}.$suffix") else null
+        return testFile?.takeIf { it.exists() } ?: File("$path.${extension}")
     }
 
     private fun parseDialogFile(file: File): DialogConfig {
