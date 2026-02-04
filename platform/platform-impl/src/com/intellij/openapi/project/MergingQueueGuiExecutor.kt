@@ -20,6 +20,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -200,13 +201,15 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
 
   protected open val taskId: Any? = null
 
+  private val schedulingDispatcher = Dispatchers.Default.limitedParallelism(1)
+
   @OptIn(InternalCoroutinesApi::class)
   private fun startInBackgroundWithVisibleOrInvisibleProgress(
     onCancellation: () -> Unit,
     task: (ProgressIndicator) -> Unit,
   ) {
     val actionStarted = AtomicBoolean(false)
-    project.service<ScopeHolder>().scope.launch {
+    project.service<ScopeHolder>().scope.launch(schedulingDispatcher) {
       withBackgroundProgress(project, myProgressTitle) {
         coroutineToIndicator { indicator ->
           actionStarted.set(true)
