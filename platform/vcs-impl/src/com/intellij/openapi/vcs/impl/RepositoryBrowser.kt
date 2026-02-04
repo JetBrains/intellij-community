@@ -182,8 +182,7 @@ class RepositoryBrowserPanel(
   }
 
   private fun getLocalFilePath(file: VcsVirtualFile): FilePath {
-    val localFile = File(localRoot.path, file.path)
-    return VcsUtil.getFilePath(localFile, file.isDirectory)
+    return VcsUtil.getFilePath(file.path, file.isDirectory)
   }
 }
 
