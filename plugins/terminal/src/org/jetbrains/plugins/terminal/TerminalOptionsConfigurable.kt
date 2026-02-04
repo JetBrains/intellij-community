@@ -686,7 +686,11 @@ private fun Panel.actionShortcutComboboxWithEnabledCheckbox(
   }
 
   onApply {
-    updateActionShortcut(checkboxProperty.get(), comboboxProperty.get())
+    val checkboxChecked = checkboxProperty.get()
+    val shortcutItem = comboboxProperty.get()
+    if (checkboxChecked != initialCheckboxState || shortcutItem != initialComboboxState) {
+      updateActionShortcut(checkboxChecked, shortcutItem)
+    }
   }
   onReset {
     checkboxProperty.set(initialCheckboxState)
