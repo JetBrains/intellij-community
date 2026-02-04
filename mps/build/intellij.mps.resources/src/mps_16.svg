@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <defs>
+    <linearGradient id="mps_16-a" x1="75.699%" x2="-19.46%" y1="132.918%" y2="11.029%">
+      <stop offset="9.14%" stop-color="#0B8FFF"/>
+      <stop offset="20.77%" stop-color="#0D94F6"/>
+      <stop offset="39.603%" stop-color="#11A3DE"/>
+      <stop offset="63.282%" stop-color="#18BBB7"/>
+      <stop offset="87.097%" stop-color="#21D789"/>
+    </linearGradient>
+    <linearGradient id="mps_16-b" x1="155.149%" x2="-35.169%" y1="92.419%" y2="-29.471%">
+      <stop offset="9.14%" stop-color="#0B8FFF"/>
+      <stop offset="20.77%" stop-color="#0D94F6"/>
+      <stop offset="39.603%" stop-color="#11A3DE"/>
+      <stop offset="63.282%" stop-color="#18BBB7"/>
+      <stop offset="87.097%" stop-color="#21D789"/>
+    </linearGradient>
+    <linearGradient id="mps_16-c" x1="12.266%" x2="80.425%" y1="103.447%" y2="-22.342%">
+      <stop offset="12.297%" stop-color="#21D789"/>
+      <stop offset="13.191%" stop-color="#27D788"/>
+      <stop offset="21.553%" stop-color="#59D87B"/>
+      <stop offset="30.328%" stop-color="#85D970"/>
+      <stop offset="39.353%" stop-color="#ABDA67"/>
+      <stop offset="48.7%" stop-color="#CADB5F"/>
+      <stop offset="58.469%" stop-color="#E1DB59"/>
+      <stop offset="68.842%" stop-color="#F2DC55"/>
+      <stop offset="80.231%" stop-color="#FCDC53"/>
+      <stop offset="94.595%" stop-color="#FFDC52"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" fill-rule="evenodd" transform="translate(1 1)">
+    <polygon fill="url(#mps_16-a)" points="0 14 14 14 7 7 0 0"/>
+    <polygon fill="url(#mps_16-b)" points="14 14 7 7 14 0"/>
+    <polygon fill="url(#mps_16-c)" points="10.2 10.2 7 7 14 0"/>
+  </g>
+</svg>

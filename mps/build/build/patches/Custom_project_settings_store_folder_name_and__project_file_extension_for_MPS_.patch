@@ -1,0 +1,52 @@
+Index: platform/core-api/src/com/intellij/openapi/project/Project.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/core-api/src/com/intellij/openapi/project/Project.java b/platform/core-api/src/com/intellij/openapi/project/Project.java
+--- a/platform/core-api/src/com/intellij/openapi/project/Project.java	(revision d4453647be19492ef13e0961e8c3918b3d746317)
++++ b/platform/core-api/src/com/intellij/openapi/project/Project.java	(date 1747768102774)
+@@ -19,7 +19,7 @@
+  */
+ @ApiStatus.NonExtendable
+ public interface Project extends ComponentManager, AreaInstance {
+-  String DIRECTORY_STORE_FOLDER = ".idea";
++  String DIRECTORY_STORE_FOLDER = ".mps";
+ 
+   /**
+    * Returns a name ot the project. For a directory-based project it's an arbitrary string specified by user at project creation
+Index: platform/ide-core/src/com/intellij/openapi/project/ProjectUtil.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/ide-core/src/com/intellij/openapi/project/ProjectUtil.kt b/platform/ide-core/src/com/intellij/openapi/project/ProjectUtil.kt
+--- a/platform/ide-core/src/com/intellij/openapi/project/ProjectUtil.kt	(revision d4453647be19492ef13e0961e8c3918b3d746317)
++++ b/platform/ide-core/src/com/intellij/openapi/project/ProjectUtil.kt	(date 1747772778393)
+@@ -192,7 +192,7 @@
+     else -> {
+       // the lower case here is used for cosmetic reasons (develar - discussed with jeka - leave it as it was,
+       // user projects will not have long names as in our tests
+-      PathUtilRt.getFileName(presentableUrl).lowercase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
++      PathUtilRt.getFileName(presentableUrl).lowercase(Locale.US).removeSuffix(".mpr"/*ProjectFileType.DOT_DEFAULT_EXTENSION*/)
+     }
+   }
+   name = sanitizeFileName(name, truncateIfNeeded = false)
+Index: jps/model-serialization/src/org/jetbrains/jps/model/serialization/PathMacroUtil.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/jps/model-serialization/src/org/jetbrains/jps/model/serialization/PathMacroUtil.java b/jps/model-serialization/src/org/jetbrains/jps/model/serialization/PathMacroUtil.java
+--- a/jps/model-serialization/src/org/jetbrains/jps/model/serialization/PathMacroUtil.java	(revision f6a9881a92d5d27ffbfd5409c59c240a84e1d3cf)
++++ b/jps/model-serialization/src/org/jetbrains/jps/model/serialization/PathMacroUtil.java	(date 1737373058517)
+@@ -27,7 +27,7 @@
+   @ApiStatus.Internal
+   public static final String MODULE_WORKING_DIR = "$" + MODULE_WORKING_DIR_NAME + "$";
+ 
+-  @ApiStatus.Internal public static final @NonNls String DIRECTORY_STORE_NAME = ".idea";
++  @ApiStatus.Internal public static final @NonNls String DIRECTORY_STORE_NAME = ".mps";
+   @ApiStatus.Internal public static final @NonNls String APPLICATION_HOME_DIR = "APPLICATION_HOME_DIR";
+   @ApiStatus.Internal public static final @NonNls String APPLICATION_CONFIG_DIR = "APPLICATION_CONFIG_DIR";
+   @ApiStatus.Internal public static final @NonNls String APPLICATION_PLUGINS_DIR = "APPLICATION_PLUGINS_DIR";
+ 

@@ -1,0 +1,413 @@
+<project name="Platform build scripts" default="all">
+
+    <!-- ===================================================== -->
+    <!-- Initialize and load properties                        -->
+    <!-- ===================================================== -->
+
+    <property name="tc.root" location="${basedir}/../../.."/>
+    <property name="jps.project.root" location="${basedir}/.."/>
+    <property name="community.folder" location="${basedir}/../community"/>
+    <property name="android.folder" location="${community.folder}/android"/>
+    <property name="community.out" value="${basedir}/../out/jetbrains mps"/>
+    <property name="mps.folder" value="${basedir}/../.."/>
+    <property name="version.properties.file" value="${mps.folder}/build/version.properties"/>
+
+    <!-- ===================================================== -->
+    <!-- Help task                                             -->
+    <!-- ===================================================== -->
+
+    <target name="usage" description="Shows help">
+        <echo message="  Execute 'ant -projecthelp' for build file help."/>
+        <echo message="  Execute 'ant -help' for Ant help."/>
+        <echo message="${line.separator}"/>
+        <echo message="  Use default target 'all' to build platform and install in parent folder with MPS repository"/>
+        <echo message="${line.separator}"/>
+        <echo message="  You can set required platform branch/commit/tag with property 'idea.commit'. By default it set to 'mps.idea.platform.number' from version.properties"/>
+    </target>
+
+    <!-- ===================================================== -->
+    <!-- Load idea.commit from property file in MPS sources    -->
+    <!-- (Fail safe)                                           -->
+    <!-- ===================================================== -->
+
+    <target name="versions-file" description="Util task to check if version.properties.file exists">
+        <condition property="version.properties.exists" value="true" else="false">
+            <available file="${version.properties.file}"/>
+        </condition>
+    </target>
+
+    <target name="versions" depends="versions-file" if="${version.properties.exists}"
+            description="Try to load properties">
+        <loadproperties srcfile="${version.properties.file}"/>
+    </target>
+
+    <!-- ===================================================== -->
+    <!-- IDEA community repository tasks:                      -->
+    <!-- Check existence of repository in community folder     -->
+    <!-- Clone, fetch, reset, checkout (if idea.commit is set) -->
+    <!-- and pull                                              -->
+    <!-- ===================================================== -->
+
+    <target name="check" description="Check if IDEA Community folder exists">
+        <condition property="community.need.clone" value="false" else="true">
+            <available file="${community.folder}" type="dir"/>
+        </condition>
+    </target>
+
+    <target name="clone" depends="check" if="${community.need.clone}"
+            description="Clone IDEA Community repository to local folder">
+        <echo message="IDEA Community folder does not exists. Cloning..."/>
+        <exec executable="git" dir="${basedir}/../">
+            <arg value="clone"/>
+            <arg value="https://github.com/JetBrains/intellij-community.git"/>
+        </exec>
+    </target>
+
+    <target name="fetch" depends="clone" description="Perform git fetch on IDEA Community repository">
+        <exec executable="git" dir="${community.folder}">
+            <arg value="fetch"/>
+            <arg value="-p"/>
+        </exec>
+    </target>
+
+    <target name="reset" depends="fetch" description="Reset current IDEA Community state to HEAD">
+        <echo message="Reset all changes in IDEA Community folder to HEAD state."/>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="reset"/>
+            <arg value="--hard"/>
+            <arg value="HEAD"/>
+        </exec>
+    </target>
+
+    <target name="check-commit" depends="versions" description="Check if idea.commit is set to execute checkout task">
+        <condition property="idea.commit.is.set" value="true" else="false">
+            <isset property="idea.commit"/>
+        </condition>
+    </target>
+
+    <target name="checkout" depends="reset,check-commit" if="${idea.commit.is.set}"
+            description="Checkout IDEA Community branch/commit/tag set in idea.commit property">
+        <echo message="Check out IDEA Community branch/commit/tag: ${idea.commit}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="checkout"/>
+            <arg value="-f"/>
+            <arg value="${idea.commit}"/>
+        </exec>
+    </target>
+
+    <target name="pull" depends="checkout" description="Update repository">
+        <exec executable="git" dir="${community.folder}">
+            <arg value="pull"/>
+        </exec>
+    </target>
+
+    <!-- ===================================================== -->
+    <!-- Preparations for build:                               -->
+    <!-- Copy list of modules                                  -->
+    <!-- Copy Kotlin compiler settings                         -->
+    <!-- Copy list of external jar repositories                -->
+    <!-- Copy list of libraries                                -->
+    <!-- Copy list of artifacts                                -->
+    <!-- Apply MPS patches                                     -->
+    <!-- ===================================================== -->
+
+    <target name="compiler" description="Copy IDEA Community compiler.xml and update paths (add the community folder)">
+        <echo message="Copy and update IDEA Community compiler.xml"/>
+        <delete file="${basedir}/../.idea/compiler.xml"/>
+        <copy file="${community.folder}/.idea/compiler.xml" todir="${basedir}/../.idea"/>
+        <replaceregexp file="${basedir}/../.idea/compiler.xml" flags="g" byline="true">
+            <regexp pattern="\$PROJECT_DIR\$"/>
+            <substitution expression="\0/community"/>
+        </replaceregexp>
+    </target>
+
+    <target name="modules" description="Copy IDEA Community modules and update paths (add the community folder)">
+        <echo message="Copy and update IDEA Community modules list"/>
+        <delete file="${basedir}/../.idea/modules.xml"/>
+        <copy file="${community.folder}/.idea/modules.xml" todir="${basedir}/../.idea"/>
+        <replaceregexp file="${basedir}/../.idea/modules.xml" flags="g" byline="true">
+            <regexp pattern="(\$PROJECT_DIR\$/)"/>
+            <substitution expression="\1community/"/>
+        </replaceregexp>
+        <replaceregexp file="${basedir}/../.idea/modules.xml">
+            <regexp pattern="&lt;/modules>"/>
+            <substitution
+                expression="  &lt;module fileurl=&quot;file://$PROJECT_DIR$/mps-platform.iml&quot; filepath=&quot;$PROJECT_DIR$/mps-platform.iml&quot; /&gt;${line.separator}      &lt;module fileurl=&quot;file://$PROJECT_DIR$/intellij.mps.resources/intellij.mps.resources.iml&quot; filepath=&quot;$PROJECT_DIR$/intellij.mps.resources/intellij.mps.resources.iml&quot; /&gt;${line.separator}&lt;/modules>"/>
+        </replaceregexp>
+    </target>
+
+    <target name="kotlinc"
+            description="Copy IDEA Community Kotlin compiler settings">
+        <echo message="Copy IDEA Community Kotlin compiler settings"/>
+        <delete file="${basedir}/../.idea/kotlinc.xml"/>
+        <copy file="${community.folder}/.idea/kotlinc.xml" todir="${basedir}/../.idea"/>
+    </target>
+
+    <target name="jar-repositories"
+            description="Copy IDEA Community external jar repositories settings">
+        <echo message="Copy IDEA Community external jar repositories settings"/>
+        <delete file="${basedir}/../.idea/jarRepositories.xml"/>
+        <copy file="${community.folder}/.idea/jarRepositories.xml" todir="${basedir}/../.idea"/>
+    </target>
+
+    <target name="libraries" description="Copy IDEA Community libraries and update paths (add the community folder)">
+        <echo message="Copy and update IDEA Community libraries"/>
+        <delete dir="${basedir}/../.idea/libraries"/>
+        <mkdir dir="${basedir}/../.idea/libraries"/>
+        <copy todir="${basedir}/../.idea/libraries">
+            <fileset dir="${community.folder}/.idea/libraries"/>
+        </copy>
+        <replaceregexp flags="g" byline="true">
+            <regexp pattern="\$PROJECT_DIR\$"/>
+            <substitution expression="\0/community"/>
+            <fileset dir="${basedir}/../.idea/libraries"/>
+        </replaceregexp>
+    </target>
+
+    <target name="patch" description="Apply MPS patches to IDEA Community sources">
+        <echo message="Applying MPS patches to IDEA Community sources..."/>
+
+        <property name="WindowsDistribution" value="${basedir}/patches/WindowsDistribution.patch"/>
+        <echo message="Applying ${WindowsDistribution}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="&#45;-ignore-space-change"/>
+            <arg value="${WindowsDistribution}"/>
+        </exec>
+
+        <property name="IJPL-156181" value="${basedir}/patches/IJPL-156181.patch"/>
+        <echo message="Applying ${IJPL-156181}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="&#45;-ignore-space-change"/>
+            <arg value="${IJPL-156181}"/>
+        </exec>
+
+        <property name="MPS-38229" value="${basedir}/patches/MPS-38229.patch"/>
+        <echo message="Applying ${MPS-38229}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="&#45;-ignore-space-change"/>
+            <arg value="${MPS-38229}"/>
+        </exec>
+
+        <property name="MPS-38534" value="${basedir}/patches/MPS-38534-WelcomeScreenPromotions_for251.patch"/>
+        <echo message="Applying ${MPS-38534}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="&#45;-ignore-space-change"/>
+            <arg value="${MPS-38534}"/>
+        </exec>
+
+      <property name="DisableSlowOperationsInEAP" value="${basedir}/patches/DisableSlowOperationsInEAP.patch"/>
+        <echo message="Applying ${DisableSlowOperationsInEAP}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="&#45;-ignore-space-change"/>
+            <arg value="${DisableSlowOperationsInEAP}"/>
+        </exec>
+
+        <property name="patchInitComponentsBeforeEditorOpens" value="${basedir}/patches/MPS-36060.patch"/>
+        <echo message="Applying ${patchInitComponentsBeforeEditorOpens}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="&#45;-ignore-space-change"/>
+            <arg value="${patchInitComponentsBeforeEditorOpens}"/>
+        </exec>
+
+        <property name="patchDisableCoursesAndTextSearch" value="${basedir}/patches/DisableCoursesAndTextSearch.patch"/>
+        <echo message="Applying ${patchDisableCoursesAndTextSearch}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="&#45;-ignore-space-change"/>
+            <arg value="${patchDisableCoursesAndTextSearch}"/>
+        </exec>
+
+        <property name="patchFile" value="${basedir}/patches/Custom_project_settings_store_folder_name_and__project_file_extension_for_MPS_.patch"/>
+        <echo message="Applying ${patchFile}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="&#45;-ignore-space-change"/>
+            <arg value="${patchFile}"/>
+        </exec>
+
+        <property name="patchJps" value="${basedir}/patches/jps.patch"/>
+        <echo message="Applying ${patchJps}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="&#45;-ignore-space-change"/>
+            <arg value="${patchJps}"/>
+        </exec>
+
+    </target>
+
+    <!-- ===================================================== -->
+    <!-- Main tasks                                            -->
+    <!-- ===================================================== -->
+
+    <!-- Exists as standalone task for TeamCity build -->
+    <target name="teamcity" depends="patch,configure,compile,repackage" description="Builds TC artifacts for the build chain"/>
+
+    <!-- Run this before opening mps-platform project in IDEA -->
+    <target name="configure" depends="compiler,modules,kotlinc,jar-repositories,libraries" description="Configures IDEA platform project"/>
+
+    <target name="prepare" depends="patch,configure" description="Make all build preparation tasks"/>
+
+    <!-- Exists as standalone task for TeamCity build -->
+    <condition property="script.suffix" value=".cmd">
+        <os family="windows" />
+    </condition>
+    <property name="script.suffix" value=".sh" />
+
+    <target name="compile" description="Runs building script.">
+        <symlink link="${jps.project.root}/.mps" resource="${jps.project.root}/.idea"/>
+        <exec failonerror="true" executable="${community.folder}/platform/jps-bootstrap/jps-bootstrap${script.suffix}">
+            <arg value="${jps.project.root}"/>
+            <arg value="mps-platform"/>
+            <arg value="org.jetbrains.intellij.build.mps.MPSBuilder"/>
+            <arg value="${jps.project.root}"/>
+        </exec>
+        <jar destfile="${community.out}/dist.all/lib/jps/jps-build-test.jar" duplicate="preserve">
+            <fileset dir="${community.out}/classes/test/intellij.platform.jps.build.tests" />
+        </jar>
+    </target>
+
+    <target name="repackage" depends="repackage-app-jar,repackage-java-plugin,extract-plugin-xml,extract-win-exe"/>
+
+    <!-- plugin.xml built by JPS contains all needed embedded module descriptors. Extract them for MPS build to later include them in MPSPlugin.xml -->
+    <target name="extract-plugin-xml" description="Extract embedded module descriptors for future use in MPS builds">
+        <unzip src="${community.out}/dist.all/lib/mps-resources.zip" dest="${community.out}/dist.all/lib/" overwrite="true">
+            <patternset>
+                <include name="META-INF/plugin.xml"/>
+            </patternset>
+            <mapper type="flatten"/>
+        </unzip>
+        <!-- Extract all <content> ... </content> snippets-->
+        <exec failonerror="true" executable="bash" dir="${community.out}/dist.all/lib/">
+            <arg value="-c"/>
+            <arg value="awk '/&lt;content[^&gt;]*&gt;/ { in_block=1 } in_block { block = block $0 ORS } /&lt;\/content&gt;/ { in_block=0; print block &gt;&gt; &quot;module-descriptors.xml&quot;; block=&quot;&quot; }' plugin.xml"/>
+        </exec>
+        <delete file="${community.out}/dist.all/lib/mps-resources.zip"/>
+        <delete file="${community.out}/dist.all/lib/plugin.xml"/>
+    </target>
+
+    <!-- Build contains exe files with proper MPS icons -->
+    <target name="extract-win-exe" description="Extract customized Windows executables">
+        <unzip src="${community.out}/artifacts/platform.win.zip" dest="${community.out}/artifacts/" overwrite="true">
+            <patternset>
+                <include name="bin/mps64.exe"/>
+            </patternset>
+            <mapper type="flatten"/>
+        </unzip>
+        <move file="${community.out}/artifacts/mps64.exe" tofile="${community.out}/dist.all/build/resources/mps-win-64.exe"/>
+
+        <unzip src="${community.out}/artifacts/platform-aarch64.win.zip" dest="${community.out}/artifacts/" overwrite="true">
+            <patternset>
+                <include name="bin/mps64.exe"/>
+            </patternset>
+            <mapper type="flatten"/>
+        </unzip>
+        <move file="${community.out}/artifacts/mps64.exe" tofile="${community.out}/dist.all/build/resources/mps-win-aarch64.exe"/>
+    </target>
+
+    <!-- We need this to remove IdeaApplicationInfo.xml and IdeaPlugin.xml from platform-impl.jar.
+    MPS declare its own files -->
+    <target name="repackage-app-jar" description="Remove IDEA specific descriptors">
+        <jar destfile="${community.out}/dist.all/lib/stripped.jar" zip64Mode="as-needed">
+            <zipfileset src="${community.out}/dist.all/lib/app.jar" excludes="idea/IdeaApplicationInfo.xml,META-INF/IdeaPlugin.xml" />
+        </jar>
+        <move file="${community.out}/dist.all/lib/stripped.jar" tofile="${community.out}/dist.all/lib/app.jar"/>
+    </target>
+
+    <!-- We need this to initialize JRT FS before repository to read JDK solution later.
+    It's quite impossible to change loading of modules/models to lazy variant.
+    Also, a possible solution is to load JRT roots with IO FS -->
+    <!--In java-impl.jar, we remove META-INF contents for Idea not to try loading plugins from it (see MPS-30538) -->
+    <target name="repackage-java-plugin" description="Remove IDEA specific descriptors">
+        <jar destfile="${community.out}/dist.all/plugins/java/lib/stripped.jar">
+            <zipfileset src="${community.out}/dist.all/plugins/java/lib/java-impl.jar" excludes="META-INF/**" />
+            <fileset dir="${basedir}/manifests/java-impl.jar" includes="META-INF/**"/>
+        </jar>
+        <move file="${community.out}/dist.all/plugins/java/lib/stripped.jar" tofile="${community.out}/dist.all/plugins/java/lib/java-impl.jar"/>
+    </target>
+
+    <target name="build" depends="pull,prepare,compile"
+            description="Build patched IDEA Community sources to create MPS platform"/>
+
+    <target name="install-check" description="Check that there are build artifacts">
+        <condition property="platform.out.exists">
+            <and>
+                <available file="${basedir}/../out/intellij idea/dist.all"/>
+                <available file="${basedir}/../out/intellij idea/artifacts"/>
+            </and>
+        </condition>
+    </target>
+
+    <target name="install" depends="install-check" description="Copy platform libs to MPS">
+
+        <fail message="No platform artifacts found! Run 'build' task first." unless="${platform.out.exists}"/>
+
+        <echo message="Cleaning destination folders in MPS sources..."/>
+
+        <delete dir="${mps.folder}/lib"/>
+        <delete dir="${mps.folder}/bin/linux"/>
+        <delete dir="${mps.folder}/bin/mac"/>
+        <delete dir="${mps.folder}/bin/win"/>
+        <delete file="${mps.folder}/build/resources/mps"/>
+        <delete dir="${mps.folder}/build/conf"/>
+        <delete dir="${mps.folder}/plugins/git4idea/lib"/>
+        <delete dir="${mps.folder}/plugins/svn4idea/lib"/>
+        <delete dir="${mps.folder}/plugins/terminal"/>
+
+        <mkdir dir="${mps.folder}/lib"/>
+        <mkdir dir="${mps.folder}/lib/src"/>
+        <mkdir dir="${mps.folder}/bin/linux"/>
+        <mkdir dir="${mps.folder}/bin/mac"/>
+        <mkdir dir="${mps.folder}/bin/win"/>
+        <mkdir dir="${mps.folder}/build/conf"/>
+        <mkdir dir="${mps.folder}/plugins/git4idea/lib"/>
+        <mkdir dir="${mps.folder}/plugins/svn4idea/lib"/>
+        <mkdir dir="${mps.folder}/plugins/terminal"/>
+
+        <echo message="Copying platform and zip with platform sources to MPS sources..."/>
+
+        <!--Copy platform libraries to MPS lib folder-->
+        <copy todir="${mps.folder}/lib">
+            <fileset dir="${community.out}/dist.all/lib"/>
+        </copy>
+
+        <!--Copy build.txt to MPS lib folder-->
+        <copy file="${community.out}/dist.all/build.txt" todir="${mps.folder}/lib"/>
+
+        <!--Copy platform sources to MPS lib folder-->
+        <copy file="${community.out}/artifacts/platform-sources.zip" todir="${mps.folder}/lib/src"/>
+
+        <!--Copy binaries-->
+        <copy todir="${mps.folder}/bin/linux">
+            <fileset dir="${community.out}/dist.all/bin/linux"/>
+        </copy>
+        <copy todir="${mps.folder}/bin/mac">
+            <fileset dir="${community.out}/dist.all/bin/mac"/>
+        </copy>
+        <copy todir="${mps.folder}/bin/win">
+            <fileset dir="${community.out}/dist.all/bin/win"/>
+        </copy>
+        <copy  todir="${mps.folder}/build/resources">
+            <fileset includes="${community.out}/dist.all/build/resources/mps*"/>
+        </copy>
+        <copy file="${community.out}/dist.all/build/dependencies/gradle.properties" todir="${mps.folder}/build/dependencies"/>
+
+        <!--Copy plugin libraries to plugin folders-->
+        <copy todir="${mps.folder}/plugins/git4idea/lib">
+            <fileset dir="${community.out}/dist.all/plugins/git4idea/lib"/>
+        </copy>
+        <copy todir="${mps.folder}/plugins/svn4idea/lib">
+            <fileset dir="${community.out}/dist.all/plugins/svn4idea/lib"/>
+        </copy>
+        <copy todir="${mps.folder}/plugins/terminal">
+            <fileset dir="${community.out}/dist.all/plugins/terminal"/>
+        </copy>
+    </target>
+
+    <target name="all" depends="build,install" description="Build and install MPS platform"/>
+</project>
