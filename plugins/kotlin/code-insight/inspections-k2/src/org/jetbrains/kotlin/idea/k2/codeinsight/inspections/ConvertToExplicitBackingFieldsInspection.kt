@@ -17,9 +17,11 @@ import com.intellij.psi.util.lastLeaf
 import com.intellij.psi.util.siblings
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformat
@@ -75,8 +77,10 @@ internal class ConvertToExplicitBackingFieldsInspection :
             val backingProperty = updater.getWritable(backingPropertyContext)
             val initializer = backingProperty.initializer?.let { getElementWithoutInnerComments(it, StringBuilder()) }
 
-            referencesToReplace.forEach { writableRef ->
-                writableRef.replace(psiFactory.createExpression(propertyNameText))
+            referencesToReplace.map { writableRef ->
+                writableRef.replace(psiFactory.createExpression("this.$propertyNameText")) as KtExpression
+            }.let {
+                shortenReferences(it, shortenOptions = ShortenOptions.ALL_ENABLED)
             }
 
             val getter = element.getter ?: return
