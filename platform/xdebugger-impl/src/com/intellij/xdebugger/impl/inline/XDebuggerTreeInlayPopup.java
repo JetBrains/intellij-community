@@ -19,7 +19,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeCreator;
 import com.intellij.xdebugger.impl.evaluate.quick.common.XDebuggerTreePopup;
-import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -132,7 +132,7 @@ public class XDebuggerTreeInlayPopup<D> extends XDebuggerTreePopup<D> {
                                        @NotNull XSourcePosition position,
                                        @NotNull XDebugSession session,
                                        Runnable hideRunnable) {
-    XDebugSessionProxy proxy = MonolithSessionProxyKt.asProxy(session);
+    XDebugSessionProxy proxy = XDebuggerEntityConverter.asProxy(session);
     new XDebuggerTreeInlayPopup<>(creator, editor, point, position, proxy, hideRunnable, valueNode).show(initialItem);
   }
 

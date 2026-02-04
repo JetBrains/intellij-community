@@ -53,16 +53,9 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebugSessionSelectionService;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import com.intellij.xdebugger.impl.frame.XDebugView;
-import com.intellij.xdebugger.impl.frame.XDebugViewSessionListener;
-import com.intellij.xdebugger.impl.frame.XFramesView;
-import com.intellij.xdebugger.impl.frame.XThreadsView;
-import com.intellij.xdebugger.impl.frame.XVariablesView;
-import com.intellij.xdebugger.impl.frame.XVariablesViewBase;
-import com.intellij.xdebugger.impl.frame.XWatchesView;
-import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
+import com.intellij.xdebugger.impl.frame.*;
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.xdebugger.impl.messages.XDebuggerImplBundle;
-import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.ApiStatus;
@@ -100,7 +93,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
                                                  @Nullable Icon icon,
                                                  @Nullable ExecutionEnvironment environment,
                                                  @Nullable RunContentDescriptor contentToReuse) {
-    XDebugSessionProxy proxy = MonolithSessionProxyKt.asProxy(session);
+    XDebugSessionProxy proxy = XDebuggerEntityConverter.asProxy(session);
     boolean forceNewDebuggerUi = XDebugSessionTabCustomizerKt.forceShowNewDebuggerUi(session.getDebugProcess());
     boolean withFramesCustomization = XDebugSessionTabCustomizerKt.allowFramesViewCustomization(session.getDebugProcess());
     @Nullable String defaultFramesViewKey = XDebugSessionTabCustomizerKt.getDefaultFramesViewKey(session.getDebugProcess());
@@ -552,7 +545,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
    */
   @Deprecated
   public static void showWatchesView(@NotNull XDebugSessionImpl session) {
-    showWatchesView(MonolithSessionProxyKt.asProxy(session));
+    showWatchesView(XDebuggerEntityConverter.asProxy(session));
   }
 
   public static void showWatchesView(@NotNull XDebugSessionProxy session) {
@@ -567,7 +560,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   @Deprecated
   public static void showFramesView(@Nullable XDebugSessionImpl session) {
     if (session == null) return;
-    showFramesView(MonolithSessionProxyKt.asProxy(session));
+    showFramesView(XDebuggerEntityConverter.asProxy(session));
   }
 
   @ApiStatus.Internal

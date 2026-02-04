@@ -11,6 +11,7 @@ import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
 import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.frame.XExecutionStack
@@ -42,7 +43,7 @@ internal class MonolithXDebugManagerProxy : XDebugManagerProxy {
   }
 
   override suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T {
-    val sessionImpl = (session as MonolithSessionProxy).sessionImpl
+    val sessionImpl = findSessionImpl(session)
     return withTemporaryXValueId(value, sessionImpl, block)
   }
 
@@ -57,7 +58,7 @@ internal class MonolithXDebugManagerProxy : XDebugManagerProxy {
   }
 
   override suspend fun <T> withId(stack: XExecutionStack, session: XDebugSessionProxy, block: suspend (XExecutionStackId) -> T): T {
-    val sessionImpl = (session as MonolithSessionProxy).sessionImpl
+    val sessionImpl = findSessionImpl(session)
     return withCoroutineScopeForId(block) { scope ->
       val (_, id) = stack.getOrStoreGlobally(scope, sessionImpl)
       id
@@ -89,6 +90,13 @@ internal class MonolithXDebugManagerProxy : XDebugManagerProxy {
   override fun hasBackendCounterpart(xValue: XValue): Boolean {
     return true
   }
+
+  private fun findSessionImpl(session: XDebugSessionProxy): XDebugSessionImpl {
+    val monolithSession = XDebuggerEntityConverter.getSessionNonSplitOnly(session) ?: error("Expected to have monolith session: $session")
+    val sessionImpl = monolithSession as XDebugSessionImpl
+    return sessionImpl
+  }
+
 }
 
 @ApiStatus.Internal

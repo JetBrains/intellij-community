@@ -4,7 +4,7 @@ package com.intellij.xdebugger.impl.frame;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
-import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +23,7 @@ public final class XDebugViewSessionListener implements XDebugSessionListener {
    */
   @ApiStatus.Obsolete
   public static void attach(@NotNull XDebugView debugView, @NotNull XDebugSession session) {
-    XDebugSessionProxy proxy = MonolithSessionProxyKt.asProxy(session);
+    XDebugSessionProxy proxy = XDebuggerEntityConverter.asProxy(session);
     attach(debugView, proxy);
   }
 

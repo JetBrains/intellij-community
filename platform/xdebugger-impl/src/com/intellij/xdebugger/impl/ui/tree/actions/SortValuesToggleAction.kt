@@ -8,9 +8,8 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
 import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.util.application
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -27,12 +26,12 @@ class SortValuesToggleAction : ToggleAction(), DumbAware, SplitDebuggerAction {
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {
-    return XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isSortValues
+    return XDebuggerSettingsManager.getInstance().dataViewSettings.isSortValues
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isSortValues = state
+    XDebuggerSettingsManager.getInstance().dataViewSettings.isSortValues = state
     saveSettingsForRemoteDevelopment(e.coroutineScope, application)
-    XDebuggerUtilImpl.rebuildAllSessionsViews(e.project)
+    DebuggerUIUtil.rebuildAllSessionsViews(e.project)
   }
 }

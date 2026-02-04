@@ -39,6 +39,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -73,12 +74,7 @@ import com.intellij.xdebugger.impl.inline.InlineWatchNode;
 import com.intellij.xdebugger.impl.inline.InlineWatchesRootNode;
 import com.intellij.xdebugger.impl.inline.XInlineWatchesView;
 import com.intellij.xdebugger.impl.messages.XDebuggerImplBundle;
-import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
-import com.intellij.xdebugger.impl.ui.DebuggerSessionTabBase;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
-import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox;
-import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
+import com.intellij.xdebugger.impl.ui.*;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.actions.XWatchTransferable;
@@ -133,7 +129,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
    */
   @Deprecated
   public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables) {
-    this(MonolithSessionProxyKt.asProxy(session), watchesInVariables);
+    this(XDebuggerEntityConverter.asProxy(session), watchesInVariables);
   }
 
   public XWatchesViewImpl(@NotNull XDebugSessionProxy session, boolean watchesInVariables) {
@@ -145,7 +141,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
    */
   @Deprecated
   protected XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables, boolean vertical) {
-    this(MonolithSessionProxyKt.asProxy(session), watchesInVariables, vertical);
+    this(XDebuggerEntityConverter.asProxy(session), watchesInVariables, vertical);
   }
 
   protected XWatchesViewImpl(@NotNull XDebugSessionProxy session, boolean watchesInVariables, boolean vertical) {
@@ -157,7 +153,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
    */
   @Deprecated
   public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables, boolean vertical, boolean withToolbar) {
-    this(MonolithSessionProxyKt.asProxy(session), watchesInVariables, vertical, withToolbar);
+    this(XDebuggerEntityConverter.asProxy(session), watchesInVariables, vertical, withToolbar);
   }
 
   public XWatchesViewImpl(@NotNull XDebugSessionProxy session, boolean watchesInVariables, boolean vertical, boolean withToolbar) {

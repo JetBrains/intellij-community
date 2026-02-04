@@ -3,6 +3,7 @@ package com.intellij.xdebugger.settings;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class XDebuggerSettingsManager implements Disposable {
@@ -12,6 +13,9 @@ public abstract class XDebuggerSettingsManager implements Disposable {
 
   public interface DataViewSettings {
     boolean isSortValues();
+
+    @ApiStatus.Internal
+    void setSortValues(boolean sortValues);
 
     boolean isAutoExpressions();
 

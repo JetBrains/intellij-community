@@ -65,7 +65,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueModifier;
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
@@ -554,7 +553,7 @@ public final class DebuggerUIUtil {
             tree.rebuildAndRestore(treeState);
           }
         });
-        XDebuggerUtilImpl.rebuildAllSessionsViews(project);
+        rebuildAllSessionsViews(project);
       }
 
       @Override
@@ -563,7 +562,7 @@ public final class DebuggerUIUtil {
           tree.rebuildAndRestore(treeState);
           errorConsumer.consume(errorMessage);
         });
-        XDebuggerUtilImpl.rebuildAllSessionsViews(project);
+        rebuildAllSessionsViews(project);
       }
     });
   }
@@ -625,5 +624,21 @@ public final class DebuggerUIUtil {
     else {
       e.getPresentation().setVisible(enable);
     }
+  }
+
+  @ApiStatus.Internal
+  public static void rebuildAllSessionsViews(@Nullable Project project) {
+    if (project == null) return;
+    XDebugManagerProxy.getInstance().getSessions(project).stream()
+      .filter(XDebugSessionProxy::isSuspended)
+      .forEach(XDebugSessionProxy::rebuildViews);
+  }
+
+  @ApiStatus.Internal
+  public static void rebuildTreeAndViews(XDebuggerTree tree) {
+    if (tree.isDetached()) {
+      tree.rebuild();
+    }
+    rebuildAllSessionsViews(tree.getProject());
   }
 }

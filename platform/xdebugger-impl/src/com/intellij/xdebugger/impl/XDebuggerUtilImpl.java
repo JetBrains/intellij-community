@@ -920,17 +920,11 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   public static void rebuildAllSessionsViews(@Nullable Project project) {
-    if (project == null) return;
-    XDebugManagerProxy.getInstance().getSessions(project).stream()
-      .filter(XDebugSessionProxy::isSuspended)
-      .forEach(XDebugSessionProxy::rebuildViews);
+    DebuggerUIUtil.rebuildAllSessionsViews(project);
   }
 
   public static void rebuildTreeAndViews(XDebuggerTree tree) {
-    if (tree.isDetached()) {
-      tree.rebuild();
-    }
-    rebuildAllSessionsViews(tree.getProject());
+    DebuggerUIUtil.rebuildTreeAndViews(tree);
   }
 
   @Override

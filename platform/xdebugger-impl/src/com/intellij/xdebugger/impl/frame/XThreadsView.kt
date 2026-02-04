@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionApi
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.platform.debugger.impl.ui.DebuggerUIUtilShared
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
 import com.intellij.ui.AutoScrollToSourceHandler
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -16,7 +17,6 @@ import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
 import com.intellij.xdebugger.impl.actions.XDebuggerActions.THREADS_VIEW_POPUP_GROUP
-import com.intellij.xdebugger.impl.proxy.asProxy
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel
@@ -45,7 +45,7 @@ class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView()
   private var wasShowing = false
 
   @ApiStatus.Obsolete
-  constructor(project: Project, session: XDebugSession) : this(project, session.asProxy())
+  constructor(project: Project, session: XDebugSession) : this(project, XDebuggerEntityConverter.asProxy(session))
 
   private val treePanel = XDebuggerTreePanel(project, session.editorsProvider, this, null, THREADS_VIEW_POPUP_GROUP, null)
 

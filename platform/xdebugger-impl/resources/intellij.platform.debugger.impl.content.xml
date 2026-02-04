@@ -490,7 +490,7 @@
   <projectListeners>
     <listener class="com.intellij.xdebugger.impl.dashboard.XDebuggerRunDashboardUpdater"
               topic="com.intellij.execution.ExecutionListener"/>
-    <listener class="com.intellij.xdebugger.impl.MonolithListenerAdapter"
+    <listener class="com.intellij.xdebugger.impl.proxy.MonolithListenerAdapter"
               topic="com.intellij.xdebugger.XDebuggerManagerListener"/>
     <listener class="com.intellij.xdebugger.impl.ExecutionPointManagerChangeListener"
               topic="com.intellij.xdebugger.impl.XDebuggerManagerProxyListener"/>

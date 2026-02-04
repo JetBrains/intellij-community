@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
+import com.intellij.platform.debugger.impl.shared.XDebuggerUtilImplShared;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NonNavigatable;
 import com.intellij.psi.PsiElement;
@@ -161,7 +162,7 @@ public abstract class XSourcePositionImpl implements XSourcePosition {
 
   @Override
   public @NotNull Navigatable createNavigatable(@NotNull Project project) {
-    return XDebuggerUtilImpl.createNavigatable(project, this);
+    return XDebuggerUtilImplShared.createNavigatable(project, this);
   }
 
   @Override
