@@ -668,6 +668,38 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         }
     }
 
+
+    @ParameterizedTest
+    @AllGradleVersionsSource("allprojects,subprojects")
+    fun testApplyInsideBlock(gradleVersion: GradleVersion, blockName: String) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                $blockName {
+                    <weak_warning>apply(plugin = "java")</weak_warning>
+                }
+                """.trimIndent()
+            )
+            testNoIntentions(
+                """
+                $blockName {
+                    apply(plugin = "java")<caret>
+                }
+                """.trimIndent(),
+                "Use the ‘plugins’ block"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testApplyNotOnTopLevel(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting("if (true) <weak_warning>apply(plugin = \"java\")</weak_warning>")
+            testNoIntentions("if (true) apply(plugin = \"java\")<caret>", "Use the ‘plugins’ block")
+        }
+    }
+
     companion object {
         @JvmStatic
         @Suppress("unused") // used by testAllCorePlugins test
