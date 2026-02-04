@@ -3,7 +3,9 @@ package com.intellij.diagnostic
 
 import com.intellij.errorreport.error.InternalEAPException
 import com.intellij.errorreport.error.UpdateAvailableException
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.DeviceIdManager
+import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.Service
@@ -20,7 +22,12 @@ import com.intellij.ui.JBAccountInfoService
 import com.intellij.ui.LicensingFacade
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URI
@@ -182,6 +189,15 @@ internal object ITNProxy {
     append(builder, "plugin.name", error.pluginName)
     append(builder, "plugin.version", error.pluginVersion)
     append(builder, "last.action", error.lastActionId)
+
+    val nonBundledPlugins = PluginManagerCore.loadedPlugins
+      .filter { !it.isBundled }
+      .map { it.pluginId }
+      .filter { getPluginInfoById(it).isSafeToReport() }
+
+    if (nonBundledPlugins.isNotEmpty()) {
+      append(builder, "plugins.nonbundled", nonBundledPlugins.joinToString(",") { it.idString })
+    }
 
     append(builder, "error.message", error.event.message?.trim { it <= ' ' } ?: "")
     append(builder, "error.stacktrace", error.event.throwableText)
