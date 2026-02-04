@@ -83,10 +83,8 @@ open class InlayButtonPresentationFactory(
   private fun createPaddedPresentation(
     base: InlayPresentation,
     left: Int = 0,
-  ): InlayButtonPresentation {
-    return InlayButtonPresentation(
-      DynamicInsetPresentation(base, CenteredInsetValueProvider(base, textMetricsStorage, left))
-    )
+  ): InlayPresentation {
+    return DynamicInsetPresentation(base, CenteredInsetValueProvider(base, textMetricsStorage, left))
   }
 
   private fun textWithoutPadding(text: String, isSmall: Boolean): InlayPresentation {
