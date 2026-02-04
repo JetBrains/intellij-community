@@ -431,10 +431,6 @@ interface EelFileSystemApi {
        */
       ALPHABETICAL
     }
-
-    interface Builder {
-      fun build(): WalkDirectoryOptions
-    }
   }
 
   /**
