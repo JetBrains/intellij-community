@@ -45,7 +45,9 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.Processor
 import com.intellij.util.containers.generateRecursiveSequence
 import com.intellij.util.indexing.StorageException
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.asJava.syntheticAccessors
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.config.SettingConstants
@@ -204,6 +206,12 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
     }
 
     private fun allModules(): Array<Module>? = runReadAction { projectIfNotDisposed?.let { ModuleManager.getInstance(it).modules } }
+
+    @ApiStatus.Internal
+    @VisibleForTesting
+    fun dirtyModules(): Set<Module> {
+        return dirtyScopeHolder.allDirtyModules
+    }
 
     private fun markAsUpToDate() {
         val modules = allModules() ?: return
