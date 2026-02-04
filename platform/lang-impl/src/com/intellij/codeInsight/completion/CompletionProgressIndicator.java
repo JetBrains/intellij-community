@@ -537,26 +537,25 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
       myHasPsiElements = true;
     }
 
-    boolean forceMiddleMatch = lookupElement.getUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH) != null;
-    if (forceMiddleMatch) {
-      myArranger.associateSorter(lookupElement, (CompletionSorterImpl)item.getSorter());
-      addItemToLookup(item);
-      return;
-    }
+    myArranger.associateSorter(lookupElement, (CompletionSorterImpl)item.getSorter());
 
     boolean allowMiddleMatches = count > BaseCompletionLookupArranger.MAX_PREFERRED_COUNT * 2;
     if (allowMiddleMatches) {
       addDelayedMiddleMatches();
     }
 
-    myArranger.associateSorter(lookupElement, (CompletionSorterImpl)item.getSorter());
-    if (item.isStartMatch() || allowMiddleMatches) {
+    if (item.isStartMatch() || allowMiddleMatches || isForceMiddleMatch(lookupElement)) {
       addItemToLookup(item);
-    } else {
+    }
+    else {
       synchronized (delayedMiddleMatches) {
         delayedMiddleMatches.add(item);
       }
     }
+  }
+
+  private static boolean isForceMiddleMatch(LookupElement lookupElement) {
+    return lookupElement.getUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH) != null;
   }
 
   private void addItemToLookup(@NotNull CompletionResult item) {
