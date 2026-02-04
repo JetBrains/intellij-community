@@ -1055,8 +1055,6 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     private static Evaluator createFallbackEvaluator(final Evaluator primary, final Evaluator fallback) {
       return new ModifiableEvaluator() {
-        private boolean myIsFallback;
-
         @Override
         public @NotNull ModifiableValue evaluateModifiable(@NotNull EvaluationContextImpl context) throws EvaluateException {
           try {
@@ -1064,19 +1062,12 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
           }
           catch (EvaluateException e) {
             try {
-              ModifiableValue res = fallback.evaluateModifiable(context);
-              myIsFallback = true;
-              return res;
+              return fallback.evaluateModifiable(context);
             }
             catch (EvaluateException e1) {
               throw e;
             }
           }
-        }
-
-        @Override
-        public Modifier getModifier() {
-          return myIsFallback ? fallback.getModifier() : primary.getModifier();
         }
       };
     }

@@ -22,10 +22,6 @@ public class SyntheticVariableEvaluator implements ModifiableEvaluator {
   private final String myLocalName;
   private final JVMName myTypeName;
 
-  // TODO remove non-final fields, see IDEA-366793
-  @Deprecated
-  private String myTypeNameString = null;
-
   public SyntheticVariableEvaluator(CodeFragmentEvaluator codeFragmentEvaluator, String localName, @Nullable JVMName typeName) {
     myCodeFragmentEvaluator = codeFragmentEvaluator;
     myLocalName = localName;
@@ -33,15 +29,9 @@ public class SyntheticVariableEvaluator implements ModifiableEvaluator {
   }
 
   @Override
-  public @NotNull ModifiableValue evaluateModifiable(EvaluationContextImpl context) throws EvaluateException {
+  public @NotNull ModifiableValue evaluateModifiable(@NotNull EvaluationContextImpl context) throws EvaluateException {
     String typeNameString = myTypeName != null ? myTypeName.getName(context.getDebugProcess()) : null;
-    myTypeNameString = typeNameString;
     return new ModifiableValue(myCodeFragmentEvaluator.getValue(myLocalName, context), new MyModifier(typeNameString));
-  }
-
-  @Override
-  public Modifier getModifier() {
-    return new MyModifier(myTypeNameString);
   }
 
   @Override
