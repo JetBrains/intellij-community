@@ -102,7 +102,6 @@
     <orderEntry type="module" module-name="intellij.relaxng" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.java" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.remoteServers.impl" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.properties.resource.bundle.editor" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.dom.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.javaFX.community" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.javaFX.jps" scope="RUNTIME" />

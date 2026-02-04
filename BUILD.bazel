@@ -191,7 +191,6 @@ jvm_library(
     "//xml/relaxng",
     "//plugins/gradle/java",
     "//platform/remote-servers/impl",
-    "//plugins/properties/properties-resource-bundle-editor:resource-bundle-editor",
     "//plugins/javaFX/community",
     "//plugins/javaFX/jps",
     "//java/manifest",
