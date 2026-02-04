@@ -229,7 +229,7 @@ class TextInsetValueProvider(
   val isSmall: Boolean,
 ) : InsetValueProvider {
   override val top: Int
-    get() = textMetricsStorage.getFontMetrics(isSmall).fontHeight - textMetricsStorage.getFontMetrics(isSmall).fontBaseline
+    get() = textMetricsStorage.getFontMetrics(isSmall).run { fontHeight - fontBaseline }
 }
 
 @ApiStatus.Internal
