@@ -6,6 +6,7 @@ import andel.editor.AnchorLifetime
 import andel.editor.DocumentComponent
 import andel.editor.DocumentComponentKey
 import andel.editor.DocumentMeta
+import andel.editor.DocumentMetaKey
 import andel.editor.MutableDocument
 import andel.editor.RangeMarkerId
 import andel.intervals.AnchorStorage
@@ -27,6 +28,11 @@ import fleet.util.openmap.BoundedOpenMap
 import fleet.util.openmap.MutableBoundedOpenMap
 import fleet.util.openmap.MutableOpenMap
 
+
+object DocToEntityUpdate : DocumentMetaKey<Boolean>
+
+internal val DbMutableDocument.docToDb: Boolean?
+  get() = meta[DocToEntityUpdate]
 
 internal class DbMutableDocument(
   val dbDocument: DocumentEntity,
@@ -79,7 +85,9 @@ internal class DbMutableDocument(
         ChangeDocument(
           operationId = UID.random(),
           documentId = dbDocument.eid,
-          operation = versionedOperation.rebase(this@DbMutableDocument)),
+          operation = versionedOperation.rebase(this@DbMutableDocument),
+          docToDb = docToDb ?: false,
+        ),
       )
     }
     val textAfter = text

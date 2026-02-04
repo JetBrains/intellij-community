@@ -27,6 +27,7 @@ data class ChangeDocument(
   val documentId: EID,
   val operationId: UID,
   val operation: Operation,
+  val docToDb: Boolean,
   override val seed: Long = Random.nextLong(),
 ) : Instruction {
 
@@ -49,6 +50,7 @@ data class ChangeDocument(
               documentId = documentUID,
               operationId = instruction.operationId,
               operation = instruction.operation,
+              docToDb = instruction.docToDb,
               seed = instruction.seed,
             )
           )
@@ -65,6 +67,7 @@ data class ChangeDocument(
         documentId = documentEID,
         operationId = sharedInstruction.operationId,
         operation = sharedInstruction.operation,
+        docToDb = sharedInstruction.docToDb,
         seed = sharedInstruction.seed,
       ))
     }
