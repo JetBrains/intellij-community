@@ -1,4 +1,5 @@
-package org.jetbrains.jewel.window.utils.macos
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.jewel.intui.standalone.window.macos
 
 import com.sun.jna.Callback
 import com.sun.jna.Library
@@ -80,20 +81,20 @@ internal interface FoundationLibrary : Library {
     fun objc_getClass(clazz: Pointer?): Pointer?
 
     companion object {
-        const val kCFStringEncodingMacRoman = 0
-        const val kCFStringEncodingWindowsLatin1 = 0x0500
-        const val kCFStringEncodingISOLatin1 = 0x0201
-        const val kCFStringEncodingNextStepLatin = 0x0B01
-        const val kCFStringEncodingASCII = 0x0600
-        const val kCFStringEncodingUnicode = 0x0100
-        const val kCFStringEncodingUTF8 = 0x08000100
-        const val kCFStringEncodingNonLossyASCII = 0x0BFF
-        const val kCFStringEncodingUTF16 = 0x0100
-        const val kCFStringEncodingUTF16BE = 0x10000100
-        const val kCFStringEncodingUTF16LE = 0x14000100
-        const val kCFStringEncodingUTF32 = 0x0c000100
-        const val kCFStringEncodingUTF32BE = 0x18000100
-        const val kCFStringEncodingUTF32LE = 0x1c000100
+        const val kCFStringEncodingMacRoman: Long = 0
+        const val kCFStringEncodingWindowsLatin1: Long = 0x0500
+        const val kCFStringEncodingISOLatin1: Long = 0x0201
+        const val kCFStringEncodingNextStepLatin: Long = 0x0B01
+        const val kCFStringEncodingASCII: Long = 0x0600
+        const val kCFStringEncodingUnicode: Long = 0x0100
+        const val kCFStringEncodingUTF8: Long = 0x08000100
+        const val kCFStringEncodingNonLossyASCII: Long = 0x0BFF
+        const val kCFStringEncodingUTF16: Long = 0x0100
+        const val kCFStringEncodingUTF16BE: Long = 0x10000100
+        const val kCFStringEncodingUTF16LE: Long = 0x14000100
+        const val kCFStringEncodingUTF32: Long = 0x0c000100
+        const val kCFStringEncodingUTF32BE: Long = 0x18000100
+        const val kCFStringEncodingUTF32LE: Long = 0x1c000100
 
         // https://developer.apple.com/library/mac/documentation/Carbon/Reference/CGWindow_Reference/Constants/Constants.html#//apple_ref/doc/constant_group/Window_List_Option_Constants
         const val kCGWindowListOptionAll = 0

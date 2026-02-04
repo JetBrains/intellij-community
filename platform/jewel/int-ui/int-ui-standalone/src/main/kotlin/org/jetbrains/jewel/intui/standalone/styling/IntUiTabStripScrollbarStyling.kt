@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.time.Duration.Companion.milliseconds
+import org.jetbrains.jewel.intui.standalone.ScrollbarHelper
 import org.jetbrains.jewel.ui.component.styling.ScrollbarColors
 import org.jetbrains.jewel.ui.component.styling.ScrollbarMetrics
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
@@ -30,7 +31,7 @@ public fun ScrollbarStyle.Companion.tabStripDark(): ScrollbarStyle =
 public fun ScrollbarStyle.Companion.tabStripMacOsLight(
     colors: ScrollbarColors = ScrollbarColors.macOsLight(),
     metrics: ScrollbarMetrics = ScrollbarMetrics.tabStripMacOs(),
-    trackClickBehavior: TrackClickBehavior = TrackClickBehavior.NextPage,
+    trackClickBehavior: TrackClickBehavior = ScrollbarHelper.trackClickBehavior,
     scrollbarVisibility: ScrollbarVisibility = ScrollbarVisibility.tabStrip(),
 ): ScrollbarStyle =
     ScrollbarStyle(
@@ -43,7 +44,7 @@ public fun ScrollbarStyle.Companion.tabStripMacOsLight(
 public fun ScrollbarStyle.Companion.tabStripMacOsDark(
     colors: ScrollbarColors = ScrollbarColors.macOsDark(),
     metrics: ScrollbarMetrics = ScrollbarMetrics.tabStripMacOs(),
-    trackClickBehavior: TrackClickBehavior = TrackClickBehavior.NextPage,
+    trackClickBehavior: TrackClickBehavior = ScrollbarHelper.trackClickBehavior,
     scrollbarVisibility: ScrollbarVisibility = ScrollbarVisibility.tabStrip(),
 ): ScrollbarStyle =
     ScrollbarStyle(
