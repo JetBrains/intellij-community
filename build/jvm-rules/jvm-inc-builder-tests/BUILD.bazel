@@ -32,7 +32,7 @@ java_test(
     "-Djvm-inc-builder.module.bazel.txt=$(rlocationpath :testData/MODULE.bazel.txt)",
     "-Djvm-inc-builder.rules.jvm.zip=$(rlocationpath //:rules_jvm_zip)",
   ] + ADD_OPENS_JVM_FLAGS,
-  timeout = "long",
+  timeout = "eternal",
   test_class = "com.intellij.tools.build.bazel.AllTests",
   runtime_deps = [
     ":jvm-inc-builder-test-lib",

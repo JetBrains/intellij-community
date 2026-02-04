@@ -14,7 +14,6 @@ import com.intellij.notebooks.visualization.ui.jupyterToolbars.JupyterCellAction
 import com.intellij.notebooks.visualization.ui.notebookEditor
 import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
 import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
@@ -23,8 +22,15 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.PlatformUtils
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.ui.JBUI
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import java.awt.Point
 import java.awt.Rectangle
@@ -157,12 +163,12 @@ internal class EditorCellActionsToolbarController(
     }
     CellType.MARKDOWN -> {
       hideDropdownIcon(ADDITIONAL_MARKDOWN_ELLIPSIS_ACTION_GROUP_ID)
-      ActionManager.getInstance().getAction(ADDITIONAL_MARKDOWN_ACTION_GROUP_ID) as? ActionGroup
+      ActionUtil.getActionGroup(ADDITIONAL_MARKDOWN_ACTION_GROUP_ID)
     }
     CellType.RAW -> null
   }
 
-  private fun hideDropdownIcon(actionGroupId: String) = ActionManager.getInstance().getAction(actionGroupId)
+  private fun hideDropdownIcon(actionGroupId: String) = ActionUtil.getAction(actionGroupId)!!
     .templatePresentation
     .putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
 

@@ -154,6 +154,7 @@ class IndexingIteratorsProviderImpl(
       includeContentNonIndexableSets = true,
       includeExternalSets = false,
       includeExternalSourceSets = false,
+      includeExternalNonIndexableSets = false,
       includeCustomKindSets = false
     )
     return fileInfo.findFileSet { fileSet -> hasRecursiveRootFromModuleContent(fileSet, module) } != null

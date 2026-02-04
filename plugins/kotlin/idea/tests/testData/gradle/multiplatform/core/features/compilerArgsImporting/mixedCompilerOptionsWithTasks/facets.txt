@@ -2,13 +2,13 @@ MODULES
 project
 
 project.androidTest
-    languageLevel = 2.0
-    apiLevel = 1.8
+    languageLevel = 2.2
+    apiLevel = {{MINIMAL_SUPPORTED}}
     compilerSettings = -opt-in CompilationOptInAnnotation,JvmCompileOptInAnnotation
 
 project.appleMain
-    languageLevel = 1.9
-    apiLevel = 1.9
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
     compilerSettings = -opt-in=CompilationOptInAnnotation
 
 project.appleTest
@@ -16,8 +16,8 @@ project.appleTest
     apiLevel = {{LATEST_STABLE}}
 
 project.commonMain
-    languageLevel = 1.9
-    apiLevel = 1.9
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
     compilerSettings = -opt-in=CompilationOptInAnnotation
 
 project.commonTest
@@ -25,18 +25,18 @@ project.commonTest
     apiLevel = {{LATEST_STABLE}}
 
 project.iosArm64Main
-    languageLevel = 1.9
-    apiLevel = 1.9
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
     compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in CompilationOptInAnnotation
 
 project.iosArm64Test
-    languageLevel = 1.9
-    apiLevel = 1.9
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
     compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in CompilationOptInAnnotation
 
 project.iosMain
-    languageLevel = 1.9
-    apiLevel = 1.9
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
     compilerSettings = -opt-in=CompilationOptInAnnotation
 
 project.iosTest
@@ -44,28 +44,28 @@ project.iosTest
     apiLevel = {{LATEST_STABLE}}
 
 project.iosX64Main
-    languageLevel = 1.9
-    apiLevel = 1.9
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
     compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in CompilationOptInAnnotation
 
 project.iosX64Test
-    languageLevel = 1.9
-    apiLevel = 1.9
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
     compilerSettings = -Xexport-kdoc -nopack -nostdlib -opt-in CompilationOptInAnnotation
 
 project.jsMain
-    languageLevel = 1.9
-    apiLevel = 1.9
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
     compilerSettings = -main call -opt-in CompilationOptInAnnotation
 
 project.jsTest
-    languageLevel = 1.9
-    apiLevel = 1.9
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
     compilerSettings = -main call -opt-in CompilationOptInAnnotation
 
 project.jvmAndroidMain
-    languageLevel = 1.9
-    apiLevel = 1.9
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
     compilerSettings = -opt-in=CompilationOptInAnnotation
 
 project.jvmAndroidTest
@@ -73,23 +73,23 @@ project.jvmAndroidTest
     apiLevel = {{LATEST_STABLE}}
 
 project.jvmMain
-    languageLevel = 2.0
-    apiLevel = 1.8
+    languageLevel = 2.2
+    apiLevel = {{MINIMAL_SUPPORTED}}
     compilerSettings = -opt-in CompilationOptInAnnotation,JvmCompileOptInAnnotation
 
 project.jvmTest
-    languageLevel = 2.0
-    apiLevel = 1.8
+    languageLevel = 2.2
+    apiLevel = {{MINIMAL_SUPPORTED}}
     compilerSettings = -opt-in CompilationOptInAnnotation,JvmCompileOptInAnnotation
 
 project.main
-    languageLevel = 2.0
-    apiLevel = 1.8
+    languageLevel = 2.2
+    apiLevel = {{MINIMAL_SUPPORTED}}
     compilerSettings = -opt-in CompilationOptInAnnotation,JvmCompileOptInAnnotation
 
 project.nativeMain
-    languageLevel = 1.9
-    apiLevel = 1.9
+    languageLevel = {{NEXT_MINIMAL_SUPPORTED}}
+    apiLevel = {{NEXT_MINIMAL_SUPPORTED}}
     compilerSettings = -opt-in=CompilationOptInAnnotation
 
 project.nativeTest
@@ -97,8 +97,8 @@ project.nativeTest
     apiLevel = {{LATEST_STABLE}}
 
 project.unitTest
-    languageLevel = 2.0
-    apiLevel = 1.8
+    languageLevel = 2.2
+    apiLevel = {{MINIMAL_SUPPORTED}}
     compilerSettings = -opt-in CompilationOptInAnnotation,JvmCompileOptInAnnotation
 
 project.webMain

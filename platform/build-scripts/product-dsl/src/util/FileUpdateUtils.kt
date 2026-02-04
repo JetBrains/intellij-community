@@ -1,9 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.util
 
+import org.jetbrains.intellij.build.productLayout.model.error.FileChangeType
+import org.jetbrains.intellij.build.productLayout.model.error.FileDiff
 import org.jetbrains.intellij.build.productLayout.stats.FileChangeStatus
-import org.jetbrains.intellij.build.productLayout.validation.FileChangeType
-import org.jetbrains.intellij.build.productLayout.validation.FileDiff
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CopyOnWriteArrayList

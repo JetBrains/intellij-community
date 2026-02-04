@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
+import com.intellij.idea.AppMode
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.experiment.ab.impl.ABExperimentOption
 import com.intellij.util.PlatformUtils
@@ -12,14 +13,22 @@ import org.jetbrains.annotations.TestOnly
 @ApiStatus.Internal
 object SearchEverywhereFeature {
   private const val PLATFORM_KEY = "search.everywhere.new.enabled"
-  private const val RIDER_KEY = "search.everywhere.new.rider.enabled"
   private const val CWM_CLIENT_KEY = "search.everywhere.new.cwm.client.enabled"
+
+  private const val RIDER_KEY = "search.everywhere.new.rider.enabled"
+  private const val IDEA_KEY = "search.everywhere.new.idea.enabled"
+  private const val PYCHARM_KEY = "search.everywhere.new.pycharm.enabled"
 
   private const val ALLOW_AB_KEY = "search.everywhere.new.allow.ab"
 
   private val registryKey: String get() =
     if (isGuest) CWM_CLIENT_KEY
-    else if (PlatformUtils.isRider()) RIDER_KEY
+    else if (AppMode.isMonolith()) {
+      if (PlatformUtils.isRider()) RIDER_KEY
+      else if (PlatformUtils.isIntelliJ()) IDEA_KEY
+      else if (PlatformUtils.isPyCharm() && !PlatformUtils.isDataSpell()) PYCHARM_KEY
+      else PLATFORM_KEY
+    }
     else PLATFORM_KEY
 
   var isSplit: Boolean
@@ -42,6 +51,8 @@ object SearchEverywhereFeature {
   val allRegistryKeys: List<String>
   @TestOnly get() = listOf(PLATFORM_KEY,
                            RIDER_KEY,
+                           IDEA_KEY,
+                           PYCHARM_KEY,
                            CWM_CLIENT_KEY,
                            ALLOW_AB_KEY)
 }

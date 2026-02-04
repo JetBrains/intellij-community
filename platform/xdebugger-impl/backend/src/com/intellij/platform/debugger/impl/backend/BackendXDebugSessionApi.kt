@@ -28,6 +28,7 @@ import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XExecutionStack
+import com.intellij.xdebugger.frame.XExecutionStackGroup
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
@@ -56,6 +57,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.await
 import org.jetbrains.concurrency.rejectedPromise
+import kotlin.collections.map
 
 internal class BackendXDebugSessionApi : XDebugSessionApi {
   override suspend fun createDocument(frontendDocumentId: FrontendDocumentId, sessionId: XDebugSessionId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): XExpressionDocumentDto? {
@@ -212,11 +214,12 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     }
   }
 
-  override suspend fun computeRunningExecutionStacks(sessionId: XDebugSessionId): Flow<XExecutionStacksEvent> {
+  override suspend fun computeRunningExecutionStacks(sessionId: XDebugSessionId, suspendContextId: XSuspendContextId?): Flow<XExecutionStackGroupsEvent> {
     val session = sessionId.findValue() ?: return emptyFlow()
+    val suspendContextModel = suspendContextId?.findValue()
     val scope = session.coroutineScope.childScopeCancelledOnSessionEvents("RunningExecutionStacksScope", session)
-    return createExecutionStacksEventFlow(session, scope) { container ->
-      session.debugProcess.computeRunningExecutionStacks(container)
+    return createExecutionStackGroupEventFlow(session, scope) { container ->
+      session.debugProcess.computeRunningExecutionStacks(container, suspendContextModel?.suspendContext)
     }
   }
 
@@ -247,14 +250,14 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
           val stacks = executionStacks.map { stack ->
             stack.toRpc(scope, session)
           }
-          trySend(XExecutionStacksEvent.NewExecutionStacks(stacks, last))
+          trySend(NewExecutionStacksEvent(stacks, last))
           if (last) {
             this@channelFlow.close()
           }
         }
 
         override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
-          trySend(XExecutionStacksEvent.ErrorOccurred(errorMessage))
+          trySend(ErrorOccurredEvent(errorMessage))
         }
       }
       computeExecutionStacks(container)
@@ -265,6 +268,54 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     }.buffer(Channel.UNLIMITED)
   }
 
+  private fun createExecutionStackGroupEventFlow(
+    session: XDebugSessionImpl,
+    scope: CoroutineScope,
+    computeExecutionStacks: (XSuspendContext.XExecutionStackGroupContainer) -> Unit
+  ) : Flow<XExecutionStackGroupsEvent> {
+    return channelFlow {
+      attachAsChildTo(scope)
+      val container = object : XSuspendContext.XExecutionStackGroupContainer {
+        @Volatile
+        var obsolete = false
+
+        override fun isObsolete(): Boolean {
+          return obsolete
+        }
+
+        override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
+          val stacks = executionStacks.map { stack ->
+            stack.toRpc(scope, session)
+          }
+          trySend(NewExecutionStacksEvent(stacks, last))
+          if (last) {
+            this@channelFlow.close()
+          }
+        }
+
+        override fun addExecutionStackGroups(executionStackGroups: List<XExecutionStackGroup>, last: Boolean) {
+          val groups = executionStackGroups.map { group ->
+            group.toRpc(scope, session)
+          }
+          trySend(NewExecutionStackGroupsEvent(groups, last))
+          if (last) {
+            this@channelFlow.close()
+          }
+        }
+
+        override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
+          trySend(ErrorOccurredEvent(errorMessage))
+        }
+      }
+      computeExecutionStacks(container)
+
+      awaitClose {
+        container.obsolete = true
+      }
+    }.buffer(Channel.UNLIMITED)
+  }
+
+  // TODO use a util function from the shared module
   private fun CoroutineScope.childScopeCancelledOnSessionEvents(name: String, session: XDebugSessionImpl): CoroutineScope =
     childScope(name).also { childScope ->
       val listener = object : XDebugSessionListener {
@@ -371,6 +422,15 @@ internal fun XExecutionStack.toRpc(coroutineScope: CoroutineScope, session: XDeb
     stack.topFrameAsync.thenApply { frame ->
       frame?.toRpc(coroutineScope, session)
     }.asDeferred()
+  )
+}
+
+internal fun XExecutionStackGroup.toRpc(coroutineScope: CoroutineScope, session: XDebugSessionImpl): XExecutionStackGroupDto {
+  return XExecutionStackGroupDto(
+    groups.map { it.toRpc(coroutineScope, session) },
+    stacks.map { it.toRpc(coroutineScope, session) },
+    this.name,
+    this.icon?.rpcId(),
   )
 }
 

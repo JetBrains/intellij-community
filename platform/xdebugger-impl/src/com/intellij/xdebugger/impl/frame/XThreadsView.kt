@@ -8,7 +8,6 @@ import com.intellij.platform.debugger.impl.rpc.XDebugSessionApi
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.platform.debugger.impl.ui.DebuggerUIUtilShared
 import com.intellij.ui.AutoScrollToSourceHandler
-import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.xdebugger.XDebugSession
@@ -21,6 +20,7 @@ import com.intellij.xdebugger.impl.proxy.asProxy
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import kotlinx.coroutines.Dispatchers
@@ -34,6 +34,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.event.HierarchyEvent
+import javax.swing.Icon
 import javax.swing.JPanel
 
 @OptIn(FlowPreview::class)
@@ -89,7 +90,9 @@ class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView()
           withContext(Dispatchers.EDT) {
             DebuggerUIUtilShared.freezePaintingToReduceFlickering(treePanel.contentComponent)
             if (panel.isShowing) {
+              val state = XDebuggerTreeState.saveState(tree)
               tree.setRoot(XThreadsRootNode(tree, session), false)
+              state.restoreState(tree)
             }
           }
         }
@@ -140,21 +143,37 @@ class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView()
 
   class ThreadsContainer(private val session: XDebugSessionProxy) : XValueContainer() {
     override fun computeChildren(node: XCompositeNode) {
-      val container = object : XSuspendContext.XExecutionStackContainer {
+      val container = object : XSuspendContext.XExecutionStackGroupContainer {
         override fun errorOccurred(errorMessage: String) {
+          node.setMessage(errorMessage)
         }
 
         override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
           val children = XValueChildrenList()
-          executionStacks.map { FramesContainer(it, session) }.forEach { children.add("", it) }
+          executionStacks.map { FramesContainer(it, session) }.forEach { children.add(it.executionStack.displayName, it) }
+          node.addChildren(children, last)
+        }
+
+        override fun addExecutionStackGroups(executionStackGroups: List<XExecutionStackGroup>, last: Boolean) {
+          val children = XValueChildrenList()
+          executionStackGroups.map { ThreadGroupContainer(it, session) }.forEach { children.add(it.group.name, it) }
           node.addChildren(children, last)
         }
       }
-      if (session.hasSuspendContext()) {
-        session.computeExecutionStacks(container)
-      } else {
-        session.computeRunningExecutionStacks(container)
-      }
+      session.computeRunningExecutionStacks(container)
+    }
+  }
+
+  class ThreadGroupContainer(val group: XExecutionStackGroup, private val session: XDebugSessionProxy) : XValue() {
+    override fun computeChildren(node: XCompositeNode) {
+      val children = XValueChildrenList()
+      group.groups.map { ThreadGroupContainer(it, session) }.forEach { children.add(it.group.name, it) }
+      group.stacks.forEach { children.add(it.displayName, FramesContainer(it, session)) }
+      node.addChildren(children, true)
+    }
+
+    override fun computePresentation(node: XValueNode, place: XValuePlace) {
+      node.setEmptyValuePresentation(group.icon)
     }
   }
 
@@ -172,45 +191,52 @@ class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView()
 
         override fun addStackFrames(stackFrames: List<XStackFrame>, last: Boolean) {
           val children = XValueChildrenList()
-          stackFrames.forEach { children.add("", FrameValue(executionStack,it)) }
+          stackFrames.forEach { children.add("", FrameValue(executionStack,it, session)) }
           node.addChildren(children, last)
         }
       })
     }
 
     override fun computePresentation(node: XValueNode, place: XValuePlace) {
-      node.setPresentation(executionStack.icon, XRegularValuePresentation(executionStack.displayName, null, ""), true)
-    }
-
-    private fun XCompositeNode.setMessage(text: String) {
-      // remove temporary loading message nodes
-      addChildren(XValueChildrenList.EMPTY, true)
-      setMessage(text, null, SimpleTextAttributes.GRAYED_ATTRIBUTES, null)
+      node.setEmptyValuePresentation(executionStack.icon)
     }
   }
 
-  class FrameValue(val executionStack: XExecutionStack, val frame : XStackFrame) : XValue() {
+  class FrameValue(val executionStack: XExecutionStack, val frame : XStackFrame, private val session: XDebugSessionProxy) : XValue() {
     override fun computePresentation(node: XValueNode, place: XValuePlace) {
-      val component = SimpleColoredComponent()
-      frame.customizeTextPresentation(component)
-      node.setPresentation(component.icon, object : XValuePresentation() {
-        override fun getSeparator(): @NlsSafe String = ""
-        override fun renderValue(renderer: XValueTextRenderer) {
-          val i = component.iterator()
-          while (i.hasNext()) {
-            i.next()
-            val text = i.fragment
-            when (i.textAttributes) {
-              SimpleTextAttributes.GRAYED_ATTRIBUTES -> renderer.renderComment(text)
-              SimpleTextAttributes.ERROR_ATTRIBUTES -> renderer.renderError(text)
-              SimpleTextAttributes.REGULAR_ATTRIBUTES -> renderer.renderValue(text)
+      session.coroutineScope.launch {
+        frame.customizePresentation().collectLatest { presentation ->
+          node.setPresentation(presentation.icon, object : XValuePresentation() {
+            override fun getSeparator(): @NlsSafe String = ""
+            override fun renderValue(renderer: XValueTextRenderer) {
+              val fragments = presentation.fragments
+              fragments.forEach { (text, attr) ->
+                when(attr) {
+                  SimpleTextAttributes.GRAYED_ATTRIBUTES,
+                  SimpleTextAttributes.GRAY_ATTRIBUTES,
+                  SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES,
+                    -> renderer.renderComment(text)
+                  SimpleTextAttributes.ERROR_ATTRIBUTES -> renderer.renderError(text)
+                  else -> renderer.renderValue(text)
+                }
+              }
             }
-          }
+          }, false)
         }
-      }, false)
+      }
     }
   }
 
   class XThreadsRootNode(tree: XDebuggerTree, session: XDebugSessionProxy) :
     XValueContainerNode<ThreadsContainer>(tree, null, false, ThreadsContainer(session))
+}
+
+private fun XCompositeNode.setMessage(text: String) {
+  // remove temporary loading message nodes
+  addChildren(XValueChildrenList.EMPTY, true)
+  setMessage(text, null, SimpleTextAttributes.GRAYED_ATTRIBUTES, null)
+}
+
+private fun XValueNode.setEmptyValuePresentation(icon: Icon?) {
+  setPresentation(icon, XRegularValuePresentation("", null, ""), true)
 }

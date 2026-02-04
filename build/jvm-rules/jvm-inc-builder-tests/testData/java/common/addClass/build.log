@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  Util.class
+End of files
+Compiling files:
+  java/common/addClass/a/Util.java
+End of files
+Cleaning output files:
+  Client.class
+End of files
+Compiling files:
+  java/common/addClass/b/Client.java
+End of files
+------------------------------------------
+Exit code: ERROR

@@ -72,5 +72,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.coverage.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.maven.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.facet.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support.tests" scope="RUNTIME" />
   </component>
 </module>

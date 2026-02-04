@@ -6,6 +6,7 @@ import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.TestDaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
@@ -89,8 +90,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
 
     InspectionsKt.configureInspections(tools, getProject(), getTestRootDisposable());
 
-    DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
-    daemonCodeAnalyzer.prepareForTest();
+    new TestDaemonCodeAnalyzerImpl(getProject()).prepareForTest();
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
 
     if (isStressTest()) {
@@ -125,10 +125,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
 
           ((StartupManagerImpl)startupManager).checkCleared();
         }
-        DaemonCodeAnalyzer daemonCodeAnalyzer = project.getServiceIfCreated(DaemonCodeAnalyzer.class);
-        if (daemonCodeAnalyzer != null) {
-          ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).cleanupAfterTest();
-        }
+        new TestDaemonCodeAnalyzerImpl(getProject()).cleanupAfterTest();
       }
     }
     catch (Throwable e) {

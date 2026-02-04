@@ -11,6 +11,7 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
 import com.intellij.grazie.text.CheckerRunner
 import com.intellij.grazie.text.ProblemFilter
+import com.intellij.grazie.text.ProofreadingService.Companion.registerProblems
 import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
@@ -85,6 +86,7 @@ class GrazieInspection : LocalInspectionTool(), DumbAware, UnfairLocalInspection
           .map { CheckerRunner(it) }
           .map { it to it.run(filterCheckers(checkers, element, scopes), checkedDomains) }
           .forEach { (runner, problems) ->
+            runner.text.registerProblems(problems)
             problems.forEach { problem ->
               runner.toProblemDescriptors(problem, holder.isOnTheFly)
                 .forEach(holder::registerProblem)
@@ -99,7 +101,9 @@ class GrazieInspection : LocalInspectionTool(), DumbAware, UnfairLocalInspection
   }
 
   private fun checkTextLevel(file: PsiFile, holder: ProblemsHolder) {
-    TreeRuleChecker.checkTextLevelProblems(file).forEach { reportProblem(it, holder) }
+    val problems = TreeRuleChecker.checkTextLevelProblems(file)
+    file.registerProblems(problems)
+    problems.forEach { reportProblem(it, holder) }
   }
 
   private fun reportProblem(problem: TextProblem, holder: ProblemsHolder) {

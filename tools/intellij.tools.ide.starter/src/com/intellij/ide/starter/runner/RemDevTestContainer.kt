@@ -6,7 +6,7 @@ import com.intellij.ide.starter.ide.frontendTestCase
 import com.intellij.ide.starter.models.TestCase
 import com.intellij.tools.ide.util.common.logOutput
 
-class RemDevTestContainer : TestContainer<RemDevTestContainer> {
+class RemDevTestContainer internal constructor() : TestContainer {
   override fun newContext(testName: String, testCase: TestCase<*>, preserveSystemDir: Boolean): IDETestContext {
     logOutput("Creating backend context")
     val backendContext = super.newContext(testName, testCase, preserveSystemDir)

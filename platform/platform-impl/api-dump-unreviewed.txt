@@ -10469,8 +10469,6 @@ f:com.intellij.platform.AttachProjectAction$Companion
 - f:attachProject(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):V
 - f:getTO_SELECT_KEY():com.intellij.openapi.util.Key
 f:com.intellij.platform.CommandLineProjectOpenProcessor$Companion
-- f:getInstance():com.intellij.platform.CommandLineProjectOpenProcessor
-- f:getInstanceIfExists():com.intellij.platform.CommandLineProjectOpenProcessor
 a:com.intellij.platform.DirectoryProjectConfigurator$AsyncDirectoryProjectConfigurator
 - com.intellij.platform.DirectoryProjectConfigurator
 - <init>():V

@@ -90,7 +90,7 @@ private suspend fun executeRewordOperation(
     executeInMemoryWithFallback(
       inMemoryOperation = {
         val objectRepo = GitObjectRepository(repository)
-        val showFailureNotification = Registry.`is`("git.in.memory.interactive.rebase.notify.errors")
+        val showFailureNotification = Registry.`is`("git.in.memory.interactive.rebase.debug.notify.errors")
         GitInMemoryRewordOperation(objectRepo, commit, newMessage).execute(showFailureNotification)
       },
       fallbackOperation = {

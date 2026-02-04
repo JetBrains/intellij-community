@@ -19,10 +19,10 @@ interface UndoMeta {
 
     @JvmStatic
     fun create(
-        project: Project?,
-        editor: FileEditor?,
-        actions: List<UndoableActionMeta>,
-        isForcedGlobal: Boolean,
+      project: Project?,
+      editor: FileEditor?,
+      actions: List<UndoableActionMeta>,
+      isForcedGlobal: Boolean,
     ): UndoMeta {
       if (project == null && editor == null && actions.isEmpty() && !isForcedGlobal) {
         return EmptyUndoMeta
@@ -32,10 +32,10 @@ interface UndoMeta {
   }
 
   private class ImmutableUndoMeta(
-      private val project: Project?,
-      private val editor: FileEditor?,
-      private val actions: List<UndoableActionMeta>,
-      private val isForcedGlobal: Boolean,
+    private val project: Project?,
+    private val editor: FileEditor?,
+    private val actions: List<UndoableActionMeta>,
+    private val isForcedGlobal: Boolean,
   ) : UndoMeta {
     override fun undoProject(): Project? = project
     override fun focusedEditor(): FileEditor? = editor

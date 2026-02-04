@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class CachedValuesManagerImpl extends CachedValuesManager implements Disposable {
   private static final Object NULL = new Object();
 

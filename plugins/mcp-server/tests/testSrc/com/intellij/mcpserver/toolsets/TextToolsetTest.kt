@@ -36,6 +36,18 @@ class TextToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
+  fun get_file_text_by_path_accepts_lowercase_enum() = runBlocking {
+    testMcpTool(
+      TextToolset::get_file_text_by_path.name,
+      buildJsonObject {
+        put("pathInProject", JsonPrimitive(project.baseDir.toNioPath().relativizeIfPossible(testJavaFile)))
+        put("truncateMode", JsonPrimitive("start"))
+      },
+      "Test.java content"
+    )
+  }
+
+  @Test
   fun replace_file_text_by_path() = runBlocking {
     testMcpTool(
       TextToolset::replace_text_in_file.name,

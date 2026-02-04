@@ -35,8 +35,8 @@ kotlin {
         iosSimulatorArm64()
     ).forEach { target ->
         target.compilerOptions {
-            apiVersion.set(KotlinVersion.KOTLIN_1_8)
-            languageVersion.set(KotlinVersion.KOTLIN_1_8)
+            apiVersion.set({{nextMinimalSupportedKotlinVersion}})
+            languageVersion.set({{nextMinimalSupportedKotlinVersion}})
             optIn.add("project.ios")
         }
     }

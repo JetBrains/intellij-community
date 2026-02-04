@@ -151,6 +151,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   @RequiresBackgroundThread(generateAssertion = false) //No warning yet as there are usages: to be fixed
+  @ApiStatus.Internal
   private static boolean isLocalPathValid(@NotNull Path path) {
     return PythonSdkFlavor.getFlavor(path.toString()) != null;
   }
@@ -224,6 +225,7 @@ public final class PythonSdkType extends SdkType {
     return descriptor;
   }
 
+  @ApiStatus.Internal
   private static boolean isLocatedInWsl(@NotNull VirtualFile file) {
     return SystemInfo.isWindows && isCustomPythonSdkHomePath(file.getPath());
   }
@@ -252,6 +254,7 @@ public final class PythonSdkType extends SdkType {
    * @param commandLine what to patch
    * @param sdk         SDK we're using
    */
+  @ApiStatus.Internal
   public static void patchCommandLineForVirtualenv(@NotNull GeneralCommandLine commandLine,
                                                    @NotNull Sdk sdk) {
     patchEnvironmentVariablesForVirtualenv(commandLine.getEnvironment(), sdk);
@@ -297,6 +300,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   @RequiresBackgroundThread(generateAssertion = false) //because of process output
+  @ApiStatus.Internal
   public static @Nullable String suggestBaseSdkName(@NotNull String sdkHome) {
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdkHome);
     if (flavor == null) return null;
@@ -411,6 +415,7 @@ public final class PythonSdkType extends SdkType {
     return true;  // run setupSdkPaths only once (from PythonSdkDetailsStep). Skip this from showCustomCreateUI
   }
 
+  @ApiStatus.Internal
   public static void notifyRemoteSdkSkeletonsFail(final InvalidSdkException e, final @Nullable Runnable restartAction) {
     NotificationListener notificationListener;
     String notificationMessage;
@@ -437,6 +442,7 @@ public final class PythonSdkType extends SdkType {
     notification.notify(null);
   }
 
+  @ApiStatus.Internal
   public static @NotNull VirtualFile getSdkRootVirtualFile(@NotNull VirtualFile path) {
     String suffix = path.getExtension();
     if (suffix != null) {
@@ -504,19 +510,13 @@ public final class PythonSdkType extends SdkType {
     return homeDir != null && homeDir.isValid();
   }
 
-  public static boolean isIncompleteRemote(@NotNull Sdk sdk) {
-    return false;
-  }
-
+  @ApiStatus.Internal
   public static boolean isRunAsRootViaSudo(@NotNull Sdk sdk) {
     SdkAdditionalData data = sdk.getSdkAdditionalData();
     return data instanceof PyTargetAwareAdditionalData pyTargetAwareAdditionalData && pyTargetAwareAdditionalData.isRunAsRootViaSudo();
   }
 
-  public static boolean hasInvalidRemoteCredentials(@NotNull Sdk sdk) {
-    return false;
-  }
-
+  @ApiStatus.Internal
   public static @NotNull String getSdkKey(@NotNull Sdk sdk) {
     return sdk.getName();
   }
@@ -527,11 +527,13 @@ public final class PythonSdkType extends SdkType {
     return !PythonSdkUtil.isRemote(sdk);
   }
 
+  @ApiStatus.Internal
   public static @Nullable Sdk findLocalCPython(@Nullable Module module) {
     final Sdk moduleSDK = PythonSdkUtil.findPythonSdk(module);
     return findLocalCPythonForSdk(moduleSDK);
   }
 
+  @ApiStatus.Internal
   public static @Nullable Sdk findLocalCPythonForSdk(@Nullable Sdk existingSdk) {
     if (existingSdk != null && !PythonSdkUtil.isRemote(existingSdk) && PythonSdkFlavor.getFlavor(existingSdk) instanceof CPythonSdkFlavor) {
       return existingSdk;
@@ -561,6 +563,7 @@ public final class PythonSdkType extends SdkType {
    * @return if SDK is mock (used by tests only)
    */
   @SuppressWarnings("TestOnlyProblems")
+  @ApiStatus.Internal
   public static boolean isMock(@NotNull Sdk sdk) {
     return (sdk.getUserData(MOCK_PY_VERSION_KEY) != null) ||
            (sdk.getUserData(MOCK_SYS_PATH_KEY) != null) ||
@@ -570,6 +573,7 @@ public final class PythonSdkType extends SdkType {
   /**
    * Returns mocked path (stored in sdk with {@link #MOCK_SYS_PATH_KEY} in test)
    */
+  @ApiStatus.Internal
   public static @NotNull List<String> getMockPath(@NotNull Sdk sdk) {
     var workDir = Paths.get(Objects.requireNonNull(sdk.getHomePath())).getParent().toString();
     var mockPaths = sdk.getUserData(MOCK_SYS_PATH_KEY);

@@ -807,6 +807,26 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/complexRedundantLet/callChainWithLineBreak.kt");
         }
 
+        @TestMetadata("comment1.kt")
+        public void testComment1() throws Exception {
+            runTest("../testData/inspectionsLocal/complexRedundantLet/comment1.kt");
+        }
+
+        @TestMetadata("comment2.kt")
+        public void testComment2() throws Exception {
+            runTest("../testData/inspectionsLocal/complexRedundantLet/comment2.kt");
+        }
+
+        @TestMetadata("comment3.kt")
+        public void testComment3() throws Exception {
+            runTest("../testData/inspectionsLocal/complexRedundantLet/comment3.kt");
+        }
+
+        @TestMetadata("comment4.kt")
+        public void testComment4() throws Exception {
+            runTest("../testData/inspectionsLocal/complexRedundantLet/comment4.kt");
+        }
+
         @TestMetadata("comparisons.kt")
         public void testComparisons() throws Exception {
             runTest("../testData/inspectionsLocal/complexRedundantLet/comparisons.kt");
@@ -6057,6 +6077,26 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("callChainWithLineBreak.kt")
         public void testCallChainWithLineBreak() throws Exception {
             runTest("../testData/inspectionsLocal/simpleRedundantLet/callChainWithLineBreak.kt");
+        }
+
+        @TestMetadata("comment1.kt")
+        public void testComment1() throws Exception {
+            runTest("../testData/inspectionsLocal/simpleRedundantLet/comment1.kt");
+        }
+
+        @TestMetadata("comment2.kt")
+        public void testComment2() throws Exception {
+            runTest("../testData/inspectionsLocal/simpleRedundantLet/comment2.kt");
+        }
+
+        @TestMetadata("comment3.kt")
+        public void testComment3() throws Exception {
+            runTest("../testData/inspectionsLocal/simpleRedundantLet/comment3.kt");
+        }
+
+        @TestMetadata("comment4.kt")
+        public void testComment4() throws Exception {
+            runTest("../testData/inspectionsLocal/simpleRedundantLet/comment4.kt");
         }
 
         @TestMetadata("comparisons.kt")

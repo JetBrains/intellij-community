@@ -532,7 +532,7 @@ public sealed class TypeEvalContext {
     }
   }
 
-  final static class LibraryTypeEvalContext extends TypeEvalContext {
+  private final static class LibraryTypeEvalContext extends TypeEvalContext {
     private LibraryTypeEvalContext(@NotNull TypeEvalConstraints constraints) {
       super(constraints);
     }
@@ -544,7 +544,7 @@ public sealed class TypeEvalContext {
     }
   }
 
-  final static class OptimizedTypeEvalContext extends TypeEvalContext {
+  private final static class OptimizedTypeEvalContext extends TypeEvalContext {
     private volatile TypeEvalContext codeInsightFallback;
 
     OptimizedTypeEvalContext(boolean allowDataFlow, boolean allowStubToAST, boolean allowCallContext, @Nullable PsiFile origin) {

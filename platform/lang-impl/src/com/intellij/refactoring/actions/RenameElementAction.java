@@ -1,11 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiDocumentManager;
@@ -19,14 +22,14 @@ import com.intellij.refactoring.rename.Renamer;
 import com.intellij.refactoring.rename.RenamerFactory;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class RenameElementAction extends AnAction {
+public class RenameElementAction extends DumbAwareAction {
 
   public RenameElementAction() {
     setInjectedContext(true);
@@ -73,9 +76,25 @@ public class RenameElementAction extends AnAction {
         return;
       }
 
-      List<Renamer> renamers = Utils.computeWithProgressIcon(e.getDataContext(), e.getPlace(), __ -> ReadAction.compute(
-        () -> getAvailableRenamers(dataContext).collect(Collectors.toList())));
-      if (renamers.isEmpty()) {
+      List<Renamer> allRenamers = Utils.computeWithProgressIcon(e.getDataContext(), e.getPlace(), __ -> ReadAction.compute(
+        () -> getAvailableRenamers(dataContext).toList()));
+
+      List<Renamer> availableRenamers = ContainerUtil.filter(allRenamers, DumbService.getInstance(project)::isUsableInCurrentContext);
+
+
+      if (availableRenamers.isEmpty()) {
+        // check if rename is not performed due to dumb mode
+        if (!allRenamers.isEmpty() && DumbService.isDumb(project)) {
+          String actionUnavailableMessage = IdeBundle.message("dumb.balloon.0.is.not.available.while.indexing", this.getTemplateText());
+          Runnable rerunAction = () -> {
+            ActionManager.getInstance().tryToExecute(this, null, null, null, true);
+          };
+          String id = ActionManager.getInstance().getId(this);
+          List<String> actionIds = id != null ? List.of(id) : List.of();
+          DumbService.getInstance(project).showDumbModeActionBalloon(actionUnavailableMessage, rerunAction, actionIds);
+          return;
+        }
+
         String message = RefactoringBundle.getCannotRefactorMessage(
           RefactoringBundle.message("error.wrong.caret.position.symbol.to.refactor")
         );
@@ -87,12 +106,12 @@ public class RenameElementAction extends AnAction {
           null
         );
       }
-      else if (renamers.size() == 1) {
-        renamers.get(0).performRename();
+      else if (availableRenamers.size() == 1) {
+        availableRenamers.get(0).performRename();
       }
       else {
         JBPopupFactory.getInstance()
-          .createPopupChooserBuilder(renamers)
+          .createPopupChooserBuilder(availableRenamers)
           .setTitle(RefactoringBundle.message("what.would.you.like.to.do"))
           .setRenderer(new RenamerRenderer())
           .setItemChosenCallback(Renamer::performRename)

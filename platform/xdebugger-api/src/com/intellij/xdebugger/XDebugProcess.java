@@ -12,10 +12,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.XDropFrameHandler;
-import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.frame.XSuspendContext;
-import com.intellij.xdebugger.frame.XValueMarkerProvider;
+import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.mixedMode.XMixedModeDebugProcessExtension;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
@@ -306,7 +303,7 @@ public abstract class XDebugProcess {
    * Provide execution stacks corresponding to all the live threads in the debug process to the {@code container}.
    */
   @ApiStatus.Internal
-  public void computeRunningExecutionStacks(XSuspendContext.XExecutionStackContainer container) {
+  public void computeRunningExecutionStacks(XSuspendContext.XExecutionStackGroupContainer container, @Nullable XSuspendContext suspendContext) {
     container.addExecutionStack(List.of(), true);
   }
 

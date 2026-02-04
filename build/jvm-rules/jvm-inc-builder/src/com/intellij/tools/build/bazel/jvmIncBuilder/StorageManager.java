@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.build.bazel.jvmIncBuilder;
 
-import com.intellij.tools.build.bazel.jvmIncBuilder.impl.*;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.CompositeZipOutputBuilder;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.KotlinCriUtilKt;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.Utils;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ZipEntryIterator;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ZipOutputBuilderImpl;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.forms.FormBinding;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.PersistentMVStoreMapletFactory;
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumentationClassFinder;
@@ -16,17 +20,33 @@ import org.jetbrains.jps.dependency.impl.DependencyGraphImpl;
 import org.jetbrains.jps.dependency.kotlin.KotlinSubclassesIndex;
 import org.jetbrains.jps.dependency.kotlin.LookupsIndex;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.file.*;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import static org.jetbrains.jps.util.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.collect;
+import static org.jetbrains.jps.util.Iterators.filter;
+import static org.jetbrains.jps.util.Iterators.flat;
+import static org.jetbrains.jps.util.Iterators.map;
 
 public class StorageManager implements CloseableExt {
   private final BuildContext myContext;
@@ -52,24 +72,33 @@ public class StorageManager implements CloseableExt {
   }
 
   public void cleanBuildState() throws IOException {
-    closeDataStorages(false);
     Path output = myContext.getOutputZip();
     Path abiOutput = myContext.getAbiOutputZip();
 
     BuildProcessLogger logger = myContext.getBuildLogger();
     if (logger.isEnabled() && !myContext.isRebuild()) {
       // need this for tests
-      Path outBackup = DataPaths.getJarBackupStoreFile(myContext, output);
-      try (var is = new BufferedInputStream(Files.newInputStream(Files.exists(outBackup)? outBackup : output))) {
-        List<String> paths = collect(filter(map(new ZipEntryIterator(is), ze -> ze.getEntry().getName()), n -> !n.endsWith("/") && !"__index__".equals(n)), new ArrayList<>());
-        if (!paths.isEmpty()) {
-          logger.logDeletedPaths(paths);
+      Iterable<String> paths = null;
+      if (myOutputBuilder != null) {
+        // if output builder is open now, collect most recent data from it
+        paths = myOutputBuilder.getEntryNames();
+      }
+      else {
+        // collect paths from disk
+        Path outBackup = DataPaths.getJarBackupStoreFile(myContext, output);
+        try (var is = new BufferedInputStream(Files.newInputStream(Files.exists(outBackup)? outBackup : output))) {
+          paths = collect(map(new ZipEntryIterator(is), ze -> ze.getEntry().getName()), new ArrayList<>());
+        }
+        catch (IOException ignored) {
+          // ignore corrupted or non-existing zips
         }
       }
-      catch (IOException ignored) {
-        // ignore corrupted or non-existing zips
+      if (paths != null) {
+        logger.logDeletedPaths(filter(paths, n -> !n.endsWith("/") && !"__index__".equals(n)));
       }
     }
+
+    closeDataStorages(false);
 
     Utils.deleteIfExists(output);
     if (abiOutput != null) {

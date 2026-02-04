@@ -118,6 +118,9 @@ import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -590,6 +593,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return null;
   }
 
+  private static final Map<String, Object> DOWNLOAD_LOCKS = new ConcurrentHashMap<>();
   private void downloadDependenciesWhenRequired(@NotNull Project project,
                                                 @NotNull List<String> classPath,
                                                 @NotNull RepositoryLibraryProperties properties) throws CantRunException {
@@ -604,9 +608,14 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         String title = JavaUiBundle.message("jar.repository.manager.dialog.resolving.dependencies.title", 1);
         targetProgressIndicator.addSystemLine(title);
       }
-      roots = JarRepositoryManager.loadDependenciesSync(project, properties, false, false, null, null,
-                                                        targetProgressIndicator != null ? new ProgressIndicatorWrapper(targetProgressIndicator)
-                                                                                        : ObjectUtils.notNull(ProgressManager.getInstance().getProgressIndicator(), new DumbProgressIndicator()));
+      Object lock = DOWNLOAD_LOCKS.computeIfAbsent(properties.getMavenId(), key -> ObjectUtils.sentinel("JUnitDownload: " + key));
+      synchronized (lock) {
+        roots = JarRepositoryManager.loadDependenciesSync(
+          project, properties, false, false, null, null,
+          targetProgressIndicator != null
+          ? new ProgressIndicatorWrapper(targetProgressIndicator)
+          : ObjectUtils.notNull(ProgressManager.getInstance().getProgressIndicator(), new DumbProgressIndicator()));
+      }
     }
     catch (ProcessCanceledException e) {
       roots = Collections.emptyList();
@@ -818,27 +827,28 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
   }
 
-  private String myRunner;
-  private static final Object LOCK = ObjectUtils.sentinel("JUnitRunner");
+  private final AtomicReference<String> myRunner = new AtomicReference<>(null);
 
   protected @NotNull String getRunner() {
-    synchronized (LOCK) {
-      if (myRunner == null) {
-        if (ApplicationManager.getApplication().isDispatchThread()) {
-          myRunner = ProgressManager.getInstance()
-            .runProcessWithProgressSynchronously(() -> ReadAction.nonBlocking(this::getRunnerInner).executeSynchronously(),
-                                                 JUnitBundle.message("dialog.title.preparing.test"),
-                                                 true, myConfiguration.getProject());
-        }
-        else if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
-          myRunner = ReadAction.nonBlocking(this::getRunnerInner).executeSynchronously();
-        }
-        else {
-          myRunner = getRunnerInner();
-        }
+    String cached = myRunner.get();
+    if (cached != null) return cached;
+
+    Supplier<String> runner = () -> {
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        return ProgressManager.getInstance()
+          .runProcessWithProgressSynchronously(() -> ReadAction.nonBlocking(this::getRunnerInner).executeSynchronously(),
+                                               JUnitBundle.message("dialog.title.preparing.test"),
+                                               true, myConfiguration.getProject());
       }
-      return myRunner;
-    }
+      else if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
+        return ReadAction.nonBlocking(this::getRunnerInner).executeSynchronously();
+      }
+      else {
+        return getRunnerInner();
+      }
+    };
+    myRunner.compareAndSet(null, runner.get());
+    return myRunner.get();
   }
 
   private String getRunner(@NotNull GlobalSearchScope scope, @NotNull Project project) {

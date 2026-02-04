@@ -2,7 +2,7 @@
 interface I
 class C {
     val x: List<I>
-        field = mutableListOf()
+        field: MutableList<I> = mutableListOf()
 
     fun update(newX: I) {
         x.add(newX)

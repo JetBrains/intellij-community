@@ -63,7 +63,7 @@ internal class ConvertToExplicitBackingFieldsInspection :
         override fun applyFix(project: Project, element: KtProperty, updater: ModPsiUpdater) {
             val psiFactory = KtPsiFactory(element.project)
 
-            val propertyName = element.name ?: return
+            val propertyNameText = element.nameIdentifier?.text ?: return
             val propertyType = element.typeReference?.text ?: return
             val backingPropertyName = context.backingProperty.name ?: return
             val backingPropertyType = context.backingProperty.typeReference?.text
@@ -78,7 +78,7 @@ internal class ConvertToExplicitBackingFieldsInspection :
             val backingProperty = updater.getWritable(context.backingProperty)
 
             referencesToReplace.forEach { writableRef ->
-                writableRef.replace(psiFactory.createExpression(propertyName))
+                writableRef.replace(psiFactory.createExpression(propertyNameText))
             }
 
             val newPropertyText = buildString {
@@ -90,17 +90,17 @@ internal class ConvertToExplicitBackingFieldsInspection :
                 }
                 append(if (element.isVar) "var" else "val")
                 append(" ")
-                append(propertyName)
+                append(propertyNameText)
                 append(": ")
                 append(propertyType)
-
-                val initializer = context.backingProperty.initializer
-                if (initializer != null) {
-                    append("\nfield = ")
-                    append(initializer.text)
-                } else if (backingPropertyType != null && backingPropertyType != propertyType) {
-                    append("\nfield: ")
+                append("\nfield")
+                backingPropertyType?.let {
+                    append(": ")
                     append(backingPropertyType)
+                }
+                context.backingProperty.initializer?.let {
+                    append(" = ")
+                    append(it.text)
                 }
             }
 

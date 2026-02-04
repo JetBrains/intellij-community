@@ -48,8 +48,30 @@ val result = mutableMapOf<String, CachedModuleInfo>()
 val seen = mutableSetOf<String>()
 ```
 
+## Function Body Style
+
+- **Don't use expression body if the body is multiline** - use block body with explicit `return` instead
+
+```kotlin
+// Preferred
+fun process(items: List<Item>): Result {
+  return items
+    .filter { it.isValid }
+    .map { transform(it) }
+    .toResult()
+}
+
+// Avoid
+fun process(items: List<Item>): Result =
+  items
+    .filter { it.isValid }
+    .map { transform(it) }
+    .toResult()
+```
+
 ## Rationale
 
 1. `@JvmField` eliminates property accessor overhead when accessed from Java code
 2. Explicit `.put()/.get()` makes the intent clearer and avoids ambiguity with nullable returns
 3. Explicit collection types make memory layout and iteration order explicit (LinkedHashMap preserves insertion order, HashMap does not)
+4. Block body with explicit `return` is more readable for multiline expressions and makes debugging easier

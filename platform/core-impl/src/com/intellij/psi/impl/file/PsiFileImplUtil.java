@@ -1,5 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
 import com.intellij.openapi.editor.Document;
@@ -14,15 +13,15 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.function.Consumer;
 
 public final class PsiFileImplUtil {
-  private static final Key<Consumer<PsiFile>> NON_PHYSICAL_FILE_DELETE_HANDLER = Key.create("NonPhysicalFileDeleteHandler");
-  
-  private PsiFileImplUtil() {
-  }
+  private static final Key<Consumer<PsiFile>> FILE_DELETE_HANDLER = Key.create("NonPhysicalFileDeleteHandler");
+
+  private PsiFileImplUtil() { }
 
   // before the file becomes non-openable in the editor, save it to prevent data loss
   @ApiStatus.Internal
@@ -42,23 +41,30 @@ public final class PsiFileImplUtil {
     if (file.isPhysical()) {
       throw new IllegalArgumentException();
     }
-    file.putUserData(NON_PHYSICAL_FILE_DELETE_HANDLER, handler);
+    file.putUserData(FILE_DELETE_HANDLER, handler);
+  }
+
+  @ApiStatus.Internal
+  public static void setCustomFileDeleteHandler(@NotNull PsiFile file, @Nullable Consumer<@NotNull PsiFile> handler) {
+    if (!file.isPhysical()) {
+      throw new IllegalArgumentException();
+    }
+    file.putUserData(FILE_DELETE_HANDLER, handler);
   }
 
   public static boolean canDeleteNonPhysicalFile(@NotNull PsiFile file) {
-    return !file.isPhysical() && file.getUserData(NON_PHYSICAL_FILE_DELETE_HANDLER) != null;
+    return !file.isPhysical() && file.getUserData(FILE_DELETE_HANDLER) != null;
   }
 
   public static PsiFile setName(@NotNull PsiFile file, @NotNull String newName) throws IncorrectOperationException {
     VirtualFile vFile = file.getViewProvider().getVirtualFile();
     PsiManager manager = file.getManager();
 
-    try{
+    try {
       saveDocumentIfFileWillBecomeBinary(vFile, newName);
-
       vFile.rename(manager, newName);
     }
-    catch(IOException e){
+    catch (IOException e) {
       throw new IncorrectOperationException(e);
     }
 
@@ -70,28 +76,30 @@ public final class PsiFileImplUtil {
     VirtualFile parentFile = vFile.getParent();
     if (parentFile == null) return;
     VirtualFile child = parentFile.findChild(name);
-    if (child != null && !child.equals(vFile)){
+    if (child != null && !child.equals(vFile)) {
       throw new IncorrectOperationException("File " + child.getPresentableUrl() + " already exists.");
     }
   }
 
   public static void doDelete(@NotNull PsiFile file) throws IncorrectOperationException {
+    Consumer<PsiFile> handler = file.getUserData(FILE_DELETE_HANDLER);
+
     if (!file.isPhysical()) {
-      Consumer<PsiFile> handler = file.getUserData(NON_PHYSICAL_FILE_DELETE_HANDLER);
-      if (handler == null) {
-        throw new IncorrectOperationException();
-      }
+      if (handler == null) throw new IncorrectOperationException("handler missing: " + file);
       handler.accept(file);
       return;
     }
-    
-    PsiManager manager = file.getManager();
 
+    if (handler != null) {
+      handler.accept(file);
+    }
+
+    PsiManager manager = file.getManager();
     VirtualFile vFile = file.getVirtualFile();
-    try{
+    try {
       vFile.delete(manager);
     }
-    catch(IOException e){
+    catch (IOException e) {
       throw new IncorrectOperationException(e);
     }
   }

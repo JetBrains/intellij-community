@@ -1,0 +1,5 @@
+class Base {
+  public static String[] foo() {
+    return new String[]{"Base.foo()"};
+  }
+}

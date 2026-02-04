@@ -39,28 +39,38 @@ public class ComboBoxButtonUI extends DarculaButtonUI {
     else {
       Graphics2D g2 = (Graphics2D)g.create();
       try {
-        int iconSize = JBUIScale.scale(16);
-        int x = button.getWidth() - iconSize - button.getInsets().right - button.getMargin().right + button.getArrowGap(); // Different icons correction
-        int y = (button.getHeight() - iconSize)/2;
-
-        g2.translate(x, y);
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
-
-        g2.setColor(JBUI.CurrentTheme.Arrow.foregroundColor(button.isEnabled()));
-
-        Path2D arrow = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-        arrow.moveTo(JBUIScale.scale(3.5f), JBUIScale.scale(6f));
-        arrow.lineTo(JBUIScale.scale(12.5f), JBUIScale.scale(6f));
-        arrow.lineTo(JBUIScale.scale(8f), JBUIScale.scale(11f));
-        arrow.closePath();
-
-        g2.fill(arrow);
+        paintArrow(g2, button);
       }
       finally {
         g2.dispose();
       }
     }
+  }
+
+  private void paintArrow(Graphics2D g2, ComboBoxAction.ComboBoxButton button) {
+    int iconSize = JBUIScale.scale(16);
+    int x = button.getWidth() - iconSize - button.getInsets().right - button.getMargin().right + button.getArrowGap(); // Different icons correction
+    int y = (button.getHeight() - iconSize)/2;
+
+    Icon customIcon = (Icon) button.getClientProperty("ComboBoxButton.arrowIcon");
+    if (customIcon != null) {
+      customIcon.paintIcon(button, g2, x, y);
+      return;
+    }
+
+    g2.translate(x, y);
+    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
+    g2.setColor(JBUI.CurrentTheme.Arrow.foregroundColor(button.isEnabled()));
+
+    Path2D arrow = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+    arrow.moveTo(JBUIScale.scale(3.5f), JBUIScale.scale(6f));
+    arrow.lineTo(JBUIScale.scale(12.5f), JBUIScale.scale(6f));
+    arrow.lineTo(JBUIScale.scale(8f), JBUIScale.scale(11f));
+    arrow.closePath();
+
+    g2.fill(arrow);
   }
 
   @Override

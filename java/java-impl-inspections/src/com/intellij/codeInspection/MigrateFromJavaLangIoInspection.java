@@ -1,10 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModCommandService;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElement;
@@ -15,6 +17,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_IO;
 
@@ -47,22 +50,44 @@ public final class MigrateFromJavaLangIoInspection extends AbstractBaseJavaLocal
         if (!isIOPrint(expression)) return;
 
         PsiReferenceExpression methodExpression = expression.getMethodExpression();
-        ConvertIOToSystemOutFix fix = new ConvertIOToSystemOutFix(expression);
-        LocalQuickFix localQuickFix = ModCommandService.getInstance().wrapToQuickFix(fix);
-        holder.registerProblem(methodExpression, JavaBundle.message("inspection.migrate.from.java.lang.io.name"), localQuickFix);
+        ConvertIOToSystemOutFix fix = new ConvertIOToSystemOutFix(expression, referenceName);
+        holder.problem(methodExpression, JavaBundle.message("inspection.migrate.from.java.lang.io.name"))
+          .fix(fix)
+          .register();
       }
     };
   }
 
+  public static @Nullable ModCommandAction createCanBeIOFix(@NotNull PsiElement psi) {
+    if (!(psi instanceof PsiReferenceExpression)) return null;
+    if (!(psi.getParent() instanceof PsiReferenceExpression parentReference)) return null;
+    if (!(parentReference.getParent() instanceof PsiMethodCallExpression methodCallExpression)) return null;
+    if (!canBeIOPrint(methodCallExpression)) return null;
+    String referenceName = methodCallExpression.getMethodExpression().getReferenceName();
+    if (referenceName == null) return null;
+    return new MigrateFromJavaLangIoInspection.ConvertIOToSystemOutFix(methodCallExpression, referenceName)
+      .withPresentation(presentation -> presentation.withPriority(PriorityAction.Priority.HIGH));
+  }
+
   public static class ConvertIOToSystemOutFix extends PsiUpdateModCommandAction<PsiMethodCallExpression> {
 
-    public ConvertIOToSystemOutFix(@NotNull PsiMethodCallExpression expression) {
+    @NotNull
+    private final String methodName;
+
+    private ConvertIOToSystemOutFix(@NotNull PsiMethodCallExpression expression,
+                                    @NotNull String name) {
       super(expression);
+      methodName = name;
     }
 
     @Override
     public @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.migrate.from.java.lang.io.fix.family");
+    }
+
+    @Override
+    protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiMethodCallExpression element) {
+      return Presentation.of(JavaBundle.message("inspection.migrate.from.java.lang.io.fix.name", "System.out." + methodName + "()"));
     }
 
     @Override
@@ -81,12 +106,12 @@ public final class MigrateFromJavaLangIoInspection extends AbstractBaseJavaLocal
     }
   }
 
-  public static boolean isIOPrint(@NotNull PsiMethodCallExpression expression) {
+  private static boolean isIOPrint(@NotNull PsiMethodCallExpression expression) {
     if (!IO_PRINT.test(expression)) return false;
     return MigrateToJavaLangIoInspection.callIOAndSystemIdentical(expression.getArgumentList());
   }
 
-  public static boolean canBeIOPrint(@NotNull PsiMethodCallExpression expression) {
+  private static boolean canBeIOPrint(@NotNull PsiMethodCallExpression expression) {
     if (!CAN_BE_IO_PRINT.test(expression)) return false;
     return MigrateToJavaLangIoInspection.callIOAndSystemIdentical(expression.getArgumentList());
   }

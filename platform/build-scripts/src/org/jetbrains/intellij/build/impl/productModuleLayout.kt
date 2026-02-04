@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
@@ -58,15 +58,16 @@ internal fun processAndGetProductPluginContentModules(
       outputProvider = context.outputProvider,
       inlineXmlIncludes = true,
       inlineModuleSets = true,
-      productPropertiesClass = context.productProperties::class.java.name,
-      generatorCommand = "(runtime)",
+      metadataBuilder = { sb ->
+        sb.append("  <id>com.intellij</id>\n")
+      },
       isUltimateBuild = context.paths.projectHome != context.paths.communityHomeDir
     )
     Span.current().addEvent("Generated ${buildResult.contentBlocks.size} content blocks with ${buildResult.contentBlocks.sumOf { it.modules.size }} total modules")
 
     element = JDOMUtil.load(buildResult.xml)
-    moduleToSetChainMapping = buildResult.moduleToSetChainMapping
-    moduleToIncludeDependenciesMapping = buildResult.moduleToIncludeDependenciesMapping
+    moduleToSetChainMapping = buildResult.moduleToSetChainMapping.mapKeys { it.key.value }
+    moduleToIncludeDependenciesMapping = buildResult.moduleToIncludeDependenciesMapping.mapKeys { it.key.value }
   }
 
   // Scrambling isn’t an issue: the scrambler can modify XML.

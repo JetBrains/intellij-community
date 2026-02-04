@@ -13,10 +13,12 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.backend.documentation.*
 import com.intellij.util.AsyncSupplier
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 
-internal fun DocumentationTarget.documentationRequest(): DocumentationRequest {
+@ApiStatus.Internal
+fun DocumentationTarget.documentationRequest(): DocumentationRequest {
   ApplicationManager.getApplication().assertReadAccessAllowed()
   return DocumentationRequest(createPointer(), computePresentation())
 }

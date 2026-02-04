@@ -1,0 +1,14 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->
+<!-- Source: see moduleSet("platform.testFrameworks.junit5") function in CommunityModuleSets.kt -->
+<!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
+<idea-plugin>
+  <content namespace="jetbrains">
+    <module name="intellij.platform.testFramework.junit5"/>
+    <module name="intellij.platform.testFramework.junit5.projectStructure"/>
+    <module name="intellij.platform.testFramework.junit5.codeInsight"/>
+    <module name="intellij.platform.testFramework.junit5._test"/>
+    <module name="intellij.platform.testFramework.junit5.eel._test"/>
+    <module name="intellij.platform.testFramework.junit5.wsl._test"/>
+  </content>
+</idea-plugin>

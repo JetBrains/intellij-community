@@ -11,8 +11,8 @@ repositories {
 
 android {
     kotlinOptions {
-        freeCompilerArgs += "-opt-in=OptInAnnotation"
-        languageVersion = "1.7"
-        apiVersion = "1.7"
+        freeCompilerArgs.add("-opt-in=OptInAnnotation")
+        languageVersion = {{minimalSupportedKotlinVersion}}
+        apiVersion.set({{minimalSupportedKotlinVersion}})
     }
 }

@@ -11,6 +11,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import java.awt.*;
 import java.awt.font.GlyphVector;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
 import java.util.function.Consumer;
@@ -50,31 +51,31 @@ public final class ComplexTextFragment extends TextFragment {
       // (the only place where it's used at the moment of writing),
       // but may need to be updated as unusual edge cases are discovered.
       // PASS 1: store the original widths.
-      var originalWidths = new float[myGlyphVector.getNumGlyphs()];
+      float[] originalWidths = new float[myGlyphVector.getNumGlyphs()];
       alignments = new float[myGlyphVector.getNumGlyphs()];
       for (int i = 0; i < myGlyphVector.getNumGlyphs(); i++) {
         originalWidths[i] = (float)(myGlyphVector.getGlyphPosition(i + 1).getX() - myGlyphVector.getGlyphPosition(i).getX());
       }
       // PASS 2: use the original widths to calculate the new widths, update the positions to match the new widths.
-      var x = myGlyphVector.getGlyphPosition(0).getX();
+      double x = myGlyphVector.getGlyphPosition(0).getX();
       for (int i = 0; i < myGlyphVector.getNumGlyphs(); i++) {
-        var originalWidth = originalWidths[i];
+        float originalWidth = originalWidths[i];
         int charIndex = myGlyphVector.getGlyphCharIndex(i);
         int codePoint = Character.codePointAt(lineChars, start + charIndex);
-        var adjustedWidth = adjustedWidthOrNull(codePoint, originalWidth);
-        x += adjustedWidth != null ? adjustedWidth : originalWidth;
-        var nextPos = myGlyphVector.getGlyphPosition(i + 1);
+        float adjustedWidth = adjustedWidth(codePoint);
+        x += isTooClose(adjustedWidth, originalWidth) ? originalWidth : adjustedWidth;
+        Point2D nextPos = myGlyphVector.getGlyphPosition(i + 1);
         nextPos.setLocation(x, nextPos.getY());
         myGlyphVector.setGlyphPosition(i + 1, nextPos);
       }
       // PASS 3: use the differences between the original and the new widths to center the characters.
       for (int i = 0; i < myGlyphVector.getNumGlyphs(); i++) {
-        var originalWidth = originalWidths[i];
-        var prevPos = myGlyphVector.getGlyphPosition(i);
-        var nextPos = myGlyphVector.getGlyphPosition(i + 1);
-        var newWidth = nextPos.getX() - prevPos.getX();
+        float originalWidth = originalWidths[i];
+        Point2D prevPos = myGlyphVector.getGlyphPosition(i);
+        Point2D nextPos = myGlyphVector.getGlyphPosition(i + 1);
+        double newWidth = nextPos.getX() - prevPos.getX();
         if (newWidth < originalWidth + 0.001) continue;
-        var alignment = (newWidth - originalWidth) / 2;
+        double alignment = (newWidth - originalWidth) / 2;
         alignments[i] = (float)alignment;
         prevPos.setLocation(prevPos.getX() + alignment, prevPos.getY());
         myGlyphVector.setGlyphPosition(i, prevPos);
@@ -178,7 +179,7 @@ public final class ComplexTextFragment extends TextFragment {
 
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   @Override
-  public Consumer<Graphics2D> draw(float x, float y, int startColumn, int endColumn) {
+  public @NotNull Consumer<Graphics2D> draw(float x, float y, int startColumn, int endColumn) {
     assert startColumn >= 0                    : assertMessage(x, y, startColumn, endColumn);
     assert endColumn <= myCharPositions.length : assertMessage(x, y, startColumn, endColumn);
     assert startColumn < endColumn             : assertMessage(x, y, startColumn, endColumn);
@@ -251,7 +252,7 @@ public final class ComplexTextFragment extends TextFragment {
   }
 
   @Override
-  public int[] xToVisualColumn(float startX, float x) {
+  public int @NotNull [] xToVisualColumn(float startX, float x) {
     float relX = x - startX;
     float prevPos = 0;
     int columnCount = getCodePointCount();

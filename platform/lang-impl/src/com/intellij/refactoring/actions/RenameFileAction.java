@@ -2,6 +2,7 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -17,7 +18,7 @@ import java.util.List;
 import java.util.Objects;
 
 @ApiStatus.Internal
-public final class RenameFileAction extends AnAction implements ActionPromoter {
+public final class RenameFileAction extends AnAction implements ActionPromoter, DumbAware {
   @Override
   public void actionPerformed(final @NotNull AnActionEvent e) {
     final PsiFile file = e.getData(CommonDataKeys.PSI_FILE);

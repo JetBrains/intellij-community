@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.refactoring
 
 import com.google.gson.JsonParser
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiDocumentManager
@@ -26,6 +28,7 @@ abstract class AbstractMemberPullPushTest : KotlinLightCodeInsightFixtureTestCas
         val mainFile = File(path)
         val afterFile = File("$path.after")
         val conflictFile = getConflictFile(path)
+        val dialogFile = getDialogFile(path)
 
         fixture.testDataPath = mainFile.parent
 
@@ -40,6 +43,14 @@ abstract class AbstractMemberPullPushTest : KotlinLightCodeInsightFixtureTestCas
         try {
             markMembersInfo(file)
             extraFilesToPsi.keys.forEach(::markMembersInfo)
+
+            val dialogConfig = if (dialogFile.exists()) parseDialogFile(dialogFile) else null
+            if (dialogConfig != null) {
+                TestDialogManager.setTestDialog { message ->
+                    assertEquals(dialogConfig.expectedMessage, message)
+                    dialogConfig.buttonResult
+                }
+            }
 
             action(file)
 
@@ -61,16 +72,52 @@ abstract class AbstractMemberPullPushTest : KotlinLightCodeInsightFixtureTestCas
         }
     }
 
-    private fun getConflictFile(path: String): File {
+    private enum class TestFileExtension(val value: String) {
+        MESSAGES("messages"),
+        DIALOG("dialog"),
+    }
+
+    private fun getConflictFile(path: String): File =
+        getTestFile(path, TestFileExtension.MESSAGES)
+
+    private fun getDialogFile(path: String): File =
+        getTestFile(path, TestFileExtension.DIALOG)
+
+    private fun getTestFile(path: String, extension: TestFileExtension): File {
         val suffix = getSuffix()
-        val conflictFile = if (suffix != null) File("$path.messages.$suffix") else null
-        return conflictFile?.takeIf { it.exists() } ?: File("$path.messages")
+        val testFile = if (suffix != null) File("$path.${extension.value}.$suffix") else null
+        return testFile?.takeIf { it.exists() } ?: File("$path.${extension.value}")
+    }
+
+    private fun parseDialogFile(file: File): DialogConfig {
+        val lines = file.readLines()
+
+        val directiveLine = lines.firstOrNull { it.trim().startsWith("// BUTTON:") }
+            ?: error("Missing BUTTON directive. Expected format: '// BUTTON: <name>'. Supported: YES, NO, OK, CANCEL")
+
+        val buttonName = directiveLine.substringAfter("// BUTTON:").trim()
+        val button = when (buttonName) {
+            "YES" -> Messages.YES
+            "NO" -> Messages.NO
+            "CANCEL" -> Messages.CANCEL
+            "OK" -> Messages.OK
+            else -> error("Unknown button name in BUTTON directive: '$buttonName'. Supported: YES, NO, OK, CANCEL")
+        }
+
+        val message = lines.filterNot { it.trim().startsWith("//") }.joinToString("\n").trim()
+
+        return DialogConfig(message, button)
     }
 
     protected open fun getSuffix(): String? {
         return null
     }
 }
+
+private data class DialogConfig(
+    val expectedMessage: String,
+    val buttonResult: Int,
+)
 
 @ApiStatus.Internal
 fun markMembersInfo(file: PsiFile) {

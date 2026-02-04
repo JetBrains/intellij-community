@@ -31,7 +31,7 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
   override fun getComponents(): List<PyPattern> = elements
 
   override fun getType(context: TypeEvalContext, key: TypeEvalContext.Key): PyType? {
-    val sequenceCaptureType = this.getSequenceCaptureType(context)
+    val sequenceCaptureType = getSequenceCaptureType(context)
     val types = elements.flatMap { pattern ->
       when (pattern) {
         is PySingleStarPattern -> pattern.getCapturedTypesFromSequenceType(sequenceCaptureType, context)
@@ -51,13 +51,15 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
   }
 
   override fun canExcludePatternType(context: TypeEvalContext): Boolean {
-    val allElementsCoverCapture = elements.all { PyClassPatternImpl.canExcludeArgumentPatternType(it, context) }
-    val allCapturesOfThisAreHeteroTuples = this.getSequenceCaptureType(context).toList().all { it.isHeterogeneousTuple() }
-    return allElementsCoverCapture && allCapturesOfThisAreHeteroTuples
+    if (elements.size == 1 && elements[0] is PySingleStarPattern) return true
+    val allElementsExhaustive = elements.all { PyClassPatternImpl.isExhaustive(it, context) }
+    if (!allElementsExhaustive) return false
+    val captureType = getSequenceCaptureType(context) ?: return false
+    return captureType.toList().all { type -> type.isHeterogeneousTuple() }
   }
 
   override fun getCaptureTypeForChild(pattern: PyPattern, context: TypeEvalContext): PyType? {
-    val sequenceType = this.getSequenceCaptureType(context) ?: return null
+    val sequenceType = getSequenceCaptureType(context) ?: return null
 
     // This is done to skip group- and as-patterns
     val sequenceMember = pattern.findParentInFile(withSelf = true) { el -> this === el.parent }
@@ -82,7 +84,7 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
         return sequence.getElementType(idx)
       }
       else {
-        val starSpan = sequence.elementCount - this.elements.size
+        val starSpan = sequence.elementCount - elements.size
         return sequence.getElementType(idx + starSpan)
       }
     }
@@ -123,7 +125,7 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
 
 private fun PySingleStarPattern.getCapturedTypesFromSequenceType(sequenceType: PyType?, context: TypeEvalContext): List<PyType?> {
   if (sequenceType.isHeterogeneousTuple()) {
-    val sequenceParent = this.parent as? PySequencePattern ?: return listOf()
+    val sequenceParent = parent as? PySequencePattern ?: return listOf()
     val idx = sequenceParent.elements.indexOf(this)
     return sequenceType.elementTypes.subList(idx, idx + sequenceType.elementCount - sequenceParent.elements.size + 1)
   }
@@ -144,14 +146,14 @@ private fun PyType?.isHeterogeneousTuple(): Boolean {
 }
 
 private fun PyTupleType.takeIfSizeMatches(desiredSize: Int, hasStar: Boolean): PyTupleType? {
-  if (this.elementTypes.any { it is PyUnpackedTupleType }) {
-    val variadicElementsCount: Int = desiredSize - this.elementTypes.size + 1
+  if (elementTypes.any { it is PyUnpackedTupleType }) {
+    val variadicElementsCount: Int = desiredSize - elementTypes.size + 1
     if (variadicElementsCount >= 0) {
-      return this.expandVariadics(variadicElementsCount)
+      return expandVariadics(variadicElementsCount)
     }
   }
   else {
-    if (hasStar && desiredSize <= this.elementCount || desiredSize == this.elementCount) {
+    if (hasStar && desiredSize <= elementCount || desiredSize == elementCount) {
       return this
     }
   }
@@ -159,7 +161,7 @@ private fun PyTupleType.takeIfSizeMatches(desiredSize: Int, hasStar: Boolean): P
 }
 
 private fun PyTupleType.expandVariadics(variadicElementCount: Int): PyTupleType {
-  require(!this.isHomogeneous) { "Supplied tuple must not be homogeneous: $this" }
+  require(!isHomogeneous) { "Supplied tuple must not be homogeneous: $this" }
   require(variadicElementCount >= 0) { "Supplied variadic element count must not be negative: $variadicElementCount" }
 
   val unpackedTupleIndex = elementTypes.indexOfFirst { it is PyUnpackedTupleType }
@@ -173,7 +175,7 @@ private fun PyTupleType.expandVariadics(variadicElementCount: Int): PyTupleType 
     }
     addAll(elementTypes.subList(unpackedTupleIndex + 1, elementTypes.size))
   }
-  return PyTupleType(this.pyClass, adjustedTupleElementTypes, false)
+  return PyTupleType(pyClass, adjustedTupleElementTypes, false)
 }
 
 private fun intersect(type1: PyType?, type2: PyType?, context: TypeEvalContext): PyType? {

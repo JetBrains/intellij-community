@@ -318,6 +318,7 @@ jvm_library(
     "//platform/xdebugger-impl/ui",
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
+    "//python/python-external-index:externalIndex",
   ],
   exports = [
     "//python/openapi:community",

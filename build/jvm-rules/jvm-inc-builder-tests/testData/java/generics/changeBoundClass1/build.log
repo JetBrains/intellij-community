@@ -1,0 +1,12 @@
+================ Step #1 =================
+Cleaning output files:
+  Value.class
+End of files
+Cleaning output files:
+  A.class
+End of files
+Compiling files:
+  java/generics/changeBoundClass1/a/A.java
+End of files
+------------------------------------------
+Exit code: ERROR

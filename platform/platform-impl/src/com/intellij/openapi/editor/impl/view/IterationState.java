@@ -99,6 +99,7 @@ public final class IterationState {
   private final boolean myStickyLinesPainting;
   private final boolean myEditorRightAligned;
   private final boolean myReverseIteration;
+  private final boolean myColumnMode;
   private final List<RangeHighlighterEx> myCurrentHighlighters = new ArrayList<>();
   private final List<TextAttributes> myCachedAttributesList = new ArrayList<>(5);
   private final GuardedBlocksIndex myGuardedBlocks;
@@ -141,6 +142,7 @@ public final class IterationState {
     myStickyLinesPainting = editor instanceof EditorImpl impl && impl.isStickyLinePainting();
     myEditorRightAligned = editor instanceof EditorImpl impl && impl.isRightAligned();
     myReverseIteration = iterateBackwards;
+    myColumnMode = editor.isColumnMode();
     myHighlighterIterator = useOnlyFullLineHighlighters ? null : getHighlighter(editor).createIterator(start);
     myCaretData = ObjectUtils.notNull(caretData, CaretData.getNullCaret());
     myFoldingModel = !useFoldRegions ? null : getFoldingModel(editor);
@@ -525,7 +527,7 @@ public final class IterationState {
                               ? null
                               : myHighlighterIterator.getTextAttributes();
     TextAttributes selection = getSelectionAttributes(isInSelection);
-    if (!Registry.is("editor.disable.new.selection") && selection != null) {
+    if (!Registry.is("editor.old.full.horizontal.selection.enabled") && !myColumnMode && selection != null) {
       selection.setBackgroundColor(null);
     }
     TextAttributes caret = getCaretRowAttributes(isInCaretRow);

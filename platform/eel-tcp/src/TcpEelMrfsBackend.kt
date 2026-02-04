@@ -1,13 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.tcp
 
-import com.intellij.execution.ijent.nio.IjentEphemeralRootAwareFileSystemProvider
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
-import com.intellij.platform.eel.impl.fs.telemetry.TracingFileSystemProvider
 import com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend
 import com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemPosixApi
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
+import com.intellij.platform.ijent.community.impl.nio.fs.IjentEphemeralRootAwareFileSystemProvider
 import kotlinx.coroutines.CoroutineScope
 import java.net.URI
 import java.nio.file.FileStore
@@ -38,7 +37,7 @@ class TcpEelMrfsBackend(private val scope: CoroutineScope) : MultiRoutingFileSys
     }
 
     val ijentUri = URI("ijent", "tcp", "/$internalName", null, null)
-    val ijentDefaultProvider = TracingFileSystemProvider(IjentNioFileSystemProvider.getInstance())
+    val ijentDefaultProvider = IjentNioFileSystemProvider.getInstance()
 
     try {
       val ijentFs = IjentFailSafeFileSystemPosixApi(scope, descriptor, checkIsIjentInitialized = null)
@@ -51,7 +50,7 @@ class TcpEelMrfsBackend(private val scope: CoroutineScope) : MultiRoutingFileSys
     return IjentEphemeralRootAwareFileSystemProvider(
       root = localPath,
       ijentFsProvider = ijentDefaultProvider,
-      originalFsProvider = TracingFileSystemProvider(localFS.provider()),
+      originalFsProvider = localFS.provider(),
       useRootDirectoriesFromOriginalFs = false
     ).getFileSystem(ijentUri)
   }

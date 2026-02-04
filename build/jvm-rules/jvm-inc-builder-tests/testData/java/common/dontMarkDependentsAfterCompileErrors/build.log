@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  packageA/Server.class
+End of files
+Compiling files:
+  java/common/dontMarkDependentsAfterCompileErrors/a/packageA/Server.java
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Compiling files:
+  java/common/dontMarkDependentsAfterCompileErrors/a/packageA/Server.java
+End of files
+------------------------------------------
+Exit code: ERROR

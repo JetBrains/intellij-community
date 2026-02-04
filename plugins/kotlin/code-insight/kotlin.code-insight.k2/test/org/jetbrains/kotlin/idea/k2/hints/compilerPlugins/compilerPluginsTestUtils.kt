@@ -21,6 +21,18 @@ internal fun <T> OpenapiModule.withCompilerPlugin(
 ): T {
     val pluginJar = plugin.bundledJarLocation
 
+    addPluginLibraryToClassPath(plugin)
+
+    return withCustomCompilerOptions(
+        "// COMPILER_ARGUMENTS: -Xplugin=${pluginJar.absolutePathString()} ${options?.let { "-P $it" }.orEmpty()}",
+        project,
+        module = this
+    ) {
+        action()
+    }
+}
+
+internal fun OpenapiModule.addPluginLibraryToClassPath(plugin: KotlinK2BundledCompilerPlugins) {
     when (plugin) {
         KotlinK2BundledCompilerPlugins.KOTLINX_SERIALIZATION_COMPILER_PLUGIN -> {
             ConfigLibraryUtil.addLibrary(this, "serialization-core") {
@@ -29,14 +41,6 @@ internal fun <T> OpenapiModule.withCompilerPlugin(
         }
 
         else -> {}
-    }
-
-    return withCustomCompilerOptions(
-        "// COMPILER_ARGUMENTS: -Xplugin=${pluginJar.absolutePathString()} ${options?.let { "-P $it" }.orEmpty()}",
-        project,
-        module = this
-    ) {
-        action()
     }
 }
 

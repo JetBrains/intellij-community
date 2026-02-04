@@ -218,6 +218,23 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-85595
+  public void testDunderGetattrNotCalledForExplicitAnyAnnotation() {
+    doTest("Any", """
+      from typing import Any
+      
+      class MyClass:
+          def __init__(self):
+              self.attr: Any = 42
+      
+          def __getattr__(self, item) -> 'MyClass':
+              pass
+      
+      def foo(obj: MyClass):
+          expr = obj.attr
+      """);
+  }
+
   // PY-78964
   public void testFunctionReturnTypeTryFinally() {
     doTest("str",
@@ -1301,6 +1318,210 @@ public class Py3TypeTest extends PyTestCase {
     doTest("list[A]",
            "class A: pass\n" +
            "expr = [e for e in [] if isinstance(e, A)]");
+  }
+
+  // PY-83370
+  public void testIsInstanceNegativeNarrowing() {
+    // Variable reference - should NOT narrow (not a class reference)
+    doTest("A | int", """
+      class A:
+          pass
+      
+      def test(a: A | int, b: type[A]):
+          if isinstance(a, b):
+              return
+          expr = a
+      """);
+
+    // Class reference - should narrow
+    doTest("int", """
+      class A:
+          pass
+      
+      def test(a: A | int):
+          if isinstance(a, A):
+              return
+          expr = a
+      """);
+
+    // Tuple of classes - should narrow
+    doTest("int", """
+      class A:
+          pass
+      
+      class B:
+          pass
+      
+      def test(a: A | B | int):
+          if isinstance(a, (A, B)):
+              return
+          expr = a
+      """);
+
+    // Tuple with variable - should NOT narrow
+    doTest("A | B | int", """
+      class A:
+          pass
+      
+      class B:
+          pass
+      
+      def test(a: A | B | int, b: type[B]):
+          if isinstance(a, (A, b)):
+              return
+          expr = a
+      """);
+
+    // Union operator - should narrow
+    doTest("int", """
+      class A:
+          pass
+      
+      class B:
+          pass
+      
+      def test(a: A | B | int):
+          if isinstance(a, A | B):
+              return
+          expr = a
+      """);
+
+    // Union operator with variable - should NOT narrow
+    doTest("A | B | int", """
+      class A:
+          pass
+      
+      class B:
+          pass
+      
+      def test(a: A | B | int, b: type[B]):
+          if isinstance(a, A | b):
+              return
+          expr = a
+      """);
+  }
+
+  // PY-83370
+  public void testIsSubclassNegativeNarrowing() {
+    // Class reference - should narrow
+    doTest("type[int]", """
+      class A:
+          pass
+      
+      def test(a: type[A] | type[int]):
+          if issubclass(a, A):
+              return
+          expr = a
+      """);
+
+    // Variable reference - should NOT narrow
+    doTest("type[A | int]", """
+      class A:
+          pass
+      
+      def test(a: type[A | int], b: type[A]):
+          if issubclass(a, b):
+              return
+          expr = a
+      """);
+
+    // Tuple of classes - should narrow
+    doTest("type[int]", """
+      class A:
+          pass
+      
+      class B:
+          pass
+      
+      def test(a: type[A] | type[B] | type[int]):
+          if issubclass(a, (A, B)):
+              return
+          expr = a
+      """);
+
+    // Tuple with variable - should NOT narrow
+    doTest("type[A | B | int]", """
+      class A:
+          pass
+      
+      class B:
+          pass
+      
+      def test(a: type[A] | type[B] | type[int], b: type[B]):
+          if issubclass(a, (A, b)):
+              return
+          expr = a
+      """);
+
+    // Union operator - should narrow
+    doTest("type[int]", """
+      class A:
+          pass
+      
+      class B:
+          pass
+      
+      def test(a: type[A] | type[B] | type[int]):
+          if issubclass(a, A | B):
+              return
+          expr = a
+      """);
+
+    // Union operator with variable - should NOT narrow
+    doTest("type[A | B | int]", """
+      class A:
+          pass
+      
+      class B:
+          pass
+      
+      def test(a: type[A] | type[B] | type[int], b: type[B]):
+          if issubclass(a, A | b):
+              return
+          expr = a
+      """);
+  }
+
+  // PY-83370
+  public void testIsSafeForNegativeAssertionRecursiveCases() {
+    // Recursion: Nested tuple containing classes - should narrow
+    doTest("int", """
+      class A:
+          pass
+      
+      class B:
+          pass
+      
+      def test(a: A | B | int):
+          if not isinstance(a, (((A,), (B,)),)):
+              expr = a
+      """);
+
+    // Recursion: Tuple containing union of classes - should narrow
+    doTest("int", """
+      class A:
+          pass
+      
+      class B:
+          pass
+      
+      class C:
+          pass
+      
+      def test(a: A | B | C | int):
+          if not isinstance(a, (A | B, C)):
+              expr = a
+      """);
+
+    // Non-class expressions: Literal tuple - should NOT narrow
+    doTest("A | int", """
+      class A:
+          pass
+      
+      def test(a: A | int):
+          if not isinstance(a, (1, 2)):
+              expr = a
+      """);
   }
 
   // PY-24405

@@ -54,5 +54,7 @@ com.intellij.execution.process.SelfKiller
 - s:shellCommand(java.lang.String,java.nio.file.Path,Z,java.util.List):java.lang.ProcessBuilder
 - s:winShellCommand(java.nio.file.Path,java.util.List):java.lang.ProcessBuilder
 *f:com.intellij.util.io.TrashBin
+- s:canMoveToTrash(com.intellij.openapi.vfs.VirtualFile):Z
+- s:canMoveToTrash(java.nio.file.Path):Z
 - s:isSupported():Z
 - s:moveToTrash(java.nio.file.Path):V

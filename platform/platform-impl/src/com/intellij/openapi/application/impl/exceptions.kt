@@ -83,7 +83,9 @@ private fun interactiveMode(coroutineContext: CoroutineContext?): Mode {
   }
   // Exception thrown on EDT with modal dialog (or no project) has something to do with current user task
   if ((EDT.isCurrentThreadEdt() && LaterInvocator.isInModalContext()) ||
-      ProjectManager.getInstanceIfCreated()?.openProjects?.isEmpty() == true) {
+      ApplicationManager.getApplication()
+        ?.getServiceIfCreated(ProjectManager::class.java)
+        ?.openProjects?.isEmpty() == true) {
     return Mode.Interactive(action = null)
   }
   else {

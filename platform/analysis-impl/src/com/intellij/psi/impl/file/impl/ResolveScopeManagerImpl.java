@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.TestSourcesFilter;
@@ -35,7 +34,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Map;
 
 import static com.intellij.psi.impl.PsiManagerImpl.ANY_PSI_CHANGE_TOPIC;
@@ -206,9 +204,10 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
 
     if (module == null) {
       ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
-      List<OrderEntry> entries = projectFileIndex.getOrderEntriesForFile(notNullVFile);
-      if (entries.isEmpty() &&
-          (WorkspaceFileIndex.getInstance(myProject).findFileSet(notNullVFile, true, false, false, true, true, true) != null ||
+      var empty = projectFileIndex.findContainingLibraries(notNullVFile).isEmpty()
+                  && projectFileIndex.findContainingSdks(notNullVFile).isEmpty();
+      if (empty &&
+          (WorkspaceFileIndex.getInstance(myProject).findFileSet(notNullVFile, true, false, false, true, true, true, true) != null ||
            myAdditionalIndexableFileSet.isInSet(notNullVFile))) {
         return allScope;
       }

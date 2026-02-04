@@ -10,12 +10,11 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.TerminalFirstIdeSessionMoment
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
-/**
- * Note, that this class is about reworked terminal usage.
- */
 @ApiStatus.Internal
 @Service
 @State(
@@ -33,12 +32,15 @@ class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalSto
   private val completionPopupShownTimes = AtomicInteger()
   private val completionItemChosenTimes = AtomicInteger()
 
+  private val firstIdeSessionMoment = AtomicReference<TerminalFirstIdeSessionMoment?>(null)
+
   override fun getState(): State = State(
     feedbackNotificationShown.get(),
     enterKeyPressedTimes.get(),
     completionFeedbackNotificationShown.get(),
     completionPopupShownTimes.get(),
     completionItemChosenTimes.get(),
+    firstIdeSessionMoment.get(),
   )
 
   override fun loadState(state: State) {
@@ -47,6 +49,7 @@ class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalSto
     completionFeedbackNotificationShown.set(state.completionFeedbackNotificationShown)
     completionPopupShownTimes.set(state.completionPopupShownTimes)
     completionItemChosenTimes.set(state.completionItemChosenTimes)
+    firstIdeSessionMoment.set(state.firstIdeSessionMoment)
   }
 
   fun recordFeedbackNotificationShown() {
@@ -69,6 +72,10 @@ class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalSto
     completionItemChosenTimes.incrementAndGet()
   }
 
+  fun recordFirstIdeSessionMoment(moment: TerminalFirstIdeSessionMoment) {
+    firstIdeSessionMoment.set(moment)
+  }
+
   @Serializable
   data class State(
     val feedbackNotificationShown: Boolean = false,
@@ -76,6 +83,7 @@ class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalSto
     val completionFeedbackNotificationShown: Boolean = false,
     val completionPopupShownTimes: Int = 0,
     val completionItemChosenTimes: Int = 0,
+    val firstIdeSessionMoment: TerminalFirstIdeSessionMoment? = null,
   )
 
   companion object {

@@ -269,7 +269,6 @@ public class DaemonLineMarkersRespondToChangesTest extends DaemonAnalyzerTestCas
     assertEmpty(changed);
   }
 
-  @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   public void testLineMarkersClearWhenTypingAtTheEndOfPsiComment() {
     configureByText(JavaFileType.INSTANCE, "class S {\n//ddd<caret>\n}");
     StringBuffer log = new StringBuffer();
@@ -291,7 +290,8 @@ public class DaemonLineMarkersRespondToChangesTest extends DaemonAnalyzerTestCas
       log.append("FileStatusMap.getDirtyTextRange: " + range+"\n");
       List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(getFile(), range.getStartOffset(), range.getEndOffset());
       log.append("CollectHighlightsUtil.getElementsInRange: " + range + ": " + elements.size() +" elements : "+ elements+"\n");
-      List<HighlightInfo> infos = doHighlighting();
+      List<HighlightInfo> infos =
+        DaemonRespondToChangesTest.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.INFORMATION);
       log.append(" File text: '" + getFile().getText() + "'\n");
       log.append("infos: " + infos + "\n");
       assertEmpty(filter(infos,HighlightSeverity.ERROR));
@@ -300,7 +300,7 @@ public class DaemonLineMarkersRespondToChangesTest extends DaemonAnalyzerTestCas
       assertOneElement(lineMarkers);
 
       type(' ');
-      infos = doHighlighting();
+      infos = DaemonRespondToChangesTest.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.INFORMATION);
       log.append("File text: '" + getFile().getText() + "'\n");
       log.append("infos: " + infos + "\n");
       assertEmpty(filter(infos,HighlightSeverity.ERROR));
@@ -309,7 +309,7 @@ public class DaemonLineMarkersRespondToChangesTest extends DaemonAnalyzerTestCas
       assertOneElement(lineMarkers);
 
       backspace();
-      infos = doHighlighting();
+      infos = DaemonRespondToChangesTest.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.INFORMATION);
       log.append("File text: '" + getFile().getText() + "'\n");
       log.append("infos: " + infos + "\n");
       assertEmpty(filter(infos,HighlightSeverity.ERROR));
@@ -343,7 +343,7 @@ public class DaemonLineMarkersRespondToChangesTest extends DaemonAnalyzerTestCas
     myDaemonCodeAnalyzer.restart(getTestName(false));
 
     {
-      assertEmpty(doHighlighting(HighlightSeverity.ERROR));
+      assertEmpty(DaemonRespondToChangesTest.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
       LineMarkerInfo<?> info = assertOneElement(DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject()));
       assertSame(MY_NAVIGATION_HANDLER, info.getNavigationHandler());
     }
@@ -351,14 +351,14 @@ public class DaemonLineMarkersRespondToChangesTest extends DaemonAnalyzerTestCas
     type("\n\n\n\n\n\n\n\n\n\n");
 
     {
-      assertEmpty(doHighlighting(HighlightSeverity.ERROR));
+      assertEmpty(DaemonRespondToChangesTest.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
       LineMarkerInfo<?> info = assertOneElement(DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject()));
       assertSame(MY_NAVIGATION_HANDLER, info.getNavigationHandler());
     }
     type("\n\n\n\n\n\n\n\n\n\n");
 
     {
-      assertEmpty(doHighlighting(HighlightSeverity.ERROR));
+      assertEmpty(DaemonRespondToChangesTest.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
       LineMarkerInfo<?> info = assertOneElement(DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject()));
       assertSame(MY_NAVIGATION_HANDLER, info.getNavigationHandler());
     }

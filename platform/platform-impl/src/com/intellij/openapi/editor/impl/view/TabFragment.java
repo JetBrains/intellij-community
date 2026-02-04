@@ -38,7 +38,7 @@ final class TabFragment implements LineFragment {
   }
 
   @Override
-  public Consumer<Graphics2D> draw(float x, float y, int startColumn, int endColumn) {
+  public @NotNull Consumer<Graphics2D> draw(float x, float y, int startColumn, int endColumn) {
     return g -> {};
   }
 
@@ -73,7 +73,7 @@ final class TabFragment implements LineFragment {
   }
 
   @Override
-  public int[] xToVisualColumn(float startX, float x) {
+  public int @NotNull [] xToVisualColumn(float startX, float x) {
     if (x <= startX) return new int[] {0, 0};
     float nextTabStop = getNextTabStop(startX);
     if (x > nextTabStop) return new int[] {getVisualColumnCount(startX), 1};

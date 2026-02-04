@@ -5,6 +5,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
@@ -33,6 +34,10 @@ internal class PyCharmWelcomeScreenProjectProvider : WelcomeScreenProjectProvide
   override fun doIsForceDisabledFileColors(): Boolean = true
 
   override fun doGetCreateNewFileProjectPrefix(): String = "awesomeProject"
+
+  override fun canOpenFilesFromSystemFileManager(filePath: Path): Boolean {
+    return Registry.`is`("welcome.screen.open.files", false) && filePath.endsWith(".ipynb")
+  }
 
   override suspend fun doCreateOrOpenWelcomeScreenProject(path: Path): Project {
     val project = super.doCreateOrOpenWelcomeScreenProject(path)

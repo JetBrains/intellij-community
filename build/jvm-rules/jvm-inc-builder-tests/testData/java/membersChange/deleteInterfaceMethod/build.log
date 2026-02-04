@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  Iface.class
+End of files
+Compiling files:
+  java/membersChange/deleteInterfaceMethod/a/Iface.java
+End of files
+Cleaning output files:
+  IfaceImpl.class
+  IfaceImpl2.class
+End of files
+Compiling files:
+  java/membersChange/deleteInterfaceMethod/a/IfaceImpl.java
+  java/membersChange/deleteInterfaceMethod/a/IfaceImpl2.java
+End of files
+------------------------------------------
+Exit code: ERROR

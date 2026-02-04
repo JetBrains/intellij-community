@@ -19,7 +19,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.PlatformNioHelper;
 import com.intellij.util.io.TrashBin;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,7 +50,7 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
     var project = CommonDataKeys.PROJECT.getData(dataContext);
     var toBin = TrashBin.isSupported() && GeneralSettings.getInstance().isDeletingToBin();
 
-    if (!(toBin && ContainerUtil.all(files, PlatformNioHelper::isLocal))) {
+    if (!(toBin && ContainerUtil.all(files, TrashBin::canMoveToTrash))) {
       var message = createConfirmationMessage(files);
       var returnValue = Messages.showOkCancelDialog(
         message, UIBundle.message("delete.dialog.title"), ApplicationBundle.message("button.delete"), CommonBundle.getCancelButtonText(), Messages.getQuestionIcon()
@@ -72,7 +71,7 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
           indicator.setText(file.getPresentableUrl());
           indicator.setFraction((double)i++ / files.length);
           try {
-            if (toBin && PlatformNioHelper.isLocal(file)) {
+            if (toBin && TrashBin.canMoveToTrash(file)) {
               TrashBin.moveToTrash(file.toNioPath());
             }
             WriteAction.runAndWait(() -> file.delete(this));

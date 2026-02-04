@@ -109,6 +109,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     updateControls()
     @Suppress("LeakingThis")
     myMessagePool.addListener(this)
+    peer.isMaximizable = true
   }
 
   private suspend fun loadCredentialsPanel(submitter: ErrorReportSubmitter) {

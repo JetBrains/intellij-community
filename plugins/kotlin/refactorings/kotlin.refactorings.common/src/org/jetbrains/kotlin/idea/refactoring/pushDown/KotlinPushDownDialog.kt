@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.pushDown
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.RefactoringBundle
@@ -86,13 +87,13 @@ class KotlinPushDownDialog(
         ) {
             override fun isFixedAbstract(member: KotlinMemberInfo?) = null
 
-            override fun isAbstractEnabled(memberInfo: KotlinMemberInfo): Boolean {
+            override fun isAbstractEnabled(memberInfo: KotlinMemberInfo): Boolean = runReadAction {
                 val member = memberInfo.member
                 if (member.hasModifier(KtTokens.INLINE_KEYWORD) ||
                     member.hasModifier(KtTokens.EXTERNAL_KEYWORD) ||
                     member.hasModifier(KtTokens.LATEINIT_KEYWORD)
-                ) return false
-                return member is KtNamedFunction || member is KtProperty
+                ) return@runReadAction false
+                member is KtNamedFunction || member is KtProperty
             }
         }
         memberInfoModel!!.memberInfoChanged(MemberInfoChange(memberInfos))

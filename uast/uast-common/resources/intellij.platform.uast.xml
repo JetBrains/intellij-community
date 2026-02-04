@@ -11,4 +11,26 @@
     <module name="intellij.platform.backend"/>
     <plugin id="com.intellij.modules.java-capable"/>
   </dependencies>
+
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.uast.uastLanguagePlugin" interface="org.jetbrains.uast.UastLanguagePlugin" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.uast.analysis.uastAnalysisPlugin"
+                    interface="org.jetbrains.uast.analysis.UastAnalysisPlugin"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.uast.evaluation.uastEvaluatorExtension"
+                    interface="org.jetbrains.uast.evaluation.UEvaluatorExtension"
+                    dynamic="true"/>
+  </extensionPoints>
+
+
+  <!--from intellij.java.psi.impl.xml-->
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="uast.evaluator.depth.limit" defaultValue="15"
+                 description="Maximal allowed depth for UAST TreeBasedEvaluator visitor"/>
+    <registryKey key="uast.evaluator.loop.iteration.limit" defaultValue="20"
+                 description="Maximal allowed iteration count for loop evaluation in the UAST TreeBasedEvaluator visitor"/>
+  </extensions>
+
+
 </idea-plugin>

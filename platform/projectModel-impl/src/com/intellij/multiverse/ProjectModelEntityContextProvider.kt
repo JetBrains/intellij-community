@@ -37,6 +37,7 @@ internal class ProjectModelEntityContextProvider : CodeInsightContextProvider {
       includeContentNonIndexableSets = true,
       includeExternalSets = true,
       includeExternalSourceSets = true,
+      includeExternalNonIndexableSets = true,
       includeCustomKindSets = true
     )
     if (fileSets.isEmpty()) return emptyList()

@@ -12,6 +12,7 @@
 *:com.intellij.platform.runtime.product.ProductModules
 - a:getBundledPluginModuleGroups():java.util.List
 - a:getMainModuleGroup():com.intellij.platform.runtime.product.RuntimeModuleGroup
+- a:getNotLoadedBundledPluginModules():java.util.Map
 *:com.intellij.platform.runtime.product.RuntimeModuleGroup
 - a:getIncludedModules():java.util.List
 - a:getNotLoadedModuleIds():java.util.Map

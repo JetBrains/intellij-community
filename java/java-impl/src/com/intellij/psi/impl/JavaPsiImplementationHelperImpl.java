@@ -26,7 +26,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -44,9 +43,12 @@ import com.intellij.platform.backend.navigation.NavigationRequest;
 import com.intellij.platform.backend.navigation.NavigationTarget;
 import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.platform.backend.workspace.VirtualFileUrls;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
 import com.intellij.platform.workspace.jps.entities.LibraryRoot;
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId;
+import com.intellij.platform.workspace.jps.entities.SdkEntity;
 import com.intellij.platform.workspace.jps.entities.SdkRoot;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
@@ -147,14 +149,19 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
       ProjectFileIndex idx = ProjectRootManager.getInstance(project).getFileIndex();
       if (vFile != null && idx.isInLibrarySource(vFile)) {
         GlobalSearchScope librariesScope = LibraryScopeCache.getInstance(project).getLibrariesOnlyScope();
-        Set<OrderEntry> originalEntries = new HashSet<>(idx.getOrderEntriesForFile(vFile));
+        Set<WorkspaceEntity> originalEntities = new HashSet<>();
+        originalEntities.addAll(idx.findContainingSdks(vFile));
+        originalEntities.addAll(idx.findContainingLibraries(vFile));
         for (T candidate : candidateFinder.apply(librariesScope)) {
           PsiFile candidateFile = candidate.getContainingFile();
           if (candidateFile != null) {
             VirtualFile candidateVFile = candidateFile.getVirtualFile();
             if (candidateVFile != null) {
-              for (OrderEntry candidateEntry : idx.getOrderEntriesForFile(candidateVFile)) {
-                if (originalEntries.contains(candidateEntry)) return candidate;
+              for (SdkEntity candidateEntity : idx.findContainingSdks(candidateVFile)) {
+                if (originalEntities.contains(candidateEntity)) return candidate;
+              }
+              for (LibraryEntity candidateEntity : idx.findContainingLibraries(candidateVFile)) {
+                if (originalEntities.contains(candidateEntity)) return candidate;
               }
             }
           }

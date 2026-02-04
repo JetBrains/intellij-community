@@ -6,8 +6,12 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,13 +40,33 @@ public class SidePanelSeparator extends SeparatorWithText {
     Rectangle iconR = new Rectangle();
     Rectangle textR = new Rectangle();
     String s = SwingUtilities
-      .layoutCompoundLabel(g.getFontMetrics(), getCaption(), null, CENTER,
+      .layoutCompoundLabel(g.getFontMetrics(), getCaption(), null, getCaptionVerticalAlignment(),
                            LEFT,
                            CENTER,
                            LEFT,
                            viewR, iconR, textR, 0);
     GraphicsUtil.setupAAPainting(g);
-    g.setColor(UIUtil.getListForeground());
+    JBFont customFont = getCustomFont();
+    if (customFont != null) {
+      g.setFont(customFont);
+    }
+
+    g.setColor(getSeparatorCaptionColor());
     g.drawString(s, textR.x + 10, textR.y + g.getFontMetrics().getAscent());
+  }
+
+  @ApiStatus.Internal
+  protected @Nullable JBFont getCustomFont() {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  protected @NotNull Color getSeparatorCaptionColor() {
+    return UIUtil.getListForeground();
+  }
+
+  @ApiStatus.Internal
+  protected int getCaptionVerticalAlignment() {
+    return CENTER;
   }
 }

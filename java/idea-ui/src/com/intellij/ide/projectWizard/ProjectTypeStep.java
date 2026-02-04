@@ -637,8 +637,9 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
   @Override
   public void onStepLeaving() {
-    if (myCustomSteps.get(myCurrentCard) instanceof ModuleWizardStep wizardStep) {
-      wizardStep.onStepLeaving();
+    ModuleWizardStep step = getCustomStep();
+    if (step != null) {
+      step.onStepLeaving();
     }
   }
 
@@ -684,9 +685,6 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     }
     if (isFrameworksMode() && !myFrameworksPanel.validate()) {
       return false;
-    }
-    if (myCustomSteps.get(myCurrentCard) instanceof ModuleWizardStep wizardStep) {
-      if (!wizardStep.validate()) return false;
     }
     return super.validate();
   }

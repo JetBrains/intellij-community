@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch
 
 import com.intellij.dvcs.branch.GroupingKey
@@ -85,6 +85,10 @@ internal class GitBranchesTreeTestContext(private val groupByDirectories: Boolea
     if (expanded) {
       TreeTestUtil(tree).expandAll()
     }
+  }
+
+  fun refilter() {
+    filter(searchTextField.text)
   }
 
   fun filter(filterText: String) {

@@ -52,7 +52,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
-import java.lang.ref.WeakReference
 import java.util.ArrayDeque
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
@@ -68,11 +67,11 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal constructor(
   private var myDisposed = false
 
   internal val debuggerThreadDispatcher = DebuggerThreadDispatcher(this)
-  private var _vmProxy = WeakReference<VirtualMachineProxyImpl?>(null)
+  private var _vmProxy: VirtualMachineProxyImpl? = null
 
   @get:ApiStatus.Internal
   val vmProxy: VirtualMachineProxyImpl?
-    get() = _vmProxy.get()
+    get() = _vmProxy
 
   @ApiStatus.Internal
   fun setVmProxy(proxy: VirtualMachineProxyImpl?) {
@@ -80,7 +79,7 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal constructor(
     if (current != null && proxy != null && current.virtualMachine !== proxy.virtualMachine) {
       LOG.error("VM proxy changed from $current to $proxy")
     }
-    _vmProxy = WeakReference(proxy)
+    _vmProxy = proxy
   }
 
   @ApiStatus.Internal

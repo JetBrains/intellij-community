@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  B.class
+End of files
+Compiling files:
+  java/generics/implicitOverrideMethodSignatureChanged/a/B.java
+End of files
+Cleaning output files:
+  BA.class
+End of files
+Compiling files:
+  java/generics/implicitOverrideMethodSignatureChanged/a/BA.java
+End of files
+------------------------------------------
+Exit code: ERROR

@@ -89,16 +89,22 @@ interface XDebugSessionProxy {
   fun isSteppingSuspendContext(): Boolean
 
   /**
-   * Computes execution stacks corresponding to all the live threads in the debug process and adds them to the provided container
+   * Computes execution stacks corresponding to all the live threads in the debug process and adds them to the provided [container]
    * if suspendContext is available.
    */
   fun computeExecutionStacks(container: XSuspendContext.XExecutionStackContainer)
 
   /**
-   * Computes execution stacks corresponding to all the live threads in the debug process and adds them to the provided container.
-   * Uses [com.intellij.xdebugger.XDebugProcess.computeRunningExecutionStacks] on the backend and doesn't require suspendContext.
+   * Computes execution stacks corresponding to all the live threads in the debug process and adds them to the provided [container].
+   *
+   * - Uses [com.intellij.xdebugger.XDebugProcess.computeRunningExecutionStacks] to retrieve execution stacks.
+   * - Can provide execution stacks even if there is no active suspend context (i.e., when the process is running).
+   * - Supports execution stacks grouping. The provided [XSuspendContext.XExecutionStackGroupContainer] can accept
+   *   [com.intellij.xdebugger.frame.XExecutionStackGroup] objects, allowing for a hierarchical display of execution stacks
+   *   (e.g., grouped by thread group) in the UI.
    */
-  fun computeRunningExecutionStacks(container: XSuspendContext.XExecutionStackContainer)
+  fun computeRunningExecutionStacks(container: XSuspendContext.XExecutionStackGroupContainer)
+
   fun createTabLayouter(): XDebugTabLayouter
   fun addSessionListener(listener: XDebugSessionListener)
   fun addSessionListener(listener: XDebugSessionListener, disposable: Disposable)

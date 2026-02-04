@@ -1,8 +1,18 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command
 
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionLocation
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionProgressIndicator
+import com.intellij.codeInsight.completion.CompletionProvider
+import com.intellij.codeInsight.completion.CompletionResult
 import com.intellij.codeInsight.completion.CompletionResult.SHOULD_NOT_CHECK_WHEN_WRAP
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionService
+import com.intellij.codeInsight.completion.CompletionSorter
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.PrefixMatcher
+import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
 import com.intellij.codeInsight.completion.command.commands.AfterHighlightingCommandProvider
 import com.intellij.codeInsight.completion.command.commands.DirectIntentionCommandProvider
@@ -26,7 +36,13 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorSettings
+import com.intellij.openapi.editor.FoldRegion
+import com.intellij.openapi.editor.FoldingModel
+import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.SoftWrapModel
+import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.impl.EmptySoftWrapModel
 import com.intellij.openapi.editor.impl.ImaginaryEditor
 import com.intellij.openapi.progress.ProgressManager
@@ -36,7 +52,12 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.StandardPatterns
-import com.intellij.psi.*
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil.FORCE_INJECTED_COPY_ELEMENT_KEY
@@ -614,6 +635,7 @@ internal fun findActualIndex(suffix: String, text: CharSequence, offset: Int): I
     var currentIndex = 1
     while (text.getOrNull(offset - currentIndex)?.isLetter() == true ||
            text.getOrNull(offset - currentIndex) == ' ' ||
+           text.getOrNull(offset - currentIndex) == '\t' ||
            text.getOrNull(offset - currentIndex) == '\''
     ) {
       currentIndex++
@@ -633,12 +655,13 @@ internal fun findCommandCompletionType(
   offset: Int,
   editor: Editor,
 ): InvocationCommandType? {
-  val suffix = factory.suffix().toString() + (factory.filterSuffix() ?: "")
+  val suffix = factory.suffix().toString()
+  val fullSuffix = suffix + (factory.filterSuffix() ?: "")
   val text = editor.document.immutableCharSequence
   if (isNonWritten) {
     return InvocationCommandType.FullSuffix("", editor.document.immutableCharSequence.substring(0, editor.caretModel.offset))
   }
-  val indexOf = findActualIndex(suffix, text, offset)
+  val indexOf = findActualIndex(fullSuffix, text, offset)
   if (offset - indexOf < 0) return null
   if (indexOf == 1 && text[offset - indexOf] == factory.suffix()) {
     //one point
@@ -648,7 +671,11 @@ internal fun findCommandCompletionType(
   //two points
   else if (offset - indexOf + 2 <= text.length &&
            offset >= offset - indexOf + 2 &&
-           text.substring(offset - indexOf, offset - indexOf + 2) == suffix) {
+           text.substring(offset - indexOf, offset - indexOf + 2) == fullSuffix) {
+    if ((offset - indexOf - 1 >= 0 && text[offset - indexOf - 1] == factory.suffix()) ||
+        (offset - indexOf - 2 >= 0 && text.substring(offset - indexOf - 2, offset - indexOf) == fullSuffix)) {
+      return null
+    }
     return InvocationCommandType.FullSuffix(text.substring(offset - indexOf + 2, offset),
                                             text.substring(offset - indexOf, offset - indexOf + 2))
   }

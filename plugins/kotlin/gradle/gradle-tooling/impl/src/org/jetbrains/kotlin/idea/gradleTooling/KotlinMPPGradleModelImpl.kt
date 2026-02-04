@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.projectModel.KotlinTargetJar
 import org.jetbrains.kotlin.idea.projectModel.KotlinTaskProperties
 import org.jetbrains.kotlin.idea.projectModel.KotlinTestRunTask
 import org.jetbrains.kotlin.idea.projectModel.KotlinWasmCompilationExtensions
+import org.jetbrains.kotlin.idea.projectModel.KotlinSwiftExportModel
 import java.io.File
 
 class KotlinAndroidSourceSetInfoImpl(
@@ -282,6 +283,28 @@ data class ExtraFeaturesImpl(
     override val isHMPPEnabled: Boolean,
 ) : ExtraFeatures
 
+/**
+ * Implementation of [KotlinSwiftExportModel] for serialization during Gradle sync.
+ *
+ * ## KGP Reference
+ *
+ * This class captures data from the Swift Export DSL in the Kotlin Gradle Plugin:
+ * - Extension: `org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.SwiftExportExtension`
+ * - Source: `libraries/tools/kotlin-gradle-plugin/src/common/kotlin/org/jetbrains/kotlin/gradle/plugin/mpp/apple/swiftexport/SwiftExportExtension.kt`
+ *
+ * @see KotlinSwiftExportModel
+ * @see KotlinMPPGradleModelBuilder.buildSwiftExportModel
+ */
+data class KotlinSwiftExportModelImpl(
+    override val moduleName: String?,
+    override val flattenPackage: String?
+) : KotlinSwiftExportModel {
+    constructor(swiftExport: KotlinSwiftExportModel) : this(
+        moduleName = swiftExport.moduleName,
+        flattenPackage = swiftExport.flattenPackage
+    )
+}
+
 data class KotlinMPPGradleModelImpl @OptIn(KotlinGradlePluginVersionDependentApi::class) constructor(
     override val sourceSetsByName: Map<String, KotlinSourceSet>,
     override val targets: Collection<KotlinTarget>,
@@ -290,7 +313,8 @@ data class KotlinMPPGradleModelImpl @OptIn(KotlinGradlePluginVersionDependentApi
     override val dependencyMap: Map<KotlinDependencyId, KotlinDependency>,
     override val dependencies: IdeaKotlinDependenciesContainer?,
     override val kotlinImportingDiagnostics: KotlinImportingDiagnosticsContainer = mutableSetOf(),
-    override val kotlinGradlePluginVersion: KotlinGradlePluginVersion?
+    override val kotlinGradlePluginVersion: KotlinGradlePluginVersion?,
+    override val swiftExport: KotlinSwiftExportModel? = null
 ) : KotlinMPPGradleModel {
 
     @OptIn(KotlinGradlePluginVersionDependentApi::class)
@@ -312,7 +336,8 @@ data class KotlinMPPGradleModelImpl @OptIn(KotlinGradlePluginVersionDependentApi
         dependencyMap = mppModel.dependencyMap.map { it.key to it.value.deepCopy(cloningCache) }.toMap(),
         dependencies = mppModel.dependencies,
         kotlinImportingDiagnostics = mppModel.kotlinImportingDiagnostics.mapTo(mutableSetOf()) { it.deepCopy(cloningCache) },
-        kotlinGradlePluginVersion = mppModel.kotlinGradlePluginVersion?.reparse()
+        kotlinGradlePluginVersion = mppModel.kotlinGradlePluginVersion?.reparse(),
+        swiftExport = mppModel.swiftExport?.let { KotlinSwiftExportModelImpl(it) }
     )
 }
 

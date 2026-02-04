@@ -287,7 +287,7 @@ open class CodeVisionHost(val project: Project) {
     project.messageBus.connect(enableCodeVisionLifetime.createNestedDisposable())
       .subscribe(DynamicPluginListener.TOPIC,
                  object : DynamicPluginListener {
-                   override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+                   override fun pluginsLoaded() {
                      recollectAndRearrangeProviders()
                    }
 

@@ -4,7 +4,6 @@ package com.intellij.codeInspection;
 import com.intellij.codeInspection.wrongPackageStatement.AdjustPackageNameFix;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModCommandService;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
@@ -30,6 +29,7 @@ import com.intellij.psi.PsiImplicitClass;
 import com.intellij.psi.PsiImportList;
 import com.intellij.psi.PsiImportModuleStatement;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
@@ -39,11 +39,13 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
+import com.intellij.psi.util.JvmMainMethodSearcher;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
@@ -79,22 +81,48 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
           return;
         }
         ReplaceWithExplicitClassFix fix = new ReplaceWithExplicitClassFix(aClass);
-        LocalQuickFix localQuickFix = ModCommandService.getInstance().wrapToQuickFix(fix);
         if (InspectionProjectProfileManager.isInformationLevel(getShortName(), identifier)) {
           TextRange textRange =
             TextRange.create(0, method.getParameterList().getTextRange().getEndOffset() - method.getTextRange().getStartOffset());
-          holder.registerProblem(method, textRange, message, localQuickFix);
+          holder.problem(method, message)
+            .range(textRange)
+            .fix(fix)
+            .register();
         }
         else {
-          holder.registerProblem(identifier, message, localQuickFix);
+          holder.problem(identifier, message)
+            .fix(fix)
+            .register();
         }
       }
     };
   }
 
+  public static @Nullable PsiUpdateModCommandAction<PsiImplicitClass> createFix(@NotNull PsiElement psiElement) {
+    PsiMember member = PsiTreeUtil.getNonStrictParentOfType(psiElement, PsiMember.class);
+    if (!(member instanceof PsiMethod)) return null;
+    if (!(member.getContainingClass() instanceof PsiImplicitClass implicitClass)) return null;
+    boolean hasMainMethod = new JvmMainMethodSearcher() {
+      @Override
+      public boolean instanceMainMethodsEnabled(@NotNull PsiElement psiElement) {
+        return true;
+      }
+
+      @Override
+      protected boolean inheritedStaticMainEnabled(@NotNull PsiElement psiElement) {
+        return true;
+      }
+    }.hasMainMethod(implicitClass);
+    if (!hasMainMethod) return null;
+    if (PsiTreeUtil.hasErrorElements(implicitClass)) {
+      return null;
+    }
+    return new ImplicitToExplicitClassBackwardMigrationInspection.ReplaceWithExplicitClassFix(implicitClass);
+  }
+
   public static class ReplaceWithExplicitClassFix extends PsiUpdateModCommandAction<PsiImplicitClass> {
 
-    protected ReplaceWithExplicitClassFix(@NotNull PsiImplicitClass element) {
+    private ReplaceWithExplicitClassFix(@NotNull PsiImplicitClass element) {
       super(element);
     }
 

@@ -160,7 +160,7 @@ public interface Application extends ComponentManager {
   <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E;
 
   /**
-   * Runs the specified write action. Must be called from EDT. The action is executed
+   * Runs the specified write action. The action is executed
    * immediately if no read actions are currently running, or blocked until all read actions complete.
    * <p>
    * See also {@link WriteAction#run} for a more lambda-friendly version.
@@ -172,7 +172,7 @@ public interface Application extends ComponentManager {
   void runWriteAction(@NotNull Runnable action);
 
   /**
-   * Runs the specified computation in a write-action. Must be called from EDT.
+   * Runs the specified computation in a write-action.
    * The action is executed immediately if no read actions or write actions are currently running,
    * or blocked until all read actions and write actions complete.
    * <p>
@@ -187,7 +187,7 @@ public interface Application extends ComponentManager {
   <T> T runWriteAction(@NotNull Computable<T> computation);
 
   /**
-   * Runs the specified computation in a write-action. Must be called from EDT.
+   * Runs the specified computation in a write-action.
    * The action is executed immediately if no read actions or write actions are currently running,
    * or blocked until all read actions and write actions complete.
    * <p>

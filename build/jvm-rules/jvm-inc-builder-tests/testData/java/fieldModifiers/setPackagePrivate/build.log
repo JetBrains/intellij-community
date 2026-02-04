@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  qqq/Base.class
+  qqq/BaseImpl.class
+End of files
+Compiling files:
+  java/fieldModifiers/setPackagePrivate/a/qqq/BaseImpl.java
+End of files
+Cleaning output files:
+  ppp/Client$1.class
+  ppp/Client.class
+End of files
+Compiling files:
+  java/fieldModifiers/setPackagePrivate/a/ppp/Client.java
+End of files
+------------------------------------------
+Exit code: ERROR

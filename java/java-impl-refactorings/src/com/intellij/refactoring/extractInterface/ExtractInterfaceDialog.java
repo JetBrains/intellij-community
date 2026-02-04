@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractInterface;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -58,9 +58,7 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
                  && (PsiUtil.isAvailable(JavaFeature.STATIC_INTERFACE_CALLS, element) || !element.hasModifierProperty(PsiModifier.STATIC));
         }
         else if (element instanceof PsiField && !(element instanceof PsiEnumConstant)) {
-          return element.hasModifierProperty(PsiModifier.FINAL)
-                 && element.hasModifierProperty(PsiModifier.STATIC)
-                 && element.hasModifierProperty(PsiModifier.PUBLIC);
+          return element.hasModifierProperty(PsiModifier.FINAL) && element.hasModifierProperty(PsiModifier.STATIC);
         }
         else if (element instanceof PsiClass) {
           return ((PsiClass)element).isInterface() || element.hasModifierProperty(PsiModifier.STATIC);

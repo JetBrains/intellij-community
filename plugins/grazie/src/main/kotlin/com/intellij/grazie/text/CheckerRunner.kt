@@ -12,6 +12,7 @@ import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.grazie.cloud.GrazieCloudConnector.Companion.seemsCloudConnected
+import com.intellij.grazie.grammar.LanguageToolChecker
 import com.intellij.grazie.ide.fus.AcceptanceRateTracker
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
@@ -21,6 +22,7 @@ import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieEnableCloudActi
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieMassApplyAction
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieRuleSettingsAction
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieYtReportAction
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.spellcheck.TypoProblem
 import com.intellij.grazie.text.TextChecker.ProofreadingContext
@@ -242,6 +244,7 @@ class CheckerRunner(val text: TextContent) {
       result.add(GrazieRuleSettingsAction(problem.rule, problem.text.getTextDomain()))
     }
     result.add(GrazieMassApplyAction())
+    result.add(GrazieYtReportAction(problem))
     result.add(GrazieEnableCloudAction())
     return result.toTypedArray()
   }

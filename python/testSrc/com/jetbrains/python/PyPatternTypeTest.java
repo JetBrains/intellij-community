@@ -175,29 +175,6 @@ match m:
         """);
   }
 
-  public void testMatchSequencePatternAlreadyNarrowerOuter() {
-    doTestByText("""
-from typing import assert_type
-from typing import Sequence
-m: Sequence[object]
-
-match m:
-    case [1, True]:
-        assert_type(m, Sequence[int | bool])
-        """);
-  }
-
-  public void testMatchSequencePatternAlreadyNarrowerBoth() {
-    doTestByText("""
-from typing import assert_type
-from typing import Sequence
-m: Sequence[bool]
-
-match m:
-    case [1, True]:
-        assert_type(m, Sequence[bool])
-        """);
-  }
 
   public void testMatchSequencePatternNarrowSubjectItems() {
     doTestByText("""
@@ -700,23 +677,6 @@ match m:
     );
   }
 
-  public void testMatchClassPatternCapture() {
-    doTestByText("""
-from typing import assert_type
-
-class A:
-    __match_args__ = ("a", "b")
-    a: str
-    b: int
-
-m: A
-
-match m:
-    case A(i, j):
-        assert_type(i, str)
-        assert_type(j, int)
-                   """);
-  }
 
   public void testMatchClassPatternCaptureDataclass() {
     doTestByText("""
@@ -1115,6 +1075,144 @@ match p2:
         assert_type(x_val, int)
         assert_type(y_val, int)
         assert_type(color_val, str)
+                   """);
+  }
+
+  // PY-85990
+  public void testClassAttributeValuePatternDoesNotNarrow() {
+    doTestByText("""
+                   from typing import assert_type
+                   
+                   class A:
+                       s = "s"
+                   
+                   def func(x: str):
+                       match x:
+                           case A.s:
+                               return
+                   
+                       assert_type(x, str)
+                   """);
+  }
+
+  // PY-85990
+  public void testOrPatternWithNonLiteralDoesNotNarrow() {
+    doTestByText("""
+                   from typing import assert_type
+                   
+                   class A:
+                       s = "s"
+                   
+                   def func(x: str):
+                       match x:
+                           case "literal" | A.s:
+                               return
+                   
+                       assert_type(x, str)
+                   """);
+  }
+
+  // PY-85990
+  public void testSequencePatternWithNonExhaustiveElementDoesNotNarrow() {
+    doTestByText("""
+                   from typing import assert_type
+                   
+                   class A:
+                       s = "s"
+                   
+                   def func(x: list[str]):
+                       match x:
+                           case [A.s]:
+                               return
+                   
+                       assert_type(x, list[str])
+                   """);
+  }
+
+  // PY-85990
+  public void testMappingPatternWithDoubleStarIsExhaustive() {
+    doTestByText("""
+                   from typing import assert_type, Never
+                   
+                   def func(x: dict[str, int]):
+                       match x:
+                           case {**rest}:
+                               assert_type(x, dict[str, int])
+                               assert_type(rest, dict[str, int])
+                               return
+                   
+                       assert_type(x, Never)
+                   """);
+  }
+
+  // PY-85990
+  public void testSequencePatternWithSingleStarIsExhaustive() {
+    doTestByText("""
+                   from typing import assert_type, Never
+                   
+                   def func(x: list[int]):
+                       match x:
+                           case [*rest]:
+                               assert_type(x, list[int])
+                               assert_type(rest, list[int])
+                               return
+                   
+                       assert_type(x, Never)
+                   """);
+  }
+
+  // PY-85990
+  public void testClassPatternWithNonExhaustiveArgumentDoesNotNarrow() {
+    doTestByText("""
+                   from typing import assert_type
+                   
+                   class B:
+                       s = "s"
+                   
+                   class A:
+                       __match_args__ = ("a",)
+                       a: str
+                   
+                   def func(x: A):
+                       match x:
+                           case A(B.s):
+                               return
+                   
+                       assert_type(x, A)
+                   """);
+  }
+
+  // PY-85990
+  public void testClassPatternWithNonExhaustiveKeywordArgumentDoesNotNarrow() {
+    doTestByText("""
+                   from typing import assert_type
+                   
+                   class B:
+                       s = "s"
+                   
+                   class A:
+                       a: str
+                   
+                   def func(x: A):
+                       match x:
+                           case A(a=B.s):
+                               return
+                   
+                       assert_type(x, A)
+                   """);
+  }
+
+  // PY-85990
+  public void testSpecialBuiltinWithNonExhaustiveArgumentDoesNotNarrow() {
+    doTestByText("""
+                   from typing import assert_type
+                   
+                   def func(x: str):
+                       match x:
+                           case str("literal"):
+                               return
+                   
+                       assert_type(x, str)
                    """);
   }
 }

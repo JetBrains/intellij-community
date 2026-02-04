@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ActivateToolWindowAction
+import com.intellij.ide.plugins.PluginManagerConfigurableUtils.showInstallPluginDialog
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
@@ -19,7 +20,9 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
@@ -33,14 +36,14 @@ import com.intellij.util.ui.StatusText
 import com.intellij.vcs.commit.CommitModeManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.awt.event.ComponentEvent
 import java.awt.event.InputEvent
-
-private const val ACTION_LOCAL_HISTORY = "LocalHistory.ShowHistory"
 
 @ApiStatus.Internal
 interface ShareProjectActionProvider {
   companion object {
-    val EP_NAME: ExtensionPointName<ShareProjectActionProvider> = ExtensionPointName.create<ShareProjectActionProvider>("com.intellij.openapi.vcs.changes.ui.shareProjectAction")
+    val EP_NAME: ExtensionPointName<ShareProjectActionProvider> =
+      ExtensionPointName.create("com.intellij.openapi.vcs.changes.ui.shareProjectAction")
   }
 
   val hostServiceName: @Nls String
@@ -79,8 +82,10 @@ internal fun setChangesViewEmptyState(statusText: StatusText, project: Project) 
     }
   }
   statusText.appendLine(message("status.text.vcs.toolwindow.emptyPrefix") + " ").apply {
-    statusText.appendText(message("status.text.vcs.toolwindow.local.history"), LINK_PLAIN_ATTRIBUTES) {
-      invokeAction(it.source, ACTION_LOCAL_HISTORY)
+    statusText.appendText(message("more.vcs.plugins.link"), LINK_PLAIN_ATTRIBUTES) {
+      val component = (it.source as? ComponentEvent)?.component ?: return@appendText
+      VcsStatisticsCollector.MORE_VCS_PLUGINS_LINK_CLICKED.log()
+      showInstallPluginDialog(component, Registry.stringValue("vcs.more.plugins.search.query"))
     }
   }
   statusText.appendLine("")
@@ -100,11 +105,11 @@ internal fun setCommitViewEmptyState(statusText: StatusText, project: Project) {
         invokeAction(it.source, action)
       }
   }
-  statusText.appendLine(message("status.text.commit.toolwindow.local.history.prefix"))
-    .appendText(" ")
-    .appendText(message("status.text.commit.toolwindow.local.history"), LINK_PLAIN_ATTRIBUTES) {
-      invokeAction(it.source, ACTION_LOCAL_HISTORY)
-    }
+  statusText.appendLine(message("more.vcs.plugins.link"), LINK_PLAIN_ATTRIBUTES) {
+    val component = (it.source as? ComponentEvent)?.component ?: return@appendLine
+    VcsStatisticsCollector.MORE_VCS_PLUGINS_LINK_CLICKED.log()
+    showInstallPluginDialog(component, Registry.stringValue("vcs.more.plugins.search.query"))
+  }
   statusText.appendLine("")
   statusText.appendLine(AllIcons.General.ContextHelp, message("status.text.vcs.toolwindow.help"), LINK_PLAIN_ATTRIBUTES) {
     invokeAction(it.source, ACTION_CONTEXT_HELP)

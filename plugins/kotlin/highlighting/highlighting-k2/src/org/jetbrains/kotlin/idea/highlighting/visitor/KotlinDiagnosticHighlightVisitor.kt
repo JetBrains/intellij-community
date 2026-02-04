@@ -278,7 +278,7 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
         }
     }
 
-    private fun KaSession.createHighlightInfo(
+    private fun createHighlightInfo(
         diagnostic: KaDiagnosticWithPsi<*>,
         range: TextRange
     ): HighlightInfo.Builder {
@@ -309,7 +309,8 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
 
     private fun isInternalOrUnitTestMode(): Boolean {
         val application = ApplicationManager.getApplication()
-        return application.isInternal || application.isUnitTestMode
+        return (application.isInternal || application.isUnitTestMode) &&
+                Registry.`is`("kotlin.highlighting.internal.show.diagnostic.names", true)
     }
 
     private fun getHighlightInfoType(psi: KaDiagnosticWithPsi<*>): HighlightInfoType = when {

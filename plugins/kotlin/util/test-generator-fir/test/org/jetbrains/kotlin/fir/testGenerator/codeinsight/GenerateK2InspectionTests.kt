@@ -138,6 +138,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/addOperatorModifier")
             model("${idea}/inspectionsLocal/kotlinUnreachableCode")
             model("${idea}/inspectionsLocal/removeRedundantLabel")
+            model("${idea}/inspectionsLocal/mainFunctionReturnUnit")
 
             // removeRedundantCallsOfConversionMethods is implemented as compiler diagnostic, see quickfixes
             model("${idea}/inspectionsLocal/removeRedundantCallsOfConversionMethods", isIgnored = true)

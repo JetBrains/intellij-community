@@ -33,8 +33,39 @@ class KotlinExtensionReflection(
         sourceSets.associateBy { it.name }
     }
 
+    /**
+     * Returns the Swift Export extension if configured, or null if Swift Export is not enabled.
+     *
+     * ## KGP Reference
+     *
+     * The Swift Export extension is registered in the Kotlin Gradle Plugin via:
+     * - Setup: `SetUpSwiftExportAction` in `SetupSwiftExportDSL.kt`
+     * - Registration: `multiplatformExtension.addExtension("swiftExport", swiftExportExtension)`
+     * - Source: `libraries/tools/kotlin-gradle-plugin/src/common/kotlin/org/jetbrains/kotlin/gradle/plugin/mpp/apple/swiftexport/SetupSwiftExportDSL.kt`
+     *
+     * Because the extension is added via `addExtension()` (not as a direct property),
+     * we must access it via `getExtensions().findByName("swiftExport")` rather than `getSwiftExport()`.
+     *
+     * The extension name constant is defined in `SwiftExportDSLConstants.SWIFT_EXPORT_EXTENSION_NAME = "swiftExport"`.
+     */
+    val swiftExport: KotlinSwiftExportReflection? by lazy {
+        val extensions = kotlinExtension.callReflectiveAnyGetter("getExtensions", logger) ?: return@lazy null
+        val swiftExportExtension = extensions.callReflective(
+            "findByName",
+            parameters(parameter<String>(SWIFT_EXPORT_EXTENSION_NAME)),
+            returnType<Any?>(),
+            logger
+        ) ?: return@lazy null
+        KotlinSwiftExportReflection(swiftExportExtension)
+    }
+
     companion object {
         private val logger: ReflectionLogger = ReflectionLogger(KotlinExtensionReflection::class.java)
         private const val KOTLIN_PLUGIN_WRAPPER_FILE_CLASS_NAME = "org.jetbrains.kotlin.gradle.plugin.KotlinPluginWrapperKt"
+
+        /**
+         * KGP: `SwiftExportDSLConstants.SWIFT_EXPORT_EXTENSION_NAME` in `SetupSwiftExportDSL.kt`
+         */
+        private const val SWIFT_EXPORT_EXTENSION_NAME = "swiftExport"
     }
 }

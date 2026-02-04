@@ -25,7 +25,7 @@ import java.util.Collections;
 @TestDataPath("$CONTENT_ROOT/testData/editor/painting")
 public class EditorPaintingTest extends EditorPaintingTestCase {
   private void setNewSelectionEnabled(boolean enabled) {
-    Registry.get("editor.disable.new.selection").setValue(!enabled);
+    Registry.get("editor.old.full.horizontal.selection.enabled").setValue(!enabled);
   }
 
   public void testWholeLineHighlighterAtDocumentEnd() throws Exception {

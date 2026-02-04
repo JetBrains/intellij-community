@@ -9,25 +9,19 @@ import com.intellij.codeInsight.daemon.impl.quickfix.InsertMissingTokenFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.RenameUnderscoreFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassJava10Fix;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
-import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.streamMigration.SimplifyForEachInspection;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiImplicitClass;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiSwitchBlock;
 import com.intellij.psi.PsiSwitchLabelStatement;
 import com.intellij.psi.PsiSwitchLabelStatementBase;
 import com.intellij.psi.PsiSwitchLabeledRuleStatement;
 import com.intellij.psi.PsiTryStatement;
-import com.intellij.psi.util.JvmMainMethodSearcher;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,36 +42,12 @@ public final class AdditionalJavaErrorFixProvider extends AbstractJavaErrorFixPr
                                                 new RenameUnderscoreFix(ref) : null);
     fix(JavaErrorKinds.UNSUPPORTED_FEATURE, error -> {
       if (error.context() != JavaFeature.IMPLICIT_CLASSES) return null;
-      PsiMember member = PsiTreeUtil.getNonStrictParentOfType(error.psi(), PsiMember.class);
-      if (!(member instanceof PsiMethod)) return null;
-      if (!(member.getContainingClass() instanceof PsiImplicitClass implicitClass)) return null;
-      boolean hasMainMethod = new JvmMainMethodSearcher() {
-
-        @Override
-        public boolean instanceMainMethodsEnabled(@NotNull PsiElement psiElement) {
-          return true;
-        }
-
-        @Override
-        protected boolean inheritedStaticMainEnabled(@NotNull PsiElement psiElement) {
-          return true;
-        }
-      }.hasMainMethod(implicitClass);
-      if (!hasMainMethod) return null;
-      if (PsiTreeUtil.hasErrorElements(implicitClass)) {
-        return null;
-      }
-      return new ImplicitToExplicitClassBackwardMigrationInspection.ReplaceWithExplicitClassFix(implicitClass);
+      return ImplicitToExplicitClassBackwardMigrationInspection.createFix(error.psi());
     });
     fix(JavaErrorKinds.REFERENCE_UNRESOLVED, error -> {
       PsiJavaCodeReferenceElement psi = error.psi();
       if (PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, psi)) return null;
-      if (!(psi instanceof PsiReferenceExpression)) return null;
-      if (!(psi.getParent() instanceof PsiReferenceExpression parentReference)) return null;
-      if (!(parentReference.getParent() instanceof PsiMethodCallExpression methodCallExpression)) return null;
-      if (!MigrateFromJavaLangIoInspection.canBeIOPrint(methodCallExpression)) return null;
-      return new MigrateFromJavaLangIoInspection.ConvertIOToSystemOutFix(methodCallExpression)
-        .withPresentation(presentation -> presentation.withPriority(PriorityAction.Priority.HIGH));
+      return MigrateFromJavaLangIoInspection.createCanBeIOFix(error.psi());
     });
   }
 

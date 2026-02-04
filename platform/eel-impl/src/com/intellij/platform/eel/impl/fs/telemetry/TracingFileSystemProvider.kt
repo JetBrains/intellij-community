@@ -4,6 +4,7 @@ package com.intellij.platform.eel.impl.fs.telemetry
 import com.intellij.platform.core.nio.fs.DelegatingFileSystemProvider
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import org.jetbrains.annotations.ApiStatus
+import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
 import java.nio.file.AccessMode
 import java.nio.file.CopyOption
@@ -35,16 +36,21 @@ class TracingFileSystemProvider(
 
   override fun getDelegate(path1: Path?, path2: Path?): FileSystemProvider = delegate
 
-   override fun wrapDelegatePath(delegatePath: Path?): Path? = delegatePath
+  override fun wrapDelegatePath(delegatePath: Path?): Path? = delegatePath
 
   override fun toDelegatePath(path: Path?): Path? = path
 
   override fun toString(): String = """${javaClass.simpleName}($delegate)"""
 
   override fun newByteChannel(path: Path, options: MutableSet<out OpenOption>?, vararg attrs: FileAttribute<*>?): SeekableByteChannel =
-    TracingSeekableByteChannel(Measurer.measure(Measurer.Operation.providerNewByteChannel, spanNamePrefix) {
+    Measurer.measure(Measurer.Operation.providerNewByteChannel, spanNamePrefix) {
       super.newByteChannel(path, options, *attrs)
-    }, spanNamePrefix)
+    }.traced(spanNamePrefix)
+
+  override fun newFileChannel(path: Path, options: MutableSet<out OpenOption>?, vararg attrs: FileAttribute<*>?): FileChannel =
+    Measurer.measure(Measurer.Operation.providerNewFileChannel, spanNamePrefix) {
+      super.newFileChannel(path, options, *attrs)
+    }.traced(spanNamePrefix)
 
   override fun newDirectoryStream(dir: Path, filter: DirectoryStream.Filter<in Path>?): DirectoryStream<Path> =
     TracingDirectoryStream<Path>(Measurer.measure(Measurer.Operation.providerNewDirectoryStream, spanNamePrefix) {

@@ -30,6 +30,9 @@ import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.branch.GitBranchUtil
+import git4idea.commands.Git
+import git4idea.commands.GitCommand
+import git4idea.commands.GitLineHandler
 import git4idea.config.GitConfigUtil
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitSaveChangesPolicy
@@ -55,7 +58,7 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 
 internal class GitStatisticsCollector : ProjectUsagesCollector() {
-  private val GROUP = EventLogGroup("git.configuration", 22)
+  private val GROUP = EventLogGroup("git.configuration", 23)
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -105,6 +108,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
         REMOTES with repository.remotes.size,
         IS_WORKTREE_USED with repository.isWorkTreeUsed(),
         FS_MONITOR with repository.detectFsMonitor(),
+        REF_FORMAT with repository.detectRefFormat(),
 
         REMOTES_AVAILABILITY with repoStatus,
       )
@@ -261,6 +265,8 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
   private val IS_WORKTREE_USED = EventFields.Boolean("is_worktree_used")
 
   private val FS_MONITOR = EventFields.Enum<FsMonitor>("fs_monitor")
+  private val REF_FORMAT = EventFields.Enum<RefFormat>("ref_format", "--ref-format")
+
   private val remoteTypes = setOf("github", "gitlab", "bitbucket", "gitee",
                                   "github_custom", "gitlab_custom", "bitbucket_custom", "gitee_custom",
                                   "other")
@@ -278,6 +284,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
                                                      REMOTES,
                                                      IS_WORKTREE_USED,
                                                      FS_MONITOR,
+                                                     REF_FORMAT,
                                                      COMMITERS_LAST_MONTH,
                                                      COMMITERS_HALF_YEAR,
                                                      COMMITERS_LAST_YEAR,
@@ -398,6 +405,31 @@ private fun GitRepository.detectFsMonitor(): FsMonitor {
 
   return FsMonitor.NONE
 }
+
+internal enum class RefFormat { UNKNOWN, FILES, REFTABLE }
+
+private fun GitRepository.detectRefFormat(): RefFormat {
+  try {
+    val handler = GitLineHandler(project, root, GitCommand.REV_PARSE)
+    handler.addParameters("--show-ref-format")
+    handler.setSilent(true)
+
+    val result = Git.getInstance().runCommand(handler)
+
+    if (result.success()) {
+      return when (result.outputAsJoinedString.trim().lowercase()) {
+        "files" -> RefFormat.FILES
+        "reftable" -> RefFormat.REFTABLE
+        else -> RefFormat.UNKNOWN
+      }
+    }
+  }
+  catch (_: Exception) {
+  }
+
+  return RefFormat.UNKNOWN
+}
+
 
 private data class RoundedUserCountEventField(
   override val name: String,

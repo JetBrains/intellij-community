@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  Test.class
+End of files
+Compiling files:
+  java/classProperties/removeImplements2/a/Test.java
+End of files
+Cleaning output files:
+  Client.class
+  ClientImpl.class
+End of files
+Compiling files:
+  java/classProperties/removeImplements2/a/Client.java
+  java/classProperties/removeImplements2/a/ClientImpl.java
+End of files
+------------------------------------------
+Exit code: ERROR

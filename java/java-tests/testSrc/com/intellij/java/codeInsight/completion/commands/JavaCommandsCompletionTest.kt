@@ -48,6 +48,20 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     Registry.get("ide.completion.command.enabled").setValue(false, getTestRootDisposable())
   }
 
+  fun testSkipThreeDots() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A { 
+        void foo() {
+          int y = 10;
+          int x =                           y...<caret>;
+        } 
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertNull(elements.firstOrNull { element -> element.lookupString.contains("Reformat code", ignoreCase = true) })
+  }
+
   fun testFormatNotCall() {
     Registry.get("ide.completion.command.force.enabled").setValue(false, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """

@@ -193,3 +193,6 @@ org.jetbrains.jps.dependency.diff.Difference$Specifier
 - changed():java.lang.Iterable
 - removed():java.lang.Iterable
 - unchanged():Z
+c:org.jetbrains.jps.dependency.test.TestJvmDifferentiateStrategy
+- <init>():V
+- p:getTrackedAnnotations():java.lang.Iterable

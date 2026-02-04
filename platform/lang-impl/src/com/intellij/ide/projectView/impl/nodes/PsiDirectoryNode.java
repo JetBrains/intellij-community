@@ -52,6 +52,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.openapi.vfs.newvfs.NewVirtualFile.asCacheAvoiding;
+
 public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements NavigatableWithText, PathElementIdProvider, NodeWithMeasurableExpand {
   // the chain from a parent directory to this one usually contains only one virtual file
   private final Set<VirtualFile> chain = new SmartHashSet<>();
@@ -441,7 +443,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   public boolean isAlwaysShowPlus() {
     final VirtualFile file = getVirtualFile();
     if (file == null || !file.isValid()) return false;
-    VirtualFile[] children = file.getChildren();
+    VirtualFile[] children = asCacheAvoiding(file).getChildren();
     if (ArrayUtil.isEmpty(children)) return false;
     if (ContainerUtil.exists(children, child -> !child.isDirectory())) return true;
     ViewSettings settings = getSettings();

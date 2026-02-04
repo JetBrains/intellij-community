@@ -7,8 +7,8 @@ import com.intellij.tools.ide.starter.bus.EventsBus
 import org.kodein.di.provider
 
 object Starter {
-  fun newTestContainer(vararg setupHooks: IDETestContext.() -> Unit): TestContainer<*> {
-    val testContainer: () -> TestContainer<*> by di.provider()
+  fun newTestContainer(vararg setupHooks: IDETestContext.() -> Unit): TestContainer {
+    val testContainer: () -> TestContainer by di.provider()
     return (testContainer.invoke().also { testContainer ->
       if (setupHooks.isNotEmpty()) {
         EventsBus.subscribeForTestContextInitializedEvent("setupHooks", testContainer) { event ->

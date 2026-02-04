@@ -3,6 +3,10 @@
 
 package com.intellij.platform.testFramework.junit5.eel.impl
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
@@ -22,8 +26,6 @@ import java.nio.file.*
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.Path
 import kotlin.io.path.name
-
-internal const val FAKE_WINDOWS_ROOT = "\\\\dummy-ij-root\\test-eel\\"
 
 private val EelPlatform.name: String
   get() = when (this) {
@@ -67,7 +69,8 @@ internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFil
   val id = Ksuid.generate()
   val descriptor = EelTestDescriptor(Path(fakeRoot), id, os.osFamily)
 
-  val disposable = Disposer.newDisposable()
+  // EelDescriptor has almost static lifetime by contract, so we bind it to the application service
+  val disposable: Disposable = ApplicationManager.getApplication().service<TestEelService>()
 
   MultiRoutingFileSystemBackend.EP_NAME.point.registerExtension(
     object : MultiRoutingFileSystemBackend {
@@ -128,9 +131,13 @@ internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFil
   val eelApi = eelApiByOs(fakeLocalFileSystem, descriptor, os)
   apiRef.set(eelApi)
   val root = Path.of(fakeRoot)
-  initialized(IsolatedFileSystemImpl(root, descriptor, eelApi)) {
-    Disposer.dispose(disposable)
+
+  // We can't dispose descriptor after each test because EelMachineResolver must be available till the end of the app
+  Disposer.register(disposable) {
     directory.delete(true)
+  }
+
+  initialized(IsolatedFileSystemImpl(root, descriptor, eelApi)) {
   }
 }
 
@@ -149,3 +156,9 @@ internal fun checkMultiRoutingFileSystem() {
   Assumptions.assumeTrue(FileSystems.getDefault() is MultiRoutingFileSystem,
                          "Please enable `-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider`")
 }
+
+/**
+ * Used to dispose test eels
+ */
+@Service(Service.Level.APP)
+private class TestEelService : Disposable.Default

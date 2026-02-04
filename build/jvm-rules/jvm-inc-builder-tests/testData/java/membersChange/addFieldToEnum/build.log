@@ -1,0 +1,19 @@
+================ Step #1 =================
+Cleaning output files:
+  A.class
+End of files
+Compiling files:
+  java/membersChange/addFieldToEnum/a/A.java
+End of files
+Cleaning output files:
+  C$1.class
+  C.class
+  D$1.class
+  D.class
+End of files
+Compiling files:
+  java/membersChange/addFieldToEnum/a/C.java
+  java/membersChange/addFieldToEnum/a/D.java
+End of files
+------------------------------------------
+Exit code: ERROR

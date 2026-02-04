@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  Base.class
+End of files
+Compiling files:
+  java/membersChange/addMoreSpecific2/a/Base.java
+End of files
+Cleaning output files:
+  Client.class
+End of files
+Compiling files:
+  java/membersChange/addMoreSpecific2/a/Client.java
+End of files
+------------------------------------------
+Exit code: OK

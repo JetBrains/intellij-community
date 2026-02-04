@@ -1,18 +1,23 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout
 
+import com.intellij.platform.pluginGraph.ContentModuleName
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.intellij.build.productLayout.xml.containsOverriddenNestedSet
+import org.jetbrains.intellij.build.productLayout.xml.findOverriddenNestedSetNames
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 
 /**
  * Tests for generator.kt helper functions.
  */
+@ExtendWith(TestFailureLogger::class)
 class ProductDslGeneratorTest {
   // Test fixtures
   private fun createSimpleModuleSet(name: String, vararg moduleNames: String): ModuleSet {
     return ModuleSet(
       name = name,
-      modules = moduleNames.map { ContentModule(it) }
+      modules = moduleNames.map { ContentModule(ContentModuleName(it)) }
     )
   }
 
@@ -23,7 +28,7 @@ class ProductDslGeneratorTest {
   ): ModuleSet {
     return ModuleSet(
       name = name,
-      modules = moduleNames.map { ContentModule(it) },
+      modules = moduleNames.map { ContentModule(ContentModuleName(it)) },
       nestedSets = nestedSets
     )
   }

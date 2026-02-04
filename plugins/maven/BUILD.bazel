@@ -114,6 +114,7 @@ jvm_library(
     "//platform/xdebugger-impl:debugger-impl",
     "//libraries/http-client",
     "//platform/execution",
+    "//platform/projectModel-impl",
     ":platform_java-guiForms-rt_provided",
     ":plugins_maven_artifactResolver-m31_provided",
   ],

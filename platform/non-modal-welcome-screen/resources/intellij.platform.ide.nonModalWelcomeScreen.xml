@@ -25,6 +25,8 @@
 
     <noProjectStateHandler implementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenNoProjectStateHandler" order="first"/>
 
+    <projectOpenProcessor implementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenCommandLineProjectOpenProcessor" order="first"/>
+
     <actionConfigurationCustomizer implementation="com.intellij.platform.ide.nonModalWelcomeScreen.actions.WelcomeScreenAwareActionsCustomizer" />
 
     <fileEditorProvider id="settingsWindow" implementation="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabVirtualFileEditorProvider"/>
@@ -34,8 +36,8 @@
     <advancedSetting id="welcome.screen.non.modal.enabled" default="true"
                      groupKey="group.advanced.settings.welcome.screen"
                      bundle="messages.NonModalWelcomeScreenBundle"/>
-    <statistics.counterUsagesCollector
-      implementationClass="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.nonModalWelcomeScreen.newProjectNotification.WelcomeScreenSingleFileOpeningCollector"/>
 
     <internalFileTemplate name="Generic Empty File"/>
   </extensions>

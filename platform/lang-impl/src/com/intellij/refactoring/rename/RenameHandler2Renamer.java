@@ -3,13 +3,15 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-final class RenameHandler2Renamer implements Renamer {
+final class RenameHandler2Renamer implements Renamer, PossiblyDumbAware {
 
   private final @NotNull Project myProject;
   private final @NotNull DataContext myDataContext; // This is wrong. Don't do drugs kids, and don't store DataContext.
@@ -24,6 +26,11 @@ final class RenameHandler2Renamer implements Renamer {
     myDataContext = context;
     myHandler = handler;
     myEventCount = count;
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return DumbService.isDumbAware(myHandler);
   }
 
   @Override

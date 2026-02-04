@@ -499,6 +499,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     };
   }
 
+  /**
+   * @see IntroduceVariableBase#getAnchor(PsiExpression[])
+   */
   public static @Nullable PsiElement getAnchor(PsiElement place) {
     place = getPhysicalElement(place);
     PsiElement anchorStatement = CommonJavaRefactoringUtil.getParentStatement(place, false);
@@ -515,7 +518,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return anchorStatement;
   }
 
-  static @Nullable PsiElement getAnchor(PsiExpression[] places) {
+  /**
+   * @return the location where the new variable should be inserted so that it has access to all {@code places}.
+   */
+  public static @Nullable PsiElement getAnchor(PsiExpression[] places) {
     if (places.length == 1) {
       return getAnchor(places[0]);
     }
@@ -1140,12 +1146,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     /**
      * Represents all the data necessary to introduce the variable.
-     * @param expression - element that should be extracted into the separate variable.
-     * @param originalType - type of the expression that should be extracted.
-     * @param anchorStatement - statement near which the declared variable will be created.
-     * @param occurrenceManager - stores all occurrences of the expression that should be extracted.
-     * @param occurrencesInfo - stores additional information about occurrences like whether they are valid for extraction.
-     * @param isInplaceAvailableOnDataContext - indicates whether inplace refactoring is available for the current context.
+     * @param expression element that should be extracted into the separate variable.
+     * @param originalType type of the expression that should be extracted.
+     * @param anchorStatement statement near which the declared variable will be created.
+     *                        NB: this statement is calculated for @{code expression} only and not all occurrences of its expression
+     * @param occurrenceManager stores all occurrences of the expression that should be extracted.
+     * @param occurrencesInfo stores additional information about occurrences like whether they are valid for extraction.
+     * @param isInplaceAvailableOnDataContext indicates whether inplace refactoring is available for the current context.
      */
     record Context(
       @NotNull PsiExpression expression,

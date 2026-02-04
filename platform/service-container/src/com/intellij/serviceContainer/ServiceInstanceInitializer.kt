@@ -8,7 +8,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceDescriptor
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Disposer
@@ -24,6 +23,13 @@ internal abstract class ServiceInstanceInitializer(
   private val pluginId: PluginId,
   private val serviceDescriptor: ServiceDescriptor,
 ) : InstanceInitializer {
+  // In the ideal world, we should create the proxy for any "open=true" service. Unfortunately, at the moment "open" services are not
+  // truly open: they are cast to "impl" classes in different places. Unchecked casts throw exceptions. Checked casts silently
+  // disable some functionality. To work around the problem, we introduce the "allowlist" of services that are allowed to be proxied.
+  private val proxiedServicesList: Set<String> by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+    javaClass.classLoader.getResourceAsStream("proxied-services.list")?.bufferedReader()?.useLines { it.toSet() } ?: emptySet()
+  }
+
   override val overridable: Boolean
     get() = serviceDescriptor.open
 
@@ -72,26 +78,20 @@ internal abstract class ServiceInstanceInitializer(
   }
 
   private fun wrapIfDynamicOverrideSupported(instance: Any): Any {
-    return if (canBeDynamicallyOverridden()) {
-      val keyClassName = serviceDescriptor.serviceInterface ?: serviceDescriptor.implementation!!
+    val keyClassName = serviceDescriptor.serviceInterface ?: serviceDescriptor.implementation!!
+    return if (canBeDynamicallyOverridden(keyClassName)) {
       // TODO: is there a better way to get the service interface type here?
       val keyClass = instance.javaClass.classLoader.loadClass(keyClassName)
-
-      if (keyClass.isInterface) {
-        ServiceProxy.createInstance(keyClass, instance)
-      }
-      else {
-        thisLogger().error("Only proxies for interfaces are supported now. Actual: $keyClass")
-        instance
-      }
+      ServiceProxyGenerator.createInstance(keyClass, instance)
     }
     else {
       instance
     }
   }
 
-  private fun canBeDynamicallyOverridden(): Boolean {
-    return componentManager.useProxiesForOpenServices && overridable
+  private fun canBeDynamicallyOverridden(serviceInterfaceName: String): Boolean {
+    return componentManager.useProxiesForOpenServices && overridable &&
+           proxiedServicesList.contains(serviceInterfaceName)
   }
 }
 
