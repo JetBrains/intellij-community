@@ -7,8 +7,21 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.*
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
+import org.jetbrains.kotlin.analysis.api.components.allSupertypes
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.components.buildSubstitutor
+import org.jetbrains.kotlin.analysis.api.components.compositeScope
+import org.jetbrains.kotlin.analysis.api.components.defaultType
+import org.jetbrains.kotlin.analysis.api.components.isAnyType
+import org.jetbrains.kotlin.analysis.api.components.memberScope
+import org.jetbrains.kotlin.analysis.api.components.namedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeProjection
@@ -19,19 +32,23 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSetupScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2ContributorSectionPriority
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2TypeInstantiationContributor.InheritanceSubstitutionResult.*
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2TypeInstantiationContributor.InheritanceSubstitutionResult.SubstitutionNotPossible
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2TypeInstantiationContributor.InheritanceSubstitutionResult.SuccessfulSubstitution
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2TypeInstantiationContributor.InheritanceSubstitutionResult.UnresolvedParameter
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.getAliasNameIfExists
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirLookupElementFactory.createAnonymousObjectLookupElement
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.ExpectedTypeWeigher
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.ExpectedTypeWeigher.matchesExpectedType
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllInheritors
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isAbstract
-import org.jetbrains.kotlin.utils.addToStdlib.flattenTo
 
 /**
  * This contributor is responsible for completing type instantiation items for Kotlin classes and objects.
@@ -69,19 +86,27 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
     }
 
     context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
-    private fun addAnonymousObjectLookupElement(symbol: KaClassSymbol, typeArguments: List<KaTypeProjection>?) {
-        val element = createAnonymousObjectLookupElement(symbol, typeArguments)
+    private fun addAnonymousObjectLookupElement(
+        symbol: KaClassSymbol,
+        typeArguments: List<KaTypeProjection>?,
+        importingStrategy: ImportStrategy,
+        aliasName: Name?
+    ) {
+        val element = createAnonymousObjectLookupElement(symbol, typeArguments, importingStrategy, aliasName)
         element.matchesExpectedType = ExpectedTypeWeigher.MatchesExpectedType.MATCHES
         addElement(element)
     }
 
     context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
-    private fun addObjectLookupElement(symbol: KaClassSymbol) {
-        val importStrategy = context.importStrategyDetector.detectImportStrategyForClassifierSymbol(symbol)
+    private fun addObjectLookupElement(
+        symbol: KaClassSymbol,
+        importingStrategy: ImportStrategy,
+        aliasName: Name?
+    ) {
         KotlinFirLookupElementFactory.createClassifierLookupElement(
             symbol = symbol,
-            importingStrategy = importStrategy,
-            aliasName = null,
+            importingStrategy = importingStrategy,
+            aliasName = aliasName,
         )?.let { element ->
             element.matchesExpectedType = ExpectedTypeWeigher.MatchesExpectedType.MATCHES
             addElement(element)
@@ -89,7 +114,12 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
     }
 
     context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
-    private fun addConstructorCallLookupElements(symbol: KaNamedClassSymbol, inputTypeArgumentsAreRequired: Boolean) {
+    private fun addConstructorCallLookupElements(
+        symbol: KaNamedClassSymbol,
+        inputTypeArgumentsAreRequired: Boolean,
+        importStrategy: ImportStrategy,
+        aliasName: Name?
+    ) {
         val constructorSymbols = symbol.memberScope.constructors
             .filter { context.visibilityChecker.isVisible(it, context.positionContext) }
             .toList()
@@ -99,12 +129,11 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
             return
         }
 
-        val importStrategy = context.importStrategyDetector.detectImportStrategyForClassifierSymbol(symbol)
-
         KotlinFirLookupElementFactory.createConstructorCallLookupElement(
             containingSymbol = symbol,
             visibleConstructorSymbols = constructorSymbols,
             importingStrategy = importStrategy,
+            aliasName = aliasName,
             inputTypeArgumentsAreRequired = inputTypeArgumentsAreRequired,
         )?.let { element ->
             element.matchesExpectedType = ExpectedTypeWeigher.MatchesExpectedType.MATCHES
@@ -151,8 +180,18 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
 
         if (expectedSymbol !is KaNamedClassSymbol || expectedType !is KaClassType) return
 
+        val aliasName = context.parameters.completionFile.getAliasNameIfExists(expectedSymbol)
+        val importingStrategy = if (aliasName == null) {
+            context.importStrategyDetector.detectImportStrategyForClassifierSymbol(expectedSymbol)
+        } else ImportStrategy.DoNothing
+
         if (expectedSymbol.psi?.canBeInstantiated() == true) {
-            addConstructorCallLookupElements(expectedSymbol, inputTypeArgumentsAreRequired = false)
+            addConstructorCallLookupElements(
+                symbol = expectedSymbol,
+                inputTypeArgumentsAreRequired = false,
+                importStrategy = importingStrategy,
+                aliasName = aliasName
+            )
         }
 
         if (expectedSymbol.psi?.canBeInherited() == true) {
@@ -169,7 +208,11 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
 
             // If the expected type is _exactly_ the type we want to inherit, then the type arguments
             // required are exactly the ones of the expected type.
-            addAnonymousObjectLookupElement(expectedSymbol, typeArguments.takeIf { !hasUnresolvedArguments })
+            addAnonymousObjectLookupElement(
+                expectedSymbol, typeArguments.takeIf { !hasUnresolvedArguments },
+                importingStrategy = importingStrategy,
+                aliasName = aliasName
+            )
         }
     }
 
@@ -208,7 +251,7 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
         expectedSuperType: KaClassType,
     ): InheritanceSubstitutionResult {
         val superType = inheritorSymbol.defaultType.allSupertypes.firstOrNull { it.symbol == expectedSuperType.symbol }
-            as? KaClassType ?: return SubstitutionNotPossible
+                as? KaClassType ?: return SubstitutionNotPossible
         val superTypeMapping = superType.getTypeParameterMapping()
 
         // Create a reverse mapping from super type
@@ -285,6 +328,10 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
                 is PsiClass -> inheritor.namedClassSymbol ?: continue
                 else -> continue
             }
+            val aliasName = context.parameters.completionFile.getAliasNameIfExists(inheritorSymbol)
+            val importStrategy = if (aliasName == null) {
+                context.importStrategyDetector.detectImportStrategyForClassifierSymbol(inheritorSymbol)
+            } else ImportStrategy.DoNothing
 
             if (inheritorSymbol.classKind == KaClassKind.ENUM_CLASS) {
                 // Enum is not allowed to be instantiated
@@ -304,7 +351,12 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
                     UnresolvedParameter -> null // show the result, but let user complete type arguments
                 }
 
-                addAnonymousObjectLookupElement(inheritorSymbol, typeArgs)
+                addAnonymousObjectLookupElement(
+                    symbol = inheritorSymbol,
+                    typeArguments = typeArgs,
+                    importingStrategy = importStrategy,
+                    aliasName = aliasName
+                )
             }
 
             if (canBeInstantiated) {
@@ -313,11 +365,20 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
                     SubstitutionNotPossible -> continue // do not show the result
                     UnresolvedParameter -> true
                 }
-                addConstructorCallLookupElements(inheritorSymbol, inputTypeArgumentsAreRequired = typeArgsRequired)
+                addConstructorCallLookupElements(
+                    symbol = inheritorSymbol,
+                    inputTypeArgumentsAreRequired = typeArgsRequired,
+                    importStrategy = importStrategy,
+                    aliasName = aliasName,
+                )
             }
 
             if (isObject) {
-                addObjectLookupElement(inheritorSymbol)
+                addObjectLookupElement(
+                    symbol = inheritorSymbol,
+                    importingStrategy = importStrategy,
+                    aliasName = aliasName,
+                )
             }
         }
     }
