@@ -13425,6 +13425,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/convertToExplicitBackingFields/backingFieldTypeIsASubtype.kt");
             }
 
+            @TestMetadata("commentsInsideBrackets.kt")
+            public void testCommentsInsideBrackets() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/commentsInsideBrackets.kt");
+            }
+
             @TestMetadata("customGetter.kt")
             public void testCustomGetter() throws Exception {
                 runTest("testData/inspectionsLocal/convertToExplicitBackingFields/customGetter.kt");
@@ -13498,6 +13503,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("withBlankLines.kt")
             public void testWithBlankLines() throws Exception {
                 runTest("testData/inspectionsLocal/convertToExplicitBackingFields/withBlankLines.kt");
+            }
+
+            @TestMetadata("withComments.kt")
+            public void testWithComments() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/withComments.kt");
+            }
+
+            @TestMetadata("withComments2.kt")
+            public void testWithComments2() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/withComments2.kt");
             }
 
             @TestMetadata("withCustomFunctions.kt")

@@ -6,10 +6,16 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.childrenOfType
+import com.intellij.psi.util.lastLeaf
 import com.intellij.psi.util.siblings
+import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
@@ -22,16 +28,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinMo
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtPropertyAccessor
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtReturnExpression
-import org.jetbrains.kotlin.psi.KtVisitor
-import org.jetbrains.kotlin.psi.propertyVisitor
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
@@ -42,7 +40,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 internal class ConvertToExplicitBackingFieldsInspection :
     KotlinApplicableInspectionBase.Simple<KtProperty, ConvertToExplicitBackingFieldsInspection.Context>() {
 
-    data class Context(val backingProperty: KtProperty)
+    data class Context(val backingProperty: SmartPsiElementPointer<KtProperty>)
 
     override fun getProblemDescription(
         element: KtProperty,
@@ -64,54 +62,51 @@ internal class ConvertToExplicitBackingFieldsInspection :
             val psiFactory = KtPsiFactory(element.project)
 
             val propertyNameText = element.nameIdentifier?.text ?: return
-            val propertyType = element.typeReference?.text ?: return
-            val backingPropertyName = context.backingProperty.name ?: return
-            val backingPropertyType = context.backingProperty.typeReference?.text
+            val backingPropertyContext = context.backingProperty.element ?: return
+            val backingPropertyName = backingPropertyContext.name ?: return
+            val backingPropertyType = backingPropertyContext.typeReference?.text
 
-            val containingFile = element.containingKtFile
-            val referencesToReplace = containingFile.collectDescendantsOfType<KtNameReferenceExpression>()
+            val referencesToReplace = element.containingKtFile.collectDescendantsOfType<KtNameReferenceExpression>()
                 .filter { ref ->
-                    ref.getReferencedName() == backingPropertyName && ref.mainReference.resolve() == context.backingProperty
+                    ref.getReferencedName() == backingPropertyName && ref.mainReference.resolve() == backingPropertyContext
                 }
                 .map { updater.getWritable(it) }
 
-            val backingProperty = updater.getWritable(context.backingProperty)
+            val backingProperty = updater.getWritable(backingPropertyContext)
+            val initializer = backingProperty.initializer?.let { getElementWithoutInnerComments(it, StringBuilder()) }
 
             referencesToReplace.forEach { writableRef ->
                 writableRef.replace(psiFactory.createExpression(propertyNameText))
             }
 
+            val getter = element.getter ?: return
+            val accessorsCommentSaver = CommentSaver(getter)
+            getter.delete()
+            if (element.lastLeaf() is PsiWhiteSpace) element.lastLeaf().delete()
+            accessorsCommentSaver.restore(element)
+
             val newPropertyText = buildString {
-                element.modifierList?.text?.let { modifiers ->
-                    if (modifiers.isNotBlank()) {
-                        append(modifiers)
-                        append(" ")
-                    }
-                }
-                append(if (element.isVar) "var" else "val")
-                append(" ")
-                append(propertyNameText)
-                append(": ")
-                append(propertyType)
+                append(element.text)
                 append("\nfield")
                 backingPropertyType?.let {
                     append(": ")
                     append(backingPropertyType)
                 }
-                context.backingProperty.initializer?.let {
+                initializer?.let {
                     append(" = ")
-                    append(it.text)
+                    append(it)
                 }
             }
 
             val newProperty = psiFactory.createProperty(newPropertyText)
-            element.replace(newProperty).reformat(canChangeWhiteSpacesOnly = true)
+            val replacedProperty = element.replace(newProperty)
+            replacedProperty.reformat(canChangeWhiteSpacesOnly = true)
 
             backingProperty.parent.deleteChildRange(
                 backingProperty,
-                backingProperty.siblings(withSelf = false).takeWhile { it is PsiWhiteSpace }.lastOrNull() ?: backingProperty
+                backingProperty.siblings(withSelf = false).takeWhile { it is PsiWhiteSpace }.lastOrNull() ?: backingProperty,
             )
-            backingProperty.delete()
+            CommentSaver(backingProperty).restore(replacedProperty)
         }
     }
 
@@ -146,7 +141,7 @@ internal class ConvertToExplicitBackingFieldsInspection :
         if (returnedType.semanticallyEquals(propertyType)) return null
         if (!returnedType.isSubtypeOf(propertyType)) return null
 
-        return Context(returnedProperty)
+        return Context(returnedProperty.createSmartPointer())
     }
 
     context(_: KaSession)
@@ -173,6 +168,15 @@ internal class ConvertToExplicitBackingFieldsInspection :
     private fun resolveToProperty(expression: KtNameReferenceExpression): KtProperty? {
         val symbol = expression.mainReference.resolveToSymbol() as? KaPropertySymbol ?: return null
         return symbol.psi as? KtProperty
+    }
+
+    private fun getElementWithoutInnerComments(property: PsiElement, builder: StringBuilder): String {
+        when (property) {
+            is PsiComment -> {}
+            is KtElement -> property.allChildren.forEach { getElementWithoutInnerComments(it, builder) }
+            else -> builder.append(property.text)
+        }
+        return builder.toString()
     }
 
 }
