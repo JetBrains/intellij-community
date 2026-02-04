@@ -90,7 +90,6 @@ class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
 class PyUnitTestFactory(type: PythonTestConfigurationType) : PyAbstractTestFactory<PyUnitTestConfiguration>(type) {
   companion object {
     const val id: String = "Unittests"
-    private val PACKAGE_SPEC = PackageAvailabilitySpec("unittest", "unittest.TestCase")
   }
 
   override fun createTemplateConfiguration(project: Project): PyUnitTestConfiguration = PyUnitTestConfiguration(project, this)
@@ -101,5 +100,5 @@ class PyUnitTestFactory(type: PythonTestConfigurationType) : PyAbstractTestFacto
 
   override fun onlyClassesAreSupported(project: Project, sdk: Sdk): Boolean = true
 
-  override val packageSpec: PackageAvailabilitySpec = PACKAGE_SPEC
+  override val packageSpec: PackageAvailabilitySpec? = null
 }

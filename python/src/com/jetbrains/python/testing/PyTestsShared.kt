@@ -786,6 +786,7 @@ abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration>(t
   open val packageSpec: PackageAvailabilitySpec? = null
 
   open fun isFrameworkInstalled(project: Project, sdk: Sdk): Boolean {
+    // example is unittest, it's part of stdlib, so no need to check.
     val spec = packageSpec ?: return true
     return isPackageAvailable(project, sdk, spec)
   }
