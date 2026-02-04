@@ -33,10 +33,12 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSetupScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2ContributorSectionPriority
+import org.jetbrains.kotlin.idea.completion.impl.k2.allowsOnlyNamedArguments
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2TypeInstantiationContributor.InheritanceSubstitutionResult.SubstitutionNotPossible
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2TypeInstantiationContributor.InheritanceSubstitutionResult.SuccessfulSubstitution
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2TypeInstantiationContributor.InheritanceSubstitutionResult.UnresolvedParameter
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.getAliasNameIfExists
+import org.jetbrains.kotlin.idea.completion.impl.k2.isAfterRangeOperator
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirLookupElementFactory.createAnonymousObjectLookupElement
@@ -70,6 +72,11 @@ import org.jetbrains.kotlin.psi.psiUtil.isAbstract
 internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNameReferencePositionContext>(
     KotlinNameReferencePositionContext::class
 ) {
+
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
+    override fun shouldExecute(): Boolean {
+        return !context.positionContext.isAfterRangeOperator() && !context.positionContext.allowsOnlyNamedArguments()
+    }
 
     override fun K2CompletionSetupScope<KotlinNameReferencePositionContext>.isAppropriatePosition(): Boolean {
         // Cannot have type instantiation items when we have a receiver.
