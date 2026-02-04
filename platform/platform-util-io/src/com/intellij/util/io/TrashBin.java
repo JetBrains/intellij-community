@@ -3,6 +3,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
@@ -63,7 +64,8 @@ public final class TrashBin {
   }
 
   public static boolean canMoveToTrash(@NotNull VirtualFile file) {
-    return file.isInLocalFileSystem() && canMoveToTrash(file.toNioPath());
+    final Path path = file.getFileSystem().getNioPath(file);
+    return file.isInLocalFileSystem() && path != null && canMoveToTrash(path);
   }
 
   public static void moveToTrash(@NotNull Path path) throws IOException {
