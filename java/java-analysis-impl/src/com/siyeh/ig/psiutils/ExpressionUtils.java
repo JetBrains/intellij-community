@@ -111,6 +111,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -213,7 +214,7 @@ public final class ExpressionUtils {
 
   @Contract("null -> false")
   public static boolean isEvaluatedAtCompileTime(@Nullable PsiExpression expression) {
-    return isEvaluatedAtCompileTime(expression, ContainerUtil.newHashSet());
+    return isEvaluatedAtCompileTime(expression, new HashSet<>());
   }
 
   private static boolean isEvaluatedAtCompileTime(@Nullable PsiExpression expression,
@@ -240,7 +241,7 @@ public final class ExpressionUtils {
       }
       final PsiElement element = referenceExpression.resolve();
       if (element instanceof PsiVariable variable) {
-        if (visited.contains(variable)) {
+        if (!visited.add(variable)) {
           // cyclic reference detected; not a compile-time evaluatable expression
           return false;
         }
@@ -250,13 +251,7 @@ public final class ExpressionUtils {
         if (!variable.hasModifierProperty(PsiModifier.FINAL)) {
           return false;
         }
-        visited.add(variable);
-        try {
-          return isEvaluatedAtCompileTime(PsiFieldImpl.getDetachedInitializer(variable), visited);
-        }
-        finally {
-          visited.remove(variable);
-        }
+        return isEvaluatedAtCompileTime(PsiFieldImpl.getDetachedInitializer(variable), visited);
       }
     }
     if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
