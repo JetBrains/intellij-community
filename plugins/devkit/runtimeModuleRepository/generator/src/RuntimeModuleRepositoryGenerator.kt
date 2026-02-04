@@ -23,7 +23,7 @@ import kotlin.io.path.createDirectories
 object RuntimeModuleRepositoryGenerator {
   const val JAR_REPOSITORY_FILE_NAME: String = "module-descriptors.jar"
   const val COMPACT_REPOSITORY_FILE_NAME: String = "module-descriptors.dat"
-  const val GENERATOR_VERSION: Int = 2
+  const val GENERATOR_VERSION: Int = 3
 
   /**
    * Generates the runtime module descriptors for all modules and libraries in [project].
