@@ -412,11 +412,18 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     if (base.getModel() instanceof MatchResultCustomizerModel customizerModel && fullMatcher != null) {
       MatchResult customResult = customizerModel.getCustomRulesMatchResult(fullMatcher, pattern, matcher, name);
       if (customResult != null) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("custom result weight for name [" + name + "] = " + customResult.matchingDegree);
+        }
         return customResult;
       }
     }
 
-    return matches(base, pattern, matcher, name);
+    final var defaultMatch = matches(base, pattern, matcher, name);
+    if (LOG.isDebugEnabled() && defaultMatch != null) {
+      LOG.debug("default result weight for name [" + name + "] = " + defaultMatch.matchingDegree);
+    }
+    return defaultMatch;
   }
 
   protected static @Nullable MatchResult matches(@NotNull ChooseByNameViewModel base,
