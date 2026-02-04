@@ -47,12 +47,12 @@ import kotlin.math.max
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.foundation.theme.OverrideDarkMode
+import org.jetbrains.jewel.intui.standalone.window.macos.MacPlatformServicesDefaultImpl
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultDropdownStyle
 import org.jetbrains.jewel.ui.component.styling.LocalIconButtonStyle
 import org.jetbrains.jewel.ui.util.isDark
 import org.jetbrains.jewel.window.styling.TitleBarStyle
 import org.jetbrains.jewel.window.utils.DesktopPlatform
-import org.jetbrains.jewel.window.utils.macos.MacUtil
 
 internal const val TITLE_BAR_COMPONENT_LAYOUT_ID_PREFIX = "__TITLE_BAR_"
 
@@ -186,7 +186,7 @@ internal class TitleBarMeasurePolicy(
 
         return layout(boxWidth, boxHeight) {
             if (state.isFullscreen) {
-                MacUtil.updateFullScreenButtons(window)
+                MacPlatformServicesDefaultImpl.updateFullScreenButtons(window)
             }
             val placeableGroups =
                 measuredPlaceable.groupBy { (measurable, _) ->

@@ -49,6 +49,8 @@ ktor-client-java = { module = "io.ktor:ktor-client-java", version = "3.0.3" }
 metalava = { module = "com.android.tools.metalava:metalava", version.ref = "metalava" }
 jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core" }
+coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test" }
 
 # Plugin libraries for build-logic's convention plugins to use to resolve the types/tasks coming from these plugins
 detekt-gradlePlugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
