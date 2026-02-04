@@ -10,6 +10,8 @@ import com.intellij.xdebugger.frame.XValueContainer;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog;
 import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public class EvaluatingExpressionRootNode extends XValueContainerNode<EvaluatingExpressionRootNode.EvaluatingResultContainer> {
@@ -22,8 +24,20 @@ public class EvaluatingExpressionRootNode extends XValueContainerNode<Evaluating
     return MessageTreeNode.createEvaluatingMessage(myTree, this);
   }
 
+  @ApiStatus.Internal
+  public void rebuild() {
+    EvaluatingResultContainer valueContainer = getValueContainer();
+    if (valueContainer.myResult != null) {
+      XDebuggerTree tree = getTree();
+      XDebuggerTreeState treeState = XDebuggerTreeState.saveState(tree);
+      clearChildren();
+      treeState.restoreState(tree);
+    }
+  }
+
   public static class EvaluatingResultContainer extends XValueContainer {
     private final XDebuggerEvaluationDialog myDialog;
+    private XValue myResult = null;
 
     public EvaluatingResultContainer(final XDebuggerEvaluationDialog dialog) {
       myDialog = dialog;
@@ -31,7 +45,17 @@ public class EvaluatingExpressionRootNode extends XValueContainerNode<Evaluating
 
     @Override
     public void computeChildren(final @NotNull XCompositeNode node) {
-      myDialog.startEvaluation(new MyEvaluationCallback(node));
+      if (myResult != null) {
+        addResult(node, myResult);
+      }
+      else {
+        myDialog.startEvaluation(new MyEvaluationCallback(node));
+      }
+    }
+
+    private static void addResult(@NotNull XCompositeNode node, @NotNull XValue result) {
+      String name = UIUtil.removeMnemonic(XDebuggerBundle.message("xdebugger.evaluate.result"));
+      node.addChildren(XValueChildrenList.singleton(name, result), true);
     }
 
     private class MyEvaluationCallback extends XEvaluationCallbackBase implements XEvaluationCallbackWithOrigin {
@@ -46,8 +70,8 @@ public class EvaluatingExpressionRootNode extends XValueContainerNode<Evaluating
 
       @Override
       public void evaluated(final @NotNull XValue result) {
-        String name = UIUtil.removeMnemonic(XDebuggerBundle.message("xdebugger.evaluate.result"));
-        myNode.addChildren(XValueChildrenList.singleton(name, result), true);
+        myResult = result;
+        addResult(myNode, result);
         myDialog.evaluationDone();
       }
 

@@ -72,6 +72,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private EvaluationMode myMode;
   private XSourcePosition mySourcePosition;
   private final SwitchModeAction mySwitchModeAction;
+  private boolean myIsEvaluating = false;
 
   /**
    * Use {@link XDebuggerEvaluationDialog#XDebuggerEvaluationDialog(XDebugSessionProxy, XDebuggerEditorsProvider, XExpression, XSourcePosition, boolean)} instead
@@ -196,6 +197,22 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       @Override
       public void sessionPaused() {
         updateSourcePosition();
+      }
+
+      @Override
+      public void settingsChanged() {
+        if (myIsEvaluating) { // filter out rebuildViews after our own evaluation
+          myIsEvaluating = false;
+          return;
+        }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          XDebuggerEditorBase inputEditor = getInputEditor();
+          // recreate document to support value marks update
+          inputEditor.setExpression(inputEditor.getExpression());
+          if (myTreePanel.getTree().getRoot() instanceof EvaluatingExpressionRootNode rootNode) {
+            rootNode.rebuild();
+          }
+        });
       }
     }, myDisposable);
   }
@@ -393,7 +410,9 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   }
 
   public void evaluationDone() {
-    if (mySession != null) mySession.rebuildViews();
+    if (mySession == null) return;
+    myIsEvaluating = true;
+    mySession.rebuildViews();
   }
 
   @Override
