@@ -25,7 +25,7 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.pathString
-import kotlin.io.path.readLines
+import kotlin.io.path.readText
 
 abstract class AbstractMemberPullPushTest : KotlinLightCodeInsightFixtureTestCase() {
     val fixture: JavaCodeInsightTestFixture get() = myFixture
@@ -51,11 +51,11 @@ abstract class AbstractMemberPullPushTest : KotlinLightCodeInsightFixtureTestCas
             markMembersInfo(file)
             extraFilesToPsi.keys.forEach(::markMembersInfo)
 
-            val dialogConfig = if (dialogFile.exists()) parseDialogFile(dialogFile) else null
-            if (dialogConfig != null) {
-                TestDialogManager.setTestDialog { message ->
-                    assertEquals(dialogConfig.expectedMessage, message)
-                    dialogConfig.buttonResult
+            val expectedDialogMessage = if (dialogFile.exists()) parseDialogMessage(dialogFile) else null
+            if (expectedDialogMessage != null) {
+                TestDialogManager.setTestDialog { actualDialogMessage ->
+                    assertEquals(expectedDialogMessage, actualDialogMessage)
+                    Messages.OK
                 }
             }
 
@@ -96,36 +96,13 @@ abstract class AbstractMemberPullPushTest : KotlinLightCodeInsightFixtureTestCas
         return testFile?.takeIf { it.exists() } ?: Path("$path.${extension}")
     }
 
-    private fun parseDialogFile(file: Path): DialogConfig {
-        val lines = file.readLines()
-
-        val directiveLine = lines.firstOrNull { it.trim().startsWith("// BUTTON:") }
-            ?: error("Missing BUTTON directive. Expected format: '// BUTTON: <name>'. Supported: YES, NO, OK, CANCEL")
-
-        val buttonName = directiveLine.substringAfter("// BUTTON:").trim()
-        val button = when (buttonName) {
-            "YES" -> Messages.YES
-            "NO" -> Messages.NO
-            "CANCEL" -> Messages.CANCEL
-            "OK" -> Messages.OK
-            else -> error("Unknown button name in BUTTON directive: '$buttonName'. Supported: YES, NO, OK, CANCEL")
-        }
-
-        val message = lines.filterNot { it.trim().startsWith("//") }.joinToString("\n").trim()
-
-        return DialogConfig(message, button)
-    }
+    private fun parseDialogMessage(file: Path): String =
+        file.readText().trim()
 
     protected open fun getSuffix(): String? {
         return null
     }
 }
-
-private data class DialogConfig(
-    val expectedMessage: String,
-    /** One of [Messages] constants (YES, NO, OK, CANCEL) */
-    val buttonResult: Int,
-)
 
 @ApiStatus.Internal
 fun markMembersInfo(file: PsiFile) {
