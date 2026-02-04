@@ -68,7 +68,7 @@ public final class FoldingUpdate {
   }
 
   @RequiresReadLock
-  static @Nullable Runnable updateFoldRegions(@NotNull Editor editor, @NotNull PsiFile psiFile, boolean firstTime) {
+  static @Nullable Runnable updateFoldRegions(@NotNull Editor editor, @NotNull PsiFile psiFile, boolean firstTime, boolean quick) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     Project project = psiFile.getProject();
@@ -88,13 +88,13 @@ public final class FoldingUpdate {
       }
     }
     if (firstTime) {
-      return getUpdateResult(psiFile, document, project, editor, true).getFirst();
+      return getUpdateResult(psiFile, document, project, editor, true, quick).getFirst();
     }
 
     return CachedValuesManager.getManager(project).getCachedValue(
       editor, CODE_FOLDING_KEY, () -> {
         PsiFile psiFile1 = CodeFoldingManagerImpl.getPsiFileForFolding(project, document);
-        Pair<@NotNull Runnable, @NotNull Object @NotNull []> result = getUpdateResult(psiFile1, document, project, editor, false);
+        Pair<@NotNull Runnable, @NotNull Object @NotNull []> result = getUpdateResult(psiFile1, document, project, editor, false, quick);
         Runnable runnable = result.getFirst();
         Object[] dependencies = result.getSecond();
         return CachedValueProvider.Result.create(runnable, dependencies);
@@ -105,9 +105,10 @@ public final class FoldingUpdate {
                                                                                                @NotNull Document document,
                                                                                                @NotNull Project project,
                                                                                                @NotNull Editor editor,
-                                                                                               boolean applyDefaultState) {
+                                                                                               boolean applyDefaultState,
+                                                                                               boolean quick) {
     PsiUtilCore.ensureValid(psiFile);
-    List<RegionInfo> elementsToFold = getFoldingsFor(psiFile, false);
+    List<RegionInfo> elementsToFold = getFoldingsFor(psiFile, quick);
     UpdateFoldRegionsOperation operation = new UpdateFoldRegionsOperation(project, editor, psiFile, elementsToFold,
                                                                           applyDefaultStateMode(applyDefaultState),
                                                                           !applyDefaultState, false);

@@ -89,7 +89,7 @@ private class CodeFoldingNecromancer(
   override suspend fun spawnNoZombie(recipe: SpawnRecipe) {
     val project = recipe.project
     val document = recipe.document
-    val codeFoldingManager = project.serviceAsync<CodeFoldingManager>()
+    val codeFoldingManager = project.serviceAsync<CodeFoldingManager>() as CodeFoldingManagerImpl
     val psiDocumentManager = project.serviceAsync<PsiDocumentManager>()
     val editor = recipe.editorSupplier()
     var modStamp:Long = 0
@@ -98,7 +98,7 @@ private class CodeFoldingNecromancer(
         modStamp = document.modificationStamp
         catchingExceptions {
           blockingContextToIndicator {
-            codeFoldingManager.updateFoldRegionsAsync(editor, true)
+            codeFoldingManager.updateFoldRegionsAsync(editor, true, true)
           }
         }
       } else {

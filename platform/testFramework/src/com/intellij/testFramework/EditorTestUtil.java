@@ -4,6 +4,7 @@ package com.intellij.testFramework;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.folding.FoldingBuilder;
@@ -933,7 +934,7 @@ public final class EditorTestUtil {
       if (psiFile == null || !supportsDumbModeFolding(psiFile)) {
         return null;
       }
-      return CodeFoldingManager.getInstance(project).updateFoldRegionsAsync(editor, true);
+      return ((CodeFoldingManagerImpl)CodeFoldingManager.getInstance(project)).updateFoldRegionsAsync(editor, true, true);
     }).submit(AppExecutorUtil.getAppExecutorService()));
     if (foldingState != null) {
       foldingState.run();

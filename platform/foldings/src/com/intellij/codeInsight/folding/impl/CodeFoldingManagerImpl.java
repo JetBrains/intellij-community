@@ -264,7 +264,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
       return;
     }
     PsiDocumentManager.getInstance(myProject).commitDocument(editor.getDocument());
-    Runnable runnable = updateFoldRegions(editor, false);
+    Runnable runnable = updateFoldRegions(editor, false, false);
     if (runnable != null) {
       runnable.run();
     }
@@ -274,12 +274,19 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
   @RequiresBackgroundThread
   @RequiresReadLock
   public @Nullable Runnable updateFoldRegionsAsync(@NotNull Editor editor, boolean firstTime) {
+    return updateFoldRegionsAsync(editor, firstTime, false);
+  }
+
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  @RequiresReadLock
+  public @Nullable Runnable updateFoldRegionsAsync(@NotNull Editor editor, boolean firstTime, boolean quick) {
     ThreadingAssertions.assertBackgroundThread();
     ThreadingAssertions.assertReadAccess();
     if (!editor.getSettings().isAutoCodeFoldingEnabled()) {
       return null;
     }
-    Runnable runnable = updateFoldRegions(editor, firstTime);
+    Runnable runnable = updateFoldRegions(editor, firstTime, quick);
     return () -> {
       if (runnable != null) {
         runnable.run();
@@ -290,9 +297,9 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     };
   }
 
-  private @Nullable Runnable updateFoldRegions(@NotNull Editor editor, boolean firstTime) {
+  private @Nullable Runnable updateFoldRegions(@NotNull Editor editor, boolean firstTime, boolean quick) {
     PsiFile psiFile = getPsiFileForFolding(myProject, editor.getDocument());
-    return psiFile == null ? null : FoldingUpdate.updateFoldRegions(editor, psiFile, firstTime);
+    return psiFile == null ? null : FoldingUpdate.updateFoldRegions(editor, psiFile, firstTime, quick);
   }
 
   @Override
