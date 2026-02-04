@@ -2,6 +2,7 @@ package com.intellij.database.datagrid;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.database.DataGridBundle;
 import com.intellij.database.DatabaseDataKeys;
 import com.intellij.database.connection.throwable.info.ErrorInfo;
@@ -56,11 +57,15 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.EmptyActionGroup;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -73,6 +78,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -116,6 +122,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.Action;
+import javax.swing.ActionMap;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.border.Border;
@@ -125,7 +133,9 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.Component;
 import java.awt.Insets;
 import java.awt.Point;
+import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
@@ -969,6 +979,49 @@ public class GridUtil extends GridUtilCore {
   public static @Nullable String getEditorTabName(@NotNull DataGrid grid) {
     VirtualFile file = getVirtualFile(grid);
     return file == null ? null : file.getNameWithoutExtension();
+  }
+
+  public static void registerArrowAction(
+    final @NotNull EditorEx editor,
+    @NotNull DataGrid grid,
+    Supplier<? extends @Nullable Editor> editorSupplier
+  ) {
+    KeyboardShortcut up = KeyboardShortcut.fromString("UP");
+    KeyboardShortcut down = KeyboardShortcut.fromString("DOWN");
+    AnAction action = new DumbAwareAction("goToPreviousOrNextLineOrStopEditing") {
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        if (editor.getDocument().getLineCount() > 1) {
+          e.getPresentation().setEnabledAndVisible(false);
+          return;
+        }
+        KeyEvent keyEvent = ObjectUtils.tryCast(e.getInputEvent(), KeyEvent.class);
+        e.getPresentation().setEnabledAndVisible(keyEvent != null && LookupManager.getActiveLookup(editorSupplier.get()) == null);
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        KeyEvent keyEvent = (KeyEvent)e.getInputEvent();
+        JComponent gridComponent = grid.getPreferredFocusedComponent();
+        ActionMap actionMap = gridComponent.getActionMap();
+        Action action = up.getFirstKeyStroke().getKeyCode() == keyEvent.getKeyCode()
+                        ? actionMap.get("selectPreviousRow")
+                        : actionMap.get("selectNextRow");
+        if (action == null) return;
+        action.actionPerformed(
+          new ActionEvent(gridComponent, keyEvent.getID(), keyEvent.toString(), keyEvent.getWhen(), keyEvent.getModifiers()));
+      }
+    };
+    registerAction(editor, action, new CustomShortcutSet(up, down));
+  }
+
+  public static void registerAction(@NotNull Editor editor, @NotNull AnAction action, @NotNull ShortcutSet shortcutSet) {
+    action.registerCustomShortcutSet(shortcutSet, editor.getComponent());
   }
 
   public static class FileNotificationListener implements NotificationListener {

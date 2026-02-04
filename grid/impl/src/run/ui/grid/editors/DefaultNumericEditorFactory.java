@@ -83,7 +83,10 @@ public class DefaultNumericEditorFactory extends FormatBasedGridCellEditorFactor
                   @NotNull ValueParser valueParser,
                   @NotNull ValueFormatter valueFormatter) {
       super(project, grid, format, column, row, nullValue, initiator, provider, valueParser, valueFormatter, false);
-      getTextField().addSettingsProvider(editor -> GridUtil.configureNumericEditor(grid, editor));
+      getTextField().addSettingsProvider(editor -> {
+        GridUtil.registerArrowAction(editor, grid, this::getEditor);
+        GridUtil.configureNumericEditor(grid, editor);
+      });
     }
   }
 }
