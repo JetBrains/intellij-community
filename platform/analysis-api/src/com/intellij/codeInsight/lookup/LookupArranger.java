@@ -24,6 +24,9 @@ import java.util.function.Predicate;
  * If accessed from multiple threads, it needs to take care of proper synchronization itself.
  */
 public abstract class LookupArranger implements WeighingContext {
+  //not static!
+  private final Key<Runnable> ADDING_CALLBACK = Key.create("on_adding_callback");
+
   protected final List<LookupElement> myItems = new ArrayList<>();
   private final List<LookupElement> myMatchingItems = new ArrayList<>();
   private final List<LookupElement> myExactPrefixItems = new ArrayList<>();
@@ -36,6 +39,7 @@ public abstract class LookupArranger implements WeighingContext {
   public void addElement(@NotNull LookupElement item, @NotNull LookupElementPresentation presentation) {
     myItems.add(item);
     updateCache(item);
+    runAddingCallback(item);
   }
 
   private void updateCache(@NotNull LookupElement item) {
@@ -238,6 +242,23 @@ public abstract class LookupArranger implements WeighingContext {
 
   public @NotNull List<LookupElement> getMatchingItems() {
     return myMatchingItems;
+  }
+
+  /**
+   * Invokes the specified callback when the specified item is added to this arranger.
+   * Is useful when using {@link com.intellij.codeInsight.completion.BaseCompletionLookupArranger} in batch mode, see {@link com.intellij.codeInsight.completion.BaseCompletionLookupArranger#batchUpdate}.
+   * In batch mode, items are added with a delay, so it's useful to invoke this method to get notified when the item is actually added.
+   */
+  @ApiStatus.Internal
+  public void invokeWhenLookupElementAdded(@NotNull LookupElement item, @NotNull Runnable callback) {
+    item.putUserData(ADDING_CALLBACK, callback);
+  }
+
+  private void runAddingCallback(@NotNull LookupElement item) {
+    Runnable callback = item.getUserData(ADDING_CALLBACK);
+    if (callback == null) return;
+    item.putUserData(ADDING_CALLBACK, null);
+    callback.run();
   }
 
   /**

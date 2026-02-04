@@ -175,32 +175,46 @@ private class AddItemJob(
 ) : Runnable {
   override fun run() {
     try {
+      val batch = mutableListOf<AddingEvent>()
       while (true) {
         indicator.checkCanceled()
 
-        when (val event = workingQueue.poll(30, TimeUnit.MILLISECONDS)) {
-          Stop -> {
-            tryReadOrCancel(indicator) {
-              indicator.addDelayedMiddleMatches()
-            }
-            return
-          }
-          is AddItem -> {
-            tryReadOrCancel(indicator) {
-              indicator.addItem(event.result)
-            }
-          }
-          is AddBatch -> {
-            tryReadOrCancel(indicator) {
-              indicator.withSingleUpdate {
-                for (result in event.results) {
-                  indicator.addItem(result)
+        workingQueue.drainTo(batch)
+        if (batch.isEmpty()) {
+          // try awaiting the next event
+          val next = workingQueue.poll(30, TimeUnit.MILLISECONDS) ?: continue
+          batch.add(next)
+        }
+
+        var stop = false
+        tryReadOrCancel(indicator) {
+          indicator.withSingleUpdate {
+            for (event in batch) {
+              indicator.checkCanceled()
+              when (event) {
+                is AddItem -> {
+                  indicator.addItem(event.result)
+                }
+                is AddBatch -> {
+                  for (result in event.results) {
+                    indicator.addItem(result)
+                  }
+                }
+                Stop -> {
+                  indicator.addDelayedMiddleMatches()
+                  stop = true
+                  break
                 }
               }
             }
           }
-          null -> { /* keep waiting for the value */ }
         }
+
+        if (stop) {
+          return
+        }
+
+        batch.clear()
       }
     }
     catch (e: InterruptedException) {

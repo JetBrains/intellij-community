@@ -414,9 +414,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     cellRenderer.itemAdded(item, presentation);
     LookupArranger arranger = myArranger;
+    arranger.invokeWhenLookupElementAdded(item, () -> cellRenderer.itemAddedToArranger(item));
     arranger.registerMatcher(item, matcher);
     arranger.addElement(item, presentation);
-    cellRenderer.itemAddedToArranger(item);
     return true;
   }
 
