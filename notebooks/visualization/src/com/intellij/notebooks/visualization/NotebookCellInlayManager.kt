@@ -2,12 +2,21 @@ package com.intellij.notebooks.visualization
 
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.notebooks.ui.bind
-import com.intellij.notebooks.visualization.ui.*
-import com.intellij.notebooks.visualization.ui.EditorCellEventListener.*
+import com.intellij.notebooks.visualization.ui.EditorCell
+import com.intellij.notebooks.visualization.ui.EditorCellEventListener
+import com.intellij.notebooks.visualization.ui.EditorCellEventListener.CellCreated
+import com.intellij.notebooks.visualization.ui.EditorCellEventListener.CellRemoved
+import com.intellij.notebooks.visualization.ui.EditorCellEventListener.EditorCellEvent
+import com.intellij.notebooks.visualization.ui.EditorCellView
+import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener
 import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.CellViewCreated
 import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.CellViewRemoved
+import com.intellij.notebooks.visualization.ui.EditorEmbeddedComponentContainer
+import com.intellij.notebooks.visualization.ui.EditorNotebook
+import com.intellij.notebooks.visualization.ui.JupyterCellSelectionNotifier
 import com.intellij.notebooks.visualization.ui.endInlay.EditorNotebookEndInlay
 import com.intellij.notebooks.visualization.ui.endInlay.EditorNotebookEndInlayProvider
+import com.intellij.notebooks.visualization.ui.notebookViewUpdater
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
@@ -19,6 +28,7 @@ import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FoldingListener
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
@@ -326,11 +336,23 @@ class NotebookCellInlayManager private constructor(
     ): NotebookCellInlayManager {
       EditorEmbeddedComponentContainer(editor as EditorEx)
       val notebook = createNotebook(editor, editorNotebookPostprocessors)
+
+      //We use here BEFORE editor because inlays will not be disposed after editor because thay have check editor is not disposed.
+      //To prevent it we dispose before Editor dispose
+      val beforeEditorDisposable = JupyterBeforeEditorDisposable.get(editor)
+
+      Disposer.register(beforeEditorDisposable, notebook)
       val notebookCellInlayManager = NotebookCellInlayManager(
         editor,
         notebook
-      ).also { Disposer.register(editor.disposable, it) }
+      ).also { Disposer.register(beforeEditorDisposable, it) }
 
+
+      EditorUtil.disposeWithEditor(editor) {
+        //Some external plugin keep editor even if it is disposed, and inlays with it too
+        //So we forced clear all inlays AFTER editor dispose
+        editor.contentComponent.removeAll()
+      }
       NotebookIntervalPointerFactory.get(editor).changeListeners.addListener(notebookCellInlayManager, notebookCellInlayManager)
       return notebookCellInlayManager
     }
