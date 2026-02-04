@@ -9,6 +9,8 @@ import com.intellij.projectImport.ProjectImportBuilder
 import com.intellij.projectImport.ProjectOpenProcessorBase
 import org.jetbrains.idea.eclipse.EclipseProjectFinder
 import org.jetbrains.idea.eclipse.EclipseXml
+import kotlin.io.path.Path
+import kotlin.io.path.name
 
 internal class EclipseProjectOpenProcessor : ProjectOpenProcessorBase<EclipseImportBuilder>() {
   override fun doGetBuilder(): EclipseImportBuilder {
@@ -22,17 +24,12 @@ internal class EclipseProjectOpenProcessor : ProjectOpenProcessorBase<EclipseImp
     val rootDirectory = file.parent.path
     builder.setRootDirectory(rootDirectory)
     val projects = builder.list
-    if (projects.isNullOrEmpty()) {
+    if (projects.isNullOrEmpty() || !projects.contains(rootDirectory)) {
       return false
     }
 
-    if (projects.size > 1) {
-      if (!projects.contains(rootDirectory)) {
-        return false
-      }
-      builder.list = listOf(rootDirectory)
-    }
-    wizardContext.projectName = EclipseProjectFinder.findProjectName(projects.get(0))
+    builder.list = projects
+    wizardContext.projectName = EclipseProjectFinder.findProjectName(rootDirectory) ?: Path(rootDirectory).name
     return true
   }
 }
