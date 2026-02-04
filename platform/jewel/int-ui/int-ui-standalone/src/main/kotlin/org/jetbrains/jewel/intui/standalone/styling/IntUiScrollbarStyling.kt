@@ -7,6 +7,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import org.jetbrains.jewel.intui.standalone.ScrollbarHelper
 import org.jetbrains.jewel.ui.component.styling.ScrollbarColors
 import org.jetbrains.jewel.ui.component.styling.ScrollbarMetrics
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
@@ -49,15 +50,15 @@ public fun ScrollbarStyle.Companion.dark(): ScrollbarStyle =
  *
  * @param colors The color scheme for the scrollbar.
  * @param metrics The sizing and shape properties.
- * @param trackClickBehavior The behavior when clicking on the track.
- * @param scrollbarVisibility The visibility behavior of the scrollbar.
+ * @param trackClickBehavior The behavior when clicking on the track. Defaults to reading from system preferences.
+ * @param scrollbarVisibility The visibility behavior of the scrollbar. Defaults to reading from system preferences.
  * @return A [ScrollbarStyle] configured for light theme on macOS.
  */
 public fun ScrollbarStyle.Companion.macOsLight(
     colors: ScrollbarColors = ScrollbarColors.macOsLight(),
     metrics: ScrollbarMetrics = ScrollbarMetrics.macOs(),
-    trackClickBehavior: TrackClickBehavior = TrackClickBehavior.NextPage,
-    scrollbarVisibility: ScrollbarVisibility = WhenScrolling.default(),
+    trackClickBehavior: TrackClickBehavior = ScrollbarHelper.trackClickBehavior,
+    scrollbarVisibility: ScrollbarVisibility = ScrollbarHelper.scrollbarVisibilityStyle,
 ): ScrollbarStyle =
     ScrollbarStyle(
         colors = colors,
@@ -71,15 +72,15 @@ public fun ScrollbarStyle.Companion.macOsLight(
  *
  * @param colors The color scheme for the scrollbar.
  * @param metrics The sizing and shape properties.
- * @param trackClickBehavior The behavior when clicking on the track.
- * @param scrollbarVisibility The visibility behavior of the scrollbar.
+ * @param trackClickBehavior The behavior when clicking on the track. Defaults to reading from system preferences.
+ * @param scrollbarVisibility The visibility behavior of the scrollbar. Defaults to reading from system preferences.
  * @return A [ScrollbarStyle] configured for dark theme on macOS.
  */
 public fun ScrollbarStyle.Companion.macOsDark(
     colors: ScrollbarColors = ScrollbarColors.macOsDark(),
     metrics: ScrollbarMetrics = ScrollbarMetrics.macOs(),
-    trackClickBehavior: TrackClickBehavior = TrackClickBehavior.NextPage,
-    scrollbarVisibility: ScrollbarVisibility = WhenScrolling.default(),
+    trackClickBehavior: TrackClickBehavior = ScrollbarHelper.trackClickBehavior,
+    scrollbarVisibility: ScrollbarVisibility = ScrollbarHelper.scrollbarVisibilityStyle,
 ): ScrollbarStyle =
     ScrollbarStyle(
         colors = colors,
@@ -526,7 +527,24 @@ public fun WhenScrolling.Companion.windowsAndLinux(
         lingerDuration = lingerDuration,
     )
 
-public fun ScrollbarVisibility.Companion.tabStrip(
+/**
+ * Creates an [AlwaysVisible] scrollbar visibility configuration specifically designed for tab strips.
+ *
+ * Uses smaller track dimensions than the standard macOS [AlwaysVisible] to suit the compact nature of tab strip
+ * scrollbars.
+ *
+ * @param trackThickness The thickness of the scrollbar track when not expanded.
+ * @param trackThicknessExpanded The thickness of the scrollbar track when expanded.
+ * @param trackPadding The padding around the scrollbar track.
+ * @param trackPaddingExpanded The padding around the scrollbar track when expanded.
+ * @param trackPaddingWithBorder The padding around the scrollbar track when it has a border.
+ * @param trackColorAnimationDuration The duration of track color animations.
+ * @param expandAnimationDuration The duration of track expansion animations.
+ * @param thumbColorAnimationDuration The duration of thumb color animations.
+ * @param lingerDuration The duration the scrollbar remains visible after scrolling stops.
+ * @return An [AlwaysVisible] configuration for tab strips.
+ */
+public fun AlwaysVisible.Companion.tabStrip(
     trackThickness: Dp = 5.dp,
     trackThicknessExpanded: Dp = 5.dp,
     trackPadding: PaddingValues = PaddingValues(1.dp),
@@ -549,4 +567,41 @@ public fun ScrollbarVisibility.Companion.tabStrip(
         lingerDuration = lingerDuration,
         scrollbarBackgroundColorLight = Color.Unspecified,
         scrollbarBackgroundColorDark = Color.Unspecified,
+    )
+
+/**
+ * Creates a [WhenScrolling] scrollbar visibility configuration specifically designed for tab strips.
+ *
+ * Uses smaller track dimensions than the standard macOS [WhenScrolling] to suit the compact nature of tab strip
+ * scrollbars.
+ *
+ * @param trackThickness The thickness of the scrollbar track when not expanded.
+ * @param trackThicknessExpanded The thickness of the scrollbar track when expanded.
+ * @param trackPadding The padding around the scrollbar track.
+ * @param trackPaddingWithBorder The padding around the scrollbar track when it has a border.
+ * @param trackColorAnimationDuration The duration of track color animations.
+ * @param expandAnimationDuration The duration of track expansion animations.
+ * @param thumbColorAnimationDuration The duration of thumb color animations.
+ * @param lingerDuration The duration the scrollbar remains visible after scrolling stops.
+ * @return A [WhenScrolling] configuration for tab strips.
+ */
+public fun WhenScrolling.Companion.tabStrip(
+    trackThickness: Dp = 5.dp,
+    trackThicknessExpanded: Dp = 5.dp,
+    trackPadding: PaddingValues = PaddingValues(1.dp),
+    trackPaddingWithBorder: PaddingValues = PaddingValues(1.dp),
+    trackColorAnimationDuration: Duration = 125.milliseconds,
+    expandAnimationDuration: Duration = trackColorAnimationDuration,
+    thumbColorAnimationDuration: Duration = trackColorAnimationDuration,
+    lingerDuration: Duration = 700.milliseconds,
+): ScrollbarVisibility =
+    WhenScrolling(
+        trackThickness = trackThickness,
+        trackThicknessExpanded = trackThicknessExpanded,
+        trackPadding = trackPadding,
+        trackPaddingWithBorder = trackPaddingWithBorder,
+        trackColorAnimationDuration = trackColorAnimationDuration,
+        expandAnimationDuration = expandAnimationDuration,
+        thumbColorAnimationDuration = thumbColorAnimationDuration,
+        lingerDuration = lingerDuration,
     )
