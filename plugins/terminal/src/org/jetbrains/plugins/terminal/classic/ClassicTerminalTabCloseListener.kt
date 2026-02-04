@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.classic
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.content.Content
 import org.jetbrains.plugins.terminal.TerminalTabCloseListener
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
@@ -14,7 +15,9 @@ internal class ClassicTerminalTabCloseListener private constructor(
 ) : TerminalTabCloseListener(content, project, parentDisposable) {
   override fun hasChildProcesses(content: Content): Boolean {
     val widget = TerminalToolWindowManager.findWidgetByContent(content) ?: return false
-    return widget.isCommandRunning()
+    return runWithModalProgressBlocking(myProject, "") {
+      widget.isCommandRunning()
+    }
   }
 
   companion object {
