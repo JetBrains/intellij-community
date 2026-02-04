@@ -85,6 +85,216 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
         }
     }
 
+    /**
+     * Completes type instantiation items for the expected type.
+     * This does not complete subtypes of the expected type, which is done in [completeSubtypes].
+     */
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
+    private fun completeExactExpectedTypeMatch() {
+        val expectedType = context.weighingContext.expectedType ?: return
+        val expectedSymbol = expectedType.symbol
+        val symbolPsi = expectedSymbol?.psi ?: return
+
+        if (expectedSymbol !is KaNamedClassSymbol || expectedType !is KaClassType) return
+
+        val expectedTypeParamMap = expectedType.getTypeParameterMapping()
+        completeElementsForSymbol(
+            symbolPsi = symbolPsi,
+            expectedType = expectedType,
+            expectedTypeParamMap = expectedTypeParamMap,
+            alreadyResolvedSymbol = expectedSymbol,
+        )
+    }
+
+    /**
+     * Completes type instantiation items for matching types that are proper subtypes of the expected type.
+     */
+    @OptIn(KaExperimentalApi::class)
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
+    private fun completeSubtypes() {
+        val expectedType = context.weighingContext.expectedType ?: return
+        if (expectedType.isAnyType) {
+            // There would be too many results as every class would match
+            return
+        }
+        if (expectedType !is KaClassType) return
+
+        val expectedTypeParamMap = expectedType.getTypeParameterMapping()
+
+        val inheritingClasses = expectedType.symbol.psi?.findAllInheritors() ?: return
+        for (inheritor in inheritingClasses) {
+            completeElementsForSymbol(inheritor, expectedType, expectedTypeParamMap)
+        }
+    }
+
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
+    private fun completeElementsForSymbol(
+        symbolPsi: PsiElement,
+        expectedType: KaClassType,
+        expectedTypeParamMap: Map<KaTypeParameterSymbol, KaTypeProjection>,
+        alreadyResolvedSymbol: KaNamedClassSymbol? = null
+    ) {
+        val canBeInherited = symbolPsi.canBeInherited()
+        val canBeInstantiated = symbolPsi.canBeInstantiated()
+        val isObject = symbolPsi is KtObjectDeclaration
+        // Fast path of returning without resolving symbols
+        if (!canBeInherited && !canBeInstantiated && !isObject) return
+
+        val symbol = alreadyResolvedSymbol ?: resolveClassSymbol(symbolPsi) ?: return
+        val aliasName = context.parameters.completionFile.getAliasNameIfExists(symbol)
+
+        if (symbol.classKind == KaClassKind.ENUM_CLASS) {
+            // Enum is not allowed to be instantiated
+            return
+        }
+
+        // If we have an alias in scope, then we do not need to import anything, just use the alias name.
+        val importStrategy = if (aliasName == null) {
+            context.importStrategyDetector.detectImportStrategyForClassifierSymbol(symbol)
+        } else ImportStrategy.DoNothing
+
+        val substitutionResult = substituteTypeArgumentsToMatchExpectedSupertype(
+            inheritorSymbol = symbol,
+            expectedSuperTypeParameterMapping = expectedTypeParamMap,
+            expectedSuperType = expectedType,
+        )
+
+        // Note: These if statements are not necessarily mutually exclusive, e.g., for open classes.
+        if (isObject) {
+            addObjectLookupElement(
+                symbol = symbol,
+                importingStrategy = importStrategy,
+                aliasName = aliasName,
+            )
+        }
+
+        if (canBeInherited) {
+            val typeArgs = when (substitutionResult) {
+                is SuccessfulSubstitution -> substitutionResult.typeArguments
+                SubstitutionNotPossible -> return // do not show the result
+                UnresolvedParameter -> null // show the result, but let user complete type arguments
+            }
+
+            addAnonymousObjectLookupElement(
+                symbol = symbol,
+                typeArguments = typeArgs,
+                importingStrategy = importStrategy,
+                aliasName = aliasName
+            )
+        }
+
+        if (canBeInstantiated) {
+            val typeArgsRequired = when (substitutionResult) {
+                // If symbol == expectedType.symbol, the type arguments will be inferred correctly and can be omitted
+                is SuccessfulSubstitution -> substitutionResult.typeArguments.isNotEmpty() && symbol != expectedType.symbol
+                SubstitutionNotPossible -> return // do not show the result
+                UnresolvedParameter -> true
+            }
+            addConstructorCallLookupElements(
+                symbol = symbol,
+                inputTypeArgumentsAreRequired = typeArgsRequired,
+                importStrategy = importStrategy,
+                aliasName = aliasName,
+            )
+        }
+    }
+
+    /**
+     * Given an [expectedSuperType] with its corresponding [expectedSuperTypeParameterMapping], this function calculates
+     * a mapping of the [inheritorSymbol]'s type parameters so that when applied will result in a type that will
+     * be a subtype of the [expectedSuperType].
+     * If it is not possible to instantiate the [inheritorSymbol] in such a way, then the function returns [SubstitutionNotPossible].
+     * If there are unresolved type parameters or there are multiple ways to instantiate the symbol,
+     * then the function returns [UnresolvedParameter].
+     *
+     * Note: this does not work in all cases and there are more complex cases that are not covered.
+     * These cases will return [UnresolvedParameter] as a safe behavior which is sufficient for now.
+     */
+    @OptIn(KaExperimentalApi::class)
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
+    private fun substituteTypeArgumentsToMatchExpectedSupertype(
+        inheritorSymbol: KaClassSymbol,
+        expectedSuperTypeParameterMapping: Map<KaTypeParameterSymbol, KaTypeProjection>,
+        expectedSuperType: KaClassType,
+    ): InheritanceSubstitutionResult {
+        // Special case if the expectedSuperType is exactly our type.
+        if (expectedSuperType.symbol == inheritorSymbol) {
+            val typeArguments = expectedSuperType.typeArguments
+
+            // If the expected type contains some type parameters, then we have to let the user fill them in,
+            // unless the type parameters are also available in the same scope.
+            val potentiallyUnresolvedTypeParameters = typeArguments.mapNotNull { it.type }.filterIsInstance<KaTypeParameterType>()
+            val hasUnresolvedArguments = if (potentiallyUnresolvedTypeParameters.isNotEmpty()) {
+                val typeParametersScope = context.weighingContext.scopeContext.compositeScope { it is KaScopeKind.TypeParameterScope }
+                val availableTypeParameters = typeParametersScope.classifiers.filterIsInstance<KaTypeParameterSymbol>()
+                potentiallyUnresolvedTypeParameters.any { it.symbol !in availableTypeParameters }
+            } else false
+
+            return if (hasUnresolvedArguments) UnresolvedParameter else SuccessfulSubstitution(typeArguments)
+        }
+
+
+        val superType = inheritorSymbol.defaultType.allSupertypes.firstOrNull { it.symbol == expectedSuperType.symbol }
+                as? KaClassType ?: return SubstitutionNotPossible
+        val superTypeMapping = superType.getTypeParameterMapping()
+
+        // Create a reverse mapping from super type
+        val reverseSuperTypeMapping = buildList {
+            for ((preImage, image) in superTypeMapping) {
+                val imageType = image.type
+                if (imageType !is KaTypeParameterType) continue
+                add(imageType.symbol to preImage)
+            }
+        }.groupBy({ it.first }) { it.second }
+
+        // Example:
+        // superSymbolParameterMapping: Comparable<String> => in T -> String
+        // reverseSuperTypeMapping: Foo<T> : Comparable<T> => T -> in T
+        // Now compose the reverseSuperTypeMapping and the superSymbolParameterMapping
+        val mappedTypeArgs = inheritorSymbol.typeParameters.map { typeParamSymbol ->
+            // Note: there might be multiple results here, which is fine as long as all the results
+            // map to a _single_ result in the end.
+            val reverseTypes = reverseSuperTypeMapping[typeParamSymbol] ?: return UnresolvedParameter
+            val mappedTypes = reverseTypes.mapTo(mutableSetOf()) { expectedSuperTypeParameterMapping[it] }
+            // Only take the result if it maps to a single output type in the end
+            val singleMappedType = mappedTypes.distinctBy { it?.type }.singleOrNull()
+            singleMappedType ?: return UnresolvedParameter
+        }
+
+        // Based on the type arguments, we build a substitutor to map the `inheritorSymbol` to the concrete type that will be used.
+        val substitutor = buildSubstitutor {
+            inheritorSymbol.typeParameters.zip(mappedTypeArgs).forEach { (typeParam, typeArg) ->
+                val type = typeArg.type ?: buildClassType(StandardClassIds.Any) {
+                    isMarkedNullable = true
+                }
+                substitution(typeParam, type)
+            }
+        }
+
+        // We apply the substitution. It's possible that the resulting type is not a subtype of the expected type,
+        // in which case the element does not match and we return [SubstitutionNotPossible].
+        val substituted = substitutor.substitute(inheritorSymbol.defaultType)
+        // The analysis API's `isSubtypeOf` method does not work properly if free type parameters are involved.
+        // To still show results in that case, we use `isPossiblySubTypeOf`, which can lead to elements
+        // being allowed to be shown even if they do not actually work in the cotext.
+        if (!substituted.isPossiblySubTypeOf(expectedSuperType)) {
+            return SubstitutionNotPossible
+        }
+
+        // Return the types that will be used to instantiate the type parameters in symbol.
+        return SuccessfulSubstitution(mappedTypeArgs)
+    }
+
+    /**
+     * Given the type, returns a map of how the corresponding symbol's type arguments are mapped
+     * to instantiate the symbol to the type.
+     */
+    @OptIn(KaExperimentalApi::class)
+    context(_: KaSession)
+    private fun KaClassType.getTypeParameterMapping(): Map<KaTypeParameterSymbol, KaTypeProjection> {
+        return symbol.typeParameters.zip(typeArguments).toMap()
+    }
+
     context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
     private fun addAnonymousObjectLookupElement(
         symbol: KaClassSymbol,
@@ -169,217 +379,16 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
         else -> false
     }
 
-    /**
-     * Completes type instantiation items for the expected type.
-     * This does not complete subtypes of the expected type, which is done in [completeSubtypes].
-     */
-    context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
-    private fun completeExactExpectedTypeMatch() {
-        val expectedType = context.weighingContext.expectedType ?: return
-        val expectedSymbol = expectedType.symbol
-
-        if (expectedSymbol !is KaNamedClassSymbol || expectedType !is KaClassType) return
-
-        val aliasName = context.parameters.completionFile.getAliasNameIfExists(expectedSymbol)
-        val importingStrategy = if (aliasName == null) {
-            context.importStrategyDetector.detectImportStrategyForClassifierSymbol(expectedSymbol)
-        } else ImportStrategy.DoNothing
-
-        if (expectedSymbol.psi?.canBeInstantiated() == true) {
-            addConstructorCallLookupElements(
-                symbol = expectedSymbol,
-                inputTypeArgumentsAreRequired = false,
-                importStrategy = importingStrategy,
-                aliasName = aliasName
-            )
-        }
-
-        if (expectedSymbol.psi?.canBeInherited() == true) {
-            val typeArguments = expectedType.typeArguments
-
-            // If the expected type contains some type parameters, then we have to let the user fill them in,
-            // unless the type parameters are also available in the same scope.
-            val potentiallyUnresolvedTypeParameters = typeArguments.mapNotNull { it.type }.filterIsInstance<KaTypeParameterType>()
-            val hasUnresolvedArguments = if (potentiallyUnresolvedTypeParameters.isNotEmpty()) {
-                val typeParametersScope = context.weighingContext.scopeContext.compositeScope { it is KaScopeKind.TypeParameterScope }
-                val availableTypeParameters = typeParametersScope.classifiers.filterIsInstance<KaTypeParameterSymbol>()
-                potentiallyUnresolvedTypeParameters.any { it.symbol !in availableTypeParameters }
-            } else false
-
-            // If the expected type is _exactly_ the type we want to inherit, then the type arguments
-            // required are exactly the ones of the expected type.
-            addAnonymousObjectLookupElement(
-                expectedSymbol, typeArguments.takeIf { !hasUnresolvedArguments },
-                importingStrategy = importingStrategy,
-                aliasName = aliasName
-            )
-        }
+    context(_: KaSession)
+    private fun resolveClassSymbol(psiElement: PsiElement): KaNamedClassSymbol? = when (psiElement) {
+        is KtClassOrObject -> psiElement.symbol as? KaNamedClassSymbol
+        is PsiClass -> psiElement.namedClassSymbol
+        else -> null
     }
 
     private sealed interface InheritanceSubstitutionResult {
         object SubstitutionNotPossible : InheritanceSubstitutionResult
         object UnresolvedParameter : InheritanceSubstitutionResult
         class SuccessfulSubstitution(val typeArguments: List<KaTypeProjection>) : InheritanceSubstitutionResult
-    }
-
-    /**
-     * Given the type, returns a map of how the corresponding symbol's type arguments are mapped
-     * to instantiate the symbol to the type.
-     */
-    @OptIn(KaExperimentalApi::class)
-    context(_: KaSession)
-    private fun KaClassType.getTypeParameterMapping(): Map<KaTypeParameterSymbol, KaTypeProjection> {
-        return symbol.typeParameters.zip(typeArguments).toMap()
-    }
-
-    /**
-     * Given an [expectedSuperType] with its corresponding [expectedSuperTypeParameterMapping], this function calculates
-     * a mapping of the [inheritorSymbol]'s type parameters so that when applied will result in a type that will
-     * be a subtype of the [expectedSuperType].
-     * If it is not possible to instantiate the [inheritorSymbol] in such a way, then the function returns [SubstitutionNotPossible].
-     * If there are unresolved type parameters or there are multiple ways to instantiate the symbol,
-     * then the function returns [UnresolvedParameter].
-     *
-     * Note: this does not work in all cases and there are more complex cases that are not covered.
-     * These cases will return [UnresolvedParameter] as a safe behavior which is sufficient for now.
-     */
-    @OptIn(KaExperimentalApi::class)
-    context(_: KaSession)
-    private fun substituteTypeArgumentsToMatchExpectedSupertype(
-        inheritorSymbol: KaClassSymbol,
-        expectedSuperTypeParameterMapping: Map<KaTypeParameterSymbol, KaTypeProjection>,
-        expectedSuperType: KaClassType,
-    ): InheritanceSubstitutionResult {
-        val superType = inheritorSymbol.defaultType.allSupertypes.firstOrNull { it.symbol == expectedSuperType.symbol }
-                as? KaClassType ?: return SubstitutionNotPossible
-        val superTypeMapping = superType.getTypeParameterMapping()
-
-        // Create a reverse mapping from super type
-        val reverseSuperTypeMapping = buildList {
-            for ((preImage, image) in superTypeMapping) {
-                val imageType = image.type
-                if (imageType !is KaTypeParameterType) continue
-                add(imageType.symbol to preImage)
-            }
-        }.groupBy({ it.first }) { it.second }
-
-        // Example:
-        // superSymbolParameterMapping: Comparable<String> => in T -> String
-        // reverseSuperTypeMapping: Foo<T> : Comparable<T> => T -> in T
-        // Now compose the reverseSuperTypeMapping and the superSymbolParameterMapping
-        val mappedTypeArgs = inheritorSymbol.typeParameters.map { typeParamSymbol ->
-            // Note: there might be multiple results here, which is fine as long as all the results
-            // map to a _single_ result in the end.
-            val reverseTypes = reverseSuperTypeMapping[typeParamSymbol] ?: return UnresolvedParameter
-            val mappedTypes = reverseTypes.mapTo(mutableSetOf()) { expectedSuperTypeParameterMapping[it] }
-            // Only take the result if it maps to a single output type in the end
-            val singleMappedType = mappedTypes.distinctBy { it?.type }.singleOrNull()
-            singleMappedType ?: return UnresolvedParameter
-        }
-
-        // Based on the type arguments, we build a substitutor to map the `inheritorSymbol` to the concrete type that will be used.
-        val substitutor = buildSubstitutor {
-            inheritorSymbol.typeParameters.zip(mappedTypeArgs).forEach { (typeParam, typeArg) ->
-                val type = typeArg.type ?: buildClassType(StandardClassIds.Any) {
-                    isMarkedNullable = true
-                }
-                substitution(typeParam, type)
-            }
-        }
-
-        // We apply the substitution. It's possible that the resulting type is not a subtype of the expected type,
-        // in which case the element does not match and we return [SubstitutionNotPossible].
-        val substituted = substitutor.substitute(inheritorSymbol.defaultType)
-        // The analysis API's `isSubtypeOf` method does not work properly if free type parameters are involved.
-        // To still show results in that case, we use `isPossiblySubTypeOf`, which can lead to elements
-        // being allowed to be shown even if they do not actually work in the cotext.
-        if (!substituted.isPossiblySubTypeOf(expectedSuperType)) {
-            return SubstitutionNotPossible
-        }
-
-        // Return the types that will be used to instantiate the type parameters in symbol.
-        return SuccessfulSubstitution(mappedTypeArgs)
-    }
-
-    /**
-     * Completes type instantiation items for matching types that are proper subtypes of the expected type.
-     */
-    @OptIn(KaExperimentalApi::class)
-    context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
-    private fun completeSubtypes() {
-        val expectedType = context.weighingContext.expectedType ?: return
-        if (expectedType.isAnyType) {
-            // There would be too many results as every class would match
-            return
-        }
-        if (expectedType !is KaClassType) return
-
-        val expectedTypeParamMap = expectedType.getTypeParameterMapping()
-
-        val inheritingClasses = expectedType.symbol.psi?.findAllInheritors() ?: return
-        for (inheritor in inheritingClasses) {
-            val canBeInherited = inheritor.canBeInherited()
-            val canBeInstantiated = inheritor.canBeInstantiated()
-            val isObject = inheritor is KtObjectDeclaration
-            if (!canBeInherited && !canBeInstantiated && !isObject) continue
-
-            val inheritorSymbol = when (inheritor) {
-                is KtClassOrObject -> inheritor.symbol as? KaNamedClassSymbol ?: continue
-                is PsiClass -> inheritor.namedClassSymbol ?: continue
-                else -> continue
-            }
-            val aliasName = context.parameters.completionFile.getAliasNameIfExists(inheritorSymbol)
-            val importStrategy = if (aliasName == null) {
-                context.importStrategyDetector.detectImportStrategyForClassifierSymbol(inheritorSymbol)
-            } else ImportStrategy.DoNothing
-
-            if (inheritorSymbol.classKind == KaClassKind.ENUM_CLASS) {
-                // Enum is not allowed to be instantiated
-                continue
-            }
-
-            val substitutionResult = substituteTypeArgumentsToMatchExpectedSupertype(
-                inheritorSymbol = inheritorSymbol,
-                expectedSuperTypeParameterMapping = expectedTypeParamMap,
-                expectedSuperType = expectedType,
-            )
-
-            if (canBeInherited) {
-                val typeArgs = when (substitutionResult) {
-                    is SuccessfulSubstitution -> substitutionResult.typeArguments
-                    SubstitutionNotPossible -> continue // do not show the result
-                    UnresolvedParameter -> null // show the result, but let user complete type arguments
-                }
-
-                addAnonymousObjectLookupElement(
-                    symbol = inheritorSymbol,
-                    typeArguments = typeArgs,
-                    importingStrategy = importStrategy,
-                    aliasName = aliasName
-                )
-            }
-
-            if (canBeInstantiated) {
-                val typeArgsRequired = when (substitutionResult) {
-                    is SuccessfulSubstitution -> substitutionResult.typeArguments.isNotEmpty()
-                    SubstitutionNotPossible -> continue // do not show the result
-                    UnresolvedParameter -> true
-                }
-                addConstructorCallLookupElements(
-                    symbol = inheritorSymbol,
-                    inputTypeArgumentsAreRequired = typeArgsRequired,
-                    importStrategy = importStrategy,
-                    aliasName = aliasName,
-                )
-            }
-
-            if (isObject) {
-                addObjectLookupElement(
-                    symbol = inheritorSymbol,
-                    importingStrategy = importStrategy,
-                    aliasName = aliasName,
-                )
-            }
-        }
     }
 }
