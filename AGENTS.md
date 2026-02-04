@@ -24,10 +24,8 @@ repository: monorepo
 Special handling applies to the directories below. If a file you touch lives under one of these roots, you must activate that module's rules first (read the referenced doc before edits or reviews). These rules override general guidelines if they conflict.
 
 - **Product DSL** (`community/platform/build-scripts/product-dsl/`): read `./.claude/rules/product-dsl.md` before changing anything in this tree.
-- **Codex Task skill** (`.codex/skills/task/`): read `.codex/skills/task/task-skill-dev-rule.md` before edits or reviews.
 
 - **Task MCP server** (`community/build/mcp-servers/task/`):
-  - `community/build/mcp-servers/task/beads-semantics.md` is the source for `.codex/skills/task/references/beads-quickref.md` (do not edit the derived file).
   - Tests: `community/build/mcp-servers/task/task-mcp.test.mjs`.
   - Bazel: do not run Bazel build and tests here.
 - **IJ Proxy MCP server** (`community/build/mcp-servers/ij-proxy/`):

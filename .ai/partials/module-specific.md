@@ -4,11 +4,9 @@ Special handling applies to the directories below. If a file you touch lives und
 
 <!-- IF_TOOL:CODEX -->
 - **Product DSL** (`community/platform/build-scripts/product-dsl/`): read `./.claude/rules/product-dsl.md` before changing anything in this tree.
-- **Codex Task skill** (`.codex/skills/task/`): read `.codex/skills/task/task-skill-dev-rule.md` before edits or reviews.
 <!-- /IF_TOOL:CODEX -->
 
 - **Task MCP server** (`community/build/mcp-servers/task/`):
-  - `community/build/mcp-servers/task/beads-semantics.md` is the source for `.codex/skills/task/references/beads-quickref.md` (do not edit the derived file).
   - Tests: `community/build/mcp-servers/task/task-mcp.test.mjs`.
   - Bazel: do not run Bazel build and tests here.
 - **IJ Proxy MCP server** (`community/build/mcp-servers/ij-proxy/`):

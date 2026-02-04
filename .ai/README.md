@@ -6,7 +6,6 @@ This directory (community/.ai) contains the source templates used by `node commu
 
 The same renderer also generates additional derived files outside this directory:
 - `.claude/rules/beads.md` (from `community/build/mcp-servers/task/beads-semantics.md`)
-- `.codex/skills/task/references/beads-quickref.md` (from `community/build/mcp-servers/task/beads-semantics.md`)
 - `opencode.json` (from `.mcp.json`)
 - `.opencode/skill/*` (mirrored from `.codex/skills/*`)
 

@@ -83,15 +83,6 @@ const outputs = [
     generatedHeader: generatedBeadsHeader,
   },
   {
-    name: "Beads quickref (Codex)",
-    tool: "CODEX",
-    templatePath: "community/build/mcp-servers/task/beads-semantics.md",
-    output: ".codex/skills/task/references/beads-quickref.md",
-    forbiddenToolsSuffix: "",
-    usesCompilationRule: false,
-    generatedHeader: generatedBeadsHeader,
-  },
-  {
     name: "Guidelines (community)",
     tool: "CODEX",
     template: "ai-topic-index.template.md",
@@ -408,9 +399,6 @@ async function copyDirectory(sourceDir, targetDir) {
   for (const entry of entries) {
     const sourcePath = join(sourceDir, entry.name);
     const targetPath = join(targetDir, entry.name);
-    if (entry.name === "task-skill-dev-rule.md") {
-      continue;
-    }
     if (entry.isDirectory()) {
       await copyDirectory(sourcePath, targetPath);
     } else if (entry.isFile()) {
