@@ -49,7 +49,7 @@ fun createPythonSdkProducer(sdkHome: String): (Project, Module) -> Sdk {
     run {
       val sdk = createSdkForPerformance(module, SdkCreationType.SDK_PACKAGES_AND_SKELETONS, sdkHome)
       UIUtil.invokeAndWaitIfNeeded(Runnable {
-        PythonSdkUpdater.update(sdk, project, null)
+        PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project)
       })
       sdk
     }

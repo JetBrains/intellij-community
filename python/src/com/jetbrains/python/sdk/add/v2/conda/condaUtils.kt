@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2.conda
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.execService.BinaryToExec
@@ -26,7 +25,6 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.persist
 import com.jetbrains.python.sdk.setAssociationToModule
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.takeWhile
 
 @RequiresEdt
@@ -43,8 +41,7 @@ internal suspend fun PythonAddInterpreterModel<*>.createCondaEnvironment(moduleO
 
   val result = createCondaCommand().getOr { return it }.createCondaSdkAlongWithNewEnv(
     newCondaEnvInfo = request,
-    uiContext = Dispatchers.EDT,
-    existingSdks = existingSdks,
+      existingSdks = existingSdks,
     project = moduleOrProject.project
   )
     .onSuccess { sdk ->

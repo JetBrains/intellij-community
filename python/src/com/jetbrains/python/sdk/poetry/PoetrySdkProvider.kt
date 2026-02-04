@@ -1,6 +1,5 @@
 package com.jetbrains.python.sdk.poetry
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.python.community.impl.poetry.common.icons.PythonCommunityImplPoetryCommonIcons
@@ -15,10 +14,9 @@ import javax.swing.Icon
  *  This source code is created by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
  */
 
-class PoetrySdkProvider : PySdkProvider {
+internal class PoetrySdkProvider : PySdkProvider {
   override fun createEnvironmentAssociationFix(
-    module: Module,
-    sdk: Sdk,
+      sdk: Sdk,
     isPyCharm: Boolean,
     associatedModulePath: String?,
   ): PyInterpreterInspectionQuickFixData? {

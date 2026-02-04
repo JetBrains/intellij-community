@@ -18,7 +18,5 @@ public interface AbstractPyCommonOptionsForm extends AbstractPythonRunConfigurat
 
   void addInterpreterComboBoxActionListener(ActionListener listener);
 
-  void removeInterpreterComboBoxActionListener(ActionListener listener);
-
   void addInterpreterModeListener(Consumer<Boolean> listener);
 }

@@ -39,7 +39,6 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration<Pytho
   implements AbstractPythonRunConfigurationParams, PythonRunConfigurationParams, RefactoringListenerProvider, InputRedirectAware {
   public static final String SCRIPT_NAME = "SCRIPT_NAME";
   public static final String PARAMETERS = "PARAMETERS";
-  public static final String MULTIPROCESS = "MULTIPROCESS";
   public static final String SHOW_COMMAND_LINE = "SHOW_COMMAND_LINE";
   public static final String EMULATE_TERMINAL = "EMULATE_TERMINAL";
   public static final String MODULE_MODE = "MODULE_MODE";

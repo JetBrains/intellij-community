@@ -60,7 +60,6 @@ import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isPythonSdk
 import com.jetbrains.python.sdk.readOnly.PythonSdkReadOnlyProvider
-import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.createDetectedSdk
 import com.jetbrains.python.util.ShowingMessageErrorSync
@@ -68,10 +67,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
-import java.nio.file.Paths
 import kotlin.io.path.Path
 import kotlin.io.path.div
 import kotlin.io.path.pathString
@@ -194,15 +191,6 @@ fun filterAssociatedSdks(module: Module, existingSdks: List<Sdk>): List<Sdk> {
 fun detectAssociatedEnvironments(module: Module, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
   detectVirtualEnvs(module, existingSdks, context).filter { it.isAssociatedWithModule(module) }
 
-@Deprecated("Please use version with sdkAdditionalData parameter")
-fun createSdkByGenerateTask(
-  generateSdkHomePath: Task.WithResult<String, ExecutionException>,
-  existingSdks: List<Sdk>,
-  baseSdk: Sdk?,
-  associatedProjectPath: String?,
-  suggestedSdkName: String?,
-): Sdk = createSdkByGenerateTask(generateSdkHomePath, existingSdks, baseSdk, associatedProjectPath, suggestedSdkName, null)
-
 @Internal
 fun createSdkByGenerateTask(
   generateSdkHomePath: Task.WithResult<String, ExecutionException>,
@@ -324,11 +312,6 @@ internal val Sdk.associatedModuleDir: VirtualFile?
     val nioPath = associatedModuleNioPath ?: return null
     return VirtualFileManager.getInstance().findFileByNioPath(nioPath) ?: TempFileSystem.getInstance().findFileByNioFile(nioPath)
   }
-
-internal fun Sdk.adminPermissionsNeeded(): Boolean {
-  val pathToCheck = sitePackagesDirectory?.path ?: homePath ?: return false
-  return !Files.isWritable(Paths.get(pathToCheck))
-}
 
 @Internal
 fun PyDetectedSdk.setup(existingSdks: List<Sdk>): Sdk? {
@@ -488,9 +471,6 @@ val Sdk.readOnlyErrorMessage: String
 
 private val Sdk.associatedPathFromAdditionalData: String?
   get() = (sdkAdditionalData as? PythonSdkAdditionalData)?.associatedModulePath
-
-private val Sdk.sitePackagesDirectory: VirtualFile?
-  get() = PySkeletonUtil.getSitePackagesDirectory(this)
 
 val Sdk.sdkFlavor: PythonSdkFlavor<*> get() = getOrCreateAdditionalData().flavor
 

@@ -184,7 +184,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     val existingSdks = PyConfigurableInterpreterList.getInstance(project).model.sdks
     val newCondaEnvInfo = NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(environmentYml.toNioPath(), existingEnvs)
     val sdk = PyCondaCommand(condaExecutable, null)
-      .createCondaSdkAlongWithNewEnv(newCondaEnvInfo, Dispatchers.EDT, existingSdks.toList(), project).getOr {
+      .createCondaSdkAlongWithNewEnv(newCondaEnvInfo, existingSdks.toList(), project).getOr {
         PySdkConfigurationCollector.logCondaEnv(project, CondaEnvResult.CREATION_FAILURE)
         thisLogger().warn("Exception during creating conda environment $it")
         return it

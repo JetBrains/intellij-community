@@ -35,7 +35,7 @@ internal enum class RunTypeField(val string: String) {
   override fun toString(): String = string
 }
 
-internal data class UvRunSettingsEditor(val project: Project) : SettingsEditor<UvRunConfiguration>() {
+internal class UvRunSettingsEditor() : SettingsEditor<UvRunConfiguration>() {
   private lateinit var panel: JPanel
   private val scriptField = TextFieldWithBrowseButton()
   private val moduleField = JBTextField()
@@ -50,7 +50,7 @@ internal data class UvRunSettingsEditor(val project: Project) : SettingsEditor<U
   private val isScript = propertyGraph.property(true)
   private val isModule = propertyGraph.property(false)
 
-  constructor(project: Project, uvRunConfiguration: UvRunConfiguration, sdks: List<Sdk?>) : this(project) {
+  constructor(project: Project, uvRunConfiguration: UvRunConfiguration, sdks: List<Sdk?>) : this() {
     scriptField.addBrowseFolderListener(
       project,
       FileChooserDescriptorFactory.singleFile(),

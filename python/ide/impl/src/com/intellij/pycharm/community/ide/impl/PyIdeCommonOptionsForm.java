@@ -298,11 +298,6 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   @Override
-  public void removeInterpreterComboBoxActionListener(ActionListener listener) {
-    content.interpreterComboBox.removeActionListener(listener);
-  }
-
-  @Override
   public @NotNull List<String> getEnvFilePaths() {
     return myEnvPaths;
   }

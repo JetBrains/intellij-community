@@ -425,13 +425,13 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
    * @param commandLine what to patch
    */
   @Override
+  @ApiStatus.Internal
   public void patchCommandLine(GeneralCommandLine commandLine) {
     final String interpreterPath = getInterpreterPath();
     Sdk sdk = getSdk();
     if (sdk != null && interpreterPath != null) {
       patchCommandLineFirst(commandLine, interpreterPath);
       patchCommandLineForVirtualenv(commandLine, sdk);
-      patchCommandLineLast(commandLine, interpreterPath);
     }
   }
 
@@ -439,15 +439,8 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
    * Patches command line before virtualenv patchers.
    * Default implementation does nothing.
    */
+  @ApiStatus.Internal
   protected void patchCommandLineFirst(GeneralCommandLine commandLine, String sdkHome) {
-    // override
-  }
-
-  /**
-   * Patches command line after virtualenv patchers.
-   * Default implementation does nothing.
-   */
-  protected void patchCommandLineLast(GeneralCommandLine commandLine, String sdkHome) {
     // override
   }
 

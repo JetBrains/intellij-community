@@ -10,19 +10,16 @@ public final class PythonProcessRunner {
   private PythonProcessRunner() {
   }
 
-  public static ProcessHandler createProcess(GeneralCommandLine commandLine, boolean softKillOnWin) throws ExecutionException {
+  public static ProcessHandler createProcess(GeneralCommandLine commandLine) throws ExecutionException {
     if (isUnderDebugger(commandLine)) {
       return new PyDebugProcessHandler(commandLine);
     }
     return new PythonProcessHandler(commandLine);
   }
 
-  public static ProcessHandler createProcess(GeneralCommandLine commandLine) throws ExecutionException {
-    return createProcess(commandLine, PythonProcessHandler.softKillOnWin());
-  }
 
   public static ProcessHandler createProcessHandlingCtrlC(GeneralCommandLine commandLine) throws ExecutionException {
-    return createProcess(commandLine, true);
+    return createProcess(commandLine);
   }
 
   private static boolean isUnderDebugger(GeneralCommandLine commandLine) {

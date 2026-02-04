@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
-import com.intellij.platform.util.progress.RawProgressReporter
 import com.jetbrains.python.conda.loadLocalPythonCondaPath
 import com.jetbrains.python.conda.saveLocalPythonCondaPath
 import com.jetbrains.python.errorProcessing.PyResult
@@ -52,7 +51,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
-import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.isExecutable
 import kotlin.io.path.pathString
 
@@ -150,10 +148,8 @@ private suspend fun getCondaInterpreterOutput(
  */
 suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(
   newCondaEnvInfo: NewCondaEnvRequest,
-  uiContext: CoroutineContext,
   existingSdks: List<Sdk>,
   project: Project,
-  reporter: RawProgressReporter? = null,
 ): PyResult<Sdk> {
   PyCondaEnv.createEnv(this, newCondaEnvInfo).getOr { return it }
   val sdk = createCondaSdkFromExistingEnv(

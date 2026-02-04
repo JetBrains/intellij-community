@@ -117,7 +117,7 @@ public class SphinxBaseCommand {
 
   private ProcessHandler createProcess(Module module) throws ExecutionException {
     GeneralCommandLine commandLine = createCommandLine(module, Collections.emptyList());
-    ProcessHandler handler = PythonProcessRunner.createProcess(commandLine, false);
+    ProcessHandler handler = PythonProcessRunner.createProcess(commandLine);
     ProcessTerminatedListener.attach(handler);
     return handler;
   }

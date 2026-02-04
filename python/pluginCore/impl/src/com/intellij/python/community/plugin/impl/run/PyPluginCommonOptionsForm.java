@@ -95,11 +95,6 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   @Override
-  public void removeInterpreterComboBoxActionListener(ActionListener listener) {
-    content.interpreterComboBox.removeActionListener(listener);
-  }
-
-  @Override
   public void addInterpreterModeListener(Consumer<Boolean> listener) {
     myRemoteInterpreterModeListeners.add(listener);
   }

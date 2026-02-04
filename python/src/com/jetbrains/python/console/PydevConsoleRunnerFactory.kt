@@ -188,8 +188,8 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
                                           settingsProvider: PyConsoleSettings): TargetEnvironmentFunction<String> {
       val customStartScript = makeStartWithEmptyLine(settingsProvider.customStartScript)
       val pythonPathFuns = collectPythonPath(project, module, settingsProvider.mySdkHome, pathMapper,
-                                             settingsProvider.shouldAddContentRoots(), settingsProvider.shouldAddSourceRoots(),
-                                             false).toMutableSet()
+                                             settingsProvider.shouldAddContentRoots(), settingsProvider.shouldAddSourceRoots()
+      ).toMutableSet()
       return constructPyPathAndWorkingDirCommand(pythonPathFuns, workingDir, customStartScript)
     }
 

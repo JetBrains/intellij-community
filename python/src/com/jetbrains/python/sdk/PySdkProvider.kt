@@ -4,7 +4,6 @@ package com.jetbrains.python.sdk
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.util.NlsSafe
@@ -16,6 +15,7 @@ import javax.swing.Icon
  * This API is subject to change in version 2020.3, please avoid using it. If you have to, your plugin has to set compatibility to 2020.2.2.
  */
 @ApiStatus.Experimental
+@ApiStatus.Internal
 interface PySdkProvider {
   // SDK
   /**
@@ -34,8 +34,8 @@ interface PySdkProvider {
   /**
    * Quickfix that makes the existing environment available to the module, or null.
    */
+  @ApiStatus.Internal
   fun createEnvironmentAssociationFix(
-    module: Module,
     sdk: Sdk,
     isPyCharm: Boolean,
     associatedModulePath: @NlsSafe String?,
@@ -44,7 +44,7 @@ interface PySdkProvider {
 
   companion object {
     @JvmField
-    val EP_NAME: ExtensionPointName<PySdkProvider> = ExtensionPointName.create<PySdkProvider>("Pythonid.pySdkProvider")
+    val EP_NAME: ExtensionPointName<PySdkProvider> = ExtensionPointName.create("Pythonid.pySdkProvider")
   }
 }
 

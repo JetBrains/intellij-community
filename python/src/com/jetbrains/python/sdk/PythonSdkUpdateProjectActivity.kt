@@ -41,7 +41,7 @@ class PythonSdkUpdateProjectActivity : ProjectActivity, DumbAware {
 }
 
 @ApiStatus.Internal
-suspend fun refreshPaths(project: Project, sdk: Sdk, reason: Any) {
+suspend fun refreshPaths(project: Project, sdk: Sdk) {
   // Background refreshing breaks structured concurrency: there is a some activity in background that locks files.
   // Temporary folders can't be deleted on Windows due to that.
   // That breaks tests.

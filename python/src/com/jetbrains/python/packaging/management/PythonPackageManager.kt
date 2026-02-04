@@ -141,7 +141,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
 
     if (packages != installedPackages) {
       if (!isInit) {
-        refreshPaths(project, sdk, "Reloading packages")
+        refreshPaths(project, sdk)
       }
       installedPackages = packages
       PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {

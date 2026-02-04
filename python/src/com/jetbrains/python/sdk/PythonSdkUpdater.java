@@ -108,7 +108,7 @@ public final class PythonSdkUpdater {
    * Since this method blocks for the first phase of an update, it's not allowed to call it on threads holding a read or write action.
    * The only exception is made for EDT, in which case a modal progress indicator will be displayed during this first synchronous step.
    * <p>
-   * This method emulates the legacy behavior of {@link #update(Sdk, Project, Component)} and is likely to be removed
+   * This method emulates the legacy behavior of `update` and is likely to be removed
    * or changed in the future. Unless you're sure that a synchronous update is necessary you should rather use
    * {@link #scheduleUpdate(Sdk, Project)} directly.
    *
@@ -186,15 +186,6 @@ public final class PythonSdkUpdater {
   }
 
   /**
-   * @deprecated Use {@link #scheduleUpdate} or {@link #updateVersionAndPathsSynchronouslyAndScheduleRemaining}
-   */
-  @ApiStatus.Internal
-  @Deprecated
-  public static boolean update(@NotNull Sdk sdk, @Nullable Project project, @Nullable Component ownerComponent) {
-    return updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project);
-  }
-
-  /**
    * Schedule an <i>asynchronous</i> background update of the given SDK.
    * <p>
    * This method may be invoked from any thread. Synchronization guarantees the following properties:
@@ -211,18 +202,6 @@ public final class PythonSdkUpdater {
   @ApiStatus.Internal
   public static void scheduleUpdate(@NotNull Sdk sdk, @NotNull Project project, Boolean withPackageUpdate) {
     scheduleUpdate(sdk, project, new PyUpdateSdkRequestData(withPackageUpdate));
-  }
-
-  /**
-   * Does the same that {@link #scheduleUpdate(Sdk, Project)}, but simply omits the new update request if another one is in progress,
-   * while the former method will schedule the next update after processing the other update.
-   */
-  public static void ensureUpdateScheduled(@NotNull Sdk sdk, @NotNull Project project) {
-    synchronized (ourLock) {
-      if (ourUnderRefresh.contains(sdk) || ourToBeRefreshed.containsKey(sdk)) return;
-      ourUnderRefresh.add(sdk);
-    }
-    ProgressManager.getInstance().run(new PyUpdateSdkTask(project, sdk, new PyUpdateSdkRequestData(true)));
   }
 
   /**
@@ -393,7 +372,7 @@ public final class PythonSdkUpdater {
         final String sdkPresentableName = getSdkPresentableName(sdk);
         LOG.info("Performing background update of skeletons for SDK " + sdkPresentableName);
         indicator.setText(PyBundle.message("python.sdk.updating.skeletons"));
-        PySkeletonRefresher.refreshSkeletonsOfSdk(myProject, null, skeletonsPath, sdk);
+        PySkeletonRefresher.refreshSkeletonsOfSdk(myProject, skeletonsPath, sdk);
         if (PythonSdkUtil.isRemote(sdk)) {
           updateSdkPaths(sdk, getRemoteSdkMappedPaths(sdk), getProject());
         }
@@ -420,7 +399,7 @@ public final class PythonSdkUpdater {
         if (PythonSdkUtil.isRemote(mySdk)) {
           PythonSdkType.notifyRemoteSdkSkeletonsFail((InvalidSdkException)exception, () -> {
             if (!isSdkDisposed()) {
-              update(mySdk, myProject, null);
+              updateVersionAndPathsSynchronouslyAndScheduleRemaining(mySdk, myProject);
             }
           });
         }

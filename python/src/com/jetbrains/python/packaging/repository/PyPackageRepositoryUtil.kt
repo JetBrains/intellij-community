@@ -16,7 +16,6 @@ import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
 import com.jetbrains.python.packaging.pip.PypiPackageCache
 import kotlinx.io.IOException
 import org.jetbrains.annotations.ApiStatus
-import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 
@@ -40,11 +39,6 @@ internal fun PyPackageRepository.checkValid(): Boolean {
     .connectTimeout(3000)
     .throwStatusCodeException(false)
     .tryConnect() == 200
-}
-
-@ApiStatus.Experimental
-internal fun encodeCredentialsForUrl(login: String, password: String): String {
-  return "${URLEncoder.encode(login, StandardCharsets.UTF_8)}:${URLEncoder.encode(password, StandardCharsets.UTF_8)}"
 }
 
 @ApiStatus.Experimental
