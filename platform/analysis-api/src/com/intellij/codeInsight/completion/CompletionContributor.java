@@ -15,11 +15,13 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Consumer;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -235,7 +237,16 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
 
   @ApiStatus.Internal
   public static @NotNull List<CompletionContributor> forLanguage(@NotNull Language language) {
-    List<CompletionContributor> contributors = INSTANCE.forKey(language);
+    boolean isRDFrontend = Registry.is("remdev.completion.on.frontend") && PlatformUtils.isJetBrainsClient();
+
+    List<CompletionContributor> contributors;
+    if (isRDFrontend) {
+      contributors = ContainerUtil.filter(INSTANCE.forKey(language), c -> c instanceof FrontendCompletionContributor);
+    }
+    else {
+      contributors = INSTANCE.forKey(language);
+    }
+
     if (ModCompletionItemProvider.modCommandCompletionEnabled()) {
       List<ModCompletionItemProvider> modContributors = ModCompletionItemProvider.forLanguage(language);
       List<CompletionItemContributor> modContributorAdapters = ContainerUtil.map(modContributors, CompletionItemContributor::new);
