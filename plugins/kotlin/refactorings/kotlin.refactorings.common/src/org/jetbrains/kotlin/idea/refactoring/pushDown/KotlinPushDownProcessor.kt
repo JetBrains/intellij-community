@@ -17,6 +17,7 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
+import org.jetbrains.kotlin.idea.refactoring.memberInfo.qualifiedClassNameForRendering
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -63,7 +64,11 @@ abstract class KotlinPushDownProcessor(
     protected override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
         val usages = refUsages.get() ?: UsageInfo.EMPTY_ARRAY
         if (usages.isEmpty()) {
-            val message = KotlinBundle.message("text.0.have.no.inheritors.warning", renderSourceClassForConflicts())
+            val className = context.sourceClass.qualifiedClassNameForRendering()
+            val classPresentableName = context.sourceClass.getClassOrInterfaceKeyword()
+                ?.let { "${it.text} $className" }
+                ?: className
+            val message = KotlinBundle.message("text.0.have.no.inheritors.warning", classPresentableName)
             val answer = Messages.showYesNoDialog(message.capitalize(), PUSH_MEMBERS_DOWN, Messages.getWarningIcon())
             if (answer == Messages.NO) return false
         }
@@ -74,8 +79,6 @@ abstract class KotlinPushDownProcessor(
 
         return showConflicts(conflicts, usages)
     }
-
-    protected abstract fun renderSourceClassForConflicts(): String
 
     protected abstract fun analyzePushDownConflicts(
         usages: Array<out UsageInfo>,

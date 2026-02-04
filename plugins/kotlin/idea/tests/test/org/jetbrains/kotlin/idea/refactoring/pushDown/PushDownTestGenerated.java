@@ -97,6 +97,16 @@ public abstract class PushDownTestGenerated extends AbstractPushDownTest {
             runTest("testData/refactoring/pushDown/k2k/noInheritors.kt");
         }
 
+        @TestMetadata("noInheritorsNestedClass.kt")
+        public void testNoInheritorsNestedClass() throws Exception {
+            runTest("testData/refactoring/pushDown/k2k/noInheritorsNestedClass.kt");
+        }
+
+        @TestMetadata("noInheritorsNestedInterface.kt")
+        public void testNoInheritorsNestedInterface() throws Exception {
+            runTest("testData/refactoring/pushDown/k2k/noInheritorsNestedInterface.kt");
+        }
+
         @TestMetadata("objectDeclaration.kt")
         public void testObjectDeclaration() throws Exception {
             runTest("testData/refactoring/pushDown/k2k/objectDeclaration.kt");

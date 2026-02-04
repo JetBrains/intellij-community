@@ -1,0 +1,4 @@
+class A {
+    open class B {
+    }
+}

@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.idea.refactoring.pullUp.clearMarking
 import org.jetbrains.kotlin.idea.refactoring.pullUp.getSuperTypeEntryByDescriptor
 import org.jetbrains.kotlin.idea.refactoring.pullUp.makeAbstract
 import org.jetbrains.kotlin.idea.refactoring.pullUp.markElements
-import org.jetbrains.kotlin.idea.refactoring.pullUp.renderForConflicts
 import org.jetbrains.kotlin.idea.util.getTypeSubstitution
 import org.jetbrains.kotlin.idea.util.orEmpty
 import org.jetbrains.kotlin.idea.util.toSubstitutor
@@ -41,9 +40,6 @@ class K1PushDownProcessor(
 ) : KotlinPushDownProcessor(project) {
     override val context: K1PushDownContext =
         K1PushDownContext(sourceClass, membersToMove)
-
-    override fun renderSourceClassForConflicts(): String =
-        context.sourceClassDescriptor.renderForConflicts()
 
     override fun analyzePushDownConflicts(
         usages: Array<out UsageInfo>,
