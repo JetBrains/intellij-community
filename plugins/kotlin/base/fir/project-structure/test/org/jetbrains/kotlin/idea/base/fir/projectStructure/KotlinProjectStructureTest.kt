@@ -52,6 +52,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.contextModule
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibraryModuleImpl
