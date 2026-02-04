@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinCallableReferencePos
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -254,6 +255,14 @@ private fun LanguageVersionSettings.excludeSyntheticJavaProperties(
 context(_: KaSession)
 internal fun KtFile.getAliasNameIfExists(symbol: KaSymbol): Name? {
     val fqName = symbol.getFqNameIfPackageOrNonLocal() ?: return null
+    return getAliasNameIfExists(fqName)
+}
+
+/**
+ * Checks if the scope contains an alias for the [fqName] and returns the name of the alias.
+ */
+context(_: KaSession)
+internal fun KtFile.getAliasNameIfExists(fqName: FqName): Name? {
     // TODO: It's possible to optimize this by using a map for the aliases if it turns out to be a bottleneck.
     return findAliasByFqName(fqName)?.name?.let { Name.identifier(it) }
 }

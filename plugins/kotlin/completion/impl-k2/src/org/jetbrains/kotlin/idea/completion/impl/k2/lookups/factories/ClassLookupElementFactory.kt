@@ -132,7 +132,7 @@ internal object ClassLookupElementFactory {
         return LookupElementBuilder.create(lookupObject, name.asString())
             .withInsertHandler(FunctionInsertionHandler)
             .appendTailText(lookupObject.renderedDeclaration, true)
-            .appendTailText(TailTextProvider.getTailText(containingSymbol), true)
+            .appendTailText(TailTextProvider.getTailText(containingSymbol, useFqnAsTailText = aliasName != null), true)
             .let {
                 it.isConstructorCall = true
                 withClassifierSymbolInfo(containingSymbol, it)

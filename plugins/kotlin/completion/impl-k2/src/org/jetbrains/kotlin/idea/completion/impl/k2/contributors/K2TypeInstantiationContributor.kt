@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.codeinsight.utils.isOpen
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
@@ -43,6 +44,8 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.ExpectedTypeWeigher
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.ExpectedTypeWeigher.matchesExpectedType
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllInheritors
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtClass
@@ -123,7 +126,12 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
 
         val inheritingClasses = expectedType.symbol.psi?.findAllInheritors() ?: return
         for (inheritor in inheritingClasses) {
-            completeElementsForSymbol(inheritor, expectedType, expectedTypeParamMap)
+            completeElementsForSymbol(
+                symbolPsi = inheritor,
+                expectedType = expectedType,
+                expectedTypeParamMap = expectedTypeParamMap,
+                isFromIndex = true,
+            )
         }
     }
 
@@ -132,8 +140,21 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
         symbolPsi: PsiElement,
         expectedType: KaClassType,
         expectedTypeParamMap: Map<KaTypeParameterSymbol, KaTypeProjection>,
+        isFromIndex: Boolean = false,
         alreadyResolvedSymbol: KaNamedClassSymbol? = null
     ) {
+        val fqName = getClassFqName(symbolPsi)
+        val aliasName = fqName?.let { context.parameters.completionFile.getAliasNameIfExists(it) }
+        val prefix = context.completionContext.prefixMatcher.prefix
+
+        // The name fqName will be null for local classes because they do not have a fqName
+        val className = aliasName ?: fqName?.shortName()
+        val nameFilter = if (isFromIndex) context.completionContext.getIndexNameFilter() else context.completionContext.scopeNameFilter
+
+        // Use prefix matcher to avoid resolving too many symbols
+        // To match, the name needs to either start with the prefix or be the start of `object` in the case of anonymous objects
+        if (!KtTokens.OBJECT_KEYWORD.value.startsWith(prefix) && (className != null && !nameFilter(className))) return
+
         val canBeInherited = symbolPsi.canBeInherited()
         val canBeInstantiated = symbolPsi.canBeInstantiated()
         val isObject = symbolPsi is KtObjectDeclaration
@@ -141,8 +162,6 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
         if (!canBeInherited && !canBeInstantiated && !isObject) return
 
         val symbol = alreadyResolvedSymbol ?: resolveClassSymbol(symbolPsi) ?: return
-        val aliasName = context.parameters.completionFile.getAliasNameIfExists(symbol)
-
         if (symbol.classKind == KaClassKind.ENUM_CLASS) {
             // Enum is not allowed to be instantiated
             return
@@ -377,6 +396,13 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
             context.visibilityChecker.canBeVisible(this) && (isInterface || hasModifier(JvmModifier.ABSTRACT))
 
         else -> false
+    }
+
+    context(_: KaSession)
+    private fun getClassFqName(psiElement: PsiElement): FqName? = when (psiElement) {
+        is KtClassOrObject -> psiElement.fqName
+        is PsiClass -> psiElement.kotlinFqName
+        else -> null
     }
 
     context(_: KaSession)
