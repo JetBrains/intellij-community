@@ -116,7 +116,10 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
 ) : DialogWrapper(myProject, true), MessagePoolListener, UiDataProvider {
   private val myAcceptedNotices: MutableSet<String>
   private val myMessageClusters: MutableList<MessageCluster> = ArrayList() // exceptions with the same stacktrace
-  private var myIndex: Int
+  private var myIndex: Int = 0
+    set(value) {
+      field = value.coerceIn(0, (myMessageClusters.size - 1).coerceAtLeast(0))
+    }
   private var myLastIndex = -1
   private var myUpdateControlsJob: Job = SupervisorJob()
 
