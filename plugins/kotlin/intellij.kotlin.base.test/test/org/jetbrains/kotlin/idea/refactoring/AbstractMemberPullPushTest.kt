@@ -123,6 +123,7 @@ abstract class AbstractMemberPullPushTest : KotlinLightCodeInsightFixtureTestCas
 
 private data class DialogConfig(
     val expectedMessage: String,
+    /** One of [Messages] constants (YES, NO, OK, CANCEL) */
     val buttonResult: Int,
 )
 
