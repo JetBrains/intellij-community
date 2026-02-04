@@ -1,18 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.declaration
 
+import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.hints.InlayHintsUtils.getDefaultInlayHintsProviderPopupActions
-import com.intellij.codeInsight.hints.presentation.BasePresentation
-import com.intellij.codeInsight.hints.presentation.InlayPresentation
-import com.intellij.codeInsight.hints.presentation.InlayTextMetrics
-import com.intellij.codeInsight.hints.presentation.InsetPresentation
-import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
-import com.intellij.codeInsight.hints.presentation.PresentationFactory
-import com.intellij.codeInsight.hints.presentation.RoundWithBackgroundPresentation
-import com.intellij.codeInsight.hints.presentation.SequencePresentation
-import com.intellij.codeInsight.hints.presentation.SpacePresentation
-import com.intellij.codeInsight.hints.presentation.VerticalListInlayPresentation
-import com.intellij.codeInsight.hints.presentation.getFontRenderContext
 import com.intellij.codeInsight.hints.presentation.*
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.AntialiasingType
@@ -25,9 +15,12 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.EDT
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import java.awt.*
 import java.awt.event.MouseEvent
+import java.util.WeakHashMap
 import javax.swing.Icon
 
 
@@ -239,19 +232,51 @@ internal inline fun <R> GeneratedCodeInlayFactory.buildCode(build: CodeInlaySess
     return CodeInlaySession(editor).let(build)
 }
 
-internal class CodeInlaySession(val editor: Editor) {
-    val textMetrics = InlayTextMetrics.create(
-        editor,
-        editor.colorsScheme.editorFontSize2D,
-        editor.colorsScheme.getAttributes(HighlighterColors.TEXT).fontType,
-        getFontRenderContext(editor.component),
-        isUseEditorFontInInlays = true,
-    )
+internal class CodeInlaySession(val editor: Editor)
+
+/**
+ * A cache for [InlayTextMetrics] that always uses the editor font (for code-like inlays).
+ * This differs from [InlayHintsUtils.getTextMetricStorage] which respects the user's
+ * "Use editor font for inlays" setting.
+ *
+ * The cache uses [InlayTextMetricsStorage.getCurrentStamp] for invalidation, ensuring
+ * metrics are recreated when IDE scale, font size, or font render context changes.
+ */
+private object EditorFontMetricsCache {
+    private class CachedEntry(val metrics: InlayTextMetrics, val stamp: Any)
+
+    /**
+     * thread unsafe but [getMetrics] is called only from EDT, so it's OK
+     */
+    private val cache = WeakHashMap<Editor, CachedEntry>()
+
+    @RequiresEdt
+    fun getMetrics(editor: Editor): InlayTextMetrics {
+        EDT.assertIsEdt()
+
+        val storage = InlayHintsUtils.getTextMetricStorage(editor)
+        val currentStamp = storage.getCurrentStamp()
+
+        val cached = cache[editor]
+        if (cached != null && cached.stamp === currentStamp) {
+            return cached.metrics
+        }
+
+        val metrics = InlayTextMetrics.create(
+            editor,
+            editor.colorsScheme.editorFontSize2D,
+            editor.colorsScheme.getAttributes(HighlighterColors.TEXT).fontType,
+            getFontRenderContext(editor.component),
+            isUseEditorFontInInlays = true,
+        )
+        cache[editor] = CachedEntry(metrics, currentStamp)
+        return metrics
+    }
 }
 
 context(session: CodeInlaySession)
 internal fun code(text: String, attributes: TextAttributes): InlayPresentation {
-    return CodeInlay(text, attributes, session.editor, session.textMetrics)
+    return CodeInlay(text, attributes, session.editor)
 }
 
 context(session: CodeInlaySession)
@@ -264,8 +289,13 @@ private class CodeInlay(
     private val text: String,
     private val ownAttributes: TextAttributes,
     private val editor: Editor,
-    private val textMetrics: InlayTextMetrics,
 ) : BasePresentation() {
+    /**
+     * Fetches metrics from cache on each access to ensure IDE scale changes are reflected.
+     */
+    private val textMetrics: InlayTextMetrics
+        get() = EditorFontMetricsCache.getMetrics(editor)
+
     override val width: Int
         get() = textMetrics.getStringWidth(text)
 
@@ -283,7 +313,7 @@ private class CodeInlay(
             g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(/* inEditor = */ true))
             g.color = foreground.withAlphaFactor()
             // a sum of gaps between which the text is situated on the line
-            val fontGap = editor.lineHeight - textMetrics.fontBaseline
+            val fontGap = editor.lineHeight - metric.fontBaseline
             val yCoordinate = editor.lineHeight - fontGap / 2
             g.drawString(text, /* x = */ 0, /* y = */ yCoordinate)
         } finally {
