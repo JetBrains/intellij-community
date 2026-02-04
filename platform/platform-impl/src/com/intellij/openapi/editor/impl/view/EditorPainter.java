@@ -387,6 +387,10 @@ public final class EditorPainter implements TextDrawingCallback {
       return !Registry.is("editor.old.full.horizontal.selection.enabled") && !myEditor.isColumnMode();
     }
 
+    private Color selectionBackgroundColor() {
+      return myEditor.getColorsScheme().getColor(EditorColors.SELECTION_BACKGROUND_COLOR);
+    }
+
     private void paintBackground() {
       float selectionExtensionWidth = selectionExtensionWidth();
 
@@ -663,7 +667,11 @@ public final class EditorPainter implements TextDrawingCallback {
         clipEndX = Math.min(clipEndX, visualLineEnd(visualLine));
       }
       float endX = (float)Math.min(clipEndX, myView.visualPositionToXY(new VisualPosition(visualLine, selectionRange.second)).getX());
-      mySelectionLinePainter.paintSelection(new Rectangle2D.Float(startX, y, endX - startX, myLineHeight));
+      if (shouldUseNewSelection()) {
+        mySelectionLinePainter.paintSelection(new Rectangle2D.Float(startX, y, endX - startX, myLineHeight));
+      } else {
+        paintBackground(selectionBackgroundColor(), startX, y, endX - startX);
+      }
     }
 
     private void paintSelectionOnSecondSoftWrapLineIfNecessary(int visualLine, int columnEnd, float xEnd, int y,
@@ -680,7 +688,11 @@ public final class EditorPainter implements TextDrawingCallback {
       float endX = (selectionEndPosition.line == visualLine && selectionEndPosition.column < columnEnd) ?
                    (float)myView.visualPositionToXY(selectionEndPosition).getX() : xEnd;
 
-      mySelectionLinePainter.paintSelection(new Rectangle2D.Float(startX, y, endX - startX, myLineHeight));
+      if (shouldUseNewSelection()) {
+        mySelectionLinePainter.paintSelection(new Rectangle2D.Float(startX, y, endX - startX, myLineHeight));
+      } else {
+        paintBackground(selectionBackgroundColor(), startX, y, endX - startX);
+      }
     }
 
     private void paintSelectionOnFirstSoftWrapLineIfNecessary(int visualLine,
@@ -709,7 +721,11 @@ public final class EditorPainter implements TextDrawingCallback {
                    (float)myView.visualPositionToXY(selectionEndPosition).getX()
                    : clipEndX;
 
-      mySelectionLinePainter.paintSelection(new Rectangle2D.Float(startX, y, endX - startX, myLineHeight));
+      if (shouldUseNewSelection()) {
+        mySelectionLinePainter.paintSelection(new Rectangle2D.Float(startX, y, endX - startX, myLineHeight));
+      } else {
+        paintBackground(selectionBackgroundColor(), startX, y, endX - startX);
+      }
     }
 
     private void paintBackground(TextAttributes attributes, float x, int y, float width) {
