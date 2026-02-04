@@ -15,14 +15,11 @@
 - f:getProvidersExtensionPoint():com.intellij.lang.LanguageExtension
 *:com.intellij.openapi.vcs.VcsFileListenerIgnoredFilesProvider
 - *sf:Companion:com.intellij.openapi.vcs.VcsFileListenerIgnoredFilesProvider$Companion
-- s:isAdditionAllowed(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):Z
-- a:isAdditionIgnored(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):Z
-- s:isDeletionAllowed(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):Z
-- a:isDeletionIgnored(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):Z
+- isAdditionIgnored(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):Z
+- isAdditionIgnored(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath,java.lang.Object):Z
+- isDeletionIgnored(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):Z
+- isDeletionIgnored(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath,java.lang.Object):Z
 *f:com.intellij.openapi.vcs.VcsFileListenerIgnoredFilesProvider$Companion
-- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
-- f:isAdditionAllowed(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):Z
-- f:isDeletionAllowed(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):Z
 a:com.intellij.openapi.vcs.VcsRootChecker
 - *:shouldAlwaysRunInitialDetection():Z
 *:com.intellij.openapi.vcs.changes.CommitExecutorWithRichDescription

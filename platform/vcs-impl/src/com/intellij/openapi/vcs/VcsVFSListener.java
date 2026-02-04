@@ -484,11 +484,11 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   private boolean allowedDeletion(@NotNull VFileEvent event) {
-    return VcsFileListenerIgnoredFilesProvider.isDeletionAllowed(myProject, getEventFilePath(event));
+    return VcsFileListenerIgnoredFilesProvider.isDeletionAllowed(myProject, getEventFilePath(event), event.getRequestor());
   }
 
   private boolean allowedAddition(@NotNull VFileEvent event) {
-    return VcsFileListenerIgnoredFilesProvider.isAdditionAllowed(myProject, getEventFilePath(event));
+    return VcsFileListenerIgnoredFilesProvider.isAdditionAllowed(myProject, getEventFilePath(event), event.getRequestor());
   }
 
   @RequiresBackgroundThread
