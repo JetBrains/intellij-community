@@ -13,7 +13,6 @@ import com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilde
 import com.intellij.internal.statistic.eventLog.events.scheme.FieldDescriptor
 import com.intellij.internal.statistic.eventLog.events.scheme.GroupDescriptor
 import com.intellij.internal.statistic.eventLog.events.scheme.PluginSchemeDescriptor
-import com.intellij.internal.statistic.eventLog.events.scheme.RegisteredLogDescriptionsProcessor
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupContextData
@@ -23,12 +22,6 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class EventSchemeBuilderTest : BasePlatformTestCase() {
-  override fun setUp() {
-    super.setUp()
-    RegisteredLogDescriptionsProcessor.configureDescriptionRegistration(false)
-    RegisteredLogDescriptionsProcessor.resetDescriptions()
-  }
-
   fun `test generate string field validated by regexp`() {
     doFieldTest(EventFields.StringValidatedByRegexpReference("count", "integer"), hashSetOf("{regexp#integer}"))
   }
@@ -89,7 +82,7 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
   }
 
   fun `test generate plugin section`() {
-    val descriptors = buildEventsScheme(null)
+    val descriptors = buildEventsScheme()
     assertTrue(descriptors.any { x -> x.plugin.id == "com.intellij" })
   }
 
@@ -99,46 +92,18 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
   }
 
   /**
-   * Tests the generation of descriptions for event log groups and events that are not registered
-   * in [RegisteredLogDescriptionsProcessor].
-   *
-   * This method assesses the following behaviors.
-   * Ensures group and event descriptions are not set when [RegisteredLogDescriptionsProcessor.isRegistered] is false.
-   * Verifies that field-level descriptions remain intact even when the group or event descriptions
-   * are not registered.
-   */
-  fun `test generate not registered descriptions`() {
-    val groupDescription = "Test group description"
-    val eventDescription = "Description of test event"
-    val fieldDescription = "Number of elements in event"
-    val eventLogGroup = EventLogGroup("test.group.id", 1, "FUS", groupDescription)
-    eventLogGroup.registerEvent("test_event", EventFields.Int("count", fieldDescription), eventDescription)
-    val collector = EventsSchemeBuilder.FeatureUsageCollectorInfo(TestCounterCollector(eventLogGroup), PluginSchemeDescriptor("testPlugin"))
-    val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(collector), "FUS")
-
-    val groupDescriptor = groups.first()
-    assertEquals(null, groupDescriptor.description)
-    val eventDescriptor = groupDescriptor.schema.first()
-    assertEquals(null, eventDescriptor.description)
-    assertEquals(fieldDescription, eventDescriptor.fields.first().description)
-  }
-
-  /**
    * Tests the generation of registered descriptions for event log groups and their associated events and fields.
-   *
-   * The method verifies that descriptions for event log groups, events are correctly generated and stored
-   * when [RegisteredLogDescriptionsProcessor.isRegistered] is true.
    */
-  fun `test generate registered descriptions1`() {
-    RegisteredLogDescriptionsProcessor.configureDescriptionRegistration(true)
-    RegisteredLogDescriptionsProcessor.resetDescriptions()
+  fun `test generate registered descriptions`() {
     val groupDescription = "Test group description5"
     val eventDescription = "Description of test event"
     val fieldDescription = "Number of elements in event"
-    val eventLogGroup = EventLogGroup("test.group.id", 1, "FUS", groupDescription)
-    eventLogGroup.registerEvent("test_event", EventFields.Int("count", fieldDescription), eventDescription)
+    val eventLogGroup = EventLogGroup("test.group.id", 1, "FUS").apply {
+      registerEvent("test_event", EventFields.Int("count", fieldDescription))
+    }
     val collector = EventsSchemeBuilder.FeatureUsageCollectorInfo(TestCounterCollector(eventLogGroup), PluginSchemeDescriptor("testPlugin"))
-    val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(collector), "FUS")
+    val descriptions = mapOf("FUS.test.group.id" to groupDescription, "FUS.test.group.id.test_event" to eventDescription)
+    val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(collector), descriptions, "FUS")
 
     val groupDescriptor = groups.first()
     assertEquals(groupDescription, groupDescriptor.description)
@@ -148,61 +113,14 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
   }
 
   /**
-   * Tests the behavior of generating and registering event descriptions for event log groups with identical identifiers
-   * but differing descriptions.
-   * Verifies that the error message contains the expected details when an attempt is made to override an already
-   * registered group description.
-   */
-  fun `test generate registered descriptions for the same groups with different descriptions`() {
-    RegisteredLogDescriptionsProcessor.configureDescriptionRegistration(true)
-    RegisteredLogDescriptionsProcessor.resetDescriptions()
-    val groupDescription = "Test group description"
-    val eventDescription = "Description of test event"
-    val fieldDescription = "Number of elements in event"
-    val eventLogGroup1 = EventLogGroup("test.group.id", 1, "FUS", groupDescription)
-    eventLogGroup1.registerEvent("test_event", EventFields.Int("count", fieldDescription), eventDescription)
-    try {
-      EventLogGroup("test.group.id", 1, "FUS", "new descriptions")
-      fail("Expected IllegalStateException")
-    }
-    catch (e: IllegalStateException) {
-      assertEquals(
-        "Trying to override registered event log group description in group 'test.group.id'. Old description: Test group description, new description: new descriptions.",
-        e.message
-      )
-    }
-  }
-
-  /**
-   * Tests the behavior of generating and registering event descriptions with identical event identifiers
-   * within the same event group but with differing descriptions.
-   * Validates the error message when attempting to overwrite an existing event description.
-   */
-  fun `test generate registered descriptions for the same events with different descriptions`() {
-    RegisteredLogDescriptionsProcessor.configureDescriptionRegistration(true)
-    RegisteredLogDescriptionsProcessor.resetDescriptions()
-    val groupDescription = "Test group description"
-    val eventDescription = "Description of test event"
-    val fieldDescription = "Number of elements in event"
-    val eventLogGroup1 = EventLogGroup("test.group.id", 1, "FUS", groupDescription)
-    eventLogGroup1.registerEvent("test_event", EventFields.Int("count", fieldDescription), eventDescription)
-
-    assertThrows(IllegalStateException::class.java, "Trying to override registered event log description for event 'test_event' in group 'test.group.id'. Old description: Description of test event, new description: new description.") {
-      eventLogGroup1.registerEvent("test_event", EventFields.Int("count", fieldDescription), "new description")
-    }
-  }
-
-  /**
    * Test that the object array property ("parent.middle") of the event is present
    * in case there are object lists in the path to the field "parent.middle.child.count"
    */
   fun `test object arrays fields`() {
-    val eventLogGroup = EventLogGroup("test.group.id", 1, "FUS", "test group")
+    val eventLogGroup = EventLogGroup("test.group.id", 1, "FUS")
     eventLogGroup.registerEvent(
       "event.id",
-      ObjectEventField("parent", ObjectListEventField("middle", ObjectEventField("child",
-                                                                                 EventFields.Int("count")))),
-      "event description"
+      ObjectEventField("parent", ObjectListEventField("middle", ObjectEventField("child", EventFields.Int("count"))))
     )
     val collector = EventsSchemeBuilder.FeatureUsageCollectorInfo(TestCounterCollector(eventLogGroup), PluginSchemeDescriptor("testPlugin"))
     val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(collector), "FUS")
@@ -218,9 +136,10 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
     val groupDataEntry = Pair<EventField<*>, FeatureUsageData.() -> Unit>(
       testField as EventField<*>
     ) { fuData: FeatureUsageData -> fuData.addData("test_field", "test_value1") }
-    val eventLogGroup = EventLogGroup("test.group.id", 1, "FUS", "test group", listOf(groupDataEntry))
-    eventLogGroup.registerEvent("test_event1", "event1 description")
-    eventLogGroup.registerEvent("test_event2", "event2 description")
+    val eventLogGroup = EventLogGroup("test.group.id", 1, "FUS", listOf(groupDataEntry)).apply {
+      registerEvent("test_event1")
+      registerEvent("test_event2")
+    }
 
     val collector = EventsSchemeBuilder.FeatureUsageCollectorInfo(TestCounterCollector(eventLogGroup), PluginSchemeDescriptor("testPlugin"))
     val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(collector), "FUS")
@@ -251,9 +170,9 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
   }
 
   private fun buildGroupDescription(eventField: EventField<*>? = null): GroupDescriptor {
-    val eventLogGroup = EventLogGroup("test.group.id", 1, "FUS", "group description")
+    val eventLogGroup = EventLogGroup("test.group.id", 1, "FUS")
     if (eventField != null) {
-      eventLogGroup.registerEvent("test_event", eventField, "event description")
+      eventLogGroup.registerEvent("test_event", eventField)
     }
     val collector = EventsSchemeBuilder.FeatureUsageCollectorInfo(TestCounterCollector(eventLogGroup), PluginSchemeDescriptor("testPlugin"))
     val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(collector), "FUS")
@@ -271,24 +190,13 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
   }
 
   class TestCustomValidationRuleFactory(private val ruleId: String) : CustomValidationRuleFactory {
-    override fun createValidator(contextData: EventGroupContextData): TestCustomValidationRule {
-      return TestCustomValidationRule(ruleId)
-    }
-
-    override fun getRuleId(): String {
-      return ruleId
-    }
-
-    override fun getRuleClass(): Class<*> {
-      return TestCustomValidationRule::class.java
-    }
+    override fun createValidator(contextData: EventGroupContextData): TestCustomValidationRule = TestCustomValidationRule(ruleId)
+    override fun getRuleId(): String = ruleId
+    override fun getRuleClass(): Class<*> = TestCustomValidationRule::class.java
   }
 
   class TestCustomValidationRule(private val ruleId: String) : CustomValidationRule() {
     override fun getRuleId(): String = ruleId
-
-    override fun doValidate(data: String, context: EventContext): ValidationResultType {
-      return ValidationResultType.ACCEPTED
-    }
+    override fun doValidate(data: String, context: EventContext): ValidationResultType = ValidationResultType.ACCEPTED
   }
 }

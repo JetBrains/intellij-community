@@ -15,5 +15,3 @@ com.intellij.internal.statistic.eventLog.StatisticsEventLogger
 - a:logAsync(com.intellij.internal.statistic.eventLog.EventLogGroup,java.lang.String,kotlin.jvm.functions.Function0,Z):java.util.concurrent.CompletableFuture
 - logAsync(com.intellij.internal.statistic.eventLog.EventLogGroup,java.lang.String,Z):java.util.concurrent.CompletableFuture
 - a:rollOver():V
-f:com.intellij.internal.statistic.eventLog.events.scheme.RegisteredLogDescriptionsProcessorKt
-- sf:FUS_DESCRIPTION_REGISTRATION_ENABLED:java.lang.String

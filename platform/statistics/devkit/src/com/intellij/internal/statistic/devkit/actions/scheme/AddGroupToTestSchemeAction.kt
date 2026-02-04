@@ -28,12 +28,13 @@ import java.io.IOException
 /**
  * Action adds group which are not yet registered on the server to a test groups scheme for testing.
  */
-class AddGroupToTestSchemeAction(private val recorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER)
-  : DumbAwareAction(ActionsBundle.messagePointer("action.AddGroupToTestSchemeAction.text"),
-                    ActionsBundle.messagePointer("action.AddGroupToTestSchemeAction.description"),
-                    AllIcons.General.Add) {
-
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+@Suppress("ActionPresentationInstantiatedInCtor")
+internal class AddGroupToTestSchemeAction(private val recorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER) : DumbAwareAction(
+  ActionsBundle.messagePointer("action.AddGroupToTestSchemeAction.text"),
+  ActionsBundle.messagePointer("action.AddGroupToTestSchemeAction.description"),
+  AllIcons.General.Add
+) {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabled = StatisticsRecorderUtil.isTestModeEnabled(recorderId)
@@ -61,38 +62,39 @@ class AddGroupToTestSchemeAction(private val recorderId: String = StatisticsDevK
     }
   }
 
-  companion object {
-    fun createAddToTestSchemeDialog(project: Project,
-                                    testRulesStorage: ValidationTestRulesPersistedStorage,
-                                    group: GroupValidationTestRule,
-                                    recorderId: String): DialogWrapper? {
-      val scheme = loadEventsScheme(project, testRulesStorage, recorderId) ?: return null
-      val groupConfiguration = EventsTestSchemeGroupConfiguration(project, scheme.productionGroups, group, scheme.generatedScheme)
-      val dialog = dialog(
-        StatisticsBundle.message("stats.add.test.group.to.test.scheme"),
-        panel = groupConfiguration.panel,
-        resizable = true,
-        focusedComponent = groupConfiguration.getFocusedComponent(),
-        project = project,
-        ok = { groupConfiguration.validate() }
-      )
-      Disposer.register(dialog.disposable, groupConfiguration)
-      return dialog
-    }
-
-    private fun loadEventsScheme(project: Project,
-                                 testRulesStorage: ValidationTestRulesPersistedStorage,
-                                 recorderId: String): EditEventsTestSchemeAction.EventsTestScheme? {
-      return ProgressManager.getInstance().run(object : Task.WithResult<EditEventsTestSchemeAction.EventsTestScheme?, IOException>(
-        project, StatisticsBundle.message("stats.loading.validation.rules"), true) {
-        override fun compute(indicator: ProgressIndicator): EditEventsTestSchemeAction.EventsTestScheme? {
-          val productionGroups = testRulesStorage.loadProductionGroups()
-          if (indicator.isCanceled) return null
-          val eventsScheme = EventsSchemeBuilder.buildEventsScheme(recorderId)
-          return EditEventsTestSchemeAction.EventsTestScheme(emptyList(), productionGroups, eventsScheme)
-        }
-      })
-    }
+  private fun createAddToTestSchemeDialog(
+    project: Project,
+    testRulesStorage: ValidationTestRulesPersistedStorage,
+    group: GroupValidationTestRule,
+    recorderId: String,
+  ): DialogWrapper? {
+    val scheme = loadEventsScheme(project, testRulesStorage, recorderId) ?: return null
+    val groupConfiguration = EventsTestSchemeGroupConfiguration(project, scheme.productionGroups, group, scheme.generatedScheme)
+    val dialog = dialog(
+      StatisticsBundle.message("stats.add.test.group.to.test.scheme"),
+      panel = groupConfiguration.panel,
+      resizable = true,
+      focusedComponent = groupConfiguration.getFocusedComponent(),
+      project = project,
+      ok = { groupConfiguration.validate() }
+    )
+    Disposer.register(dialog.disposable, groupConfiguration)
+    return dialog
   }
 
+  private fun loadEventsScheme(
+    project: Project,
+    testRulesStorage: ValidationTestRulesPersistedStorage,
+    recorderId: String,
+  ): EditEventsTestSchemeAction.EventsTestScheme? {
+    return ProgressManager.getInstance().run(object : Task.WithResult<EditEventsTestSchemeAction.EventsTestScheme?, IOException>(
+      project, StatisticsBundle.message("stats.loading.validation.rules"), true) {
+      override fun compute(indicator: ProgressIndicator): EditEventsTestSchemeAction.EventsTestScheme? {
+        val productionGroups = testRulesStorage.loadProductionGroups()
+        if (indicator.isCanceled) return null
+        val eventsScheme = EventsSchemeBuilder.buildEventsScheme(recorder = recorderId)
+        return EditEventsTestSchemeAction.EventsTestScheme(emptyList(), productionGroups, eventsScheme)
+      }
+    })
+  }
 }
