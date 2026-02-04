@@ -59,6 +59,19 @@ suspend inline fun <T> SpanBuilder.useWithScope(
   }
 }
 
+/**
+ * Use this method if telemetry is optional and turned on/off based on registry keys or options
+ * Usage example:
+ * telemetryTracer?.spanBuilder(...).useOrRun {
+ *   // some code that must be executed in any case, telemetry or not
+ * }
+ *
+ * Executes the given operation with a span builder, if it's not null, and returns the result.
+ * If the span builder is null, the operation is executed with a null span.
+ *
+ * @param operation The operation to execute with the span builder.
+ * @return The result of the operation.
+ */
 @Internal
 suspend inline fun <T> SpanBuilder?.useOrRun(
   crossinline operation: suspend (Span?) -> T,
