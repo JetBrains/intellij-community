@@ -492,7 +492,7 @@ abstract class ProductProperties {
    * @param pluginId may be null if missing or a plugin descriptor is malformed
    * @return list of plugin validation errors.
    */
-  open fun validatePlugin(pluginId: String?, result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {
+  open fun validatePlugin(pluginId: String?, result: PluginCreationResult<IdePlugin>): List<PluginProblem> {
     return when (result) {
       is PluginCreationSuccess -> buildList {
         addAll(result.unacceptableWarnings)

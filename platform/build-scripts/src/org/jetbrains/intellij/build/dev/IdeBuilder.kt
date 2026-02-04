@@ -287,8 +287,10 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
         val platformLayout = platformLayout.await()
 
         // must be before generatePluginClassPath, because we modify plugin descriptors (e.g., rename classes)
-        spanBuilder("scramble platform").use {
-          request.scrambleTool?.scramble(platformLayout = platformLayout, platformContent = platformFileEntries, context = context)
+        request.scrambleTool?.let { scrambleTool ->
+          spanBuilder("scramble platform").use {
+            scrambleTool.scramble(platformLayout = platformLayout, platformContent = platformFileEntries, context = context)
+          }
         }
 
         launch {

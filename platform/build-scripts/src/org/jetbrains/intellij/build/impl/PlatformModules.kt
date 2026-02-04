@@ -379,7 +379,7 @@ private suspend fun computePartialListToResolveIncludesAndCollectProductModules(
  * @param context the build context
  * @return map from library name to the library module that exports it
  */
-fun collectExportedLibrariesFromLibraryModules(
+suspend fun collectExportedLibrariesFromLibraryModules(
   layout: PlatformLayout,
   context: BuildContext,
 ): Map<String, String> {
@@ -604,7 +604,7 @@ private suspend fun computeImplicitRequiredModules(
   return requiredModules
 }
 
-private fun computeContentModulesPluginsWhichUseIdeaClassloader(context: BuildContext): Set<String> {
+private suspend fun computeContentModulesPluginsWhichUseIdeaClassloader(context: BuildContext): Set<String> {
   val bundledPlugins = getPluginLayoutsByJpsModuleNames(modules = context.getBundledPluginModules(), productLayout = context.productProperties.productLayout)
   return bundledPlugins.flatMapTo(LinkedHashSet()) {
     getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(pluginMainModule = it.mainModule, cacheContainer = null, context = context)

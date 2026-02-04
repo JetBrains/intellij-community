@@ -3,6 +3,8 @@
 
 package org.jetbrains.intellij.build.impl
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -19,23 +21,19 @@ internal class JpsModuleOutputProvider(private val project: JpsProject, override
   private val nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
   private val projectLibraryToModuleMapCache by lazy { buildProjectLibraryToModuleMap(modules) }
 
-  override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
+  override fun getAllModules(): List<JpsModule> = modules
+
+  override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
     val outputDir = requireNotNull(JpsJavaExtensionService.getInstance().getOutputDirectoryPath(/* module = */ module, /* forTests = */ forTests)) {
       "Output directory for ${module.name} isn't set"
     }
     val file = outputDir.resolve(relativePath)
     try {
-      return Files.readAllBytes(file)
+      return withContext(Dispatchers.IO) { Files.readAllBytes(file) }
     }
     catch (_: NoSuchFileException) {
       return null
     }
-  }
-
-  override fun getAllModules(): List<JpsModule> = modules
-
-  override suspend fun readFileContentFromModuleOutputAsync(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
-    return readFileContentFromModuleOutput(module, relativePath, forTests)
   }
 
   override fun findModule(name: String): JpsModule? = nameToModule.get(name.removeSuffix("._test"))

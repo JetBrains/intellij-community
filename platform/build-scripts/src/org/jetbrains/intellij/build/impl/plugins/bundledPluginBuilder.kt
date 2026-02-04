@@ -6,8 +6,10 @@ package org.jetbrains.intellij.build.impl.plugins
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.DistFile
 import org.jetbrains.intellij.build.InMemoryDistFileContent
@@ -213,7 +215,7 @@ private fun getPluginDirs(context: BuildContext, isUpdateFromSources: Boolean): 
   }
 }
 
-private fun writePluginInfo(
+private suspend fun writePluginInfo(
   pluginDirs: List<Pair<SupportedDistribution, Path>>,
   common: List<PluginBuildDescriptor>,
   specific: Map<SupportedDistribution, List<PluginBuildDescriptor>>,
@@ -252,10 +254,12 @@ private fun writePluginInfo(
       descriptorCacheContainer = descriptorCacheContainer,
       context = context,
     )
-    out.write(commonClassPath)
-    additionalClassPath?.let { out.write(it) }
-    specificClasspath?.let { out.write(it) }
-    out.close()
+    withContext(Dispatchers.IO) {
+      out.write(commonClassPath)
+      additionalClassPath?.let { out.write(it) }
+      specificClasspath?.let { out.write(it) }
+      out.close()
+    }
 
     context.addDistFile(
       DistFile(

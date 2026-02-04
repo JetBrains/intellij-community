@@ -60,9 +60,9 @@ abstract class JetBrainsProductProperties : ProductProperties() {
     productLayout.addPlatformSpec { layout, _ -> layout.withModule(IJENT_BOOT_CLASSPATH_MODULE, PLATFORM_CORE_NIO_FS) }
   }
 
-  final override fun validatePlugin(pluginId: String?, result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {
+  final override fun validatePlugin(pluginId: String?, result: PluginCreationResult<IdePlugin>): List<PluginProblem> {
     return buildList {
-      addAll(super.validatePlugin(pluginId, result, context).filterNot {
+      addAll(super.validatePlugin(pluginId, result).filterNot {
         isIntentionallyIgnored(it, pluginId) || isApplicableToThirdPartyPluginsOnly(it)
       })
       if (result is PluginCreationSuccess) {

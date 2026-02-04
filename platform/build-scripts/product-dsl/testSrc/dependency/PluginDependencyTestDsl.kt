@@ -690,10 +690,6 @@ internal fun createTestModuleOutputProvider(project: JpsProject): ModuleOutputPr
     override val useTestCompilationOutput: Boolean
       get() = true
 
-    override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray {
-      throw UnsupportedOperationException("Not needed for this test")
-    }
-
     override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
       throw UnsupportedOperationException("Not needed for this test")
     }
@@ -706,7 +702,7 @@ internal fun createTestModuleOutputProvider(project: JpsProject): ModuleOutputPr
 
     override fun getAllModules(): List<JpsModule> = project.modules
 
-    override suspend fun readFileContentFromModuleOutputAsync(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray {
+    override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray {
       throw UnsupportedOperationException("Not needed for this test")
     }
 
@@ -937,10 +933,6 @@ private fun stubModuleOutputProvider(): ModuleOutputProvider {
 
     override fun findModule(name: String): JpsModule? = null
     override fun findRequiredModule(name: String): JpsModule = error("Module not found: $name")
-    override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray {
-      throw UnsupportedOperationException("Stub")
-    }
-
     override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
       throw UnsupportedOperationException("Stub")
     }
@@ -951,7 +943,7 @@ private fun stubModuleOutputProvider(): ModuleOutputProvider {
 
     override fun getProjectLibraryToModuleMap(): Map<String, String> = emptyMap()
 
-    override suspend fun readFileContentFromModuleOutputAsync(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray {
+    override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray {
       throw UnsupportedOperationException("Stub")
     }
 

@@ -16,6 +16,7 @@ import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
 import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
 import org.jetbrains.intellij.build.classPath.resolveAndEmbedContentModuleDescriptor
+import org.jetbrains.intellij.build.classPath.resolveIncludes
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_BACKEND_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_JAR
 import org.jetbrains.intellij.build.isOptionalLoadingRule
@@ -31,7 +32,7 @@ internal fun getProductModuleJarName(moduleName: String, context: BuildContext, 
 }
 
 // result _must be_ consistent, do not use Set.of or HashSet here
-internal fun processAndGetProductPluginContentModules(
+internal suspend fun processAndGetProductPluginContentModules(
   layout: PlatformLayout,
   descriptorCache: ScopedCachedDescriptorContainer,
   includedPlatformModulesPartialList: Collection<String>,
@@ -108,12 +109,18 @@ internal fun processAndGetProductPluginContentModules(
   return moduleItems
 }
 
-internal inline fun filterAndProcessContentModules(
+private data class ContentModuleData(
+  val element: Element,
+  val name: String,
+  val loadingRule: String?,
+)
+
+private fun collectContentModules(
   rootElement: Element,
   pluginMainModuleName: String?,
   context: BuildContext,
-  crossinline contentHandler: (moduleElement: Element, moduleName: String, loadingRule: String?) -> Unit,
-) {
+): List<ContentModuleData> {
+  val result = ArrayList<ContentModuleData>()
   var contentModuleFilter: ContentModuleFilter? = null
   for (content in rootElement.getChildren("content")) {
     val iterator = content.getChildren("module").iterator()
@@ -135,12 +142,24 @@ internal inline fun filterAndProcessContentModules(
         }
       }
 
-      contentHandler(moduleElement, moduleName, loadingRule)
+      result.add(ContentModuleData(element = moduleElement, name = moduleName, loadingRule = loadingRule))
     }
+  }
+  return result
+}
+
+internal suspend fun filterAndProcessContentModules(
+  rootElement: Element,
+  pluginMainModuleName: String?,
+  context: BuildContext,
+  contentHandler: suspend (moduleElement: Element, moduleName: String, loadingRule: String?) -> Unit,
+) {
+  for (module in collectContentModules(rootElement = rootElement, pluginMainModuleName = pluginMainModuleName, context = context)) {
+    contentHandler(module.element, module.name, module.loadingRule)
   }
 }
 
-private fun processProductModule(
+private suspend fun processProductModule(
   moduleElement: Element,
   frontendModuleFilter: FrontendModuleFilter,
   result: LinkedHashSet<ModuleItem>,

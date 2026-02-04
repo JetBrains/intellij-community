@@ -20,7 +20,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
-import org.jetbrains.intellij.build.findFileInModuleDependenciesRecursiveAsync
+import org.jetbrains.intellij.build.findFileInModuleDependenciesRecursive
 import org.jetbrains.intellij.build.findFileInModuleLibraryDependencies
 import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.productLayout.ContentModule
@@ -877,7 +877,7 @@ internal object ModelBuildingStage {
     val resourcePath = include.resourcePath
     findFileInModuleSources(module, resourcePath)?.let { return Files.readAllBytes(it) }
     findFileInModuleLibraryDependencies(module, resourcePath, outputProvider)?.let { return it }
-    outputProvider.readFileContentFromModuleOutputAsync(module, resourcePath)?.let { return it }
+    outputProvider.readFileContentFromModuleOutput(module, resourcePath)?.let { return it }
     return null
   }
 
@@ -930,17 +930,17 @@ internal object ModelBuildingStage {
   ): ByteArray? {
     findFileInModuleSources(module, path)?.let { return Files.readAllBytes(it) }
     findFileInModuleLibraryDependencies(module, path, outputProvider)?.let { return it }
-    outputProvider.readFileContentFromModuleOutputAsync(module, path)?.let { return it }
+    outputProvider.readFileContentFromModuleOutput(module, path)?.let { return it }
 
     val processedModules = HashSet<String>()
     processedModules.add(module.name)
 
-    findFileInModuleDependenciesRecursiveAsync(
+    findFileInModuleDependenciesRecursive(
       module = module,
       relativePath = path,
       provider = outputProvider,
       processedModules = processedModules,
-      prefix = prefix,
+      moduleNamePrefix = prefix,
     )?.let { return it }
 
     outputProvider.findFileInAnyModuleOutput(path, prefix, processedModules)?.let { return it }

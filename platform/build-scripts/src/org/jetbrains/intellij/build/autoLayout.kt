@@ -130,7 +130,7 @@ internal suspend fun computeModuleSourcesByContent(
   descriptorCacheWriter.apply()
 }
 
-private fun computeOutputJarPath(
+private suspend fun computeOutputJarPath(
   moduleName: String,
   loadingRule: String?,
   modulesWithCustomPath: Set<String>,
@@ -169,7 +169,7 @@ private fun computeOutputJarPath(
   }
 }
 
-private fun checkNeedsSeparateJar(
+private suspend fun checkNeedsSeparateJar(
   moduleName: String,
   pluginLayout: PluginLayout,
   frontendModuleFilter: FrontendModuleFilter,

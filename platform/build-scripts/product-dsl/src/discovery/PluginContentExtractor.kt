@@ -15,7 +15,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
-import org.jetbrains.intellij.build.findFileInModuleDependenciesRecursiveAsync
+import org.jetbrains.intellij.build.findFileInModuleDependenciesRecursive
 import org.jetbrains.intellij.build.findFileInModuleLibraryDependencies
 import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.productLayout.ModuleSet
@@ -128,18 +128,11 @@ internal data class PluginContentInfo(
 }
 
 private val PLUGIN_ID_PATTERN = Regex("""<id>([^<]+)</id>""")
-private val PLUGIN_NAME_PATTERN = Regex("""<name>([^<]+)</name>""")
 private val XML_COMMENT_PATTERN = Regex("<!--.*?-->", setOf(RegexOption.DOT_MATCHES_ALL))
 
 /** Extracts plugin ID from plugin.xml content */
 private fun extractPluginId(content: String): PluginId? {
   return PLUGIN_ID_PATTERN.find(content)?.groupValues?.get(1)?.trim()?.let { PluginId(it) }
-}
-
-/** Extracts plugin name from plugin.xml content */
-internal fun extractPluginName(content: String): String? {
-  val sanitized = content.replace(XML_COMMENT_PATTERN, "")
-  return PLUGIN_NAME_PATTERN.find(sanitized)?.groupValues?.get(1)?.trim()?.takeIf { it.isNotEmpty() }
 }
 
 // Pattern for <depends> elements:
@@ -323,19 +316,19 @@ private suspend fun resolveXInclude(
   outputProvider: ModuleOutputProvider,
   prefix: String?,
 ): XIncludeResult {
-  outputProvider.readFileContentFromModuleOutputAsync(module = jpsModule, relativePath = path)?.let {
+  outputProvider.readFileContentFromModuleOutput(module = jpsModule, relativePath = path)?.let {
     return XIncludeResult.Success(it)
   }
 
   val processedModules = ConcurrentHashMap.newKeySet<String>()
   processedModules.add(jpsModule.name)
 
-  findFileInModuleDependenciesRecursiveAsync(
+  findFileInModuleDependenciesRecursive(
     module = jpsModule,
     relativePath = path,
     provider = outputProvider,
     processedModules = processedModules,
-    prefix = prefix,
+    moduleNamePrefix = prefix,
   )?.let {
     return XIncludeResult.Success(it)
   }

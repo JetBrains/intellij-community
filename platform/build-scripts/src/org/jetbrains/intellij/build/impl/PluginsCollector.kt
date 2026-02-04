@@ -15,9 +15,10 @@ import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.PluginDistribution
 import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
 import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
+import org.jetbrains.intellij.build.classPath.resolveIncludes
 import org.jetbrains.intellij.build.findFileInModuleSources
 
-fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData, pluginsToPublish: MutableSet<PluginLayout>, context: BuildContext) {
+suspend fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData, pluginsToPublish: MutableSet<PluginLayout>, context: BuildContext) {
   val availableModulesAndPlugins = HashSet<String>(builtinModuleData.layout.size)
   builtinModuleData.layout.mapTo(availableModulesAndPlugins) { it.name }
 
@@ -74,7 +75,7 @@ private fun isPluginCompatible(
   return true
 }
 
-fun collectPluginDescriptors(
+suspend fun collectPluginDescriptors(
   skipImplementationDetails: Boolean,
   skipBundled: Boolean,
   honorCompatiblePluginsToIgnore: Boolean,

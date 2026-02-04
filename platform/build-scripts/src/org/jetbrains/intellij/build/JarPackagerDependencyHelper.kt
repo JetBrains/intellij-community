@@ -68,7 +68,7 @@ internal class JarPackagerDependencyHelper(private val outputProvider: ModuleOut
     return moduleName.endsWith("._test")
   }
 
-  fun getPluginIdByModule(pluginModule: JpsModule): String {
+  suspend fun getPluginIdByModule(pluginModule: JpsModule): String {
     // it is ok to read the plugin descriptor with unresolved x-include as the ID should be specified at the root
     val root = readXmlAsModel(getUnprocessedPluginXmlContent(module = pluginModule, outputProvider = outputProvider))
     val element = root.getChild("id") ?: root.getChild("name") ?: throw IllegalStateException("Cannot find attribute id or name (module=$pluginModule)")
