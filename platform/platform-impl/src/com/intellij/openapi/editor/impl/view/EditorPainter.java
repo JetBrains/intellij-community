@@ -1506,7 +1506,7 @@ public final class EditorPainter implements TextDrawingCallback {
         switch (shape) {
           case DEFAULT -> {
             if (myEditor.isInsertMode() != settings.isBlockCursor()) {
-              int lineWidth = JBUIScale.scale(attr.getWidth(settings.getLineCursorWidth()));
+              float lineWidth = JBUIScale.scale(attr.getWidth(settings.getLineCursorWidth())) * myEditor.getScale();
               // fully cover extra character's pixel which can appear due to antialiasing
               // see IDEA-148843 for more details
               if (x > minX && lineWidth > 1) x -= 1 / JBUIScale.sysScale(g);
