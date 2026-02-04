@@ -27,6 +27,8 @@ open class TeamCityCIServer(
     null
   }
 ) : CIServer {
+  private val codeOwnerResolver by lazy { di.direct.instance<CodeOwnerResolver>() }
+
   override fun publishArtifact(source: Path, artifactPath: String, artifactName: String) {
     TeamCityClient.publishTeamCityArtifacts(source = source, artifactPath = artifactPath, artifactName = artifactName)
   }
@@ -42,6 +44,7 @@ open class TeamCityCIServer(
         "##teamcity[testFailed name='%s' message='%s' details='%s' flowId='%s' nodeId='%s' parentNodeId='0']",
         generifiedTestName, message.processStringForTC(), details.processStringForTC(), flowId, generifiedTestName
       ))
+      addCodeOwnerMetadata(generifiedTestName, flowId)
       if (isJetbrainsBuildserver) {
         addTestMetadata(testName = generifiedTestName, TeamCityMetadataType.LINK, flowId = flowId, name = "Start bisect", value = "https://ij-perf.labs.jb.gg/bisect/launcher?buildId=$buildId")
       }
@@ -57,6 +60,17 @@ open class TeamCityCIServer(
       )
     }
     logOutput(String.format("##teamcity[testFinished name='%s' flowId='%s' nodeId='%s' parentNodeId='0']", generifiedTestName, flowId, generifiedTestName))
+  }
+
+  private fun addCodeOwnerMetadata(testName: String, flowId: String) {
+    val owner = codeOwnerResolver.getOwnerGroupName() ?: return
+    addTestMetadata(
+      testName = testName,
+      type = TeamCityMetadataType.TEXT,
+      flowId = flowId,
+      name = CODE_OWNER_METADATA_NAME,
+      value = owner,
+    )
   }
 
   override fun reportTestFailure(testName: String, message: String, details: String, linkToLogs: String?) {
@@ -249,6 +263,7 @@ open class TeamCityCIServer(
 
   companion object {
     const val LOCAL_RUN_ID = "LOCAL_RUN_SNAPSHOT"
+    private const val CODE_OWNER_METADATA_NAME = "Code Owner"
 
     fun String.processStringForTC(): String {
       //todo replace to intellij.platform.testFramework.util.teamcity.escapeStringForTeamCity when module is published

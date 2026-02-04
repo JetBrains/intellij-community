@@ -3,6 +3,8 @@ package com.intellij.ide.starter.di
 import com.intellij.ide.starter.buildTool.BuildTool
 import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.ci.NoCIServer
+import com.intellij.ide.starter.ci.teamcity.NoOpCodeOwnerResolver
+import com.intellij.ide.starter.ci.teamcity.CodeOwnerResolver
 import com.intellij.ide.starter.community.PublicIdeDownloader
 import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.config.ScrambleToolProvider
@@ -99,6 +101,7 @@ private var _di = DI {
   bindSingleton<TargetResolver> { LocalOnlyTargetResolver }
   bindSingleton<ScrambleToolProvider> { object : ScrambleToolProvider {} }
   bindSingleton<DevBuildServerRunner> { NoOpDevBuildServerRunner }
+  bindSingleton<CodeOwnerResolver> { NoOpCodeOwnerResolver }
 }.apply {
   logOutput("Starter DI was initialized")
 }

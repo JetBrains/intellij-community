@@ -55,6 +55,15 @@ public final class TestLocationStorage {
   public static final Logger LOG = Logger.getLogger(TestLocationStorage.class.getName());
 
   /**
+   * Holds extracted location information for a test class.
+   *
+   * @param moduleName  the module name derived from the JAR path
+   * @param packagePath the package path extracted from bytecode
+   * @param fileName    the source file name extracted from bytecode
+   */
+  public record TestLocationInfo(String moduleName, String packagePath, String fileName) {}
+
+  /**
    * Path to the test location artifact file (NDJSON format)
    */
   private static final Path TEST_LOCATION_ARTIFACT = getDefaultArtifactPath();
@@ -187,60 +196,108 @@ public final class TestLocationStorage {
       .replace("\t", "\\t");
   }
 
-  static void recordTestLocation(TestIdentifier testIdentifier, TestExecutionResult.Status status, String testName) {
+  /**
+   * Extracts location information for a test identified by its {@link TestIdentifier}.
+   *
+   * <p>This method resolves the test class from the identifier, loads it using the context
+   * class loader, and extracts module name, package path, and source file name.</p>
+   *
+   * @param testIdentifier the JUnit Platform test identifier
+   * @return location info, or {@code null} if resolution fails (failures are logged)
+   */
+  public static TestLocationInfo getTestLocationInfo(TestIdentifier testIdentifier) {
     TestSource source = testIdentifier.getSource().orElse(null);
     String className = getClassNameFromTestSource(source);
 
     if (className == null) {
-      LOG.info("Cannot find class name for " + testName);
-      return;
+      LOG.info("Cannot find class name for " + testIdentifier.getDisplayName());
+      return null;
     }
 
     try {
       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
       if (classLoader == null) {
-        LOG.info("Could not find class loader for test " + testName);
-        return;
+        LOG.info("Could not find class loader for test " + testIdentifier.getDisplayName());
+        return null;
       }
 
       Class<?> testClass = Class.forName(className, false, classLoader);
+      return getTestLocationInfo(testClass);
+    }
+    catch (Exception e) {
+      LOG.info(e.getMessage());
+      return null;
+    }
+  }
+
+  /**
+   * Extracts location information for a test class.
+   *
+   * <p>This method extracts module name, package path, and source file name from
+   * the class's code source location and bytecode.</p>
+   *
+   * @param testClass the test class
+   * @return location info, or {@code null} if resolution fails (failures are logged)
+   */
+  public static TestLocationInfo getTestLocationInfo(Class<?> testClass) {
+    try {
       CodeSource codeSource = testClass.getProtectionDomain().getCodeSource();
 
-      if (codeSource != null && codeSource.getLocation() != null) {
-        Path jarPath = Paths.get(codeSource.getLocation().toURI());
-        String moduleName = getModuleName(jarPath);
-        if (moduleName == null) {
-          LOG.info("No module found for " + codeSource.getLocation());
-          return;
-        }
-        String packagePath = getPackagePath(testClass);
-        String fileName = getFileName(testClass);
-        if (fileName == null) {
-          LOG.info("No file found for " + codeSource.getLocation());
-          return;
-        }
-        boolean failed = (status == TestExecutionResult.Status.FAILED);
+      if (codeSource == null || codeSource.getLocation() == null) {
+        LOG.info("No code source for " + testClass.getName());
+        return null;
+      }
 
-        String json = String.format(
-          "{\"test\":\"%s\",\"module\":\"%s\",\"package\":\"%s\",\"file\":\"%s\",\"failed\":%s}%n",
-          escapeJson(testName),
-          escapeJson(moduleName),
-          escapeJson(packagePath),
-          escapeJson(fileName),
-          failed
-        );
+      Path jarPath = Paths.get(codeSource.getLocation().toURI());
+      String moduleName = getModuleName(jarPath);
+      if (moduleName == null) {
+        LOG.info("No module found for " + codeSource.getLocation());
+        return null;
+      }
 
-        LOG.info("Writing to " + TEST_LOCATION_ARTIFACT.toAbsolutePath());
-        synchronized (TEST_LOCATION_ARTIFACT) {
-          // Ensure parent directory exists
-          Path parentDir = TEST_LOCATION_ARTIFACT.getParent();
-          if (parentDir != null && !Files.exists(parentDir)) {
-            Files.createDirectories(parentDir);
-          }
-          Files.writeString(TEST_LOCATION_ARTIFACT, json,
-                            StandardOpenOption.CREATE,
-                            StandardOpenOption.APPEND);
+      String packagePath = getPackagePath(testClass);
+      String fileName = getFileName(testClass);
+      if (fileName == null) {
+        LOG.info("No file found for " + codeSource.getLocation());
+        return null;
+      }
+
+      return new TestLocationInfo(moduleName, packagePath, fileName);
+    }
+    catch (Exception e) {
+      LOG.info(e.getMessage());
+      return null;
+    }
+  }
+
+  static void recordTestLocation(TestIdentifier testIdentifier, TestExecutionResult.Status status, String testName) {
+    TestLocationInfo info = getTestLocationInfo(testIdentifier);
+    if (info == null) {
+      return;
+    }
+
+    boolean failed = (status == TestExecutionResult.Status.FAILED);
+
+    String json = String.format(
+      "{\"test\":\"%s\",\"module\":\"%s\",\"package\":\"%s\",\"file\":\"%s\",\"failed\":%s}%n",
+      escapeJson(testName),
+      escapeJson(info.moduleName()),
+      escapeJson(info.packagePath()),
+      escapeJson(info.fileName()),
+      failed
+    );
+
+    LOG.info("Writing to " + TEST_LOCATION_ARTIFACT.toAbsolutePath());
+    try {
+      synchronized (TEST_LOCATION_ARTIFACT) {
+        // Ensure parent directory exists
+        Path parentDir = TEST_LOCATION_ARTIFACT.getParent();
+        if (parentDir != null && !Files.exists(parentDir)) {
+          Files.createDirectories(parentDir);
         }
+        Files.writeString(TEST_LOCATION_ARTIFACT, json,
+                          StandardOpenOption.CREATE,
+                          StandardOpenOption.APPEND);
       }
     }
     catch (Exception e) {
