@@ -17,7 +17,6 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer;
-
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import org.jetbrains.annotations.ApiStatus;
@@ -39,7 +38,7 @@ public class XVariablesView extends XVariablesViewBase {
    * @deprecated Use {@link XVariablesView#XVariablesView(XDebugSessionProxy)} instead
    */
   @Deprecated
-  public XVariablesView(@NotNull XDebugSessionImpl session) {
+  public XVariablesView(@NotNull XDebugSession session) {
     this(XDebuggerEntityConverter.asProxy(session));
   }
 

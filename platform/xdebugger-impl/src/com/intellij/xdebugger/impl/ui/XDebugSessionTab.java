@@ -48,9 +48,9 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.SplitDebuggerMode;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebugSessionSelectionService;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.*;
@@ -89,7 +89,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
    * @deprecated Use {@link XDebugSessionTab#create(XDebugSessionProxy, Icon, ExecutionEnvironmentProxy, RunContentDescriptor, boolean, boolean, String)}
    */
   @Deprecated
-  public static @NotNull XDebugSessionTab create(@NotNull XDebugSessionImpl session,
+  public static @NotNull XDebugSessionTab create(@NotNull XDebugSession session,
                                                  @Nullable Icon icon,
                                                  @Nullable ExecutionEnvironment environment,
                                                  @Nullable RunContentDescriptor contentToReuse) {
@@ -544,7 +544,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
    * @deprecated Use {@link XDebugSessionTab#showWatchesView(XDebugSessionProxy)} instead
    */
   @Deprecated
-  public static void showWatchesView(@NotNull XDebugSessionImpl session) {
+  public static void showWatchesView(@NotNull XDebugSession session) {
     showWatchesView(XDebuggerEntityConverter.asProxy(session));
   }
 
@@ -558,7 +558,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
    * @deprecated Use {@link #showFramesView(XDebugSessionProxy)} instead
    */
   @Deprecated
-  public static void showFramesView(@Nullable XDebugSessionImpl session) {
+  public static void showFramesView(@Nullable XDebugSession session) {
     if (session == null) return;
     showFramesView(XDebuggerEntityConverter.asProxy(session));
   }
