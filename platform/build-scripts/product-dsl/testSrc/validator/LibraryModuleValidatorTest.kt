@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.validator
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.productLayout.TestFailureLogger
@@ -40,7 +41,7 @@ class LibraryModuleValidatorTest {
   """.trimMargin()
 
   @Test
-  fun `detects direct library dependencies`(@TempDir tempDir: Path) {
+  fun `detects direct library dependencies`(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
     // Create JPS modules with library dependencies
     val jps = jpsProject(tempDir) {
       library("JUnit4")
@@ -67,7 +68,7 @@ class LibraryModuleValidatorTest {
 
     val strategy = DeferredFileUpdater(tempDir)
     val model = testGenerationModel(graph, outputProvider = jps.outputProvider, fileUpdater = strategy)
-    runBlocking { runValidationRule(LibraryModuleValidator, model) }
+    runValidationRule(LibraryModuleValidator, model)
 
     assertThat(strategy.getDiffs())
       .describedAs("Diff should be generated for library dependency violation")
@@ -75,7 +76,7 @@ class LibraryModuleValidatorTest {
   }
 
   @Test
-  fun `update suppressions records violations without diffs`(@TempDir tempDir: Path) {
+  fun `update suppressions records violations without diffs`(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
     val jps = jpsProject(tempDir) {
       library("JUnit4")
       module("intellij.libraries.junit4") {
@@ -108,7 +109,7 @@ class LibraryModuleValidatorTest {
     ctx.initSlot(Slots.LIBRARY_SUPPRESSIONS)
     ctx.initErrorSlot(LibraryModuleValidator.id)
     val nodeCtx = ctx.forNode(LibraryModuleValidator.id)
-    runBlocking { LibraryModuleValidator.execute(nodeCtx) }
+    LibraryModuleValidator.execute(nodeCtx)
     ctx.finalizeNodeErrors(LibraryModuleValidator.id)
 
     assertThat(strategy.getDiffs())
@@ -124,7 +125,7 @@ class LibraryModuleValidatorTest {
   }
 
   @Test
-  fun `generates correct diff replacing library with module dependency`(@TempDir tempDir: Path) {
+  fun `generates correct diff replacing library with module dependency`(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
     // Create JPS modules with library dependencies
     val jps = jpsProject(tempDir) {
       library("JUnit4")
@@ -149,7 +150,7 @@ class LibraryModuleValidatorTest {
 
     val strategy = DeferredFileUpdater(tempDir)
     val model = testGenerationModel(graph, outputProvider = jps.outputProvider, fileUpdater = strategy)
-    runBlocking { runValidationRule(LibraryModuleValidator, model) }
+    runValidationRule(LibraryModuleValidator, model)
 
     val diffs = strategy.getDiffs()
     assertThat(diffs).hasSize(1)
@@ -188,7 +189,7 @@ class LibraryModuleValidatorTest {
   }
 
   @Test
-  fun `no diff when module has no library violations`(@TempDir tempDir: Path) {
+  fun `no diff when module has no library violations`(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
     // Create JPS modules without problematic library dependencies
     val jps = jpsProject(tempDir) {
       module("intellij.clean.module")
@@ -203,7 +204,7 @@ class LibraryModuleValidatorTest {
 
     val strategy = DeferredFileUpdater(tempDir)
     val model = testGenerationModel(graph, outputProvider = jps.outputProvider, fileUpdater = strategy)
-    runBlocking { runValidationRule(LibraryModuleValidator, model) }
+    runValidationRule(LibraryModuleValidator, model)
 
     assertThat(strategy.getDiffs())
       .describedAs("No diff should be generated when there are no violations")

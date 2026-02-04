@@ -9,12 +9,15 @@ import kotlinx.coroutines.coroutineScope
 import org.jetbrains.intellij.build.productLayout.cleanupOrphanedModuleSetFiles
 import org.jetbrains.intellij.build.productLayout.discovery.GenerationResult
 import org.jetbrains.intellij.build.productLayout.discovery.ModuleSetGenerationConfig
-import org.jetbrains.intellij.build.productLayout.generator.ContentModuleDependencyGenerator
+import org.jetbrains.intellij.build.productLayout.generator.ContentModuleDependencyPlanner
+import org.jetbrains.intellij.build.productLayout.generator.ContentModuleXmlWriter
 import org.jetbrains.intellij.build.productLayout.generator.ModuleSetXmlGenerator
-import org.jetbrains.intellij.build.productLayout.generator.PluginXmlDependencyGenerator
+import org.jetbrains.intellij.build.productLayout.generator.PluginDependencyPlanner
+import org.jetbrains.intellij.build.productLayout.generator.PluginXmlWriter
 import org.jetbrains.intellij.build.productLayout.generator.ProductModuleDependencyGenerator
 import org.jetbrains.intellij.build.productLayout.generator.ProductXmlGenerator
 import org.jetbrains.intellij.build.productLayout.generator.SuppressionConfigGenerator
+import org.jetbrains.intellij.build.productLayout.generator.TestPluginDependencyPlanner
 import org.jetbrains.intellij.build.productLayout.generator.TestPluginXmlGenerator
 import org.jetbrains.intellij.build.productLayout.model.ErrorSink
 import org.jetbrains.intellij.build.productLayout.model.error.FileDiff
@@ -149,6 +152,7 @@ internal class GenerationPipeline(
         config = config,
         scope = this,
         updateSuppressions = updateSuppressions,
+        commitChanges = commitChanges,
         errorSink = modelBuildingErrorSink
       )
 
@@ -474,7 +478,7 @@ internal class GenerationPipeline(
   ): List<ModuleSetFileResult> {
     if (errors.isEmpty() && commitChanges) {
       // Clean up orphaned module set files before commit
-      val deletedFiles = cleanupOrphanedModuleSetFiles(trackingMaps, model.fileUpdater)
+      val deletedFiles = cleanupOrphanedModuleSetFiles(trackingMaps, model.xmlWritePolicy)
       if (deletedFiles.isNotEmpty()) {
         println("\nDeleted ${deletedFiles.size} orphaned files")
       }
@@ -500,14 +504,17 @@ internal class GenerationPipeline(
         nodes = listOf(
           ModuleSetXmlGenerator,
           ProductModuleDependencyGenerator,
-          ContentModuleDependencyGenerator,
-          PluginXmlDependencyGenerator,
+          ContentModuleDependencyPlanner,
+          ContentModuleXmlWriter,
+          PluginDependencyPlanner,
+          PluginXmlWriter,
           PluginContentDependencyValidator,
           PluginContentStructureValidator,
           ContentModulePluginDependencyValidator,
           PluginPluginDependencyValidator,
           PluginDependencyDeclarationValidator,
           ProductXmlGenerator,
+          TestPluginDependencyPlanner,
           TestPluginXmlGenerator,
           TestPluginPluginDependencyValidator,
           SuppressionConfigGenerator,

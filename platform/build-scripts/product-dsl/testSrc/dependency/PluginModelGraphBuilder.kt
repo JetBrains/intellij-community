@@ -198,7 +198,7 @@ internal class TestPluginGraphBuilder {
    * Add content module dependencies between modules (Module --moduleDependsOn--> Module).
    *
    * These edges represent runtime dependencies from module descriptor XML
-   * (`<dependencies><module name="..."/>`), as computed by ContentModuleDependencyGenerator.
+   * (`<dependencies><module name="..."/>`), as computed by ContentModuleDependencyPlanner.
    *
    * Use this to set up graph state for testing validation rules that traverse
    * plugin model dependencies instead of JPS dependencies.

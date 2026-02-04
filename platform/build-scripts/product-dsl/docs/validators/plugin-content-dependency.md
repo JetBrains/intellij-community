@@ -9,7 +9,7 @@ Validates runtime dependency correctness for plugin content modules and plugin-l
 
 ## Inputs
 
-- Slot: `Slots.CONTENT_MODULE` (results from `ContentModuleDependencyGenerator`).
+- Slot: `Slots.CONTENT_MODULE_PLAN` (results from `ContentModuleDependencyPlanner`).
 - Graph: plugin content and dependency edges (`EDGE_CONTAINS_CONTENT`, `EDGE_CONTAINS_CONTENT_TEST`, `EDGE_CONTENT_MODULE_DEPENDS_ON`, `EDGE_CONTENT_MODULE_DEPENDS_ON_TEST`, plugin `dependsOnContentModule`).
 - Model: `buildPluginValidationModel()` (resolution sources + graph queries for bundling and plugin types).
 - Config: `pluginAllowedMissingDependencies`, product `allowMissingDependencies`, `contentModuleAllowedMissingPluginDeps`, and `suppressionConfig`.

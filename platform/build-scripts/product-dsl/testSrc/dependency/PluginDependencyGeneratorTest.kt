@@ -6,6 +6,7 @@ package org.jetbrains.intellij.build.productLayout.dependency
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.TargetName
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -163,7 +164,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `duplicate content modules across plugins generates single diff`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val setup = pluginTestSetup(tempDir) {
         plugin("plugin.one") { content("intellij.shared.content") }
         plugin("plugin.two") { content("intellij.shared.content") }
@@ -197,7 +198,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `ON_DEMAND content module deps allowed by productAllowedMissing do not trigger error`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val setup = pluginTestSetup(tempDir) {
         plugin("intellij.test.plugin") {
           content("intellij.test.content", com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue.ON_DEMAND)
@@ -228,7 +229,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `ON_DEMAND content module deps NOT in productAllowedMissing trigger error`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val setup = pluginTestSetup(tempDir) {
         plugin("intellij.test.plugin") {
           content("intellij.test.content", com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue.ON_DEMAND)
@@ -269,7 +270,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `filtered JPS dependencies are tracked and reported in error message`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val setup = pluginTestSetup(tempDir) {
         plugin("intellij.test.plugin") { content("intellij.test.content") }
         // Declare dependency module FIRST so it has a descriptor when jpsDependency processes it
@@ -316,7 +317,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `non-bundled plugin with unresolvable module dependency triggers error`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val setup = pluginTestSetup(tempDir) {
         plugin("intellij.settingsRepository") {
           // Plugin has module dependency but no content modules
@@ -345,7 +346,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `non-bundled plugin with resolvable module dependency passes validation`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val setup = pluginTestSetup(tempDir) {
         plugin("intellij.settingsRepository") {
           moduleDependency("intellij.some.known.module")
@@ -372,7 +373,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `non-bundled plugin depending on test-only content module triggers error`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       // Use a custom test framework module that we create in the test setup
       val localTestFrameworkModules = setOf(ContentModuleName("test.framework.marker.module"))
 
@@ -418,7 +419,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `non-bundled plugin depending on module in both test and production plugins passes`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       // Use a custom test framework module that we create in the test setup
       val localTestFrameworkModules = setOf(ContentModuleName("test.framework.marker.module"))
 
@@ -459,7 +460,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `non-bundled plugin depending on module set module passes validation`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val setup = pluginTestSetup(tempDir) {
         // Production plugin depends on a module
         plugin("intellij.consumer.plugin") {
@@ -491,7 +492,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `computePluginContentFromDslSpec auto-adds JPS deps with module descriptors`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       // Setup: Create JPS modules with dependencies
       val jps = jpsProject(tempDir) {
         // Content module explicitly declared in DSL
@@ -561,7 +562,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `computePluginContentFromDslSpec auto-adds test descriptor deps`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val jps = jpsProject(tempDir) {
         module("intellij.foo") {
           resourceRoot()
@@ -628,7 +629,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `computePluginContentFromDslSpec ignores suppressed module deps for optional modules with content source`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val jps = jpsProject(tempDir) {
         module("intellij.test.module") {
           resourceRoot()
@@ -698,7 +699,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `computePluginContentFromDslSpec auto-adds suppressed module deps without content source`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val jps = jpsProject(tempDir) {
         module("intellij.test.module") {
           resourceRoot()
@@ -765,7 +766,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `computePluginContentFromDslSpec reports suppressed plugin-owned deps for required modules`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val jps = jpsProject(tempDir) {
         module("intellij.test.module") {
           resourceRoot()
@@ -830,7 +831,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `computePluginContentFromDslSpec records suppression usage for unresolved plugin-owned deps in updateSuppressions`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val jps = jpsProject(tempDir) {
         module("intellij.test.module") {
           resourceRoot()
@@ -890,7 +891,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `computePluginContentFromDslSpec auto-adds library module deps`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val jps = jpsProject(tempDir) {
         library("JUnit4")
         module("intellij.libraries.junit4") {
@@ -952,7 +953,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `computePluginContentFromDslSpec auto-adds library modules even when owned by plugin`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val jps = jpsProject(tempDir) {
         module("intellij.libraries.junit4") {
           resourceRoot()
@@ -1014,7 +1015,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `computePluginContentFromDslSpec does NOT auto-add resolvable JPS deps with module descriptors`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val jps = jpsProject(tempDir) {
         module("intellij.content.module") {
           resourceRoot()
@@ -1073,7 +1074,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `computePluginContentFromDslSpec does NOT auto-add modules owned by bundled production plugin`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val jps = jpsProject(tempDir) {
         module("intellij.owner.module") {
           resourceRoot()
@@ -1133,7 +1134,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `computePluginContentFromDslSpec does NOT auto-add modules owned by additional bundled plugins`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val jps = jpsProject(tempDir) {
         module("intellij.owner.module") {
           resourceRoot()
@@ -1194,7 +1195,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `computePluginContentFromDslSpec auto-adds modules owned by bundled test plugin`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val jps = jpsProject(tempDir) {
         module("intellij.owner.module") {
           resourceRoot()
@@ -1259,7 +1260,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `computePluginContentFromDslSpec auto-adds modules owned by unbundled test plugin`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val jps = jpsProject(tempDir) {
         module("intellij.owner.module") {
           resourceRoot()
@@ -1324,7 +1325,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `computePluginContentFromDslSpec does NOT auto-add JPS deps without module descriptors`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       // Setup: Create JPS modules - one with descriptor, one without
       val jps = jpsProject(tempDir) {
         module("intellij.content.module") {
@@ -1398,7 +1399,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `pluginAllowedMissingDependencies bypasses test-only check for non-bundled plugin`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       // Use a custom test framework module that we create in the test setup
       val localTestFrameworkModules = setOf(ContentModuleName("test.framework.marker.module"))
 
@@ -1440,7 +1441,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `plugin dependency on globally embedded module is skipped`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       // Setup: Plugin depends on a module that is globally embedded (in EMBEDDED module set, no plugin source)
       val setup = pluginTestSetup(tempDir) {
         // Globally embedded module - in EMBEDDED module set, no plugin source
@@ -1487,7 +1488,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `plugin dependency on module in another plugin is kept`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       // Setup: Plugin depends on a module that is in another plugin (NOT globally embedded)
       val setup = pluginTestSetup(tempDir) {
         // Module in another plugin - NOT globally embedded because it has a plugin source
@@ -1532,7 +1533,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `plugin dependency on module with REQUIRED loading is kept`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       // Setup: Module in module set but with REQUIRED loading (not EMBEDDED)
       val setup = pluginTestSetup(tempDir) {
         contentModule("intellij.platform.optional") {
@@ -1574,7 +1575,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `module descriptor with module value declaration does not trigger NON_STANDARD_DESCRIPTOR_ROOT`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       // Descriptor with <module value="..."/> (module ID declaration) should NOT trigger error
       // This matches intellij.regexp.xml which has <module value="com.intellij.modules.regexp"/>
       val setup = pluginTestSetup(tempDir) {
@@ -1605,7 +1606,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `module descriptor with dependencies root element triggers NON_STANDARD_DESCRIPTOR_ROOT`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       // Descriptor with <dependencies> as root should trigger error (non-standard format)
       val setup = pluginTestSetup(tempDir) {
         plugin("test.plugin") { content("intellij.nonstandard") }
@@ -1635,7 +1636,7 @@ class PluginDependencyGeneratorTest {
 
   @Test
   fun `module descriptor with idea-plugin root and dependencies section does not trigger error`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       // Standard descriptor with <idea-plugin> root and <dependencies> section should be fine
       val setup = pluginTestSetup(tempDir) {
         plugin("test.plugin") { content("intellij.standard") }

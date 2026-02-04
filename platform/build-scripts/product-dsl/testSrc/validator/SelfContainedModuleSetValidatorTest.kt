@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.productLayout.validator
 
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions
 import org.jetbrains.intellij.build.productLayout.TestFailureLogger
@@ -27,7 +28,7 @@ class SelfContainedModuleSetValidatorTest {
   @Nested
   inner class SelfContainedModuleSetTest {
     @Test
-    fun `no error when all deps are within the module set`() {
+    fun `no error when all deps are within the module set`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
           moduleSet("core.platform", selfContained = true) {
               module("module.a", ModuleLoadingRuleValue.REQUIRED)
@@ -38,13 +39,13 @@ class SelfContainedModuleSetValidatorTest {
 
       val model = testGenerationModel(graph)
 
-      val errors = runBlocking { runValidationRule(SelfContainedModuleSetValidator, model) }
+      val errors = runValidationRule(SelfContainedModuleSetValidator, model)
 
       Assertions.assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `reports missing dependency outside module set`() {
+    fun `reports missing dependency outside module set`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
           moduleSet("core.platform", selfContained = true) {
               module("module.a", ModuleLoadingRuleValue.REQUIRED)
@@ -55,7 +56,7 @@ class SelfContainedModuleSetValidatorTest {
 
       val model = testGenerationModel(graph)
 
-      val errors = runBlocking { runValidationRule(SelfContainedModuleSetValidator, model) }
+      val errors = runValidationRule(SelfContainedModuleSetValidator, model)
 
       Assertions.assertThat(errors).hasSize(1)
       val error = errors[0] as SelfContainedValidationError
@@ -64,7 +65,7 @@ class SelfContainedModuleSetValidatorTest {
     }
 
     @Test
-    fun `reports transitive missing dependency`() {
+    fun `reports transitive missing dependency`(): Unit = runBlocking(Dispatchers.Default) {
       // module.a -> module.b -> missing.module
       val graph = pluginGraph {
           moduleSet("core.platform", selfContained = true) {
@@ -78,7 +79,7 @@ class SelfContainedModuleSetValidatorTest {
 
       val model = testGenerationModel(graph)
 
-      val errors = runBlocking { runValidationRule(SelfContainedModuleSetValidator, model) }
+      val errors = runValidationRule(SelfContainedModuleSetValidator, model)
 
       Assertions.assertThat(errors).hasSize(1)
       val error = errors[0] as SelfContainedValidationError
@@ -86,7 +87,7 @@ class SelfContainedModuleSetValidatorTest {
     }
 
     @Test
-    fun `validates nested sets correctly`() {
+    fun `validates nested sets correctly`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
           moduleSet("parent.set", selfContained = true) {
               module("parent.module")
@@ -99,7 +100,7 @@ class SelfContainedModuleSetValidatorTest {
 
       val model = testGenerationModel(graph)
 
-      val errors = runBlocking { runValidationRule(SelfContainedModuleSetValidator, model) }
+      val errors = runValidationRule(SelfContainedModuleSetValidator, model)
 
       // child.module depends on parent.module which is in parent set - should be OK
       Assertions.assertThat(errors).isEmpty()

@@ -4,14 +4,10 @@
 
 package org.jetbrains.intellij.build.productLayout.generator
 
-import androidx.collection.MutableIntList
-import androidx.collection.MutableIntObjectMap
-import androidx.collection.MutableObjectList
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.DependencyClassification
 import com.intellij.platform.pluginGraph.EDGE_CONTENT_MODULE_DEPENDS_ON
 import com.intellij.platform.pluginGraph.EDGE_CONTENT_MODULE_DEPENDS_ON_TEST
-import com.intellij.platform.pluginGraph.MutablePluginGraphStore
 import com.intellij.platform.pluginGraph.NODE_CONTENT_MODULE
 import com.intellij.platform.pluginGraph.PluginGraph
 import com.intellij.platform.pluginGraph.PluginId
@@ -25,24 +21,21 @@ import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
 import org.jetbrains.intellij.build.productLayout.debug
 import org.jetbrains.intellij.build.productLayout.dependency.ModuleDescriptorCache
+import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlan
+import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlanOutput
 import org.jetbrains.intellij.build.productLayout.model.error.ErrorCategory
 import org.jetbrains.intellij.build.productLayout.model.error.UnsuppressedPipelineError
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
-import org.jetbrains.intellij.build.productLayout.pipeline.ContentModuleOutput
 import org.jetbrains.intellij.build.productLayout.pipeline.DataSlot
 import org.jetbrains.intellij.build.productLayout.pipeline.NodeIds
 import org.jetbrains.intellij.build.productLayout.pipeline.PipelineNode
 import org.jetbrains.intellij.build.productLayout.pipeline.Slots
-import org.jetbrains.intellij.build.productLayout.stats.DependencyFileResult
-import org.jetbrains.intellij.build.productLayout.stats.FileChangeStatus
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionType
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionUsage
-import org.jetbrains.intellij.build.productLayout.util.FileUpdateStrategy
 import org.jetbrains.intellij.build.productLayout.xml.extractDependenciesEntries
-import org.jetbrains.intellij.build.productLayout.xml.updateXmlDependencies
 
 /**
- * Generator for content module dependency XML files.
+ * Planner for content module dependency XML files.
  *
  * Processes two types of descriptor files in a single pass:
  * 1. **Main descriptors** (`moduleName.xml`) - for all content modules
@@ -69,15 +62,15 @@ import org.jetbrains.intellij.build.productLayout.xml.updateXmlDependencies
  * - Test plugins use [EDGE_CONTENT_MODULE_DEPENDS_ON_TEST]
  *
  * **Input:** All content modules with production or test content sources
- * **Output:** Updated descriptor files with `<dependencies>` sections
+ * **Output:** Dependency plans for descriptor files with `<dependencies>` sections
  *
- * **Publishes:** [Slots.CONTENT_MODULE] for downstream validation (includes both regular and test descriptor modules)
+ * **Publishes:** [Slots.CONTENT_MODULE_PLAN] for downstream writing and validation (includes both regular and test descriptor modules)
  *
  * **No dependencies** - can run immediately (level 0).
  */
-internal object ContentModuleDependencyGenerator : PipelineNode {
+internal object ContentModuleDependencyPlanner : PipelineNode {
   override val id get() = NodeIds.CONTENT_MODULE_DEPS
-  override val produces: Set<DataSlot<*>> get() = setOf(Slots.CONTENT_MODULE)
+  override val produces: Set<DataSlot<*>> get() = setOf(Slots.CONTENT_MODULE_PLAN)
 
   override suspend fun execute(ctx: ComputeContext) {
     coroutineScope {
@@ -86,7 +79,7 @@ internal object ContentModuleDependencyGenerator : PipelineNode {
       // Process all content modules in parallel
       // Each module computes BOTH production and test dependencies
       data class GenerationOutput(
-        @JvmField val result: DependencyFileResult?,
+        @JvmField val plan: ContentModuleDependencyPlan?,
         @JvmField val suppressibleError: UnsuppressedPipelineError?,
       )
 
@@ -109,17 +102,16 @@ internal object ContentModuleDependencyGenerator : PipelineNode {
 
           // Each content module has ONE descriptor - process uniformly
           val job = async {
-            val (result, suppressibleError) = generateContentModuleDependenciesWithBothSets(
+            val (plan, suppressibleError) = planContentModuleDependenciesWithBothSets(
               contentModuleName = moduleName,
               descriptorCache = model.descriptorCache,
               pluginGraph = model.pluginGraph,
               isTestDescriptor = isTestDescriptorModule,
               suppressionConfig = model.suppressionConfig,
-              strategy = model.fileUpdater,
               updateSuppressions = model.updateSuppressions,
               libraryModuleFilter = model.config.libraryModuleFilter,
             )
-            GenerationOutput(result, suppressibleError)
+            GenerationOutput(plan, suppressibleError)
           }
 
           // Categorize based on module type for downstream slots
@@ -133,22 +125,22 @@ internal object ContentModuleDependencyGenerator : PipelineNode {
       }
 
       val mainOutputs = mainDescriptorJobs.awaitAll()
-      val mainResults = mainOutputs.mapNotNull { it.result }
+      val mainPlans = mainOutputs.mapNotNull { it.plan }
       val mainErrors = mainOutputs.mapNotNull { it.suppressibleError }
 
       val testOutputs = testDescriptorJobs.awaitAll()
-      val testDescriptorResults = testOutputs.mapNotNull { it.result }
+      val testDescriptorPlans = testOutputs.mapNotNull { it.plan }
       val testErrors = testOutputs.mapNotNull { it.suppressibleError }
 
       val errors = mainErrors + testErrors
 
       // Graph is single source of truth - populate module deps for validation
       // Returns new graph instance (immutable pattern for coroutine safety)
-      updateWithModuleDependencies(model.pluginGraph, mainResults + testDescriptorResults)
+      updateGraphWithModuleDependencyPlans(model.pluginGraph, mainPlans + testDescriptorPlans)
 
       ctx.emitErrors(errors)
       // Publish combined results - both regular and test descriptor modules in single output
-      ctx.publish(Slots.CONTENT_MODULE, ContentModuleOutput(files = mainResults + testDescriptorResults))
+      ctx.publish(Slots.CONTENT_MODULE_PLAN, ContentModuleDependencyPlanOutput(plans = mainPlans + testDescriptorPlans))
     }
   }
 }
@@ -157,7 +149,7 @@ internal object ContentModuleDependencyGenerator : PipelineNode {
  * Result from content module dependency generation, including any suppressible errors.
  */
 internal data class ContentModuleGenerationOutput(
-  @JvmField val result: DependencyFileResult?,
+  @JvmField val plan: ContentModuleDependencyPlan?,
   /** Suppressible error (e.g., non-standard XML root). Will be filtered by pipeline based on suppressionKey. */
   @JvmField val suppressibleError: UnsuppressedPipelineError?,
 )
@@ -187,13 +179,12 @@ internal data class ContentModuleGenerationOutput(
  * @see EDGE_CONTENT_MODULE_DEPENDS_ON
  * @see EDGE_CONTENT_MODULE_DEPENDS_ON_TEST
  */
-internal suspend fun generateContentModuleDependenciesWithBothSets(
+internal suspend fun planContentModuleDependenciesWithBothSets(
   contentModuleName: ContentModuleName,
   descriptorCache: ModuleDescriptorCache,
   pluginGraph: PluginGraph,
   isTestDescriptor: Boolean,
   suppressionConfig: SuppressionConfig,
-  strategy: FileUpdateStrategy,
   updateSuppressions: Boolean = false,
   libraryModuleFilter: (String) -> Boolean,
 ): ContentModuleGenerationOutput {
@@ -201,28 +192,27 @@ internal suspend fun generateContentModuleDependenciesWithBothSets(
   // These are virtual content modules without separate JPS modules.
   // Their deps come from the descriptor XML, not from JPS - skip dependency generation.
   if (contentModuleName.isSlashNotation()) {
-    return ContentModuleGenerationOutput(result = null, suppressibleError = null)
+    return ContentModuleGenerationOutput(plan = null, suppressibleError = null)
   }
 
   // Compute production dependencies (written to XML)
   val prodInfo = descriptorCache.getOrAnalyze(contentModuleName.value)
-                 ?: return ContentModuleGenerationOutput(result = null, suppressibleError = null)
+               ?: return ContentModuleGenerationOutput(plan = null, suppressibleError = null)
 
   if (prodInfo.skipDependencyGeneration) {
-    return ContentModuleGenerationOutput(result = null, suppressibleError = prodInfo.suppressibleError)
+    return ContentModuleGenerationOutput(plan = null, suppressibleError = prodInfo.suppressibleError)
   }
 
-  val result = generateContentModuleDependenciesFromInfoWithBothSets(
+  val plan = buildContentModuleDependencyPlanFromInfoWithBothSets(
     contentModuleName = contentModuleName,
     prodInfo = prodInfo,
     graph = pluginGraph,
     suppressionConfig = suppressionConfig,
-    strategy = strategy,
     isTestDescriptor = isTestDescriptor,
     updateSuppressions = updateSuppressions,
     libraryModuleFilter = libraryModuleFilter,
   )
-  return ContentModuleGenerationOutput(result = result, suppressibleError = prodInfo.suppressibleError)
+  return ContentModuleGenerationOutput(plan = plan, suppressibleError = prodInfo.suppressibleError)
 }
 
 /**
@@ -240,28 +230,32 @@ internal suspend fun generateContentModuleDependenciesWithBothSets(
  * These modules need their TEST scope JPS dependencies included in the XML because they run in
  * a test context. For these modules, we use `withTests=true` when computing "production" deps.
  */
-private fun generateContentModuleDependenciesFromInfoWithBothSets(
+private fun buildContentModuleDependencyPlanFromInfoWithBothSets(
   contentModuleName: ContentModuleName,
   prodInfo: ModuleDescriptorCache.DescriptorInfo,
   graph: PluginGraph,
   suppressionConfig: SuppressionConfig,
-  strategy: FileUpdateStrategy,
   isTestDescriptor: Boolean,
   updateSuppressions: Boolean,
   libraryModuleFilter: (String) -> Boolean,
-): DependencyFileResult {
+): ContentModuleDependencyPlan {
   // Skip XML modification for modules with non-standard XML root
   if (prodInfo.suppressibleError?.category == ErrorCategory.NON_STANDARD_DESCRIPTOR_ROOT) {
-    return DependencyFileResult(
+    return ContentModuleDependencyPlan(
       contentModuleName = contentModuleName,
       descriptorPath = prodInfo.descriptorPath,
-      status = FileChangeStatus.UNCHANGED,
-      writtenDependencies = emptyList(),
+      descriptorContent = prodInfo.content,
+      moduleDependencies = emptyList(),
+      pluginDependencies = emptyList(),
       testDependencies = emptyList(),
       existingXmlModuleDependencies = emptySet(),
+      existingXmlPluginDependencies = emptySet(),
       writtenPluginDependencies = emptyList(),
       allJpsPluginDependencies = emptySet(),
+      suppressedModules = emptySet(),
+      suppressedPlugins = emptySet(),
       suppressionUsages = emptyList(),
+      suppressibleError = prodInfo.suppressibleError,
     )
   }
 
@@ -369,27 +363,6 @@ private fun generateContentModuleDependenciesFromInfoWithBothSets(
     }
   }
 
-  val status = if (updateSuppressions) {
-    FileChangeStatus.UNCHANGED
-  }
-  else {
-    updateXmlDependencies(
-      path = prodInfo.descriptorPath,
-      content = prodInfo.content,
-      moduleDependencies = prodModuleDeps.distinct().sorted(),
-      pluginDependencies = pluginDeps.distinct().sorted(),
-      preserveExistingModule = { moduleName ->
-        // Normal mode: only preserve if suppressed
-        suppressedModules.contains(ContentModuleName(moduleName))
-      },
-      preserveExistingPlugin = { pluginName ->
-        // Normal mode: only preserve if suppressed
-        suppressedPlugins.contains(PluginId(pluginName))
-      },
-      strategy = strategy,
-    )
-  }
-
   val allWrittenPluginDeps = (prodInfo.existingPluginDependencies + pluginDeps).distinct().sorted()
 
   if (updateSuppressions && suppressionUsages.isNotEmpty()) {
@@ -400,15 +373,19 @@ private fun generateContentModuleDependenciesFromInfoWithBothSets(
     }
   }
 
-  return DependencyFileResult(
+  return ContentModuleDependencyPlan(
     contentModuleName = contentModuleName,
     descriptorPath = prodInfo.descriptorPath,
-    status = status,
-    writtenDependencies = prodModuleDeps.sorted().map(::ContentModuleName),
+    descriptorContent = prodInfo.content,
+    moduleDependencies = prodModuleDeps.distinct().sorted().map(::ContentModuleName),
+    pluginDependencies = pluginDeps.distinct().sorted().map(::PluginId),
     testDependencies = testModuleDeps.distinct().sorted().map(::ContentModuleName),
-    existingXmlModuleDependencies = prodInfo.existingModuleDependencies.mapTo(HashSet(), ::ContentModuleName),
+    existingXmlModuleDependencies = existingXmlModulesAsContentModuleName,
+    existingXmlPluginDependencies = existingXmlPluginsAsPluginId,
     writtenPluginDependencies = allWrittenPluginDeps.map(::PluginId),
     allJpsPluginDependencies = allJpsPluginDeps.distinct().toSet(),
+    suppressedModules = suppressedModules,
+    suppressedPlugins = suppressedPlugins,
     suppressionUsages = suppressionUsages,
   )
 }
@@ -416,7 +393,7 @@ private fun generateContentModuleDependenciesFromInfoWithBothSets(
 /**
  * Update graph with module dependencies (swaps internal store).
  *
- * Called by ContentModuleDependencyGenerator after computing effective deps.
+ * Called by ContentModuleDependencyPlanner after computing effective deps.
  * Populates TWO edge types:
  * - [EDGE_CONTENT_MODULE_DEPENDS_ON]: Production deps (from writtenDependencies + existingXmlModuleDependencies)
  * - [EDGE_CONTENT_MODULE_DEPENDS_ON_TEST]: Test deps (from testDependencies, superset of prod)
@@ -430,10 +407,10 @@ private fun generateContentModuleDependenciesFromInfoWithBothSets(
  *
  * Swaps the internal store in-place (thread-safe via @Volatile).
  *
- * @param results List of dependency file results from generation
+ * @param plans List of dependency plans from generation
  */
-internal fun updateWithModuleDependencies(graph: PluginGraph, results: List<DependencyFileResult>) {
-  if (results.isEmpty()) {
+internal fun updateGraphWithModuleDependencyPlans(graph: PluginGraph, plans: List<ContentModuleDependencyPlan>) {
+  if (plans.isEmpty()) {
     return
   }
 
@@ -441,23 +418,23 @@ internal fun updateWithModuleDependencies(graph: PluginGraph, results: List<Depe
 
   // Phase 1: Collect all orphan modules (deps not in graph)
   val orphanModules = LinkedHashSet<String>()
-  for (result in results) {
-    if (store.nodeId(result.contentModuleName.value, NODE_CONTENT_MODULE) < 0) continue
+  for (plan in plans) {
+    if (store.nodeId(plan.contentModuleName.value, NODE_CONTENT_MODULE) < 0) continue
 
     // Production deps: writtenDependencies + existingXmlModuleDependencies
-    for (depModule in result.writtenDependencies) {
+    for (depModule in plan.moduleDependencies) {
       if (store.nodeId(depModule.value, NODE_CONTENT_MODULE) < 0) {
         orphanModules.add(depModule.value)
       }
     }
-    for (depModule in result.existingXmlModuleDependencies) {
+    for (depModule in plan.existingXmlModuleDependencies) {
       if (store.nodeId(depModule.value, NODE_CONTENT_MODULE) < 0) {
         orphanModules.add(depModule.value)
       }
     }
 
     // Test deps
-    for (depModule in result.testDependencies) {
+    for (depModule in plan.testDependencies) {
       if (store.nodeId(depModule.value, NODE_CONTENT_MODULE) < 0) {
         orphanModules.add(depModule.value)
       }
@@ -465,58 +442,35 @@ internal fun updateWithModuleDependencies(graph: PluginGraph, results: List<Depe
   }
 
   // Phase 2: Build new store with orphan nodes added
-  val newNames = MutableObjectList<String>(store.names.size).also { list ->
-    store.names.forEach { list.add(it) }
-  }
-  val newKinds = MutableIntList(store.kinds.size).also { list ->
-    store.kinds.forEach { list.add(it) }
-  }
-  val newNameIndex = store.nameIndex.copyOf()
-  val nameIndexOwned = BooleanArray(newNameIndex.size)
-
-  val pluginIdsCopy = MutableIntObjectMap<String>(store.pluginIds.size).also { map ->
-    store.pluginIds.forEach { key, value -> map[key] = value }
-  }
-  val aliasesCopy = MutableIntObjectMap<Array<String>>(store.aliases.size).also { map ->
-    store.aliases.forEach { key, value -> map[key] = value }
-  }
-
-  // Phase 3: Create new store and populate edges using the API
-  val (newOutEdges, newInEdges) = store.copyEdgeMaps()
-  val newStore = MutablePluginGraphStore(
-    names = newNames,
-    kinds = newKinds,
-    pluginIds = pluginIdsCopy,
-    aliases = aliasesCopy,
-    outEdges = newOutEdges,
-    inEdges = newInEdges,
-    nameIndex = newNameIndex,
-    nameIndexOwned = nameIndexOwned,
+  val newStore = store.toMutableStore(
+    lazyNameIndex = true,
+    descriptorFlagsComplete = false,
   )
-
+  
   val moduleIndex = newStore.mutableNameIndex(NODE_CONTENT_MODULE)
 
   // Add orphan nodes
   for (orphanName in orphanModules) {
-    val nodeId = newNames.size
-    newNames.add(orphanName)
-    newKinds.add(NODE_CONTENT_MODULE)
+    val nodeId = newStore.names.size
+    newStore.names.add(orphanName)
+    newStore.kinds.add(NODE_CONTENT_MODULE)
     moduleIndex.put(orphanName, nodeId)
   }
 
-  for (result in results) {
-    val fromId = moduleIndex.getOrDefault(result.contentModuleName.value, -1)
+  // Phase 3: Populate edges using the API
+  for (plan in plans) {
+    val fromId = moduleIndex.getOrDefault(plan.contentModuleName.value, -1)
     if (fromId < 0) continue
 
     // Populate production edges (writtenDependencies + existingXmlModuleDependencies)
-    for (depModule in result.writtenDependencies) {
+    for (depModule in plan.moduleDependencies) {
       val toId = moduleIndex.getOrDefault(depModule.value, -1)
       if (toId >= 0) {
         newStore.addEdge(EDGE_CONTENT_MODULE_DEPENDS_ON, fromId, toId)
       }
     }
     // Also add existing XML deps (explicit declarations must be validated)
-    for (depModule in result.existingXmlModuleDependencies) {
+    for (depModule in plan.existingXmlModuleDependencies) {
       val toId = moduleIndex.getOrDefault(depModule.value, -1)
       if (toId >= 0) {
         newStore.addEdge(EDGE_CONTENT_MODULE_DEPENDS_ON, fromId, toId)
@@ -524,7 +478,7 @@ internal fun updateWithModuleDependencies(graph: PluginGraph, results: List<Depe
     }
 
     // Populate test edges (testDependencies - superset of prod)
-    for (depModule in result.testDependencies) {
+    for (depModule in plan.testDependencies) {
       val toId = moduleIndex.getOrDefault(depModule.value, -1)
       if (toId >= 0) {
         newStore.addEdge(EDGE_CONTENT_MODULE_DEPENDS_ON_TEST, fromId, toId)

@@ -6,6 +6,7 @@ import com.intellij.platform.pluginGraph.PluginGraph
 import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.TargetName
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.productLayout.discovery.ContentModuleInfo
@@ -165,7 +166,7 @@ class PluginDependencyGraphTest {
 
   @Test
   fun `discovered plugin content is added to graph`() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val targetModule = TargetName("plugin.b")
       val moduleInfo = ContentModuleInfo(ContentModuleName("plugin.b.module"), ModuleLoadingRuleValue.REQUIRED)
       val info = pluginInfo(
@@ -212,7 +213,7 @@ class PluginDependencyGraphTest {
 
   @Test
   fun `discovered plugin id resolves to content node`() {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val discoveredModule = TargetName("plugin.b.module")
       val discoveredContent = ContentModuleInfo(ContentModuleName("plugin.b.content"), ModuleLoadingRuleValue.REQUIRED)
       val discoveredInfo = pluginInfo(

@@ -41,17 +41,26 @@ internal object NodeIds {
   /** Product module dependency generation (modules in module sets) */
   @JvmField val PRODUCT_MODULE_DEPS = NodeId("productModuleDeps", NodeCategory.GENERATION)
 
-  /** Content module dependency generation (all content modules including test descriptors) */
+  /** Content module dependency planning (all content modules including test descriptors) */
   @JvmField val CONTENT_MODULE_DEPS = NodeId("contentModuleDeps", NodeCategory.GENERATION)
 
-  /** Plugin.xml dependency generation */
+  /** Content module XML writing */
+  @JvmField val CONTENT_MODULE_XML_WRITE = NodeId("contentModuleXmlWrite", NodeCategory.GENERATION)
+
+  /** Plugin.xml dependency planning */
   @JvmField val PLUGIN_XML_DEPS = NodeId("pluginXmlDeps", NodeCategory.GENERATION)
+
+  /** Plugin.xml writing */
+  @JvmField val PLUGIN_XML_WRITE = NodeId("pluginXmlWrite", NodeCategory.GENERATION)
 
   /** Product XML file generation */
   @JvmField val PRODUCT_XML = NodeId("productXml", NodeCategory.GENERATION)
 
   /** Test plugin XML file generation */
   @JvmField val TEST_PLUGIN_XML = NodeId("testPluginXml", NodeCategory.GENERATION)
+
+  /** Test plugin dependency planning */
+  @JvmField val TEST_PLUGIN_DEPENDENCY_PLAN = NodeId("testPluginDependencyPlan", NodeCategory.GENERATION)
 
   /** Suppression config generation (collects implicit dependencies) */
   @JvmField val SUPPRESSION_CONFIG = NodeId("suppressionConfig", NodeCategory.GENERATION)

@@ -18,6 +18,7 @@ import org.jetbrains.intellij.build.productLayout.discovery.DiscoveredProduct
 import org.jetbrains.intellij.build.productLayout.discovery.ModuleSetGenerationConfig
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionUsage
 import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
+import org.jetbrains.intellij.build.productLayout.util.FileUpdateStrategy
 import java.nio.file.Path
 
 /**
@@ -93,6 +94,9 @@ internal data class GenerationModel(
   /** Deferred file updater for atomic writes */
   @JvmField val fileUpdater: DeferredFileUpdater,
 
+  /** XML writer policy (write/diff/skip based on generation mode) */
+  @JvmField val xmlWritePolicy: FileUpdateStrategy,
+
   /** Coroutine scope for async operations */
   @JvmField val scope: CoroutineScope,
 
@@ -118,4 +122,13 @@ internal data class GenerationModel(
 
   /** If true, update suppressions.json (write directly, bypassing deferred updater) */
   @JvmField val updateSuppressions: Boolean,
+
+  /** Effective generation mode for this run */
+  @JvmField val generationMode: GenerationMode,
 )
+
+internal enum class GenerationMode {
+  NORMAL,
+  UPDATE_SUPPRESSIONS,
+  VALIDATE_ONLY,
+}

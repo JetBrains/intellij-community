@@ -10,7 +10,7 @@ generated test plugin `plugin.xml` to keep the test classpath consistent.
 
 ## Inputs
 
-- Slot: `Slots.CONTENT_MODULE` (content module deps with test scope, from `ContentModuleDependencyGenerator`).
+- Slot: `Slots.TEST_PLUGIN_DEPENDENCY_PLAN` (dependency plan from `TestPluginDependencyPlanner`).
 - Slot: `Slots.TEST_PLUGINS` (ensures generated test plugin XML is available via the deferred file updater).
 - Graph: owning plugin resolution and product bundling edges.
 - Model: `dslTestPluginsByProduct`, `dslTestPluginDependencyChains`, `fileUpdater`.
@@ -19,21 +19,13 @@ generated test plugin `plugin.xml` to keep the test classpath consistent.
 ## Rules
 
 - For each DSL test plugin spec in each product:
-  - Build the content module list from the spec (`buildContentBlocksAndChainMapping`).
   - Read the generated test plugin XML (expected content from the deferred updater if present, otherwise disk).
   - Parse declared plugin dependencies from `<dependencies><plugin/>` and legacy `<depends>` entries.
-  - For each content module in the test plugin:
-    - Use `DependencyFileResult.testDependencies` to get module dependencies (includes TEST scope).
-    - Ignore dependencies that are:
-      - Already part of the test plugin content.
-      - Library wrapper modules (`intellij.libraries.*`).
-      - Not owned by any production plugin.
-    - For each dependency module owned by production plugin(s) that are resolvable in test scope
-      (bundled in the product or listed in `additionalBundledPluginTargetNames`):
-      - Require a `<plugin id="..."/>` entry for each owning plugin ID,
-        unless that plugin ID is allowed-missing for the module or the test plugin.
-  - Use `dslTestPluginDependencyChains` to apply module-level `allowedMissingPluginIds` to auto-added modules
-    via their root declared module.
+  - Use `TestPluginDependencyPlan.requiredByPlugin` for plugin dependencies required by content modules.
+  - Apply module-level and global `allowedMissingPluginIds`, plus `dslTestPluginDependencyChains`,
+    to filter required dependencies per module.
+  - Report missing plugin dependencies that are required but not declared.
+  - Report unresolvable dependencies from the dependency plan unless suppressed.
 
 ## Suppression and allowlists
 

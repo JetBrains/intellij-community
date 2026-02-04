@@ -12,6 +12,8 @@ import kotlinx.coroutines.GlobalScope
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
+import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlanOutput
+import org.jetbrains.intellij.build.productLayout.deps.PluginDependencyPlanOutput
 import org.jetbrains.intellij.build.productLayout.discovery.ContentModuleInfo
 import org.jetbrains.intellij.build.productLayout.discovery.ModuleSetGenerationConfig
 import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
@@ -23,6 +25,7 @@ import org.jetbrains.intellij.build.productLayout.pipeline.ContentModuleOutput
 import org.jetbrains.intellij.build.productLayout.pipeline.DataSlot
 import org.jetbrains.intellij.build.productLayout.pipeline.DiscoveryResult
 import org.jetbrains.intellij.build.productLayout.pipeline.ErrorSlot
+import org.jetbrains.intellij.build.productLayout.pipeline.GenerationMode
 import org.jetbrains.intellij.build.productLayout.pipeline.GenerationModel
 import org.jetbrains.intellij.build.productLayout.pipeline.ModuleSetsOutput
 import org.jetbrains.intellij.build.productLayout.pipeline.PipelineNode
@@ -31,9 +34,11 @@ import org.jetbrains.intellij.build.productLayout.pipeline.ProductModuleDepsOutp
 import org.jetbrains.intellij.build.productLayout.pipeline.ProductsOutput
 import org.jetbrains.intellij.build.productLayout.pipeline.Slots
 import org.jetbrains.intellij.build.productLayout.pipeline.SuppressionConfigOutput
+import org.jetbrains.intellij.build.productLayout.pipeline.TestPluginDependencyPlanOutput
 import org.jetbrains.intellij.build.productLayout.pipeline.TestPluginsOutput
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
+import org.jetbrains.intellij.build.productLayout.util.XmlWritePolicy
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -770,6 +775,7 @@ internal fun testGenerationModel(
   val effectiveOutputProvider = outputProvider ?: stubModuleOutputProvider()
   val effectiveFileUpdater = fileUpdater ?: DeferredFileUpdater(Path.of("."))
   val effectivePluginContentCache = pluginContentCache ?: stubPluginContentCache()
+  val generationMode = if (updateSuppressions) GenerationMode.UPDATE_SUPPRESSIONS else GenerationMode.NORMAL
   return GenerationModel(
     discovery = DiscoveryResult(
       moduleSetsByLabel = emptyMap(),
@@ -792,6 +798,7 @@ internal fun testGenerationModel(
     descriptorCache = ModuleDescriptorCache(effectiveOutputProvider, GlobalScope),
     pluginContentCache = effectivePluginContentCache,
     fileUpdater = effectiveFileUpdater,
+    xmlWritePolicy = XmlWritePolicy(generationMode, effectiveFileUpdater),
     scope = GlobalScope,
     pluginGraph = pluginGraph,
     dslTestPluginsByProduct = emptyMap(),
@@ -800,6 +807,7 @@ internal fun testGenerationModel(
     productAllowedMissing = productAllowedMissing,
     suppressionConfig = suppressionConfig,
     updateSuppressions = updateSuppressions,
+    generationMode = generationMode,
   )
 }
 
@@ -835,6 +843,22 @@ internal suspend fun runValidationRule(
           else -> error("Slot override for CONTENT_MODULE must be ContentModuleOutput")
         }
         ctx.publish(slot as DataSlot<ContentModuleOutput>, output)
+      }
+      Slots.CONTENT_MODULE_PLAN -> {
+        val output = when (val override = slotOverrides[slot]) {
+          null -> ContentModuleDependencyPlanOutput(plans = emptyList())
+          is ContentModuleDependencyPlanOutput -> override
+          else -> error("Slot override for CONTENT_MODULE_PLAN must be ContentModuleDependencyPlanOutput")
+        }
+        ctx.publish(slot as DataSlot<ContentModuleDependencyPlanOutput>, output)
+      }
+      Slots.PLUGIN_DEPENDENCY_PLAN -> {
+        val output = when (val override = slotOverrides[slot]) {
+          null -> PluginDependencyPlanOutput(plans = emptyList())
+          is PluginDependencyPlanOutput -> override
+          else -> error("Slot override for PLUGIN_DEPENDENCY_PLAN must be PluginDependencyPlanOutput")
+        }
+        ctx.publish(slot as DataSlot<PluginDependencyPlanOutput>, output)
       }
       Slots.PLUGIN_XML -> {
         val output = when (val override = slotOverrides[slot]) {
@@ -875,6 +899,14 @@ internal suspend fun runValidationRule(
           else -> error("Slot override for TEST_PLUGINS must be TestPluginsOutput")
         }
         ctx.publish(slot as DataSlot<TestPluginsOutput>, output)
+      }
+      Slots.TEST_PLUGIN_DEPENDENCY_PLAN -> {
+        val output = when (val override = slotOverrides[slot]) {
+          null -> TestPluginDependencyPlanOutput(plans = emptyList())
+          is TestPluginDependencyPlanOutput -> override
+          else -> error("Slot override for TEST_PLUGIN_DEPENDENCY_PLAN must be TestPluginDependencyPlanOutput")
+        }
+        ctx.publish(slot as DataSlot<TestPluginDependencyPlanOutput>, output)
       }
       Slots.SUPPRESSION_CONFIG -> {
         val output = when (val override = slotOverrides[slot]) {

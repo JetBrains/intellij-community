@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.pipeline
 
+import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlanOutput
+import org.jetbrains.intellij.build.productLayout.deps.PluginDependencyPlanOutput
 import org.jetbrains.intellij.build.productLayout.model.error.FileDiff
 import org.jetbrains.intellij.build.productLayout.stats.DependencyFileResult
 import org.jetbrains.intellij.build.productLayout.stats.ModuleSetFileResult
@@ -118,6 +120,8 @@ internal data class SuppressionConfigOutput(
  */
 internal object Slots {
   // ============ Generation Slots (produce output files) ============
+  @JvmField val CONTENT_MODULE_PLAN = DataSlot<ContentModuleDependencyPlanOutput>("contentModulePlan")
+  @JvmField val PLUGIN_DEPENDENCY_PLAN = DataSlot<PluginDependencyPlanOutput>("pluginDependencyPlan")
 
   /** Module set XML file generation results */
   @JvmField val MODULE_SETS = DataSlot<ModuleSetsOutput>("moduleSets")
@@ -136,6 +140,9 @@ internal object Slots {
 
   /** Test plugin XML file generation results */
   @JvmField val TEST_PLUGINS = DataSlot<TestPluginsOutput>("testPlugins")
+
+  /** Test plugin dependency planning results */
+  @JvmField val TEST_PLUGIN_DEPENDENCY_PLAN = DataSlot<TestPluginDependencyPlanOutput>("testPluginDepsPlan")
 
   /** Suppression config generation results */
   @JvmField val SUPPRESSION_CONFIG = DataSlot<SuppressionConfigOutput>("suppressionConfig")

@@ -281,12 +281,52 @@ class PluginGraphStore internal constructor(
   }
 
   /**
+   * Create a mutable copy of this store for incremental updates.
+   *
+   * @param lazyNameIndex If true, reuse nameIndex maps and copy on first mutation.
+   * @param descriptorFlagsComplete Whether to set descriptor flag completeness on the new store.
+   */
+  fun toMutableStore(
+    lazyNameIndex: Boolean = true,
+    descriptorFlagsComplete: Boolean = this.descriptorFlagsComplete,
+  ): MutablePluginGraphStore {
+    val namesCopy = copyNames(names)
+    val kindsCopy = copyKinds(kinds)
+    val pluginIdsCopy = copyPluginIds(pluginIds)
+    val aliasesCopy = copyAliases(aliases)
+
+    val nameIndexCopy: Array<ObjectIntMap<String>>
+    val nameIndexOwned: BooleanArray
+    if (lazyNameIndex) {
+      nameIndexCopy = nameIndex.copyOf()
+      nameIndexOwned = BooleanArray(nameIndexCopy.size)
+    }
+    else {
+      nameIndexCopy = copyNameIndexDeep(nameIndex)
+      nameIndexOwned = BooleanArray(nameIndexCopy.size) { true }
+    }
+
+    val (outCopy, inCopy) = copyEdgeMaps()
+    return MutablePluginGraphStore(
+      names = namesCopy,
+      kinds = kindsCopy,
+      pluginIds = pluginIdsCopy,
+      aliases = aliasesCopy,
+      outEdges = outCopy,
+      inEdges = inCopy,
+      nameIndex = nameIndexCopy,
+      descriptorFlagsComplete = descriptorFlagsComplete,
+      nameIndexOwned = nameIndexOwned,
+    )
+  }
+
+  /**
    * Create deep copies of the edge maps for building a new store.
-   * Used by ContentModuleDependencyGenerator when extending the store with new nodes.
+   * Used by [toMutableStore] when extending the store with new nodes.
    *
    * @return Pair of (outEdges copy, inEdges copy)
    */
-  fun copyEdgeMaps(): Pair<MutableIntObjectMap<MutableIntList>, MutableIntObjectMap<MutableIntList>> {
+  internal fun copyEdgeMaps(): Pair<MutableIntObjectMap<MutableIntList>, MutableIntObjectMap<MutableIntList>> {
     val outCopy = MutableIntObjectMap<MutableIntList>()
     val inCopy = MutableIntObjectMap<MutableIntList>()
     for (edgeType in 0 until EDGE_TYPE_COUNT) {

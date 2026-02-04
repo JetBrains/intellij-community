@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.productLayout.validator
 
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions
 import org.jetbrains.intellij.build.productLayout.TestFailureLogger
@@ -26,7 +27,7 @@ class ProductModuleSetValidatorTest {
   @Nested
   inner class DuplicateModulesTest {
     @Test
-    fun `reports duplicate modules across module sets`() {
+    fun `reports duplicate modules across module sets`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
           product("IDEA") {
               includesModuleSet("set1")
@@ -41,7 +42,7 @@ class ProductModuleSetValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ProductModuleSetValidator, model) }
+      val errors = runValidationRule(ProductModuleSetValidator, model)
 
       Assertions.assertThat(errors).hasSize(1)
       Assertions.assertThat(errors[0]).isInstanceOf(DuplicateModulesError::class.java)
@@ -50,7 +51,7 @@ class ProductModuleSetValidatorTest {
     }
 
     @Test
-    fun `reports duplicate between module set and product content`() {
+    fun `reports duplicate between module set and product content`(): Unit = runBlocking(Dispatchers.Default) {
       // For this test, we need to add module.a as product content too
       // The test DSL doesn't directly support this, so we verify duplicates within module sets
       val graphWithDup = pluginGraph {
@@ -67,7 +68,7 @@ class ProductModuleSetValidatorTest {
       }
 
       val model = testGenerationModel(graphWithDup)
-      val errors = runBlocking { runValidationRule(ProductModuleSetValidator, model) }
+      val errors = runValidationRule(ProductModuleSetValidator, model)
 
       Assertions.assertThat(errors).hasSize(1)
       Assertions.assertThat(errors[0]).isInstanceOf(DuplicateModulesError::class.java)
@@ -77,7 +78,7 @@ class ProductModuleSetValidatorTest {
   @Nested
   inner class MissingDependenciesTest {
     @Test
-    fun `reports missing transitive dependency for critical module`() {
+    fun `reports missing transitive dependency for critical module`(): Unit = runBlocking(Dispatchers.Default) {
       // module.a (EMBEDDED) -> dep.module -> missing.module
       val graph = pluginGraph {
           product("IDEA") {
@@ -93,7 +94,7 @@ class ProductModuleSetValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ProductModuleSetValidator, model) }
+      val errors = runValidationRule(ProductModuleSetValidator, model)
 
       Assertions.assertThat(errors).hasSize(1)
       Assertions.assertThat(errors[0]).isInstanceOf(MissingDependenciesError::class.java)
@@ -102,7 +103,7 @@ class ProductModuleSetValidatorTest {
     }
 
     @Test
-    fun `no error when dependency is available in module set`() {
+    fun `no error when dependency is available in module set`(): Unit = runBlocking(Dispatchers.Default) {
       // module.a -> module.b (both in same module set)
       val graph = pluginGraph {
           product("IDEA") {
@@ -117,13 +118,13 @@ class ProductModuleSetValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ProductModuleSetValidator, model) }
+      val errors = runValidationRule(ProductModuleSetValidator, model)
 
       Assertions.assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `no error when dependency is in bundled plugin`() {
+    fun `no error when dependency is in bundled plugin`(): Unit = runBlocking(Dispatchers.Default) {
       // module.a -> plugin.module (available via bundled plugin)
       val graph = pluginGraph {
           product("IDEA") {
@@ -141,13 +142,13 @@ class ProductModuleSetValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ProductModuleSetValidator, model) }
+      val errors = runValidationRule(ProductModuleSetValidator, model)
 
       Assertions.assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `no error for non-critical module with globally available dep`() {
+    fun `no error for non-critical module with globally available dep`(): Unit = runBlocking(Dispatchers.Default) {
       // module.a (OPTIONAL) -> global.module (declared as content in another plugin, not bundled by IDEA)
       val graph = pluginGraph {
           product("IDEA") {
@@ -167,13 +168,13 @@ class ProductModuleSetValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ProductModuleSetValidator, model) }
+      val errors = runValidationRule(ProductModuleSetValidator, model)
 
       Assertions.assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `respects allowedMissingDependencies`() {
+    fun `respects allowedMissingDependencies`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
           product("IDEA") {
               includesModuleSet("core")
@@ -186,25 +187,25 @@ class ProductModuleSetValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ProductModuleSetValidator, model) }
+      val errors = runValidationRule(ProductModuleSetValidator, model)
 
       Assertions.assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `empty when no module sets`() {
+    fun `empty when no module sets`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
           product("IDEA")
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ProductModuleSetValidator, model) }
+      val errors = runValidationRule(ProductModuleSetValidator, model)
 
       Assertions.assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `critical loading mode from any source makes module critical`() {
+    fun `critical loading mode from any source makes module critical`(): Unit = runBlocking(Dispatchers.Default) {
       // module.a has EMBEDDED loading in its module set - makes it critical
       // Dependencies of critical modules must be available in THIS product
       val graph = pluginGraph {
@@ -223,7 +224,7 @@ class ProductModuleSetValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ProductModuleSetValidator, model) }
+      val errors = runValidationRule(ProductModuleSetValidator, model)
 
       // Error expected - missing.dep is not available in product and critical.module is critical
       Assertions.assertThat(errors).hasSize(1)
@@ -233,7 +234,7 @@ class ProductModuleSetValidatorTest {
     }
 
     @Test
-    fun `dependency satisfied by module in another module set`() {
+    fun `dependency satisfied by module in another module set`(): Unit = runBlocking(Dispatchers.Default) {
       // module.a depends on dep.module, which is in set2
       val graph = pluginGraph {
           product("IDEA") {
@@ -250,14 +251,14 @@ class ProductModuleSetValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ProductModuleSetValidator, model) }
+      val errors = runValidationRule(ProductModuleSetValidator, model)
 
       // No error - dep.module is available in set2
       Assertions.assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `module with transitive deps in same module set`() {
+    fun `module with transitive deps in same module set`(): Unit = runBlocking(Dispatchers.Default) {
       // module.a -> dep.a -> dep.b (transitive chain, all in same set)
       val graph = pluginGraph {
           product("IDEA") {
@@ -273,7 +274,7 @@ class ProductModuleSetValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ProductModuleSetValidator, model) }
+      val errors = runValidationRule(ProductModuleSetValidator, model)
 
       // No errors - all transitive deps available in module set
       Assertions.assertThat(errors).isEmpty()

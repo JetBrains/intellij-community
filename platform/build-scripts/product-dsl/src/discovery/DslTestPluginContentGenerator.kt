@@ -20,11 +20,11 @@ import org.jetbrains.intellij.build.productLayout.buildContentBlocksAndChainMapp
 import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
 import org.jetbrains.intellij.build.productLayout.debug
 import org.jetbrains.intellij.build.productLayout.dependency.ModuleDescriptorCache
+import org.jetbrains.intellij.build.productLayout.deps.DependencyResolutionContext
 import org.jetbrains.intellij.build.productLayout.model.ErrorSink
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionType
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionUsage
 import org.jetbrains.intellij.build.productLayout.traversal.OwningPlugin
-import org.jetbrains.intellij.build.productLayout.traversal.collectBundledPluginNames
 import org.jetbrains.intellij.build.productLayout.traversal.collectPluginContentModules
 import java.nio.file.Path
 
@@ -66,6 +66,7 @@ internal suspend fun computePluginContentFromDslSpec(
   dependencyChainsSink: MutableMap<ContentModuleName, List<ContentModuleName>>? = null,
 ): PluginContentInfo {
   val contentData = buildContentBlocksAndChainMapping(testPluginSpec.spec, collectModuleSetAliases = false)
+  val resolutionContext = DependencyResolutionContext(pluginGraph)
   val allModules = contentData.contentBlocks.flatMap { it.modules }
   val strictModules = allModules
     .asSequence()
@@ -101,7 +102,7 @@ internal suspend fun computePluginContentFromDslSpec(
   val additionalBundledContentModules = collectPluginContentModules(pluginGraph, testPluginSpec.additionalBundledPluginTargetNames)
   val resolvableModuleNames = HashSet(resolvableModules)
   resolvableModuleNames.addAll(additionalBundledContentModules)
-  val bundledPluginNames = collectBundledPluginNames(pluginGraph, productName)
+  val bundledPluginNames = resolutionContext.resolveBundledPlugins(productName)
   val allowedMissingPluginIds = testPluginSpec.allowedMissingPluginIds.mapTo(HashSet()) { it.value }
   fun pluginIdValues(ids: List<PluginId>): Set<String> {
     if (ids.isEmpty()) return emptySet()
@@ -130,15 +131,7 @@ internal suspend fun computePluginContentFromDslSpec(
   }
 
   fun findOwningPlugins(moduleName: ContentModuleName): Set<OwningPlugin> {
-    return pluginGraph.query {
-      val moduleNode = contentModule(moduleName) ?: return@query emptySet()
-      val owners = LinkedHashSet<OwningPlugin>()
-      moduleNode.owningPlugins { plugin ->
-        val idValue = plugin.pluginIdOrNull ?: return@owningPlugins
-        owners.add(OwningPlugin(plugin.name(), idValue, plugin.isTest))
-      }
-      owners
-    }
+    return resolutionContext.resolveOwningPlugins(moduleName)
   }
 
   fun isPluginModule(moduleName: ContentModuleName): Boolean {

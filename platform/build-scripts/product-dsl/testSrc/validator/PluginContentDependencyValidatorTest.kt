@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.productLayout.validator
 
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.productLayout.TestFailureLogger
@@ -33,7 +34,7 @@ class PluginContentDependencyValidatorTest {
   @Nested
   inner class GraphDependencyQueryTest {
     @Test
-    fun `validation uses graph deps - available dep causes no error`() {
+    fun `validation uses graph deps - available dep causes no error`(): Unit = runBlocking(Dispatchers.Default) {
       // This tests the fix: validation queries EDGE_CONTENT_MODULE_DEPENDS_ON from graph,
       // not raw JPS deps (which might include filtered/suppressed deps)
       val graph = pluginGraph {
@@ -52,13 +53,13 @@ class PluginContentDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(PluginContentDependencyValidator, model) }
+      val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `validation ignores deps not in graph edges`() {
+    fun `validation ignores deps not in graph edges`(): Unit = runBlocking(Dispatchers.Default) {
       // If a dep is NOT in graph edges, validation should not check it.
       // This is the key regression test - previously validation used JPS deps which
       // included suppressed deps, causing false positives.
@@ -74,7 +75,7 @@ class PluginContentDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(PluginContentDependencyValidator, model) }
+      val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       // No errors because graph has no deps to validate
       assertThat(errors).isEmpty()
@@ -84,7 +85,7 @@ class PluginContentDependencyValidatorTest {
   @Nested
   inner class MissingDependencyTest {
     @Test
-    fun `reports missing dependency not in any module set or plugin`() {
+    fun `reports missing dependency not in any module set or plugin`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
         product("IDEA") {
           bundlesPlugin("my.plugin")
@@ -97,7 +98,7 @@ class PluginContentDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(PluginContentDependencyValidator, model) }
+      val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       assertThat(errors).hasSize(1)
       assertThat(errors[0]).isInstanceOf(PluginDependencyError::class.java)
@@ -106,7 +107,7 @@ class PluginContentDependencyValidatorTest {
     }
 
     @Test
-    fun `no error when dependency is in another bundled plugin`() {
+    fun `no error when dependency is in another bundled plugin`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
         product("IDEA") {
           bundlesPlugin("my.plugin")
@@ -122,13 +123,13 @@ class PluginContentDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(PluginContentDependencyValidator, model) }
+      val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `missing dependency in one bundled product reports error`() {
+    fun `missing dependency in one bundled product reports error`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
         product("IDEA") {
           bundlesPlugin("my.plugin")
@@ -147,7 +148,7 @@ class PluginContentDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(PluginContentDependencyValidator, model) }
+      val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       assertThat(errors).hasSize(1)
       val error = errors[0] as PluginDependencyError
@@ -156,7 +157,7 @@ class PluginContentDependencyValidatorTest {
     }
 
     @Test
-    fun `no error when dependency is in same plugin`() {
+    fun `no error when dependency is in same plugin`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
         product("IDEA") {
           bundlesPlugin("my.plugin")
@@ -169,7 +170,7 @@ class PluginContentDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(PluginContentDependencyValidator, model) }
+      val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       assertThat(errors).isEmpty()
     }
@@ -178,7 +179,7 @@ class PluginContentDependencyValidatorTest {
   @Nested
   inner class FilteredDependencyAllowlistTest {
     @Test
-    fun `allowed test library module is ignored in filtered deps`() {
+    fun `allowed test library module is ignored in filtered deps`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
         product("IDEA") {
           bundlesPlugin("my.plugin")
@@ -198,7 +199,7 @@ class PluginContentDependencyValidatorTest {
           ContentModuleName("content.module") to setOf("intellij.libraries.assertj.core"),
         ),
       )
-      val errors = runBlocking { runValidationRule(PluginContentDependencyValidator, model) }
+      val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       assertThat(errors).isEmpty()
     }
@@ -207,7 +208,7 @@ class PluginContentDependencyValidatorTest {
   @Nested
   inner class TestPluginEdgeTypeTest {
     @Test
-    fun `test plugin uses TEST edge type - sees test deps`() {
+    fun `test plugin uses TEST edge type - sees test deps`(): Unit = runBlocking(Dispatchers.Default) {
       // Test plugins should include EDGE_CONTENT_MODULE_DEPENDS_ON_TEST
       val graph = pluginGraph {
         product("IDEA") {
@@ -225,14 +226,14 @@ class PluginContentDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(PluginContentDependencyValidator, model) }
+      val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       // No error - test.dep is available and test plugin sees TEST edges
       assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `test plugin reports missing production dep`() {
+    fun `test plugin reports missing production dep`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
         product("IDEA") {
           bundlesTestPlugin("test.plugin")
@@ -245,7 +246,7 @@ class PluginContentDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(PluginContentDependencyValidator, model) }
+      val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       assertThat(errors).hasSize(1)
       val error = errors[0] as PluginDependencyError
@@ -253,7 +254,7 @@ class PluginContentDependencyValidatorTest {
     }
 
     @Test
-    fun `production plugin ignores TEST-only deps`() {
+    fun `production plugin ignores TEST-only deps`(): Unit = runBlocking(Dispatchers.Default) {
       // Production plugins should NOT see deps that are only in TEST edges
       val graph = pluginGraph {
         product("IDEA") {
@@ -268,7 +269,7 @@ class PluginContentDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(PluginContentDependencyValidator, model) }
+      val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       // No error - production validation uses EDGE_CONTENT_MODULE_DEPENDS_ON,
       // which has no deps for prod.content
@@ -276,7 +277,7 @@ class PluginContentDependencyValidatorTest {
     }
 
     @Test
-    fun `test plugin with missing test dep reports error`() {
+    fun `test plugin with missing test dep reports error`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
         product("IDEA") {
           bundlesTestPlugin("test.plugin")
@@ -289,7 +290,7 @@ class PluginContentDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(PluginContentDependencyValidator, model) }
+      val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       assertThat(errors).hasSize(1)
       assertThat(errors[0]).isInstanceOf(PluginDependencyError::class.java)
@@ -302,19 +303,19 @@ class PluginContentDependencyValidatorTest {
   @Nested
   inner class EmptyAndEdgeCasesTest {
     @Test
-    fun `no error when no bundled plugins`() {
+    fun `no error when no bundled plugins`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
         product("IDEA")
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(PluginContentDependencyValidator, model) }
+      val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `no error when plugin has no content modules`() {
+    fun `no error when plugin has no content modules`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
         product("IDEA") {
           bundlesPlugin("empty.plugin")
@@ -325,7 +326,7 @@ class PluginContentDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(PluginContentDependencyValidator, model) }
+      val errors = runValidationRule(PluginContentDependencyValidator, model)
 
       assertThat(errors).isEmpty()
     }

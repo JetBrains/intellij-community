@@ -129,30 +129,9 @@ fun GraphScope.containsEdge(edgeType: Int, sourceId: Int, targetId: Int): Boolea
   return store.edgeIndex(edgeType).contains(sourceId, targetId)
 }
 
-/** Direct reverse edge membership check (cached per store/edge type). */
-@Suppress("unused")
-fun GraphScope.containsInEdge(edgeType: Int, targetId: Int, sourceId: Int): Boolean {
-  return store.edgeIndexIn(edgeType).contains(targetId, sourceId)
-}
-
 /** Direct content edge loading mode lookup (cached per store/edge type). */
 fun GraphScope.contentLoadingMode(edgeType: Int, sourceId: Int, targetId: Int): ModuleLoadingRuleValue? {
   require(isContentEdgeType(edgeType)) { "Edge $edgeType does not carry content loading mode" }
   val packed = store.edgeIndex(edgeType).payload(sourceId, targetId) ?: return null
   return packedToLoadingRule(unpackLoadingMode(packed))
-}
-
-/** Direct packed edge entry lookup (cached per store/edge type). */
-@Suppress("unused")
-fun GraphScope.packedEdgeEntry(edgeType: Int, sourceId: Int, targetId: Int): Int? {
-  require(isPackedEdgeType(edgeType)) { "Edge $edgeType does not carry packed payload" }
-  return store.edgeIndex(edgeType).payload(sourceId, targetId)
-}
-
-/** Direct edge membership check by name/kind (cached per store/edge type). */
-@Suppress("unused")
-fun GraphScope.containsEdge(edgeType: Int, sourceId: Int, targetName: String, targetKind: Int): Boolean {
-  val targetId = store.nodeId(targetName, targetKind)
-  if (targetId < 0) return false
-  return store.edgeIndex(edgeType).contains(sourceId, targetId)
 }

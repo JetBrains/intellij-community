@@ -51,6 +51,7 @@ internal fun validateDslTestPluginOwnedDependency(
     return
   }
 
+
   if (updateSuppressions) {
     val suppressionSource = declaredRootModule ?: moduleName
     suppressionUsageSink?.add(SuppressionUsage(suppressionSource, depName.value, SuppressionType.MODULE_DEP))

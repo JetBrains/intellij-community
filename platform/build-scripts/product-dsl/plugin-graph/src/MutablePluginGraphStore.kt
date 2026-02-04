@@ -4,11 +4,13 @@
 package com.intellij.platform.pluginGraph
 
 import androidx.collection.IntList
+import androidx.collection.IntObjectMap
 import androidx.collection.MutableIntList
 import androidx.collection.MutableIntObjectMap
 import androidx.collection.MutableObjectIntMap
 import androidx.collection.MutableObjectList
 import androidx.collection.ObjectIntMap
+import androidx.collection.ObjectList
 import androidx.collection.mutableIntListOf
 import androidx.collection.mutableIntObjectMapOf
 import androidx.collection.mutableObjectIntMapOf
@@ -148,24 +150,11 @@ class MutablePluginGraphStore(
    * Use this when you need a stable graph while continuing to mutate the builder.
    */
   fun freezeSnapshot(): PluginGraphStore {
-    val namesCopy = MutableObjectList<String>(names.size).also { list ->
-      names.forEach { list.add(it) }
-    }
-    val kindsCopy = MutableIntList(kinds.size).also { list ->
-      kinds.forEach { list.add(it) }
-    }
-    val pluginIdsCopy = MutableIntObjectMap<String>(pluginIds.size).also { map ->
-      pluginIds.forEach { key, value -> map[key] = value }
-    }
-    val aliasesCopy = MutableIntObjectMap<Array<String>>(aliases.size).also { map ->
-      aliases.forEach { key, value -> map[key] = value }
-    }
-    val nameIndexCopy = Array<ObjectIntMap<String>>(nameIndex.size) { index ->
-      val current = nameIndex[index]
-      val copy = MutableObjectIntMap<String>(current.size)
-      current.forEach { name, id -> copy.put(name, id) }
-      copy
-    }
+    val namesCopy = copyNames(names)
+    val kindsCopy = copyKinds(kinds)
+    val pluginIdsCopy = copyPluginIds(pluginIds)
+    val aliasesCopy = copyAliases(aliases)
+    val nameIndexCopy = copyNameIndexDeep(nameIndex)
 
     val out = buildCsrFromMap(outEdges, namesCopy.size)
     val incoming = buildCsrFromMap(inEdges, namesCopy.size)
@@ -241,6 +230,39 @@ private fun buildCsrFromMap(
     write[nodeId] = index
   }
   return result
+}
+
+internal fun copyNames(names: ObjectList<String>): MutableObjectList<String> {
+  val result = MutableObjectList<String>(names.size)
+  names.forEach { result.add(it) }
+  return result
+}
+
+internal fun copyKinds(kinds: IntList): MutableIntList {
+  val result = MutableIntList(kinds.size)
+  kinds.forEach { result.add(it) }
+  return result
+}
+
+internal fun copyPluginIds(pluginIds: IntObjectMap<String>): MutableIntObjectMap<String> {
+  val result = MutableIntObjectMap<String>(pluginIds.size)
+  pluginIds.forEach { key, value -> result[key] = value }
+  return result
+}
+
+internal fun copyAliases(aliases: IntObjectMap<Array<String>>): MutableIntObjectMap<Array<String>> {
+  val result = MutableIntObjectMap<Array<String>>(aliases.size)
+  aliases.forEach { key, value -> result[key] = value }
+  return result
+}
+
+internal fun copyNameIndexDeep(nameIndex: Array<ObjectIntMap<String>>): Array<ObjectIntMap<String>> {
+  return Array(nameIndex.size) { index ->
+    val current = nameIndex[index]
+    val copy = MutableObjectIntMap<String>(current.size)
+    current.forEach { name, id -> copy.put(name, id) }
+    copy
+  }
 }
 
 /** Deep copy a MutableIntObjectMap with MutableIntList values */

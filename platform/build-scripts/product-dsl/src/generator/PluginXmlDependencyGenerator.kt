@@ -17,6 +17,8 @@ import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
 import org.jetbrains.intellij.build.productLayout.debug
 import org.jetbrains.intellij.build.productLayout.dependency.PluginContentProvider
+import org.jetbrains.intellij.build.productLayout.deps.PluginDependencyPlan
+import org.jetbrains.intellij.build.productLayout.deps.PluginDependencyPlanOutput
 import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
 import org.jetbrains.intellij.build.productLayout.discovery.PluginSource
 import org.jetbrains.intellij.build.productLayout.model.error.MissingPluginIdError
@@ -24,18 +26,13 @@ import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
 import org.jetbrains.intellij.build.productLayout.pipeline.DataSlot
 import org.jetbrains.intellij.build.productLayout.pipeline.NodeIds
 import org.jetbrains.intellij.build.productLayout.pipeline.PipelineNode
-import org.jetbrains.intellij.build.productLayout.pipeline.PluginXmlOutput
 import org.jetbrains.intellij.build.productLayout.pipeline.Slots
-import org.jetbrains.intellij.build.productLayout.stats.PluginDependencyFileResult
-import org.jetbrains.intellij.build.productLayout.stats.PluginXmlFileResult
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionType
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionUsage
-import org.jetbrains.intellij.build.productLayout.util.FileUpdateStrategy
 import org.jetbrains.intellij.build.productLayout.xml.LegacyMigrationResult
-import org.jetbrains.intellij.build.productLayout.xml.updateXmlDependencies
 
 /**
- * Generator for plugin.xml dependency XML files.
+ * Planner for plugin.xml dependency XML files.
  *
  * Generates `<dependencies>` sections for plugin.xml files. Both module and plugin
  * dependencies are derived from the plugin graph (JPS deps + plugin metadata):
@@ -48,20 +45,19 @@ import org.jetbrains.intellij.build.productLayout.xml.updateXmlDependencies
  * DSL-defined plugins are generated from Kotlin specs and are skipped here.
  * **Output:** Updated plugin.xml files with `<dependencies>` sections
  *
- * **Publishes:** [Slots.PLUGIN_XML] for downstream validation
+ * **Publishes:** [Slots.PLUGIN_DEPENDENCY_PLAN] for downstream writing and validation
  *
  * **No dependencies** - can run immediately (level 0).
  */
-internal object PluginXmlDependencyGenerator : PipelineNode {
+internal object PluginDependencyPlanner : PipelineNode {
   override val id get() = NodeIds.PLUGIN_XML_DEPS
-  override val produces: Set<DataSlot<*>> get() = setOf(Slots.PLUGIN_XML)
+  override val produces: Set<DataSlot<*>> get() = setOf(Slots.PLUGIN_DEPENDENCY_PLAN)
 
   override suspend fun execute(ctx: ComputeContext) {
     coroutineScope {
       val model = ctx.model
       val graph = model.pluginGraph
       val pluginContentCache = model.pluginContentCache
-      val strategy = model.fileUpdater
       val suppressionConfig = model.suppressionConfig
       // Suppression semantics: return TRUE to include dep, FALSE to exclude
       // Entries in filter are deps to SUPPRESS, so return TRUE if dep is NOT in filter
@@ -72,28 +68,24 @@ internal object PluginXmlDependencyGenerator : PipelineNode {
       // Process all real plugins in the graph (main target present).
       // DSL-defined plugins are generated from Kotlin specs and skipped here.
       val updateSuppressions = model.updateSuppressions
-      val tasks = ArrayList<Deferred<PluginXmlGenResult?>>()
+      val tasks = ArrayList<Deferred<PluginDependencyPlan?>>()
       val pluginGraphDeps = collectPluginGraphDeps(graph, model.config.libraryModuleFilter)
       for (graphDeps in pluginGraphDeps) {
         if (graphDeps.isDslDefined) continue
         tasks.add(async {
-          generatePluginXmlDependencies(
+          buildPluginDependencyPlan(
             graphDeps = graphDeps,
             pluginContentCache = pluginContentCache,
             dependencyFilter = dependencyFilter,
             suppressionConfig = suppressionConfig,
-            strategy = strategy,
             updateSuppressions = updateSuppressions,
             emitError = ctx::emitError,
           )
         })
       }
-      val results = tasks.awaitAll().filterNotNull()
+      val plans = tasks.awaitAll().filterNotNull()
 
-      ctx.publish(Slots.PLUGIN_XML, PluginXmlOutput(
-        files = results.map { it.toPluginDependencyFileResult() },
-        detailedResults = results.map { it.toPluginXmlFileResult() },
-      ))
+      ctx.publish(Slots.PLUGIN_DEPENDENCY_PLAN, PluginDependencyPlanOutput(plans = plans))
     }
   }
 }
@@ -105,6 +97,7 @@ internal data class PluginGraphDeps(
   @JvmField val jpsModuleDependencies: Set<ContentModuleName>,
   @JvmField val jpsPluginDependencies: Set<PluginId>,
   @JvmField val filteredModuleDependencies: Set<ContentModuleName>,
+  @JvmField val duplicateDeclarationPluginIds: Set<PluginId>,
 )
 
 internal fun collectPluginGraphDeps(graph: PluginGraph, libraryModuleFilter: (String) -> Boolean): List<PluginGraphDeps> {
@@ -120,6 +113,7 @@ internal fun collectPluginGraphDeps(graph: PluginGraph, libraryModuleFilter: (St
       val moduleDeps = LinkedHashSet<ContentModuleName>()
       val pluginDeps = LinkedHashSet<PluginId>()
       val filteredModuleDeps = LinkedHashSet<ContentModuleName>()
+      val duplicateDeclarations = LinkedHashSet<PluginId>()
 
       plugin.mainTarget { target ->
         hasMainTarget = true
@@ -148,6 +142,12 @@ internal fun collectPluginGraphDeps(graph: PluginGraph, libraryModuleFilter: (St
         }
       }
 
+      plugin.dependsOnPlugin { dep ->
+        if (!dep.hasLegacyFormat || !dep.hasModernFormat) return@dependsOnPlugin
+        val targetId = dep.target().pluginIdOrNull ?: return@dependsOnPlugin
+        duplicateDeclarations.add(targetId)
+      }
+
       if (!hasMainTarget) return@plugins
 
       results.add(PluginGraphDeps(
@@ -157,6 +157,7 @@ internal fun collectPluginGraphDeps(graph: PluginGraph, libraryModuleFilter: (St
         jpsModuleDependencies = moduleDeps,
         jpsPluginDependencies = pluginDeps,
         filteredModuleDependencies = filteredModuleDeps,
+        duplicateDeclarationPluginIds = duplicateDeclarations,
       ))
     }
   }
@@ -180,38 +181,6 @@ internal data class FilteredDependencies(
 )
 
 /**
- * Internal result type with more detail for inter-generator communication.
- */
-private data class PluginXmlGenResult(
-  val pluginContentModuleName: ContentModuleName,
-  @JvmField val pluginXmlPath: java.nio.file.Path,
-  @JvmField val status: org.jetbrains.intellij.build.productLayout.stats.FileChangeStatus,
-  @JvmField val dependencyCount: Int,
-  /** Suppression usages recorded during generation (for unified stale detection) */
-  @JvmField val suppressionUsages: List<SuppressionUsage> = emptyList(),
-) {
-  fun toPluginDependencyFileResult(): PluginDependencyFileResult {
-    return PluginDependencyFileResult(
-      pluginContentModuleName = pluginContentModuleName,
-      pluginXmlPath = pluginXmlPath,
-      status = status,
-      dependencyCount = dependencyCount,
-      contentModuleResults = emptyList(), // Content modules handled by separate generator
-    )
-  }
-
-  fun toPluginXmlFileResult(): PluginXmlFileResult {
-    return PluginXmlFileResult(
-      pluginContentModuleName = pluginContentModuleName,
-      pluginXmlPath = pluginXmlPath,
-      status = status,
-      dependencyCount = dependencyCount,
-      suppressionUsages = suppressionUsages,
-    )
-  }
-}
-
-/**
  * Generates dependencies for a single plugin.xml file.
  *
  * Dependencies are derived from the plugin graph (populated from JPS in ModelBuildingStage Phase 8):
@@ -220,15 +189,14 @@ private data class PluginXmlGenResult(
  *
  * Also migrates legacy `<depends>` entries (v1 format) to `<plugin id="..."/>` (v2 format).
  */
-private suspend fun generatePluginXmlDependencies(
+private suspend fun buildPluginDependencyPlan(
   graphDeps: PluginGraphDeps,
   pluginContentCache: PluginContentProvider,
   dependencyFilter: (moduleName: String, depName: String, isTest: Boolean) -> Boolean,
   suppressionConfig: SuppressionConfig,
-  strategy: FileUpdateStrategy,
   updateSuppressions: Boolean,
   emitError: (org.jetbrains.intellij.build.productLayout.model.error.ValidationError) -> Unit,
-): PluginXmlGenResult? {
+): PluginDependencyPlan? {
   val pluginContentModuleName = graphDeps.pluginContentModuleName
   val pluginTargetName = TargetName(pluginContentModuleName.value)
   val info = pluginContentCache.getOrExtract(pluginTargetName) ?: return null
@@ -259,53 +227,35 @@ private suspend fun generatePluginXmlDependencies(
   val xiIncludeModuleDeps = info.depsByFile.drop(1).flatMapTo(HashSet()) { it.moduleDependencies }
   val xiIncludePluginDeps = info.depsByFile.drop(1).flatMapTo(HashSet()) { it.pluginDependencies }
 
-  // Compute JPS deps for preservation check
-  val jpsModuleDepNames = deps.moduleDependencies.mapTo(HashSet()) { it.value }
-  val jpsPluginDepNames = allPluginDepsStrings.toSet()
+  val existingXmlModuleDeps = info.moduleDependencies
+  val existingXmlPluginDeps: Set<PluginId> = info.depsByFile.firstOrNull()?.pluginDependencies ?: emptySet()
 
-  val status = updateXmlDependencies(
-    path = info.pluginXmlPath,
-    content = legacyMigration.content, // Use content with <depends> removed
-    moduleDependencies = deps.moduleDependencies.map { it.value },
-    pluginDependencies = allPluginDepsStrings,
-    preserveExistingModule = { moduleName ->
-      if (updateSuppressions) {
-        // Freeze mode: preserve all existing deps not in computed JPS deps
-        moduleName !in jpsModuleDepNames
-      }
-      else {
-        // Normal mode: preserve if filter excludes it
-        !effectiveFilter(pluginContentModuleName.value, moduleName, false)
-      }
-    },
-    // Preserve existing plugin deps that aren't being auto-added (either filtered out or manually added).
-    // This ensures we only ADD deps when detected by JPS and not filtered, never REMOVE existing deps.
-    // Note: legacy deps are already included in allPluginDeps, so they won't be preserved separately.
-    preserveExistingPlugin = { pluginId ->
-      if (updateSuppressions) {
-        // Freeze mode: preserve all existing plugin deps not in computed JPS deps
-        pluginId !in jpsPluginDepNames
-      }
-      else {
-        // Normal mode: preserve if not being auto-added
-        pluginId !in allPluginDepsStrings
-      }
-    },
-    // Pass legacy <depends> plugin IDs for semantic comparison - if computed deps match legacy,
-    // don't insert <dependencies> section just to change format
-    legacyPluginDependencies = info.legacyDepends.map { it.pluginId.value },
-    // Pass xi:include deps so we don't add them to main file when they already exist in xi:includes
-    xiIncludeModuleDeps = xiIncludeModuleDeps,
-    xiIncludePluginDeps = xiIncludePluginDeps,
-    strategy = strategy,
-  )
+  // Compute deps to preserve during XML update
+  val filteredModuleDeps = deps.moduleDependencies.mapTo(HashSet()) { it.value }
+  val preserveExistingModuleDeps = if (updateSuppressions) {
+    existingXmlModuleDeps.filterTo(LinkedHashSet()) { it.value !in filteredModuleDeps }
+  }
+  else {
+    existingXmlModuleDeps.filterTo(LinkedHashSet()) { !effectiveFilter(pluginContentModuleName.value, it.value, false) }
+  }
 
-  return PluginXmlGenResult(
+  val preserveExistingPluginDeps = existingXmlPluginDeps.filterTo(LinkedHashSet()) { it.value !in allPluginDepsStrings }
+
+  return PluginDependencyPlan(
     pluginContentModuleName = pluginContentModuleName,
     pluginXmlPath = info.pluginXmlPath,
-    status = status,
-    dependencyCount = deps.moduleDependencies.size + allPluginDepsStrings.size,
+    pluginXmlContent = legacyMigration.content,
+    moduleDependencies = deps.moduleDependencies.distinctBy { it.value }.sortedBy { it.value },
+    pluginDependencies = deps.pluginDependencies.distinctBy { it.value }.sortedBy { it.value },
+    legacyPluginDependencies = info.legacyDepends.map { it.pluginId },
+    xiIncludeModuleDeps = xiIncludeModuleDeps,
+    xiIncludePluginDeps = xiIncludePluginDeps,
+    existingXmlModuleDependencies = existingXmlModuleDeps,
+    existingXmlPluginDependencies = existingXmlPluginDeps,
+    preserveExistingModuleDependencies = preserveExistingModuleDeps,
+    preserveExistingPluginDependencies = preserveExistingPluginDeps,
     suppressionUsages = deps.suppressionUsages,
+    duplicateDeclarationPluginIds = graphDeps.duplicateDeclarationPluginIds,
   )
 }
 

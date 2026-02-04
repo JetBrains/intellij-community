@@ -2,11 +2,15 @@
 package org.jetbrains.intellij.build.productLayout.generator
 
 import com.intellij.platform.pluginGraph.PluginId
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.intellij.build.productLayout.TestFailureLogger
 import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.dependency.pluginGraph
 import org.jetbrains.intellij.build.productLayout.dependency.testGenerationModel
+import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlan
+import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlanOutput
 import org.jetbrains.intellij.build.productLayout.discovery.DiscoveredProduct
 import org.jetbrains.intellij.build.productLayout.discovery.ProductConfiguration
 import org.jetbrains.intellij.build.productLayout.moduleSet
@@ -15,13 +19,15 @@ import org.jetbrains.intellij.build.productLayout.pipeline.Slots
 import org.jetbrains.intellij.build.productLayout.productModules
 import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 
+@ExtendWith(TestFailureLogger::class)
 class TestPluginXmlGeneratorTest {
   @Test
   fun `generates dependencies for DSL test plugin`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
       product("TestProduct") { bundlesPlugin("intellij.target.plugin") }
       testPlugin("intellij.consumer.test.plugin") {
@@ -67,10 +73,7 @@ class TestPluginXmlGeneratorTest {
     )
 
     val ctx = ComputeContextImpl(model)
-    ctx.initSlot(Slots.TEST_PLUGINS)
-    val nodeCtx = ctx.forNode(TestPluginXmlGenerator.id)
-    TestPluginXmlGenerator.execute(nodeCtx)
-    ctx.finalizeNodeErrors(TestPluginXmlGenerator.id)
+    runPlannerAndGenerator(ctx)
 
     val diffs = fileUpdater.getDiffs()
     assertThat(diffs).hasSize(1)
@@ -83,7 +86,7 @@ class TestPluginXmlGeneratorTest {
 
   @Test
   fun `skips unresolvable plugin dependency in DSL test plugin`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
       testPlugin("intellij.consumer.test.plugin") {
         pluginId("intellij.consumer.test.plugin")
@@ -128,10 +131,7 @@ class TestPluginXmlGeneratorTest {
     )
 
     val ctx = ComputeContextImpl(model)
-    ctx.initSlot(Slots.TEST_PLUGINS)
-    val nodeCtx = ctx.forNode(TestPluginXmlGenerator.id)
-    TestPluginXmlGenerator.execute(nodeCtx)
-    ctx.finalizeNodeErrors(TestPluginXmlGenerator.id)
+    runPlannerAndGenerator(ctx)
 
     val diffs = fileUpdater.getDiffs()
     assertThat(diffs).hasSize(1)
@@ -140,17 +140,13 @@ class TestPluginXmlGeneratorTest {
     assertThat(xml).doesNotContain("<dependencies>")
 
     val errors = ctx.getNodeErrors(TestPluginXmlGenerator.id)
-    assertThat(errors)
-      .describedAs("Unresolvable plugin dependency should be reported as an error")
-      .hasSize(1)
-    assertThat(errors.single())
-      .isInstanceOf(org.jetbrains.intellij.build.productLayout.model.error.DslTestPluginDependencyError::class.java)
+    assertThat(errors).isEmpty()
     }
   }
 
   @Test
   fun `library content dependencies stay module dependencies in DSL test plugin`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
       product("TestProduct") { bundlesPlugin("intellij.owner.plugin") }
       plugin("intellij.owner.plugin") {
@@ -197,10 +193,7 @@ class TestPluginXmlGeneratorTest {
     )
 
     val ctx = ComputeContextImpl(model)
-    ctx.initSlot(Slots.TEST_PLUGINS)
-    val nodeCtx = ctx.forNode(TestPluginXmlGenerator.id)
-    TestPluginXmlGenerator.execute(nodeCtx)
-    ctx.finalizeNodeErrors(TestPluginXmlGenerator.id)
+    runPlannerAndGenerator(ctx)
 
     val diffs = fileUpdater.getDiffs()
     assertThat(diffs).hasSize(1)
@@ -216,7 +209,7 @@ class TestPluginXmlGeneratorTest {
 
   @Test
   fun `plugin-owned content dependency becomes plugin dependency in DSL test plugin`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
       product("TestProduct") { bundlesPlugin("intellij.owner.plugin") }
       plugin("intellij.owner.plugin") {
@@ -263,10 +256,7 @@ class TestPluginXmlGeneratorTest {
     )
 
     val ctx = ComputeContextImpl(model)
-    ctx.initSlot(Slots.TEST_PLUGINS)
-    val nodeCtx = ctx.forNode(TestPluginXmlGenerator.id)
-    TestPluginXmlGenerator.execute(nodeCtx)
-    ctx.finalizeNodeErrors(TestPluginXmlGenerator.id)
+    runPlannerAndGenerator(ctx)
 
     val diffs = fileUpdater.getDiffs()
     assertThat(diffs).hasSize(1)
@@ -279,7 +269,7 @@ class TestPluginXmlGeneratorTest {
 
   @Test
   fun `test-plugin-owned content dependency stays module dependency in DSL test plugin`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
       testPlugin("intellij.owner.test.plugin") {
         pluginId("intellij.owner.test.plugin")
@@ -325,10 +315,7 @@ class TestPluginXmlGeneratorTest {
     )
 
     val ctx = ComputeContextImpl(model)
-    ctx.initSlot(Slots.TEST_PLUGINS)
-    val nodeCtx = ctx.forNode(TestPluginXmlGenerator.id)
-    TestPluginXmlGenerator.execute(nodeCtx)
-    ctx.finalizeNodeErrors(TestPluginXmlGenerator.id)
+    runPlannerAndGenerator(ctx)
 
     val diffs = fileUpdater.getDiffs()
     assertThat(diffs).hasSize(1)
@@ -344,7 +331,7 @@ class TestPluginXmlGeneratorTest {
 
   @Test
   fun `sorts dependencies and content in DSL test plugin`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
       product("TestProduct") {
         bundlesPlugin("intellij.zeta.plugin")
@@ -421,10 +408,7 @@ class TestPluginXmlGeneratorTest {
     )
 
     val ctx = ComputeContextImpl(model)
-    ctx.initSlot(Slots.TEST_PLUGINS)
-    val nodeCtx = ctx.forNode(TestPluginXmlGenerator.id)
-    TestPluginXmlGenerator.execute(nodeCtx)
-    ctx.finalizeNodeErrors(TestPluginXmlGenerator.id)
+    runPlannerAndGenerator(ctx)
 
     val diffs = fileUpdater.getDiffs()
     assertThat(diffs).hasSize(1)
@@ -467,5 +451,22 @@ class TestPluginXmlGeneratorTest {
     assertThat(indexOfToken("<module name=\"intellij.extra.a\""))
       .isLessThan(indexOfToken("<module name=\"intellij.extra.z\""))
     }
+  }
+
+  private suspend fun runPlannerAndGenerator(
+    ctx: ComputeContextImpl,
+    contentModulePlans: List<ContentModuleDependencyPlan> = emptyList(),
+  ) {
+    ctx.initSlot(Slots.CONTENT_MODULE_PLAN)
+    ctx.publish(Slots.CONTENT_MODULE_PLAN, ContentModuleDependencyPlanOutput(plans = contentModulePlans))
+    ctx.initSlot(Slots.TEST_PLUGIN_DEPENDENCY_PLAN)
+    val plannerCtx = ctx.forNode(TestPluginDependencyPlanner.id)
+    TestPluginDependencyPlanner.execute(plannerCtx)
+    ctx.finalizeNodeErrors(TestPluginDependencyPlanner.id)
+
+    ctx.initSlot(Slots.TEST_PLUGINS)
+    val nodeCtx = ctx.forNode(TestPluginXmlGenerator.id)
+    TestPluginXmlGenerator.execute(nodeCtx)
+    ctx.finalizeNodeErrors(TestPluginXmlGenerator.id)
   }
 }

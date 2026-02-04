@@ -33,6 +33,7 @@ import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
 import org.jetbrains.intellij.build.productLayout.debug
 import org.jetbrains.intellij.build.productLayout.dependency.ModuleDescriptorCache
 import org.jetbrains.intellij.build.productLayout.dependency.PluginContentCache
+import org.jetbrains.intellij.build.productLayout.deps.collectResolvableModules
 import org.jetbrains.intellij.build.productLayout.discovery.ModuleSetGenerationConfig
 import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
 import org.jetbrains.intellij.build.productLayout.discovery.computePluginContentFromDslSpec
@@ -44,6 +45,7 @@ import org.jetbrains.intellij.build.productLayout.traversal.collectPluginContent
 import org.jetbrains.intellij.build.productLayout.traversal.collectProductModuleNames
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
+import org.jetbrains.intellij.build.productLayout.util.XmlWritePolicy
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
@@ -89,6 +91,7 @@ internal object ModelBuildingStage {
     config: ModuleSetGenerationConfig,
     scope: CoroutineScope,
     updateSuppressions: Boolean,
+    commitChanges: Boolean,
     errorSink: ErrorSink,
   ): GenerationModel {
     val projectRoot = config.projectRoot
@@ -100,6 +103,12 @@ internal object ModelBuildingStage {
 
     // Create file updater for deferred writes
     val fileUpdater = DeferredFileUpdater(projectRoot)
+    val generationMode = when {
+      updateSuppressions -> GenerationMode.UPDATE_SUPPRESSIONS
+      !commitChanges -> GenerationMode.VALIDATE_ONLY
+      else -> GenerationMode.NORMAL
+    }
+    val xmlWritePolicy = XmlWritePolicy(generationMode, fileUpdater)
 
     // Create xi:include cache (shared across plugin content extraction)
     val xIncludeCache = AsyncCache<String, ByteArray?>(scope)
@@ -236,6 +245,7 @@ internal object ModelBuildingStage {
       descriptorCache = descriptorCache,
       pluginContentCache = pluginContentCache,
       fileUpdater = fileUpdater,
+      xmlWritePolicy = xmlWritePolicy,
       scope = scope,
       pluginGraph = pluginGraph,
       dslTestPluginsByProduct = dslTestPluginExpansion.pluginsByProduct,
@@ -244,6 +254,7 @@ internal object ModelBuildingStage {
       productAllowedMissing = productAllowedMissing,
       suppressionConfig = suppressionConfig,
       updateSuppressions = updateSuppressions,
+      generationMode = generationMode,
     )
   }
 
@@ -511,7 +522,7 @@ internal object ModelBuildingStage {
 
       // Resolvable modules for DSL test plugins are derived from the product's module sets,
       // direct product content, and bundled production plugins (other test plugins excluded).
-      val resolvableBaseModules = collectResolvableModules(product.name, graphView)
+      val resolvableBaseModules = collectResolvableModules(graphView, product.name)
 
       val expandedSpecs = ArrayList<TestPluginSpec>(dslSpecs.size)
       for (dslSpec in dslSpecs) {
@@ -651,25 +662,6 @@ internal object ModelBuildingStage {
     // DEPENDS ON: Phase 7 (referenced plugins registered for accurate ID/alias resolution)
     // ───────────────────────────────────────────────────────────────────────────────
     builder.addPluginDependencyEdges(pluginInfos)
-  }
-
-  private fun collectResolvableModules(productName: String, graph: PluginGraph): Set<ContentModuleName> = graph.query {
-    val result = LinkedHashSet<ContentModuleName>()
-    val productNode = product(productName) ?: return@query result
-
-    productNode.includesModuleSet { moduleSet ->
-      moduleSet.modulesRecursive { result.add(it.contentName()) }
-    }
-    productNode.containsContent { module, _ ->
-      result.add(module.contentName())
-    }
-    productNode.bundles { plugin ->
-      plugin.containsContent { module, _ ->
-        result.add(module.contentName())
-      }
-    }
-
-    result
   }
 
   private fun seedPluginsForExtraction(

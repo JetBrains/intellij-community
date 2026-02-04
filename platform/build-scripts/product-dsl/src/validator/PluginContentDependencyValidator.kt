@@ -52,7 +52,8 @@ import java.nio.file.Path
 internal object PluginContentDependencyValidator : PipelineNode {
   override val id get() = NodeIds.PLUGIN_VALIDATION
 
-  // Requires CONTENT_MODULE because ContentModuleDependencyGenerator populates graph with module deps.
+  // Requires CONTENT_MODULE because ContentModuleDependencyPlanner populates graph with module deps
+  // and ContentModuleXmlWriter publishes the output used for validation.
   // Validation queries deps from the graph (EDGE_CONTENT_MODULE_DEPENDS_ON / EDGE_CONTENT_MODULE_DEPENDS_ON_TEST).
   override val requires: Set<DataSlot<*>> get() = setOf(Slots.CONTENT_MODULE)
 
@@ -151,24 +152,11 @@ internal suspend fun validatePluginDependencies(
       if (plugin.pluginIdOrNull == null) return@plugins
 
       val pluginName = plugin.name()
-      val productionContentModules = LinkedHashSet<ContentModuleName>()
-      val testContentModules = LinkedHashSet<ContentModuleName>()
-      val contentModulesInGraph = LinkedHashSet<ContentModuleName>()
-      val loadingModes = LinkedHashMap<ContentModuleName, ModuleLoadingRuleValue?>()
-      val bundlingProducts = LinkedHashSet<String>()
-
-      plugin.containsContent { module, loading ->
-        val moduleName = module.contentName()
-        productionContentModules.add(moduleName)
-        contentModulesInGraph.add(moduleName)
-        loadingModes.put(moduleName, loading)
-      }
-      plugin.containsContentTest { module, loading ->
-        val moduleName = module.contentName()
-        testContentModules.add(moduleName)
-        contentModulesInGraph.add(moduleName)
-        loadingModes.put(moduleName, loading)
-      }
+      val snapshot = collectPluginContentSnapshot(plugin)
+      val productionContentModules = snapshot.productionContentModules
+      val contentModulesInGraph = snapshot.allContentModules
+      val loadingModes = snapshot.loadingModes
+      val bundlingProducts = snapshot.bundlingProducts
 
       val moduleDeps = LinkedHashSet<ContentModuleName>()
       plugin.dependsOnContentModule { module ->
@@ -178,20 +166,8 @@ internal suspend fun validatePluginDependencies(
         }
       }
 
-      plugin.bundledByProducts { product ->
-        bundlingProducts.add(product.name())
-      }
-
       val isTestPlugin = plugin.isTest
-      val contentModulesForValidation = if (isTestPlugin) {
-        LinkedHashSet<ContentModuleName>().apply {
-          addAll(productionContentModules)
-          addAll(testContentModules)
-        }
-      }
-      else {
-        productionContentModules
-      }
+      val contentModulesForValidation = snapshot.contentModulesForValidation(isTestPlugin)
       val contentModuleDeps = collectContentModuleDeps(contentModulesForValidation, isTestPlugin)
 
       val contentModuleFilteredDeps = LinkedHashMap<ContentModuleName, Set<ContentModuleName>>()

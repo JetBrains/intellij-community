@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.productLayout.generator
 
 import com.intellij.platform.pluginGraph.ContentModuleName
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.productLayout.TestFailureLogger
@@ -18,7 +19,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 
 /**
- * Tests for [ContentModuleDependencyGenerator] - content module dependency generation.
+ * Tests for [ContentModuleDependencyPlanner] and [ContentModuleXmlWriter] - content module dependency generation.
  */
 @ExtendWith(TestFailureLogger::class)
 class ContentModuleDependencyGeneratorTest {
@@ -35,7 +36,7 @@ class ContentModuleDependencyGeneratorTest {
   inner class TestModuleDependencyTest {
     @Test
     fun `test module includes TEST scope JPS dependencies in XML`(@TempDir tempDir: Path) {
-      runBlocking {
+      runBlocking(Dispatchers.Default) {
         // Setup: A test module (ending with ._test) with a TEST scope JPS dependency
         val setup = pluginTestSetup(tempDir) {
           // The dependency module (like a test library)
@@ -82,7 +83,7 @@ class ContentModuleDependencyGeneratorTest {
 
     @Test
     fun `test module does not lose TEST scope dependency when regenerating`(@TempDir tempDir: Path) {
-      runBlocking {
+      runBlocking(Dispatchers.Default) {
         // Setup: A test module with existing TEST scope dependency in XML
         val setup = pluginTestSetup(tempDir) {
           // The dependency module
@@ -123,7 +124,7 @@ class ContentModuleDependencyGeneratorTest {
 
     @Test
     fun `regular module does not include TEST scope dependencies in XML`(@TempDir tempDir: Path) {
-      runBlocking {
+      runBlocking(Dispatchers.Default) {
         // Setup: A regular (non-test) module with TEST scope JPS dependency
         val setup = pluginTestSetup(tempDir) {
           // The dependency module (test-only library)
@@ -160,7 +161,7 @@ class ContentModuleDependencyGeneratorTest {
 
     @Test
     fun `test module includes both COMPILE and TEST scope dependencies`(@TempDir tempDir: Path) {
-      runBlocking {
+      runBlocking(Dispatchers.Default) {
         // Setup: Test module with both COMPILE and TEST scope dependencies
         val setup = pluginTestSetup(tempDir) {
           contentModule("intellij.compile.dep") {
@@ -210,7 +211,7 @@ class ContentModuleDependencyGeneratorTest {
   inner class TestPluginContentModuleTest {
     @Test
     fun `test plugin content modules are processed`(@TempDir tempDir: Path) {
-      runBlocking {
+      runBlocking(Dispatchers.Default) {
         val setup = pluginTestSetup(tempDir) {
           contentModule("intellij.libraries.junit5.vintage") {
             descriptor = """<idea-plugin package="org.junit.vintage"/>"""
@@ -233,15 +234,20 @@ class ContentModuleDependencyGeneratorTest {
         )
 
         val ctx = ComputeContextImpl(model)
+        ctx.initSlot(Slots.CONTENT_MODULE_PLAN)
         ctx.initSlot(Slots.CONTENT_MODULE)
-        val nodeCtx = ctx.forNode(ContentModuleDependencyGenerator.id)
-        ContentModuleDependencyGenerator.execute(nodeCtx)
-        ctx.finalizeNodeErrors(ContentModuleDependencyGenerator.id)
+        val planCtx = ctx.forNode(ContentModuleDependencyPlanner.id)
+        ContentModuleDependencyPlanner.execute(planCtx)
+        ctx.finalizeNodeErrors(ContentModuleDependencyPlanner.id)
+
+        val writeCtx = ctx.forNode(ContentModuleXmlWriter.id)
+        ContentModuleXmlWriter.execute(writeCtx)
+        ctx.finalizeNodeErrors(ContentModuleXmlWriter.id)
 
         val diffs = setup.strategy.getDiffs()
         val testBootstrapDiff = diffs.find { it.path.toString().contains("intellij.tools.testsBootstrap.xml") }
         assertThat(testBootstrapDiff)
-          .describedAs("Test plugin content module should be processed by dependency generator")
+          .describedAs("Test plugin content module should be processed by dependency planner")
           .isNotNull()
         assertThat(testBootstrapDiff!!.expectedContent)
           .contains("<module name=\"intellij.libraries.junit5.vintage\"/>")
@@ -260,7 +266,7 @@ class ContentModuleDependencyGeneratorTest {
   inner class EmbeddedModuleFilteringTest {
     @Test
     fun `content module in plugin skips globally embedded dependency`(@TempDir tempDir: Path) {
-      runBlocking {
+      runBlocking(Dispatchers.Default) {
         // Setup: Content module in a plugin depends on a globally embedded module
         val setup = pluginTestSetup(tempDir) {
           // The embedded module - in EMBEDDED module set, no plugin source
@@ -304,7 +310,7 @@ class ContentModuleDependencyGeneratorTest {
 
     @Test
     fun `content module in plugin excludes embedded deps from written list`(@TempDir tempDir: Path) {
-      runBlocking {
+      runBlocking(Dispatchers.Default) {
         val setup = pluginTestSetup(tempDir) {
           contentModule("intellij.platform.core") {
             descriptor = """<idea-plugin package="com.intellij.core"/>"""
@@ -340,7 +346,7 @@ class ContentModuleDependencyGeneratorTest {
 
     @Test
     fun `globally embedded module with plugin source is still skipped`(@TempDir tempDir: Path) {
-      runBlocking {
+      runBlocking(Dispatchers.Default) {
         val setup = pluginTestSetup(tempDir) {
           contentModule("intellij.platform.core") {
             descriptor = """<idea-plugin package="com.intellij.core"/>"""
@@ -381,7 +387,7 @@ class ContentModuleDependencyGeneratorTest {
 
     @Test
     fun `content module in module set does not skip embedded deps`(@TempDir tempDir: Path) {
-      runBlocking {
+      runBlocking(Dispatchers.Default) {
         val setup = pluginTestSetup(tempDir) {
           contentModule("intellij.platform.core") {
             descriptor = """<idea-plugin package="com.intellij.core"/>"""
@@ -420,7 +426,7 @@ class ContentModuleDependencyGeneratorTest {
 
     @Test
     fun `content module with dependency in plugin does not skip it`(@TempDir tempDir: Path) {
-      runBlocking {
+      runBlocking(Dispatchers.Default) {
         // Setup: Dependency module is in a plugin (not globally embedded)
         val setup = pluginTestSetup(tempDir) {
           // Dependency module - in a plugin, so NOT globally embedded
@@ -467,7 +473,7 @@ class ContentModuleDependencyGeneratorTest {
 
     @Test
     fun `module with non-EMBEDDED loading is not skipped`(@TempDir tempDir: Path) {
-      runBlocking {
+      runBlocking(Dispatchers.Default) {
         // Setup: Module in module set but with REQUIRED loading (not EMBEDDED)
         val setup = pluginTestSetup(tempDir) {
           // Module with REQUIRED loading (not globally embedded)

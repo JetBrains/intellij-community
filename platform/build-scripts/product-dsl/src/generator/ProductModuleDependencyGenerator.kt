@@ -40,8 +40,8 @@ import org.jetbrains.intellij.build.productLayout.xml.visitAllModules
  * **No dependencies** - can run immediately (level 0).
  *
  * @see org.jetbrains.intellij.build.productLayout.validator.SelfContainedModuleSetValidator for self-contained module set validation
- * @see ProductModuleSetValidationRule for product module set validation
- * @see LibraryModuleValidationRule for library module dependency validation
+ * @see org.jetbrains.intellij.build.productLayout.validator.ProductModuleSetValidator for product module set validation
+ * @see org.jetbrains.intellij.build.productLayout.validator.LibraryModuleValidator for library module dependency validation
  */
 internal object ProductModuleDependencyGenerator : PipelineNode {
   override val id get() = NodeIds.PRODUCT_MODULE_DEPS
@@ -59,7 +59,7 @@ internal object ProductModuleDependencyGenerator : PipelineNode {
 
       val cache = model.descriptorCache
       val graph = model.pluginGraph
-      val strategy = model.fileUpdater
+      val strategy = model.xmlWritePolicy
       val suppressionConfig = model.suppressionConfig
       val updateSuppressions = model.updateSuppressions
 

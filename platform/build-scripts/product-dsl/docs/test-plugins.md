@@ -55,7 +55,7 @@ testPlugin(
 
 ## Allow Missing Plugin Dependencies
 
-If a DSL test plugin depends on a plugin that is not resolvable in the test plugin scope, the generator emits an error and skips the plugin dependency. To suppress this error for known/expected cases, list those plugin IDs in `allowedMissingPluginIds`.
+If a DSL test plugin depends on a plugin that is not resolvable in the test plugin scope, the dependency planner reports an error and skips the plugin dependency. To suppress this error for known/expected cases, list those plugin IDs in `allowedMissingPluginIds`.
 
 ```kotlin
 testPlugin(
@@ -81,7 +81,8 @@ testPlugin(
 }
 ```
 
-This only suppresses generator errors for unresolved plugin dependencies; it does not add the dependency.
+This only suppresses unresolvable dependency errors; it does not add the dependency.
+Test plugin allowlists are DSL-only; suppressions.json does not include test plugin allowlists.
 
 ## Test Plugin Detection
 

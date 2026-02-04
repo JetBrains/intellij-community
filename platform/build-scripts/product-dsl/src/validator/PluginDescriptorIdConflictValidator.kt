@@ -6,8 +6,6 @@ import com.intellij.platform.pluginGraph.PluginGraph
 import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.PluginNode
 import com.intellij.platform.pluginGraph.ProductNode
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.intellij.build.productLayout.model.error.PluginDescriptorIdConflictError
 import org.jetbrains.intellij.build.productLayout.model.error.ValidationError
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
@@ -27,14 +25,8 @@ internal object PluginDescriptorIdConflictValidator : PipelineNode {
 
   override suspend fun execute(ctx: ComputeContext) {
     val model = ctx.model
-    coroutineScope {
-      model.pluginGraph.query {
-        products { product ->
-          launch {
-            ctx.emitErrors(validateDescriptorIdConflictsForProduct(product, model.pluginGraph))
-          }
-        }
-      }
+    ctx.emitErrorsPerProduct(model.pluginGraph) { product ->
+      validateDescriptorIdConflictsForProduct(product, model.pluginGraph)
     }
   }
 }

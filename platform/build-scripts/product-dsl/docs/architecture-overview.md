@@ -226,12 +226,15 @@ community/platform/build-scripts/product-dsl/
 │   │   └── generators/               # ComputeNode implementations
 │   │       ├── ModuleSetXmlGenerator.kt         # ModuleSetXmlNode
 │   │       ├── ProductModuleDependencyGenerator.kt  # ProductModuleDependencyNode
-│   │       ├── ContentModuleDependencyGenerator.kt  # ContentModuleDependencyNode
+│   │       ├── ContentModuleDependencyGenerator.kt  # ContentModuleDependencyPlanNode
+│   │       ├── ContentModuleXmlWriter.kt        # ContentModuleXmlWriteNode
 │   │       ├── TestDescriptorGenerator.kt       # TestDescriptorNode
-│   │       ├── PluginXmlDependencyGenerator.kt  # PluginXmlDependencyNode
+│   │       ├── PluginXmlDependencyGenerator.kt  # PluginDependencyPlanNode
+│   │       ├── PluginXmlWriter.kt               # PluginXmlWriteNode
 │   │       ├── PluginValidationGenerator.kt     # PluginValidationNode
 │   │       ├── SuppressionConfigGenerator.kt    # SuppressionConfigNode
 │   │       ├── ProductXmlGenerator.kt           # ProductXmlNode
+│   │       ├── TestPluginDependencyPlanner.kt   # TestPluginDependencyPlanNode
 │   │       └── TestPluginXmlGenerator.kt        # TestPluginXmlNode
 │   │
 │   ├── discovery/                 # Discovery & product handling

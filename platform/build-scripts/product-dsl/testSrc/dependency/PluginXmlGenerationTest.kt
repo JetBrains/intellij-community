@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.productLayout.dependency
 
 import com.intellij.platform.pluginGraph.TargetName
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -25,7 +26,7 @@ import java.nio.file.Path
 class PluginXmlGenerationTest {
   @Test
   fun `test plugin with JPS dependency on plugin module generates plugin element in plugin xml`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val setup = pluginTestSetup(tempDir) {
         // Target plugin that will be depended on
         plugin("intellij.target.plugin") {
@@ -60,10 +61,9 @@ class PluginXmlGenerationTest {
         .contains("<plugin id=\"intellij.target.plugin\"/>")
     }
   }
-
   @Test
   fun `JPS dependency on content module generates module element not plugin element`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val setup = pluginTestSetup(tempDir) {
         // Regular content module (not a plugin)
         contentModule("intellij.shared.content") {
@@ -97,8 +97,7 @@ class PluginXmlGenerationTest {
   }
 
   @Test
-  fun `JPS dependency on content module with descriptor is treated as module not plugin`(@TempDir tempDir: Path) {
-    runBlocking {
+  fun `JPS dependency on content module with descriptor is treated as module not plugin`(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
       // This tests the case where a module has BOTH a META-INF/plugin.xml AND a {moduleName}.xml descriptor.
       // Example: intellij.yaml is embedded in yaml plugin (has yaml's plugin.xml) but also has intellij.yaml.xml descriptor.
       // Such modules should be treated as content module dependencies, not plugin dependencies.
@@ -163,11 +162,9 @@ class PluginXmlGenerationTest {
         .describedAs("Should NOT have <plugin id=\"...\"/> for content module with descriptor")
         .doesNotContain("<plugin id=\"org.jetbrains.plugins.yaml\"/>")
     }
-  }
-
   @Test
   fun `production plugin with JPS dependency on plugin module generates plugin element`(@TempDir tempDir: Path) {
-    runBlocking {
+    runBlocking(Dispatchers.Default) {
       val setup = pluginTestSetup(tempDir) {
         // Target plugin that will be depended on
         plugin("intellij.target.plugin") {

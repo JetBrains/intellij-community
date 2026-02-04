@@ -33,7 +33,6 @@ internal object SuppressionConfigValidator : PipelineNode {
 
     val moduleKeyStrings = model.suppressionConfig.contentModules.keys.mapTo(HashSet()) { it.value }
     val pluginKeyStrings = model.suppressionConfig.plugins.keys.mapTo(HashSet()) { it.value }
-
     if (moduleKeyStrings.isEmpty() && pluginKeyStrings.isEmpty()) {
       return
     }
@@ -64,7 +63,6 @@ internal object SuppressionConfigValidator : PipelineNode {
       .filterNotTo(HashSet()) { it.value in existingModules }
     val invalidPluginKeys = model.suppressionConfig.plugins.keys
       .filterNotTo(HashSet()) { TargetName(it.value) in existingPlugins }
-
     if (invalidContentModuleKeys.isNotEmpty() || invalidPluginKeys.isNotEmpty()) {
       ctx.emitError(InvalidSuppressionConfigKeyError(
         context = "suppressions.json",

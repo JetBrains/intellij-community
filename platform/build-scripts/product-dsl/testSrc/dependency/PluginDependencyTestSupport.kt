@@ -20,17 +20,21 @@ import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.productLayout.config.SuppressionConfig
 import org.jetbrains.intellij.build.productLayout.config.ValidationException
+import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlan
+import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlanOutput
 import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
 import org.jetbrains.intellij.build.productLayout.generator.PluginGraphDeps
 import org.jetbrains.intellij.build.productLayout.generator.collectPluginGraphDeps
 import org.jetbrains.intellij.build.productLayout.generator.filterPluginDependencies
-import org.jetbrains.intellij.build.productLayout.generator.generateContentModuleDependenciesWithBothSets
-import org.jetbrains.intellij.build.productLayout.generator.updateWithModuleDependencies
+import org.jetbrains.intellij.build.productLayout.generator.planContentModuleDependenciesWithBothSets
+import org.jetbrains.intellij.build.productLayout.generator.updateGraphWithModuleDependencyPlans
 import org.jetbrains.intellij.build.productLayout.model.ErrorSink
+import org.jetbrains.intellij.build.productLayout.model.error.ErrorCategory
 import org.jetbrains.intellij.build.productLayout.pipeline.ContentModuleOutput
 import org.jetbrains.intellij.build.productLayout.pipeline.DataSlot
 import org.jetbrains.intellij.build.productLayout.pipeline.Slots
 import org.jetbrains.intellij.build.productLayout.stats.DependencyFileResult
+import org.jetbrains.intellij.build.productLayout.stats.FileChangeStatus
 import org.jetbrains.intellij.build.productLayout.stats.PluginDependencyFileResult
 import org.jetbrains.intellij.build.productLayout.stats.PluginDependencyGenerationResult
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
@@ -83,8 +87,10 @@ internal suspend fun PluginTestSetupContext.generateDependencies(
  *
  * This function provides a simplified API for tests that bypasses the pipeline
  * architecture. For production use, prefer
- * [org.jetbrains.intellij.build.productLayout.generator.ContentModuleDependencyGenerator],
- * [org.jetbrains.intellij.build.productLayout.generator.PluginXmlDependencyGenerator], and
+ * [org.jetbrains.intellij.build.productLayout.generator.ContentModuleDependencyPlanner],
+ * [org.jetbrains.intellij.build.productLayout.generator.ContentModuleXmlWriter],
+ * [org.jetbrains.intellij.build.productLayout.generator.PluginDependencyPlanner],
+ * [org.jetbrains.intellij.build.productLayout.generator.PluginXmlWriter], and
  * [org.jetbrains.intellij.build.productLayout.validator.PluginContentDependencyValidator] and
  * [org.jetbrains.intellij.build.productLayout.validator.ContentModulePluginDependencyValidator].
  */
@@ -107,12 +113,12 @@ internal suspend fun generatePluginDependencies(
     }
 
     val outputProvider = testSetup.jps.outputProvider
-    val contentModuleCache = AsyncCache<String, DependencyFileResult?>(this)
+    val contentModuleCache = AsyncCache<String, PlannedContentModuleResult?>(this)
     val testContentModuleCache = AsyncCache<String, DependencyFileResult?>(this)
     val pluginGraphDeps = collectPluginGraphDeps(graph, libraryModuleFilter = { true })
       .associateBy { it.pluginContentModuleName.value }
 
-    val generationResults = plugins.map { pluginModuleName ->
+    val generationOutputs = plugins.map { pluginModuleName ->
       async {
         val graphDeps = pluginGraphDeps.get(pluginModuleName) ?: return@async null
         generatePluginDependency(
@@ -130,6 +136,8 @@ internal suspend fun generatePluginDependencies(
       }
     }.awaitAll().filterNotNull()
 
+    val generationResults = generationOutputs.map { it.fileResult }
+
     // Rebuild graph with testFrameworkContentModules for test plugin detection
     val effectiveGraph = buildPluginGraphFromTestSetup(
       plugins = emptyList(),  // Not needed - we use knownPlugins
@@ -142,7 +150,12 @@ internal suspend fun generatePluginDependencies(
     // Populate content module dependency edges on the graph (mirrors ContentModuleDependencyNode)
     // This is needed for validation to query deps via EDGE_CONTENT_MODULE_DEPENDS_ON
     val allContentModuleResults = generationResults.flatMap { it.contentModuleResults }
-    updateWithModuleDependencies(effectiveGraph, allContentModuleResults)
+    val allContentModulePlans = generationOutputs.flatMap { it.contentModulePlans }
+    val deduplicatedPlans = allContentModulePlans
+      .associateBy { it.contentModuleName }
+      .values
+      .toList()
+    updateGraphWithModuleDependencyPlans(effectiveGraph, deduplicatedPlans)
 
     val validationCache = buildValidationCache(
       outputProvider = outputProvider,
@@ -170,6 +183,7 @@ internal suspend fun generatePluginDependencies(
     )
     val slotOverrides = mapOf<DataSlot<*>, Any>(
       Slots.CONTENT_MODULE to ContentModuleOutput(files = allContentModuleResults),
+      Slots.CONTENT_MODULE_PLAN to ContentModuleDependencyPlanOutput(deduplicatedPlans),
     )
     val pluginErrors = runValidationRule(
       PluginContentDependencyValidator,
@@ -187,6 +201,16 @@ internal suspend fun generatePluginDependencies(
   }
 }
 
+private data class PlannedContentModuleResult(
+  val plan: ContentModuleDependencyPlan,
+  val result: DependencyFileResult,
+)
+
+private data class PluginDependencyGenerationOutput(
+  val fileResult: PluginDependencyFileResult,
+  val contentModulePlans: List<ContentModuleDependencyPlan>,
+)
+
 // ========== Private helpers ==========
 
 private suspend fun generatePluginDependency(
@@ -198,9 +222,9 @@ private suspend fun generatePluginDependency(
   descriptorCache: ModuleDescriptorCache,
   suppressionConfig: SuppressionConfig,
   strategy: FileUpdateStrategy,
-  contentModuleCache: AsyncCache<String, DependencyFileResult?>,
+  contentModuleCache: AsyncCache<String, PlannedContentModuleResult?>,
   testContentModuleCache: AsyncCache<String, DependencyFileResult?>,
-): PluginDependencyFileResult? {
+): PluginDependencyGenerationOutput? {
   val info = pluginContentCache.getOrExtract(pluginModuleName) ?: return null
   val isTestPlugin = graphDeps.isTest
 
@@ -226,25 +250,28 @@ private suspend fun generatePluginDependency(
   )
 
   val contentModuleResults = mutableListOf<DependencyFileResult>()
+  val contentModulePlans = mutableListOf<ContentModuleDependencyPlan>()
   for (module in info.contentModules) {
     val contentModuleName = module.name.value
     val isTestModule = contentModuleName.endsWith("._test")
 
     // Use production function for content module dependency generation
     // Tests pass through their SuppressionConfig (same as production)
-    val prodResult = contentModuleCache.getOrPut(contentModuleName) {
-      generateContentModuleDependenciesWithBothSets(
+    val planned = contentModuleCache.getOrPut(contentModuleName) {
+      val generation = planContentModuleDependenciesWithBothSets(
         contentModuleName = module.name,
         descriptorCache = descriptorCache,
         pluginGraph = graph,
         isTestDescriptor = isTestModule,
         suppressionConfig = effectiveConfig,
-        strategy = strategy,
         libraryModuleFilter = { true },
-      ).result
+      )
+      val plan = generation.plan ?: return@getOrPut null
+      PlannedContentModuleResult(plan = plan, result = writeContentModulePlan(plan, strategy))
     }
-    if (prodResult != null) {
-      contentModuleResults.add(prodResult)
+    if (planned != null) {
+      contentModuleResults.add(planned.result)
+      contentModulePlans.add(planned.plan)
     }
 
     if (!isTestModule) {
@@ -279,12 +306,53 @@ private suspend fun generatePluginDependency(
     }
   }
 
-  return PluginDependencyFileResult(
-    pluginContentModuleName = ContentModuleName(pluginModuleName.value),
-    pluginXmlPath = info.pluginXmlPath,
+  return PluginDependencyGenerationOutput(
+    fileResult = PluginDependencyFileResult(
+      pluginContentModuleName = ContentModuleName(pluginModuleName.value),
+      pluginXmlPath = info.pluginXmlPath,
+      status = status,
+      dependencyCount = deps.moduleDependencies.size + deps.pluginDependencies.size,
+      contentModuleResults = contentModuleResults,
+    ),
+    contentModulePlans = contentModulePlans,
+  )
+}
+
+private fun writeContentModulePlan(plan: ContentModuleDependencyPlan, strategy: FileUpdateStrategy): DependencyFileResult {
+  if (plan.suppressibleError?.category == ErrorCategory.NON_STANDARD_DESCRIPTOR_ROOT) {
+    return DependencyFileResult(
+      contentModuleName = plan.contentModuleName,
+      descriptorPath = plan.descriptorPath,
+      status = FileChangeStatus.UNCHANGED,
+      writtenDependencies = emptyList(),
+      testDependencies = emptyList(),
+      existingXmlModuleDependencies = emptySet(),
+      writtenPluginDependencies = emptyList(),
+      allJpsPluginDependencies = emptySet(),
+      suppressionUsages = emptyList(),
+    )
+  }
+
+  val status = updateXmlDependencies(
+    path = plan.descriptorPath,
+    content = plan.descriptorContent,
+    moduleDependencies = plan.moduleDependencies.map { it.value },
+    pluginDependencies = plan.pluginDependencies.map { it.value },
+    preserveExistingModule = { moduleName -> plan.suppressedModules.contains(ContentModuleName(moduleName)) },
+    preserveExistingPlugin = { pluginName -> plan.suppressedPlugins.contains(PluginId(pluginName)) },
+    strategy = strategy,
+  )
+
+  return DependencyFileResult(
+    contentModuleName = plan.contentModuleName,
+    descriptorPath = plan.descriptorPath,
     status = status,
-    dependencyCount = deps.moduleDependencies.size + deps.pluginDependencies.size,
-    contentModuleResults = contentModuleResults,
+    writtenDependencies = plan.moduleDependencies,
+    testDependencies = plan.testDependencies,
+    existingXmlModuleDependencies = plan.existingXmlModuleDependencies,
+    writtenPluginDependencies = plan.writtenPluginDependencies,
+    allJpsPluginDependencies = plan.allJpsPluginDependencies,
+    suppressionUsages = plan.suppressionUsages,
   )
 }
 

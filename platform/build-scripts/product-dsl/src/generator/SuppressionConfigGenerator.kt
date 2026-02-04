@@ -60,8 +60,8 @@ internal object SuppressionConfigGenerator : PipelineNode {
   override val produces: Set<DataSlot<*>> get() = setOf(Slots.SUPPRESSION_CONFIG)
   override val requires: Set<DataSlot<*>> get() = setOf(
     Slots.PRODUCT_MODULE_DEPS,
-    Slots.CONTENT_MODULE,
-    Slots.PLUGIN_XML,
+    Slots.CONTENT_MODULE_PLAN,
+    Slots.PLUGIN_DEPENDENCY_PLAN,
     Slots.LIBRARY_SUPPRESSIONS,
     Slots.TEST_LIBRARY_SCOPE_SUPPRESSIONS,
   )
@@ -73,10 +73,10 @@ internal object SuppressionConfigGenerator : PipelineNode {
     // Collect ALL suppression usages from all generators and validators
     val allUsages = ArrayList<SuppressionUsage>()
 
-    // From content module dependency generator
-    val contentModuleOutput = ctx.get(Slots.CONTENT_MODULE)
-    for (file in contentModuleOutput.files) {
-      allUsages.addAll(file.suppressionUsages)
+    // From content module dependency planner
+    val contentModulePlans = ctx.get(Slots.CONTENT_MODULE_PLAN)
+    for (plan in contentModulePlans.plans) {
+      allUsages.addAll(plan.suppressionUsages)
     }
 
     // From product module dependency generator (module sets)
@@ -85,33 +85,33 @@ internal object SuppressionConfigGenerator : PipelineNode {
       allUsages.addAll(file.suppressionUsages)
     }
 
-    // From plugin.xml dependency generator
-    val pluginXmlOutput = ctx.get(Slots.PLUGIN_XML)
-    for (result in pluginXmlOutput.detailedResults) {
-      allUsages.addAll(result.suppressionUsages)
+    // From plugin.xml dependency planner
+    val pluginDependencyPlans = ctx.get(Slots.PLUGIN_DEPENDENCY_PLAN)
+    for (plan in pluginDependencyPlans.plans) {
+      allUsages.addAll(plan.suppressionUsages)
     }
 
     // From validators
     allUsages.addAll(ctx.get(Slots.LIBRARY_SUPPRESSIONS))
     allUsages.addAll(ctx.get(Slots.TEST_LIBRARY_SCOPE_SUPPRESSIONS))
 
-    // From DSL test plugin dependency traversal
+    // From DSL test plugin auto-add suppressions
     allUsages.addAll(model.dslTestPluginSuppressionUsages)
 
     if (model.updateSuppressions) {
       val usageByType = allUsages.groupingBy { it.type }.eachCount()
       debug("suppressions") {
-        "updateSuppressions: usages=${allUsages.size} byType=$usageByType contentModules=${contentModuleOutput.files.size} pluginXmls=${pluginXmlOutput.detailedResults.size}"
+        "updateSuppressions: usages=${allUsages.size} byType=$usageByType contentModules=${contentModulePlans.plans.size} pluginXmls=${pluginDependencyPlans.plans.size}"
       }
     }
 
     // Extract scope from generator outputs - these are the modules processed in this run
-    val processedContentModules = contentModuleOutput.files.mapTo(HashSet()) { it.contentModuleName }
+    val processedContentModules = contentModulePlans.plans.mapTo(HashSet()) { it.contentModuleName }
     processedContentModules.addAll(productModuleOutput.files.map { it.contentModuleName })
-    val processedPluginModules = pluginXmlOutput.detailedResults.mapTo(HashSet()) { it.pluginContentModuleName }
+    val processedPluginModules = pluginDependencyPlans.plans.mapTo(HashSet()) { it.pluginContentModuleName }
 
     // Build suppression config from usages (single source of truth - no preservation of stale entries)
-    val (contentModules, plugins) = buildSuppressionsFromUsages(allUsages)
+    val suppressionMaps = buildSuppressionsFromUsages(allUsages)
 
     // Handle suppressedErrors (error key suppressions)
     val contentModuleErrors = ctx.get(ErrorSlot(NodeIds.CONTENT_MODULE_DEPS))
@@ -124,7 +124,7 @@ internal object SuppressionConfigGenerator : PipelineNode {
 
     val missingPluginIdPlugins = collectMissingPluginIdPlugins(pluginXmlErrors)
     val mergedPlugins = mergeMissingPluginIdSuppressions(
-      basePlugins = plugins,
+      basePlugins = suppressionMaps.plugins,
       existingConfig = existingConfig,
       missingPluginIdPlugins = missingPluginIdPlugins,
       processedPluginModules = processedPluginModules,
@@ -142,7 +142,7 @@ internal object SuppressionConfigGenerator : PipelineNode {
 
     // Build new config
     val newConfig = SuppressionConfig(
-      contentModules = contentModules,
+      contentModules = suppressionMaps.contentModules,
       plugins = mergedPlugins,
       validationExceptions = existingConfig.validationExceptions,
       suppressedErrors = filteredSuppressedErrors,
@@ -161,10 +161,10 @@ internal object SuppressionConfigGenerator : PipelineNode {
       }
     }
 
-    val moduleCount = contentModules.size + plugins.size
-    val suppressionCount = contentModules.values.sumOf {
+    val moduleCount = suppressionMaps.contentModules.size + mergedPlugins.size
+    val suppressionCount = suppressionMaps.contentModules.values.sumOf {
       it.suppressModules.size + it.suppressPlugins.size + it.suppressLibraries.size + it.suppressTestLibraryScope.size
-    } + plugins.values.sumOf { it.suppressModules.size + it.suppressPlugins.size }
+    } + mergedPlugins.values.sumOf { it.suppressModules.size + it.suppressPlugins.size }
 
     ctx.publish(Slots.SUPPRESSION_CONFIG, SuppressionConfigOutput(
       moduleCount = moduleCount,
@@ -180,9 +180,14 @@ internal object SuppressionConfigGenerator : PipelineNode {
  *
  * Groups usages by source module and type, then builds the appropriate suppression objects.
  */
+private data class SuppressionMaps(
+  val contentModules: Map<ContentModuleName, ContentModuleSuppression>,
+  val plugins: Map<ContentModuleName, PluginSuppression>,
+)
+
 private fun buildSuppressionsFromUsages(
   usages: List<SuppressionUsage>,
-): Pair<Map<ContentModuleName, ContentModuleSuppression>, Map<ContentModuleName, PluginSuppression>> {
+): SuppressionMaps {
   // Group by (sourceModule, type)
   val byModuleAndType = usages.groupBy { it.sourceModule to it.type }
 
@@ -238,7 +243,10 @@ private fun buildSuppressionsFromUsages(
     }
   }
 
-  return contentModules to plugins
+  return SuppressionMaps(
+    contentModules = contentModules,
+    plugins = plugins,
+  )
 }
 
 private val CONTENT_MODULE_TYPES = setOf(

@@ -14,8 +14,8 @@ import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 
 /**
  * Interface for plugin content retrieval with on-demand discovery support.
- * Used by [org.jetbrains.intellij.build.productLayout.generator.PluginXmlDependencyGenerator] and
- * [org.jetbrains.intellij.build.productLayout.generator.ContentModuleDependencyGenerator] to resolve plugin dependencies.
+ * Used by [org.jetbrains.intellij.build.productLayout.generator.PluginDependencyPlanner] and
+ * [org.jetbrains.intellij.build.productLayout.generator.ContentModuleDependencyPlanner] to resolve plugin dependencies.
  *
  * @see PluginContentCache for production implementation
  */

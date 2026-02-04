@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.productLayout.validator
 
 import com.intellij.platform.pluginGraph.PluginId
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.productLayout.TestFailureLogger
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 @ExtendWith(TestFailureLogger::class)
 class PluginDescriptorIdConflictValidatorTest {
   @Test
-  fun `reports conflicts between production and test descriptor ids`() {
+  fun `reports conflicts between production and test descriptor ids`(): Unit = runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
       product("IDEA") {
         bundlesPlugin("prod.plugin")
@@ -32,7 +33,7 @@ class PluginDescriptorIdConflictValidatorTest {
     }
 
     val model = testGenerationModel(graph)
-    val errors = runBlocking { runValidationRule(PluginDescriptorIdConflictValidator, model) }
+    val errors = runValidationRule(PluginDescriptorIdConflictValidator, model)
 
     val conflictErrors = errors.filterIsInstance<PluginDescriptorIdConflictError>()
     assertThat(conflictErrors).hasSize(1)
@@ -45,7 +46,7 @@ class PluginDescriptorIdConflictValidatorTest {
   }
 
   @Test
-  fun `ignores distinct production and test descriptor ids`() {
+  fun `ignores distinct production and test descriptor ids`(): Unit = runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
       product("IDEA") {
         bundlesPlugin("prod.plugin")
@@ -62,7 +63,7 @@ class PluginDescriptorIdConflictValidatorTest {
     }
 
     val model = testGenerationModel(graph)
-    val errors = runBlocking { runValidationRule(PluginDescriptorIdConflictValidator, model) }
+    val errors = runValidationRule(PluginDescriptorIdConflictValidator, model)
 
     assertThat(errors).isEmpty()
   }

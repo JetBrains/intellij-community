@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.productLayout.validator
 
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.productLayout.TestFailureLogger
@@ -19,7 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 @ExtendWith(TestFailureLogger::class)
 class PluginContentStructureValidatorTest {
   @Test
-  fun `test plugin structural violations include test content modules`() {
+  fun `test plugin structural violations include test content modules`(): Unit = runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
       product("IDEA") {
         bundlesTestPlugin("test.plugin")
@@ -36,7 +37,7 @@ class PluginContentStructureValidatorTest {
     }
 
     val model = testGenerationModel(graph)
-    val errors = runBlocking { runValidationRule(PluginContentStructureValidator, model) }
+    val errors = runValidationRule(PluginContentStructureValidator, model)
 
     assertThat(errors).hasSize(1)
     val error = errors[0] as PluginDependencyError
@@ -46,7 +47,7 @@ class PluginContentStructureValidatorTest {
   }
 
   @Test
-  fun `test plugin structural violations include production edges`() {
+  fun `test plugin structural violations include production edges`(): Unit = runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
       product("IDEA") {
         bundlesTestPlugin("test.plugin")
@@ -59,7 +60,7 @@ class PluginContentStructureValidatorTest {
     }
 
     val model = testGenerationModel(graph)
-    val errors = runBlocking { runValidationRule(PluginContentStructureValidator, model) }
+    val errors = runValidationRule(PluginContentStructureValidator, model)
 
     assertThat(errors).hasSize(1)
     val error = errors[0] as PluginDependencyError

@@ -17,6 +17,7 @@ suspend fun buildPluginGraphForJson(config: ModuleSetGenerationConfig): PluginGr
       config = config,
       scope = this,
       updateSuppressions = false,
+      commitChanges = false,
       errorSink = errorSink,
     )
     model.pluginGraph

@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.productLayout.validator
 
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions
 import org.jetbrains.intellij.build.productLayout.TestFailureLogger
@@ -24,7 +25,7 @@ class ContentModuleDependencyValidatorTest {
   @Nested
   inner class MissingDependenciesTest {
     @Test
-    fun `reports missing transitive dependency for critical plugin module`() {
+    fun `reports missing transitive dependency for critical plugin module`(): Unit = runBlocking(Dispatchers.Default) {
       // plugin.module (EMBEDDED) -> dep.module -> missing.module
       val graph = pluginGraph {
           product("IDEA") {
@@ -40,7 +41,7 @@ class ContentModuleDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ContentModuleDependencyValidator, model) }
+      val errors = runValidationRule(ContentModuleDependencyValidator, model)
 
       Assertions.assertThat(errors).hasSize(1)
       Assertions.assertThat(errors[0]).isInstanceOf(MissingDependenciesError::class.java)
@@ -49,7 +50,7 @@ class ContentModuleDependencyValidatorTest {
     }
 
     @Test
-    fun `no error when dependency is available in module set`() {
+    fun `no error when dependency is available in module set`(): Unit = runBlocking(Dispatchers.Default) {
       // plugin.module -> available.module (in module set)
       val graph = pluginGraph {
           product("IDEA") {
@@ -67,13 +68,13 @@ class ContentModuleDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ContentModuleDependencyValidator, model) }
+      val errors = runValidationRule(ContentModuleDependencyValidator, model)
 
       Assertions.assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `no error when dependency is in same plugin`() {
+    fun `no error when dependency is in same plugin`(): Unit = runBlocking(Dispatchers.Default) {
       // plugin.module.a -> plugin.module.b (both in same plugin)
       val graph = pluginGraph {
           product("IDEA") {
@@ -88,13 +89,13 @@ class ContentModuleDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ContentModuleDependencyValidator, model) }
+      val errors = runValidationRule(ContentModuleDependencyValidator, model)
 
       Assertions.assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `no error for non-critical module with globally available dep`() {
+    fun `no error for non-critical module with globally available dep`(): Unit = runBlocking(Dispatchers.Default) {
       // plugin.module (OPTIONAL) -> global.module (declared as content in another plugin, not bundled by IDEA)
       val graph = pluginGraph {
           product("IDEA") {
@@ -114,13 +115,13 @@ class ContentModuleDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ContentModuleDependencyValidator, model) }
+      val errors = runValidationRule(ContentModuleDependencyValidator, model)
 
       Assertions.assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `test dependencies do not leak into production validation`() {
+    fun `test dependencies do not leak into production validation`(): Unit = runBlocking(Dispatchers.Default) {
       // Scenario: intellij.platform.lang has a TEST scope dep on hamcrest in IML
       // Production validation should NOT report hamcrest as missing
       val graph = pluginGraph {
@@ -144,14 +145,14 @@ class ContentModuleDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ContentModuleDependencyValidator, model) }
+      val errors = runValidationRule(ContentModuleDependencyValidator, model)
 
       // No error - hamcrest is only in test edges, production validation ignores it
       Assertions.assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `respects allowedMissingDependencies`() {
+    fun `respects allowedMissingDependencies`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
           product("IDEA") {
               bundlesPlugin("my.plugin")
@@ -164,25 +165,25 @@ class ContentModuleDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ContentModuleDependencyValidator, model) }
+      val errors = runValidationRule(ContentModuleDependencyValidator, model)
 
       Assertions.assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `empty when no bundled plugins`() {
+    fun `empty when no bundled plugins`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
           product("IDEA")
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ContentModuleDependencyValidator, model) }
+      val errors = runValidationRule(ContentModuleDependencyValidator, model)
 
       Assertions.assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `handles content module available in multiple plugins`() {
+    fun `handles content module available in multiple plugins`(): Unit = runBlocking(Dispatchers.Default) {
       // shared.module is content in both plugin.a and plugin.b with different loading modes.
       // It should be validated once (deduplicated), and treated as critical if ANY plugin has it EMBEDDED/REQUIRED.
       val graph = pluginGraph {
@@ -204,14 +205,14 @@ class ContentModuleDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ContentModuleDependencyValidator, model) }
+      val errors = runValidationRule(ContentModuleDependencyValidator, model)
 
       // No error - available.dep is in plugin.a's content
       Assertions.assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `critical loading mode from any plugin makes module critical`() {
+    fun `critical loading mode from any plugin makes module critical`(): Unit = runBlocking(Dispatchers.Default) {
       // shared.module is OPTIONAL in plugin.a but EMBEDDED in plugin.b
       // The module should be treated as critical (EMBEDDED wins)
       val graph = pluginGraph {
@@ -230,7 +231,7 @@ class ContentModuleDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ContentModuleDependencyValidator, model) }
+      val errors = runValidationRule(ContentModuleDependencyValidator, model)
 
       // Error expected - missing.dep is not available in product and shared.module is critical
       Assertions.assertThat(errors).hasSize(1)
@@ -243,7 +244,7 @@ class ContentModuleDependencyValidatorTest {
   @Nested
   inner class MultiPluginLoadingModeCombinationsTest {
     @Test
-    fun `OPTIONAL in all plugins - missing global dep is OK`() {
+    fun `OPTIONAL in all plugins - missing global dep is OK`(): Unit = runBlocking(Dispatchers.Default) {
       // Module is OPTIONAL in both plugins - global dep (declared as content elsewhere) is acceptable
       val graph = pluginGraph {
           product("IDEA") {
@@ -266,12 +267,12 @@ class ContentModuleDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ContentModuleDependencyValidator, model) }
+      val errors = runValidationRule(ContentModuleDependencyValidator, model)
       Assertions.assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `ON_DEMAND in all plugins - missing global dep is OK`() {
+    fun `ON_DEMAND in all plugins - missing global dep is OK`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
           product("IDEA") {
               bundlesPlugin("plugin.a")
@@ -293,12 +294,12 @@ class ContentModuleDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ContentModuleDependencyValidator, model) }
+      val errors = runValidationRule(ContentModuleDependencyValidator, model)
       Assertions.assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `REQUIRED in one plugin makes module critical`() {
+    fun `REQUIRED in one plugin makes module critical`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
           product("IDEA") {
               bundlesPlugin("plugin.a")
@@ -314,7 +315,7 @@ class ContentModuleDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ContentModuleDependencyValidator, model) }
+      val errors = runValidationRule(ContentModuleDependencyValidator, model)
 
       Assertions.assertThat(errors).hasSize(1)
       val error = errors[0] as MissingDependenciesError
@@ -322,7 +323,7 @@ class ContentModuleDependencyValidatorTest {
     }
 
     @Test
-    fun `EMBEDDED in one plugin makes module critical`() {
+    fun `EMBEDDED in one plugin makes module critical`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
           product("IDEA") {
               bundlesPlugin("plugin.a")
@@ -342,7 +343,7 @@ class ContentModuleDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ContentModuleDependencyValidator, model) }
+      val errors = runValidationRule(ContentModuleDependencyValidator, model)
 
       Assertions.assertThat(errors).hasSize(1)
       val error = errors[0] as MissingDependenciesError
@@ -350,7 +351,7 @@ class ContentModuleDependencyValidatorTest {
     }
 
     @Test
-    fun `dependency satisfied by another plugin content`() {
+    fun `dependency satisfied by another plugin content`(): Unit = runBlocking(Dispatchers.Default) {
       // shared.module depends on dep.module, which is content of plugin.b
       val graph = pluginGraph {
           product("IDEA") {
@@ -368,14 +369,14 @@ class ContentModuleDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ContentModuleDependencyValidator, model) }
+      val errors = runValidationRule(ContentModuleDependencyValidator, model)
 
       // No error - dep.module is available in plugin.b
       Assertions.assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `mixed loading modes across three plugins`() {
+    fun `mixed loading modes across three plugins`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
           product("IDEA") {
               bundlesPlugin("plugin.a")
@@ -405,14 +406,14 @@ class ContentModuleDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ContentModuleDependencyValidator, model) }
+      val errors = runValidationRule(ContentModuleDependencyValidator, model)
 
       // No errors - all deps satisfied via module set
       Assertions.assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `module in multiple plugins with transitive deps`() {
+    fun `module in multiple plugins with transitive deps`(): Unit = runBlocking(Dispatchers.Default) {
       // shared.module -> dep.a -> dep.b (transitive chain)
       val graph = pluginGraph {
           product("IDEA") {
@@ -432,7 +433,7 @@ class ContentModuleDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ContentModuleDependencyValidator, model) }
+      val errors = runValidationRule(ContentModuleDependencyValidator, model)
 
       // No errors - all transitive deps available in plugin.a
       Assertions.assertThat(errors).isEmpty()
@@ -450,7 +451,7 @@ class ContentModuleDependencyValidatorTest {
   @Nested
   inner class SlashNotationModuleTest {
     @Test
-    fun `slash-notation module as content is valid`() {
+    fun `slash-notation module as content is valid`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
           product("IDEA") {
               bundlesPlugin("intellij.restClient")
@@ -461,13 +462,13 @@ class ContentModuleDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ContentModuleDependencyValidator, model) }
+      val errors = runValidationRule(ContentModuleDependencyValidator, model)
 
       Assertions.assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `dependency on slash-notation module resolves correctly`() {
+    fun `dependency on slash-notation module resolves correctly`(): Unit = runBlocking(Dispatchers.Default) {
       // regular.module depends on intellij.restClient/intelliLang
       val graph = pluginGraph {
           product("IDEA") {
@@ -484,14 +485,14 @@ class ContentModuleDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ContentModuleDependencyValidator, model) }
+      val errors = runValidationRule(ContentModuleDependencyValidator, model)
 
       // No error - slash-notation module is available as content in intellij.restClient
       Assertions.assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `slash-notation module with dependencies validates correctly`() {
+    fun `slash-notation module with dependencies validates correctly`(): Unit = runBlocking(Dispatchers.Default) {
       // intellij.restClient/intelliLang depends on some.dep
       val graph = pluginGraph {
           product("IDEA") {
@@ -508,14 +509,14 @@ class ContentModuleDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ContentModuleDependencyValidator, model) }
+      val errors = runValidationRule(ContentModuleDependencyValidator, model)
 
       // No error - some.dep is available in module set
       Assertions.assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `missing dependency for slash-notation module is reported`() {
+    fun `missing dependency for slash-notation module is reported`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
           product("IDEA") {
               bundlesPlugin("intellij.restClient")
@@ -527,7 +528,7 @@ class ContentModuleDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ContentModuleDependencyValidator, model) }
+      val errors = runValidationRule(ContentModuleDependencyValidator, model)
 
       Assertions.assertThat(errors).hasSize(1)
       Assertions.assertThat(errors[0]).isInstanceOf(MissingDependenciesError::class.java)
@@ -536,7 +537,7 @@ class ContentModuleDependencyValidatorTest {
     }
 
     @Test
-    fun `multiple slash-notation modules in same plugin`() {
+    fun `multiple slash-notation modules in same plugin`(): Unit = runBlocking(Dispatchers.Default) {
       val graph = pluginGraph {
           product("IDEA") {
               bundlesPlugin("intellij.restClient")
@@ -550,14 +551,14 @@ class ContentModuleDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ContentModuleDependencyValidator, model) }
+      val errors = runValidationRule(ContentModuleDependencyValidator, model)
 
       // No error - both are content in same plugin
       Assertions.assertThat(errors).isEmpty()
     }
 
     @Test
-    fun `slash-notation module not bundled causes missing dependency error`() {
+    fun `slash-notation module not bundled causes missing dependency error`(): Unit = runBlocking(Dispatchers.Default) {
       // regular.module depends on intellij.restClient/intelliLang, but intellij.restClient is not bundled
       val graph = pluginGraph {
           product("IDEA") {
@@ -574,7 +575,7 @@ class ContentModuleDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ContentModuleDependencyValidator, model) }
+      val errors = runValidationRule(ContentModuleDependencyValidator, model)
 
       // Error - slash-notation module is globally available (has content source) but not in product
       // For REQUIRED loading mode, this should report missing dependency
@@ -583,7 +584,7 @@ class ContentModuleDependencyValidatorTest {
     }
 
     @Test
-    fun `OPTIONAL module can depend on globally available slash-notation module`() {
+    fun `OPTIONAL module can depend on globally available slash-notation module`(): Unit = runBlocking(Dispatchers.Default) {
       // OPTIONAL regular.module depends on intellij.restClient/intelliLang which is not bundled but exists globally
       val graph = pluginGraph {
           product("IDEA") {
@@ -601,7 +602,7 @@ class ContentModuleDependencyValidatorTest {
       }
 
       val model = testGenerationModel(graph)
-      val errors = runBlocking { runValidationRule(ContentModuleDependencyValidator, model) }
+      val errors = runValidationRule(ContentModuleDependencyValidator, model)
 
       // No error - OPTIONAL modules can depend on globally available modules
       Assertions.assertThat(errors).isEmpty()

@@ -10,11 +10,10 @@ import org.jetbrains.intellij.build.productLayout.TestFailureLogger
 import org.jetbrains.intellij.build.productLayout.dependency.pluginGraph
 import org.jetbrains.intellij.build.productLayout.dependency.runValidationRule
 import org.jetbrains.intellij.build.productLayout.dependency.testGenerationModel
+import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlan
+import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPlanOutput
 import org.jetbrains.intellij.build.productLayout.model.error.MissingContentModulePluginDependencyError
-import org.jetbrains.intellij.build.productLayout.pipeline.ContentModuleOutput
 import org.jetbrains.intellij.build.productLayout.pipeline.Slots
-import org.jetbrains.intellij.build.productLayout.stats.DependencyFileResult
-import org.jetbrains.intellij.build.productLayout.stats.FileChangeStatus
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.nio.file.Path
@@ -22,7 +21,7 @@ import java.nio.file.Path
 @ExtendWith(TestFailureLogger::class)
 class ContentModulePluginDependencyValidatorTest {
   @Test
-  fun `missing plugin dependency in XML reports error`() {
+  fun `missing plugin dependency in XML reports error`(): Unit = runBlocking {
     val graph = pluginGraph {
       plugin("owner.plugin") {
         pluginId("owner.plugin")
@@ -33,20 +32,18 @@ class ContentModulePluginDependencyValidatorTest {
       }
     }
 
-    val result = contentModuleResult(
+    val plan = contentModulePlan(
       moduleName = "owner.content",
       writtenPluginDependencies = emptyList(),
       allJpsPluginDependencies = setOf(PluginId("dep.plugin")),
     )
 
     val model = testGenerationModel(graph)
-    val errors = runBlocking {
-      runValidationRule(
-        ContentModulePluginDependencyValidator,
-        model,
-        slotOverrides = mapOf(Slots.CONTENT_MODULE to ContentModuleOutput(files = listOf(result))),
-      )
-    }
+    val errors = runValidationRule(
+      ContentModulePluginDependencyValidator,
+      model,
+      slotOverrides = mapOf(Slots.CONTENT_MODULE_PLAN to ContentModuleDependencyPlanOutput(plans = listOf(plan))),
+    )
 
     val missingErrors = errors.filterIsInstance<MissingContentModulePluginDependencyError>()
     assertThat(missingErrors).hasSize(1)
@@ -54,7 +51,7 @@ class ContentModulePluginDependencyValidatorTest {
   }
 
   @Test
-  fun `containing plugin dependency is ignored`() {
+  fun `containing plugin dependency is ignored`(): Unit = runBlocking {
     val contentModuleName = "owner.content.alt"
     val graph = pluginGraph {
       plugin("owner.plugin") {
@@ -63,36 +60,41 @@ class ContentModulePluginDependencyValidatorTest {
       }
     }
 
-    val result = contentModuleResult(
+    val plan = contentModulePlan(
       moduleName = contentModuleName,
       writtenPluginDependencies = emptyList(),
       allJpsPluginDependencies = setOf(PluginId("owner.plugin")),
     )
 
     val model = testGenerationModel(graph)
-    val errors = runBlocking {
-      runValidationRule(
-        ContentModulePluginDependencyValidator,
-        model,
-        slotOverrides = mapOf(Slots.CONTENT_MODULE to ContentModuleOutput(files = listOf(result))),
-      )
-    }
+    val errors = runValidationRule(
+      ContentModulePluginDependencyValidator,
+      model,
+      slotOverrides = mapOf(Slots.CONTENT_MODULE_PLAN to ContentModuleDependencyPlanOutput(plans = listOf(plan))),
+    )
 
     assertThat(errors).isEmpty()
   }
 
-  private fun contentModuleResult(
+  private fun contentModulePlan(
     moduleName: String,
     writtenPluginDependencies: List<PluginId>,
     allJpsPluginDependencies: Set<PluginId>,
-  ): DependencyFileResult {
-    return DependencyFileResult(
+  ): ContentModuleDependencyPlan {
+    return ContentModuleDependencyPlan(
       contentModuleName = ContentModuleName(moduleName),
       descriptorPath = Path.of("$moduleName.xml").toAbsolutePath(),
-      status = FileChangeStatus.UNCHANGED,
-      writtenDependencies = emptyList(),
+      descriptorContent = "",
+      moduleDependencies = emptyList(),
+      pluginDependencies = emptyList(),
+      testDependencies = emptyList(),
+      existingXmlModuleDependencies = emptySet(),
+      existingXmlPluginDependencies = emptySet(),
       writtenPluginDependencies = writtenPluginDependencies,
       allJpsPluginDependencies = allJpsPluginDependencies,
+      suppressedModules = emptySet(),
+      suppressedPlugins = emptySet(),
+      suppressionUsages = emptyList(),
     )
   }
 }

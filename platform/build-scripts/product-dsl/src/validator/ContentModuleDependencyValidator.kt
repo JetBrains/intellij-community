@@ -6,8 +6,6 @@ package org.jetbrains.intellij.build.productLayout.validator
 import com.intellij.platform.pluginGraph.ContentModuleNode
 import com.intellij.platform.pluginGraph.PluginGraph
 import com.intellij.platform.pluginGraph.ProductNode
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.intellij.build.productLayout.model.error.MissingDependenciesError
 import org.jetbrains.intellij.build.productLayout.model.error.ValidationError
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
@@ -20,7 +18,7 @@ import org.jetbrains.intellij.build.productLayout.pipeline.Slots
  * Content module dependency validation for bundled plugins.
  *
  * Purpose: Ensure dependencies of plugin content modules resolve per-product and globally for non-critical modules.
- * Inputs: `Slots.CONTENT_MODULE` (ContentModuleDependencyGenerator), plugin graph, product allowMissing dependencies.
+ * Inputs: `Slots.CONTENT_MODULE_PLAN` (ContentModuleDependencyPlanner), plugin graph, product allowMissing dependencies.
  * Output: `MissingDependenciesError`.
  * Auto-fix: none.
  *
@@ -30,20 +28,14 @@ import org.jetbrains.intellij.build.productLayout.pipeline.Slots
 internal object ContentModuleDependencyValidator : PipelineNode {
   override val id get() = NodeIds.PLUGIN_CONTENT_MODULE_VALIDATION
 
-  // Requires CONTENT_MODULE to ensure ContentModuleDependencyGenerator has populated the graph
+  // Requires CONTENT_MODULE_PLAN to ensure ContentModuleDependencyPlanner has populated the graph
   // with module dependency edges before this validation runs.
-  override val requires: Set<DataSlot<*>> get() = setOf(Slots.CONTENT_MODULE)
+  override val requires: Set<DataSlot<*>> get() = setOf(Slots.CONTENT_MODULE_PLAN)
 
   override suspend fun execute(ctx: ComputeContext) {
     val model = ctx.model
-    coroutineScope {
-      model.pluginGraph.query {
-        products { product ->
-          launch {
-            ctx.emitErrors(validatePluginContentModulesForProduct(product, model.pluginGraph))
-          }
-        }
-      }
+    ctx.emitErrorsPerProduct(model.pluginGraph) { product ->
+      validatePluginContentModulesForProduct(product, model.pluginGraph)
     }
   }
 }

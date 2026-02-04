@@ -19,7 +19,7 @@ import org.jetbrains.intellij.build.productLayout.pipeline.Slots
  * Self-contained module set validation.
  *
  * Purpose: Ensure selfContained module sets have all transitive deps within the set hierarchy.
- * Inputs: `Slots.CONTENT_MODULE`, plugin graph.
+ * Inputs: `Slots.CONTENT_MODULE_PLAN`, plugin graph.
  * Output: `SelfContainedValidationError`.
  * Auto-fix: none.
  *
@@ -28,7 +28,7 @@ import org.jetbrains.intellij.build.productLayout.pipeline.Slots
  */
 internal object SelfContainedModuleSetValidator : PipelineNode {
   override val id get() = NodeIds.SELF_CONTAINED_VALIDATION
-  override val requires: Set<DataSlot<*>> get() = setOf(Slots.CONTENT_MODULE)
+  override val requires: Set<DataSlot<*>> get() = setOf(Slots.CONTENT_MODULE_PLAN)
 
   override suspend fun execute(ctx: ComputeContext) {
     val model = ctx.model

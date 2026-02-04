@@ -50,8 +50,8 @@ Validation behavior is specified in [docs/validators/README.md](validators/READM
 
 **Key Functions**:
 - `PluginGraphBuilder.addJpsDependencies()` - stores ALL deps with scope as graph edges
-- `ContentModuleDependencyGenerator.computeJpsDeps()` - filters to production scopes
-- `PluginXmlDependencyGenerator.collectPluginGraphDeps()` + `filterPluginDependencies()` - plugin.xml filtering based on graph
+- `ContentModuleDependencyPlanner.computeJpsDeps()` - filters to production scopes
+- `collectPluginGraphDeps()` + `filterPluginDependencies()` (PluginDependencyPlanner) - plugin.xml filtering based on graph
 
 ### Why Exclude PROVIDED?
 
@@ -129,7 +129,7 @@ PluginContentDependencyValidator (PluginContentDependencyValidator.kt):
 | Plugin validation logic | `src/validator/PluginContentDependencyValidator.kt` |
 | Plugin structural validation | `src/validator/PluginContentStructureValidator.kt` |
 | Content module plugin dep validation | `src/validator/ContentModulePluginDependencyValidator.kt` |
-| Plugin generation orchestration | `src/dependency/PluginDependencyGenerator.kt` |
+| Plugin dependency planning + XML writing | `src/generator/ContentModuleDependencyGenerator.kt`, `src/generator/ContentModuleXmlWriter.kt`, `src/generator/PluginXmlDependencyGenerator.kt`, `src/generator/PluginXmlWriter.kt` |
 | Data models | `src/validation/ValidationModels.kt` |
 
 ### Content Module Plugin Dependency Validation
@@ -170,16 +170,24 @@ Generates dependencies for **product modules** (modules declared in module sets 
 
 **Files updated:** `{moduleName}.xml` in `META-INF/`
 
-### PluginDependencyGenerator.kt
+### ContentModuleDependencyPlanner + ContentModuleXmlWriter
 Generates dependencies for **plugin content modules** (modules declared in plugin.xml `<content>` sections).
 
 **Responsibilities:**
-- Processes `plugin.xml` - main plugin descriptor
-- Processes `{moduleName}.xml` - production content module descriptors
-- Processes `{moduleName}._test.xml` - test content module descriptors
+- Plans dependencies for production and test content modules (including `._test` modules)
+- Writes `{moduleName}.xml` and `{moduleName}._test.xml` descriptors
 - Handles content modules ending with `._test` (their `.xml` IS the test descriptor)
 
-**Files updated:** `plugin.xml`, content module XMLs, test descriptor XMLs
+**Files updated:** content module XMLs, test descriptor XMLs
+
+### PluginDependencyPlanner + PluginXmlWriter
+Generates dependencies for **plugin.xml** of plugin main modules.
+
+**Responsibilities:**
+- Processes `plugin.xml` - main plugin descriptor
+- Writes plugin-level dependency entries derived from graph/JPS deps
+
+**Files updated:** `plugin.xml`
 
 ### ModuleDescriptorCache.kt
 Async-safe caching layer for module descriptor information.
@@ -248,7 +256,7 @@ Test plugin validation: Checks EDGE_CONTENT_MODULE_DEPENDS_ON_TEST
 | Aspect | Module Descriptor Dependencies | Plugin Dependencies |
 |--------|-------------------------------|---------------------|
 | **Source** | Modules in module sets | Modules in plugin.xml `<content>` |
-| **Generator** | `ModuleDescriptorDependencyGenerator` | `PluginDependencyGenerator` |
+| **Generator** | `ModuleDescriptorDependencyGenerator` | `PluginDependencyPlanner` + `PluginXmlWriter` |
 | **Files updated** | `{moduleName}.xml` | `plugin.xml`, content module XMLs |
 | **Validation** | Full transitive validation | JPS dependencies with filtering |
 | **Configuration** | `includeDependencies=true` flag | Automatic for all content modules |
@@ -260,8 +268,8 @@ Plugin XML dependencies are generated only for plugins that have a main target i
 (real plugin modules extracted from disk or discovered via dependencies). Placeholder plugin-id
 nodes created only to model `<depends>` edges are skipped.
 
-DSL-defined plugins (`testPlugin {}`) are generated from Kotlin specs; `PluginXmlDependencyGenerator`
-does not update their plugin.xml files.
+DSL-defined plugins (`testPlugin {}`) are generated from Kotlin specs; `PluginXmlWriter`
+does not update their plugin.xml files (handled by `TestPluginXmlGenerator`).
 
 Dependencies are computed from the graph's JPS edges (production-runtime scopes only); plugin.xml
 content is read only to preserve manual entries and xi:include content.
@@ -301,7 +309,7 @@ dependencyFilter = { embeddedModules, moduleName, depName, isTest ->
 }
 ```
 
-**Important:** The `dependencyFilter` only applies to **plugin content modules** processed by `PluginDependencyGenerator`.
+**Important:** The `dependencyFilter` only applies to **plugin content modules** processed by `PluginDependencyPlanner`.
 It does NOT apply to **module set modules** (including library modules) processed by `ModuleDescriptorDependencyGenerator`.
 
 ### Implicit Dependencies Tracking
@@ -383,8 +391,8 @@ Content modules directly in products (via module sets) do NOT skip embedded deps
 
 The filtering is implemented in:
 - `EmbeddedModuleUtils.kt` - shared utility functions
-- `PluginXmlDependencyGenerator.collectPluginGraphDeps()` + `filterPluginDependencies()` - plugin.xml filtering
-- `ContentModuleDependencyGenerator.computeJpsDeps()` - content module filtering
+- `collectPluginGraphDeps()` + `filterPluginDependencies()` (PluginDependencyPlanner) - plugin.xml filtering
+- `ContentModuleDependencyPlanner.computeJpsDeps()` - content module filtering
 
 **Key functions:**
 ```kotlin

@@ -31,7 +31,7 @@ import java.nio.file.Path
  * Structural validation for plugin content modules.
  *
  * Purpose: Ensure loading-mode constraints are respected within a plugin.
- * Inputs: `Slots.CONTENT_MODULE`, plugin graph.
+ * Inputs: `Slots.CONTENT_MODULE_PLAN`, plugin graph.
  * Output: `PluginDependencyError` with structural violations only.
  * Auto-fix: Updates non-DSL plugin.xml loading for violations.
  *
@@ -41,8 +41,8 @@ import java.nio.file.Path
 internal object PluginContentStructureValidator : PipelineNode {
   override val id get() = NodeIds.PLUGIN_CONTENT_STRUCTURE_VALIDATION
 
-  // Requires CONTENT_MODULE to ensure graph has module dependency edges populated.
-  override val requires: Set<DataSlot<*>> get() = setOf(Slots.CONTENT_MODULE)
+  // Requires CONTENT_MODULE_PLAN to ensure graph has module dependency edges populated.
+  override val requires: Set<DataSlot<*>> get() = setOf(Slots.CONTENT_MODULE_PLAN)
 
   override suspend fun execute(ctx: ComputeContext) {
     val model = ctx.model
@@ -91,7 +91,7 @@ internal object PluginContentStructureValidator : PipelineNode {
         fixStructuralViolations(
           violations = violations,
           pluginContentInfo = pluginInfo,
-          strategy = model.fileUpdater,
+          strategy = model.xmlWritePolicy,
         )
         fixedPlugins.add(error.pluginName)
       }
@@ -121,34 +121,10 @@ private fun validatePluginContentStructure(
                                          (autoAddLoadingMode == ModuleLoadingRuleValue.OPTIONAL ||
                                           autoAddLoadingMode == ModuleLoadingRuleValue.ON_DEMAND)
 
-      val productionContentModules = LinkedHashSet<ContentModuleName>()
-      val testContentModules = LinkedHashSet<ContentModuleName>()
-      val loadingModes = LinkedHashMap<ContentModuleName, ModuleLoadingRuleValue?>()
-      val bundlingProducts = LinkedHashSet<String>()
-
-      plugin.containsContent { module, loading ->
-        val moduleName = module.contentName()
-        productionContentModules.add(moduleName)
-        loadingModes.put(moduleName, loading)
-      }
-      plugin.containsContentTest { module, loading ->
-        val moduleName = module.contentName()
-        testContentModules.add(moduleName)
-        loadingModes.put(moduleName, loading)
-      }
-      plugin.bundledByProducts { product ->
-        bundlingProducts.add(product.name())
-      }
-
-      val contentModulesForValidation = if (isTestPlugin) {
-        LinkedHashSet<ContentModuleName>().apply {
-          addAll(productionContentModules)
-          addAll(testContentModules)
-        }
-      }
-      else {
-        productionContentModules
-      }
+      val snapshot = collectPluginContentSnapshot(plugin)
+      val loadingModes = snapshot.loadingModes
+      val bundlingProducts = snapshot.bundlingProducts
+      val contentModulesForValidation = snapshot.contentModulesForValidation(isTestPlugin)
 
       if (contentModulesForValidation.isEmpty()) {
         return@plugins

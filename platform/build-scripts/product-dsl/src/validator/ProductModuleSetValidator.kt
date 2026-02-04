@@ -6,8 +6,6 @@ package org.jetbrains.intellij.build.productLayout.validator
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.GraphScope
 import com.intellij.platform.pluginGraph.ProductNode
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.intellij.build.productLayout.model.error.DuplicateModulesError
 import org.jetbrains.intellij.build.productLayout.model.error.MissingDependenciesError
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
@@ -31,15 +29,9 @@ internal object ProductModuleSetValidator : PipelineNode {
 
   override suspend fun execute(ctx: ComputeContext) {
     val model = ctx.model
-    coroutineScope {
+    model.pluginGraph.forEachProductParallel { product ->
       model.pluginGraph.query {
-        products { product ->
-          launch {
-            model.pluginGraph.query {
-              validateProductModuleSet(product, ctx, model)
-            }
-          }
-        }
+        validateProductModuleSet(product, ctx, model)
       }
     }
   }

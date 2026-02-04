@@ -17,7 +17,7 @@ import org.jetbrains.intellij.build.productLayout.model.error.ValidationError
 import org.jetbrains.intellij.build.productLayout.pipeline.GenerationPipeline
 import org.jetbrains.intellij.build.productLayout.stats.GenerationStats
 import org.jetbrains.intellij.build.productLayout.stats.ProductGenerationResult
-import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
+import org.jetbrains.intellij.build.productLayout.util.FileUpdateStrategy
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -144,7 +144,7 @@ internal suspend fun generateAllProductXmlFiles(
   testProductSpecs: List<Pair<String, ProductModulesContentSpec>> = emptyList(),
   projectRoot: Path,
   outputProvider: ModuleOutputProvider,
-  strategy: DeferredFileUpdater,
+  strategy: FileUpdateStrategy,
 ): ProductGenerationResult {
   // Convert test product specs to DiscoveredProduct instances
   val testProducts = testProductSpecs.mapNotNull { (name, spec) ->

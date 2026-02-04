@@ -7,7 +7,6 @@ import kotlinx.coroutines.coroutineScope
 import org.jetbrains.intellij.build.productLayout.doGenerateAllModuleSetsInternal
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
 import org.jetbrains.intellij.build.productLayout.pipeline.DataSlot
-import org.jetbrains.intellij.build.productLayout.pipeline.GenerationModel
 import org.jetbrains.intellij.build.productLayout.pipeline.ModuleSetsOutput
 import org.jetbrains.intellij.build.productLayout.pipeline.NodeIds
 import org.jetbrains.intellij.build.productLayout.pipeline.PipelineNode
@@ -20,7 +19,7 @@ import java.nio.file.Path
  * Creates `intellij.moduleSets.*.xml` files from Kotlin DSL definitions
  * (e.g., `CommunityModuleSets.kt`, `UltimateModuleSets.kt`).
  *
- * **Input:** Module set sources from [GenerationModel.moduleSetSources]
+ * **Input:** Module set sources from `GenerationModel.discovery.moduleSetSources`
  * **Output:** XML files in each source's output directory
  *
  * **Publishes:** [Slots.MODULE_SETS] with generation results
@@ -43,7 +42,7 @@ internal object ModuleSetXmlGenerator : PipelineNode {
             outputDir = outputDir,
             label = label,
             outputProvider = model.outputProvider,
-            strategy = model.fileUpdater,
+            strategy = model.xmlWritePolicy,
           )
         }
       }.awaitAll()

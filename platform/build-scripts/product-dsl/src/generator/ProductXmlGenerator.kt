@@ -15,7 +15,7 @@ import org.jetbrains.intellij.build.productLayout.pipeline.Slots
  * Generates complete `plugin.xml` files for products using programmatic content.
  * Includes `xi:include` directives for module sets and `<content>` blocks for modules.
  *
- * **Input:** Products from [GenerationModel.products] and test products from [GenerationModel.testProductSpecs]
+ * **Input:** Products from `GenerationModel.discovery.products` and test products from `GenerationModel.discovery.testProductSpecs`
  * **Output:** Updated product plugin.xml files
  *
  * **Publishes:** [Slots.PRODUCTS] with generation results
@@ -35,7 +35,7 @@ internal object ProductXmlGenerator : PipelineNode {
       testProductSpecs = model.discovery.testProductSpecs,
       projectRoot = model.projectRoot,
       outputProvider = model.outputProvider,
-      strategy = model.fileUpdater,
+      strategy = model.xmlWritePolicy,
     )
 
     ctx.publish(Slots.PRODUCTS, ProductsOutput(files = result.products))

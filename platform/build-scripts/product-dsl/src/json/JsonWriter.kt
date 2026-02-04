@@ -25,6 +25,40 @@ internal val kotlinxJson = Json {
   encodeDefaults = true
 }
 
+private data class ModuleUsageMaps<S, P>(
+  val moduleSets: Map<String, Set<S>>,
+  val products: Map<String, Set<P>>,
+)
+
+private fun <S, P> collectModuleUsageMaps(
+  allModuleSets: List<ModuleSetMetadata>,
+  products: List<ProductSpec>,
+  pluginGraph: PluginGraph,
+  moduleSetEntry: (ModuleSetMetadata) -> S,
+  productEntry: (ProductSpec) -> P,
+): ModuleUsageMaps<S, P> {
+  val moduleSetsMap = LinkedHashMap<String, LinkedHashSet<S>>()
+  val productsMap = LinkedHashMap<String, LinkedHashSet<P>>()
+
+  for (entry in allModuleSets) {
+    val modules = collectModuleSetModuleNames(pluginGraph, entry.moduleSet.name)
+    val moduleSetValue = moduleSetEntry(entry)
+    for (moduleName in modules) {
+      moduleSetsMap.computeIfAbsent(moduleName.value) { LinkedHashSet() }.add(moduleSetValue)
+    }
+  }
+
+  for (product in products) {
+    if (product.contentSpec == null) continue
+    val productValue = productEntry(product)
+    for (moduleName in collectProductModuleNames(pluginGraph, product.name)) {
+      productsMap.computeIfAbsent(moduleName.value) { LinkedHashSet() }.add(productValue)
+    }
+  }
+
+  return ModuleUsageMaps(moduleSetsMap, productsMap)
+}
+
 /**
  * Enriches products with calculated metrics (parallelized).
  * Calculates totalModuleCount, directModuleCount, and moduleSetCount for each product.
@@ -91,35 +125,21 @@ internal fun writeModuleDistribution(
     val imlPath: String? = null
   )
 
-  // Build module → sets/products mapping
-  val inModuleSets = LinkedHashMap<String, MutableSet<String>>()
-  val inProducts = LinkedHashMap<String, MutableSet<String>>()
-
-  // Collect modules from module sets
-  for (entry in allModuleSets) {
-    val modules = collectModuleSetModuleNames(pluginGraph, entry.moduleSet.name)
-    for (moduleName in modules) {
-      val moduleKey = moduleName.value
-      inModuleSets.computeIfAbsent(moduleKey) { LinkedHashSet() }.add(entry.moduleSet.name)
-    }
-  }
-
-  // Collect modules from products
-  for (product in products) {
-    if (product.contentSpec == null) continue
-    for (moduleName in collectProductModuleNames(pluginGraph, product.name)) {
-      val moduleKey = moduleName.value
-      inProducts.computeIfAbsent(moduleKey) { LinkedHashSet() }.add(product.name)
-    }
-  }
+  val usageMaps = collectModuleUsageMaps(
+    allModuleSets = allModuleSets,
+    products = products,
+    pluginGraph = pluginGraph,
+    moduleSetEntry = { it.moduleSet.name },
+    productEntry = { it.name },
+  )
 
   // Build result map
-  val allModuleNames = (inModuleSets.keys + inProducts.keys).sorted()
+  val allModuleNames = (usageMaps.moduleSets.keys + usageMaps.products.keys).sorted()
   val result = allModuleNames.associateWith { moduleName ->
-    val locationInfo = moduleLocations.get(moduleName)
+    val locationInfo = moduleLocations[moduleName]
     Entry(
-      inModuleSets = inModuleSets.get(moduleName)?.sorted() ?: emptyList(),
-      inProducts = inProducts.get(moduleName)?.sorted() ?: emptyList(),
+      inModuleSets = usageMaps.moduleSets[moduleName]?.sorted() ?: emptyList(),
+      inProducts = usageMaps.products[moduleName]?.sorted() ?: emptyList(),
       location = locationInfo?.location?.name ?: "UNKNOWN",
       imlPath = locationInfo?.imlPath
     )
@@ -199,34 +219,19 @@ internal fun writeModuleUsageIndex(
   @Serializable
   data class Wrapper(@JvmField val modules: Map<String, ModuleEntry>)
 
-  val moduleSetsMap = LinkedHashMap<String, MutableList<ModuleSetRef>>()
-  val productsMap = LinkedHashMap<String, MutableList<ProductRef>>()
+  val usageMaps = collectModuleUsageMaps(
+    allModuleSets = allModuleSets,
+    products = products,
+    pluginGraph = pluginGraph,
+    moduleSetEntry = { ModuleSetRef(it.moduleSet.name, it.location.name, it.sourceFile) },
+    productEntry = { ProductRef(it.name, it.sourceFile) },
+  )
 
-  // Collect from module sets
-  for (entry in allModuleSets) {
-    val modules = collectModuleSetModuleNames(pluginGraph, entry.moduleSet.name)
-    for (moduleName in modules) {
-      val moduleKey = moduleName.value
-      moduleSetsMap.computeIfAbsent(moduleKey) { ArrayList() }
-        .add(ModuleSetRef(entry.moduleSet.name, entry.location.name, entry.sourceFile))
-    }
-  }
-
-  // Collect from products
-  for (product in products) {
-    if (product.contentSpec == null) continue
-    for (moduleName in collectProductModuleNames(pluginGraph, product.name)) {
-      val moduleKey = moduleName.value
-      productsMap.computeIfAbsent(moduleKey) { ArrayList() }
-        .add(ProductRef(product.name, product.sourceFile))
-    }
-  }
-
-  val allModuleNames = (moduleSetsMap.keys + productsMap.keys).sorted()
+  val allModuleNames = (usageMaps.moduleSets.keys + usageMaps.products.keys).sorted()
   val modules = allModuleNames.associateWith { moduleName ->
     ModuleEntry(
-      moduleSets = moduleSetsMap.get(moduleName)?.sortedBy { it.name } ?: emptyList(),
-      products = productsMap.get(moduleName)?.sortedBy { it.name } ?: emptyList()
+      moduleSets = usageMaps.moduleSets[moduleName]?.sortedBy { it.name } ?: emptyList(),
+      products = usageMaps.products[moduleName]?.sortedBy { it.name } ?: emptyList()
     )
   }
 
