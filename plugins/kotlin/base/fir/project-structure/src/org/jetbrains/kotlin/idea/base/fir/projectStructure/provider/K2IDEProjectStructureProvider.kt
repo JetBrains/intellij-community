@@ -41,8 +41,9 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootM
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptDependencyModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.analysisContextModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.danglingFileResolutionMode
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.resolveExtensionFileModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.config.KOTLIN_SOURCE_ROOT_TYPE_ID
 import org.jetbrains.kotlin.config.KOTLIN_TEST_ROOT_TYPE_ID
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
@@ -91,7 +92,7 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
         val fileSystemItem = psiFile ?: element.parentOfType<PsiFileSystemItem>(withSelf = true)
         val virtualFile = fileSystemItem?.virtualFile
 
-        virtualFile?.analysisContextModule?.let { return it }
+        virtualFile?.resolveExtensionFileModule?.let { return it }
 
         if (useSiteModule is KaSourceModuleForOutsider || useSiteModule is KaScriptDependencyModule) {
             if (virtualFile != null && virtualFile in useSiteModule.contentScope) {

@@ -27,7 +27,7 @@ import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
-import org.jetbrains.kotlin.analysis.api.projectStructure.analysisContextModule
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.resolveExtensionFileModule
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
@@ -161,7 +161,7 @@ class ModuleInfoProvider(private val project: Project) {
         val containingKtFile = containingFile as? KtFile
         if (containingKtFile != null) {
             @OptIn(KaImplementationDetail::class, K1ModeProjectStructureApi::class)
-            containingFile.virtualFile?.analysisContextModule?.let { module ->
+            containingFile.virtualFile?.resolveExtensionFileModule?.let { module ->
                 register(module.moduleInfo)
             }
 

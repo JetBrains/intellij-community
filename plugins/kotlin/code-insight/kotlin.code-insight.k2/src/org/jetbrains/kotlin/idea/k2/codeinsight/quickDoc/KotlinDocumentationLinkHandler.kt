@@ -9,6 +9,7 @@ import com.intellij.platform.backend.documentation.LinkResolveResult
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil.findChildOfType
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.references.KDocReference
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -31,5 +32,6 @@ class KotlinDocumentationLinkHandler : DocumentationLinkHandler {
 fun resolveKDocLink(names: List<String>, element: KtElement): PsiElement? {
     val ktPsiFactory = KtPsiFactory(element.project)
     val fragment = ktPsiFactory.createBlockCodeFragment("/**[${names.joinToString(".")}]*/ val __p = 42", element)
-    return findChildOfType<KDocName>(fragment, KDocName::class.java)?.reference?.resolve()
+    val kDocReference = findChildOfType(fragment, KDocName::class.java)?.reference as? KDocReference ?: return null
+    return kDocReference.multiResolve(incompleteCode = false).firstOrNull()?.element
 }
