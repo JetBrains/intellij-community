@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
@@ -17,7 +17,15 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtScriptInitializer
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_CORE_PLUGIN_SHORT_NAMES
 
@@ -30,7 +38,7 @@ class KotlinAvoidApplyPluginMethodInspectionVisitor(private val holder: Problems
             if (callableId.packageName != FqName(GRADLE_KOTLIN_PACKAGE)) return
         }
 
-        val pluginFixInfo = getPluginFixInfo(expression)
+        val pluginFixInfo = if (expression.isTopLevel()) getPluginFixInfo(expression) else null
         val potentialFix = if (pluginFixInfo != null) GradleMoveApplyPluginToPluginsBlockFix(pluginFixInfo) else null
 
         holder.problem(
@@ -38,6 +46,8 @@ class KotlinAvoidApplyPluginMethodInspectionVisitor(private val holder: Problems
             GradleInspectionBundle.message("inspection.message.avoid.apply.plugin.method.descriptor")
         ).maybeFix(potentialFix).register()
     }
+
+    private fun KtExpression.isTopLevel() = this.parent is KtScriptInitializer
 
     /**
      * @return PluginInfo with both name, version and classpath dependency psi element if it's an external plugin,
