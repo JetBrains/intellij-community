@@ -8,11 +8,11 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 
 internal class UpdateManagerUsagesCollector : ApplicationUsagesCollector() {
-  private val GROUP: EventLogGroup = EventLogGroup("platform.installer", 3)
+  private val GROUP: EventLogGroup = EventLogGroup("platform.installer", 4)
 
   private val MANAGERS = listOf("Toolbox App", "Snap", "Homebrew", "Other", "IDE")
 
-  private val UPDATE_MANAGER = GROUP.registerEvent("Update Manager", EventFields.String("value", MANAGERS))
+  private val UPDATE_MANAGER = GROUP.registerEvent("Update_Manager", EventFields.String("value", MANAGERS))
 
   override fun getMetrics(): Set<MetricEvent> = setOf(UPDATE_MANAGER.metric(
     when (ExternalUpdateManager.ACTUAL) {
