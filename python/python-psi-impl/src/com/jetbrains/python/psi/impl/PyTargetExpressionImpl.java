@@ -16,6 +16,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.IconManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -212,10 +213,14 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         final PyExpression lhs = assignment.getLeftHandSideExpression();
         final PySequenceExpression targetTupleOrList = PsiTreeUtil.findChildOfType(lhs, PySequenceExpression.class, false);
         if (value != null && (targetTupleOrList instanceof PyTupleExpression || targetTupleOrList instanceof PyListLiteralExpression)) {
-          final PyType positionalItemType = getTargetTypeFromIterableUnpacking(targetTupleOrList, value, context);
-          if (positionalItemType != null) {
-            return positionalItemType;
+          PyType assignedType = PyUnionType.toNonWeakType(context.getType(value));
+          if (assignedType != null) {
+            @Nullable PyType positionalItemType = getTargetTypeFromIterableUnpacking(targetTupleOrList, value, assignedType, context);
+            if (positionalItemType != null) {
+              return positionalItemType;
+            }
           }
+
         }
       }
     }
@@ -260,9 +265,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   }
 
   private @Nullable PyType getTargetTypeFromIterableUnpacking(@NotNull PySequenceExpression topmostContainingTupleOrList,
-                                                              @NotNull PyExpression assignedIterable,
+                                                              @Nullable PyExpression assignedIterable, @NotNull PyType assignedType,
                                                               @NotNull TypeEvalContext context) {
-    PyType assignedType = PyUnionType.toNonWeakType(context.getType(assignedIterable));
     if (assignedType instanceof PyTupleType tupleType) {
       return PyTypeChecker.getTargetTypeFromTupleAssignment(this, topmostContainingTupleOrList, tupleType);
     }
@@ -272,7 +276,25 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         return PyTypeChecker.getTargetTypeFromTupleAssignment(this, topmostContainingTupleOrList, namedTupleType);
       }
       else {
-        return getIterationType(assignedType, assignedIterable, assignedIterable, false, context);
+        final PyType iterationType = assignedIterable != null
+                                     ? getIterationType(assignedType, assignedIterable, assignedIterable, false, context)
+                                     : getIterationType(assignedType, topmostContainingTupleOrList, context);
+        if (iterationType == null) {
+          return null;
+        }
+        PyExpression[] elements = topmostContainingTupleOrList.getElements();
+        if (ArrayUtil.contains(this, elements)) {
+          return iterationType;
+        }
+
+        for (PyExpression element : elements) {
+          if (element instanceof PySequenceExpression sequenceExpression && sequenceExpression.getTextRange().contains(getTextRange())) {
+            PyType foundType = getTargetTypeFromIterableUnpacking(sequenceExpression, null, iterationType, context);
+            if (foundType != null) {
+              return foundType;
+            }
+          }
+        }
       }
     }
     return null;
@@ -398,6 +420,19 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       if (target == this && type != null) {
         return type;
       }
+    }
+    return null;
+  }
+
+  private static @Nullable PyType getIterationType(@Nullable PyType iterableType,
+                                                   @NotNull PsiElement anchor,
+                                                   @NotNull TypeEvalContext context) {
+    if (iterableType instanceof PyTupleType tupleType) {
+      return tupleType.getIteratedItemType();
+    }
+    PyType type = PyTypeUtil.convertToType(iterableType, "typing.Iterable", anchor, context);
+    if (type instanceof PyCollectionType collectionType) {
+      return collectionType.getIteratedItemType();
     }
     return null;
   }

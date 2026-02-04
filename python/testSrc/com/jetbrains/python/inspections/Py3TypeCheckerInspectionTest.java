@@ -4263,5 +4263,15 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                        b: tuple[int, ...] = tuple(a.values())
                    """);
   }
+
+  // PY-86873
+  public void testNestedListUnpacking() {
+    doTestByText("""
+                   def f(edges: list[list[int]]):
+                       [[node_a], second_edge] = edges
+                       a: int = node_a
+                       c: list[int] = second_edge
+                   """);
+  }
 }
 

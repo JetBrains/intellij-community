@@ -5034,6 +5034,96 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-86873
+  public void testNestedListUnpacking1() {
+    doTest("int", """
+      def f(edges: list[list[int]]):
+                       [[node_a], second_edge] = edges
+                       expr = node_a
+      """);
+  }
+
+  // PY-86873
+  public void testNestedListUnpacking2() {
+    doTest("list[int]", """
+      def f(edges: list[list[int]]):
+                       [[node_a], second_edge] = edges
+                       expr = second_edge
+      """);
+  }
+
+  // PY-86873
+  public void testNestedListUnpacking3() {
+    doTest("int", """
+      def f(edges: list[list[int]]):
+                       [edge, [node_b]] = edges
+                       expr = node_b
+      """);
+  }
+
+  // PY-86873
+  public void testNestedListUnpacking4() {
+    doTest("list[int]", """
+      def f(edges: list[list[int]]):
+                       [edge, [node_b]] = edges
+                       expr = edge
+      """);
+  }
+
+  // PY-86873
+  public void testNestedListUnpacking5() {
+    doTest("int", """
+      def f(edges: list[list[int]]):
+                       [edge, [node_b], edge_2] = edges
+                       expr = node_b
+      """);
+  }
+
+  // PY-86873
+  public void testNestedListUnpacking6() {
+    doTest("tuple[int, int, int]", """
+      def f(edges: list[list[int]]):
+                       [[node_a], [node_b], [node_c]] = edges
+                       expr = (node_a, node_b, node_c)
+      """);
+  }
+
+  // PY-86873
+  public void testNestedListDepth3Unpacking1() {
+    doTest("list[int]", """
+      def f(edges: list[list[list[int]]]):
+                       [edge, [node_a]] = edges
+                       expr = node_a
+      """);
+  }
+
+  // PY-86873
+  public void testNestedListDepth3Unpacking2() {
+    doTest("int", """
+      def f(edges: list[list[list[int]]]):
+                       [edge, [edge_2, [node_a]]] = edges
+                       expr = node_a
+      """);
+  }
+
+  // PY-86873
+  public void testNestedListDepth3Unpacking3() {
+    doTest("list[int]", """
+      def f(edges: list[list[list[int]]]):
+                       [edge, [edge_2, [node_a]]] = edges
+                       expr = edge_2
+      """);
+  }
+
+  // PY-86873
+  public void testNestedListDepth3Unpacking4() {
+    doTest("list[list[int]]", """
+      def f(edges: list[list[list[int]]]):
+                       [edge, [edge_2, [node_a]]] = edges
+                       expr = edge
+      """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
