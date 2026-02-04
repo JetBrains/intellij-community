@@ -34,7 +34,7 @@ internal object KindWeigher {
 
     const val WEIGHER_ID = "kotlin.kind"
 
-    private var LookupElement.isConstructorCall: Boolean by NotNullableUserDataProperty(Key("KOTLIN_KIND_WEIGHER_IS_CONSTRUCTOR_CALL"), false)
+    internal var LookupElement.isConstructorCall: Boolean by NotNullableUserDataProperty(Key("KOTLIN_KIND_WEIGHER_IS_CONSTRUCTOR_CALL"), false)
 
     private var LookupElement.isEnumEntry: Boolean by NotNullableUserDataProperty(Key("KOTLIN_KIND_WEIGHER_IS_ENUM"), false)
 
@@ -49,7 +49,6 @@ internal object KindWeigher {
     fun addWeight(lookupElement: LookupElement, symbol: KaSymbol?, context: WeighingContext) {
         lookupElement.isSymbolToSkip = symbol in context.symbolsToSkip
         lookupElement.isEnumEntry = symbol is KaEnumEntrySymbol
-        lookupElement.isConstructorCall = symbol is KaNamedClassSymbol && lookupElement.`object` is FunctionCallLookupObject
 
         if (lookupElement.lookupString != KtTokens.NULL_KEYWORD.value || lookupElement.`object` !is KeywordLookupObject) return
         lookupElement.isNullAtHighlyLikelyPosition = context.isPositionSuitableForNull && context.expectedType == null

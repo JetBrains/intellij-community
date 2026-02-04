@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.QuotedNamesAwareInse
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TailTextProvider
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.addImportIfRequired
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.withClassifierSymbolInfo
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.KindWeigher.isConstructorCall
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.render
@@ -132,7 +133,10 @@ internal object ClassLookupElementFactory {
             .withInsertHandler(FunctionInsertionHandler)
             .appendTailText(lookupObject.renderedDeclaration, true)
             .appendTailText(TailTextProvider.getTailText(containingSymbol), true)
-            .let { withClassifierSymbolInfo(containingSymbol, it) }
+            .let {
+                it.isConstructorCall = true
+                withClassifierSymbolInfo(containingSymbol, it)
+            }
     }
 }
 
