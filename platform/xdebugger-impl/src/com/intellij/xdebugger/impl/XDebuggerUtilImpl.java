@@ -94,7 +94,7 @@ import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
-import com.intellij.xdebugger.impl.util.XDebugMonolithUtils;
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import kotlin.Unit;
@@ -356,7 +356,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       if (b instanceof MonolithLineBreakpointProxy monolith) {
         return monolith.getBreakpoint();
       }
-      XBreakpointBase<?, ?, ?> monolithBreakpoint = XDebugMonolithUtils.findBreakpointById(b.getId());
+      XBreakpoint<?> monolithBreakpoint = XDebuggerEntityConverter.getBreakpoint(b.getId());
       if (monolithBreakpoint instanceof XLineBreakpoint<?> lineBreakpoint) {
         return lineBreakpoint;
       }

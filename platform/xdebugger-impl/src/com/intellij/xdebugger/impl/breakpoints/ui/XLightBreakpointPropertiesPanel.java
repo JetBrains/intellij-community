@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy;
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -22,6 +23,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
@@ -34,7 +36,6 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.proxy.MonolithBreakpointManagerKt;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
-import com.intellij.xdebugger.impl.util.XDebugMonolithUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -229,7 +230,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
     XBreakpointCustomPropertiesPanel customRightConditionPanel = breakpointType.createCustomRightPropertiesPanel(project);
     boolean isVisibleOnPopup = false;
     if (customRightConditionPanel != null) {
-      XBreakpointBase<?, ?, ?> monolithBreakpoint = XDebugMonolithUtils.findBreakpointById(myBreakpoint.getId());
+      XBreakpoint<?> monolithBreakpoint = XDebuggerEntityConverter.getBreakpoint(myBreakpoint.getId());
       if (monolithBreakpoint != null) {
         isVisibleOnPopup = customRightConditionPanel.isVisibleOnPopup(monolithBreakpoint);
       }
@@ -313,7 +314,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
       myConditionComboBox.saveTextInHistory();
     }
 
-    XBreakpointBase<?, ?, ?> monolithBreakpoint = XDebugMonolithUtils.findBreakpointById(myBreakpoint.getId());
+    XBreakpoint<?> monolithBreakpoint = XDebuggerEntityConverter.getBreakpoint(myBreakpoint.getId());
     if (monolithBreakpoint != null) {
       for (XBreakpointCustomPropertiesPanel customPanel : myCustomPanels) {
         customPanel.saveTo(monolithBreakpoint);
@@ -346,7 +347,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
       onCheckboxChanged();
     }
 
-    XBreakpointBase<?, ?, ?> monolithBreakpoint = XDebugMonolithUtils.findBreakpointById(myBreakpoint.getId());
+    XBreakpoint<?> monolithBreakpoint = XDebuggerEntityConverter.getBreakpoint(myBreakpoint.getId());
     if (monolithBreakpoint != null) {
       for (XBreakpointCustomPropertiesPanel customPanel : myCustomPanels) {
         customPanel.loadFrom(monolithBreakpoint);

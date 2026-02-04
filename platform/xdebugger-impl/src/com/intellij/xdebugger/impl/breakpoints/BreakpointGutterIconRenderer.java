@@ -13,8 +13,10 @@ import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
-import com.intellij.xdebugger.impl.util.XDebugMonolithUtils;
+
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,9 +75,10 @@ public final class BreakpointGutterIconRenderer extends CommonBreakpointGutterIc
     XDebugSessionProxy currentSessionProxy = XDebugManagerProxy.getInstance().getCurrentSessionProxy(myBreakpoint.getProject());
     if (currentSessionProxy != null) {
       var debugSession = XDebuggerEntityConverter.getSession(currentSessionProxy);
-      XBreakpointBase<?, ?, ?> breakpoint = XDebugMonolithUtils.findBreakpointById(myBreakpoint.getId());
+      XBreakpoint<?> breakpoint = XDebuggerEntityConverter.getBreakpoint(myBreakpoint.getId());
       if (debugSession != null && breakpoint != null) {
-        return new DefaultActionGroup(breakpoint.getAdditionalPopupMenuActions(debugSession));
+        var type = (XBreakpointType)breakpoint.getType();
+        return new DefaultActionGroup(type.getAdditionalPopupMenuActions(breakpoint, debugSession));
       }
     }
     return super.getPopupMenuActions();

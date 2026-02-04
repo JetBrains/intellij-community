@@ -1,9 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.ui
 
+import com.intellij.platform.debugger.impl.rpc.XBreakpointId
+import com.intellij.platform.debugger.impl.rpc.XValueId
 import com.intellij.platform.debugger.impl.shared.XDebuggerMonolithAccessPoint
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.breakpoints.XBreakpoint
+import com.intellij.xdebugger.breakpoints.XBreakpointType
+import com.intellij.xdebugger.frame.XValue
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -39,5 +44,44 @@ object XDebuggerEntityConverter {
     return XDebuggerMonolithAccessPoint.find { it.asProxy(session) }
            ?: error("No XDebuggerMonolithAccessPoint implementation that can convert $session found. " +
                     "XDebuggerMonolithAccessPointImpl should be registered in a shared module and always be able to convert sessions.")
+  }
+
+  /**
+   * For a given [XValueId] finds the corresponding [XValue] instance.
+   *
+   * Always returns `null` on the frontend.
+   *
+   * Use this method to implement monolith-only features with a split debugger enabled.
+   */
+  @ApiStatus.Internal
+  @JvmStatic
+  fun getValue(valueId: XValueId): XValue? {
+    return XDebuggerMonolithAccessPoint.find { it.getValue(valueId) }
+  }
+
+  /**
+   * For a given breakpoint type ID finds the corresponding [XBreakpointType] instance.
+   *
+   * Always returns `null` on the frontend.
+   *
+   * Use this method to implement monolith-only features with a split debugger enabled.
+   */
+  @ApiStatus.Internal
+  @JvmStatic
+  fun getBreakpointType(typeId: String): XBreakpointType<*, *>? {
+    return XDebuggerMonolithAccessPoint.find { it.getBreakpointType(typeId) }
+  }
+
+  /**
+   * For a given [XBreakpointId] finds the corresponding [XBreakpoint] instance.
+   *
+   * Always returns `null` on the frontend.
+   *
+   * Use this method to implement monolith-only features with a split debugger enabled.
+   */
+  @ApiStatus.Internal
+  @JvmStatic
+  fun getBreakpoint(breakpointId: XBreakpointId): XBreakpoint<*>? {
+    return XDebuggerMonolithAccessPoint.find { it.getBreakpoint(breakpointId) }
   }
 }

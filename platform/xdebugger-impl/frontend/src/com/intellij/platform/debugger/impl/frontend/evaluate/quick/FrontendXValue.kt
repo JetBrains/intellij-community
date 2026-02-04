@@ -39,14 +39,8 @@ import com.intellij.xdebugger.impl.rpc.sourcePosition
 import com.intellij.xdebugger.impl.ui.XValueTextProvider
 import com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
-import com.intellij.xdebugger.impl.util.XDebugMonolithUtils
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.cancel
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
@@ -271,7 +265,7 @@ class FrontendXValue private constructor(
 
   override fun getReferrersProvider(): XReferrersProvider? {
     // TODO referrersProvider is only supported in monolith
-    return XDebugMonolithUtils.findXValueById(xValueDto.id)?.referrersProvider
+    return XDebuggerEntityConverter.getValue(xValueDto.id)?.referrersProvider
   }
 
   override fun shouldShowTextValue(): Boolean = textProvider?.value?.shouldShowTextValue ?: false

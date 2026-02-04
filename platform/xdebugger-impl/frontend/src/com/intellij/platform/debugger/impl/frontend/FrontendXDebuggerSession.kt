@@ -70,7 +70,7 @@ import com.intellij.xdebugger.impl.rpc.toRpc
 import com.intellij.xdebugger.impl.ui.SplitDebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
-import com.intellij.xdebugger.impl.util.XDebugMonolithUtils
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -536,7 +536,7 @@ class FrontendXDebuggerSession(
     // As a result, additional actions registered on the backend are added here as a flat list,
     // and separators e.g. from the original backend structure are not preserved.
     // We maintain two code paths: one for Monolith (preserving full group structure) and one for RemDev (flat view).
-    val monolithSession = XDebugMonolithUtils.findSessionById(id)
+    val monolithSession = XDebuggerEntityConverter.getSession(this)
     if (monolithSession != null) {
       monolithSession.debugProcess.registerAdditionalActions(leftToolbar, topLeftToolbar, settings)
     } else {
