@@ -46,7 +46,7 @@ import static com.intellij.openapi.actionSystem.LangDataKeys.RUN_CONTENT_DESCRIP
 /**
  * @author konstantin.aleev
  */
-public abstract class ExecutorAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+public abstract class ExecutorAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.BackendOnly {
   private static final Key<List<Integer>> RUNNABLE_LEAVES_KEY =
     Key.create("RUNNABLE_LEAVES_KEY");
 

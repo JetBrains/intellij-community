@@ -46,34 +46,34 @@ public final class RunDashboardActionUtils {
     if (project == null) return JBIterable.empty();
 
     Set<RunDashboardRunConfigurationNode> result = new LinkedHashSet<>();
+    var uiSelection = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
+    if (uiSelection != null) {
+      JBIterable<Object> roots = JBIterable.of(uiSelection);
+      if (!getLeaves(project, e, roots.toList(), Collections.emptyList(), result)) return JBIterable.empty();
 
-    RunDashboardService selectedService = null;
-
-    // todo introduce proper backend node ids, drop selected items usage completely
-    if (IdeProductMode.isMonolith()) {
-      var uiSelection = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
-      if (uiSelection != null) {
-        JBIterable<Object> roots = JBIterable.of(uiSelection);
-        if (!getLeaves(project, e, roots.toList(), Collections.emptyList(), result)) return JBIterable.empty();
-
+      if (IdeProductMode.isMonolith()) {
         var substitutor = ContainerUtil.getFirstItem(LegacyRunDashboardServiceSubstitutor.EP_NAME.getExtensionList());
-        if (substitutor == null) return JBIterable.empty();
-
+        if (substitutor == null) return JBIterable.from(result);
         return JBIterable.from(ContainerUtil.map(result, it -> substitutor.substituteWithBackendService(it, project)));
       }
+      else {
+        return JBIterable.from(result);
+      }
     }
+    return getFallbackSelectionForEmbeddedBackendRunToolwindowActions(e, project, result);
+  }
 
+  private static @NotNull JBIterable<RunDashboardRunConfigurationNode> getFallbackSelectionForEmbeddedBackendRunToolwindowActions(@NotNull AnActionEvent e,
+                                                                                Project project,
+                                                                                Set<RunDashboardRunConfigurationNode> result) {
     var currentContentDescriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
     var currentContentDescriptorId = currentContentDescriptor == null ? null : currentContentDescriptor.getId();
+    RunDashboardService selectedService = null;
     if (currentContentDescriptorId != null) {
       // backend case with run toolwindow that is not split in any way and does not properly receive a serialized data context from frontend
       // because of obscure content manager-related wrapping mechanism
       var maybeService = RunDashboardManager.getInstance(project).findService(currentContentDescriptorId);
       selectedService = maybeService instanceof RunDashboardService ? (RunDashboardService)maybeService : null;
-    }
-    if (selectedService == null) {
-      var selectedServiceId = e.getData(SELECTED_DASHBOARD_SERVICE_ID);
-      selectedService = selectedServiceId == null ? null : findValue(selectedServiceId);
     }
 
     JBIterable<Object> roots = JBIterable.of(selectedService);
