@@ -12,6 +12,7 @@ import com.jetbrains.python.codeInsight.PyDataclassParameters.Type
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyDecoratable
 import com.jetbrains.python.psi.PyDecorator
@@ -25,9 +26,11 @@ import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.impl.IntentionalUnstubbing
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.StubAwareComputation
 import com.jetbrains.python.psi.impl.mapArguments
+import com.jetbrains.python.psi.impl.selectMatchingOverload
 import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
 import com.jetbrains.python.psi.impl.stubs.PyDataclassStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
@@ -40,6 +43,7 @@ import com.jetbrains.python.psi.types.PyCallableParameterImpl
 import com.jetbrains.python.psi.types.PyCallableTypeImpl
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.pyi.PyiUtil
 
 
 object PyDataclassNames {
@@ -780,13 +784,25 @@ fun resolveDataclassFieldParameters(
     else -> null
   }
   if (fieldSpecifierCallable == null) return null
+
+  val shouldMatchOverloads = PyiUtil.getOverloads(fieldSpecifierCallable, context).isNotEmpty()
+  val resolvedCallable = if (shouldMatchOverloads) {
+    val callExpression = IntentionalUnstubbing.onFileOf(field) {
+      field.findAssignedValue() as? PyCallExpression
+    }
+    val overload = callExpression?.let { fieldSpecifierCallable.selectMatchingOverload(it, context) }
+    overload ?: fieldSpecifierCallable
+  }
+  else {
+    fieldSpecifierCallable
+  }
+
   return PyDataclassFieldParameters(
     hasDefault = fieldStub?.hasDefault() ?: false,
     hasDefaultFactory = fieldStub?.hasDefaultFactory() ?: false,
     // TODO Should we delegate to dataclass parameters init here?
-    // TODO support overloading init with Literal types
-    initValue = fieldStub?.initValue() ?: getArgumentDefault("init", fieldSpecifierCallable) ?: true,
-    kwOnly = fieldStub?.kwOnly() ?: getArgumentDefault("kw_only", fieldSpecifierCallable) ?: dataclassParams.kwOnly,
+    initValue = fieldStub?.initValue() ?: getArgumentDefault("init", resolvedCallable) ?: true,
+    kwOnly = fieldStub?.kwOnly() ?: getArgumentDefault("kw_only", resolvedCallable) ?: dataclassParams.kwOnly,
     alias = fieldStub?.alias,
   )
 }

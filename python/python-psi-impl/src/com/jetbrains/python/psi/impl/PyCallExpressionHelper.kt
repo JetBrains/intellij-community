@@ -1395,6 +1395,39 @@ private fun List<PyCallableParameter>.filterExplicitParameters(
   return subList(min(implicitOffset, size), size)
 }
 
+/**
+ * Returns the overload declaration of this function that best matches the given call expression,
+ * or null if no overload matches or overloads are unavailable in the current context.
+ */
+@ApiStatus.Internal
+fun PyFunction.selectMatchingOverload(
+  callExpression: PyCallExpression,
+  context: TypeEvalContext
+): PyFunction? {
+  val overloads = PyiUtil.getOverloads(this, context)
+  if (overloads.isEmpty()) return null
+
+  val arguments = callExpression.getArguments(this)
+  val matchingOverloads = overloads.filter { it.matchesByArgumentTypes(callExpression, context) }
+
+  if (matchingOverloads.isEmpty()) {
+    return null
+  }
+
+  if (matchingOverloads.size == 1) {
+    return matchingOverloads[0]
+  }
+
+  val someArgumentsHaveUnknownType = arguments.any { argument ->
+    context.getType(argument) == null
+  }
+  if (someArgumentsHaveUnknownType) {
+    return null
+  }
+
+  return matchingOverloads.firstOrNull()
+}
+
 fun PyExpression.canQualifyAnImplicitName(): Boolean {
   if (this !is PyCallExpression) return true
   val callee = callee

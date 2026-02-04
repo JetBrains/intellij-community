@@ -13,7 +13,6 @@ constructors_callable.py
 dataclasses_order.py
 dataclasses_match_args.py
 dataclasses_transform_converter.py
-dataclasses_transform_field.py
 dataclasses_usage.py
 directives_deprecated.py
 directives_version_platform.py

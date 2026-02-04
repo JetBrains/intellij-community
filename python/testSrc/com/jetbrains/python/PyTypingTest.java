@@ -5985,6 +5985,49 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  public void testDataclassTransformFieldSpecifierOverloadInitFalseConstructorSignature() {
+    doTestExpressionUnderCaret("(*, name: str) -> CustomerModel1", """
+     from typing import Any, Callable, Literal, TypeVar, dataclass_transform, overload
+     
+     T = TypeVar("T")
+     
+     
+     @overload
+     def field1(
+             *,
+             # default: str | None = None,
+             resolver: Callable[[], Any],
+             init: Literal[False] = False,
+     ) -> Any:
+         ...
+     
+     @overload
+     def field1(
+             *,
+             init: Literal[True] = True,
+             kw_only: bool = True,
+             default: Any = None
+     ) -> Any:
+         ...
+     
+     def field1(**kwargs) -> Any:
+         return kwargs
+     
+     
+     @dataclass_transform(kw_only_default=True, field_specifiers=(field1,))
+     def create_model(*, init: bool = True) -> Callable[[type[T]], type[T]]:
+         ...
+     
+     
+     @create_model()
+     class CustomerModel1:
+         id: int = field1(resolver=lambda: 0)
+         name: str = field1(default="Voldemort")
+     
+     Customer<caret>Model1()
+     """);
+  }
+
   public void testDataclassTransformDecoratedFunctionType() {
     doTest("(cls: Any) -> None","""
              from typing import dataclass_transform
