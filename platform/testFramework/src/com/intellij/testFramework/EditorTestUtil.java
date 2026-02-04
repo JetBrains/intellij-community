@@ -50,6 +50,8 @@ import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManage
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
@@ -81,6 +83,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 import kotlin.Unit;
+import kotlinx.coroutines.Deferred;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -690,8 +693,12 @@ public final class EditorTestUtil {
     return result[0];
   }
 
+  /**
+   * @see AsyncEditorLoader#start(TextEditorImpl, Deferred)
+   */
   @RequiresEdt
   public static void waitForLoading(@SuppressWarnings("unused") Editor editor) {
+    // editors in the test mode are loaded synchronously
   }
 
   public static void testUndoInEditor(@NotNull Editor editor, @NotNull Runnable runnable) {
