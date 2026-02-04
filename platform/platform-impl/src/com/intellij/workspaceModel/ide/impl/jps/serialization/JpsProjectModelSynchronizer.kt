@@ -477,6 +477,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   // IDEA-288703
   suspend fun hasNoSerializedJpsModules(): Boolean {
     return !isIntelliJ() && // todo: https://youtrack.jetbrains.com/issue/IDEA-291451#focus=Comments-27-5967781.0-0
+           !isAndroidStudio() &&
            !isRider() &&
            !isFleetBackend() && // https://youtrack.jetbrains.com/issue/IDEA-323592#focus=Comments-27-7967807.0-0
            (prepareSerializers() as JpsProjectSerializersImpl).moduleSerializers.isEmpty()
@@ -609,6 +610,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
   @TestOnly
   fun getSerializers(): JpsProjectSerializersImpl = serializers.get() as JpsProjectSerializersImpl
+
+  private fun isAndroidStudio(): Boolean = getPlatformPrefix() == "AndroidStudio"
 }
 
 @ApiStatus.Internal
