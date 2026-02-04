@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.scale.JBUIScale.scale
 import java.awt.Graphics2D
 import java.awt.RenderingHints
 import java.awt.geom.Path2D
@@ -151,7 +152,7 @@ internal class SelectionLinePainter(
   private val editor: EditorImpl,
   private val lineExtensionWidth: Double,
 ) {
-  private val radius = lineHeight / 6.0
+  private val radius = scale(lineHeight / 6.0f).toDouble()
   private val selectionBg = editor.colorsScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR)
   private val leftExtensionWidth = if (editor.isRightAligned) lineExtensionWidth else 0.0
   private val rightExtensionWidth = if (editor.isRightAligned) 0.0 else lineExtensionWidth
@@ -183,7 +184,11 @@ internal class SelectionLinePainter(
   }
 
   private fun isBlockInlayInSelection(block: Inlay<*>) = allCarets.any {
-    it.selectionStart <= block.offset && block.offset <= it.selectionEnd
+    val bounds = block.bounds ?: return@any false
+    val (start, end) = Pair(editor.offsetToXY(it.selectionStart), editor.offsetToXY(it.selectionEnd))
+    val selectedRange = start.y..end.y
+
+    bounds.y in selectedRange && (bounds.y + bounds.height) in selectedRange
   }
 
   private val customFoldRegions by lazy {
