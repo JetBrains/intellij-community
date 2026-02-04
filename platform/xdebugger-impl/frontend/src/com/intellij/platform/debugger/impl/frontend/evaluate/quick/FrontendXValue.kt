@@ -11,7 +11,6 @@ import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManager
 import com.intellij.platform.debugger.impl.shared.XValueStateFlows
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.Obsolescent
 import com.intellij.xdebugger.XExpression
@@ -25,6 +24,7 @@ import com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
 import com.intellij.xdebugger.impl.util.XDebugMonolithUtils
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
@@ -34,8 +34,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.asPromise
 import java.util.concurrent.CompletableFuture
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 
 @ApiStatus.Internal
 class FrontendXValue private constructor(
@@ -176,9 +174,10 @@ class FrontendXValue private constructor(
     if (initialFullValueEvaluator != null) {
       node.setFullValueEvaluator(initialFullValueEvaluator)
     }
-    node.childCoroutineScope(parentScope = cs, "FrontendXValue#computePresentation").launch(Dispatchers.EDT) {
+    cs.launch(Dispatchers.EDT) {
+      val scope = this@launch
       launch {
-        fullValueEvaluator.collectLatest { evaluator ->
+        fullValueEvaluator.collectLatestWhileNotObsolete(scope, node) { evaluator ->
           if (evaluator != null) {
             node.setFullValueEvaluator(evaluator)
           }
@@ -189,7 +188,7 @@ class FrontendXValue private constructor(
       }
       if (node is XValueNodeEx) {
         launch {
-          additionalLink.collectLatest { link ->
+          additionalLink.collectLatestWhileNotObsolete(scope, node) { link ->
             if (link != null) {
               node.addAdditionalHyperlink(link)
             }
@@ -208,7 +207,7 @@ class FrontendXValue private constructor(
             XValueApi.getInstance().computeTooltipPresentation(xValueDto.id)
           }
         }
-        presentationFlow.collectLatest {
+        presentationFlow.collectLatestWhileNotObsolete(scope, node) {
           node.setPresentation(it)
         }
       }
@@ -391,16 +390,14 @@ private fun renderAdvancedPresentation(renderer: XValuePresentation.XValueTextRe
   }
 }
 
-internal fun Obsolescent.childCoroutineScope(parentScope: CoroutineScope, name: String, context: CoroutineContext = EmptyCoroutineContext): CoroutineScope {
-  val obsolescent = this
-  val scope = parentScope.childScope(name, context)
-  parentScope.launch(context = Dispatchers.IO, start = CoroutineStart.UNDISPATCHED) {
-    while (!obsolescent.isObsolete) {
-      delay(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)
+private suspend fun <T> Flow<T>.collectLatestWhileNotObsolete(scope: CoroutineScope, obsolescent: Obsolescent, block: suspend (T) -> Unit) {
+  collectLatest {
+    if (obsolescent.isObsolete) {
+      scope.cancel()
+      return@collectLatest
     }
-    scope.cancel()
+    block(it)
   }
-  return scope
 }
 
 @Service(Service.Level.PROJECT)
