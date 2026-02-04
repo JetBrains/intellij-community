@@ -89,7 +89,7 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.ui.TerminalContrastRatio
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
-import org.jetbrains.plugins.terminal.starter.ShellCustomizer
+import org.jetbrains.plugins.terminal.settings.TerminalSettingsProvider
 import org.jetbrains.plugins.terminal.util.updateActionShortcut
 import java.awt.Color
 import java.awt.Component
@@ -225,6 +225,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
           }.bind(blockTerminalOptions::promptStyle)
 
           panel {
+            @Suppress("DEPRECATION")
             configurables(LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getBlockTerminalConfigurable(project) })
           }
 
@@ -425,7 +426,8 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
                          .and(ComponentPredicate.fromValue(RunCommandUsingIdeUtil.isVisible)))
         }
         panel {
-          configurables(ShellCustomizer.EP_NAME.extensionList.mapNotNull { it.getConfigurable(project) })
+          configurables(TerminalSettingsProvider.EP_NAME.extensionList.mapNotNull { it.createConfigurable(project) })
+          @Suppress("DEPRECATION")
           configurables(LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getConfigurable(project) })
         }
         row(message("settings.cursor.shape.label")) {

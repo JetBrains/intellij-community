@@ -2,10 +2,8 @@
 package org.jetbrains.plugins.terminal.starter
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -31,13 +29,6 @@ interface ShellCustomizer {
    *         In case of `null`, the default start directory will be used.
    */
   fun getStartDirectory(project: Project): Path? = null
-
-  /**
-   * @return a configurable for customizer-specific options
-   * The method is called on EDT.
-   */
-  @RequiresEdt(generateAssertion = false)
-  fun getConfigurable(project: Project): UnnamedConfigurable? = null
 
   companion object {
     @ApiStatus.Internal
