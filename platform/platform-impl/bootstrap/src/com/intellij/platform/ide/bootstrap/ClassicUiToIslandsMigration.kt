@@ -51,12 +51,18 @@ internal object ClassicUiToIslandsMigration {
         return
       }
 
-      if (InitialConfigImportState.isNewUser()
-          || EarlyAccessRegistryManager.getBoolean("ide.experimental.ui")
-          || !isAllowedUserLafToMigrate()) {
+      val isNewUser = InitialConfigImportState.isNewUser()
+      val experimentalUi = EarlyAccessRegistryManager.getBoolean("ide.experimental.ui")
+      val allowedUserLafToMigrate = isAllowedUserLafToMigrate()
+
+      LOG.info("Detect if switching to Islands needed: isNewUser=$isNewUser, experimentalUi=$experimentalUi, allowedUserLafToMigrate=$allowedUserLafToMigrate")
+
+      if (isNewUser || experimentalUi || !allowedUserLafToMigrate) {
         EarlyAccessRegistryManager.setAndFlush(mapOf(ExperimentalUI.SWITCHED_FROM_CLASSIC_TO_ISLANDS to "false"))
       }
       else {
+        LOG.info("Switching is needed and has been initiated")
+
         ExperimentalUI.switchedFromClassicToIslandsInSession = true
         ExperimentalUI.switchedFromClassicToIslandsLafMigration = true
         EarlyAccessRegistryManager.setAndFlush(mapOf("ide.experimental.ui" to "true", ExperimentalUI.SWITCHED_FROM_CLASSIC_TO_ISLANDS to "true"))
@@ -88,6 +94,8 @@ internal object ClassicUiToIslandsMigration {
     }
 
     DisabledPluginsState.setEnabledState(setOf(classicUI), true)
+
+    LOG.info("Classic UI removed from disabled plugins")
   }
 
   private fun addClassicUiToDisabledPlugins() {
@@ -101,6 +109,9 @@ internal object ClassicUiToIslandsMigration {
     }
 
     DisabledPluginsState.setEnabledState(setOf(classicUI), false)
+
+    LOG.info("Classic UI added to disabled plugins")
+
     cleanUpClassicUIFromDisabledPlugins.compareAndSet(false, true)
   }
 

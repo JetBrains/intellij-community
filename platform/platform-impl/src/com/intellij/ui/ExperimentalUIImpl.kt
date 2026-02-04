@@ -32,6 +32,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.util.PlatformUtils
+import com.intellij.util.system.OS
 import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOG: Logger
@@ -171,14 +172,17 @@ private class ExperimentalUiAppLifecycleListener : AppLifecycleListener {
 
   override fun appFrameCreated(commandLineArgs: List<String?>) {
     if (ExperimentalUI.switchedFromClassicToIslandsInSession) {
+      LOG.info("Islands switching: settings updating")
+
       ExperimentalUI.switchedFromClassicToIslandsInSession = false
       ExperimentalUI.SHOW_NEW_UI_ONBOARDING_ON_START = true
 
       val settings = UISettings.getInstance()
-      if (!PlatformUtils.isDataGrip()) {
+      if (!PlatformUtils.isDataGrip() && OS.CURRENT != OS.macOS) {
         settings.mainMenuDisplayMode = MainMenuDisplayMode.MERGED_WITH_MAIN_TOOLBAR
       }
       settings.compactMode = true
+      settings.fireUISettingsChanged()
 
       if (PlatformUtils.isRider()) {
         switchSchemeToDefaultIfNeeded("Islands Light", "Rider Light")
