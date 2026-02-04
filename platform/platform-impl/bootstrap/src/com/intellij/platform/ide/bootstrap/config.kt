@@ -41,7 +41,7 @@ internal suspend fun importConfigIfNeeded(
     scope.launch {
       logDeferred.await().info("Will skip the config import to directory \"$configDir\" (exists = $configDirExists). Current entries: ${entries}.")
     }
-    if (ClassicUiToIslandsMigration.isEnabledFeature) {
+    if (ClassicUiToIslandsMigration.isEnabledFeature && !isHeadless) {
       // Possible minor update
       ClassicUiToIslandsMigration.enableNewUiWithIslands(logDeferred)
     }
