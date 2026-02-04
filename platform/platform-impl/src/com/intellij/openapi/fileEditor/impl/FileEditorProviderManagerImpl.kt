@@ -205,7 +205,9 @@ class FileEditorProviderManagerImpl
     }
 
     updateState {
-      FileEditorProviderManagerState(it.selectedProviders + (computeKey(list) to composite.selectedWithProvider!!.provider.editorTypeId))
+      val selectedWithProvider = composite.selectedWithProvider
+      val selected = if (selectedWithProvider == null) it.selectedProviders else it.selectedProviders + (computeKey(list) to selectedWithProvider.provider.editorTypeId)
+      FileEditorProviderManagerState(selected)
     }
   }
 
