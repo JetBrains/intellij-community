@@ -1,0 +1,17 @@
+// WITH_STDLIB
+fun getFlag(): Boolean? = null
+
+fun test() {
+    val flag = getFlag()
+    when (flag) {
+        true -> {
+            println("true")
+        }
+        false -> {
+            println("false")
+        }
+        else -> {
+            println("null")
+        }
+    }
+}

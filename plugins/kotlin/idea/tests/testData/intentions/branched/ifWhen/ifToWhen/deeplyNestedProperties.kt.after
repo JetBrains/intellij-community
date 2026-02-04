@@ -1,0 +1,18 @@
+// WITH_STDLIB
+data class A(val b: B)
+data class B(val c: C)
+data class C(val value: String)
+
+fun test(obj: A) {
+    when (obj.b.c.value) {
+        "a" -> {
+            println("a")
+        }
+        "b" -> {
+            println("b")
+        }
+        "c" -> {
+            println("c")
+        }
+    }
+}
