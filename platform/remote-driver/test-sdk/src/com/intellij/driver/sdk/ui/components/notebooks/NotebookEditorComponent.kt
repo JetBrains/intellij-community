@@ -317,6 +317,7 @@ fun Driver.createNewNotebook(name: String = "New Notebook", type: NotebookType) 
 
 fun Driver.createNewNotebookWithMouse(name: String = "New Notebook", type: NotebookType) {
   ideFrame {
+    leftToolWindowToolbar.projectButton.open()
     projectView {
       projectViewTree.run {
         waitFor("wait for project tree to load", 30.seconds) {
