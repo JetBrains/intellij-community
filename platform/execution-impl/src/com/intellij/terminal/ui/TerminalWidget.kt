@@ -9,7 +9,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalWidget
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.session.TerminalSession
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import org.jetbrains.annotations.ApiStatus
@@ -71,10 +73,13 @@ interface TerminalWidget : ComponentContainer {
   }
 
   /**
-   * Note that implementations might not guarantee that the result is 100% correct.
+   * Determines if any command is running in the terminal by checking if the shell has any child processes.
+   * This method may access the file system and launch external processes,
+   * so it is prohibited to call it on EDT or under read action.
    */
   @ApiStatus.Experimental
-  @RequiresEdt(generateAssertion = false)
+  @RequiresReadLockAbsence
+  @RequiresBackgroundThread
   fun isCommandRunning(): Boolean {
     return false
   }

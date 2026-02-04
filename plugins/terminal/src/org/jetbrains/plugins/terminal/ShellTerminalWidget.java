@@ -11,6 +11,8 @@ import com.intellij.terminal.actions.TerminalActionUtil;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.intellij.util.containers.ContainerUtil;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.Terminal;
@@ -199,7 +201,14 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
     asNewWidget().getTtyConnectorAccessor().executeWithTtyConnector(consumer);
   }
 
+  /**
+   * Determines if any command is running in the terminal by checking if the shell has any child processes.
+   * This method may access the file system and launch external processes,
+   * so it is prohibited to call it on EDT or under read action.
+   */
   @Override
+  @RequiresReadLockAbsence
+  @RequiresBackgroundThread
   public boolean hasRunningCommands() throws IllegalStateException {
     TtyConnector connector = getTtyConnector();
     if (connector == null) return false;
