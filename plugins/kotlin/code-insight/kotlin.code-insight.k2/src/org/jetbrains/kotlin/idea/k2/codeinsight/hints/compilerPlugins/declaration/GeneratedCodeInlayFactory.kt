@@ -311,7 +311,7 @@ private class CodeInlay(
             val font = metric.font
             g.font = font
             g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(/* inEditor = */ true))
-            g.color = foreground.withAlphaFactor()
+            g.color = foreground
             // a sum of gaps between which the text is situated on the line
             val fontGap = editor.lineHeight - metric.fontBaseline
             val yCoordinate = editor.lineHeight - fontGap / 2
@@ -321,15 +321,5 @@ private class CodeInlay(
         }
     }
 
-    private fun Color.withAlphaFactor(): Color {
-        // we are materializing the color here, so we can use `java.awt.Color`
-        @Suppress("UseJBColor")
-        return Color(red, green, blue, (alpha * ALPHA_FACTOR).toInt())
-    }
-
     override fun toString(): String = text
-
-    companion object {
-        const val ALPHA_FACTOR = .95
-    }
 }
