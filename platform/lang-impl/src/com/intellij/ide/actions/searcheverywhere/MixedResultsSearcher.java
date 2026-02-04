@@ -107,7 +107,16 @@ public final class MixedResultsSearcher implements SESearcher {
 
     SearchEverywhereSpellingCorrector spellingCorrector = SearchEverywhereSpellingCorrector.getInstance();
     if (spellingCorrector == null || !spellingCorrector.isAvailableInTab(base.getSearchProviderId())) return original;
-    List<SearchEverywhereSpellCheckResult.Correction> fixes = spellingCorrector.getAllCorrections(pattern, MAX_SPELLING_CORRECTIONS);
+    List<SearchEverywhereSpellCheckResult.Correction> fixes = Collections.emptyList();
+    try {
+      fixes = spellingCorrector.getAllCorrections(pattern, MAX_SPELLING_CORRECTIONS);
+    }
+    catch (ProcessCanceledException c) {
+      throw c;
+    }
+    catch (Throwable e) {
+      LOG.warn("Spell check failed for contributor " + base.getSearchProviderId(), e);
+    }
     if (fixes.isEmpty()) return original;
 
     Map<SearchEverywhereContributor<?>, Integer> res = new LinkedHashMap<>();

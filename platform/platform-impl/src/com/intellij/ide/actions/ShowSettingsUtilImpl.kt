@@ -94,7 +94,13 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
         for (configurable in configurables) {
           yield(configurable)
           if (configurable is Configurable.Composite) {
-            collect(configurables = (configurable as Configurable.Composite).configurables)
+            val configurables = runCatching {
+              (configurable as Configurable.Composite).configurables
+            }.getOrLogException(LOG)
+
+            configurables?.let {
+              collect(configurables = configurables)
+            }
           }
         }
       }
@@ -104,7 +110,13 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
         for (configurable in ConfigurableExtensionPointUtil.getConfigurables(project, withIdeSettings, checkNonDefaultProject)) {
           yield(configurable)
           if (configurable is Configurable.Composite) {
-            collect(configurable.configurables)
+            val configurables = runCatching {
+              configurable.configurables
+            }.getOrLogException(LOG)
+
+            configurables?.let {
+              collect(configurables)
+            }
           }
         }
       }
