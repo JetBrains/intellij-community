@@ -150,7 +150,7 @@ def get_inspection_none_count(table):
         for col, missing_count in cur_table.isna().sum().items():
             if missing_count > 0:
                 results_per_column.append({
-                    "columnName": col,
+                    "columnName": str(col),
                     "value": str(missing_count)
                 })
 
@@ -188,7 +188,7 @@ def get_inspection_outliers(table):
 
                 if outliers_count > 0:
                     results_per_column.append({
-                        "columnName": col,
+                        "columnName": str(col),
                         "value": str(outliers_count)
                     })
 
@@ -205,7 +205,7 @@ def get_inspection_constant_columns(table):
         for col in cur_table.columns:
             if cur_table[col].nunique(dropna=False) == 1:
                 results_per_column.append({
-                    "columnName": col,
+                    "columnName": str(col),
                     "value": str(cur_table[col].iloc[0])
                 })
 
@@ -214,6 +214,29 @@ def get_inspection_constant_columns(table):
         return __create_success_result(is_triggered, details)
 
     return __execute_inspection(table, _calculate_constant_columns, "CONSTANT_COLUMNS")
+
+
+def get_inspection_duplicate_column_names(table):
+    def _calculate_duplicate_column_names(cur_table):
+        from collections import defaultdict
+        tmp_results = defaultdict(list)
+
+        for idx, col in enumerate(cur_table.columns):
+            tmp_results[col].append(str(idx))
+
+        results_per_column_name = []
+        for col, columns_indexes in tmp_results.items():
+            if len(columns_indexes) > 1:
+                results_per_column_name.append({
+                    "columnName": str(col),
+                    "value": "Indexes: %s" % (", ".join(columns_indexes))
+                })
+
+        is_triggered = len(results_per_column_name) > 0
+        details = __create_per_column_details(results_per_column_name) if is_triggered else None
+        return __create_success_result(is_triggered, details)
+
+    return __execute_inspection(table, _calculate_duplicate_column_names, "DUPLICATE_COLUMN_NAMES")
 
 
 def __get_data_slice(table, start, end):
