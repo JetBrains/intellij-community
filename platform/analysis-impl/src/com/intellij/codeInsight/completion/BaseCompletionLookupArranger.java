@@ -127,7 +127,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
       Collection<LookupElement> thisSorterItems = inputBySorter.get(sorter);
       for (LookupElement element : thisSorterItems) {
         map.put(element, new SmartList<>(new Pair<>("frozen", myFrozenItems.contains(element)),
-                                                    new Pair<>("sorter", sorterNumber)));
+                                         new Pair<>("sorter", sorterNumber)));
       }
       ProcessingContext context = createContext();
       Classifier<LookupElement> classifier = myClassifiers.get(sorter);
@@ -225,11 +225,13 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   public void batchUpdate(@NotNull Runnable runnable) {
     if (Boolean.TRUE.equals(isInBatchUpdate.get())) {
       runnable.run();
-    } else {
+    }
+    else {
       isInBatchUpdate.set(true);
       try {
         runnable.run();
-      } finally {
+      }
+      finally {
         isInBatchUpdate.remove();
       }
       if (!batchItems.isEmpty()) {
@@ -240,7 +242,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
 
   private void flushBatch() {
     synchronized (this) {
-      for (Pair<LookupElement, LookupElementPresentation> pair: batchItems) {
+      for (Pair<LookupElement, LookupElementPresentation> pair : batchItems) {
         super.addElement(pair.first, pair.second);
       }
       batchItems.clear();
@@ -301,7 +303,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     }
   }
 
-  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "HardCodedStringLiteral"})
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private void printTestWarning() {
     System.err.println("Your test might miss some lookup items, because only " + (myLimit / 2) + " most relevant items are guaranteed to be shown in the lookup. You can:");
     System.err.println("1. Make the prefix used for completion longer, so that there are less suggestions.");
@@ -547,7 +549,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
                                              @NotNull LinkedHashSet<? super LookupElement> model) {
     if (!lookup.isSelectionTouched()) {
       LookupElement lastSelection = lookup.getCurrentItem();
-      if (items.contains(lastSelection) && lastSelection!=null && !isCustomElements(lastSelection)) {
+      if (items.contains(lastSelection) && lastSelection != null && !isCustomElements(lastSelection)) {
         model.add(lastSelection);
       }
     }
