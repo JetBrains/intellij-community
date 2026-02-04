@@ -94,7 +94,7 @@ private var _di = DI {
     }
   }
 
-  bindProvider<TestContainer<*>> { if (ConfigurationStorage.splitMode()) TestContainer.newInstance<RemDevTestContainer>() else TestContainer.newInstance<TestContainerImpl>() }
+  bindProvider<TestContainer> { if (ConfigurationStorage.splitMode()) RemDevTestContainer() else TestContainerImpl() }
   bindSingleton<JBRDownloader> { StarterJBRDownloader }
   bindSingleton<TargetResolver> { LocalOnlyTargetResolver }
   bindSingleton<ScrambleToolProvider> { object : ScrambleToolProvider {} }

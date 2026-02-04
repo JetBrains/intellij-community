@@ -5,6 +5,7 @@ import com.intellij.mcpserver.clients.McpClientInfo
 import com.intellij.mcpserver.clients.configs.CodexStreamableHttpConfig
 import com.intellij.mcpserver.clients.configs.ExistingConfig
 import com.intellij.mcpserver.clients.configs.ServerConfig
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.createParentDirectories
 import com.moandjiezana.toml.Toml
 import com.moandjiezana.toml.TomlWriter
@@ -91,7 +92,7 @@ open class CodexClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient
       legacyKeys: Set<String>,
       url: String
     ): String {
-      val root = Toml().read(existing).toMap()
+      val root = normalizeTomlMap(Toml().read(existing).toMap())
 
       val existingServers = (root[MCP_SERVERS] as? Map<*, *>) ?: emptyMap<Any, Any>()
 
@@ -110,6 +111,37 @@ open class CodexClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient
       val rendered = writer.write(updatedRoot)
 
       return if (rendered.endsWith("\n")) rendered else "$rendered\n"
+    }
+
+    private fun normalizeTomlMap(map: Map<*, *>): Map<String, Any> {
+      val normalized = LinkedHashMap<String, Any>(map.size)
+      for ((key, value) in map) {
+        val keyString = key as? String ?: continue
+        val normalizedKey = unquoteKeyIfWrapped(keyString)
+        val normalizedValue = normalizeTomlValue(value) ?: continue
+        normalized[normalizedKey] = normalizedValue
+      }
+      return normalized
+    }
+
+    private fun normalizeTomlValue(value: Any?): Any? {
+      return when (value) {
+        is Map<*, *> -> normalizeTomlMap(value)
+        is List<*> -> value.mapNotNull { normalizeTomlValue(it) }
+        else -> value
+      }
+    }
+
+    private fun unquoteKeyIfWrapped(key: String): String {
+      // TomlWriter auto-quotes keys that need it. If the parsed map already contains quoted keys
+      // (e.g. from a previously written/merged config), writing again would double-quote them.
+      // Strip paired quotes repeatedly to normalize and heal already-corrupted keys.
+      var result = key
+      while (true) {
+        val unquoted = StringUtil.unquoteString(result)
+        if (unquoted == result) return result
+        result = unquoted
+      }
     }
   }
 }

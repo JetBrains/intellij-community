@@ -4,7 +4,9 @@ package com.jetbrains.python.inspections.quickfix
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.python.externalIndex.PyExternalFilesIndexService
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiPackageUtil.moduleToPackageName
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
@@ -16,7 +18,9 @@ class InstallAllPackagesQuickFix(private val packageNames: List<String>) : Local
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement ?: return
-    val sdk = PythonSdkUtil.findPythonSdk(element) ?: return
+    val sdk = PythonSdkUtil.findPythonSdk(element)
+              ?: project.service<PyExternalFilesIndexService>().findSdkForExternallyIndexedFile(descriptor.psiElement.containingFile.virtualFile)
+              ?: return
 
     val normalizedPackageNames = packageNames.map { moduleToPackageName(it) }
 

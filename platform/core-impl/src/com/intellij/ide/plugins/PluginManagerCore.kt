@@ -420,11 +420,7 @@ object PluginManagerCore {
   ): Deferred<PluginSet> {
     var result = pluginsState.initFuture
     if (result == null) {
-      result = coroutineScope.scheduleLoading(
-        zipPoolDeferred = zipPoolDeferred,
-        mainClassLoaderDeferred = mainClassLoaderDeferred,
-        logDeferred = logDeferred,
-      )
+      result = coroutineScope.scheduleLoading(zipPoolDeferred = zipPoolDeferred, mainClassLoaderDeferred = mainClassLoaderDeferred, logDeferred = logDeferred)
       pluginsState.initFuture = result
     }
     return result

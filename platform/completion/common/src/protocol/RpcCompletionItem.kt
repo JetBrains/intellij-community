@@ -23,6 +23,7 @@ data class RpcCompletionItem(
   val shouldStopLookupInsertion: Boolean = false,
   val isDirectInsertion: Boolean = false,
   val prefixMatcher: RpcPrefixMatcher,
+  val isWorthShowingInAutoPopup: Boolean = false,
 ) {
   override fun toString(): String = buildToString("RpcCompletionItem") {
     field("lookupString", lookupString)
@@ -57,6 +58,7 @@ fun CompletionResult.toRpc(): RpcCompletionItem {
     shouldStopLookupInsertion = element is LookupElementInsertStopper && element.shouldStopLookupInsertion(),
     isDirectInsertion = element.getUserData(CodeCompletionHandlerBase.DIRECT_INSERTION) != null,
     prefixMatcher = prefixMatcher.toRpc(id),
+    isWorthShowingInAutoPopup = element.isWorthShowingInAutoPopup(),
   )
 }
 

@@ -373,22 +373,29 @@ public final class EditorPainter implements TextDrawingCallback {
 
     private SelectionLinePainter mySelectionLinePainter = null;
 
-    private float selectionExtensionWidth(TextAttributes attributes) {
+    private float selectionExtensionWidth() {
       // We need a singular width since otherwise end-of-line selections don't align
       // Choose `M` as it is generally considered the widest letter of the font
       // https://en.wikipedia.org/wiki/Em_(typography)
       return FontLayoutService.getInstance().charWidth2D(
-        myEditor.getFontMetrics(attributes.getFontType()),
+        myEditor.getFontMetrics(Font.PLAIN),
         'M'
       );
     }
 
+    private boolean shouldUseNewSelection() {
+      return !Registry.is("editor.old.full.horizontal.selection.enabled") && !myEditor.isColumnMode();
+    }
+
     private void paintBackground() {
+      float selectionExtensionWidth = selectionExtensionWidth();
+
       mySelectionLinePainter = new SelectionLinePainter(
         myGraphics,
         myLineHeight,
         myYShift,
-        myEditor
+        myEditor,
+        selectionExtensionWidth
       );
 
       int lineCount = myView.getVisibleLineCount();
@@ -441,10 +448,10 @@ public final class EditorPainter implements TextDrawingCallback {
           boolean isSelection = result.second;
 
           myBetweenLinesAttributes.put(visualLine, attributes);
-          if (!isSelection || Registry.is("editor.disable.new.selection")) {
-            paintBackground(attributes.getBackgroundColor(), startX, prevY, endX - startX, y - prevY);
+          if (isSelection && shouldUseNewSelection()) {
+            mySelectionLinePainter.paintAllBlockInlaysAbove(visualLine);
           } else {
-            mySelectionLinePainter.paintAllBlockInlaysAbove(visualLine, selectionExtensionWidth(attributes));
+            paintBackground(attributes, startX, prevY, endX - startX, y - prevY);
           }
         }
         boolean dryRun = visualLine > myEndVisualLine;
@@ -458,11 +465,13 @@ public final class EditorPainter implements TextDrawingCallback {
             if (dryRun) return;
             if (visualLine == 0) xEnd -= myView.getPrefixTextWidthInPixels();
             paintBackground(attributes, startX, y, xEnd);
-            if (!Registry.is("editor.disable.new.selection")
+            if (shouldUseNewSelection()
                 && it.isInSelection()
                 && myEditor.isRightAligned()) {
-              mySelectionLinePainter.paintSelection(new Rectangle2D.Float(startX, y, 0.0f, myLineHeight));
-              mySelectionLinePainter.extendLine(selectionExtensionWidth(attributes));
+              mySelectionLinePainter.paintSelection(new Rectangle2D.Float(
+                xEnd - selectionExtensionWidth, y,
+                selectionExtensionWidth, myLineHeight
+              ));
             }
             if (!hasSoftWrap) return;
             paintSelectionOnSecondSoftWrapLineIfNecessary(visualLine, columnEnd, xEnd, y, primarySelectionStart, primarySelectionEnd);
@@ -535,18 +544,20 @@ public final class EditorPainter implements TextDrawingCallback {
             CustomFoldRegion cfr = visLinesIterator.getCustomFoldRegion();
             if (cfr != null) {
               float paintWidth = endX - startX;
-              if (!Registry.is("editor.disable.new.selection", true) && mySelectionLinePainter.isCFRInSelection(cfr)) {
+              if (shouldUseNewSelection() && mySelectionLinePainter.isCFRInSelection(cfr)) {
                 paintWidth = cfr.getWidthInPixels();
                 backgroundAttributes.setBackgroundColor(
                   myEditor.getColorsScheme()
                     .getColor(EditorColors.SELECTION_BACKGROUND_COLOR)
                 );
+
+                float start = startX - (myEditor.isRightAligned() ? selectionExtensionWidth : 0.0f);
+                float end = start + paintWidth + (myEditor.isRightAligned() ? 0.0f : selectionExtensionWidth);
                 mySelectionLinePainter.paintSelection(
                   new Rectangle2D.Float(
-                    startX, y, paintWidth, cfr.getHeightInPixels()
+                    start, y, end - start, cfr.getHeightInPixels()
                   )
                 );
-                mySelectionLinePainter.extendLine(selectionExtensionWidth(backgroundAttributes));
               } else {
                 paintBackground(backgroundAttributes, startX, y, paintWidth, cfr.getHeightInPixels());
               }
@@ -557,14 +568,10 @@ public final class EditorPainter implements TextDrawingCallback {
               return;
             }
             paintBackground(backgroundAttributes.getBackgroundColor(), x, y, endX - x, myLineHeight);
-            if (it.isInSelection() && !Registry.is("editor.disable.new.selection")) {
-              var extensionWidth = selectionExtensionWidth(backgroundAttributes);
+            if (it.isInSelection() && shouldUseNewSelection() && !myEditor.isRightAligned()) {
               mySelectionLinePainter.paintSelection(
-                new Rectangle2D.Float(x, y, 0.0f, myLineHeight)
+                new Rectangle2D.Float(x, y, selectionExtensionWidth, myLineHeight)
               );
-              if (!myEditor.isRightAligned()) {
-                mySelectionLinePainter.extendLine(extensionWidth);
-              }
             }
             int offset = it.getEndOffset();
             SoftWrap softWrap = mySoftWrapModel.getSoftWrap(offset);
@@ -652,7 +659,7 @@ public final class EditorPainter implements TextDrawingCallback {
                      : (float)myView.visualPositionToXY(new VisualPosition(visualLine, selectionRange.first)).getX();
 
       float clipEndX = myClip.x + myClip.width;
-      if (!Registry.is("editor.disable.new.selection", true)) {
+      if (shouldUseNewSelection()) {
         clipEndX = Math.min(clipEndX, visualLineEnd(visualLine));
       }
       float endX = (float)Math.min(clipEndX, myView.visualPositionToXY(new VisualPosition(visualLine, selectionRange.second)).getX());
@@ -694,7 +701,7 @@ public final class EditorPainter implements TextDrawingCallback {
                      (float)myView.visualPositionToXY(selectionStartPosition).getX() : xStart;
 
       float clipEndX = myClip.x + myClip.width;
-      if (!Registry.is("editor.disable.new.selection", true)) {
+      if (shouldUseNewSelection()) {
         clipEndX = Math.min(clipEndX, visualLineEnd(visualLine));
       }
       float endX = selectionEndPosition.line == visualLine
@@ -713,7 +720,7 @@ public final class EditorPainter implements TextDrawingCallback {
       if (attributes == null) return;
 
       paintBackground(attributes.getBackgroundColor(), x, y, width, height);
-      if (!Registry.is("editor.disable.new.selection") && mySelectionLinePainter.isInSelection(x, y, width)) {
+      if (shouldUseNewSelection() && mySelectionLinePainter.isInSelection(x, y, width)) {
         mySelectionLinePainter.paintSelection(new Rectangle2D.Float(x, y, width, height));
       }
     }

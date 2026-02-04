@@ -13415,6 +13415,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("backTicksAsName.kt")
+            public void testBackTicksAsName() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/backTicksAsName.kt");
+            }
+
             @TestMetadata("backingFieldTypeIsASubtype.kt")
             public void testBackingFieldTypeIsASubtype() throws Exception {
                 runTest("testData/inspectionsLocal/convertToExplicitBackingFields/backingFieldTypeIsASubtype.kt");
@@ -13483,6 +13488,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("twoGetters.kt")
             public void testTwoGetters() throws Exception {
                 runTest("testData/inspectionsLocal/convertToExplicitBackingFields/twoGetters.kt");
+            }
+
+            @TestMetadata("typeArgument.kt")
+            public void testTypeArgument() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/typeArgument.kt");
             }
 
             @TestMetadata("withBlankLines.kt")
@@ -17696,6 +17706,65 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("whileLoopLabel.kt")
         public void testWhileLoopLabel() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantLabel/whileLoopLabel.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/mainFunctionReturnUnit")
+    public static class MainFunctionReturnUnit extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("explicitReturnTypeBlockBody.kt")
+        public void testExplicitReturnTypeBlockBody() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mainFunctionReturnUnit/explicitReturnTypeBlockBody.kt");
+        }
+
+        @TestMetadata("explicitReturnTypeBlockBody.k2.kt")
+        public void testExplicitReturnTypeBlockBody_k2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mainFunctionReturnUnit/explicitReturnTypeBlockBody.k2.kt");
+        }
+
+        @TestMetadata("explicitReturnTypeExpressionBody.kt")
+        public void testExplicitReturnTypeExpressionBody() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mainFunctionReturnUnit/explicitReturnTypeExpressionBody.kt");
+        }
+
+        @TestMetadata("explicitReturnTypeExpressionBody.k2.kt")
+        public void testExplicitReturnTypeExpressionBody_k2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mainFunctionReturnUnit/explicitReturnTypeExpressionBody.k2.kt");
+        }
+
+        @TestMetadata("implicitReturnTypeExpressionBody.kt")
+        public void testImplicitReturnTypeExpressionBody() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mainFunctionReturnUnit/implicitReturnTypeExpressionBody.kt");
+        }
+
+        @TestMetadata("implicitReturnTypeExpressionBody.k2.kt")
+        public void testImplicitReturnTypeExpressionBody_k2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mainFunctionReturnUnit/implicitReturnTypeExpressionBody.k2.kt");
+        }
+
+        @TestMetadata("notMainFunName.kt")
+        public void testNotMainFunName() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mainFunctionReturnUnit/notMainFunName.kt");
+        }
+
+        @TestMetadata("notMainReturnType.kt")
+        public void testNotMainReturnType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mainFunctionReturnUnit/notMainReturnType.kt");
+        }
+
+        @TestMetadata("unit.kt")
+        public void testUnit() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mainFunctionReturnUnit/unit.kt");
         }
     }
 

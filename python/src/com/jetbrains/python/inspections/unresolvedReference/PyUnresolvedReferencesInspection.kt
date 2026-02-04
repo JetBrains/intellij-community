@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
@@ -26,6 +27,7 @@ import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
+import com.intellij.python.externalIndex.PyExternalFilesIndexService
 import com.intellij.python.pyproject.model.api.isPyProjectTomlBased
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.PyNames
@@ -105,7 +107,7 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
       // Don't suggest installing "name" for `import pkg.name` or `from pkg.name import foo`.
       if (node !is PyReferenceExpression || node.isQualified) {
         return emptyList()
-      } 
+      }
 
       val qname = QualifiedName.fromDottedString(refName)
       val components = qname.components
@@ -114,14 +116,16 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
       }
       val packageName = PyPsiPackageUtil.moduleToPackageName(components[0])
 
+      val project = node.project
       val module = ModuleUtilCore.findModuleForPsiElement(node)
       val sdk = PythonSdkUtil.findPythonSdk(module)
-      if (module == null || sdk == null || !PyPackageUtil.packageManagementEnabled(sdk, false, true)) {
+                ?: project.service<PyExternalFilesIndexService>().findSdkForExternallyIndexedFile(node.containingFile.virtualFile)
+      if (sdk == null || !PyPackageUtil.packageManagementEnabled(sdk, false, true)) {
         return emptyList()
       }
 
 
-      val packageManager = PythonPackageManager.forSdk(module.project, sdk)
+      val packageManager = PythonPackageManager.forSdk(project, sdk)
 
       val shouldBeSuggest = !sdk.isReadOnly && packageManager.isNotInstalledAndCanBeInstalled(packageName)
       if (!shouldBeSuggest)

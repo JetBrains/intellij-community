@@ -1,6 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout
 
+import com.intellij.platform.pluginGraph.PluginGraph
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.json.Json
@@ -9,7 +10,9 @@ import org.jetbrains.intellij.build.impl.BazelModuleOutputProvider
 import org.jetbrains.intellij.build.impl.JpsModuleOutputProvider
 import org.jetbrains.intellij.build.impl.bazelOutputRoot
 import org.jetbrains.intellij.build.productLayout.discovery.GenerationResult
+import org.jetbrains.intellij.build.productLayout.discovery.ModuleSetGenerationConfig
 import org.jetbrains.intellij.build.productLayout.discovery.findProductPropertiesSourceFile
+import org.jetbrains.intellij.build.productLayout.json.buildPluginGraphForJson
 import org.jetbrains.intellij.build.productLayout.json.streamModuleAnalysisJson
 import org.jetbrains.intellij.build.productLayout.stats.printGenerationSummary
 import org.jetbrains.intellij.build.productLayout.tooling.JsonFilter
@@ -41,35 +44,17 @@ private fun determineProductCategory(contentSpec: ProductModulesContentSpec?): P
 }
 
 /**
- * Parses JSON argument from command line in the format `--json` or `--json='{"filter":"...","value":"..."}'`.
- * Returns null for full JSON output, or JsonFilter for filtered output.
- *
- * @param arg The command line argument (e.g., "--json" or "--json={...}")
- * @return JsonFilter if filter is specified, null for full JSON output
- */
-private fun parseJsonArgument(arg: String): JsonFilter? {
-  if (arg.contains('=')) {
-    val filterJson = arg.substringAfter("=")
-    try {
-      return Json.decodeFromString<JsonFilter>(filterJson)
-    }
-    catch (e: Exception) {
-      System.err.println("Failed to parse JSON filter: $filterJson")
-      System.err.println("Error: ${e.message}")
-      return null
-    }
-  }
-  else {
-    // Full JSON output
-    return null
-  }
-}
-
-/**
  * Generic main runner for module set generation and analysis.
- * Supports two modes:
+ * Supports multiple modes:
  * 1. JSON mode (--json): Outputs comprehensive analysis as JSON to stdout
- * 2. Default mode: Generates XML files for module sets and products
+ * 2. Update suppressions mode (--update-suppressions): Only updates suppressions.json, no XML changes
+ * 3. Default mode: Generates XML files for module sets and products (but NOT suppressions.json)
+ *
+ * CLI flags:
+ * - `--json[=filter]`: Output analysis as JSON instead of generating files
+ * - `--update-suppressions`: Only update suppressions.json (no XML changes)
+ * - `--validation=<ids>`: Run only specified validation rules (comma-separated).
+ *   Use `--validation=none` to skip all validation. Generation generators always run.
  *
  * @param args Command line arguments
  * @param communityModuleSets Module sets from community
@@ -79,6 +64,7 @@ private fun parseJsonArgument(arg: String): JsonFilter? {
  * @param ultimateSourceFile Source file path for ultimate module sets (or null for community-only)
  * @param projectRoot Project root path
  * @param generateXmlImpl Lambda to generate XML files, returns generation result with errors and diffs
+ * @param graphConfigProvider Optional provider for building ModuleSetGenerationConfig when JSON analysis needs PluginGraph
  */
 suspend fun runModuleSetMain(
   args: Array<String>,
@@ -88,22 +74,18 @@ suspend fun runModuleSetMain(
   communitySourceFile: String,
   ultimateSourceFile: String?,
   projectRoot: Path,
-  generateXmlImpl: suspend (outputProvider: ModuleOutputProvider) -> GenerationResult,
+  generateXmlImpl: suspend (outputProvider: ModuleOutputProvider, options: GeneratorRunOptions) -> GenerationResult,
+  graphConfigProvider: (suspend (outputProvider: ModuleOutputProvider, options: GeneratorRunOptions) -> ModuleSetGenerationConfig)? = null,
 ) {
   withoutTracer {
-    // Parse `--json` arg with optional filter
-    val jsonArg = args.firstOrNull { it.startsWith("--json") }
+    val options = parseGeneratorOptions(args)
+    setProductDslLogFilter(options.logFilter)
     coroutineScope {
       val outputProvider = createModuleOutputProvider(projectRoot = projectRoot, scope = this)
-      if (jsonArg == null) {
-        // Default mode: Generate XML files
-        val result = generateXmlImpl(outputProvider)
-        printGenerationSummary(result.stats, result.errors)
-        if (result.errors.isNotEmpty()) {
-          exitProcess(1)
-        }
-      }
-      else {
+      if (options.jsonFilter != null) {
+        val filter = parseJsonArgument(options.jsonFilter)
+        val pluginGraph = graphConfigProvider?.let { buildPluginGraphForJson(it(outputProvider, options)) }
+          ?: error("PluginGraph is required for --json output; graphConfigProvider was not supplied")
         jsonResponse(
           communityModuleSets = communityModuleSets,
           communitySourceFile = communitySourceFile,
@@ -111,9 +93,24 @@ suspend fun runModuleSetMain(
           ultimateModuleSets = ultimateModuleSets,
           projectRoot = projectRoot,
           testProducts = testProducts,
-          jsonArg = jsonArg,
+          filter = filter,
           outputProvider = outputProvider,
+          pluginGraph = pluginGraph,
         )
+      }
+      else if (options.updateSuppressions) {
+        // Update suppressions mode: only update suppressions.json, no XML changes
+        val result = generateXmlImpl(outputProvider, options)
+        println("Suppressions config updated.")
+        printGenerationSummary(result.stats, result.errors)
+      }
+      else {
+        // Default mode: Generate XML files but NOT suppressions.json
+        val result = generateXmlImpl(outputProvider, options)
+        printGenerationSummary(result.stats, result.errors)
+        if (result.errors.isNotEmpty()) {
+          exitProcess(1)
+        }
       }
     }
   }
@@ -126,8 +123,9 @@ private suspend fun jsonResponse(
   ultimateModuleSets: List<ModuleSet>,
   projectRoot: Path,
   testProducts: List<Pair<String, ProductModulesContentSpec>>,
-  jsonArg: String,
+  filter: JsonFilter?,
   outputProvider: ModuleOutputProvider,
+  pluginGraph: PluginGraph,
 ) {
   // Prepare all module sets with metadata
   val communityModuleSetsWithMeta = communityModuleSets.map {
@@ -189,9 +187,34 @@ private suspend fun jsonResponse(
     allModuleSets = allModuleSets,
     products = (regularProducts + testProductSpecs).toList(),
     projectRoot = projectRoot,
-    filter = parseJsonArgument(jsonArg),
-    outputProvider = outputProvider,
+    filter = filter,
+    pluginGraph = pluginGraph,
   )
+}
+
+/**
+ * Parses JSON argument from command line in the format `--json` or `--json='{"filter":"...","value":"..."}'`.
+ * Returns null for full JSON output, or JsonFilter for filtered output.
+ *
+ * @param arg The command line argument (e.g., "--json" or "--json={...}")
+ * @return JsonFilter if filter is specified, null for full JSON output
+ */
+private fun parseJsonArgument(arg: String): JsonFilter? {
+  if (arg.contains('=')) {
+    val filterJson = arg.substringAfter("=")
+    try {
+      return Json.decodeFromString<JsonFilter>(filterJson)
+    }
+    catch (e: Exception) {
+      System.err.println("Failed to parse JSON filter: $filterJson")
+      System.err.println("Error: ${e.message}")
+      return null
+    }
+  }
+  else {
+    // Full JSON output
+    return null
+  }
 }
 
 private fun createModuleOutputProvider(projectRoot: Path, scope: CoroutineScope): ModuleOutputProvider {

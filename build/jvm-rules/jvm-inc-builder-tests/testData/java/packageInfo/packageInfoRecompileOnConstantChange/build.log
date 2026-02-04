@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  bug/Namespace.class
+End of files
+Compiling files:
+  java/packageInfo/packageInfoRecompileOnConstantChange/a/bug/Namespace.java
+End of files
+Cleaning output files:
+  bug/package-info.class
+End of files
+Compiling files:
+  java/packageInfo/packageInfoRecompileOnConstantChange/a/bug/package-info.java
+End of files
+------------------------------------------
+Exit code: OK

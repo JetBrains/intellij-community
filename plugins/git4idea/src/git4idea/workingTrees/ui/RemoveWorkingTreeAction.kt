@@ -19,11 +19,13 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitWorkingTree
+import git4idea.actions.workingTree.GitCreateWorkingTreeService
 import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys
 import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys.SELECTED_WORKING_TREES
 import git4idea.commands.Git
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil
 import git4idea.workingTrees.GitWorkingTreesService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -44,10 +46,13 @@ internal class RemoveWorkingTreeAction : DumbAwareAction() {
   }
 
   private fun isEnabledFor(trees: List<GitWorkingTree>?, project: Project?, repository: GitRepository?): Boolean {
-    return project != null && repository != null && !trees.isNullOrEmpty() && trees.all { !it.isCurrent && !it.isMain }
+    return project != null && repository != null && !trees.isNullOrEmpty() && trees.all {
+      !it.isCurrent && !it.isMain && !GitCreateWorkingTreeService.getInstance().isWorkingTreeCreationInProgress(it)
+    }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
+    GitWorkingTreesNewBadgeUtil.workingTreesFeatureWasUsed()
     val project = e.project ?: return
     val data = e.getData(SELECTED_WORKING_TREES)
     val repository = e.getData(GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY)

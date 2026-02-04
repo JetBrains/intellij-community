@@ -10,11 +10,14 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
@@ -31,9 +34,11 @@ import git4idea.actions.workingTree.GitCreateWorkingTreeService
 import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil
 import git4idea.workingTrees.GitWorkingTreesService
 import kotlinx.coroutines.launch
 import java.awt.Component
+import java.awt.ComponentOrientation
 import java.awt.Point
 import java.util.function.Predicate
 import javax.swing.DefaultListModel
@@ -47,6 +52,7 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
     internal const val GIT_WORKING_TREE_TOOLWINDOW_TAB_TOOLBAR: String = "GitWorkingTreeToolWindowTabToolbar"
     internal const val GIT_WORKING_TREE_TOOLWINDOW_TAB_EMPTY_LIST: String = "GitWorkingTreeToolWindowTabEmptyList"
 
+    private const val EMPTY_TAB_WORKING_TREE_CONCEPT_HELP_ID = "worktree-concept"
     private const val TOOLWINDOW_CONTENT_HELP_ID = "worktree-help"
   }
 
@@ -106,6 +112,7 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
 
     private fun initEmptyText(emptyText: StatusText) {
       emptyText.text = GitBundle.message("toolwindow.working.trees.tab.empty.text")
+      emptyText.withUnscaledGapAfter(20)
       emptyText.appendLine(GitBundle.message("toolwindow.working.trees.tab.empty.text.create.working.tree"),
                            SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) { _ ->
         val repository = model.repository
@@ -114,6 +121,11 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
                                                                                     null,
                                                                                     GIT_WORKING_TREE_TOOLWINDOW_TAB_EMPTY_LIST)
         }
+      }
+      emptyText.appendLine(AllIcons.General.ContextHelp,
+                           GitBundle.message("toolwindow.working.trees.tab.empty.what.git.worktree"),
+                           SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) { _ ->
+        HelpManager.getInstance().invokeHelp(EMPTY_TAB_WORKING_TREE_CONCEPT_HELP_ID)
       }
     }
 
@@ -176,8 +188,16 @@ internal class GitWorkingTreesContentPreloader(val project: Project) : ChangesVi
   override fun preloadTabContent(content: Content) {
     content.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY, ChangesViewContentManager.TabOrderWeight.WORKING_TREES.weight)
 
-    content.isCloseable = true
-    content.displayName = GitBundle.message("toolwindow.working.trees.tab.name")
+    content.apply {
+      isCloseable = true
+      displayName = GitBundle.message("toolwindow.working.trees.tab.name")
+      if (GitWorkingTreesNewBadgeUtil.shouldShowBadgeNew()) {
+        icon = AllIcons.General.New_badge
+        putUserData(ToolWindow.SHOW_CONTENT_ICON, true)
+        putUserData(ToolWindowContentUi.NOT_SELECTED_TAB_ICON_TRANSPARENT, false)
+        putUserData(Content.TAB_LABEL_ORIENTATION_KEY, ComponentOrientation.RIGHT_TO_LEFT)
+      }
+    }
     // content.manager is not yet initialized here
     ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS)?.contentManager?.addContentManagerListener(object : ContentManagerListener {
       override fun contentRemoved(event: ContentManagerEvent) {

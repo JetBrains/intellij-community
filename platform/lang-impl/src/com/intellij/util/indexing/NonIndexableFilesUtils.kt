@@ -58,7 +58,7 @@ private data class AllFileSets(val recursive: List<WorkspaceFileSet>, val nonRec
 
 private fun WorkspaceFileIndex.allIndexableFileSets(root: VirtualFile): AllFileSets {
   val indexableFileSets = runReadAction {
-    findFileSets(root, true, true, false, true, true, true)
+    findFileSets(root, true, true, false, true, true, false, true)
   }
   return indexableFileSets
     .partition { fileSet -> fileSet !is WorkspaceFileSetWithCustomData<*> || fileSet.recursive }
@@ -67,7 +67,7 @@ private fun WorkspaceFileIndex.allIndexableFileSets(root: VirtualFile): AllFileS
 
 private fun WorkspaceFileIndexEx.isExcludedOrInvalid(file: VirtualFile): Boolean {
   val info = runReadAction {
-    getFileInfo(file, true, true, true, true, true, true)
+    getFileInfo(file, true, true, true, true, true, true, true)
   }
   return when (info) {
     NonWorkspace.EXCLUDED -> true

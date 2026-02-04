@@ -90,6 +90,9 @@
 - name: lib/modules/intellij.python.copyright.jar
   contentModules:
   - name: intellij.python.copyright
+- name: lib/modules/intellij.python.externalIndex.jar
+  contentModules:
+  - name: intellij.python.externalIndex
 - name: lib/modules/intellij.python.featuresTrainer.jar
   contentModules:
   - name: intellij.python.featuresTrainer

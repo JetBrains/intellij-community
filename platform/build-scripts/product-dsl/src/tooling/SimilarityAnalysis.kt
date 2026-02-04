@@ -1,10 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.tooling
 
+import com.intellij.platform.pluginGraph.PluginGraph
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import org.jetbrains.intellij.build.productLayout.traversal.ModuleSetTraversalCache
+import org.jetbrains.intellij.build.productLayout.traversal.collectModuleSetDirectModuleNames
+import org.jetbrains.intellij.build.productLayout.traversal.collectProductModuleSetNames
+import org.jetbrains.intellij.build.productLayout.traversal.isModuleSetTransitivelyNested
 
 /**
  * Detects overlapping or redundant module sets.
@@ -12,29 +15,29 @@ import org.jetbrains.intellij.build.productLayout.traversal.ModuleSetTraversalCa
  * ENHANCED: Now checks TRANSITIVE nested relationships (e.g., essential → libraries → `libraries.core`).
  * Only reports actual duplications, not designed composition patterns.
  *
- * OPTIMIZED: Uses [ModuleSetTraversalCache] for O(1) lookups and parallel comparison.
- *
  * @param allModuleSets List of all module sets with metadata
- * @param cache Pre-computed traversal cache for O(1) lookups
+ * @param pluginGraph Plugin graph for module set traversal
  * @param minOverlapPercent Minimum overlap percentage (0-100) to include in results
  * @return List of overlapping module set pairs sorted by overlap percentage (descending)
  */
 internal suspend fun detectModuleSetOverlap(
   allModuleSets: List<ModuleSetMetadata>,
-  cache: ModuleSetTraversalCache,
+  pluginGraph: PluginGraph,
   minOverlapPercent: Int = 50
-): List<ModuleSetOverlap> = coroutineScope {
-  val comparisons = ArrayList<Deferred<ModuleSetOverlap?>>()
+): List<ModuleSetOverlap> {
+  return coroutineScope {
+    val comparisons = ArrayList<Deferred<ModuleSetOverlap?>>()
 
-  for (i in allModuleSets.indices) {
-    for (j in i + 1 until allModuleSets.size) {
-      comparisons.add(async {
-        computeOverlap(allModuleSets[i], allModuleSets[j], cache, minOverlapPercent)
-      })
+    for (i in allModuleSets.indices) {
+      for (j in i + 1 until allModuleSets.size) {
+        comparisons.add(async {
+          computeOverlap(allModuleSets[i], allModuleSets[j], pluginGraph, minOverlapPercent)
+        })
+      }
     }
-  }
 
-  comparisons.mapNotNull { it.await() }.sortedByDescending { it.overlapPercent }
+    comparisons.mapNotNull { it.await() }.sortedByDescending { it.overlapPercent }
+  }
 }
 
 /**
@@ -44,18 +47,18 @@ internal suspend fun detectModuleSetOverlap(
 private fun computeOverlap(
   ms1: ModuleSetMetadata,
   ms2: ModuleSetMetadata,
-  cache: ModuleSetTraversalCache,
+  pluginGraph: PluginGraph,
   minOverlapPercent: Int
 ): ModuleSetOverlap? {
   // Skip if one explicitly includes the other as a nested set (direct or transitive)
-  if (cache.isTransitivelyNested(ms1.moduleSet.name, ms2.moduleSet.name) ||
-      cache.isTransitivelyNested(ms2.moduleSet.name, ms1.moduleSet.name)) {
+  if (isModuleSetTransitivelyNested(pluginGraph, ms1.moduleSet.name, ms2.moduleSet.name) ||
+      isModuleSetTransitivelyNested(pluginGraph, ms2.moduleSet.name, ms1.moduleSet.name)) {
     return null  // Intentional composition via nesting, not duplication
   }
 
   // Calculate overlap based on direct modules only (not nested)
-  val modules1 = ms1.moduleSet.modules.map { it.name }.toSet()
-  val modules2 = ms2.moduleSet.modules.map { it.name }.toSet()
+  val modules1 = collectModuleSetDirectModuleNames(pluginGraph, ms1.moduleSet.name)
+  val modules2 = collectModuleSetDirectModuleNames(pluginGraph, ms2.moduleSet.name)
 
   val intersection = modules1.intersect(modules2)
   if (intersection.isEmpty()) return null
@@ -117,20 +120,23 @@ private fun generateOverlapRecommendation(
  */
 internal suspend fun analyzeProductSimilarity(
   products: List<ProductSpec>,
+  pluginGraph: PluginGraph,
   similarityThreshold: Double = 0.7
-): List<ProductSimilarityPair> = coroutineScope {
-  val productsWithContent = products.filter { it.contentSpec != null }
-  val comparisons = ArrayList<Deferred<ProductSimilarityPair?>>()
+): List<ProductSimilarityPair> {
+  return coroutineScope {
+    val productsWithContent = products.filter { it.contentSpec != null }
+    val comparisons = ArrayList<Deferred<ProductSimilarityPair?>>()
 
-  for (i in productsWithContent.indices) {
-    for (j in i + 1 until productsWithContent.size) {
-      comparisons.add(async {
-        computeProductSimilarity(productsWithContent[i], productsWithContent[j], similarityThreshold)
-      })
+    for (i in productsWithContent.indices) {
+      for (j in i + 1 until productsWithContent.size) {
+        comparisons.add(async {
+          computeProductSimilarity(productsWithContent[i], productsWithContent[j], pluginGraph, similarityThreshold)
+        })
+      }
     }
-  }
 
-  comparisons.mapNotNull { it.await() }.sortedByDescending { it.similarity }
+    comparisons.mapNotNull { it.await() }.sortedByDescending { it.similarity }
+  }
 }
 
 /**
@@ -140,10 +146,11 @@ internal suspend fun analyzeProductSimilarity(
 private fun computeProductSimilarity(
   p1: ProductSpec,
   p2: ProductSpec,
+  pluginGraph: PluginGraph,
   similarityThreshold: Double
 ): ProductSimilarityPair? {
-  val sets1 = p1.contentSpec!!.moduleSets.map { it.moduleSet.name }.toSet()
-  val sets2 = p2.contentSpec!!.moduleSets.map { it.moduleSet.name }.toSet()
+  val sets1 = collectProductModuleSetNames(pluginGraph, p1.name)
+  val sets2 = collectProductModuleSetNames(pluginGraph, p2.name)
 
   val shared = sets1.intersect(sets2)
   val union = sets1.union(sets2)

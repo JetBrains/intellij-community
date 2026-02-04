@@ -22,16 +22,16 @@ import java.util.Objects;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class TestFrameworkUtil {
-  public static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
+  public static boolean shouldSkipHeadless() { return GraphicsEnvironment.isHeadless(); }  // lazy to avoid caching GraphicsEnvironment.isHeadless() on class initialization
   public static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
 
   public static boolean canRunTest(@NotNull Class<?> testCaseClass) {
-    if (!SKIP_SLOW && !SKIP_HEADLESS) {
+    if (!SKIP_SLOW && !shouldSkipHeadless()) {
       return true;
     }
 
     for (Class<?> clazz = testCaseClass; clazz != null; clazz = clazz.getSuperclass()) {
-      if (SKIP_HEADLESS && clazz.getAnnotation(SkipInHeadlessEnvironment.class) != null) {
+      if (shouldSkipHeadless() && clazz.getAnnotation(SkipInHeadlessEnvironment.class) != null) {
         System.out.println("Class '" + testCaseClass.getName() + "' is skipped because it requires working UI environment");
         return false;
       }

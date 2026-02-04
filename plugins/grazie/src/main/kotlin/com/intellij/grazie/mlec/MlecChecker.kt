@@ -1,5 +1,6 @@
 package com.intellij.grazie.mlec
 
+import ai.grazie.gec.model.problem.Problem
 import ai.grazie.gec.model.problem.ProblemFix
 import ai.grazie.gec.model.problem.SentenceWithProblems
 import ai.grazie.nlp.langs.Language
@@ -14,6 +15,7 @@ import com.intellij.grazie.text.ExternalTextChecker
 import com.intellij.grazie.text.GrazieProblem
 import com.intellij.grazie.text.Rule
 import com.intellij.grazie.text.RuleGroup
+import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextProblem
 import com.intellij.grazie.utils.Text
 import com.intellij.grazie.utils.TextStyleDomain
@@ -29,13 +31,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import java.util.Locale
+import kotlin.String
 
 class MlecChecker : ExternalTextChecker() {
-  private val incompleteSentenceMessages = setOf(
-    "Missing verb", "Missing auxiliary verb", "Missing pronoun", "Incorrect subject-verb form", "Incorrect grammar",
-    "Incorrect verb form", "Incorrect noun form", "Multiple mistakes", "Incorrect verb tense form"
-  )
-
   override fun getRules(locale: Locale): List<Rule> {
     val targetLanguage = locale.language ?: return emptyList()
     val (_, rules) = Constants.mlecRules.entries.find { it.key.locale.language == targetLanguage } ?: return emptyList()
@@ -44,53 +42,18 @@ class MlecChecker : ExternalTextChecker() {
 
   override suspend fun checkExternally(context: ProofreadingContext): Collection<TextProblem> {
     if (!GrazieCloudConnector.seemsCloudConnected() || !context.shouldCheckGrammarStyle()) return emptyList()
-
     val rules = Constants.mlecRules[context.language] ?: return emptyList()
     if (rules.none { it.isCurrentlyEnabled(context.text) }) return emptyList()
 
     val typos = getProblems(context, MlecServerBatcherHolder::class.java)?.takeIf { it.isNotEmpty() } ?: return emptyList()
-
     return typos
       .mapNotNull { typo ->
         val underline: TextRange = typo.highlighting.underline ?: return@mapNotNull null
-
-        val fixes = typo.fixes.map { it.display() }
-        val errorText = underline.substring(context.text.toString())
-
         val rule =
           if (context.language == Language.ENGLISH && typo.info.id.id.endsWith("article.missing")) Constants.enMissingArticle
           else rules.last()
         if (!rule.isCurrentlyEnabled(context.text)) return@mapNotNull null
-
-        object : GrazieProblem(typo, rule, context.text) {
-          override fun getDescriptionTemplate(isOnTheFly: Boolean): @InspectionMessage String {
-            val description = super.getDescriptionTemplate(isOnTheFly)
-            if (ApplicationManager.getApplication().isUnitTestMode()) return "${rule.globalId}: $description"
-            return description
-          }
-
-          override fun fitsGroup(group: RuleGroup): Boolean {
-            if (RuleGroup.SENTENCE_START_CASE in group.rules && StringUtil.capitalize(errorText) in fixes) {
-              val prev = context.text.subSequence(0, underline.startOffset).toString().trim()
-              if (prev.isBlank() ||
-                  Text.Latin.isEndPunctuation(prev) ||
-                  Text.findParagraphRange(context.text, underline).startOffset == underline.startOffset) {
-                return true
-              }
-            }
-
-            if (RuleGroup.SENTENCE_END_PUNCTUATION in group.rules && "$errorText." in fixes) {
-              return context.text.subSequence(underline.endOffset, context.text.length).isBlank() ||
-                     Text.findParagraphRange(context.text, underline).endOffset == underline.endOffset
-            }
-
-            if (RuleGroup.INCOMPLETE_SENTENCE in group.rules && typo.message in incompleteSentenceMessages) {
-              return true
-            }
-
-            return super.fitsGroup(group)
-          }
-        }
+        MlecProblem(typo, rule, context.text, underline)
       }
       .filterNot { isKnownMlecBug(it) }
   }
@@ -110,15 +73,15 @@ class MlecChecker : ExternalTextChecker() {
 
   @Suppress("NonAsciiCharacters")
   object Constants {
-    const val MLEC_RULE_PREFIX = "Grazie.MLEC"
-    val enMissingArticle = mlecRule(
+    const val MLEC_RULE_PREFIX: String = "Grazie.MLEC"
+    val enMissingArticle: Rule = mlecRule(
       "$MLEC_RULE_PREFIX.En.MissingArticle",
       Language.ENGLISH,
       presentableName = "Missing article check (ML)",
       category = "Machine Learning",
       description = "Missing article detection powered by Grazie machine learning"
     )
-    val mlecRules = mapOf(
+    val mlecRules: Map<Language, List<Rule>> = mapOf(
       Language.ENGLISH to listOf(
         enMissingArticle,
         mlecRule(
@@ -191,4 +154,44 @@ class MlecChecker : ExternalTextChecker() {
     }
   }
 
+  class MlecProblem(source: Problem, rule: Rule, text: TextContent, private val underline: TextRange) : GrazieProblem(source, rule, text) {
+    companion object {
+      private val incompleteSentenceMessages = setOf(
+        "Missing verb", "Missing auxiliary verb", "Missing pronoun", "Incorrect subject-verb form", "Incorrect grammar",
+        "Incorrect verb form", "Incorrect noun form", "Multiple mistakes", "Incorrect verb tense form"
+      )
+    }
+
+    override fun getDescriptionTemplate(isOnTheFly: Boolean): @InspectionMessage String {
+      val description = super.getDescriptionTemplate(isOnTheFly)
+      if (ApplicationManager.getApplication().isUnitTestMode()) return "${rule.globalId}: $description"
+      return description
+    }
+
+    override fun fitsGroup(group: RuleGroup): Boolean {
+      val fixes = source.fixes.map { it.display() }
+      val errorText = errorText
+      if (RuleGroup.SENTENCE_START_CASE in group.rules && StringUtil.capitalize(errorText) in fixes) {
+        val prev = text.subSequence(0, underline.startOffset).toString().trim()
+        if (prev.isBlank() ||
+            Text.Latin.isEndPunctuation(prev) ||
+            Text.findParagraphRange(text, underline).startOffset == underline.startOffset) {
+          return true
+        }
+      }
+
+      if (RuleGroup.SENTENCE_END_PUNCTUATION in group.rules && "$errorText." in fixes) {
+        return text.subSequence(underline.endOffset, text.length).isBlank() ||
+               Text.findParagraphRange(text, underline).endOffset == underline.endOffset
+      }
+
+      if (RuleGroup.INCOMPLETE_SENTENCE in group.rules && source.message in incompleteSentenceMessages) {
+        return true
+      }
+
+      return super.fitsGroup(group)
+    }
+
+    val errorText: String get() = underline.substring(text.toString())
+  }
 }

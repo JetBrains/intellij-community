@@ -66,7 +66,7 @@ interface XDebugSessionApi : RemoteApi<Unit> {
 
   suspend fun computeExecutionStacks(suspendContextId: XSuspendContextId): Flow<XExecutionStacksEvent>
 
-  suspend fun computeRunningExecutionStacks(sessionId: XDebugSessionId): Flow<XExecutionStacksEvent>
+  suspend fun computeRunningExecutionStacks(sessionId: XDebugSessionId, suspendContextId: XSuspendContextId?): Flow<XExecutionStackGroupsEvent>
 
   suspend fun muteBreakpoints(sessionDataId: XDebugSessionDataId, muted: Boolean)
 
@@ -107,13 +107,24 @@ data class XDebugSessionDto(
 
 @ApiStatus.Internal
 @Serializable
-sealed interface XExecutionStacksEvent {
-  @Serializable
-  data class NewExecutionStacks(val stacks: List<XExecutionStackDto>, val last: Boolean) : XExecutionStacksEvent
+sealed interface XExecutionStacksEvent
 
-  @Serializable
-  data class ErrorOccurred(val errorMessage: @NlsContexts.DialogMessage String) : XExecutionStacksEvent
+@ApiStatus.Internal
+@Serializable
+sealed interface XExecutionStackGroupsEvent {
 }
+
+@ApiStatus.Internal
+@Serializable
+data class NewExecutionStacksEvent(val stacks: List<XExecutionStackDto>, val last: Boolean) : XExecutionStacksEvent, XExecutionStackGroupsEvent
+
+@ApiStatus.Internal
+@Serializable
+data class ErrorOccurredEvent(val errorMessage: @NlsContexts.DialogMessage String) : XExecutionStacksEvent, XExecutionStackGroupsEvent
+
+@ApiStatus.Internal
+@Serializable
+data class NewExecutionStackGroupsEvent(val groups: List<XExecutionStackGroupDto>, val last: Boolean) : XExecutionStackGroupsEvent
 
 @ApiStatus.Internal
 @Serializable
@@ -123,6 +134,23 @@ data class XExecutionStackDto(
   val icon: IconId?,
   @Serializable(with = DeferredSerializer::class) val descriptor: Deferred<XDescriptor>?,
   @Serializable(with = DeferredSerializer::class) val topFrame: Deferred<XStackFrameDto?>,
+)
+
+@ApiStatus.Internal
+fun XExecutionStackGroupDto.flatten(): Sequence<XExecutionStackDto> = sequence {
+  yieldAll(stacks)
+  for (group in groups) {
+    yieldAll(group.flatten())
+  }
+}
+
+@ApiStatus.Internal
+@Serializable
+data class XExecutionStackGroupDto(
+  val groups: List<XExecutionStackGroupDto>,
+  val stacks: List<XExecutionStackDto>,
+  val displayName: @Nls String,
+  val icon: IconId?,
 )
 
 @ApiStatus.Internal

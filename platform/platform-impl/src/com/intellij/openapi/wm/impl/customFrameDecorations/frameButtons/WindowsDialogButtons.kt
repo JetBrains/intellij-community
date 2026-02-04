@@ -78,6 +78,7 @@ private fun createButtonsPanel(): JPanel {
     try {
       dialog.addComponentListener(componentListener)
       dialog.addWindowListener(windowListener)
+      update() // The first update on show, to ensure the correct maximize/normalize state.
       awaitCancellation()
     }
     finally {

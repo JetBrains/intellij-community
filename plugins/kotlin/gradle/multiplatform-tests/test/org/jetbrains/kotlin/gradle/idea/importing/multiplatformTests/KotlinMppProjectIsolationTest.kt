@@ -122,7 +122,6 @@ class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
         }
     }
 
-    @Ignore("Check and unmute when KTIJ-33118 is fixed")
     @Test
     @PluginTargetVersions(pluginVersion = "2.2.0-dev-231+", gradleVersion = "8.10+")
     fun testKmpIncludeBuild() {

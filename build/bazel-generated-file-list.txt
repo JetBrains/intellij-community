@@ -240,6 +240,7 @@ fleet/ktor/client/core
 fleet/ktor/network/tls
 fleet/ktor/server/cio
 fleet/lsp.protocol
+fleet/lsp.protocol/test
 fleet/modules/api
 fleet/modules/jvm
 fleet/multiplatform.shims
@@ -367,6 +368,7 @@ jvm/jvm-analysis-refactoring
 jvm/jvm-analysis-testFramework
 libraries/aalto-xml
 libraries/ai.grazie.spell.gec.engine.local
+libraries/androidx-collections
 libraries/asm
 libraries/asm-tools
 libraries/assertj-core
@@ -457,6 +459,7 @@ libraries/ktor/client
 libraries/ktor/client-cio
 libraries/ktor/io
 libraries/ktor/network-tls
+libraries/ktor/server-cio
 libraries/ktor/utils
 libraries/lucene.common
 libraries/lz4
@@ -519,6 +522,7 @@ platform/build-scripts/dev-server
 platform/build-scripts/downloader
 platform/build-scripts/icons
 platform/build-scripts/product-dsl
+platform/build-scripts/product-dsl/plugin-graph
 platform/build-scripts/testFramework
 platform/build-scripts/testPlugins/testPluginWithMissingDependencies
 platform/build-scripts/testPlugins/testPluginWithMissingDependencies/module
@@ -1502,6 +1506,7 @@ python/python-copyright
 python/python-core-impl
 python/python-exec-service
 python/python-exec-service/execService.python
+python/python-external-index
 python/python-features-trainer
 python/python-grazie
 python/python-hatch

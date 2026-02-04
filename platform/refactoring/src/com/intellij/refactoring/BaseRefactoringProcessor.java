@@ -21,10 +21,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbModeBlockedFunctionality;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.NlsContexts.Command;
@@ -311,7 +308,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       MessagesService.getInstance().showErrorDialog(myProject, RefactoringBundle.message("unsupported.refs.found", refErrorLanguage.get().getDisplayName()), RefactoringBundle.message("error.title"));
       return;
     }
-    if (!indexNotReadyException.isNull() || DumbService.isDumb(myProject)) {
+    if (!indexNotReadyException.isNull() || !DumbService.getInstance(myProject).isUsableInCurrentContext(this)) {
       DumbService.getInstance(myProject).showDumbModeNotificationForFunctionality(RefactoringBundle.message("refactoring.dumb.mode.notification"),
                                                                                   DumbModeBlockedFunctionality.Refactoring);
       return;
@@ -574,9 +571,12 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     });
   }
 
-  private void addDoRefactoringAction(@NotNull UsageView usageView, @NotNull Runnable refactoringRunnable, @NotNull String canNotMakeString) {
+  private void addDoRefactoringAction(@NotNull UsageView usageView,
+                                      @NotNull Runnable refactoringRunnable,
+                                      @NotNull String canNotMakeString) {
+    boolean isDumbAware = DumbService.isDumbAware(this);
     usageView.addPerformOperationAction(refactoringRunnable, getCommandName(), canNotMakeString,
-                                        RefactoringBundle.message("usageView.doAction"), false);
+                                        RefactoringBundle.message("usageView.doAction"), false, isDumbAware);
   }
 
   /**
@@ -615,6 +615,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         PsiElement primaryElement = data != null ? data.getUserData(RefactoringEventData.PSI_ELEMENT_KEY) : null;
         PsiElement[] allElements = elements != null ? ArrayUtil.append(elements, primaryElement) : new PsiElement[]{primaryElement};
         for (final RefactoringHelper<?> helper : RefactoringHelper.EP_NAME.getExtensionList()) {
+          if (!DumbService.getInstance(myProject).isUsableInCurrentContext(helper)) continue;
+
           Object operation = ReadAction.compute(() -> {
             return helper.prepareOperation(writableUsageInfos, ContainerUtil.filter(allElements, e -> e != null));
           });

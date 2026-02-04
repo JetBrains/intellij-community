@@ -70,6 +70,7 @@ internal object CandidateCollector {
           includeContentNonIndexableSets = true,
           includeExternalSets = true,
           includeExternalSourceSets = true,
+          includeExternalNonIndexableSets = true,
           includeCustomKindSets = true
         ).fileSets
 

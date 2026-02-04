@@ -115,7 +115,7 @@ protected constructor(
     super.checkConfiguration()
     if (packageSpec != null && !isFrameworkInstalled()) {
       throw RuntimeConfigurationWarning(
-        PyBundle.message("runcfg.testing.no.test.framework", packageSpec))
+        PyBundle.message("runcfg.testing.no.test.framework", packageSpec.packageName))
     }
   }
 

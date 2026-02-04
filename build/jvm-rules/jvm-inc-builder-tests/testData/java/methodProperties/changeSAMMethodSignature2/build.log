@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  ppp/DataProvider.class
+End of files
+Compiling files:
+  java/methodProperties/changeSAMMethodSignature2/a/ppp/DataProvider.java
+End of files
+Cleaning output files:
+  ppp/Main.class
+End of files
+Compiling files:
+  java/methodProperties/changeSAMMethodSignature2/a/ppp/Main.java
+End of files
+------------------------------------------
+Exit code: ERROR

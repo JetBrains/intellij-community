@@ -380,7 +380,11 @@ public final class FileTemplateUtil {
   }
 
   private static @NotNull FileType getFileType(@NotNull FileTemplate template) {
-    FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
+    // Try to match by full filename first (handles files like "Dockerfile", "CMakeLists.txt", etc.)
+    FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByFileName(template.getName());
+    if (!fileType.equals(FileTypes.UNKNOWN)) return fileType;
+
+    fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
     if (fileType.equals(FileTypes.UNKNOWN)) {
       return FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(FileUtilRt.getExtension(template.getExtension()));
     }

@@ -3,6 +3,7 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.uast"/>
+    <module name="intellij.platform.uast.ide"/>
     <module name="intellij.java.psi.impl"/>
     <module name="intellij.java.syntax"/>
     <module name="intellij.java.frontback.psi"/>
@@ -13,36 +14,8 @@
     <plugin id="com.intellij.modules.java-capable"/>
   </dependencies>
 
-  <extensionPoints>
-    <extensionPoint qualifiedName="org.jetbrains.uast.uastLanguagePlugin" interface="org.jetbrains.uast.UastLanguagePlugin" dynamic="true"/>
-    <extensionPoint qualifiedName="org.jetbrains.uast.analysis.uastAnalysisPlugin"
-                    interface="org.jetbrains.uast.analysis.UastAnalysisPlugin"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="org.jetbrains.uast.generate.uastCodeGenerationPlugin"
-                    interface="org.jetbrains.uast.generate.UastCodeGenerationPlugin"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="org.jetbrains.uast.evaluation.uastEvaluatorExtension"
-                    interface="org.jetbrains.uast.evaluation.UEvaluatorExtension"
-                    dynamic="true"/>
-  </extensionPoints>
-
-  <!--from intellij.java.psi.impl.xml-->
-  <extensions defaultExtensionNs="com.intellij">
-    <registryKey key="uast.evaluator.depth.limit" defaultValue="15"
-                 description="Maximal allowed depth for UAST TreeBasedEvaluator visitor"/>
-    <registryKey key="uast.evaluator.loop.iteration.limit" defaultValue="20"
-                 description="Maximal allowed iteration count for loop evaluation in the UAST TreeBasedEvaluator visitor"/>
-    <registryKey key="uast.references.by.usage" defaultValue="true"
-                 description="Enables UAST reference contributors that search for usages of variables in the opened file"/>
-  </extensions>
-
   <extensions defaultExtensionNs="org.jetbrains.uast">
     <uastLanguagePlugin implementation="org.jetbrains.uast.java.JavaUastLanguagePlugin"/>
-  </extensions>
-
-
-  <extensions defaultExtensionNs="com.intellij">
-    <registryKey defaultValue="30" description="UAST usages graph building depth limit" key="uast.usage.graph.default.recursion.depth.limit"/>
   </extensions>
 
 </idea-plugin>

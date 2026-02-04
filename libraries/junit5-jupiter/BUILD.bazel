@@ -17,6 +17,7 @@ jvm_library(
     "@lib//:junit5Jupiter",
     "//libraries/junit5",
     "//libraries/junit5-launcher",
+    "//libraries/junit5-vintage",
   ]
 )
 ### auto-generated section `build intellij.libraries.junit5.jupiter` end

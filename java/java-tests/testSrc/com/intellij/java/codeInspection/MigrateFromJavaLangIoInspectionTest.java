@@ -25,7 +25,7 @@ public class MigrateFromJavaLangIoInspectionTest extends LightJavaCodeInsightFix
   }
 
   public void testPrintlnResolved() {
-    doTest("Replace with 'System.out' method");
+    doTest("Replace with 'System.out.println()'");
   }
 
   public void testPrintArrayChar() {

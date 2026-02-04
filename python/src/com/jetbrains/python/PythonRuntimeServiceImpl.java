@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.python.externalIndex.PyExternalFilesIndexService;
 import com.intellij.remote.RemoteSdkAdditionalData;
 import com.jetbrains.python.console.PyConsoleOptions;
 import com.jetbrains.python.console.PydevConsoleRunner;
@@ -41,6 +42,15 @@ public final class PythonRuntimeServiceImpl extends PythonRuntimeService {
   @Override
   public boolean isInScratchFile(@NotNull PsiElement element) {
     return ScratchUtil.isScratch(PsiUtilCore.getVirtualFile(element));
+  }
+
+  @Override
+  public boolean isExternallyIndexedFile(@NotNull PsiElement element) {
+    var virtualFile = PsiUtilCore.getVirtualFile(element);
+    if (virtualFile == null) {
+      return false;
+    }
+    return element.getProject().getService(PyExternalFilesIndexService.class).isFileAddedToNonProjectIndex(virtualFile);
   }
 
   @Override

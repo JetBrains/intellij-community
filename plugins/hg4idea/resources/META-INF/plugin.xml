@@ -17,6 +17,8 @@
   <depends>com.intellij.modules.vcs</depends>
 
   <extensions defaultExtensionNs="com.intellij">
+    <dependencySupport kind="vcs" coordinate="hg4idea" displayName="Mercurial"/>
+
     <search.projectOptionsTopHitProvider implementation="org.zmlx.hg4idea.HgOptionsTopHitProvider"/>
     <vcs name="hg4idea" vcsClass="org.zmlx.hg4idea.HgVcs" displayName="Mercurial" administrativeAreaName=".hg"/>
     <projectConfigurable id="vcs.Mercurial" key="hg4idea.mercurial" instance="org.zmlx.hg4idea.HgProjectConfigurable"

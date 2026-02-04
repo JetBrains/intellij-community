@@ -310,6 +310,7 @@
     <group id="Git.FileHistory.ContextMenu">
       <reference ref="Git.Revert.In.Log"/>
       <reference ref="Git.Fixup.To.Commit"/>
+      <reference ref="Git.Squash.Into.Commit"/>
       <separator/>
       <reference ref="Git.CreateNewTag"/>
       <separator/>
@@ -573,6 +574,8 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <dependencySupport kind="vcs" coordinate="vcs:git" displayName="Git"/>
+
     <advancedSetting id="git.clone.recurse.submodules" default="true" groupKey="advanced.settings.git"/>
     <advancedSetting id="git.read.content.with" enumClass="git4idea.util.GitTextConvMode" default="FILTERS"
                      groupKey="advanced.settings.git"/>
@@ -691,7 +694,7 @@
                  description="Enables the 'Drop Selected Changes' action in Git log changes tree context menu."/>
     <registryKey key="git.in.memory.commit.editing.operations.enabled" defaultValue="true"
                  description="Starts in-memory variants of interactive rebase operations in suitable scenarios, leading to better performance"/>
-    <registryKey key="git.in.memory.interactive.rebase.notify.errors" defaultValue="false"
+    <registryKey key="git.in.memory.interactive.rebase.debug.notify.errors" defaultValue="false"
                  description="Show notification when in-memory interactive rebase fails and fallbacks to the regular one"/>
     <registryKey key="git.cherry.pick.use.git.sequencer" defaultValue="false"
                  description="If enabled, Git will use a sequencer to cherry-pick multiple commits as a range (e.g., 'git cherry-pick A^..C') instead of applying each commit individually."/>
@@ -906,6 +909,7 @@
                         preloaderClassName="git4idea.workingTrees.ui.GitWorkingTreesContentPreloader"
                         isInCommitToolWindow="false"/>
     <statistics.actionCustomPlaceAllowlist places="GitWorkingTreeToolWindowTabToolbar;GitWorkingTreeToolWindowTabEmptyList"/>
+    <backgroundPostStartupActivity implementation="git4idea.workingTrees.GitWorkingTreeStartupActivity"/>
 
     <projectService serviceInterface="git4idea.commands.GitCommandOutputPrinter"
                     serviceImplementation="git4idea.commands.GitCommandOutputConsolePrinter"/>

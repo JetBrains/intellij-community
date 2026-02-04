@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.impl
@@ -7,8 +7,7 @@ import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.intellij.bazelEnvironment.BazelLabel
 import org.jetbrains.intellij.bazelEnvironment.BazelRunfiles
-import org.jetbrains.intellij.build.BuildOptions.Companion.USE_TEST_COMPILATION_OUTPUT_DEFAULT_VALUE
-import org.jetbrains.intellij.build.BuildOptions.Companion.USE_TEST_COMPILATION_OUTPUT_PROPERTY
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
@@ -19,13 +18,14 @@ import java.nio.file.Path
 import kotlin.io.path.isRegularFile
 
 internal class BazelModuleOutputProvider(
-  modules: List<JpsModule>,
+  private val modules: List<JpsModule>,
   private val projectHome: Path,
   val bazelOutputRoot: Path,
   scope: CoroutineScope?,
   override val useTestCompilationOutput: Boolean,
 ) : ModuleOutputProvider {
   private val nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
+  private val projectLibraryToModuleMapCache by lazy { buildProjectLibraryToModuleMap(modules) }
 
   private val zipFilePool = ModuleOutputZipFilePool(scope)
 
@@ -65,6 +65,8 @@ internal class BazelModuleOutputProvider(
     }
     return result.singleOrNull()
   }
+
+  override fun getAllModules(): List<JpsModule> = modules
 
   override fun findModule(name: String): JpsModule? = nameToModule.get(name.removeSuffix("._test"))
 
@@ -125,9 +127,9 @@ internal class BazelModuleOutputProvider(
     if (forTests && !useTestCompilationOutput) {
       error(
         "Cannot find test sources for module '${module.name}' because 'useTestSourceEnabled' is false.\n" +
-        "System property '${USE_TEST_COMPILATION_OUTPUT_PROPERTY}' value: ${System.getProperty(USE_TEST_COMPILATION_OUTPUT_PROPERTY)}, " +
+        "System property '${BuildOptions.USE_TEST_COMPILATION_OUTPUT_PROPERTY}' value: ${System.getProperty(BuildOptions.USE_TEST_COMPILATION_OUTPUT_PROPERTY)}, " +
         "BazelModuleOutputProvider.useTestCompilationOutput (from BuildOptions.useTestCompilationOutput) value: $useTestCompilationOutput, " +
-        "default value: $USE_TEST_COMPILATION_OUTPUT_DEFAULT_VALUE"
+        "default value: ${BuildOptions.USE_TEST_COMPILATION_OUTPUT_DEFAULT_VALUE}"
       )
     }
 
@@ -150,6 +152,8 @@ internal class BazelModuleOutputProvider(
       processedModules = processedModules,
     )
   }
+
+  override fun getProjectLibraryToModuleMap(): Map<String, String> = projectLibraryToModuleMapCache
 
   override fun getModuleImlFile(module: JpsModule): Path {
     val baseDir = requireNotNull(JpsModelSerializationDataService.getBaseDirectoryPath(module)) {

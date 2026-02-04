@@ -311,10 +311,13 @@ com.intellij.usages.UsageView
 - sf:USAGE_VIEW_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:USAGE_VIEW_SETTINGS_KEY:com.intellij.openapi.actionSystem.DataKey
 - a:addButtonToLowerPane(java.lang.Runnable,java.lang.String):V
+- addButtonToLowerPane(java.lang.Runnable,java.lang.String,Z):V
 - a:addButtonToLowerPane(javax.swing.Action):V
+- addButtonToLowerPane(javax.swing.Action,Z):V
 - addExcludeListener(com.intellij.openapi.Disposable,com.intellij.usages.UsageView$ExcludeListener):V
 - a:addPerformOperationAction(java.lang.Runnable,java.lang.String,java.lang.String,java.lang.String):V
 - a:addPerformOperationAction(java.lang.Runnable,java.lang.String,java.lang.String,java.lang.String,Z):V
+- addPerformOperationAction(java.lang.Runnable,java.lang.String,java.lang.String,java.lang.String,Z,Z):V
 - a:appendUsage(com.intellij.usages.Usage):V
 - a:close():V
 - a:excludeUsages(com.intellij.usages.Usage[]):V

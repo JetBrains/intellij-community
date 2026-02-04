@@ -11,12 +11,15 @@ import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.java.JavaBundle;
+import com.intellij.lang.java.JavaImportOptimizer;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.module.Module;
@@ -33,6 +36,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.statistics.JavaStatisticsManager;
@@ -54,6 +58,7 @@ import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class AddImportAction implements QuestionAction {
   private static final Logger LOG = Logger.getInstance(AddImportAction.class);
@@ -256,18 +261,29 @@ public class AddImportAction implements QuestionAction {
       }
 
       StatisticsManager.getInstance().incUseCount(JavaStatisticsManager.createInfo(null, targetClass));
-      WriteCommandAction.runWriteCommandAction(myProject, QuickFixBundle.message("add.import"), null,
-                                               () -> doAddImport(ref, targetClass),
-                                               ref.getElement().getContainingFile());
+      PsiFile file = ref.getElement().getContainingFile();
+      if (file instanceof PsiJavaFile) {
+        ActionContext ctx = ActionContext.from(myEditor, file);
+        ModCommandExecutor.executeInteractively(
+          ctx, QuickFixBundle.message("add.import"), myEditor,
+          () -> ModCommand.psiUpdate(ref.getElement(), (e, updater) -> {
+            bindReference(Objects.requireNonNull(e.getReference()), targetClass);
+            if (CodeInsightWorkspaceSettings.getInstance(myProject).isOptimizeImportsOnTheFly()) {
+              new JavaImportOptimizer().processFile(updater.getPsiFile()).run();
+            }
+          }));
+      } else {
+        WriteCommandAction.runWriteCommandAction(myProject, QuickFixBundle.message("add.import"), null,
+                                                 () -> doAddImport(ref, targetClass, file),
+                                                 file);
+      }
     });
   }
 
-  private void doAddImport(@NotNull PsiReference ref, @NotNull PsiClass targetClass) {
+  private void doAddImport(@NotNull PsiReference ref, @NotNull PsiClass targetClass, @NotNull PsiFile psiFile) {
     try {
       bindReference(ref, targetClass);
       if (CodeInsightWorkspaceSettings.getInstance(myProject).isOptimizeImportsOnTheFly()) {
-        Document document = myEditor.getDocument();
-        PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
         new OptimizeImportsProcessor(myProject, psiFile).runWithoutProgress();
       }
     }

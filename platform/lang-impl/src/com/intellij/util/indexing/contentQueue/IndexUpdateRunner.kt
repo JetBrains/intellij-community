@@ -316,11 +316,11 @@ class IndexUpdateRunner(
         val workspaceFileIndex = WorkspaceFileIndex.getInstance(project)
         val excluded = readActionUndispatched {
           val isIndexable = workspaceFileIndex.isIndexable(file)
-          val belongsToContentNonIndexable = workspaceFileIndex.findFileSet(file, true, false, includeContentNonIndexableSets = true, false, false, false) != null
+          val belongsToNonIndexable = workspaceFileIndex.findFileSet(file, true, false, includeContentNonIndexableSets = true, false, false, includeExternalNonIndexableSets = true, false) != null
           // We don't want to just exclude all !isIndexable,
           // because they may be contributed by an indexing contributor while WorkspaceFileIndex is not aware about it.
           // We only want to exclude the files that are explicitly registered as non indexable.
-          ProjectRootManager.getInstance(project).fileIndex.isExcluded(file) || (!isIndexable && belongsToContentNonIndexable)
+          ProjectRootManager.getInstance(project).fileIndex.isExcluded(file) || (!isIndexable && belongsToNonIndexable)
         }
         if (excluded) {
           val counter = badFileCounter.incrementAndGet()

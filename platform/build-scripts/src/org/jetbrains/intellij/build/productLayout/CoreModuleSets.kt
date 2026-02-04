@@ -169,6 +169,7 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.ktor.io")
     embeddedModule("intellij.libraries.ktor.utils")
     embeddedModule("intellij.libraries.ktor.network.tls")
+    embeddedModule("intellij.libraries.ktor.server.cio")
     embeddedModule("intellij.libraries.ktor.client")
     embeddedModule("intellij.libraries.ktor.client.cio")
   }

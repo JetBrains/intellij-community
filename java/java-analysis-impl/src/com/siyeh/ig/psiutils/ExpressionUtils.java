@@ -213,19 +213,25 @@ public final class ExpressionUtils {
 
   @Contract("null -> false")
   public static boolean isEvaluatedAtCompileTime(@Nullable PsiExpression expression) {
+    return isEvaluatedAtCompileTime(expression, ContainerUtil.newHashSet());
+  }
+
+  private static boolean isEvaluatedAtCompileTime(@Nullable PsiExpression expression,
+                                                  @NotNull Set<PsiVariable> visited) {
+    if (expression == null) return false;
     if (expression instanceof PsiLiteralExpression) {
       return true;
     }
     if (expression instanceof PsiPolyadicExpression polyadicExpression) {
       for (PsiExpression operand : polyadicExpression.getOperands()) {
-        if (!isEvaluatedAtCompileTime(operand)) {
+        if (!isEvaluatedAtCompileTime(operand, visited)) {
           return false;
         }
       }
       return true;
     }
     if (expression instanceof PsiPrefixExpression prefixExpression) {
-      return isEvaluatedAtCompileTime(prefixExpression.getOperand());
+      return isEvaluatedAtCompileTime(prefixExpression.getOperand(), visited);
     }
     if (expression instanceof PsiReferenceExpression referenceExpression) {
       final PsiElement qualifier = referenceExpression.getQualifier();
@@ -234,21 +240,35 @@ public final class ExpressionUtils {
       }
       final PsiElement element = referenceExpression.resolve();
       if (element instanceof PsiVariable variable) {
-        return !PsiTreeUtil.isAncestor(variable, expression, true)
-               && variable.hasModifierProperty(PsiModifier.FINAL)
-               && isEvaluatedAtCompileTime(PsiFieldImpl.getDetachedInitializer(variable));
+        if (visited.contains(variable)) {
+          // cyclic reference detected; not a compile-time evaluatable expression
+          return false;
+        }
+        if (PsiTreeUtil.isAncestor(variable, expression, true)) {
+          return false;
+        }
+        if (!variable.hasModifierProperty(PsiModifier.FINAL)) {
+          return false;
+        }
+        visited.add(variable);
+        try {
+          return isEvaluatedAtCompileTime(PsiFieldImpl.getDetachedInitializer(variable), visited);
+        }
+        finally {
+          visited.remove(variable);
+        }
       }
     }
     if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
-      return isEvaluatedAtCompileTime(parenthesizedExpression.getExpression());
+      return isEvaluatedAtCompileTime(parenthesizedExpression.getExpression(), visited);
     }
     if (expression instanceof PsiConditionalExpression conditionalExpression) {
-      return isEvaluatedAtCompileTime(conditionalExpression.getCondition()) &&
-             isEvaluatedAtCompileTime(conditionalExpression.getThenExpression()) &&
-             isEvaluatedAtCompileTime(conditionalExpression.getElseExpression());
+      return isEvaluatedAtCompileTime(conditionalExpression.getCondition(), visited) &&
+             isEvaluatedAtCompileTime(conditionalExpression.getThenExpression(), visited) &&
+             isEvaluatedAtCompileTime(conditionalExpression.getElseExpression(), visited);
     }
     if (expression instanceof PsiTypeCastExpression typeCastExpression) {
-      return hasStringType(typeCastExpression) && isEvaluatedAtCompileTime(typeCastExpression.getOperand());
+      return hasStringType(typeCastExpression) && isEvaluatedAtCompileTime(typeCastExpression.getOperand(), visited);
     }
     return false;
   }

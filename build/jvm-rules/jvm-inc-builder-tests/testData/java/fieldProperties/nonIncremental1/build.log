@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  A/A.class
+End of files
+Compiling files:
+  java/fieldProperties/nonIncremental1/a/A/A.java
+End of files
+Cleaning output files:
+  A/C.class
+End of files
+Compiling files:
+  java/fieldProperties/nonIncremental1/a/A/C.java
+End of files
+------------------------------------------
+Exit code: OK

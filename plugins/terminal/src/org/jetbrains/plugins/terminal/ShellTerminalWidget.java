@@ -97,6 +97,11 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
       else {
         myShellCommandHandlerHelper.processKeyPressed(e);
       }
+
+      // Special handling for Escape shortcut - show notification about behavior change.
+      if (e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getModifiersEx() == 0) {
+        TerminalEscapeBehaviorChangeNotification.showNotificationIfNeeded(project);
+      }
     });
   }
 

@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <extensions defaultExtensionNs="com.intellij">
     <applicationInitializedListener implementation="com.intellij.platform.kernel.impl.KernelApplicationInitializedListener"/>
   </extensions>

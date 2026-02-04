@@ -262,7 +262,16 @@ class KtCompilerPluginsCache private constructor(
             val pathMacroManager = PathMacroManager.getInstance(project)
             val expandedPluginClassPaths = pluginClassPaths.map { pathMacroManager.expandPath(it) }
             val eel = project.getEelDescriptor()
-            return expandedPluginClassPaths.map { Path(it, eel).toAbsolutePath() }
+            return expandedPluginClassPaths.mapNotNull {
+                try {
+                    Path(it, eel).toAbsolutePath()
+                } catch (e: ProcessCanceledException) {
+                    throw e
+                } catch (e: Throwable) {
+                    LOG.error(e)
+                    null
+                }
+            }
         }
 
         /**

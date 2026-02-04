@@ -7062,17 +7062,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.intellij.deps/debugger-agent-1.133.jar_copy",
-  src = "@org_jetbrains_intellij_deps-debugger-agent-1_133_http//file",
-  out = "org.jetbrains.intellij.deps/debugger-agent-1.133.jar",
+  name = "org.jetbrains.intellij.deps/debugger-agent-1.136.jar_copy",
+  src = "@org_jetbrains_intellij_deps-debugger-agent-1_136_http//file",
+  out = "org.jetbrains.intellij.deps/debugger-agent-1.136.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "java-debugger-agent-holder-debugger-agent",
-  jar = "@org_jetbrains_intellij_deps-debugger-agent-1_133_http//file",
-  source_jar = "@org_jetbrains_intellij_deps-debugger-agent-1_133-sources_http//file",
+  jar = "@org_jetbrains_intellij_deps-debugger-agent-1_136_http//file",
+  source_jar = "@org_jetbrains_intellij_deps-debugger-agent-1_136-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -10124,6 +10124,73 @@ jvm_import(
 )
 
 copy_file(
+  name = "androidx.collection/collection-1.6.0-beta01.jar_copy",
+  src = "@androidx_collection-collection-1_6_0-beta01_http//file",
+  out = "androidx.collection/collection-1.6.0-beta01.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "androidx.annotation/annotation-1.9.1.jar_copy",
+  src = "@androidx_annotation-annotation-1_9_1_http//file",
+  out = "androidx.annotation/annotation-1.9.1.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "androidx.annotation/annotation-jvm-1.9.1.jar_copy",
+  src = "@androidx_annotation-annotation-jvm-1_9_1_http//file",
+  out = "androidx.annotation/annotation-jvm-1.9.1.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "androidx.collection/collection-jvm-1.6.0-beta01.jar_copy",
+  src = "@androidx_collection-collection-jvm-1_6_0-beta01_http//file",
+  out = "androidx.collection/collection-jvm-1.6.0-beta01.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "libraries-androidx-collections-androidx-collection",
+  exports = [
+    ":androidx_collection-collection-1_6_0-beta01_http_import",
+    ":androidx_annotation-annotation-1_9_1_http_import",
+    ":androidx_annotation-annotation-jvm-1_9_1_http_import",
+    ":androidx_collection-collection-jvm-1_6_0-beta01_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "androidx_collection-collection-1_6_0-beta01_http_import",
+  jar = "@androidx_collection-collection-1_6_0-beta01_http//file",
+  source_jar = "@androidx_collection-collection-1_6_0-beta01-sources_http//file"
+)
+
+jvm_import(
+  name = "androidx_annotation-annotation-1_9_1_http_import",
+  jar = "@androidx_annotation-annotation-1_9_1_http//file",
+  source_jar = "@androidx_annotation-annotation-1_9_1-sources_http//file"
+)
+
+jvm_import(
+  name = "androidx_annotation-annotation-jvm-1_9_1_http_import",
+  jar = "@androidx_annotation-annotation-jvm-1_9_1_http//file",
+  source_jar = "@androidx_annotation-annotation-jvm-1_9_1-sources_http//file"
+)
+
+jvm_import(
+  name = "androidx_collection-collection-jvm-1_6_0-beta01_http_import",
+  jar = "@androidx_collection-collection-jvm-1_6_0-beta01_http//file",
+  source_jar = "@androidx_collection-collection-jvm-1_6_0-beta01-sources_http//file"
+)
+
+copy_file(
   name = "org.jetbrains.intellij.deps/asm-all-9.6.1.jar_copy",
   src = "@org_jetbrains_intellij_deps-asm-all-9_6_1_http//file",
   out = "org.jetbrains.intellij.deps/asm-all-9.6.1.jar",
@@ -10745,14 +10812,6 @@ copy_file(
 )
 
 copy_file(
-  name = "androidx.annotation/annotation-jvm-1.9.1.jar_copy",
-  src = "@androidx_annotation-annotation-jvm-1_9_1_http//file",
-  out = "androidx.annotation/annotation-jvm-1.9.1.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
   name = "androidx.compose.runtime/runtime-annotation-jvm-1.10.0.jar_copy",
   src = "@androidx_compose_runtime-runtime-annotation-jvm-1_10_0_http//file",
   out = "androidx.compose.runtime/runtime-annotation-jvm-1.10.0.jar",
@@ -10781,12 +10840,6 @@ jvm_import(
   name = "androidx_collection-collection-jvm-1_5_0_http_import",
   jar = "@androidx_collection-collection-jvm-1_5_0_http//file",
   source_jar = "@androidx_collection-collection-jvm-1_5_0-sources_http//file"
-)
-
-jvm_import(
-  name = "androidx_annotation-annotation-jvm-1_9_1_http_import",
-  jar = "@androidx_annotation-annotation-jvm-1_9_1_http//file",
-  source_jar = "@androidx_annotation-annotation-jvm-1_9_1-sources_http//file"
 )
 
 jvm_import(
@@ -11657,6 +11710,16 @@ jvm_import(
   name = "libraries-ktor-io-ktor-io",
   jar = "@io_ktor-ktor-io-jvm-3_3_2_http//file",
   source_jar = "@io_ktor-ktor-io-jvm-3_3_2-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "libraries-ktor-server-cio-ktor-server-cio-internal",
+  exports = [
+    ":io_ktor-ktor-server-cio-jvm-3_3_2_http_import",
+    ":io_ktor-ktor-server-core-jvm-3_3_2_http_import",
+    ":com_typesafe-config-1_4_5_http_import",
+  ],
   visibility = ["//visibility:public"]
 )
 
@@ -16314,58 +16377,6 @@ jvm_import(
   jar = "@io_takari-maven-wrapper-0_5_5_http//file",
   source_jar = "@io_takari-maven-wrapper-0_5_5-sources_http//file",
   visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "io.ktor/ktor-server-cio-jvm-3.1.3.jar_copy",
-  src = "@io_ktor-ktor-server-cio-jvm-3_1_3_http//file",
-  out = "io.ktor/ktor-server-cio-jvm-3.1.3.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "io.ktor/ktor-server-core-jvm-3.1.3.jar_copy",
-  src = "@io_ktor-ktor-server-core-jvm-3_1_3_http//file",
-  out = "io.ktor/ktor-server-core-jvm-3.1.3.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "com.typesafe/config-1.4.3.jar_copy",
-  src = "@com_typesafe-config-1_4_3_http//file",
-  out = "com.typesafe/config-1.4.3.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "mcpserver-ktor-server-cio-internal",
-  exports = [
-    ":io_ktor-ktor-server-cio-jvm-3_1_3_http_import",
-    ":io_ktor-ktor-server-core-jvm-3_1_3_http_import",
-    ":com_typesafe-config-1_4_3_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "io_ktor-ktor-server-cio-jvm-3_1_3_http_import",
-  jar = "@io_ktor-ktor-server-cio-jvm-3_1_3_http//file",
-  source_jar = "@io_ktor-ktor-server-cio-jvm-3_1_3-sources_http//file"
-)
-
-jvm_import(
-  name = "io_ktor-ktor-server-core-jvm-3_1_3_http_import",
-  jar = "@io_ktor-ktor-server-core-jvm-3_1_3_http//file",
-  source_jar = "@io_ktor-ktor-server-core-jvm-3_1_3-sources_http//file"
-)
-
-jvm_import(
-  name = "com_typesafe-config-1_4_3_http_import",
-  jar = "@com_typesafe-config-1_4_3_http//file",
-  source_jar = "@com_typesafe-config-1_4_3-sources_http//file"
 )
 
 copy_file(

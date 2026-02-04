@@ -931,7 +931,7 @@ abstract class LineLayout {
     }
 
     // offsets are visual (relative to fragment's start)
-    Consumer<Graphics2D> draw(float x, float y, int startRelativeOffset, int endRelativeOffset) {
+    @NotNull Consumer<Graphics2D> draw(float x, float y, int startRelativeOffset, int endRelativeOffset) {
       return delegate.draw(x, y, startRelativeOffset, endRelativeOffset);
     }
 

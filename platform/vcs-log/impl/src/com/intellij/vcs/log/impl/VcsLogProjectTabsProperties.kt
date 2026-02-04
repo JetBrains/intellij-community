@@ -53,7 +53,7 @@ class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsPr
   }
 
   val tabs: Map<String, VcsLogTabLocation>
-    get() = _state.openTabs
+    get() = _state.openTabs.toMap()
 
   fun getRecentlyFilteredGroups(filterName: String): List<List<String>> {
     return getRecentGroup(_state.recentFilters, filterName)
@@ -69,7 +69,7 @@ class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsPr
 
     @get:OptionTag("OPEN_GENERIC_TABS")
     @get:MapAnnotation(sortBeforeSave = false)
-    var openTabs = LinkedHashMap<String, VcsLogTabLocation>()
+    var openTabs: LinkedHashMap<String, VcsLogTabLocation> = LinkedHashMap()
 
     @get:OptionTag("RECENT_FILTERS")
     var recentFilters: MutableMap<String, MutableList<RecentGroup>> = HashMap()

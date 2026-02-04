@@ -48,4 +48,22 @@ class KotlinGrazieSupportTest28 : GrazieTestBase(), ExpectedPluginModeProvider {
         val content = TextExtractor.findTextAt(file, 10, TextContent.TextDomain.ALL)
         assertEquals("foo | bar", TextContentTest.unknownOffsets(content))
     }
+
+    fun `test meaningful single suggestion in RenameTo action`() {
+        myFixture.configureByText("a.kt", """
+            class A {
+                // <TYPO descr="Typo: In word 'tagret'">tagret</TYPO>
+                val <TYPO descr="Typo: In word 'tagret'">tag<caret>ret</TYPO> = 1
+            }
+        """)
+        myFixture.checkHighlighting()
+        val intention = myFixture.findSingleIntention("Typo: Rename to 'target'")
+        myFixture.launchAction(intention)
+        myFixture.checkResult("""
+            class A {
+                // target
+                val target = 1
+            }
+        """)
+    }
 }

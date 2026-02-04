@@ -56,7 +56,7 @@ final class ApproximationFragment implements LineFragment {
   }
 
   @Override
-  public int[] xToVisualColumn(float startX, float x) {
+  public int @NotNull [] xToVisualColumn(float startX, float x) {
     float relX = x - startX;
     int column = relX < myWidth / 2 ? 0 : myColumnCount;
     return new int[] {column, relX <= visualColumnToX(startX, column) ? 0 : 1};
@@ -68,7 +68,7 @@ final class ApproximationFragment implements LineFragment {
   }
 
   @Override
-  public Consumer<Graphics2D> draw(float x, float y, int startColumn, int endColumn) {
+  public @NotNull Consumer<Graphics2D> draw(float x, float y, int startColumn, int endColumn) {
     throw new UnsupportedOperationException();
   }
 

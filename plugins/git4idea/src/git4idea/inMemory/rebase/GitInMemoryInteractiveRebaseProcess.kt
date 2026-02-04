@@ -169,7 +169,7 @@ internal suspend fun performInMemoryRebase(
   if (!isInMemoryRebaseSupported(repository)) {
     return GitCommitEditingOperationResult.Incomplete
   }
-  val showFailureNotification = Registry.`is`("git.in.memory.interactive.rebase.notify.errors")
+  val showFailureNotification = Registry.`is`("git.in.memory.interactive.rebase.debug.notify.errors")
 
   val rebaseData = createRebaseData(model, entries, repository, showFailureNotification)
                    ?: return GitCommitEditingOperationResult.Incomplete

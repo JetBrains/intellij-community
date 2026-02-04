@@ -1,8 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.productLayout
 
+import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 import kotlinx.serialization.Serializable
 
@@ -14,7 +15,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ModuleSetWithOverrides(
   @JvmField val moduleSet: ModuleSet,
-  @JvmField val loadingOverrides: Map<String, ModuleLoadingRuleValue> = emptyMap(),
+  @JvmField val loadingOverrides: Map<ContentModuleName, ModuleLoadingRuleValue> = emptyMap(),
 ) {
   val hasOverrides: Boolean
     get() = loadingOverrides.isNotEmpty()
@@ -25,20 +26,13 @@ data class ModuleSetWithOverrides(
  */
 @ProductDslMarker
 class ModuleLoadingOverrideBuilder {
-  private val overrides = HashMap<String, ModuleLoadingRuleValue>()
+  private val overrides = HashMap<ContentModuleName, ModuleLoadingRuleValue>()
 
   /**
    * Override a module in this module set to be loaded as embedded (loading="embedded").
    */
   fun overrideAsEmbedded(moduleName: String) {
-    overrides.put(moduleName, ModuleLoadingRuleValue.EMBEDDED)
-  }
-
-  /**
-   * Override a module in this module set to be loaded as required (loading="required").
-   */
-  fun overrideAsRequired(moduleName: String) {
-    overrides.put(moduleName, ModuleLoadingRuleValue.REQUIRED)
+    overrides.put(ContentModuleName(moduleName), ModuleLoadingRuleValue.EMBEDDED)
   }
 
   /**
@@ -46,10 +40,10 @@ class ModuleLoadingOverrideBuilder {
    */
   fun loading(rule: ModuleLoadingRuleValue, vararg moduleNames: String) {
     for (name in moduleNames) {
-      overrides.put(name, rule)
+      overrides.put(ContentModuleName(name), rule)
     }
   }
 
   @PublishedApi
-  internal fun build(): Map<String, ModuleLoadingRuleValue> = overrides.toMap()
+  internal fun build(): Map<ContentModuleName, ModuleLoadingRuleValue> = overrides.toMap()
 }

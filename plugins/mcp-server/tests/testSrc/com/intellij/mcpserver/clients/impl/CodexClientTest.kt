@@ -189,6 +189,30 @@ class CodexClientTest {
     assertTrue(result.contains("value = 42"))
     assertTrue(result.contains("[mcp_servers.codextest]"))
   }
+
+  @Test
+  fun `configure keeps quoted project keys without doubling quotes`() {
+    val configPath = tempDir.resolve("config.toml")
+    configPath.writeText(
+      """
+      [projects."/Users/test/project"]
+      trust_level = "trusted"
+
+      [mcp_servers.codextest]
+      url = "http://localhost:1111/stream"
+      """.trimIndent()
+    )
+
+    McpClient.overrideProductSpecificServerKeyForTests("codextest")
+    McpClient.overrideWriteLegacyForTests(false)
+
+    val client = TestCodexClient(McpClientInfo.Scope.GLOBAL, configPath, "http://localhost:4444/stream")
+    client.configure()
+
+    val result = configPath.readText()
+    assertTrue(result.contains("""[projects."/Users/test/project"]"""))
+    assertFalse(result.contains("""[projects.""/Users/test/project""]"""))
+  }
 }
 
 private class TestCodexClient(

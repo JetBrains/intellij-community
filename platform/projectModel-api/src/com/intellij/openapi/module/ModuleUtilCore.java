@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import com.intellij.platform.workspace.storage.EntityStorage;
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
@@ -19,6 +20,8 @@ import com.intellij.util.PathUtilRt;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.graph.Graph;
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceModelLegacyBridge;
+import kotlin.sequences.Sequence;
+import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,21 +128,24 @@ public class ModuleUtilCore {
       }
 
       if (fileIndex.isInLibrary(vFile)) {
-        List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
-        if (orderEntries.isEmpty()) {
+        List<WorkspaceEntityWithSymbolicId> entities = new ArrayList<>();
+        entities.addAll(fileIndex.findContainingSdks(vFile));
+        entities.addAll(fileIndex.findContainingLibraries(vFile));
+        if (entities.isEmpty()) {
           return null;
         }
 
-        if (orderEntries.size() == 1 && orderEntries.get(0) instanceof LibraryOrSdkOrderEntry) {
-          return orderEntries.get(0).getOwnerModule();
+        var modelLegacyBridge = project.getService(WorkspaceModelLegacyBridge.class);
+        var currentSnapshot = WorkspaceModel.getInstance(project).getCurrentSnapshot();
+        var modules = new ArrayList<Module>();
+        for (var entity : entities) {
+          Sequence<Module> modulesSequence =
+            SequencesKt.filterNotNull(SequencesKt.map(currentSnapshot.referrers(entity.getSymbolicId(), ModuleEntity.class), modelLegacyBridge::findLegacyModule));
+          SequencesKt.toCollection(modulesSequence, modules);
         }
-
-        Optional<Module> module = orderEntries
+        Optional<Module> module = modules
           .stream()
-          .filter(entry -> entry instanceof LibraryOrSdkOrderEntry)
-          .map(OrderEntry::getOwnerModule)
           .min(ModuleManager.getInstance(project).moduleDependencyComparator());
-        //there may be no LibraryOrSdkOrderEntry if the file is located under both module source root and a library root
         if (module.isPresent()) {
           return module.get();
         }

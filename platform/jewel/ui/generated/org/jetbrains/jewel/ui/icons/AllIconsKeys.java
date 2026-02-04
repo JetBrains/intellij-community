@@ -35,6 +35,9 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey AddToDictionary = new IntelliJIconKey("actions/addToDictionary.svg", "expui/actions/addToDictionary.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey AiIntentionBulb = new IntelliJIconKey("expui/actions/aiIntentionBulb.svg", "expui/actions/aiIntentionBulb.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Annotate = new IntelliJIconKey("actions/annotate.svg", "expui/general/listFiles.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources

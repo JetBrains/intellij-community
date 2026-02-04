@@ -14,7 +14,7 @@ import java.util.function.Consumer;
 @ApiStatus.Internal
 public abstract class TextFragment implements LineFragment {
   final float @NotNull [] myCharPositions; // i-th value is the x coordinate of right edge of i-th character (counted in visual order)
-  final @Nullable EditorView myView;
+  private final @Nullable EditorView myView;
 
   TextFragment(int charCount, @Nullable EditorView view) {
     assert charCount > 0;
@@ -63,11 +63,14 @@ public abstract class TextFragment implements LineFragment {
     return myView != null && myView.getEditor().getCharacterGrid() != null;
   }
 
-  @Nullable Float adjustedWidthOrNull(int codePoint,  float width) {
+  float adjustedWidth(int codePoint) {
     assert myView != null;
-    var actualWidth = myView.getCodePointWidth(codePoint, Font.PLAIN); // in the grid mode all font styles should have identical widths
-    if (Math.abs(width - actualWidth) < 0.001) return null;
-    return actualWidth;
+    // in the grid mode all font styles should have identical widths
+    return myView.getCodePointWidth(codePoint, Font.PLAIN);
+  }
+
+  static boolean isTooClose(float width, float newWidth) {
+    return Math.abs(width - newWidth) < 0.001;
   }
 
   private final class TextFragmentWindow implements LineFragment {
@@ -131,7 +134,7 @@ public abstract class TextFragment implements LineFragment {
     }
 
     @Override
-    public int[] xToVisualColumn(float startX, float x) {
+    public int @NotNull [] xToVisualColumn(float startX, float x) {
       int startColumnInParent = visualColumnToParent(0);
       float parentStartX = startX - TextFragment.this.visualColumnToX(0, startColumnInParent);
       int[] parentColumn = TextFragment.this.xToVisualColumn(parentStartX, x);
@@ -157,7 +160,7 @@ public abstract class TextFragment implements LineFragment {
     }
 
     @Override
-    public Consumer<Graphics2D> draw(float x, float y, int startOffset, int endOffset) {
+    public @NotNull Consumer<Graphics2D> draw(float x, float y, int startOffset, int endOffset) {
       return TextFragment.this.draw(x, y, visualOffsetToParent(startOffset), visualOffsetToParent(endOffset));
     }
 

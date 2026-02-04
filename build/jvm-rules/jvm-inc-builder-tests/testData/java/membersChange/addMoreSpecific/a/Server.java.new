@@ -1,0 +1,5 @@
+class Server{
+  void foo(Object o){}
+
+  void foo(String s){}
+}

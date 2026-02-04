@@ -89,6 +89,7 @@ import javax.swing.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.max
+import kotlin.time.Duration.Companion.seconds
 
 internal val EMPTY_MENU_ACTION_ICON: Icon = EmptyIcon.create(16, 1)
 
@@ -1015,6 +1016,10 @@ object Utils {
    * Using to prevent deadlock when EDT is blocked by runWithInputEventEdtDispatcher and important sync call from
    * the backend main thread is requiring to run something on the EDT
    *
+   * A 1-second delay is applied before cancellation to allow actions time to complete (if the action is not blocked by the backend).
+   * If the action completes within the delay, it won't be cancelled. This prevents user actions from being
+   * immediately interrupted during backend operations while still resolving potential deadlocks.
+   *
    * @param block The suspending function to execute after cancelling the current input event processing.
    * @return The result of the provided block function.
    */
@@ -1022,7 +1027,10 @@ object Utils {
   suspend fun <T> cancelCurrentInputEventProcessingAndRun(context: CoroutineContext, block: () -> T): T = coroutineScope {
     val cancelJob = launch(cancellationDispatcher) {
       ourCurrentInputEventProcessingJobFlow.collectLatest {
-        it?.cancel()
+        if (it != null) {
+          delay(1.seconds)
+          it.cancel()
+        }
       }
     }
     return@coroutineScope withContext(context) {

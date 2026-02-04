@@ -19,13 +19,13 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.PlatformNioHelper;
 import com.intellij.util.io.TrashBin;
 import com.intellij.util.ui.IoErrorText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JTextField;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -54,7 +54,7 @@ public final class FileDeleteAction extends FileChooserAction {
     var project = e.getProject();
     var toBin = TrashBin.isSupported() && GeneralSettings.getInstance().isDeletingToBin();
 
-    if (!(toBin && ContainerUtil.all(paths, PlatformNioHelper::isLocal))) {
+    if (!(toBin && ContainerUtil.all(paths, TrashBin::canMoveToTrash))) {
       var ok = MessageDialogBuilder.yesNo(UIBundle.message("file.chooser.delete.title"), UIBundle.message("file.chooser.delete.confirm"))
         .yesText(ApplicationBundle.message("button.delete"))
         .noText(CommonBundle.getCancelButtonText())
@@ -74,7 +74,7 @@ public final class FileDeleteAction extends FileChooserAction {
             if (indicator.isCanceled()) break;
             indicator.setText(path.toString());
             indicator.setFraction((double)i++ / paths.size());
-            if (toBin && PlatformNioHelper.isLocal(path)) {
+            if (toBin && TrashBin.canMoveToTrash(path)) {
               TrashBin.moveToTrash(path);
             }
             else {

@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  BaseImpl.class
+  BaseImplImpl.class
+End of files
+Compiling files:
+  java/membersChange/deleteMethodImplementation7/a/BaseImpl.java
+  java/membersChange/deleteMethodImplementation7/a/BaseImplImpl.java
+End of files
+Cleaning output files:
+  ConcreteBase.class
+End of files
+Compiling files:
+  java/membersChange/deleteMethodImplementation7/a/ConcreteBase.java
+End of files
+------------------------------------------
+Exit code: ERROR

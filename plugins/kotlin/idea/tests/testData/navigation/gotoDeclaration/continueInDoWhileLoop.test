@@ -1,0 +1,14 @@
+// FILE: before.kt
+// IGNORE_K1
+fun some() {
+    do {
+        <caret>continue
+    } while (true)
+}
+// FILE: after.kt
+// IGNORE_K1
+fun some() {
+    <caret>do {
+        continue
+    } while (true)
+}

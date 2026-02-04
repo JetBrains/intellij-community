@@ -24,16 +24,12 @@ import kotlin.reflect.jvm.isAccessible
 
 typealias IDEDataPathsProvider = (testName: String, testDirectory: Path, useInMemoryFileSystem: Boolean) -> IDEDataPaths
 
-interface TestContainer<T> {
+interface TestContainer {
   companion object {
     init {
-      EventsBus.subscribe(TestContainer<*>::javaClass) { _: TestContextInitializedEvent ->
+      EventsBus.subscribe(TestContainer::javaClass) { _: TestContextInitializedEvent ->
         logOutput("Starter configuration storage: ${ConfigurationStorage.instance().getAll()}")
       }
-    }
-
-    inline fun <reified T : TestContainer<T>> newInstance(): T {
-      return T::class.constructors.single().apply { isAccessible = true }.call()
     }
 
     suspend fun resolveIDE(ideInfo: IdeInfo): Pair<String, InstalledIde> {

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -52,6 +52,29 @@ public class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
     PsiClass innerClass = aClass.getInnerClasses()[0];
     assertTrue(JUnitUtil.isTestClass(innerClass));
     assertTrue(JUnitUtil.isTestMethod(MethodLocation.elementInClass(innerClass.getMethods()[0], innerClass)));
+  }
+
+  @Test
+  void rejectAbstractMethods() {
+    PsiClass aClass = myFixture.addClass("""
+                          import org.junit.jupiter.api.*;
+                          /** @noinspection ALL*/
+                          abstract class MyTest {
+                            @Test abstract void method();
+                          }
+                          """);
+    assertFalse(TestFrameworks.getInstance().isTestClass(aClass));
+    assertFalse(TestFrameworks.getInstance().isTestMethod(aClass.getMethods()[0]));
+
+    PsiClass iClass = myFixture.addClass("""
+                          import org.junit.jupiter.api.*;
+                          /** @noinspection ALL*/
+                          abstract class InheritedTest extends MyTest {
+                            @Override void method();
+                          }
+                          """);
+    assertFalse(TestFrameworks.getInstance().isTestClass(iClass));
+    assertFalse(TestFrameworks.getInstance().isTestMethod(iClass.getMethods()[0]));
   }
 
   @Test

@@ -154,14 +154,6 @@ open class TestingOptions {
   var isEnableCausalProfiling: Boolean = getBooleanProperty("intellij.build.test.enable.causal.profiling", false)
 
   /**
-   * Pattern to match tests in [mainModule] or default main module tests compilation outputs.
-   * Tests from each matched class will be executed in a forked Runtime.
-   *
-   * E.g. "com/intellij/util/ui/standalone/ **Test.class"
-   */
-  var batchTestIncludes: String? = System.getProperty("intellij.build.test.batchTest.includes")
-
-  /**
    * Run only whole classes/packages in forked Runtime
    * Allowed values:
    * * `false`

@@ -7,6 +7,8 @@ import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestProperties.Companion.minimalSupportedKotlinVersion
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestProperties.Companion.next
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.ModuleReportData
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.PrinterContext
@@ -68,12 +70,25 @@ object KotlinFacetSettingsChecker : WorkspaceModelChecker<KotlinFacetSettingsChe
             if (configuration.includedFacetFields != null) {
                 add("showing only following facet fields: ${configuration.includedFacetFields!!.joinToString { it.name }}")
             }
+            if (configuration.skipLanguageVersionSubstitutions) {
+                add("language version substitutions are skipped")
+            }
         }
     }
 
     private fun PrinterContext.languageVersionSanitized(fieldValue: LanguageVersion): String {
-        val languageVersion = LanguageVersion.fromFullVersionString(testProperties.kotlinVersion.version.toString())
-        return if (fieldValue == languageVersion) CURRENT_LANGUAGE_VERSION_PLACEHOLDER else fieldValue.versionString
+        if (testConfiguration.getConfiguration(KotlinFacetSettingsChecker).skipLanguageVersionSubstitutions) {
+            return fieldValue.versionString
+        }
+        val currentSupportedLanguageVersion = LanguageVersion.fromFullVersionString(testProperties.kotlinVersion.version.toString())
+        val minimalSupportedLanguageVersion = LanguageVersion.fromFullVersionString(minimalSupportedKotlinVersion(testProperties.kotlinVersion.version).kotlinLanguageVersion)
+        val nextMinimalSupportedLanguageVersion = minimalSupportedLanguageVersion!!.next()
+        return when (fieldValue) {
+            currentSupportedLanguageVersion -> CURRENT_LANGUAGE_VERSION_PLACEHOLDER
+            minimalSupportedLanguageVersion -> MINIMAL_SUPPORTED_LANGUAGE_VERSION_PLACEHOLDER
+            nextMinimalSupportedLanguageVersion -> NEXT_MINIMAL_SUPPORTED_LANGUAGE_VERSION_PLACEHOLDER
+            else -> fieldValue.versionString
+        }
     }
 
     private fun KotlinFacetSettingsChecksConfiguration.computeFieldsToPrint(): Set<FacetField> {
@@ -102,7 +117,9 @@ object KotlinFacetSettingsChecker : WorkspaceModelChecker<KotlinFacetSettingsChe
         IKotlinFacetSettings::compilerSettings
     )
 
-    private val CURRENT_LANGUAGE_VERSION_PLACEHOLDER = "{{LATEST_STABLE}}"
+    private const val CURRENT_LANGUAGE_VERSION_PLACEHOLDER = "{{LATEST_STABLE}}"
+    private const val MINIMAL_SUPPORTED_LANGUAGE_VERSION_PLACEHOLDER = "{{MINIMAL_SUPPORTED}}"
+    private const val NEXT_MINIMAL_SUPPORTED_LANGUAGE_VERSION_PLACEHOLDER = "{{NEXT_MINIMAL_SUPPORTED}}"
 
     // Possible input: "-Xparam1=value1 -Xflag -param2 value2"
     private fun String.filterOutInternalArguments() =

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.product.serialization
 
 import com.intellij.platform.runtime.product.ProductMode
@@ -12,6 +12,7 @@ import com.intellij.platform.runtime.repository.writePluginXml
 import com.intellij.platform.runtime.repository.xml
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.util.io.directoryContent
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -104,7 +105,29 @@ class ProductModulesLoaderTest {
     assertEquals(RuntimeModuleLoadingRule.OPTIONAL, optional.loadingRule)
     assertEquals(setOf("optional", "unknown"), pluginModuleGroup.optionalModuleIds.mapTo(HashSet()) { it.stringId })
   }
-  
+
+  @Test
+  fun `unresolved plugin module`() {
+    val repository = createRepository(
+      tempDirectory.rootPath,
+      RawRuntimeModuleDescriptor.create("root", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor.create("plugin", listOf("plugin"), listOf("plugin.util")),
+      RawRuntimeModuleDescriptor.create("plugin.util", emptyList(), listOf("unresolved.module")),
+    )
+    writePluginXmlWithModules(tempDirectory.rootPath / "plugin", "plugin")
+    val xml = generateProductModulesWithPlugin()
+    val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.MONOLITH, repository)
+    assertThat(productModules.bundledPluginModuleGroups).isEmpty()
+    assertThat(productModules.notLoadedBundledPluginModules).hasSize(1)
+    val notLoadedPlugin = productModules.notLoadedBundledPluginModules.entries.single()
+    assertThat(notLoadedPlugin.key.stringId).isEqualTo("plugin")
+    assertThat(notLoadedPlugin.value).containsExactly(
+      RuntimeModuleId.raw("plugin"),
+      RuntimeModuleId.raw("plugin.util"),
+      RuntimeModuleId.raw("unresolved.module"),
+    )
+  }
+
   @Test
   fun `enable plugin modules in relevant modes`() {
     val repository = createRepository(
@@ -250,6 +273,53 @@ class ProductModulesLoaderTest {
     assertThrows<MalformedRepositoryException> {
       ServiceModuleMapping.buildMapping(productModules)
     }
+  }
+
+  @Test
+  fun `without module should exclude module from the nested included module`() {
+    val repository = createRepository(
+      tempDirectory.rootPath,
+      RawRuntimeModuleDescriptor.create("root", listOf("root"), listOf("plugin1")),
+      RawRuntimeModuleDescriptor.create("plugin1", listOf("plugin1"), listOf("plugin2")),
+      RawRuntimeModuleDescriptor.create("plugin2", listOf("plugin2"), listOf("plugin3")),
+      RawRuntimeModuleDescriptor.create("plugin3", listOf("plugin3"), listOf()),
+    )
+    val plugins = listOf("plugin1", "plugin2", "plugin3")
+    plugins.forEach { writePluginXmlWithModules(tempDirectory.rootPath.resolve(it), it) }
+    writePluginXmlWithModules(tempDirectory.rootPath.resolve("root"), "root")
+    val rootProductModulesPath = tempDirectory.rootPath.resolve("root/META-INF/root")
+    directoryContent {
+      xml(FILE_NAME, """
+        <product-modules>
+          <include>
+           <from-module>plugin1</from-module>
+           <without-module>plugin3</without-module>
+          </include>
+          <main-root-modules>
+            <module loading="required">root</module>
+          </main-root-modules>
+        </product-modules>
+      """.trimIndent())
+    }.generate(rootProductModulesPath)
+    val plugin1ProductModulesPath = tempDirectory.rootPath.resolve("plugin1/META-INF/plugin1")
+    directoryContent {
+      xml(FILE_NAME, """
+        <product-modules>
+          <include>
+           <from-module>plugin2</from-module>
+          </include>
+          <main-root-modules>
+            <module loading="required">plugin1</module>
+          </main-root-modules>
+        </product-modules>
+      """.trimIndent())
+    }.generate(plugin1ProductModulesPath)
+    val plugin2ProductModulesPath = tempDirectory.rootPath.resolve("plugin2/META-INF/plugin2")
+    productModulesWithPlugins(mainModules = listOf("plugin2"), plugins = listOf("plugin3")).generate(plugin2ProductModulesPath)
+    val productModules =
+      ProductModulesSerialization.loadProductModules(rootProductModulesPath.resolve(FILE_NAME), ProductMode.MONOLITH, repository)
+    assertThat(productModules.bundledPluginModuleGroups.map { it.mainModule.moduleId.stringId })
+      .doesNotContain("plugin3")
   }
 
   private fun writePluginXmlWithModules(resourcePath: Path, pluginId: String, vararg contentModules: String) {

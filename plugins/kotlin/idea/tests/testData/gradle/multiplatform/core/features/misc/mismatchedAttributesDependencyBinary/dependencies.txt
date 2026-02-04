@@ -5,11 +5,9 @@ project.consumer
 
 project.consumer.commonMain
     org.jetbrains.kotlin.mpp.tests:producer:1.0 (COMPILE)
-    org.jetbrains.kotlin.mpp.tests:producer:commonMain:1.0 (COMPILE)
 
 project.consumer.commonTest
     org.jetbrains.kotlin.mpp.tests:producer:1.0 (TEST)
-    org.jetbrains.kotlin.mpp.tests:producer:commonMain:1.0 (TEST)
 
 project.consumer.jsMain
     org.jetbrains.kotlin.mpp.tests:producer-js:1.0 (COMPILE)

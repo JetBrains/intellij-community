@@ -266,6 +266,7 @@ object PyExpectedTypeJudgement {
           declaration = mapping.callableType?.declarationElement
         )
       }
+      // TODO merge the type of `**kwargs` with the types of other mapped parameters here
       else {
         return param.getType(ctx)
       }

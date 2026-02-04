@@ -51,6 +51,9 @@
 
     <advancedSetting id="terminal.shift.enter.sends.esc.cr" default="true"
                      bundle="messages.TerminalBundle" groupKey="group.advanced.settings.terminal"/>
+
+    <platform.rpc.applicationRemoteTopicListener
+        implementation="com.intellij.terminal.frontend.settings.TerminalActionShortcutChangedListener"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
@@ -58,7 +61,6 @@
 
     <escapeHandler implementation="com.intellij.terminal.frontend.action.CancelSelection"/>
     <escapeHandler implementation="com.intellij.terminal.frontend.action.CloseSearch"/>
-    <escapeHandler implementation="com.intellij.terminal.frontend.action.SelectEditor"/>
     <escapeHandler implementation="com.intellij.terminal.frontend.action.ClosePopupCompletion"/>
   </extensions>
 

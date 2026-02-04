@@ -515,12 +515,10 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     }
 
     if (myIsModule) {
-      if (!myIsLibraryMode) {
-        for (ModuleUsage usage : Iterators.map(Iterators.filter(myModuleRequires, r -> !Objects.equals(myName, r.getName())), r -> new ModuleUsage(r.getName()))) {
-          addUsage(usage);
-        }
+      for (ModuleUsage usage : Iterators.map(Iterators.filter(myModuleRequires, r -> !Objects.equals(myName, r.getName())), r -> new ModuleUsage(r.getName()))) {
+        addUsage(usage);
       }
-      return new JvmModule(flags, myName, myFileName, myVersion, myModuleRequires, myModuleExports, myIsLibraryMode? Set.of() : myUsages, myMetadata);
+      return new JvmModule(flags, myName, myFileName, myVersion, myModuleRequires, myModuleExports, myIsLibraryMode? Iterators.filter(myUsages, u -> u instanceof ModuleUsage) : myUsages, myMetadata);
     }
 
     if (!myIsLibraryMode) {

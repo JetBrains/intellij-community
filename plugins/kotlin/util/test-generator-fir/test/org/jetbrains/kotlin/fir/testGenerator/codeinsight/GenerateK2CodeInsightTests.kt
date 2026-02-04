@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.k2.generate.AbstractFirGenerateTestSupportMetho
 import org.jetbrains.kotlin.idea.k2.generate.AbstractFirGenerateToStringActionTest
 import org.jetbrains.kotlin.idea.k2.hierarchy.AbstractFirHierarchyTest
 import org.jetbrains.kotlin.idea.k2.hierarchy.AbstractFirHierarchyWithLibTest
+import org.jetbrains.kotlin.idea.k2.hints.compilerPlugins.AbstractCompilerPluginDeclarationHighlighterTest
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtCallChainHintsProviderTest
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtDefaultParameterInlayHintsProviderTest
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtLambdasHintsProvider
@@ -182,6 +183,10 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
 
         testClass<AbstractKtCompilerDeclarationsHintProviderTest> {
             model("hints/compilerPlugins/declarations", pattern = inlayHintsFileRegexp)
+        }
+
+        testClass<AbstractCompilerPluginDeclarationHighlighterTest> {
+            model("hints/compilerPlugins/highlighger", pattern = inlayHintsFileRegexp)
         }
 
         testClass<AbstractKtCompilerSupertypesHintProviderTest> {

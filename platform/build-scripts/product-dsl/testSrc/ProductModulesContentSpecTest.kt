@@ -1,13 +1,21 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout
 
+import com.intellij.platform.pluginGraph.ContentModuleName
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.jps.model.module.JpsModule
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import java.nio.file.Path
 
+private val TEST_METADATA_BUILDER: (StringBuilder) -> Unit = { sb ->
+  sb.append("  <id>com.intellij</id>\n")
+  sb.append("  <name>Test</name>\n")
+}
+
+@ExtendWith(TestFailureLogger::class)
 class ProductModulesContentSpecTest {
   @Test
   fun `test valid overrides for existing modules`() {
@@ -15,9 +23,9 @@ class ProductModulesContentSpecTest {
     val moduleSet = ModuleSet(
       name = "testSet",
       modules = listOf(
-        ContentModule("module.a"),
-        ContentModule("module.b"),
-        ContentModule("module.c")
+        ContentModule(ContentModuleName("module.a")),
+        ContentModule(ContentModuleName("module.b")),
+        ContentModule(ContentModuleName("module.c"))
       )
     )
 
@@ -34,8 +42,7 @@ class ProductModulesContentSpecTest {
       outputProvider = MockModuleOutputProvider(),
       inlineXmlIncludes = false,
       inlineModuleSets = true,
-      productPropertiesClass = "TestProperties",
-      generatorCommand = "test",
+      metadataBuilder = TEST_METADATA_BUILDER,
       isUltimateBuild = false
     )
 
@@ -48,8 +55,8 @@ class ProductModulesContentSpecTest {
     val moduleSet = ModuleSet(
       name = "testSet",
       modules = listOf(
-        ContentModule("module.a"),
-        ContentModule("module.b")
+        ContentModule(ContentModuleName("module.a")),
+        ContentModule(ContentModuleName("module.b"))
       )
     )
 
@@ -67,8 +74,7 @@ class ProductModulesContentSpecTest {
         outputProvider = MockModuleOutputProvider(),
         inlineXmlIncludes = false,
         inlineModuleSets = true,
-        productPropertiesClass = "TestProperties",
-        generatorCommand = "test",
+        metadataBuilder = TEST_METADATA_BUILDER,
         isUltimateBuild = false
       )
     }
@@ -82,15 +88,15 @@ class ProductModulesContentSpecTest {
     val nestedSet = ModuleSet(
       name = "nested",
       modules = listOf(
-        ContentModule("nested.module.a"),
-        ContentModule("nested.module.b")
+        ContentModule(ContentModuleName("nested.module.a")),
+        ContentModule(ContentModuleName("nested.module.b"))
       )
     )
 
     val parentSet = ModuleSet(
       name = "parent",
       modules = listOf(
-        ContentModule("parent.module.a")
+        ContentModule(ContentModuleName("parent.module.a"))
       ),
       nestedSets = listOf(nestedSet)
     )
@@ -110,8 +116,7 @@ class ProductModulesContentSpecTest {
         outputProvider = MockModuleOutputProvider(),
         inlineXmlIncludes = false,
         inlineModuleSets = true,
-        productPropertiesClass = "TestProperties",
-        generatorCommand = "test",
+        metadataBuilder = TEST_METADATA_BUILDER,
         isUltimateBuild = false
       )
     }
@@ -126,7 +131,7 @@ class ProductModulesContentSpecTest {
     val moduleSet = ModuleSet(
       name = "testSet",
       modules = listOf(
-        ContentModule("module.a")
+        ContentModule(ContentModuleName("module.a"))
       )
     )
 
@@ -140,8 +145,7 @@ class ProductModulesContentSpecTest {
       outputProvider = MockModuleOutputProvider(),
       inlineXmlIncludes = false,
       inlineModuleSets = true,
-      productPropertiesClass = "TestProperties",
-      generatorCommand = "test",
+      metadataBuilder = TEST_METADATA_BUILDER,
       isUltimateBuild = false
     )
 
@@ -153,7 +157,7 @@ class ProductModulesContentSpecTest {
     val moduleSet = ModuleSet(
       name = "testSet",
       modules = listOf(
-        ContentModule("module.a")
+        ContentModule(ContentModuleName("module.a"))
       )
     )
 
@@ -172,8 +176,7 @@ class ProductModulesContentSpecTest {
         outputProvider = MockModuleOutputProvider(),
         inlineXmlIncludes = false,
         inlineModuleSets = true,
-        productPropertiesClass = "TestProperties",
-        generatorCommand = "test",
+        metadataBuilder = TEST_METADATA_BUILDER,
         isUltimateBuild = false
       )
     }
@@ -187,16 +190,16 @@ class ProductModulesContentSpecTest {
     val nestedSet = ModuleSet(
       name = "nested",
       modules = listOf(
-        ContentModule("nested.module.a"),
-        ContentModule("nested.module.b")
+        ContentModule(ContentModuleName("nested.module.a")),
+        ContentModule(ContentModuleName("nested.module.b"))
       )
     )
 
     val parentSet = ModuleSet(
       name = "parent",
       modules = listOf(
-        ContentModule("parent.module.a"),
-        ContentModule("parent.module.b")
+        ContentModule(ContentModuleName("parent.module.a")),
+        ContentModule(ContentModuleName("parent.module.b"))
       ),
       nestedSets = listOf(nestedSet)
     )
@@ -213,8 +216,7 @@ class ProductModulesContentSpecTest {
       outputProvider = MockModuleOutputProvider(),
       inlineXmlIncludes = false,
       inlineModuleSets = false,
-      productPropertiesClass = "TestProperties",
-      generatorCommand = "test",
+      metadataBuilder = TEST_METADATA_BUILDER,
       isUltimateBuild = false
     )
 
@@ -232,9 +234,9 @@ class ProductModulesContentSpecTest {
     val moduleSet = ModuleSet(
       name = "testSet",
       modules = listOf(
-        ContentModule("module.a"),
-        ContentModule("module.b"),
-        ContentModule("module.c")
+        ContentModule(ContentModuleName("module.a")),
+        ContentModule(ContentModuleName("module.b")),
+        ContentModule(ContentModuleName("module.c"))
       )
     )
 
@@ -251,8 +253,7 @@ class ProductModulesContentSpecTest {
       outputProvider = MockModuleOutputProvider(),
       inlineXmlIncludes = false,
       inlineModuleSets = true,
-      productPropertiesClass = "TestProperties",
-      generatorCommand = "test",
+      metadataBuilder = TEST_METADATA_BUILDER,
       isUltimateBuild = false
     )
 
@@ -275,16 +276,16 @@ class ProductModulesContentSpecTest {
     val deeplyNestedSet = ModuleSet(
       name = "rdCommon",
       modules = listOf(
-        ContentModule("rd.module.a"),
-        ContentModule("rd.module.b"),
-        ContentModule("rd.module.c")
+        ContentModule(ContentModuleName("rd.module.a")),
+        ContentModule(ContentModuleName("rd.module.b")),
+        ContentModule(ContentModuleName("rd.module.c"))
       )
     )
 
     val middleSet = ModuleSet(
       name = "ideUltimate",
       modules = listOf(
-        ContentModule("ide.module.a")
+        ContentModule(ContentModuleName("ide.module.a"))
       ),
       nestedSets = listOf(deeplyNestedSet)
     )
@@ -292,7 +293,7 @@ class ProductModulesContentSpecTest {
     val parentSet = ModuleSet(
       name = "commercialIdeBase",
       modules = listOf(
-        ContentModule("commercial.module.a")
+        ContentModule(ContentModuleName("commercial.module.a"))
       ),
       nestedSets = listOf(middleSet)
     )
@@ -313,8 +314,7 @@ class ProductModulesContentSpecTest {
       outputProvider = MockModuleOutputProvider(),
       inlineXmlIncludes = false,
       inlineModuleSets = false,
-      productPropertiesClass = "TestProperties",
-      generatorCommand = "test",
+      metadataBuilder = TEST_METADATA_BUILDER,
       isUltimateBuild = false
     )
 
@@ -349,15 +349,15 @@ class ProductModulesContentSpecTest {
     val rdCommon = ModuleSet(
       name = "rdCommon",
       modules = listOf(
-        ContentModule("intellij.rd.platform"),
-        ContentModule("intellij.rd.ui")
+        ContentModule(ContentModuleName("intellij.rd.platform")),
+        ContentModule(ContentModuleName("intellij.rd.ui"))
       )
     )
 
     val commercialIdeBase = ModuleSet(
       name = "commercialIdeBase",
       modules = listOf(
-        ContentModule("commercial.module")
+        ContentModule(ContentModuleName("commercial.module"))
       ),
       nestedSets = listOf(rdCommon)
     )
@@ -376,8 +376,7 @@ class ProductModulesContentSpecTest {
       outputProvider = MockModuleOutputProvider(),
       inlineXmlIncludes = false,
       inlineModuleSets = true,  // Full inlining mode
-      productPropertiesClass = "TestProperties",
-      generatorCommand = "test",
+      metadataBuilder = TEST_METADATA_BUILDER,
       isUltimateBuild = false
     )
 
@@ -394,6 +393,77 @@ class ProductModulesContentSpecTest {
     val rdUiCount = Regex("""<module name="intellij\.rd\.ui"""").findAll(result.xml).count()
     assertThat(rdPlatformCount).describedAs("rd.platform should appear exactly once").isEqualTo(1)
     assertThat(rdUiCount).describedAs("rd.ui should appear exactly once").isEqualTo(1)
+  }
+  @Test
+  fun `test module sets are inlined with additional modules`() {
+    // This test verifies that when inlineModuleSets = true, module set modules 
+    // appear together with additional modules in the output XML
+    val testFrameworkSet = ModuleSet(
+      name = "testFrameworks",
+      modules = listOf(
+        ContentModule(ContentModuleName("intellij.libraries.junit5")),
+        ContentModule(ContentModuleName("intellij.libraries.testcontainers"))
+      )
+    )
+
+    val spec = productModules {
+      moduleSet(testFrameworkSet)
+      module("intellij.additional.module")
+    }
+
+    val result = buildProductContentXml(
+      spec = spec,
+      outputProvider = null,  // null for test plugins
+      inlineXmlIncludes = true,
+      inlineModuleSets = true,
+      metadataBuilder = { sb ->
+        sb.append("  <id>test.plugin</id>\n")
+        sb.append("  <name>Test Plugin</name>\n")
+      },
+      isUltimateBuild = true
+    )
+
+    // Verify module set modules are present
+    assertThat(result.xml).contains("<module name=\"intellij.libraries.junit5\"/>")
+    assertThat(result.xml).contains("<module name=\"intellij.libraries.testcontainers\"/>")
+    // Verify additional module is present
+    assertThat(result.xml).contains("<module name=\"intellij.additional.module\"/>")
+    // Verify content block exists
+    assertThat(result.xml).contains("<content namespace=\"jetbrains\">")
+  }
+
+  @Test
+  fun `test nested module sets are fully inlined`() {
+    // Verifies that nested module sets are recursively inlined
+    val nestedSet = ModuleSet(
+      name = "nested",
+      modules = listOf(ContentModule(ContentModuleName("nested.module")))
+    )
+    
+    val parentSet = ModuleSet(
+      name = "parent",
+      modules = listOf(ContentModule(ContentModuleName("parent.module"))),
+      nestedSets = listOf(nestedSet)
+    )
+
+    val spec = productModules {
+      moduleSet(parentSet)
+    }
+
+    val result = buildProductContentXml(
+      spec = spec,
+      outputProvider = null,
+      inlineXmlIncludes = true,
+      inlineModuleSets = true,
+      metadataBuilder = TEST_METADATA_BUILDER,
+      isUltimateBuild = true
+    )
+
+    // Both parent and nested modules should be inlined
+    assertThat(result.xml).contains("<module name=\"parent.module\"/>")
+    assertThat(result.xml).contains("<module name=\"nested.module\"/>")
+    // Should NOT have xi:include references
+    assertThat(result.xml).doesNotContain("xi:include")
   }
 }
 
@@ -421,6 +491,10 @@ private class MockModuleOutputProvider : ModuleOutputProvider {
   }
 
   override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> {
+    throw UnsupportedOperationException("Not available in mock")
+  }
+
+  override fun getProjectLibraryToModuleMap(): Map<String, String> {
     throw UnsupportedOperationException("Not available in mock")
   }
 

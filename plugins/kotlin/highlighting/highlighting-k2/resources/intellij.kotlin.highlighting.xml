@@ -27,8 +27,10 @@
 
     <registryKey key="kotlin.highlighting.warmup"
                  description="Enables Kotlin highlighting warmup – triggers resolution in parallel to prefill caches"
-                 defaultValue="true"
-    />
+                 defaultValue="true"/>
+    <registryKey key="kotlin.highlighting.internal.show.diagnostic.names"
+                 description="Shows diagnostic names in internal mode for debugging purposes."
+                 defaultValue="true"/>
   </extensions>
 
 </idea-plugin>

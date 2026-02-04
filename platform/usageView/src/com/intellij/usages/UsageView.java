@@ -49,7 +49,14 @@ public interface UsageView extends Disposable {
   boolean isSearchInProgress();
 
   void addButtonToLowerPane(@NotNull Runnable runnable, @NlsContexts.Button @NotNull String text);
+  default void addButtonToLowerPane(@NotNull Runnable runnable, @NlsContexts.Button @NotNull String text, boolean dumbAware){
+    addButtonToLowerPane(runnable, text);
+  }
+
   void addButtonToLowerPane(@NotNull Action action);
+  default void addButtonToLowerPane(@NotNull Action action, boolean dumbAware) {
+    addButtonToLowerPane(action);
+  }
 
   /**
    * @param rerunAction this action is used to provide non-standard search restart. Disabled action makes toolbar button disabled too.
@@ -75,6 +82,20 @@ public interface UsageView extends Disposable {
                                  @NotNull String cannotMakeString,
                                  @NotNull String shortDescription,
                                  boolean checkReadOnlyStatus);
+
+  /**
+   * @param cannotMakeString pass empty string to avoid "cannot perform" checks e.g., for explicit reruns
+   * @param checkReadOnlyStatus if false, check is performed inside processRunnable
+   * @param dumbAware if true, the action can be performed in dumb mode (without indexes)
+   */
+  default void addPerformOperationAction(@NotNull Runnable processRunnable,
+                                         @Nullable String commandName,
+                                         @NotNull String cannotMakeString,
+                                         @NotNull String shortDescription,
+                                         boolean checkReadOnlyStatus,
+                                         boolean dumbAware) {
+    addPerformOperationAction(processRunnable, commandName, cannotMakeString, shortDescription, checkReadOnlyStatus);
+  }
 
   @NotNull
   UsageViewPresentation getPresentation();

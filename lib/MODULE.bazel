@@ -5740,17 +5740,17 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps-debugger-agent-1_133_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.133/debugger-agent-1.133.jar",
-  sha256 = "d08d14bf727e3a393dc9e0f95b86b3483d32c15027673324558a13d4eee3756e",
-  downloaded_file_path = "debugger-agent-1.133.jar"
+  name = "org_jetbrains_intellij_deps-debugger-agent-1_136_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.136/debugger-agent-1.136.jar",
+  sha256 = "e048fb4bf2e9e883681e3070996fe4baf317287b175e09bab31dac799d0f6466",
+  downloaded_file_path = "debugger-agent-1.136.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps-debugger-agent-1_133-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.133/debugger-agent-1.133-sources.jar",
-  sha256 = "cd0d9ab32ca1ebebc4f662bf08df315e64fdeba5358d1bcc625a90f742d1260f",
-  downloaded_file_path = "debugger-agent-1.133-sources.jar"
+  name = "org_jetbrains_intellij_deps-debugger-agent-1_136-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.136/debugger-agent-1.136-sources.jar",
+  sha256 = "251417abce7bb907fbec34cd3ac8b9889494267e04de3dcf25d51d531b0f1be2",
+  downloaded_file_path = "debugger-agent-1.136-sources.jar"
 )
 
 http_file(
@@ -7973,6 +7973,62 @@ http_file(
 )
 
 http_file(
+  name = "androidx_collection-collection-1_6_0-beta01_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/collection/collection/1.6.0-beta01/collection-1.6.0-beta01.jar",
+  sha256 = "9a273f0f95e9bec012a4bbe5090c08f80b67c28ff40d6a212b401eff99316a09",
+  downloaded_file_path = "collection-1.6.0-beta01.jar"
+)
+
+http_file(
+  name = "androidx_annotation-annotation-1_9_1_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/annotation/annotation/1.9.1/annotation-1.9.1.jar",
+  sha256 = "38322afa7345c37e29c65ec8852178ae1c26e23096a0634d07a4a3893931f58c",
+  downloaded_file_path = "annotation-1.9.1.jar"
+)
+
+http_file(
+  name = "androidx_annotation-annotation-jvm-1_9_1_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/annotation/annotation-jvm/1.9.1/annotation-jvm-1.9.1.jar",
+  sha256 = "1e343917ebf27ba96fe4dc52b1cad7fd32b738fbc6355bb6cd5b3b305d7212d0",
+  downloaded_file_path = "annotation-jvm-1.9.1.jar"
+)
+
+http_file(
+  name = "androidx_collection-collection-jvm-1_6_0-beta01_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/collection/collection-jvm/1.6.0-beta01/collection-jvm-1.6.0-beta01.jar",
+  sha256 = "74e128077ba26f4f0ca6c5490ef86f8e931f811cd7aadf182830753a108aace9",
+  downloaded_file_path = "collection-jvm-1.6.0-beta01.jar"
+)
+
+http_file(
+  name = "androidx_collection-collection-1_6_0-beta01-sources_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/collection/collection/1.6.0-beta01/collection-1.6.0-beta01-sources.jar",
+  sha256 = "22caf0ab3a7b667ae2e3a4fed5c3647fe005170d8c3d5e667fe386532862ca3c",
+  downloaded_file_path = "collection-1.6.0-beta01-sources.jar"
+)
+
+http_file(
+  name = "androidx_annotation-annotation-1_9_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/annotation/annotation/1.9.1/annotation-1.9.1-sources.jar",
+  sha256 = "4560d6790c5174f4a6f1170fd8bd4c38ad918608fedd624fb67a35cd1a0f4e3a",
+  downloaded_file_path = "annotation-1.9.1-sources.jar"
+)
+
+http_file(
+  name = "androidx_annotation-annotation-jvm-1_9_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/annotation/annotation-jvm/1.9.1/annotation-jvm-1.9.1-sources.jar",
+  sha256 = "c6ae897fbfb73ca09d4ae31a24bfff85c652097ad10644cdbb738488728cb39b",
+  downloaded_file_path = "annotation-jvm-1.9.1-sources.jar"
+)
+
+http_file(
+  name = "androidx_collection-collection-jvm-1_6_0-beta01-sources_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/collection/collection-jvm/1.6.0-beta01/collection-jvm-1.6.0-beta01-sources.jar",
+  sha256 = "6cbe955cd2f5f71c416d4bdf67efcd42916dfaf681c8cb59e256e8cece87eaa8",
+  downloaded_file_path = "collection-jvm-1.6.0-beta01-sources.jar"
+)
+
+http_file(
   name = "org_jetbrains_intellij_deps-asm-all-9_6_1_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/asm-all/9.6.1/asm-all-9.6.1.jar",
   sha256 = "a72e84efb1406a7ab326e0b28c4376e9e1ebfc08c09f23edff5e6e7249588df7",
@@ -8519,13 +8575,6 @@ http_file(
 )
 
 http_file(
-  name = "androidx_annotation-annotation-jvm-1_9_1_http",
-  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/annotation/annotation-jvm/1.9.1/annotation-jvm-1.9.1.jar",
-  sha256 = "1e343917ebf27ba96fe4dc52b1cad7fd32b738fbc6355bb6cd5b3b305d7212d0",
-  downloaded_file_path = "annotation-jvm-1.9.1.jar"
-)
-
-http_file(
   name = "androidx_compose_runtime-runtime-annotation-jvm-1_10_0_http",
   url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/compose/runtime/runtime-annotation-jvm/1.10.0/runtime-annotation-jvm-1.10.0.jar",
   sha256 = "f89dda8bcd73876d0fc16568844b2bd79443ee7ca62810874d25c7dcaa394bd6",
@@ -8544,13 +8593,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/collection/collection-jvm/1.5.0/collection-jvm-1.5.0-sources.jar",
   sha256 = "bcc6197ec5fb349e86ae3ba6c94b164d3a9ac5a03d9f9c235d7c4eb24e5878b3",
   downloaded_file_path = "collection-jvm-1.5.0-sources.jar"
-)
-
-http_file(
-  name = "androidx_annotation-annotation-jvm-1_9_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/annotation/annotation-jvm/1.9.1/annotation-jvm-1.9.1-sources.jar",
-  sha256 = "c6ae897fbfb73ca09d4ae31a24bfff85c652097ad10644cdbb738488728cb39b",
-  downloaded_file_path = "annotation-jvm-1.9.1-sources.jar"
 )
 
 http_file(
@@ -12954,48 +12996,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/takari/maven-wrapper/0.5.5/maven-wrapper-0.5.5-sources.jar",
   sha256 = "24f32dd1019cedff1c43da5009c4194ca1c31053a27ffd690c1f190fab5c102e",
   downloaded_file_path = "maven-wrapper-0.5.5-sources.jar"
-)
-
-http_file(
-  name = "io_ktor-ktor-server-cio-jvm-3_1_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-cio-jvm/3.1.3/ktor-server-cio-jvm-3.1.3.jar",
-  sha256 = "f1526fe94e8d76c5251b5a25e4b4bb72199a25d3e1f6045e4b9e42789293f069",
-  downloaded_file_path = "ktor-server-cio-jvm-3.1.3.jar"
-)
-
-http_file(
-  name = "io_ktor-ktor-server-core-jvm-3_1_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-core-jvm/3.1.3/ktor-server-core-jvm-3.1.3.jar",
-  sha256 = "bf582ba004634d0d343bb2dfa1edd0e8de18cdc2c607a4089db8b79d3085d10a",
-  downloaded_file_path = "ktor-server-core-jvm-3.1.3.jar"
-)
-
-http_file(
-  name = "com_typesafe-config-1_4_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/typesafe/config/1.4.3/config-1.4.3.jar",
-  sha256 = "8ada4c185ce72416712d63e0b5afdc5f009c0cdf405e5f26efecdf156aa5dfb6",
-  downloaded_file_path = "config-1.4.3.jar"
-)
-
-http_file(
-  name = "io_ktor-ktor-server-cio-jvm-3_1_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-cio-jvm/3.1.3/ktor-server-cio-jvm-3.1.3-sources.jar",
-  sha256 = "f2212090a23d4791ed8c01911caa8b68cbf31f1656ca8c0c935df7eaddfe0a4e",
-  downloaded_file_path = "ktor-server-cio-jvm-3.1.3-sources.jar"
-)
-
-http_file(
-  name = "io_ktor-ktor-server-core-jvm-3_1_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-core-jvm/3.1.3/ktor-server-core-jvm-3.1.3-sources.jar",
-  sha256 = "18c7701345d3968ca44970bf5cdd79475bf3fe726dc151b775221b7a9082deb7",
-  downloaded_file_path = "ktor-server-core-jvm-3.1.3-sources.jar"
-)
-
-http_file(
-  name = "com_typesafe-config-1_4_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/typesafe/config/1.4.3/config-1.4.3-sources.jar",
-  sha256 = "d3330505601cc47d97d03349d93dff32c85ec3881b5b168a8881c6af8ceb852a",
-  downloaded_file_path = "config-1.4.3-sources.jar"
 )
 
 http_file(

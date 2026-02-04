@@ -59,7 +59,6 @@ internal class PsiBuilderFreezeTest {
 
   @Test
   fun `test psi builder does not freeze`() = runBlocking(/*timeout = 150.milliseconds,*/ context = Dispatchers.Default) {
-    val started = System.currentTimeMillis()
     val builder = createBuilder("class Test {}")
 
     val writeAccessDelay = 50.milliseconds
@@ -68,6 +67,8 @@ internal class PsiBuilderFreezeTest {
     val restarted = AtomicInteger(0)
     launch {
       readAction {
+        val started = System.currentTimeMillis()
+
         val count = restarted.incrementAndGet()
         if (count > 1) {
           return@readAction
@@ -80,8 +81,9 @@ internal class PsiBuilderFreezeTest {
           builder.advanceLexer()
           marker.rollbackTo()
 
-          if (System.currentTimeMillis() - started > maxReadAccessExpectedDuration.inWholeMilliseconds) {
-            fail { "read action was not canceled for more than ${maxReadAccessExpectedDuration - writeAccessDelay}" }
+          val lng = System.currentTimeMillis() - started
+          if (lng > maxReadAccessExpectedDuration.inWholeMilliseconds) {
+            fail { "read action was not canceled for more than ${maxReadAccessExpectedDuration - writeAccessDelay}: $lng" }
           }
         }
       }

@@ -81,6 +81,8 @@ public final class KeymapPanel extends JPanel implements SearchableConfigurable,
   private boolean myShowOnlyConflicts;
   private final JPanel mySystemShortcutConflictsPanel;
 
+  private @Nullable String actionIdToSelectAfterInit = null;
+
   public KeymapPanel() { this(false); }
 
   public KeymapPanel(boolean showOnlyConflicts) {
@@ -557,6 +559,12 @@ public final class KeymapPanel extends JPanel implements SearchableConfigurable,
       nationalKeyboardsSupport.setSelected(NationalKeyboardSupport.getInstance().getEnabled());
     }
     myManager.reset();
+
+    // Reset is called after the KeymapPanel is chosen in the Settings.
+    if (actionIdToSelectAfterInit != null) {
+      selectAction(actionIdToSelectAfterInit);
+      actionIdToSelectAfterInit = null;
+    }
   }
 
   @Override
@@ -574,8 +582,19 @@ public final class KeymapPanel extends JPanel implements SearchableConfigurable,
     return myManager.isModified() || (myShowFN != null && myShowFN.isModified());
   }
 
+  /**
+   * Navigates the actions tree to make the node of the specified action visible and selected.
+   * If KeymapPanel is not initialized yet, the action will be remembered and selected once initialization is complete.
+   */
   public void selectAction(String actionId) {
-    myActionsTree.selectAction(actionId);
+    if (myManager.getSelectedKeymap() != null) {
+      myActionsTree.selectAction(actionId);
+    }
+    else {
+      // KeymapPanel was not initialized yet.
+      // Let's add a callback to select the action once initialization is complete.
+      actionIdToSelectAfterInit = actionId;
+    }
   }
 
   @Override

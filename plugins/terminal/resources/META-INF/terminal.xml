@@ -124,10 +124,12 @@
     <advancedSetting id="new.terminal.output.capacity.kb" default="1024" groupKey="group.advanced.settings.terminal"/>
 
     <postStartupActivity implementation="org.jetbrains.plugins.terminal.block.GenOneTerminalOptionHidingActivity"/>
-    
+
     <remote.customDataContextSerializer implementation="org.jetbrains.plugins.terminal.block.reworked.TerminalSessionIdDataContextSerializer" />
     <remote.customDataContextSerializer implementation="org.jetbrains.plugins.terminal.block.reworked.IsAlternateBufferDataContextSerializer" />
     <remote.customDataContextSerializer implementation="org.jetbrains.plugins.terminal.block.reworked.hyperlinks.HyperlinkIdDataContextSerializer" />
+
+    <notificationGroup displayType="BALLOON" id="terminal" bundle="messages.TerminalBundle" key="notification.group.terminal"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
@@ -141,6 +143,9 @@
   </extensions>
 
   <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.shellCustomizer"
+                    interface="org.jetbrains.plugins.terminal.starter.ShellCustomizer" dynamic="true"/>
+    <!--suppress DeprecatedClassUsageInspection -->
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.localTerminalCustomizer"
                     interface="org.jetbrains.plugins.terminal.LocalTerminalCustomizer" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.terminal.shellCommandHandler"

@@ -60,6 +60,9 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
    * the ImmediatePainterTest to work.
    */
   fun setCursorPositionImmediately(editor: EditorImpl) {
+    editor.caretAnimationJob?.cancel()
+    editor.caretAnimationJob = null
+
     val animationStates = calculateUpdates(editor)
     for (state in animationStates) {
       editor.lastPosMap[state.caret] = state.finalPos to state.finalLogicalPosition

@@ -389,6 +389,8 @@ jvm_library(
     "//python/python-process-output:processOutput",
     "//tools/intellij.tools.ide.starter.junit5:ide-starter-junit5",
     "//tools/intellij.tools.ide.starter.junit5:ide-starter-junit5_test_lib",
+    "//platform/build-scripts/product-dsl",
+    "//platform/build-scripts/product-dsl:product-dsl_test_lib",
     "//plugins/terminal/tests:tests_test_lib",
     "//plugins/git4idea/terminal",
     "//plugins/git4idea/terminal:terminal_test_lib",

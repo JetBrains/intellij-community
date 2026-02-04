@@ -106,6 +106,7 @@ public final class PySdkUtil {
     return getProcessOutput(cmd, homePath, extraEnv, timeout, null, true);
   }
 
+  @ApiStatus.Internal
   public static ProcessOutput getProcessOutput(@NotNull GeneralCommandLine cmd, @Nullable String homePath,
                                                @Nullable @NonNls Map<String, String> extraEnv,
                                                int timeout,
@@ -201,6 +202,7 @@ public final class PySdkUtil {
     return result;
   }
 
+  @ApiStatus.Internal
   public static @NotNull Map<String, String> activateVirtualEnv(@NotNull Sdk sdk) {
     final Map<String, String> cached = sdk.getUserData(ENVIRONMENT_KEY);
     if (cached != null) return cached;

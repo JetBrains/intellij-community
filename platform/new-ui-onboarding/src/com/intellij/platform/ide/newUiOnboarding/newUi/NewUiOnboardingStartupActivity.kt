@@ -31,6 +31,7 @@ internal class NewUiOnboardingStartupActivity : ProjectActivity {
 
     if (NewUiOnboardingUtil.shouldProposeOnboarding(NewUiOnboardingUtil.OnboardingType.NEW_UI_ONBOARDING)) {
       propertyManager.unsetValue(ExperimentalUI.NEW_UI_SWITCH)
+      ExperimentalUI.SHOW_NEW_UI_ONBOARDING_ON_START = false
       val version = ApplicationInfo.getInstance().build.asStringWithoutProductCodeAndSnapshot()
       propertyManager.setValue(ONBOARDING_PROPOSED_VERSION, version)
 

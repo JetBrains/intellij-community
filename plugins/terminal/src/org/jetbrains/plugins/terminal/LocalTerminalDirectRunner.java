@@ -4,6 +4,9 @@ package org.jetbrains.plugins.terminal;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.platform.eel.path.EelPath;
+import com.intellij.platform.eel.path.EelPathException;
+import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
 import com.intellij.terminal.pty.PtyProcessTtyConnector;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -11,6 +14,7 @@ import com.intellij.util.execution.ParametersListUtil;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +24,7 @@ import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 import org.jetbrains.plugins.terminal.runner.LocalOptionsConfigurer;
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector;
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder;
+import org.jetbrains.plugins.terminal.starter.*;
 import org.jetbrains.plugins.terminal.shell_integration.TerminalPSReadLineUpdateUtil;
 
 import java.nio.charset.Charset;
@@ -32,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.terminal.TerminalStartupKt.findEelDescriptor;
@@ -71,21 +77,57 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   private @NotNull ShellStartupOptions applyTerminalCustomizers(@NotNull ShellStartupOptions options) {
     List<String> shellCommand = ContainerUtil.notNullize(options.getShellCommand());
-    EelDescriptor eelDescriptor = findEelDescriptor(options.getWorkingDirectory(), shellCommand);
+    String workingDirectory = Objects.requireNonNull(options.getWorkingDirectory(), () -> {
+      return "Working directory must not be null, " + options;
+    });
+    EelDescriptor eelDescriptor = findEelDescriptor(workingDirectory, shellCommand);
+    
     Map<String, String> envs = ShellStartupOptionsKt.createEnvVariablesMap(options.getEnvVariables());
+    //noinspection deprecation
     for (LocalTerminalCustomizer customizer : LocalTerminalCustomizer.EP_NAME.getExtensionList()) {
       try {
-        shellCommand = customizer.customizeCommandAndEnvironment(myProject, options.getWorkingDirectory(), shellCommand, envs, eelDescriptor);
+        shellCommand = customizer.customizeCommandAndEnvironment(myProject, workingDirectory, shellCommand, envs, eelDescriptor);
       }
       catch (Exception e) {
         LOG.error("Exception during customization of the terminal session", e);
       }
     }
 
+    EelPath workingDirectoryEelPath = findWorkingDirectoryEelPath(workingDirectory, eelDescriptor);
+
+    if (workingDirectoryEelPath != null) {
+      AtomicReference<ShellExecCommand> shellExecCommandRef = new AtomicReference<>(new ShellExecCommand(shellCommand));
+      ShellCustomizer.Companion.getEP_NAME().processWithPluginDescriptor((customizer, __) -> {
+        ShellExecOptions execOptions = new ShellExecOptionsImpl(
+          eelDescriptor,
+          workingDirectoryEelPath,
+          shellExecCommandRef.get(),
+          envs,
+          customizer.getClass()
+        );
+        customizer.customizeExecOptions(myProject, execOptions);
+        shellExecCommandRef.set(execOptions.getExecCommand());
+        return Unit.INSTANCE;
+      });
+      shellCommand = shellExecCommandRef.get().getCommand();
+    }
+
     return options.builder()
       .shellCommand(shellCommand)
       .envVariables(envs)
       .build();
+  }
+
+  private static @Nullable EelPath findWorkingDirectoryEelPath(@NotNull String workingDirectory, @NotNull EelDescriptor eelDescriptor) {
+    EelPath workingDirectoryEelPath = null;
+    try {
+      Path nioPath = Path.of(workingDirectory);
+      workingDirectoryEelPath = EelNioBridgeServiceKt.asEelPath(nioPath, eelDescriptor);
+    }
+    catch (InvalidPathException | EelPathException e) {
+      LOG.warn("Cannot find working directory (" + workingDirectory + "), skipping " + ShellCustomizer.class.getSimpleName(), e);
+    }
+    return workingDirectoryEelPath;
   }
 
   /**

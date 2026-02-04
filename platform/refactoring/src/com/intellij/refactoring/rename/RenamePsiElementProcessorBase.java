@@ -3,6 +3,7 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Pass;
@@ -150,8 +151,9 @@ public abstract class RenamePsiElementProcessorBase {
   }
 
   public static @NotNull RenamePsiElementProcessorBase forPsiElement(@NotNull PsiElement element) {
+    DumbService dumbService = DumbService.getInstance(element.getProject());
     for (RenamePsiElementProcessorBase processor : EP_NAME.getExtensionList()) {
-      if (processor.canProcessElement(element)) {
+      if (dumbService.isUsableInCurrentContext(processor) && processor.canProcessElement(element)) {
         return processor;
       }
     }

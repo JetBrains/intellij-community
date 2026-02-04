@@ -1,0 +1,19 @@
+================ Step #1 =================
+Cleaning output files:
+  A$Inner1.class
+  A$Inner2.class
+  A.class
+End of files
+Compiling files:
+  java/classModifiers/changeInnerClassModifiers/a/A.java
+End of files
+Cleaning output files:
+  B.class
+  C.class
+End of files
+Compiling files:
+  java/classModifiers/changeInnerClassModifiers/a/B.java
+  java/classModifiers/changeInnerClassModifiers/a/C.java
+End of files
+------------------------------------------
+Exit code: OK

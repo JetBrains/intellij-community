@@ -493,10 +493,9 @@ internal fun CoroutineScope.scheduleLoading(
     val pluginSet = pluginsState.pluginSet
     this@scheduleLoading.launch {
       // logging is not as a part of a plugin set job for performance reasons
-      logPlugins(plugins = pluginSet.allPlugins, initContext = initContext, incompletePlugins = pluginsState.incompletePluginsForLogging, logSupplier = {
+      logPlugins(plugins = pluginSet.allPlugins, initContext = initContext, incompletePlugins = pluginsState.incompletePluginsForLogging, log = {
         // make sure that logger is ready to use (not a console logger)
-        logDeferred?.await()
-        LOG
+        (logDeferred?.await() ?: LOG).info(it)
       })
     }
     pluginSet
@@ -508,10 +507,10 @@ private suspend fun logPlugins(
   plugins: Collection<IdeaPluginDescriptorImpl>,
   initContext: PluginInitializationContext,
   incompletePlugins: List<PluginMainDescriptor>,
-  logSupplier: suspend () -> Logger,
+  log: suspend (String) -> Unit,
 ) {
   if (AppMode.isDisableNonBundledPlugins()) {
-    LOG.info("Running with disableThirdPartyPlugins argument, third-party plugins will be disabled")
+    log("Running with disableThirdPartyPlugins argument, third-party plugins will be disabled")
   }
 
   val bundled = StringBuilder()
@@ -545,13 +544,12 @@ private suspend fun logPlugins(
     }
   }
 
-  val log = logSupplier()
-  log.info("Loaded bundled plugins: $bundled")
+  log("Loaded bundled plugins: $bundled")
   if (custom.isNotEmpty()) {
-    log.info("Loaded custom plugins: $custom")
+    log("Loaded custom plugins: $custom")
   }
   if (disabled.isNotEmpty()) {
-    log.info("Disabled plugins: $disabled")
+    log("Disabled plugins: $disabled")
   }
 }
 

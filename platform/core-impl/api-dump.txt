@@ -271,8 +271,6 @@ com.intellij.psi.util.PsiAwareObject
 - a:findElement(com.intellij.openapi.project.Project):com.intellij.psi.PsiElement
 com.intellij.refactoring.rename.BindablePsiReference
 - com.intellij.psi.PsiReference
-f:com.intellij.util.CachedValuesManagerImpl
-- com.intellij.openapi.Disposable
 com.intellij.util.SequentialTask
 - a:isDone():Z
 - a:iteration():Z

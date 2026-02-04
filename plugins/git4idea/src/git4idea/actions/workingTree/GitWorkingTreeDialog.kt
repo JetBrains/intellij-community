@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.getPresentablePath
+import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.util.coroutines.childScope
@@ -87,12 +88,11 @@ internal class GitWorkingTreeDialog(
     existingBranchWithWorkingTree = propertyGraph.property(data.initialExistingBranch?.toBranchWithWorkingTree())
     createNewBranch = propertyGraph.property(false)
     newBranchName = propertyGraph.property("")
-    projectName = propertyGraph.property("")
+    projectName = propertyGraph.property(suggestProjectName())
     parentPath = propertyGraph.property(data.initialParentPath?.path ?: "")
-    propertyGraph.dependsOn(projectName, existingBranchWithWorkingTree, true, ::suggestProjectName)
-    propertyGraph.dependsOn(projectName, createNewBranch, true, ::suggestProjectName)
-    propertyGraph.dependsOn(projectName, newBranchName, true, ::suggestProjectName)
-
+    listOf(existingBranchWithWorkingTree, createNewBranch, newBranchName).forEach {
+      propertyGraph.dependsOn(projectName, it, true, ::suggestProjectName)
+    }
     init()
     title = GitBundle.message("working.tree.dialog.title")
     setOKButtonText(GitBundle.message("working.tree.dialog.button.ok"))
@@ -117,8 +117,7 @@ internal class GitWorkingTreeDialog(
   override fun createCenterPanel(): JComponent {
     return panel {
       row(GitBundle.message("working.tree.dialog.label.existing.branch")) {
-        createBranchComboBox()
-          .bindItem(existingBranchWithWorkingTree).align(Align.FILL).validationOnApply { validateExistingBranchOnApply() }
+        createBranchComboBox().bindItem(existingBranchWithWorkingTree).align(Align.FILL)
       }
 
       row {
@@ -160,16 +159,26 @@ internal class GitWorkingTreeDialog(
     component.renderer = BranchWithTreeCellRenderer(data.project, data.repository)
 
     return cell(component)
+      .validationRequestor(WHEN_PROPERTY_CHANGED(createNewBranch))
+      .validationRequestor(WHEN_PROPERTY_CHANGED(existingBranchWithWorkingTree))
+      .validationOnInput { validateExistingBranchOnInput() }
+      .validationOnApply { validateExistingBranchOnApply() }
+  }
+
+  private fun ValidationInfoBuilder.validateExistingBranchOnInput(): ValidationInfo? {
+    val value = existingBranchWithWorkingTree.get()
+    return if (value?.workingTree != null && !createNewBranch.get()) {
+      error(GitBundle.message("working.tree.dialog.branch.validation.already.checked.out.in.working.tree")).asWarning()
+    }
+    else {
+      null
+    }
   }
 
   private fun ValidationInfoBuilder.validateExistingBranchOnApply(): ValidationInfo? {
     val value = existingBranchWithWorkingTree.get()
     if (value == null) {
       return error(GitBundle.message("working.tree.dialog.location.validation.select.branch"))
-    }
-    if (value.workingTree != null && !createNewBranch.get()) {
-      return error(GitBundle.message("working.tree.dialog.branch.validation.already.checked.out.in.working.tree",
-                                     value.branch.name, value.workingTree.path.name))
     }
     val branch = value.branch
     if (branch is GitRemoteBranch && !createNewBranch.get()) {

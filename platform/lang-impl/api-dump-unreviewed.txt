@@ -14094,7 +14094,6 @@ f:com.intellij.refactoring.actions.IntroduceVariableAction
 - com.intellij.refactoring.actions.IntroduceActionBase
 - <init>():V
 c:com.intellij.refactoring.actions.RenameElementAction
-- com.intellij.openapi.actionSystem.AnAction
 - <init>():V
 - f:actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread

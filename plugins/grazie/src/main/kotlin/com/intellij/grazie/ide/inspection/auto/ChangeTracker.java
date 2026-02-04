@@ -81,13 +81,20 @@ public final class ChangeTracker implements Disposable {
       changes.removeFirst().marker.dispose();
     }
 
-    changes.addLast(new RecentChange(now, createMarker(event)));
+    if (!ContainerUtil.exists(changes, change -> coversSameRange(change.marker, event))) {
+      changes.addLast(new RecentChange(now, createMarker(event)));
+    }
+  }
+
+  private static boolean coversSameRange(RangeMarker marker, DocumentEvent event) {
+    return marker.getStartOffset() == event.getOffset() && marker.getEndOffset() == event.getOffset() + event.getNewLength();
   }
 
   @NotNull
   private static RangeMarker createMarker(DocumentEvent event) {
     return event.getDocument().createRangeMarker(TextRange.from(event.getOffset(), event.getNewLength()));
   }
+
 
   private synchronized void registerUndo(DocumentEvent event) {
     Document document = event.getDocument();
@@ -124,7 +131,7 @@ public final class ChangeTracker implements Disposable {
     private static final long TRACKING_INTERVAL = TimeUnit.MINUTES.toNanos(1);
 
     boolean isRelevant(long now) {
-      return marker.isValid() && now - time <= TRACKING_INTERVAL;
+      return marker.isValid() && !marker.getTextRange().isEmpty() && now - time <= TRACKING_INTERVAL;
     }
   }
 }

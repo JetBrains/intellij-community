@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ui
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
@@ -71,22 +72,28 @@ class KotlinExtractInterfaceDialog(
                 if (!super.isMemberEnabled(member)) return false
 
                 val declaration = member.member
-                return !(declaration.hasModifier(KtTokens.INLINE_KEYWORD) ||
-                        declaration.hasModifier(KtTokens.EXTERNAL_KEYWORD) ||
-                        declaration.hasModifier(KtTokens.LATEINIT_KEYWORD))
+                return runReadAction {
+                    !(declaration.hasModifier(KtTokens.INLINE_KEYWORD) ||
+                            declaration.hasModifier(KtTokens.EXTERNAL_KEYWORD) ||
+                            declaration.hasModifier(KtTokens.LATEINIT_KEYWORD))
+                }
             }
 
             override fun isAbstractEnabled(memberInfo: KotlinMemberInfo): Boolean {
                 if (!super.isAbstractEnabled(memberInfo)) return false
                 val member = memberInfo.member
-                if (member.isAbstractInInterface(originalClass)) return false
-                if (member.isConstructorDeclaredProperty()) return false
-                return member is KtNamedFunction || (member is KtProperty && !member.mustBeAbstractInInterface()) || member is KtParameter
+                return runReadAction {
+                    if (member.isAbstractInInterface(originalClass)) return@runReadAction false
+                    if (member.isConstructorDeclaredProperty()) return@runReadAction false
+                    member is KtNamedFunction || (member is KtProperty && !member.mustBeAbstractInInterface()) || member is KtParameter
+                }
             }
 
             override fun isAbstractWhenDisabled(memberInfo: KotlinMemberInfo): Boolean {
                 val member = memberInfo.member
-                return member is KtProperty || member.isAbstractInInterface(originalClass) || member.isConstructorDeclaredProperty()
+                return runReadAction {
+                    member is KtProperty || member.isAbstractInInterface(originalClass) || member.isConstructorDeclaredProperty()
+                }
             }
 
             override fun checkForProblems(memberInfo: KotlinMemberInfo): Int {

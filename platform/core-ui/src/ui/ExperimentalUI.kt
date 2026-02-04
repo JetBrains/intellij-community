@@ -40,11 +40,15 @@ abstract class ExperimentalUI {
     @Volatile
     var switchedFromClassicToIslandsInSession: Boolean = false
     @Volatile
-    var showNewUiOnboarding: Boolean = false
-    @Volatile
     var cleanUpClassicUIFromDisabled: Runnable? = null
 
+    var SHOW_NEW_UI_ONBOARDING_ON_START: Boolean
+      get() = PropertiesComponent.getInstance().getBoolean(SHOW_NEW_UI_ONBOARDING_ON_START_KEY)
+      set(value) = PropertiesComponent.getInstance().setValue(SHOW_NEW_UI_ONBOARDING_ON_START_KEY, value)
+
     var wasThemeReset = false
+
+    private const val SHOW_NEW_UI_ONBOARDING_ON_START_KEY = "show.new.ui.onboarding.on.start"
 
     @Internal
     @JvmField

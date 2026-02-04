@@ -2390,6 +2390,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Actions
 - sf:AddList:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:AddMulticaret:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:AddToDictionary:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:AiIntentionBulb:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Annotate:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ArrowCollapse:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ArrowExpand:org.jetbrains.jewel.ui.icon.IntelliJIconKey

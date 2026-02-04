@@ -24,6 +24,7 @@ import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardTestCase
 import org.jetbrains.idea.maven.wizards.sdk
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
+import org.jetbrains.kotlin.idea.test.TestMetadataUtil
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.kotlinBuildSystemData
 import org.jetbrains.kotlin.tools.projectWizard.maven.MavenKotlinNewProjectWizardData.Companion.kotlinMavenData
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
@@ -34,6 +35,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.io.File
 
 @TestRoot("project-wizard/tests")
 @RunWith(JUnit4::class)
@@ -41,6 +43,7 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     override val testDirectory: String
         get() = "testData/mavenNewProjectWizard"
     private val newModuleName = "module"
+    private val testRoot: File? = TestMetadataUtil.getTestRoot(MavenNewKotlinModuleTest::class.java)
 
     @JvmField
     @Rule
@@ -129,7 +132,7 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
             }
 
             assertModules(project, listOf("project", newModuleName))
-            project.assertCorrectProjectFiles()
+            project.assertCorrectProjectFiles(testRoot)
 
         }
         return@runBlocking
@@ -172,7 +175,7 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
             }
 
             assertModules(project, expectedModules)
-            project.assertCorrectProjectFiles()
+            project.assertCorrectProjectFiles(testRoot)
             additionalAssertions(project)
 
         }
@@ -186,7 +189,7 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
                 createKotlinProjectFromTemplate()
             }.useProject { project ->
                 assertModules(project, listOf("project"))
-                project.assertCorrectProjectFiles()
+                project.assertCorrectProjectFiles(testRoot)
             }
         }
     }
@@ -309,7 +312,6 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     override fun substituteArtifactsVersions(str: String): String {
         var result = str
 
-        result = substituteVersionForArtifact(result, "kotlin-maven-plugin", needMoreSpaces = true)
         result = substituteVersionForArtifact(result, "maven-surefire-plugin", needMoreSpaces = true)
         result = substituteVersionForArtifact(result, "maven-failsafe-plugin", needMoreSpaces = true)
         result = substituteVersionForArtifact(result, "junit-jupiter")

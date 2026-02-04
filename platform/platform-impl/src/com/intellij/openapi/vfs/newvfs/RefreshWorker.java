@@ -600,7 +600,7 @@ final class RefreshWorker {
     for (Project openProject : ProjectManager.getInstance().getOpenProjects()) {
       if (ReadAction.compute(() -> {
         List<WorkspaceFileSet> indexableFileSet = WorkspaceFileIndex.getInstance(openProject)
-          .findFileSets(parent, true, true, /*includeContentNonIndexableSets*/ false, true, true, true);
+          .findFileSets(parent, true, true, /*includeContentNonIndexableSets*/ false, true, true, /*includeExternalNonIndexableSets*/ false, true);
         return ContainerUtil.exists(indexableFileSet, set -> set instanceof WorkspaceFileSetWithCustomData && ((WorkspaceFileSetWithCustomData<?>)set).getRecursive());
       })) {
         return true;

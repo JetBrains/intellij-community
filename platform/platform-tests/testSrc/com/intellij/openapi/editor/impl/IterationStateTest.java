@@ -36,7 +36,7 @@ public class IterationStateTest extends AbstractEditorTest {
   public void setUp() throws Exception {
     super.setUp();
 
-    Registry.get("editor.disable.new.selection").setValue(true);
+    Registry.get("editor.old.full.horizontal.selection.enabled").setValue(true);
     EditorColorsScheme colorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
     DEFAULT_BACKGROUND = new DebugColor("DEFAULT_BACKGROUND", colorsScheme.getDefaultBackground());
     CARET_ROW_BACKGROUND = new DebugColor(EditorColors.CARET_ROW_COLOR);

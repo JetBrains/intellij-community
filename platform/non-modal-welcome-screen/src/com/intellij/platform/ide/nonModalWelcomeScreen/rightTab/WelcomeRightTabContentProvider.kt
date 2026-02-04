@@ -4,6 +4,7 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -30,7 +31,9 @@ interface WelcomeRightTabContentProvider {
 
   val isDisableOptionVisible: Boolean
 
-  fun shouldBeFocused(project: Project): Boolean = true
+  fun shouldBeFocused(project: Project): Boolean {
+    return project.service<WelcomeScreenPreventWelcomeTabFocusService>().isAllowedFocusOnWelcomeTab()
+  }
 
   @Composable
   fun getFeatureButtonModels(project: Project): List<FeatureButtonModel>

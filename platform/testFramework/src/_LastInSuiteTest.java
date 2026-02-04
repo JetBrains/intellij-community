@@ -7,10 +7,7 @@ import com.intellij.testFramework.GlobalState;
 import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.TestApplicationManager;
-import com.intellij.tests.DynamicExtensionPointsTester;
-import com.intellij.util.SystemProperties;
 import junit.framework.TestCase;
-import org.junit.Assume;
 import org.junit.FixMethodOrder;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
@@ -39,13 +36,6 @@ public class _LastInSuiteTest extends TestCase {
   private static String getTestName(String name) {
     String buildConf = System.getProperty("teamcity.buildConfName");
     return buildConf == null ? name : name + "[" + buildConf + "]";
-  }
-
-  public void testDynamicExtensions() {
-    boolean testDynamicExtensions = SystemProperties.getBooleanProperty("intellij.test.all.dynamic.extension.points", false);
-    Assume.assumeTrue("intellij.test.all.dynamic.extension.points is off, no dynamic extensions to test",
-                      !DynamicExtensionPointsTester.EXTENSION_POINTS_WHITE_LIST.isEmpty() || testDynamicExtensions);
-    DynamicExtensionPointsTester.checkDynamicExtensionPoints(_LastInSuiteTest::getTestName);
   }
 
   public void testProjectLeak() {

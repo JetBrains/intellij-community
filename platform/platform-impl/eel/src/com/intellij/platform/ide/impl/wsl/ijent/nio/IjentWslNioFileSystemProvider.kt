@@ -1,9 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.impl.wsl.ijent.nio
 
-import com.intellij.execution.ijent.nio.getCachedFileAttributesAndWrapToDosAttributesAdapter
-import com.intellij.execution.ijent.nio.getFileAttributeViewUsingDosAttributesAdapter
-import com.intellij.execution.ijent.nio.readAttributesUsingDosAttributesAdapter
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.diagnostic.logger
@@ -11,6 +8,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
+import com.intellij.platform.ijent.community.impl.nio.fs.getCachedFileAttributesAndWrapToDosAttributesAdapter
+import com.intellij.platform.ijent.community.impl.nio.fs.getFileAttributeViewUsingDosAttributesAdapter
+import com.intellij.platform.ijent.community.impl.nio.fs.readAttributesUsingDosAttributesAdapter
 import com.intellij.util.io.sanitizeFileName
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException

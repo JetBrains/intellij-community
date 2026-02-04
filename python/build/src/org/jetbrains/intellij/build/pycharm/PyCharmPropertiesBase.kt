@@ -53,4 +53,11 @@ abstract class PyCharmPropertiesBase(enlargeWelcomeScreen: Boolean) : JetBrainsP
   }
 
   open fun getKeymapReferenceDirectory(context: BuildContext): Path = context.paths.projectHome.resolve("python/help")
+
+  companion object {
+    val SUPPORTED_FILE_EXTENSIONS: List<String> = listOf(
+      "py", "ipynb", "yaml", "yml", "md", "txt", "json", "html", "sql", "env",
+      "csv", "tsv", "xml", "toml", "sh", "dockerfile",
+    )
+  }
 }

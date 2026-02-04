@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
 import com.intellij.platform.runtime.product.ProductMode
 import io.opentelemetry.api.trace.Span
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -176,8 +177,10 @@ class LinuxDistributionBuilder(
     )
   }
 
-  override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl): Sequence<String> {
-    return customizer.generateExecutableFilesPatterns(includeRuntime, arch, libc, context)
+  override suspend fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl): Sequence<String> {
+    val base = customizer.generateExecutableFilesPatterns(includeRuntime, arch, libc, context)
+    val pluginPatterns = collectPluginExecutablePatterns(context, OsFamily.LINUX, arch, libc)
+    return base + pluginPatterns
   }
 
   private val rootDirectoryName: String

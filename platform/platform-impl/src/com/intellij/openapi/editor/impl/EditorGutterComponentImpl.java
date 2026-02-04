@@ -2890,11 +2890,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   private int getInitialLineNumberWidth(boolean applyEditorScale) {
     if (ExperimentalUI.isNewUI()) {
       //have a placeholder for breakpoints
-      int baseWidth = 12;
+      Icon breakpointIcon = AllIcons.Debugger.Db_set_breakpoint;
       if (applyEditorScale) {
-        return scaleWithEditor(baseWidth);
+        Icon scaledIcon = scaleIcon(breakpointIcon);
+        return scaledIcon.getIconWidth();
       } else {
-        return JBUI.scale(baseWidth);
+        return breakpointIcon.getIconWidth();
       }
     }
     return 0;

@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  Base.class
+End of files
+Compiling files:
+  java/fieldModifiers/setFinal/a/Base.java
+End of files
+Cleaning output files:
+  Client1.class
+  Client2.class
+End of files
+Compiling files:
+  java/fieldModifiers/setFinal/a/Client1.java
+  java/fieldModifiers/setFinal/a/Client2.java
+End of files
+------------------------------------------
+Exit code: ERROR

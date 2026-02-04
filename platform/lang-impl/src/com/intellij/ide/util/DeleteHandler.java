@@ -54,7 +54,6 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.PlatformNioHelper;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import com.intellij.util.io.TrashBin;
 import com.intellij.util.ui.IoErrorText;
@@ -437,7 +436,7 @@ public final class DeleteHandler {
           var path = file.toNioPath();
           indicator.setText(path.toString());
 
-          if (toBin && PlatformNioHelper.isLocal(path)) {
+          if (toBin && TrashBin.canMoveToTrash(path)) {
             TrashBin.moveToTrash(path);
           }
           else {

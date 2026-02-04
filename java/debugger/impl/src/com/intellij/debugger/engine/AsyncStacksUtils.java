@@ -23,6 +23,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerCoreKt;
 import com.intellij.idea.AppMode;
+import com.intellij.java.debugger.impl.shared.JavaDebuggerSharedBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.PathManager;
@@ -465,7 +466,8 @@ public final class AsyncStacksUtils {
     @Nullable Project project,
     @Nullable Disposable disposable
   ) {
-    Path pluginDistDir = PluginManagerCoreKt.getPluginDistDirByClass(AsyncStacksUtils.class);
+    //take class from embedded module - JavaDebuggerSharedBundle, to resolve plugin dir
+    Path pluginDistDir = PluginManagerCoreKt.getPluginDistDirByClass(JavaDebuggerSharedBundle.class);
     if (pluginDistDir == null || !Files.isDirectory(pluginDistDir)) {
       LOG.error("Unable to find the (java) plugin distribution directory by class AsyncStacksUtils");
       return null;

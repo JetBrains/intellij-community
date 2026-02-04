@@ -8,6 +8,12 @@ import java.nio.file.Path
 interface ModuleOutputProvider {
   val useTestCompilationOutput: Boolean
 
+  /**
+   * Returns all modules from the project model if available.
+   * Used for graph enrichment in analysis-only flows.
+   */
+  fun getAllModules(): List<JpsModule> = emptyList()
+
   fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean = false): ByteArray?
 
   fun findModule(name: String): JpsModule?
@@ -20,6 +26,17 @@ interface ModuleOutputProvider {
   fun findRequiredModule(name: String): JpsModule
 
   fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String? = null): List<Path>
+
+  /**
+   * Returns a map from project library name to library module name.
+   *
+   * This is required to translate project-level JPS library dependencies
+   * (e.g., assertJ, JUnit5Params) into intellij.libraries.* modules when
+   * building the plugin graph and DSL test plugin content.
+   *
+   * Will be removed as soon as all indirect usages are replaced.
+   */
+  fun getProjectLibraryToModuleMap(): Map<String, String>
 
   fun getModuleOutputRoots(module: JpsModule, forTests: Boolean = false): List<Path>
 

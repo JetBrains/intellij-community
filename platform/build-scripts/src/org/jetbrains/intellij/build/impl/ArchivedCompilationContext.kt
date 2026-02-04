@@ -128,14 +128,6 @@ private class ArchivedModuleOutputProvider(
     return result.singleOrNull()
   }
 
-  override fun toString(): String {
-    return "ArchivedModuleOutputProvider(" +
-           "archivesLocation=${storage.archivedOutputDirectory}, " +
-           "delegate.outputProvider=$delegateOutputProvider, " +
-           "storage=$storage" +
-           ")"
-  }
-
   override suspend fun findFileInAnyModuleOutput(relativePath: String, moduleNamePrefix: String?, processedModules: MutableSet<String>?): ByteArray? {
     for ((unarchivedPath, archivedPath) in storage.getMapping()) {
       val moduleName = unarchivedPath.fileName.toString()
@@ -150,6 +142,18 @@ private class ArchivedModuleOutputProvider(
       }
     }
     return null
+  }
+
+  override fun getProjectLibraryToModuleMap(): Map<String, String> {
+    return delegateOutputProvider.getProjectLibraryToModuleMap()
+  }
+
+  override fun toString(): String {
+    return "ArchivedModuleOutputProvider(" +
+           "archivesLocation=${storage.archivedOutputDirectory}, " +
+           "delegate.outputProvider=$delegateOutputProvider, " +
+           "storage=$storage" +
+           ")"
   }
 }
 

@@ -194,12 +194,13 @@ public class FontEditorPreview implements PreviewPanel{
       // Showing preview for the first time
       myFontKey = newKey;
       return;
-    } else if (myFontKey == newKey) {
+    } else if (myFontKey.equals(newKey)) {
       // Font features haven't changed
       return;
     } else if (!Strings.areSameInstance(myFontKey.getFontFamily(), newKey.getFontFamily())) {
       // Font family changed, avoid blinking everything
       myFontKey = newKey;
+      myRangeBlinker.stopBlinking();
       return;
     }
 

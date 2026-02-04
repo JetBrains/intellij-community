@@ -33,8 +33,7 @@ fun name(sdk: Sdk): Triple<String?, String, String?> = name(sdk, sdk.name)
 
 fun name(sdk: Sdk, name: String): Triple<String?, String, String?> {
   val modifier = when {
-    !sdk.sdkSeemsValid || PythonSdkType.hasInvalidRemoteCredentials(sdk) -> "invalid"
-    PythonSdkType.isIncompleteRemote(sdk) -> "incomplete"
+    !sdk.sdkSeemsValid -> "invalid"
     !LanguageLevel.SUPPORTED_LEVELS.contains(PySdkUtil.getLanguageLevelForSdk(sdk)) -> "unsupported"
     else -> null
   }
@@ -93,10 +92,7 @@ fun icon(sdk: Sdk): Icon {
   val providedIcon = PySdkProvider.EP_NAME.extensions.firstNotNullOfOrNull { it.getSdkIcon(sdk) }
 
   return when {
-    (!sdk.sdkSeemsValid) ||
-    PythonSdkType.isIncompleteRemote(sdk) ||
-    PythonSdkType.hasInvalidRemoteCredentials(sdk) ||
-    !LanguageLevel.SUPPORTED_LEVELS.contains(PySdkUtil.getLanguageLevelForSdk(sdk)) ->
+    !sdk.sdkSeemsValid || !LanguageLevel.SUPPORTED_LEVELS.contains(PySdkUtil.getLanguageLevelForSdk(sdk)) ->
       wrapIconWithWarningDecorator(icon)
     sdk is PyDetectedSdk -> IconLoader.getTransparentIcon(icon)
     providedIcon != null -> providedIcon

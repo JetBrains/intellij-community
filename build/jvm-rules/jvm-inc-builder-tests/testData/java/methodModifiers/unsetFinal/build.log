@@ -1,0 +1,9 @@
+================ Step #1 =================
+Cleaning output files:
+  Server.class
+End of files
+Compiling files:
+  java/methodModifiers/unsetFinal/a/Server.java
+End of files
+------------------------------------------
+Exit code: OK

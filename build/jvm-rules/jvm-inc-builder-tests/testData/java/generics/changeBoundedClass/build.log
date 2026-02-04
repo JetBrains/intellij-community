@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  Value.class
+End of files
+Compiling files:
+  java/generics/changeBoundedClass/a/Value.java
+End of files
+Cleaning output files:
+  A.class
+End of files
+Compiling files:
+  java/generics/changeBoundedClass/a/A.java
+End of files
+------------------------------------------
+Exit code: ERROR
