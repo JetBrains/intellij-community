@@ -8,6 +8,7 @@
 
   <content namespace="jetbrains">
     <module name="intellij.platform.tips"/>
+    <module name="intellij.ide.startup.importSettings"/>
   </content>
 
 </idea-plugin>
