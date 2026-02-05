@@ -71,7 +71,6 @@ Suppressions are explicit contracts: dependencies intentionally omitted from XML
 - `pluginAllowedMissingDependencies` (config): allow missing module deps for a plugin.
 - `contentModuleAllowedMissingPluginDeps` (config): allow missing plugin IDs for a content module.
 - `suppressions.json`: suppress module deps, plugin deps, library replacements, or test-library scope fixes.
-- `dependencyFilter`: generation-time filter that affects which JPS deps become XML deps; implicit deps that survive suppression are still validated by plugin content validation.
 
 ## See also
 

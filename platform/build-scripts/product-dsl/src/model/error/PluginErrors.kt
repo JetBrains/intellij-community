@@ -143,7 +143,7 @@ data class PluginDependencyError(
   @JvmField val moduleSourceInfo: Map<ContentModuleName, ModuleSourceInfo> = emptyMap(),
   /** Per-product breakdown: product name -> unresolved deps in that product */
   @JvmField val unresolvedByProduct: Map<String, Set<ContentModuleName>> = emptyMap(),
-  /** Dependencies that were filtered by dependencyFilter, per content module (for error message clarity) */
+  /** Dependencies filtered out from XML generation (auto-inferred JPS deps), per content module */
   @JvmField val filteredDependencies: Map<ContentModuleName, Set<ContentModuleName>> = emptyMap(),
   /** Structural violations: content module -> deps with violation (e.g., REQUIRED depending on OPTIONAL sibling) */
   @JvmField val structuralViolations: Map<ContentModuleName, Set<ContentModuleName>> = emptyMap(),
@@ -218,7 +218,7 @@ data class PluginDependencyError(
     for ((missingDep, needingModules) in missingDependencies.entries.sortedByDescending { it.value.size }) {
       val missingDepInfo = moduleSourceInfo.get(missingDep)
 
-      // Check if this dep was filtered out by dependencyFilter for any of the needing modules
+      // Check if this dep was filtered out during generation for any of the needing modules
       val isFiltered = needingModules.any { moduleName ->
         filteredDependencies.get(moduleName)?.contains(missingDep) == true
       }

@@ -16,10 +16,8 @@ import org.jetbrains.intellij.build.productLayout.deps.DependencyResolutionConte
 import org.jetbrains.intellij.build.productLayout.deps.TestPluginDependencyPlan
 import org.jetbrains.intellij.build.productLayout.deps.TestPluginDependencyPlanOutput
 import org.jetbrains.intellij.build.productLayout.deps.TestPluginUnresolvedDependency
-import org.jetbrains.intellij.build.productLayout.deps.TestPluginXmlDependencies
 import org.jetbrains.intellij.build.productLayout.deps.buildAllowedMissingByModule
 import org.jetbrains.intellij.build.productLayout.deps.collectResolvableModules
-import org.jetbrains.intellij.build.productLayout.deps.readExistingTestPluginDependencies
 import org.jetbrains.intellij.build.productLayout.deps.resolveAllowedMissingPluginIds
 import org.jetbrains.intellij.build.productLayout.model.error.DslTestPluginOwner
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
@@ -27,7 +25,6 @@ import org.jetbrains.intellij.build.productLayout.pipeline.DataSlot
 import org.jetbrains.intellij.build.productLayout.pipeline.NodeIds
 import org.jetbrains.intellij.build.productLayout.pipeline.PipelineNode
 import org.jetbrains.intellij.build.productLayout.pipeline.Slots
-import java.nio.file.Path
 
 /**
  * Computes dependency plans for DSL-defined test plugins.
@@ -58,7 +55,6 @@ internal object TestPluginDependencyPlanner : PipelineNode {
     val depsByModule = ctx.get(Slots.CONTENT_MODULE_PLAN).plansByModule
     val pluginTargetNamesByPluginId = buildPluginTargetNamesByPluginId(model.pluginGraph)
     val pluginIdByTargetName = buildPluginIdByTargetName(model.pluginGraph)
-    val updateSuppressions = model.updateSuppressions
     val resolutionContext = DependencyResolutionContext(model.pluginGraph)
 
     val plans = testPluginsWithSource.map { (spec, productClass, productName) ->
@@ -72,8 +68,6 @@ internal object TestPluginDependencyPlanner : PipelineNode {
         pluginTargetNamesByPluginId = pluginTargetNamesByPluginId,
         pluginIdByTargetName = pluginIdByTargetName,
         dependencyChains = model.dslTestPluginDependencyChains[spec.pluginId].orEmpty(),
-        updateSuppressions = updateSuppressions,
-        projectRoot = model.projectRoot,
       )
     }
 
@@ -97,8 +91,6 @@ private fun buildTestPluginDependencyPlan(
   pluginTargetNamesByPluginId: Map<PluginId, Set<TargetName>>,
   pluginIdByTargetName: Map<TargetName, PluginId>,
   dependencyChains: Map<ContentModuleName, List<ContentModuleName>>,
-  updateSuppressions: Boolean,
-  projectRoot: Path,
 ): TestPluginDependencyPlan {
   val contentData = buildContentBlocksAndChainMapping(spec.spec, collectModuleSetAliases = false)
   val contentModules = contentData.contentBlocks
@@ -110,15 +102,6 @@ private fun buildTestPluginDependencyPlan(
   val bundledPluginNames = resolutionContext.resolveBundledPlugins(productName)
   val resolvableOwners = resolutionContext.resolveBundledPlugins(productName, spec.additionalBundledPluginTargetNames.toSet())
   val resolvableModules = collectResolvableModules(graph, productName, spec.additionalBundledPluginTargetNames.toSet())
-
-  val existingXmlDeps = if (updateSuppressions) {
-    readExistingTestPluginDependencies(projectRoot.resolve(spec.pluginXmlPath))
-  }
-  else {
-    TestPluginXmlDependencies()
-  }
-  val existingPluginDeps = existingXmlDeps.pluginDependencies
-  val existingModuleDeps = existingXmlDeps.moduleDependencies
 
   val requiredByPlugin = LinkedHashMap<PluginId, LinkedHashSet<ContentModuleName>>()
   val moduleDepsFromContent = LinkedHashSet<ContentModuleName>()
@@ -212,19 +195,6 @@ private fun buildTestPluginDependencyPlan(
     }
   }
 
-  val effectivePluginDependencies = if (updateSuppressions) {
-    existingPluginDeps
-  }
-  else {
-    computedPluginDependencies
-  }
-  val effectiveModuleDependencies = if (updateSuppressions) {
-    existingModuleDeps
-  }
-  else {
-    filteredModuleDependencies
-  }
-
   val filteredRequiredByPlugin = requiredByPlugin.mapValues { it.value.toSet() }
   val mergedUnresolvedDependencies = if (unresolvedPluginsFromContent.isEmpty()) {
     targetPlan.unresolvedDependencies
@@ -243,8 +213,8 @@ private fun buildTestPluginDependencyPlan(
     spec = spec,
     productName = productName,
     productClass = productClass,
-    pluginDependencies = effectivePluginDependencies.sortedBy { it.value },
-    moduleDependencies = effectiveModuleDependencies.sortedBy { it.value },
+    pluginDependencies = computedPluginDependencies.sortedBy { it.value },
+    moduleDependencies = filteredModuleDependencies.sortedBy { it.value },
     requiredByPlugin = filteredRequiredByPlugin,
     unresolvedDependencies = mergedUnresolvedDependencies,
   )

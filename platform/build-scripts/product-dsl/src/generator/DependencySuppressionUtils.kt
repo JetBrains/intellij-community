@@ -8,19 +8,13 @@ import org.jetbrains.intellij.build.productLayout.stats.SuppressionUsage
 internal fun collectModuleDepsWithSuppressions(
   contentModuleName: ContentModuleName,
   dependencies: Iterable<ContentModuleName>,
-  existingXmlModules: Set<ContentModuleName>,
   suppressedModules: Set<ContentModuleName>,
-  updateSuppressions: Boolean,
   suppressionUsages: MutableList<SuppressionUsage>,
 ): List<String> {
   val moduleDeps = ArrayList<String>()
   for (depModule in dependencies) {
     val depName = depModule.value
-    val isNewDep = depModule !in existingXmlModules
-    if (updateSuppressions && isNewDep) {
-      suppressionUsages.add(SuppressionUsage(contentModuleName, depName, SuppressionType.MODULE_DEP))
-    }
-    else if (suppressedModules.contains(depModule)) {
+    if (suppressedModules.contains(depModule)) {
       suppressionUsages.add(SuppressionUsage(contentModuleName, depName, SuppressionType.MODULE_DEP))
     }
     else {
@@ -28,4 +22,18 @@ internal fun collectModuleDepsWithSuppressions(
     }
   }
   return moduleDeps
+}
+
+internal fun <T> computeEffectiveSuppressedDeps(
+  updateSuppressions: Boolean,
+  existingXmlDeps: Set<T>,
+  jpsDeps: Set<T>,
+  suppressedDeps: Set<T>,
+): Set<T> {
+  if (!updateSuppressions) {
+    return suppressedDeps
+  }
+  val missingInXml = jpsDeps.filterNotTo(LinkedHashSet()) { it in existingXmlDeps }
+  val xmlOnly = existingXmlDeps.filterNotTo(LinkedHashSet()) { it in jpsDeps }
+  return suppressedDeps + missingInXml + xmlOnly
 }

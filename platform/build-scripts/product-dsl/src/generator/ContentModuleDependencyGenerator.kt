@@ -32,7 +32,6 @@ import org.jetbrains.intellij.build.productLayout.pipeline.PipelineNode
 import org.jetbrains.intellij.build.productLayout.pipeline.Slots
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionType
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionUsage
-import org.jetbrains.intellij.build.productLayout.xml.extractDependenciesEntries
 
 /**
  * Planner for content module dependency XML files.
@@ -185,7 +184,7 @@ internal suspend fun planContentModuleDependenciesWithBothSets(
   pluginGraph: PluginGraph,
   isTestDescriptor: Boolean,
   suppressionConfig: SuppressionConfig,
-  updateSuppressions: Boolean = false,
+  updateSuppressions: Boolean,
   libraryModuleFilter: (String) -> Boolean,
 ): ContentModuleGenerationOutput {
   // Handle slash-notation modules (e.g., "intellij.restClient/intelliLang")
@@ -208,8 +207,8 @@ internal suspend fun planContentModuleDependenciesWithBothSets(
     prodInfo = prodInfo,
     graph = pluginGraph,
     suppressionConfig = suppressionConfig,
-    isTestDescriptor = isTestDescriptor,
     updateSuppressions = updateSuppressions,
+    isTestDescriptor = isTestDescriptor,
     libraryModuleFilter = libraryModuleFilter,
   )
   return ContentModuleGenerationOutput(plan = plan, suppressibleError = prodInfo.suppressibleError)
@@ -235,8 +234,8 @@ private fun buildContentModuleDependencyPlanFromInfoWithBothSets(
   prodInfo: ModuleDescriptorCache.DescriptorInfo,
   graph: PluginGraph,
   suppressionConfig: SuppressionConfig,
-  isTestDescriptor: Boolean,
   updateSuppressions: Boolean,
+  isTestDescriptor: Boolean,
   libraryModuleFilter: (String) -> Boolean,
 ): ContentModuleDependencyPlan {
   // Skip XML modification for modules with non-standard XML root
@@ -264,13 +263,10 @@ private fun buildContentModuleDependencyPlanFromInfoWithBothSets(
   val suppressedModules = suppressionConfig.getSuppressedModules(contentModuleName)
   val suppressedPlugins = suppressionConfig.getSuppressedPlugins(contentModuleName)
 
-  val existingEntriesForUpdate = if (updateSuppressions) extractDependenciesEntries(prodInfo.content) else null
-  val existingXmlModulesForUpdate = existingEntriesForUpdate?.moduleNames?.toSet()
-                                 ?: prodInfo.existingModuleDependencies.toSet()
-  val existingXmlPluginsForUpdate = existingEntriesForUpdate?.pluginIds?.toSet()
-                                 ?: prodInfo.existingPluginDependencies.toSet()
-  val existingXmlModulesAsContentModuleName = existingXmlModulesForUpdate.mapTo(HashSet(), ::ContentModuleName)
-  val existingXmlPluginsAsPluginId = existingXmlPluginsForUpdate.mapTo(HashSet(), ::PluginId)
+  val existingXmlModules = prodInfo.existingModuleDependencies.toSet()
+  val existingXmlPlugins = prodInfo.existingPluginDependencies.toSet()
+  val existingXmlModulesAsContentModuleName = existingXmlModules.mapTo(HashSet(), ::ContentModuleName)
+  val existingXmlPluginsAsPluginId = existingXmlPlugins.mapTo(HashSet(), ::PluginId)
 
   val prodModuleDeps: List<String>
   val testModuleDeps = ArrayList<String>()
@@ -292,20 +288,29 @@ private fun buildContentModuleDependencyPlanFromInfoWithBothSets(
   val prodGraphPluginDeps = prodGraphDeps.pluginDeps
   val prodFilteredEmbeddedDeps = prodGraphDeps.filteredEmbeddedModuleDeps.filterTo(LinkedHashSet()) { dep -> dep in prodGraphModuleDeps }
 
+  val effectiveSuppressedModules = computeEffectiveSuppressedDeps(
+    updateSuppressions = updateSuppressions,
+    existingXmlDeps = existingXmlModulesAsContentModuleName,
+    jpsDeps = prodGraphModuleDeps,
+    suppressedDeps = suppressedModules,
+  )
+  val effectiveSuppressedPlugins = computeEffectiveSuppressedDeps(
+    updateSuppressions = updateSuppressions,
+    existingXmlDeps = existingXmlPluginsAsPluginId,
+    jpsDeps = prodGraphPluginDeps,
+    suppressedDeps = suppressedPlugins,
+  )
+
   prodModuleDeps = collectModuleDepsWithSuppressions(
     contentModuleName = contentModuleName,
     dependencies = prodGraphModuleDeps,
-    existingXmlModules = existingXmlModulesAsContentModuleName,
-    suppressedModules = suppressedModules,
-    updateSuppressions = updateSuppressions,
+    suppressedModules = effectiveSuppressedModules,
     suppressionUsages = suppressionUsages,
   )
 
   for (pluginId in prodGraphPluginDeps) {
     allJpsPluginDeps.add(pluginId)
-    val isNewPluginDep = pluginId !in existingXmlPluginsAsPluginId
-    if ((updateSuppressions && isNewPluginDep) || suppressedPlugins.contains(pluginId)) {
-      // updateSuppressions: suppress new deps to keep XML unchanged
+    if (effectiveSuppressedPlugins.contains(pluginId)) {
       suppressionUsages.add(SuppressionUsage(contentModuleName, pluginId.value, SuppressionType.PLUGIN_DEP))
     }
     else {
@@ -324,54 +329,37 @@ private fun buildContentModuleDependencyPlanFromInfoWithBothSets(
 
   for (depModule in testGraphModuleDeps) {
     val depName = depModule.value
-    if (!suppressedModules.contains(depModule)) {
+    if (!effectiveSuppressedModules.contains(depModule)) {
       testModuleDeps.add(depName)
     }
   }
 
   // Track suppressions that prevent removal: existing XML deps not in JPS graph
-  val prodDepNames = prodGraphModuleDeps.mapTo(HashSet()) { it.value }
   val prodFilteredEmbeddedDepNames = prodFilteredEmbeddedDeps.mapTo(HashSet()) { it.value }
-  val newModuleDeps = if (updateSuppressions) prodDepNames - existingXmlModulesForUpdate else emptySet()
-  val removedModuleDeps = if (updateSuppressions) existingXmlModulesForUpdate - prodDepNames else emptySet()
-  for (existingDep in existingXmlModulesForUpdate) {
-    val notInGraph = existingDep !in prodDepNames
-    if (notInGraph && (updateSuppressions || suppressedModules.contains(ContentModuleName(existingDep)))) {
-      if (!updateSuppressions && existingDep in prodFilteredEmbeddedDepNames) {
+  for (existingDep in existingXmlModulesAsContentModuleName) {
+    val notInGraph = existingDep !in prodGraphModuleDeps
+    if (notInGraph && effectiveSuppressedModules.contains(existingDep)) {
+      if (existingDep.value in prodFilteredEmbeddedDepNames) {
         debug("filterDeps") {
-          "preserve embedded dep via suppression for ${contentModuleName.value} -> $existingDep"
+          "preserve embedded dep via suppression for ${contentModuleName.value} -> ${existingDep.value}"
         }
       }
-      // Normal mode: suppression keeps this XML dep - report it
-      suppressionUsages.add(SuppressionUsage(contentModuleName, existingDep, SuppressionType.MODULE_DEP))
+      // Suppression keeps this XML dep - report it
+      suppressionUsages.add(SuppressionUsage(contentModuleName, existingDep.value, SuppressionType.MODULE_DEP))
     }
   }
 
   // Track plugin suppressions that prevent removal: existing XML plugin deps not in JPS
-  val jpsPluginNames = prodGraphPluginDeps.mapTo(HashSet()) { it.value }
-  for (existingPlugin in existingXmlPluginsForUpdate) {
-    val notInJps = existingPlugin !in jpsPluginNames
-    if (notInJps && (updateSuppressions || suppressedPlugins.contains(PluginId(existingPlugin)))) {
-      // Normal mode: suppression keeps this XML plugin dep - report it
-      suppressionUsages.add(SuppressionUsage(contentModuleName, existingPlugin, SuppressionType.PLUGIN_DEP))
-    }
-  }
-
-  if (updateSuppressions && (newModuleDeps.isNotEmpty() || removedModuleDeps.isNotEmpty())) {
-    debug("suppressions") {
-      "updateSuppressions: ${contentModuleName.value} newModuleDeps=${newModuleDeps.sorted()} removedModuleDeps=${removedModuleDeps.sorted()} existingXml=${existingXmlModulesForUpdate.sorted()}"
+  for (existingPlugin in existingXmlPluginsAsPluginId) {
+    val notInJps = existingPlugin !in prodGraphPluginDeps
+    if (notInJps && effectiveSuppressedPlugins.contains(existingPlugin)) {
+      // Suppression keeps this XML plugin dep - report it
+      suppressionUsages.add(SuppressionUsage(contentModuleName, existingPlugin.value, SuppressionType.PLUGIN_DEP))
     }
   }
 
   val allWrittenPluginDeps = (prodInfo.existingPluginDependencies + pluginDeps).distinct().sorted()
 
-  if (updateSuppressions && suppressionUsages.isNotEmpty()) {
-    val suppressedModuleNames = suppressionUsages.filter { it.type == SuppressionType.MODULE_DEP }.map { it.suppressedDep }
-    val suppressedPluginIds = suppressionUsages.filter { it.type == SuppressionType.PLUGIN_DEP }.map { it.suppressedDep }
-    debug("suppressions") {
-      "updateSuppressions: ${contentModuleName.value} suppressedModules=${suppressedModuleNames.sorted()} suppressedPlugins=${suppressedPluginIds.sorted()}"
-    }
-  }
 
   return ContentModuleDependencyPlan(
     contentModuleName = contentModuleName,
@@ -384,8 +372,8 @@ private fun buildContentModuleDependencyPlanFromInfoWithBothSets(
     existingXmlPluginDependencies = existingXmlPluginsAsPluginId,
     writtenPluginDependencies = allWrittenPluginDeps.map(::PluginId),
     allJpsPluginDependencies = allJpsPluginDeps.distinct().toSet(),
-    suppressedModules = suppressedModules,
-    suppressedPlugins = suppressedPlugins,
+    suppressedModules = effectiveSuppressedModules,
+    suppressedPlugins = effectiveSuppressedPlugins,
     suppressionUsages = suppressionUsages,
   )
 }
@@ -395,15 +383,15 @@ private fun buildContentModuleDependencyPlanFromInfoWithBothSets(
  *
  * Called by ContentModuleDependencyPlanner after computing effective deps.
  * Populates TWO edge types:
- * - [EDGE_CONTENT_MODULE_DEPENDS_ON]: Production deps (from writtenDependencies + existingXmlModuleDependencies)
+ * - [EDGE_CONTENT_MODULE_DEPENDS_ON]: Production deps (from writtenDependencies + suppressed existing XML deps)
  * - [EDGE_CONTENT_MODULE_DEPENDS_ON_TEST]: Test deps (from testDependencies, superset of prod)
  *
  * **Orphan handling**: Dependencies that don't exist in the graph (orphan modules) are
  * added as new nodes WITHOUT content source edges. This allows validation to detect them
  * using [com.intellij.platform.pluginGraph.GraphScope.hasContentSource]. See `docs/validation-rules.md#resolved-vs-orphan-modules`.
  *
- * **Existing XML deps**: Always included in production edges because they were explicitly
- * written by someone. If they don't resolve, they need to be detected as errors.
+ * **Existing XML deps**: Included in production edges only when explicitly suppressed
+ * (i.e., intentionally preserved despite not being in JPS).
  *
  * Swaps the internal store in-place (thread-safe via @Volatile).
  *
@@ -421,13 +409,14 @@ internal fun updateGraphWithModuleDependencyPlans(graph: PluginGraph, plans: Lis
   for (plan in plans) {
     if (store.nodeId(plan.contentModuleName.value, NODE_CONTENT_MODULE) < 0) continue
 
-    // Production deps: writtenDependencies + existingXmlModuleDependencies
+    // Production deps: writtenDependencies + suppressed existing XML deps
     for (depModule in plan.moduleDependencies) {
       if (store.nodeId(depModule.value, NODE_CONTENT_MODULE) < 0) {
         orphanModules.add(depModule.value)
       }
     }
-    for (depModule in plan.existingXmlModuleDependencies) {
+    val preservedXmlModuleDeps = plan.existingXmlModuleDependencies.filter { it in plan.suppressedModules }
+    for (depModule in preservedXmlModuleDeps) {
       if (store.nodeId(depModule.value, NODE_CONTENT_MODULE) < 0) {
         orphanModules.add(depModule.value)
       }
@@ -462,15 +451,16 @@ internal fun updateGraphWithModuleDependencyPlans(graph: PluginGraph, plans: Lis
     val fromId = moduleIndex.getOrDefault(plan.contentModuleName.value, -1)
     if (fromId < 0) continue
 
-    // Populate production edges (writtenDependencies + existingXmlModuleDependencies)
+    // Populate production edges (writtenDependencies + suppressed existing XML deps)
     for (depModule in plan.moduleDependencies) {
       val toId = moduleIndex.getOrDefault(depModule.value, -1)
       if (toId >= 0) {
         newStore.addEdge(EDGE_CONTENT_MODULE_DEPENDS_ON, fromId, toId)
       }
     }
-    // Also add existing XML deps (explicit declarations must be validated)
-    for (depModule in plan.existingXmlModuleDependencies) {
+    // Also add suppressed existing XML deps (explicitly preserved)
+    val preservedXmlModuleDeps = plan.existingXmlModuleDependencies.filter { it in plan.suppressedModules }
+    for (depModule in preservedXmlModuleDeps) {
       val toId = moduleIndex.getOrDefault(depModule.value, -1)
       if (toId >= 0) {
         newStore.addEdge(EDGE_CONTENT_MODULE_DEPENDS_ON, fromId, toId)

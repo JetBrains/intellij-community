@@ -8,12 +8,12 @@ This document describes how IntelliJ's build system generates module dependencie
 
 **Answer**: Only those with **PRODUCTION_RUNTIME** scope.
 
-| JPS Scope | In PRODUCTION_RUNTIME? | → XML? | Why |
-|-----------|------------------------|--------|-----|
+| JPS Scope | In PRODUCTION_RUNTIME? | → XML? | Why                                |
+|-----------|------------------------|--------|------------------------------------|
 | COMPILE   | ✓ Yes                  | ✓ Yes  | Code needed at compile AND runtime |
-| RUNTIME   | ✓ Yes                  | ✓ Yes  | Runtime-only dependencies |
-| PROVIDED  | ✗ No                   | ✗ No   | Provided by runtime environment |
-| TEST      | ✗ No                   | ✗ No   | Test code only |
+| RUNTIME   | ✓ Yes                  | ✓ Yes  | Runtime-only dependencies          |
+| PROVIDED  | ✗ No                   | ✗ No   | Provided by runtime environment    |
+| TEST      | ✗ No                   | ✗ No   | Test code only                     |
 
 **Data Flow**:
 ```
@@ -28,7 +28,7 @@ All dependency generation and validation must use **PluginGraph** as the single 
 - For JPS **library** dependencies, resolve library name -> library module via `ModuleSetGenerationConfig.projectLibraryToModuleMap` (built from JPS library modules), not by scanning `.idea` libraries or module libraries.
 - The graph already encodes product/module-set aliases and pseudo-core plugins; do not build parallel maps.
 - Keep generator and validator in sync: if validation expects a dependency to be present, generator must be able to emit it (or mark it implicit/suppressed) so a second run is clean.
-- Suppression config is a contract: if a JPS-derived dep is suppressed, it is intentionally omitted from XML and must not produce validation errors. Validation should only consider deps represented in the graph after filtering/suppression.
+- Suppression config is a contract: if a JPS-derived dep is suppressed, it is intentionally omitted from XML and must not produce validation errors. Existing XML-only deps are removed unless explicitly suppressed. Validation should only consider deps represented in the graph after filtering/suppression.
 
 ### Graph Completeness During DSL Test Plugin Expansion
 
@@ -205,14 +205,24 @@ Orchestrates all generation via `generateAllModuleSetsWithProducts()`.
 data class ModuleSetGenerationConfig(
   val moduleSetSources: Map<String, Pair<Any, Path>>,  // label → (source object, output dir)
   val discoveredProducts: List<DiscoveredProduct>,
-  val testProductSpecs: List<Pair<String, ProductModulesContentSpec>>,
+  val testProductSpecs: List<Pair<String, ProductModulesContentSpec>> = emptyList(),
   val projectRoot: Path,
   val outputProvider: ModuleOutputProvider,
-  val additionalPlugins: Map<String, String>,
-  val dependencyFilter: (embeddedModules, moduleName, depName, isTest) -> Boolean,
-  val skipXIncludePaths: Set<String>,
-  val xIncludePrefixFilter: (moduleName) -> String?,
-  val testFrameworkContentModules: Set<String>,  // Modules indicating test plugins
+  val nonBundledPlugins: Map<String, Set<TargetName>> = emptyMap(),
+  val knownPlugins: Set<TargetName> = emptySet(),
+  val testPluginsByProduct: Map<String, Set<TargetName>> = emptyMap(),
+  val includeTestPluginDescriptorsFromSources: Boolean = false,
+  val skipXIncludePaths: Set<String> = emptySet(),
+  val xIncludePrefixFilter: (moduleName: String) -> String? = { null },
+  val testFrameworkContentModules: Set<ContentModuleName> = emptySet(),  // Modules indicating test plugins
+  val testingLibraries: Set<String> = emptySet(),
+  val testLibraryAllowedInModule: Map<ContentModuleName, Set<String>> = emptyMap(),
+  val pluginAllowedMissingDependencies: Map<ContentModuleName, Set<ContentModuleName>> = emptyMap(),
+  val libraryModuleFilter: (libraryModuleName: String) -> Boolean = { true },
+  val projectLibraryToModuleMap: Map<String, String> = emptyMap(),
+  val suppressionConfigPath: Path? = null,
+  val validationFilter: Set<String>? = null,
+  val dslTestPluginAutoAddLoadingMode: ModuleLoadingRuleValue = ModuleLoadingRuleValue.OPTIONAL,
 )
 ```
 
@@ -260,7 +270,7 @@ Test plugin validation: Checks EDGE_CONTENT_MODULE_DEPENDS_ON_TEST
 | **Files updated** | `{moduleName}.xml` | `plugin.xml`, content module XMLs |
 | **Validation** | Full transitive validation | JPS dependencies with filtering |
 | **Configuration** | `includeDependencies=true` flag | Automatic for all content modules |
-| **Filtering** | None (use `@skip-dependency-generation` to skip) | `dependencyFilter` applied |
+| **Filtering** | None (use `@skip-dependency-generation` to skip) | Globally embedded module filtering + suppressions |
 
 ### Plugin.xml Generation Scope
 
@@ -274,80 +284,14 @@ does not update their plugin.xml files (handled by `TestPluginXmlGenerator`).
 Dependencies are computed from the graph's JPS edges (production-runtime scopes only); plugin.xml
 content is read only to preserve manual entries and xi:include content.
 
-## The `dependencyFilter` Function
+## Filtering and Implicit Dependencies
 
-Determines which dependencies should be included in generated XML files.
+Dependencies are generated from production-scope JPS edges. A dependency can be omitted from XML in two cases:
 
-**Signature:**
-```kotlin
-(embeddedModules: Set<String>, moduleName: String, depName: String, isTest: Boolean) -> Boolean
-```
+1. The target module is **globally embedded** and the dependency is coming from a content module that belongs only to a plugin (see [Globally Embedded Module Filtering](#globally-embedded-module-filtering)).
+2. The dependency is explicitly suppressed via `suppressions.json` (or allowlists).
 
-**Parameters:**
-- `embeddedModules` - modules with `loading="embedded"` in the product
-- `moduleName` - module whose dependencies are being processed
-- `depName` - candidate dependency module name
-- `isTest` - whether this is for a test descriptor or production
-
-**Example from ultimateGenerator.kt:**
-```kotlin
-dependencyFilter = { embeddedModules, moduleName, depName, isTest ->
-  // For production descriptors, skip test-related modules
-  if (!isTest && (
-    moduleName.startsWith("intellij.platform.testFramework") ||
-    moduleName == "intellij.tools.testsBootstrap"
-  )) {
-    return@ModuleSetGenerationConfig false
-  }
-
-  // Only include library modules if not embedded
-  if (depName.startsWith(LIB_MODULE_PREFIX)) {
-    !embeddedModules.contains(depName)
-  } else {
-    false
-  }
-}
-```
-
-**Important:** The `dependencyFilter` only applies to **plugin content modules** processed by `PluginDependencyPlanner`.
-It does NOT apply to **module set modules** (including library modules) processed by `ModuleDescriptorDependencyGenerator`.
-
-### Implicit Dependencies Tracking
-
-**Key behavior:** JPS dependencies that survive filtering and suppression are **validated**, but only filtered-in dependencies are **written to XML**.
-
-When `dependencyFilter` returns `false` for a dependency:
-1. The dependency is NOT written to the XML descriptor
-2. The dependency IS still validated unless it is suppressed by `suppressions.json` or allowlists
-3. The dependency is tracked as "implicit" (computed: `allJpsDependencies - writtenDependencies`)
-4. If validation fails, error messages show "(auto-inferred JPS dependency, filtered by config)"
-
-**DependencyFileResult structure:**
-```kotlin
-data class DependencyFileResult(
-  val writtenDependencies: List<String>,    // deps written to XML
-  val allJpsDependencies: Set<String>,      // all JPS deps (superset)
-) {
-  val implicitDependencies: Set<String>     // computed: allJps - written
-    get() = allJpsDependencies - writtenDependencies.toSet()
-}
-```
-
-This design ensures that:
-- Validation catches missing dependencies that are not suppressed (not just those written to XML)
-- Error messages clearly distinguish between explicit and implicit dependencies
-- Users know to add missing deps to `pluginAllowedMissingDependencies` rather than the XML
-
-**Data flow:**
-```
-JPS Dependencies (.iml)
-        │
-        ▼
-dependencyFilter() ──┬── true  → writtenDependencies (XML) + Validated
-                     │
-                     └── false → implicitDependencies (NOT in XML) + Validated unless suppressed
-                                 Error shows "(auto-inferred JPS dependency, filtered by config)"
-```
+**Implicit dependencies** are JPS production deps missing from XML (`JPS deps - XML deps`). Validators treat these as auto-inferred JPS deps and still validate them unless they are suppressed or allowlisted.
 
 See [errors.md](errors.md) for error handling details.
 
@@ -405,7 +349,7 @@ fun GraphScope.isGloballyEmbedded(moduleId: Int): Boolean
 
 ## Skipping Dependency Generation for Module Set Modules
 
-For module set modules (including library modules like `intellij.libraries.*`), the `dependencyFilter` is NOT applied.
+For module set modules (including library modules like `intellij.libraries.*`), embedded-module filtering is not applied.
 All JPS dependencies with descriptors are included automatically.
 
 If a module requires **manual dependency management** (e.g., for specific ordering requirements),
@@ -511,19 +455,20 @@ Test descriptors provide dependencies for test code.
    - Both are processed; test uses `withTests=true` for JPS dependencies
 
 2. **Test content modules** (e.g., `intellij.foo._test`):
-   - Their `.xml` file IS the test descriptor
-   - No separate `._test._test.xml` file
-   - Processed with `isTest=true` filter
+    - Their `.xml` file IS the test descriptor
+    - No separate `._test._test.xml` file
+    - Processed with `isTestDescriptor=true` (production deps include TEST scope)
 
 **Code logic:**
 ```kotlin
-val isTestModule = contentModuleName.endsWith("._test")
-generateContentModuleDependencies(
-  dependencyFilter = { dependencyFilter(moduleName, it, isTestModule) }
+val isTestDescriptor = contentModuleName.endsWith("._test")
+val plan = planContentModuleDependenciesWithBothSets(
+  contentModuleName = contentModuleName,
+  isTestDescriptor = isTestDescriptor,
+  libraryModuleFilter = config.libraryModuleFilter,
 )
-if (!isTestModule) {
-  generateTestContentModuleDependencies(...)  // Process ._test.xml
-}
+// plan.moduleDependencies -> main descriptor
+// plan.testDependencies -> moduleName._test.xml for non-test descriptor modules
 ```
 
 ## XML Generation Format
@@ -588,10 +533,13 @@ For detailed implementation documentation, see `SuppressionConfigGenerator.kt`.
 ### Running the Generator
 
 ```bash
-# Run generator - automatically updates suppressions.json if needed
+# Normal generation: updates XML only
 bazel run //platform/buildScripts:plugin-model-tool
 
-# Review and commit changes
+# Update suppressions without touching XML (captures current XML state)
+bazel run //platform/buildScripts:plugin-model-tool -- --update-suppressions
+
+# Review and commit suppressions changes
 git diff platform/buildScripts/suppressions.json
 ```
 

@@ -25,6 +25,7 @@ import org.jetbrains.intellij.build.productLayout.deps.ContentModuleDependencyPl
 import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
 import org.jetbrains.intellij.build.productLayout.generator.PluginGraphDeps
 import org.jetbrains.intellij.build.productLayout.generator.collectPluginGraphDeps
+import org.jetbrains.intellij.build.productLayout.generator.computeEffectiveSuppressedDeps
 import org.jetbrains.intellij.build.productLayout.generator.filterPluginDependencies
 import org.jetbrains.intellij.build.productLayout.generator.planContentModuleDependenciesWithBothSets
 import org.jetbrains.intellij.build.productLayout.generator.updateGraphWithModuleDependencyPlans
@@ -39,6 +40,7 @@ import org.jetbrains.intellij.build.productLayout.stats.PluginDependencyFileResu
 import org.jetbrains.intellij.build.productLayout.stats.PluginDependencyGenerationResult
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.intellij.build.productLayout.util.FileUpdateStrategy
+import org.jetbrains.intellij.build.productLayout.util.withUpdateSuppressions
 import org.jetbrains.intellij.build.productLayout.validator.ContentModulePluginDependencyValidator
 import org.jetbrains.intellij.build.productLayout.validator.PluginContentDependencyValidator
 import org.jetbrains.intellij.build.productLayout.xml.updateXmlDependencies
@@ -63,6 +65,7 @@ internal suspend fun PluginTestSetupContext.generateDependencies(
   pluginAllowedMissingDependencies: Map<TargetName, Set<ContentModuleName>> = emptyMap(),
   contentModuleAllowedMissingPluginDeps: Map<ContentModuleName, Set<PluginId>> = emptyMap(),
   productAllowedMissing: Map<String, Set<ContentModuleName>> = emptyMap(),
+  updateSuppressions: Boolean = false,
 ): PluginDependencyGenerationResult {
   return coroutineScope {
     val descriptorCache = ModuleDescriptorCache(jps.outputProvider, this)
@@ -73,6 +76,7 @@ internal suspend fun PluginTestSetupContext.generateDependencies(
       graph = pluginGraph,
       descriptorCache = descriptorCache,
       suppressionConfig = suppressionConfig,
+      updateSuppressions = updateSuppressions,
       strategy = strategy,
       testFrameworkContentModules = testFrameworkContentModules,
       pluginAllowedMissingDependencies = pluginAllowedMissingDependencies,
@@ -106,6 +110,7 @@ internal suspend fun generatePluginDependencies(
   pluginAllowedMissingDependencies: Map<TargetName, Set<ContentModuleName>> = emptyMap(),
   contentModuleAllowedMissingPluginDeps: Map<ContentModuleName, Set<PluginId>> = emptyMap(),
   productAllowedMissing: Map<String, Set<ContentModuleName>> = emptyMap(),
+  updateSuppressions: Boolean = false,
 ): PluginDependencyGenerationResult {
   return coroutineScope {
     if (plugins.isEmpty()) {
@@ -129,6 +134,7 @@ internal suspend fun generatePluginDependencies(
           outputProvider = outputProvider,
           descriptorCache = descriptorCache,
           suppressionConfig = suppressionConfig,
+          updateSuppressions = updateSuppressions,
           strategy = strategy,
           contentModuleCache = contentModuleCache,
           testContentModuleCache = testContentModuleCache,
@@ -221,32 +227,50 @@ private suspend fun generatePluginDependency(
   outputProvider: ModuleOutputProvider,
   descriptorCache: ModuleDescriptorCache,
   suppressionConfig: SuppressionConfig,
+  updateSuppressions: Boolean,
   strategy: FileUpdateStrategy,
   contentModuleCache: AsyncCache<String, PlannedContentModuleResult?>,
   testContentModuleCache: AsyncCache<String, DependencyFileResult?>,
 ): PluginDependencyGenerationOutput? {
   val info = pluginContentCache.getOrExtract(pluginModuleName) ?: return null
-  val isTestPlugin = graphDeps.isTest
+  val effectiveStrategy = strategy.withUpdateSuppressions(updateSuppressions)
 
   // For DSL-defined plugins, no filtering (empty suppression)
   val effectiveConfig = if (graphDeps.isDslDefined) SuppressionConfig() else suppressionConfig
 
-  // Derive filter from SuppressionConfig (same as production code)
-  val effectiveFilter: (moduleName: String, depName: String, isTest: Boolean) -> Boolean = { moduleName, depName, _ ->
-    val suppressedModules = effectiveConfig.getSuppressedModules(ContentModuleName(moduleName))
-    !suppressedModules.contains(ContentModuleName(depName))
-  }
+  val pluginContentModuleName = graphDeps.pluginContentModuleName
+  val existingXmlModuleDeps = info.moduleDependencies
+  val existingXmlPluginDeps: Set<PluginId> = info.depsByFile.firstOrNull()?.pluginDependencies ?: emptySet()
+  val suppressedModules = effectiveConfig.getPluginSuppressedModules(pluginContentModuleName)
+  val suppressedPlugins = effectiveConfig.getPluginSuppressedPlugins(pluginContentModuleName)
+  val effectiveSuppressedModules = computeEffectiveSuppressedDeps(
+    updateSuppressions = updateSuppressions,
+    existingXmlDeps = existingXmlModuleDeps,
+    jpsDeps = graphDeps.jpsModuleDependencies,
+    suppressedDeps = suppressedModules,
+  )
+  val effectiveSuppressedPlugins = computeEffectiveSuppressedDeps(
+    updateSuppressions = updateSuppressions,
+    existingXmlDeps = existingXmlPluginDeps,
+    jpsDeps = graphDeps.jpsPluginDependencies,
+    suppressedDeps = suppressedPlugins,
+  )
 
-  val deps = filterPluginDependencies(graphDeps, info, effectiveFilter)
+  val deps = filterPluginDependencies(
+    graphDeps = graphDeps,
+    pluginInfo = info,
+    suppressedModules = effectiveSuppressedModules,
+    suppressedPlugins = effectiveSuppressedPlugins,
+  )
 
   val status = updateXmlDependencies(
     path = info.pluginXmlPath,
     content = info.pluginXmlContent,
     moduleDependencies = deps.moduleDependencies.map { it.value },
     pluginDependencies = deps.pluginDependencies.map { it.value },
-    preserveExistingModule = { !effectiveFilter(pluginModuleName.value, it, false) },
-    preserveExistingPlugin = if (isTestPlugin) null else { _ -> true },
-    strategy = strategy,
+    preserveExistingModule = { moduleName -> ContentModuleName(moduleName) in effectiveSuppressedModules },
+    preserveExistingPlugin = { pluginName -> PluginId(pluginName) in effectiveSuppressedPlugins },
+    strategy = effectiveStrategy,
   )
 
   val contentModuleResults = mutableListOf<DependencyFileResult>()
@@ -264,10 +288,11 @@ private suspend fun generatePluginDependency(
         pluginGraph = graph,
         isTestDescriptor = isTestModule,
         suppressionConfig = effectiveConfig,
+        updateSuppressions = updateSuppressions,
         libraryModuleFilter = { true },
       )
       val plan = generation.plan ?: return@getOrPut null
-      PlannedContentModuleResult(plan = plan, result = writeContentModulePlan(plan, strategy))
+      PlannedContentModuleResult(plan = plan, result = writeContentModulePlan(plan, effectiveStrategy))
     }
     if (planned != null) {
       contentModuleResults.add(planned.result)
@@ -290,14 +315,13 @@ private suspend fun generatePluginDependency(
           }
         }
 
-        // Derive filter from SuppressionConfig for test descriptor (same as production)
-        val testSuppressedModules = effectiveConfig.getSuppressedModules(module.name)
+        val testSuppressedModules = planned?.plan?.suppressedModules ?: effectiveConfig.getSuppressedModules(module.name)
         generateTestDescriptorDependencies(
           contentModuleName = module.name,
           outputProvider = outputProvider,
           graphModuleDeps = graphModuleDeps,
           dependencyFilter = { depName -> !testSuppressedModules.contains(ContentModuleName(depName)) },
-          strategy = strategy,
+          strategy = effectiveStrategy,
         )
       }
       if (testResult != null) {

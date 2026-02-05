@@ -199,15 +199,8 @@ internal suspend fun computePluginContentFromDslSpec(
   while (queue.isNotEmpty()) {
     val moduleName = queue.removeFirst()
     val rootModule = rootDeclaredModuleByModule.get(moduleName) ?: moduleName
-    // In updateSuppressions mode, treat suppressions as stale hints so auto-add can
-    // recompute the full dependency set and drop obsolete suppressions.
-    val moduleSuppressedModules = if (updateSuppressions) {
-      emptySet()
-    }
-    else {
-      suppressionConfig.getSuppressedModules(moduleName)
-    }
-    val rootSuppressedModules = if (updateSuppressions || rootModule == moduleName) {
+    val moduleSuppressedModules = suppressionConfig.getSuppressedModules(moduleName)
+    val rootSuppressedModules = if (rootModule == moduleName) {
       emptySet()
     }
     else {
@@ -227,10 +220,6 @@ internal suspend fun computePluginContentFromDslSpec(
       if (depName in suppressedModules) {
         val suppressionSource = if (depName in rootSuppressedModules) rootModule else moduleName
         suppressionUsageSink?.add(SuppressionUsage(suppressionSource, depName.value, SuppressionType.MODULE_DEP))
-        if (updateSuppressions) {
-          debug("dslTestDeps") { "skip suppressed dep=$depName from=$moduleName" }
-          return
-        }
         if (!isStrictModule && hasAnyContentSource(depName)) {
           debug("dslTestDeps") { "skip suppressed dep=$depName from=$moduleName (has content source)" }
           return
