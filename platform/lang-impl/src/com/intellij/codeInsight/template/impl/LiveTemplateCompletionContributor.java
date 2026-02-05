@@ -125,8 +125,10 @@ public final class LiveTemplateCompletionContributor extends CompletionContribut
                                            CompletionResultSet result,
                                            boolean isAutopopup) {
     if (!templatesShown.getAndSet(true)) {
-      var templateKeys = ContainerUtil.map(availableTemplates, template -> template.getKey());
-      result.restartCompletionOnPrefixChange(StandardPatterns.string().afterNonJavaIdentifierPart().endsWithOneOf(templateKeys));
+      if (!availableTemplates.isEmpty()) {
+        var templateKeys = ContainerUtil.map(availableTemplates, template -> template.getKey());
+        result.restartCompletionOnPrefixChange(StandardPatterns.string().afterNonJavaIdentifierPart().endsWithOneOf(templateKeys));
+      }
       for (final Map.Entry<TemplateImpl, String> entry : templates.entrySet()) {
         ProgressManager.checkCanceled();
         if (isAutopopup && entry.getKey().getShortcutChar() == TemplateSettings.NONE_CHAR) continue;
