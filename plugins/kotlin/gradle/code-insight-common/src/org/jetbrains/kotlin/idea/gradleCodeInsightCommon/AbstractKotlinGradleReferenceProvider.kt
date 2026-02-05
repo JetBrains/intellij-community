@@ -34,8 +34,7 @@ abstract class AbstractKotlinGradleReferenceProvider: ImplicitReferenceProvider 
         val callExpression = element?.getParentOfType<KtCallExpression>(true, KtDeclarationWithBody::class.java) ?: return null
         return allowAnalysisOnEdt {
             analyze(callExpression) {
-                val singleFunctionCallOrNull = callExpression.resolveToCall()?.singleFunctionCallOrNull()
-                singleFunctionCallOrNull?.symbol?.callableId
+                callExpression.resolveToCall()?.singleFunctionCallOrNull()?.symbol?.callableId
             }
         }
     }

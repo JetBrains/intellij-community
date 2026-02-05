@@ -1,8 +1,5 @@
 // FILE: settings.gradle.kts
-// "EXPECTED-NAVIGATION-SUBSTRING": "println("custom")"
+// "EXPECTED-NAVIGATION-SUBSTRING": "val fromCustomSettingsPlugin = "custom.settings.settings.gradle.kts""
 plugins {
     id("custom<caret>.settings")
 }
-
-// FILE: custom/src/main/kotlin/custom.settings.settings.gradle.kts
-println("custom")

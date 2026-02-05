@@ -20,7 +20,7 @@ import org.junit.jupiter.params.ParameterizedTest
 @GradleProjectTestApplication
 @AssertKotlinPluginMode
 @TestRoot("idea/tests/testData/")
-@TestDataPath("\$CONTENT_ROOT")
+@TestDataPath($$"$CONTENT_ROOT")
 @TestMetadata("../../../idea/tests/testData/gradle/navigation/composite")
 class K2GradleBuildLogicPluginNavigationTest : AbstractKotlinGradleNavigationTest() {
     @ParameterizedTest
@@ -37,31 +37,56 @@ class K2GradleBuildLogicPluginNavigationTest : AbstractKotlinGradleNavigationTes
         verifyFileShouldStayTheSame(gradleVersion)
     }
 
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("testNavigationToBacktickedSettingsPluginFromSettingsGradleKts.test")
+    fun testNavigationToBacktickedSettingsPluginFromSettingsGradleKts(gradleVersion: GradleVersion) {
+        verifyNavigationFromCaretToExpected(gradleVersion)
+    }
+
     override val myFixture = FIXTURE_WITH_SETTINGS_PLUGIN
 
     companion object {
         private val FIXTURE_WITH_SETTINGS_PLUGIN: GradleTestFixtureBuilder =
             GradleTestFixtureBuilder.create("GradleKotlinFixture") { gradleVersion ->
-                withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
-                    setProjectName("GradleKotlinFixture")
-                }
-                withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
-                    """
-                    plugins {
-                        `kotlin-dsl`
-                    }
-                    """.trimIndent()
+                withBuildFile(gradleVersion, "buildSrc", gradleDsl = GradleDsl.KOTLIN) {
+                    withKotlinDsl()
                 }
 
-                withSettingsFile(gradleVersion, "custom", gradleDsl = GradleDsl.KOTLIN) {}
-                withBuildFile(gradleVersion, "custom", gradleDsl = GradleDsl.KOTLIN) {
-                    """
-                    plugins {
-                        `kotlin-dsl`
+                withFile(
+                    "buildSrc/src/main/kotlin/my-conventions.gradle.kts", """
+                    val fromBuildSrc = "my-conventions.gradle.kts"
+                """.trimIndent()
+                )
+
+                withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
+                    withPlugin {
+                        code("`my-conventions`")
                     }
-                    """.trimIndent()
                 }
-                withFile("custom/src/main/kotlin/custom.settings.settings.gradle.kts", "")
+
+                withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
+                    addCode("""
+                        pluginManagement {
+                            includeBuild("custom")
+                        }
+    
+                        plugins {
+                            id("custom.settings")
+                        }
+                    """.trimIndent())
+                }
+
+                withBuildFile(gradleVersion, "custom", gradleDsl = GradleDsl.KOTLIN) {
+                    withKotlinDsl()
+                }
+
+                withFile(
+                    "custom/src/main/kotlin/custom.settings.settings.gradle.kts", """
+                    val fromCustomSettingsPlugin = "custom.settings.settings.gradle.kts"
+                """.trimIndent()
+                )
+
             }
     }
 }
