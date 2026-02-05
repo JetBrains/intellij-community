@@ -86,7 +86,7 @@ public class LazyQuickFixTest extends LightQuickFixTestCase {
     ALLOW_UNRESOLVED_REFERENCE_QUICK_FIXES = true;
     DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart(getTestName(false));
     errors = highlightErrors();
-    CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getFile(), getEditor());
+    CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getProject(), getEditor());
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     assertSize(N, errors);
     assertNotEmpty(regFixCalled);
@@ -109,7 +109,7 @@ public class LazyQuickFixTest extends LightQuickFixTestCase {
       DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart(getTestName(false));
       List<HighlightInfo> errors = highlightErrors();
       assertTrue(ContainerUtil.exists(errors, h->"my class".equals(h.getDescription())));
-      CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getFile(), getEditor());
+      CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getProject(), getEditor());
 
       IntentionAction fix = findActionWithText("my lazy fix");
       assertNotNull(fix);
@@ -163,7 +163,7 @@ public class LazyQuickFixTest extends LightQuickFixTestCase {
     ProperTextRange visibleRange = getEditor().calculateVisibleRange();
     assertTrue(visibleRange.toString(), visibleRange.getStartOffset() > 1000);
     List<HighlightInfo> infos = highlightErrors();
-    CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getFile(), getEditor());
+    CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getProject(), getEditor());
     assertTrue(String.valueOf(infos), ContainerUtil.exists(infos, h-> "Cannot resolve method 'fooooo' in 'AClass'".equals(h.getDescription())));
     assertSize(0, regFixCalled); // must not compute
 
@@ -176,7 +176,7 @@ public class LazyQuickFixTest extends LightQuickFixTestCase {
     backspace();  // change psi to revalidate cached values
     infos = highlightErrors();
     assertTrue(String.valueOf(infos), ContainerUtil.exists(infos, h-> "Cannot resolve method 'fooooo' in 'AClass'".equals(h.getDescription())));
-    CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getFile(), getEditor());
+    CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getProject(), getEditor());
     assertSize(1, regFixCalled); // now must compute, since it's close to the caret
     Disposer.dispose(resolveInBackground);
   }

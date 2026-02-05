@@ -78,7 +78,7 @@ class K2AutoImportHighlightingFlickeringTest: KotlinLightCodeInsightFixtureTestC
                 assertTrue(errors.any { info -> "moduleA" == textHighlighted(info.highlighter) })
 
                 AppExecutorUtil.getAppExecutorService().submit {
-                    DaemonCodeAnalyzerImpl.waitForLazyQuickFixesUnderCaret(myFixture.file, myFixture.editor)
+                    DaemonCodeAnalyzerImpl.waitForLazyQuickFixesUnderCaret(project, myFixture.editor)
                 }.get()
 
                 val imports = (myFixture.file as KtFile).importDirectives

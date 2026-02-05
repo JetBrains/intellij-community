@@ -963,16 +963,16 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  public static void waitForLazyQuickFixesUnderCaret(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+  @RequiresBackgroundThread
+  public static void waitForLazyQuickFixesUnderCaret(@NotNull Project project, @NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ThreadingAssertions.assertNoOwnReadAccess();
     List<HighlightInfo> relevantInfos = new ArrayList<>();
-    Project project = psiFile.getProject();
+    Document document = editor.getDocument();
     ReadAction.run(() -> {
       PsiUtilBase.assertEditorAndProjectConsistent(project, editor);
       CaretModel caretModel = editor.getCaretModel();
       int offset = caretModel.getOffset();
-      Document document = editor.getDocument();
       int logicalLine = caretModel.getLogicalPosition().line;
       processHighlights(document, project, null, 0, document.getTextLength(), info -> {
         if (!info.hasLazyQuickFixes()) {
@@ -991,7 +991,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       });
     });
     for (HighlightInfo info : relevantInfos) {
-      LazyQuickFixUpdater.getInstance(project).waitQuickFixesSynchronously(psiFile, editor, info);
+      LazyQuickFixUpdater.getInstance(project).waitQuickFixesSynchronously(info, project, document);
     }
   }
 

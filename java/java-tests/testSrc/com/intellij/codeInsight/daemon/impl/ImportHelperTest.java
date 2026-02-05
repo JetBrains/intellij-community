@@ -889,7 +889,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     for (int i = 0; i < errors.size(); i++) {
       HighlightInfo error = errors.get(i);
       if (visibleRange.contains(error)) { // we care only for visible errors; invisible ones may or may not be computed
-        updater.waitForBackgroundJobIfStartedInTests(getFile(), editor, error, deadline - System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+        updater.waitForBackgroundJobIfStartedInTests(getProject(), editor.getDocument(), error, deadline - System.currentTimeMillis(), TimeUnit.MILLISECONDS);
         if (!error.hasHint()) {
           List<HintAction> hints = ShowAutoImportPass.extractHints(error);
           String message = error + ": " + i + " hasHints: "+error.hasHint() + "; hints:" + hints + "; visibleRange:" + visibleRange + "; contains: " + visibleRange.contains(error);

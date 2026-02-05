@@ -747,8 +747,8 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
 
     if (!new HashSet<>(fromMarkup).equals(fromData)) {
       Comparator<Object> toString = Comparator.comparing(o->o.toString());
-      List<HighlightInfo> ds = ContainerUtil.sorted(fromData, toString);
-      List<HighlightInfo> ms = ContainerUtil.sorted(fromMarkup, toString);
+      List<HighlightInfo> ds = ContainerUtil.sorted(fromData, BY_OFFSETS_AND_HASH_ERRORS_FIRST);
+      List<HighlightInfo> ms = ContainerUtil.sorted(fromMarkup, BY_OFFSETS_AND_HASH_ERRORS_FIRST);
       String fromDataStr = StringUtil.join(ds, "\n");
       String fromMarkupStr = StringUtil.join(ms, "\n");
       LOG.error("data inconsistent with markup: data:\n"

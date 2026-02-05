@@ -63,7 +63,6 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -1440,7 +1439,7 @@ public class HighlightInfo implements Segment {
     }
   }
 
-  final void computeQuickFixesSynchronously(@NotNull PsiFile psiFile, @NotNull Document document) throws ExecutionException, InterruptedException {
+  final void computeQuickFixesSynchronously(@NotNull Project project, @NotNull Document document) throws ExecutionException, InterruptedException {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
@@ -1455,8 +1454,7 @@ public class HighlightInfo implements Segment {
         Consumer<? super QuickFixActionRegistrar> computer = desc.fixesComputer();
         // recompute only if necessary
         List<IntentionActionDescriptor> result =
-          computerToResult.computeIfAbsent(computer,
-            __ -> doComputeLazyQuickFixes(document, psiFile.getProject(), desc.psiModificationStamp(), computer));
+          computerToResult.computeIfAbsent(computer, __ -> doComputeLazyQuickFixes(document, project, desc.psiModificationStamp(), computer));
         assert result != null;
         future = CompletableFuture.completedFuture(result);
         return new LazyFixDescription(desc.fixesComputer(), desc.psiModificationStamp(), future);

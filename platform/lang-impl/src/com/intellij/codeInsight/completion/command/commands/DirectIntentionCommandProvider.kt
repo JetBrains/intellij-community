@@ -405,7 +405,7 @@ internal class DirectIntentionCommandProvider : CommandProvider {
                 (isInjected && !insideRange.contains(TextRange(info.startOffset, info.endOffset)))) continue
             if (info.hasLazyQuickFixes()) {
               info.updateLazyFixesPsiTimeStamp(PsiModificationTracker.getInstance(psiFile.project).modificationCount)
-              lazyQuickFixUpdater.waitQuickFixesSynchronously(psiFile, editor, info)
+              lazyQuickFixUpdater.waitQuickFixesSynchronously(info, psiFile.getProject(), editor.getDocument())
             }
             val fixes: MutableList<IntentionActionDescriptor> = ArrayList()
             ShowIntentionsPass.addAvailableFixesForGroups(info, topLevelEditor, topLevelFile, fixes, -1, offset, false)

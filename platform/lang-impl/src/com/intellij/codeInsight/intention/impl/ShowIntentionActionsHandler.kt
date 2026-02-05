@@ -80,7 +80,7 @@ open class ShowIntentionActionsHandler : CodeInsightActionHandler {
       return ApplicationManager.getApplication().runWriteIntentReadAction(ThrowableComputable {
         val prioritizedRunnable = ThrowableComputable<CachedIntentions, RuntimeException> {
           ProgressManager.getInstance().computePrioritized(ThrowableComputable {
-            DaemonCodeAnalyzerImpl.waitForLazyQuickFixesUnderCaret(file, editor)
+            DaemonCodeAnalyzerImpl.waitForLazyQuickFixesUnderCaret(project, editor)
             ApplicationManager.getApplication().runReadAction(ThrowableComputable {
               CachedIntentions.createAndUpdateActions(project, file, editor, ShowIntentionsPass.getActionsToShow(editor, file))
             })

@@ -81,7 +81,7 @@ abstract class AbstractAutoImportTestBase : KotlinLightCodeInsightFixtureTestCas
                         )
                     }
                     AppExecutorUtil.getAppExecutorService().submit {
-                        DaemonCodeAnalyzerImpl.waitForLazyQuickFixesUnderCaret(myFixture.file, myFixture.editor)
+                        DaemonCodeAnalyzerImpl.waitForLazyQuickFixesUnderCaret(project, myFixture.editor)
                     }.get()
 
                 } finally {
