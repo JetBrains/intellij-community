@@ -5,13 +5,17 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ModuleSourceOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,6 +54,51 @@ public class MultipleModuleHighlightingTest extends JavaCodeInsightFixtureTestCa
                                                                     }
                                                                     """).getContainingFile().getVirtualFile());
     myFixture.checkHighlighting();
+  }
+
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder<?> moduleBuilder) throws Exception {
+    moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
+    moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
+  }
+
+  public void testMissedTransitiveDepFunctionalInterface() throws IOException {
+    Sdk sdk = ModuleRootManager.getInstance(getModule()).getSdk();
+    Module mod1 =
+      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
+    Module mod2 =
+      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
+    Module mod3 =
+      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod3", myFixture.getTempDirFixture().findOrCreateDir("mod3"));
+    ModuleRootModificationUtil.setModuleSdk(mod1, sdk);
+    ModuleRootModificationUtil.setModuleSdk(mod2, sdk);
+    ModuleRootModificationUtil.setModuleSdk(mod3, sdk);
+    ModuleRootModificationUtil.addDependency(mod2, mod1);
+    ModuleRootModificationUtil.addDependency(mod3, mod2);
+    myFixture.addFileToProject("mod1/M1.java", "public class M1 {}");
+    myFixture.addFileToProject("mod2/M2.java", """
+      import java.util.function.Supplier;
+      
+      public class M2 {
+          public static void test(Supplier<M1> supplier) {
+              System.out.println(supplier.get());
+          }
+      
+          public static M1Sub create() {
+              return new M1Sub();
+          }
+      
+          public static class M1Sub extends M1 {}
+      }
+      """);
+    PsiFile file = myFixture.addFileToProject("mod3/M3.java", """
+      public class M3 {
+          public static void main(String[] args) {
+              M2.test(<error descr="Cannot access M1">M2::create</error>);
+          }
+      }""");
+    myFixture.configureFromExistingVirtualFile(PsiUtilCore.getVirtualFile(file));
+    IdeaTestUtil.withLevel(mod3, LanguageLevel.JDK_1_8, myFixture::checkHighlighting);
   }
 
   public void testMissedMethodInHierarchy() throws IOException {

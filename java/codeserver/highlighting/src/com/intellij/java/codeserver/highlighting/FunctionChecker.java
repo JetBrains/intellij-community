@@ -5,6 +5,7 @@ import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.LambdaUtil;
 import com.intellij.psi.PsiCall;
@@ -14,6 +15,7 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFunctionalExpression;
 import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
@@ -418,6 +420,7 @@ final class FunctionChecker {
       PsiUtil.resolveGenericsClassInType(PsiClassImplUtil.correctType(functionalInterfaceType, expression.getResolveScope()));
     PsiClass psiClass = resolveResult.getElement();
     if (psiClass == null) return;
+    PsiFile file = psiClass.getContainingFile();
     if (!PsiUtil.isAccessible(myVisitor.project(), psiClass, expression, null)) {
       myVisitor.myModifierChecker.reportAccessProblem(expression, psiClass, resolveResult);
       return;
@@ -448,5 +451,11 @@ final class FunctionChecker {
     }
 
     myVisitor.myModuleChecker.checkModuleAccess(psiClass, expression);
+    if (!myVisitor.hasErrorResults()) {
+      VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile != null && !expression.getResolveScope().contains(virtualFile)) {
+        myVisitor.report(JavaErrorKinds.CLASS_NOT_ACCESSIBLE.create(expression, psiClass));
+      }
+    }
   }
 }
