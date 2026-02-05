@@ -121,7 +121,7 @@ internal class AsyncCompletion(project: Project?) : CompletionThreadingBase() {
             ProgressManager.checkCanceled()
             runnable.run()
           }
-          catch (_: ProcessCanceledException) {
+          catch (@Suppress("IncorrectCancellationExceptionHandling") _: ProcessCanceledException) {
           }
         }, progressIndicator)
     }
