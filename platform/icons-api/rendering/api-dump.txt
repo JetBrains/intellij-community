@@ -1,0 +1,49 @@
+c:com.intellij.platform.icons.rendering.Dimensions
+- <init>(I,I):V
+- f:copy(I,I):com.intellij.platform.icons.rendering.Dimensions
+- bs:copy$default(com.intellij.platform.icons.rendering.Dimensions,I,I,I,java.lang.Object):com.intellij.platform.icons.rendering.Dimensions
+- equals(java.lang.Object):Z
+- f:getHeight():I
+- f:getWidth():I
+- hashCode():I
+com.intellij.platform.icons.rendering.GenericImageResourceLoader
+- a:loadGenericImage(com.intellij.platform.icons.ImageResourceLocation,com.intellij.platform.icons.rendering.ImageModifiers):com.intellij.platform.icons.rendering.ImageResource
+- bs:loadGenericImage$default(com.intellij.platform.icons.rendering.GenericImageResourceLoader,com.intellij.platform.icons.ImageResourceLocation,com.intellij.platform.icons.rendering.ImageModifiers,I,java.lang.Object):com.intellij.platform.icons.rendering.ImageResource
+com.intellij.platform.icons.rendering.IconRenderer
+- a:getIcon():com.intellij.platform.icons.Icon
+com.intellij.platform.icons.rendering.IconRendererManager
+- sf:Companion:com.intellij.platform.icons.rendering.IconRendererManager$Companion
+- a:createRenderer(com.intellij.platform.icons.Icon,com.intellij.platform.icons.rendering.RenderingContext):com.intellij.platform.icons.rendering.IconRenderer
+- a:createRenderingContext(com.intellij.platform.icons.rendering.MutableIconUpdateFlow,com.intellij.platform.icons.rendering.ImageModifiers):com.intellij.platform.icons.rendering.RenderingContext
+- bs:createRenderingContext$default(com.intellij.platform.icons.rendering.IconRendererManager,com.intellij.platform.icons.rendering.MutableIconUpdateFlow,com.intellij.platform.icons.rendering.ImageModifiers,I,java.lang.Object):com.intellij.platform.icons.rendering.RenderingContext
+- a:createUpdateFlow(kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function1):com.intellij.platform.icons.rendering.MutableIconUpdateFlow
+- s:getInstance():com.intellij.platform.icons.rendering.IconRendererManager
+f:com.intellij.platform.icons.rendering.IconRendererManager$Companion
+- f:activate(com.intellij.platform.icons.rendering.IconRendererManager):V
+- f:createRenderingContext(com.intellij.platform.icons.rendering.MutableIconUpdateFlow,com.intellij.platform.icons.rendering.ImageModifiers):com.intellij.platform.icons.rendering.RenderingContext
+- bs:createRenderingContext$default(com.intellij.platform.icons.rendering.IconRendererManager$Companion,com.intellij.platform.icons.rendering.MutableIconUpdateFlow,com.intellij.platform.icons.rendering.ImageModifiers,I,java.lang.Object):com.intellij.platform.icons.rendering.RenderingContext
+- f:createUpdateFlow(kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function1):com.intellij.platform.icons.rendering.MutableIconUpdateFlow
+- f:getInstance():com.intellij.platform.icons.rendering.IconRendererManager
+f:com.intellij.platform.icons.rendering.IconRendererManagerKt
+- sf:createRenderer(com.intellij.platform.icons.Icon,com.intellij.platform.icons.rendering.RenderingContext):com.intellij.platform.icons.rendering.IconRenderer
+com.intellij.platform.icons.rendering.ImageModifiers
+- a:getColorFilter():com.intellij.platform.icons.filters.ColorFilter
+- a:getSvgPatcher():com.intellij.platform.icons.patchers.SvgPatcher
+com.intellij.platform.icons.rendering.ImageResource
+- sf:Companion:com.intellij.platform.icons.rendering.ImageResource$Companion
+- a:getHeight():java.lang.Integer
+- a:getWidth():java.lang.Integer
+f:com.intellij.platform.icons.rendering.ImageResource$Companion
+com.intellij.platform.icons.rendering.ImageResourceLoader
+- com.intellij.platform.icons.rendering.GenericImageResourceLoader
+- loadGenericImage(com.intellij.platform.icons.ImageResourceLocation,com.intellij.platform.icons.rendering.ImageModifiers):com.intellij.platform.icons.rendering.ImageResource
+- a:loadImage(com.intellij.platform.icons.ImageResourceLocation,com.intellij.platform.icons.rendering.ImageModifiers):com.intellij.platform.icons.rendering.ImageResource
+- bs:loadImage$default(com.intellij.platform.icons.rendering.ImageResourceLoader,com.intellij.platform.icons.ImageResourceLocation,com.intellij.platform.icons.rendering.ImageModifiers,I,java.lang.Object):com.intellij.platform.icons.rendering.ImageResource
+com.intellij.platform.icons.rendering.RenderingContext
+- sf:Companion:com.intellij.platform.icons.rendering.RenderingContext$Companion
+- a:getDefaultImageModifiers():com.intellij.platform.icons.rendering.ImageModifiers
+- a:getUpdateFlow():com.intellij.platform.icons.rendering.MutableIconUpdateFlow
+- a:imageResource(com.intellij.platform.icons.ImageResourceLocation,com.intellij.platform.icons.rendering.ImageModifiers):com.intellij.platform.icons.rendering.ImageResource
+- bs:imageResource$default(com.intellij.platform.icons.rendering.RenderingContext,com.intellij.platform.icons.ImageResourceLocation,com.intellij.platform.icons.rendering.ImageModifiers,I,java.lang.Object):com.intellij.platform.icons.rendering.ImageResource
+f:com.intellij.platform.icons.rendering.RenderingContext$Companion
+- f:getEmpty():com.intellij.platform.icons.rendering.RenderingContext

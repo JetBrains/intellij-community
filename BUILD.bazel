@@ -797,6 +797,8 @@ jvm_library(
     "//platform/external-system-api/dependency-updater:externalSystem-dependencyUpdater-tests_test_lib",
     "//platform/jewel/detekt-plugin",
     "//platform/jewel/detekt-plugin:detekt-plugin_test_lib",
+    "//platform/icons-impl/intellij/tests",
+    "//platform/icons-impl/intellij/tests:tests_test_lib",
     "//platform/testFramework/selfContainedProjects",
     "//platform/testFramework/selfContainedProjects:selfContainedProjects_test_lib",
     "//tools/tests",

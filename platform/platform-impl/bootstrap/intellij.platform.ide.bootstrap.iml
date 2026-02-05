@@ -51,5 +51,7 @@
     <orderEntry type="module" module-name="intellij.platform.welcomeScreen" />
     <orderEntry type="module" module-name="fleet.rhizomedb" />
     <orderEntry type="module" module-name="intellij.platform.eel.nioFs.impl" />
+    <orderEntry type="module" module-name="intellij.platform.icons.impl" />
+    <orderEntry type="module" module-name="intellij.platform.icons.impl.intellij" />
   </component>
 </module>

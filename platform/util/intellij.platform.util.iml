@@ -56,6 +56,8 @@
     <orderEntry type="module" module-name="intellij.platform.util.multiplatform" />
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.eel.nioFs" />
+    <orderEntry type="module" module-name="intellij.platform.icons.api" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.icons.api.rendering" exported="" />
   </component>
   <component name="copyright">
     <Base>

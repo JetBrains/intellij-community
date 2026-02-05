@@ -101,6 +101,22 @@ f:org.jetbrains.jewel.ui.component.search.SpeedSearchableTreeKt
 - *sf:SpeedSearchableTree(org.jetbrains.jewel.ui.component.SpeedSearchScope,org.jetbrains.jewel.foundation.lazy.tree.Tree,kotlin.jvm.functions.Function1,androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.tree.TreeState,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.ui.component.styling.LazyTreeStyle,kotlinx.coroutines.CoroutineDispatcher,kotlin.jvm.functions.Function4,androidx.compose.runtime.Composer,I,I,I):V
 f:org.jetbrains.jewel.ui.component.styling.IconButtonStylingKt
 - *sf:getLocalTransparentIconButtonStyle():androidx.compose.runtime.ProvidableCompositionLocal
+f:org.jetbrains.jewel.ui.icon.IconUtilsKt
+- *sf:badge-3IgeMak(com.intellij.platform.icons.design.IconDesigner,J,com.intellij.platform.icons.design.Shape,com.intellij.platform.icons.design.IconAlign,com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.modifiers.IconModifier):V
+- *bs:badge-3IgeMak$default(com.intellij.platform.icons.design.IconDesigner,J,com.intellij.platform.icons.design.Shape,com.intellij.platform.icons.design.IconAlign,com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.modifiers.IconModifier,I,java.lang.Object):V
+- *sf:circle-0680j_4(F):com.intellij.platform.icons.design.Circle
+- *sf:fillArea-YgX7TsA(F,F):com.intellij.platform.icons.scale.FillAreaScale
+- *sf:fitArea-YgX7TsA(F,F):com.intellij.platform.icons.scale.FitAreaScale
+- *sf:rectangle-YgX7TsA(F,F):com.intellij.platform.icons.design.Rectangle
+- *sf:stroke-4WTKRHQ(com.intellij.platform.icons.modifiers.IconModifier,J):com.intellij.platform.icons.modifiers.IconModifier
+- *sf:tintColor-4MyTwCo(com.intellij.platform.icons.modifiers.IconModifier,J,I):com.intellij.platform.icons.modifiers.IconModifier
+- *bs:tintColor-4MyTwCo$default(com.intellij.platform.icons.modifiers.IconModifier,J,I,I,java.lang.Object):com.intellij.platform.icons.modifiers.IconModifier
+- *sf:toCompose(com.intellij.platform.icons.design.BlendMode):I
+- *sf:toCompose(com.intellij.platform.icons.design.Color):J
+- *sf:toCompose(com.intellij.platform.icons.filters.ColorFilter):androidx.compose.ui.graphics.ColorFilter
+- *sf:toIconsBlendMode-s9anfk8(I):com.intellij.platform.icons.design.BlendMode
+- *sf:toIconsColor-8_81llA(J):com.intellij.platform.icons.design.Color
+- *sf:toIconsDp-0680j_4(F):com.intellij.platform.icons.design.DisplayPoint
 *f:org.jetbrains.jewel.ui.painter.hints.EmbeddedToInlineCssStyleSvgPatchHint
 - org.jetbrains.jewel.ui.painter.PainterSvgPatchHint
 - sf:$stable:I

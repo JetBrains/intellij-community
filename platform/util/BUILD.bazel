@@ -38,11 +38,15 @@ jvm_library(
     "//platform/util/multiplatform",
     "//platform/eel",
     "//platform/eel-nioFs",
+    "//platform/icons-api",
+    "//platform/icons-api/rendering",
     ":platform_util_troveCompileOnly_provided",
   ],
   exports = [
     "@lib//:jetbrains-annotations",
     "//platform/util-rt",
+    "//platform/icons-api",
+    "//platform/icons-api/rendering",
   ],
   runtime_deps = [
     "//libraries/commons/io",
@@ -62,6 +66,10 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/util-rt",
     "//platform/util-rt:util-rt_test_lib",
+    "//platform/icons-api",
+    "//platform/icons-api:icons-api_test_lib",
+    "//platform/icons-api/rendering",
+    "//platform/icons-api/rendering:rendering_test_lib",
   ],
   runtime_deps = [
     ":util",
@@ -89,6 +97,8 @@ jvm_library(
     "//platform/util/multiplatform:multiplatform_test_lib",
     "//platform/eel:eel_test_lib",
     "//platform/eel-nioFs:eel-nioFs_test_lib",
+    "//platform/icons-api:icons-api_test_lib",
+    "//platform/icons-api/rendering:rendering_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.util` end

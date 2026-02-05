@@ -51,6 +51,8 @@ jvm_library(
     "//platform/welcome-screen",
     "//fleet/rhizomedb",
     "//platform/eel-nioFs-impl",
+    "//platform/icons-impl",
+    "//platform/icons-impl/intellij",
   ]
 )
 
@@ -103,6 +105,8 @@ jvm_library(
     "//platform/welcome-screen:welcome-screen_test_lib",
     "//fleet/rhizomedb:rhizomedb_test_lib",
     "//platform/eel-nioFs-impl:eel-nioFs-impl_test_lib",
+    "//platform/icons-impl:icons-impl_test_lib",
+    "//platform/icons-impl/intellij:intellij_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.bootstrap` end
