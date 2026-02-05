@@ -700,6 +700,199 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         }
     }
 
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testCoreDuplicateIdInPlugins(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                plugins {
+                    id("java")
+                }
+                
+                <weak_warning>apply(plugin = "java")</weak_warning>
+                """.trimIndent()
+            )
+            testNoIntentions(
+                """
+                plugins {
+                    id("java")
+                }
+                
+                apply(plugin = "java")<caret>
+                """.trimIndent(),
+                "Use the ‘plugins’ block"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testCoreDuplicateBareInPlugins(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                plugins {
+                    java
+                }
+                
+                <weak_warning>apply(plugin = "java")</weak_warning>
+                """.trimIndent()
+            )
+            testNoIntentions(
+                """
+                plugins {
+                    java
+                }
+                
+                apply(plugin = "java")<caret>
+                """.trimIndent(),
+                "Use the ‘plugins’ block"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testCoreDuplicateBackTicksInPlugins(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                plugins {
+                    `java`
+                }
+                
+                <weak_warning>apply(plugin = "java")</weak_warning>
+                """.trimIndent()
+            )
+            testNoIntentions(
+                """
+                plugins {
+                    `java`
+                }
+                
+                apply(plugin = "java")<caret>
+                """.trimIndent(),
+                "Use the ‘plugins’ block"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testDuplicateKotlinInPlugins(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                plugins {
+                    kotlin("jvm") version "2.3.0"
+                }
+                
+                buildscript {
+                    repositories {
+                        gradlePluginPortal()
+                    }
+                    dependencies {
+                        classpath("org.jetbrains.kotlin.jvm:org.jetbrains.kotlin.jvm.gradle.plugin:2.3.0")
+                    }
+                }
+                
+                <weak_warning>apply(plugin = "org.jetbrains.kotlin.jvm")</weak_warning>
+                """.trimIndent()
+            )
+            testNoIntentions(
+                """
+                plugins {
+                    kotlin("jvm") version "2.3.0"
+                }
+                
+                buildscript {
+                    repositories {
+                        gradlePluginPortal()
+                    }
+                    dependencies {
+                        classpath("org.jetbrains.kotlin.jvm:org.jetbrains.kotlin.jvm.gradle.plugin:2.3.0")
+                    }
+                }
+                
+                apply(plugin = "org.jetbrains.kotlin.jvm")<caret>
+                """.trimIndent(),
+                "Use the ‘plugins’ block"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testCoreDuplicateIdInPluginsVals(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                val java1 = "java"
+                plugins {
+                    id(java1)
+                }
+                
+                val java2 = "java"
+                <weak_warning>apply(plugin = java2)</weak_warning>
+                """.trimIndent()
+            )
+            testNoIntentions(
+                """
+                val java1 = "java"
+                plugins {
+                    id(java1)
+                }
+                
+                val java2 = "java"
+                apply(plugin = java2)<caret>
+                """.trimIndent(),
+                "Use the ‘plugins’ block"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testCoreDifferentIdInPluginsVals(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                val java1 = "java-library"
+                plugins {
+                    id(java1)
+                }
+                
+                val java2 = "java"
+                <weak_warning>apply(plugin = java2)</weak_warning>
+                """.trimIndent()
+            )
+            testIntention(
+                """
+                val java1 = "java-library"
+                plugins {
+                    id(java1)
+                }
+                
+                val java2 = "java"
+                apply(plugin = java2)<caret>
+                """.trimIndent(),
+                """
+                val java1 = "java-library"
+                plugins {
+                    id(java1)
+                    id("java")
+                }
+                
+                val java2 = "java"
+                
+                """.trimIndent(),
+                "Use the ‘plugins’ block"
+            )
+        }
+    }
+
+
     companion object {
         @JvmStatic
         @Suppress("unused") // used by testAllCorePlugins test
