@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Predicates;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
@@ -117,6 +118,7 @@ public class SafeDeleteFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
   public static @NotNull List<PsiElement> computeReferencedCodeSafeToDelete(@Nullable PsiMember psiMember,
                                                                             @NotNull Predicate<? super PsiElement> additionalFilter) {
+    if (psiMember instanceof PsiCompiledElement) return Collections.emptyList();
     final PsiElement body;
     if (psiMember instanceof PsiMethod method) {
       body = method.getBody();
