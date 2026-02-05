@@ -188,13 +188,13 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
         withDirtyScopeUnderWriteLock {
             --activeBuildCount
 
+            if (activeBuildCount == 0) openStorage(projectPath)
+
             if (!initialized) {
                 initialize(allModules, compiledModules)
             } else {
                 compilerActivityFinished(compiledModules)
             }
-
-            if (activeBuildCount == 0) openStorage(projectPath)
         }
     }
 
@@ -209,7 +209,8 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
 
     @ApiStatus.Internal
     @VisibleForTesting
-    fun dirtyModules(): Set<Module> {
+    fun dirtyModules(): Set<Module>? {
+        if (!initialized) return null
         return dirtyScopeHolder.allDirtyModules
     }
 
