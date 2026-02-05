@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.newUiOnboarding.steps
 
+import com.intellij.ide.actions.CustomizeMainToolbarAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.CheckedDisposable
@@ -18,7 +19,8 @@ internal class SettingsAndCustomizationStep : NewUiOnboardingStep {
   override suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData? {
     val popup = NewUiOnboardingUtil.createSettingsEntryPointPopup(project, disposable) ?: return null
     val actionsList = UIUtil.findComponentOfType(popup.content, JBList::class.java) ?: return null
-    val pluginsActionBounds = NewUiOnboardingUtil.findActionItemBounds(actionsList, "CustomizeMainToolbarGroup") ?: return null
+    val pluginsActionBounds = NewUiOnboardingUtil.findActionItemBounds(actionsList, CustomizeMainToolbarAction.ID) ?: return null
+    NewUiOnboardingUtil.selectAction(actionsList, CustomizeMainToolbarAction.ID)
     val builder = GotItComponentBuilder(NewUiOnboardingBundle.message("settings.and.customization.step.text"))
       .withHeader(NewUiOnboardingBundle.message("settings.and.customization.step.header"))
 

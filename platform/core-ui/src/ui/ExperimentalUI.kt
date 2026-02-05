@@ -38,10 +38,6 @@ abstract class ExperimentalUI {
       get() = EarlyAccessRegistryManager.getString(SWITCHED_FROM_CLASSIC_TO_ISLANDS)?.toBoolean()
 
     @Volatile
-    var switchedFromClassicToIslandsInSession: Boolean = false
-    @Volatile
-    var switchedFromClassicToIslandsLafMigration : Boolean = false
-    @Volatile
     var cleanUpClassicUIFromDisabled: Runnable? = null
 
     var SHOW_NEW_UI_ONBOARDING_ON_START: Boolean
