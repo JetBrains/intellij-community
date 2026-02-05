@@ -11,7 +11,8 @@ import com.intellij.platform.debugger.impl.rpc.XValueId
 import com.intellij.xdebugger.frame.XFullValueEvaluator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
@@ -66,9 +67,10 @@ internal class FrontendXFullValueEvaluator(
 
   override fun startEvaluation(callback: XFullValueEvaluationCallback) {
     xValueCs.launch(Dispatchers.EDT) {
+      val job = currentCoroutineContext().job
       XValueApi.getInstance().evaluateFullValue(xValueId).collect { result ->
         if (callback.isObsolete) {
-          cancel()
+          job.cancel()
           return@collect
         }
         when (result) {

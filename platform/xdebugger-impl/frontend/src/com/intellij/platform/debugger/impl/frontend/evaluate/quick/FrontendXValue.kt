@@ -194,9 +194,9 @@ class FrontendXValue private constructor(
       node.setFullValueEvaluator(initialFullValueEvaluator)
     }
     cs.launch(Dispatchers.EDT) {
-      val scope = this@launch
+      val job = currentCoroutineContext().job
       launch {
-        fullValueEvaluator.collectLatestWhileNotObsolete(scope, node) { evaluator ->
+        fullValueEvaluator.collectLatestWhileNotObsolete(job, node) { evaluator ->
           if (evaluator != null) {
             node.setFullValueEvaluator(evaluator)
           }
@@ -207,7 +207,7 @@ class FrontendXValue private constructor(
       }
       if (node is XValueNodeEx) {
         launch {
-          additionalLink.collectLatestWhileNotObsolete(scope, node) { link ->
+          additionalLink.collectLatestWhileNotObsolete(job, node) { link ->
             if (link != null) {
               node.addAdditionalHyperlink(link)
             }
@@ -226,7 +226,7 @@ class FrontendXValue private constructor(
             XValueApi.getInstance().computeTooltipPresentation(xValueDto.id)
           }
         }
-        presentationFlow.collectLatestWhileNotObsolete(scope, node) {
+        presentationFlow.collectLatestWhileNotObsolete(job, node) {
           node.setPresentation(it)
         }
       }
@@ -409,10 +409,10 @@ private fun renderAdvancedPresentation(renderer: XValuePresentation.XValueTextRe
   }
 }
 
-private suspend fun <T> Flow<T>.collectLatestWhileNotObsolete(scope: CoroutineScope, obsolescent: Obsolescent, block: suspend (T) -> Unit) {
+private suspend fun <T> Flow<T>.collectLatestWhileNotObsolete(job: Job, obsolescent: Obsolescent, block: suspend (T) -> Unit) {
   collectLatest {
     if (obsolescent.isObsolete) {
-      scope.cancel()
+      job.cancel()
       return@collectLatest
     }
     block(it)
