@@ -23,6 +23,11 @@ private const val LEGACY_MARKER = "editor-fold desc=\"Generated dependencies"
 
 private enum class RegionType { NONE, WRAPS_ENTIRE_SECTION, INSIDE_SECTION }
 
+private data class RemovalRange(
+  @JvmField val start: Int,
+  @JvmField val end: Int,
+)
+
 private sealed class DepEntry {
   data class Plugin(val id: String) : DepEntry()
   data class Module(val name: String) : DepEntry()
@@ -300,8 +305,82 @@ private fun insertDependenciesSection(content: String, modules: List<String>, pl
 
   val nextLine = content.indexOf('\n', pos + 1)
   val indent = (if (nextLine != -1) content.substring(nextLine + 1).takeWhile { it == ' ' || it == '\t' } else "").ifEmpty { "  " }
-  val suffix = content.substring(pos + 1).let { if (it.startsWith('\n')) it.substring(1) else it }
-  return content.substring(0, pos + 1) + "\n" + buildFullBlock(indent, emptyList(), modules, plugins) + suffix
+  val insertPos = findDependenciesInsertPos(content, pos + 1)
+  val prefix = content.substring(0, insertPos)
+  val suffix = content.substring(insertPos)
+  val normalizedPrefix = if (prefix.isNotEmpty() && prefix.last() != '\n') "$prefix\n" else prefix
+  return normalizedPrefix + buildFullBlock(indent, emptyList(), modules, plugins) + suffix
+}
+
+private val METADATA_TAGS = setOf(
+  "id",
+  "name",
+  "description",
+  "category",
+  "vendor",
+  "version",
+  "idea-version",
+  "change-notes",
+)
+
+private fun findDependenciesInsertPos(content: String, rootContentStart: Int): Int {
+  val metadataEnd = findMetadataEndOffset(content) ?: return rootContentStart
+  var pos = content.indexOf('\n', metadataEnd).let { if (it == -1) content.length else it + 1 }
+  while (pos < content.length) {
+    val lineEnd = content.indexOf('\n', pos).let { if (it == -1) content.length else it + 1 }
+    if (content.substring(pos, lineEnd).trim().isNotEmpty()) break
+    pos = lineEnd
+  }
+  return pos
+}
+
+private fun findMetadataEndOffset(content: String): Int? {
+  val reader = createXmlStreamReaderWithLocation(StringReader(content))
+  try {
+    var depth = 0
+    var lastEnd = -1
+    while (reader.hasNext()) {
+      when (reader.next()) {
+        XMLStreamConstants.START_ELEMENT -> {
+          val localName = reader.localName
+          if (depth == 0 && localName == "idea-plugin") {
+            depth = 1
+            continue
+          }
+          if (depth > 0) {
+            val currentDepth = depth
+            depth++
+            if (currentDepth == 1 && METADATA_TAGS.contains(localName)) {
+              val startOffset = content.lastIndexOf("<$localName", reader.location.characterOffset)
+              if (startOffset != -1) {
+                val endOffset = findElementEndOffset(content, localName, startOffset)
+                if (endOffset != null && endOffset > lastEnd) {
+                  lastEnd = endOffset
+                }
+              }
+            }
+          }
+        }
+        XMLStreamConstants.END_ELEMENT -> if (depth > 0) depth--
+      }
+    }
+    return if (lastEnd == -1) null else lastEnd
+  }
+  finally {
+    reader.close()
+  }
+}
+
+private fun findElementEndOffset(content: String, tag: String, startOffset: Int): Int? {
+  val startTagEnd = content.indexOf('>', startOffset)
+  if (startTagEnd == -1) return null
+  var i = startTagEnd - 1
+  while (i >= startOffset && content[i].isWhitespace()) i--
+  val selfClosing = i >= startOffset && content[i] == '/'
+  if (selfClosing) return startTagEnd + 1
+  val closeTag = "</$tag>"
+  val closeIndex = content.indexOf(closeTag, startTagEnd + 1)
+  return if (closeIndex == -1) null else closeIndex + closeTag.length
 }
 
 /** Region only with auto-generated modules/plugins (for INSIDE_SECTION - replacing fold content) */
@@ -355,8 +434,72 @@ private fun buildWithEntries(indent: String, manualEntries: List<DepEntry>, auto
  * Result of migrating legacy `<depends>` entries to `<plugin id="..."/>` format.
  */
 internal data class LegacyMigrationResult(
-  /** XML content with `<depends>` entries removed */
+  /** XML content with duplicate legacy `<depends>` entries removed */
   @JvmField val content: String,
-  /** Plugin IDs to add as `<plugin id="..."/>` dependencies */
-  @JvmField val pluginDepsToAdd: List<String>,
+  /** Legacy plugin IDs removed from the content */
+  @JvmField val removedLegacyPluginIds: Set<PluginId> = emptySet(),
 )
+
+/**
+ * Removes legacy `<depends>` entries that duplicate modern `<dependencies><plugin/>` declarations.
+ * Only non-optional entries without config-file are removed.
+ */
+internal fun removeDuplicateLegacyDepends(content: String, modernPluginIds: Set<PluginId>): LegacyMigrationResult {
+  if (modernPluginIds.isEmpty() || !content.contains("<depends")) {
+    return LegacyMigrationResult(content = content)
+  }
+
+  val idsToRemove = modernPluginIds.mapTo(HashSet()) { it.value }
+  val ranges = ArrayList<RemovalRange>()
+  val removed = LinkedHashSet<PluginId>()
+
+  val reader = createXmlStreamReaderWithLocation(StringReader(content))
+  try {
+    while (reader.hasNext()) {
+      when (reader.next()) {
+        XMLStreamConstants.START_ELEMENT -> if (reader.localName == "depends") {
+          val optionalAttr = reader.getAttributeValue(null, "optional")
+          val configFileAttr = reader.getAttributeValue(null, "config-file")
+          val isOptional = optionalAttr?.equals("true", ignoreCase = true) == true
+          val hasConfigFile = !configFileAttr.isNullOrEmpty()
+          val startOffset = content.lastIndexOf("<depends", reader.location.characterOffset)
+          val pluginId = reader.elementText.trim()
+          if (!isOptional && !hasConfigFile && startOffset != -1 && pluginId in idsToRemove) {
+            var start = startOffset
+            val lineStart = content.lastIndexOf('\n', startOffset - 1).let { if (it == -1) 0 else it + 1 }
+            if (content.substring(lineStart, startOffset).all { it == ' ' || it == '\t' }) {
+              start = lineStart
+            }
+
+            val closeIndex = content.indexOf("</depends>", startOffset)
+            if (closeIndex != -1) {
+              var end = closeIndex + "</depends>".length
+              if (end < content.length && content[end] == '\r') end++
+              if (end < content.length && content[end] == '\n') end++
+              ranges.add(RemovalRange(start, end))
+              removed.add(PluginId(pluginId))
+            }
+          }
+        }
+      }
+    }
+  }
+  finally {
+    reader.close()
+  }
+
+  if (ranges.isEmpty()) {
+    return LegacyMigrationResult(content = content)
+  }
+
+  ranges.sortBy { it.start }
+  val result = StringBuilder(content.length)
+  var cursor = 0
+  for (range in ranges) {
+    if (range.start < cursor) continue
+    result.append(content, cursor, range.start)
+    cursor = range.end
+  }
+  result.append(content, cursor, content.length)
+  return LegacyMigrationResult(content = result.toString(), removedLegacyPluginIds = removed)
+}

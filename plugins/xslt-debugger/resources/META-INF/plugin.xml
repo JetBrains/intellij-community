@@ -9,8 +9,11 @@
 
   <vendor>JetBrains</vendor>
 
-  <depends>XPathView</depends>
-  <depends>com.intellij.modules.xml</depends>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="XPathView"/>
+  </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <xdebugger.breakpointType implementation="org.intellij.plugins.xsltDebugger.XsltBreakpointType"/>

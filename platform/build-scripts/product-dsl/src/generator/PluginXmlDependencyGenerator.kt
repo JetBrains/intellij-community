@@ -30,6 +30,8 @@ import org.jetbrains.intellij.build.productLayout.pipeline.Slots
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionType
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionUsage
 import org.jetbrains.intellij.build.productLayout.xml.LegacyMigrationResult
+import org.jetbrains.intellij.build.productLayout.xml.extractDependenciesEntries
+import org.jetbrains.intellij.build.productLayout.xml.removeDuplicateLegacyDepends
 
 /**
  * Planner for plugin.xml dependency XML files.
@@ -215,12 +217,29 @@ private suspend fun buildPluginDependencyPlan(
 
   val deps = filterPluginDependencies(graphDeps, info, effectiveFilter, suppressionConfig, updateSuppressions)
 
-  // Legacy <depends> entries are NOT migrated - they stay as-is
-  // Generator only manages <dependencies> section, doesn't touch legacy format
-  val legacyMigration = LegacyMigrationResult(content = info.pluginXmlContent, pluginDepsToAdd = emptyList())
+  // Remove duplicate legacy <depends> only when modern deps are present or we are generating a <dependencies> section.
+  val hasDependenciesSection = extractDependenciesEntries(info.pluginXmlContent) != null
+  val hasModernDepsInXIncludes = info.depsByFile.drop(1).any { it.pluginDependencies.isNotEmpty() || it.moduleDependencies.isNotEmpty() }
+  val legacyPluginIds = info.legacyDepends.map { it.pluginId.value }.sorted()
+  val autoPluginIds = deps.pluginDependencies.map { it.value }.sorted()
+  val shouldRemoveLegacyDuplicates = hasDependenciesSection || hasModernDepsInXIncludes || deps.moduleDependencies.isNotEmpty() || autoPluginIds != legacyPluginIds
 
-  // Merge legacy plugin deps with auto-generated plugin deps (convert to String for XML processing)
-  val allPluginDepsStrings = (deps.pluginDependencies.map { it.value } + legacyMigration.pluginDepsToAdd).distinct().sorted()
+  val modernPluginIds = HashSet<PluginId>().apply {
+    addAll(deps.pluginDependencies)
+    for (fileDeps in info.depsByFile) {
+      addAll(fileDeps.pluginDependencies)
+    }
+  }
+
+  val legacyMigration = if (shouldRemoveLegacyDuplicates) {
+    removeDuplicateLegacyDepends(info.pluginXmlContent, modernPluginIds)
+  }
+  else {
+    LegacyMigrationResult(content = info.pluginXmlContent)
+  }
+
+  // Merge auto-generated plugin deps (convert to String for XML processing)
+  val allPluginDepsStrings = deps.pluginDependencies.map { it.value }.distinct().sorted()
 
   // Compute xi:include deps from depsByFile (first entry = main file, rest = xi:includes)
   // These are deps already present in xi:included files, so we don't need to add them to the main file
@@ -240,6 +259,7 @@ private suspend fun buildPluginDependencyPlan(
   }
 
   val preserveExistingPluginDeps = existingXmlPluginDeps.filterTo(LinkedHashSet()) { it.value !in allPluginDepsStrings }
+  val effectiveLegacyDepends = info.legacyDepends.filterNot { it.pluginId in legacyMigration.removedLegacyPluginIds }
 
   return PluginDependencyPlan(
     pluginContentModuleName = pluginContentModuleName,
@@ -247,7 +267,7 @@ private suspend fun buildPluginDependencyPlan(
     pluginXmlContent = legacyMigration.content,
     moduleDependencies = deps.moduleDependencies.distinctBy { it.value }.sortedBy { it.value },
     pluginDependencies = deps.pluginDependencies.distinctBy { it.value }.sortedBy { it.value },
-    legacyPluginDependencies = info.legacyDepends.map { it.pluginId },
+    legacyPluginDependencies = effectiveLegacyDepends.map { it.pluginId },
     xiIncludeModuleDeps = xiIncludeModuleDeps,
     xiIncludePluginDeps = xiIncludePluginDeps,
     existingXmlModuleDependencies = existingXmlModuleDeps,
