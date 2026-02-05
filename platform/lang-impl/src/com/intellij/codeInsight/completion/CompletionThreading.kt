@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.Semaphore
 import kotlinx.coroutines.CancellationException
@@ -141,7 +142,12 @@ internal class AsyncCompletion(project: Project?) : CompletionThreadingBase() {
   }
 
   override fun createConsumer(indicator: CompletionProgressIndicator): CompletionConsumer {
-    val addItemJob = AddItemJob(workingQueue, indicator)
+    @Suppress("DEPRECATION")
+    val addItemJob = if (Registry.`is`("ide.completion.batch.add.items"))
+      AddItemJob(workingQueue, indicator)
+    else
+      AddItemJobNoBatching(workingQueue, indicator)
+
     val addItemJobHook = startThread(ProgressWrapper.wrap(indicator), addItemJob)
     return CompletionConsumerImpl(workingQueue, addItemJobHook, batchList)
   }
@@ -222,6 +228,51 @@ private class AddItemJob(
     }
   }
 }
+
+/**
+ * The outdated version of [AddItemJob]
+ */
+@Deprecated("Use AddItemJob instead")
+private class AddItemJobNoBatching(
+  val workingQueue: LinkedBlockingQueue<AddingEvent>,
+  val indicator: CompletionProgressIndicator,
+) : Runnable {
+  override fun run() {
+    try {
+      while (true) {
+        indicator.checkCanceled()
+
+        when (val event = workingQueue.poll(30, TimeUnit.MILLISECONDS)) {
+          Stop -> {
+            tryReadOrCancel(indicator) {
+              indicator.addDelayedMiddleMatches()
+            }
+            return
+          }
+          is AddItem -> {
+            tryReadOrCancel(indicator) {
+              indicator.addItem(event.result)
+            }
+          }
+          is AddBatch -> {
+            tryReadOrCancel(indicator) {
+              indicator.withSingleUpdate {
+                for (result in event.results) {
+                  indicator.addItem(result)
+                }
+              }
+            }
+          }
+          null -> { /* keep waiting for the value */ }
+        }
+      }
+    }
+    catch (e: InterruptedException) {
+      logger<AsyncCompletion>().error(e)
+    }
+  }
+}
+
 
 /**
  * Delegates all the work to [AddItemJob] working on another thread by passing events to [workingQueue].
