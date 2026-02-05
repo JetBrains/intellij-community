@@ -148,36 +148,37 @@
     "layer-2-bg": "gray-130",
     "layer-2-border": "gray-120",
 
-    "core-text": "gray-40",
-    "core-text-muted": "gray-70",
-    "core-text-secondary": "gray-90",
-    "core-text-disabled": "gray-110",
-    "core-text-over-accent": "white",
-    "core-text-over-accent-inverted": "black",
-    "core-text-code": "#BCBEC4",
+    "text-default": "gray-40",
+    "text-muted": "gray-70",
+    "text-secondary": "gray-90",
+    "text-disabled": "gray-110",
+    "text-bright": "white",
+    "text-over-accent": "white",
+    "text-over-accent-inverted": "black",
+    "text-link": "blue-70",
+    "text-error": "red-70",
+    "text-warning": "yellow-70",
+    "text-success": "green-70",
+    "editor-text": "#BCBEC4",
 
-    "accent-brand-text": "blue-70",
     "accent-brand-bg": "blue-90",
     "accent-brand-bg-muted": "blue-110",
     "accent-brand-border": "blue-90",
     "accent-brand-bg-secondary": "blue-130",
     "accent-brand-border-secondary": "blue-110",
 
-    "accent-error-text": "red-70",
     "accent-error-bg": "red-130",
     "accent-error-bg-bright": "red-90",
     "accent-error-border": "red-110",
     "accent-error-border-bright": "red-90",
     "accent-error-border-muted": "red-120",
 
-    "accent-warning-text": "yellow-70",
     "accent-warning-bg": "yellow-130",
     "accent-warning-bg-bright": "yellow-90",
     "accent-warning-border": "yellow-110",
     "accent-warning-border-bright": "yellow-90",
     "accent-warning-border-muted": "yellow-120",
 
-    "accent-success-text": "green-70",
     "accent-success-bg": "green-130",
     "accent-success-bg-bright": "green-90",
     "accent-success-border": "green-110",
@@ -212,16 +213,12 @@
     "control-border-disabled": "gray-130",
     "control-border-raised": "gray-100",
     "control-border-small": "gray-100",
-    "control-brand-text": "accent-brand-text",
     "control-brand-bg": "accent-brand-bg",
 
     "selection-bg-active": "blue-120",
     "selection-bg-muted": "blue-130",
     "selection-bg-inactive": "gray-130",
 
-    "feedback-error-text": "accent-error-text",
-    "feedback-warning-text": "accent-warning-text",
-    "feedback-success-text": "accent-success-text",
     "feedback-bg": "layer-2-bg",
     "feedback-border": "layer-2-bg",
 
@@ -305,29 +302,29 @@
 
   "ui": {
     "*": {
-      "foreground": "core-text",
+      "foreground": "text-default",
       "background": "container-tool-window-bg",
       "borderColor": "container-tool-window-border",
 
-      "disabledText": "core-text-disabled",
-      "disabledForeground": "core-text-disabled",
-      "inactiveForeground": "core-text-disabled",
+      "disabledText": "text-disabled",
+      "disabledForeground": "text-disabled",
+      "inactiveForeground": "text-disabled",
       "disabledBackground": "container-dialog-bg",
       "disabledBorderColor": "control-border-disabled",
 
       "selectionBackground": "selection-bg-active",
       "lightSelectionBackground": "selection-bg-muted",
-      "selectionForeground": "core-text",
-      "selectionInactiveForeground": "core-text",
+      "selectionForeground": "text-default",
+      "selectionInactiveForeground": "text-default",
       "selectionInactiveBackground": "selection-bg-inactive",
 
       "inactiveBackground": "layer-1-bg",
 
       "hoverBackground": "control-bg-hovered",
 
-      "infoForeground": "core-text-secondary",
-      "acceleratorForeground": "core-text-secondary",
-      "shortcutForeground": "core-text-secondary",
+      "infoForeground": "text-secondary",
+      "acceleratorForeground": "text-secondary",
+      "shortcutForeground": "text-secondary",
 
       "underlineColor": "control-brand-bg",
       "inactiveUnderlineColor": "control-bg-small",
@@ -335,9 +332,9 @@
       "focusColor": "accent-brand-border",
 
       "separatorColor": "layer-1-border",
-      "separatorForeground": "core-text-secondary",
+      "separatorForeground": "text-secondary",
 
-      "modifiedItemForeground": "control-brand-text"
+      "modifiedItemForeground": "text-link"
     },
 
     "Islands": 1,
@@ -382,7 +379,7 @@
     "AlertDialog.background": "container-popup-bg",
 
     "Badge": {
-      "greenOutlineForeground": "feedback-success-text",
+      "greenOutlineForeground": "text-success",
       "greenOutlineBorderColor": "accent-success-border-bright"
     },
 
@@ -405,10 +402,10 @@
     },
 
     "Bookmark": {
-      "Mnemonic.iconForeground": "core-text",
+      "Mnemonic.iconForeground": "text-default",
       "MnemonicAvailable.borderColor": "control-border",
       "MnemonicAssigned.background": "accent-warning-bg-bright",
-      "MnemonicAssigned.foreground": "core-text-over-accent",
+      "MnemonicAssigned.foreground": "text-over-accent",
       "MnemonicCurrent.background": "control-brand-bg"
     },
 
@@ -426,11 +423,11 @@
       "endBorderColor": "control-border",
       "focusedBorderColor": "control-bg",
       "shadowColor": "transparent",
-      "loadingForeground": "core-text-secondary",
+      "loadingForeground": "text-secondary",
       "minimumSize": "72,28",
       "default": {
-        "foreground": "core-text-over-accent",
-        "loadingForeground": "core-text-muted",
+        "foreground": "text-over-accent",
+        "loadingForeground": "text-muted",
         "startBackground": "control-brand-bg",
         "endBackground": "control-brand-bg",
         "startBorderColor": "control-brand-bg",
@@ -489,13 +486,13 @@
     },
 
     "Shortcut": {
-      "foreground": "core-text-muted",
+      "foreground": "text-muted",
       "borderColor": "control-border-small",
       "backgroundOpacity": 0
     },
 
     "Abbreviation": {
-      "foreground": "core-text-muted",
+      "foreground": "text-muted",
       "background": "bg-control-transparent"
     },
 
@@ -503,7 +500,7 @@
 
     "Counter": {
       "background": "accent-neutral-bg-bright",
-      "foreground": "core-text-over-accent-inverted"
+      "foreground": "text-over-accent-inverted"
     },
 
     "Debugger": {
@@ -513,8 +510,8 @@
         "evaluatingExpressionForeground": "#6F737A",
         "changedValueForeground": "#548AF7",
         "modifyingValueForeground": "#548AF7",
-        "errorMessageForeground": "feedback-error-text",
-        "exceptionForeground": "feedback-error-text",
+        "errorMessageForeground": "text-error",
+        "exceptionForeground": "text-error",
         "typeForeground": "#6F737A"
       },
       "EvaluateExpression.background": "container-tool-window-bg"
@@ -592,17 +589,17 @@
     },
 
     "Label": {
-      "errorForeground": "feedback-error-text",
-      "warningForeground": "feedback-warning-text",
-      "successForeground": "feedback-success-text"
+      "errorForeground": "text-error",
+      "warningForeground": "text-warning",
+      "successForeground": "text-success"
     },
 
     "Link": {
-      "activeForeground": "control-brand-text",
-      "hoverForeground": "control-brand-text",
-      "pressedForeground": "control-brand-text",
-      "visitedForeground": "control-brand-text",
-      "secondaryForeground": "control-brand-text",
+      "activeForeground": "text-link",
+      "hoverForeground": "text-link",
+      "pressedForeground": "text-link",
+      "visitedForeground": "text-link",
+      "secondaryForeground": "text-link",
       "focusedBorderColor": "accent-brand-border"
     },
 
@@ -624,7 +621,7 @@
     },
 
     "MainMenu": {
-      "selectionForeground": "core-text",
+      "selectionForeground": "text-default",
       "selectionBackground": "control-bg-hovered",
       "transparentSelectionBackground": "control-bg-hovered"
     },
@@ -693,23 +690,23 @@
     "Notification": {
       "background": "feedback-bg",
       "borderColor": "feedback-border",
-      "foreground": "core-text",
-      "linkForeground": "control-brand-text",
+      "foreground": "text-default",
+      "linkForeground": "text-link",
       "iconHoverBackground": "control-bg-hovered",
       "Button": {
         "background": "feedback-bg",
         "borderColor": "control-border-raised",
-        "foreground": "core-text"
+        "foreground": "text-default"
       },
       "MoreButton": {
         "background": "layer-0-bg",
         "innerBorderColor": "layer-1-border",
-        "foreground": "core-text-muted"
+        "foreground": "text-muted"
       },
       "ToolWindow": {
-        "errorForeground": "core-text",
-        "warningForeground": "core-text",
-        "informativeForeground": "core-text",
+        "errorForeground": "text-default",
+        "warningForeground": "text-default",
+        "informativeForeground": "text-default",
         "errorBackground": "accent-error-bg",
         "errorBorderColor": "accent-error-border",
         "warningBackground": "accent-warning-bg",
@@ -735,15 +732,15 @@
     "Plugins": {
       "SectionHeader.background": "layer-1-bg",
       "Button": {
-        "installFillForeground": "core-text-over-accent",
+        "installFillForeground": "text-over-accent",
         "installFillBackground": "accent-success-bg-bright",
         "installBorderColor": "accent-success-border-bright",
-        "installForeground": "feedback-success-text",
+        "installForeground": "text-success",
         "updateBackground": "control-brand-bg",
         "updateBorderColor": "control-brand-bg",
-        "updateForeground": "core-text-over-accent"
+        "updateForeground": "text-over-accent"
       },
-      "tagForeground": "core-text-muted",
+      "tagForeground": "text-muted",
       "tagBackground": "gray-130",
       "paidTagBackground": "accent-brand-bg-secondary",
       "trialTagBackground": "accent-success-bg",
@@ -756,7 +753,7 @@
       "borderColor": "container-popup-border",
       "inactiveBorderColor": "container-popup-border",
       "Advertiser": {
-        "foreground": "core-text-secondary",
+        "foreground": "text-secondary",
         "background": "container-popup-bg",
         "borderColor": "container-popup-bg",
         "fontSizeOffset": -1,
@@ -765,7 +762,7 @@
       "Header": {
         "activeBackground": "container-popup-bg",
         "inactiveBackground": "container-popup-bg",
-        "inactiveForeground": "core-text-secondary"
+        "inactiveForeground": "text-secondary"
       },
       "Toolbar.background": "container-popup-bg"
     },
@@ -789,10 +786,10 @@
     "ComplexPopup.Header.background": "container-popup-bg",
 
     "CompletionPopup": {
-      "foreground": "core-text-code",
+      "foreground": "editor-text",
       "matchForeground": "blue-80",
       "Advertiser": {
-        "foreground": "core-text-secondary",
+        "foreground": "text-secondary",
         "background": "container-popup-bg",
         "borderInsets": "6,12,6,12"
       }
@@ -837,10 +834,10 @@
       "List.settingsBackground": "container-popup-bg",
       "Tab": {
         "selectedBackground": "tab-selected-bg-active",
-        "selectedForeground": "core-text-over-accent"
+        "selectedForeground": "text-over-accent"
       },
       "Advertiser": {
-        "foreground": "core-text-secondary",
+        "foreground": "text-secondary",
         "background": "bg-layer",
         "borderInsets": "8,12,8,12"
       }
@@ -849,7 +846,7 @@
     "Separator.separatorColor": "container-popup-border",
 
     "SearchField": {
-      "errorForeground": "feedback-error-text",
+      "errorForeground": "text-error",
       "errorBackground": "accent-error-bg"
     },
 
@@ -878,7 +875,7 @@
     "SpeedSearch": {
       "background": "container-tool-window-bg",
       "borderColor": "control-border",
-      "errorForeground": "feedback-error-text"
+      "errorForeground": "text-error"
     },
 
     "Spinner": {
@@ -890,14 +887,14 @@
       "background": "container-main-window-bg",
       "borderColor": "transparent",
       "Widget": {
-        "foreground": "core-text-muted",
-        "hoverForeground": "core-text",
+        "foreground": "text-muted",
+        "hoverForeground": "text-default",
         "hoverBackground": "control-bg-hovered",
         "pressedBackground": "control-bg-hovered"
       },
       "Breadcrumbs": {
-        "foreground": "core-text-muted",
-        "hoverForeground": "core-text",
+        "foreground": "text-muted",
+        "hoverForeground": "text-default",
         "hoverBackground": "control-bg-hovered",
         "pressedBackground": "control-bg-hovered",
         "selectionBackground": "control-bg-hovered",
@@ -942,9 +939,9 @@
     "ToolTip":{
       "background": "feedback-bg",
       "borderColor": "feedback-bg",
-      "foreground": "core-text",
-      "infoForeground": "core-text-muted",
-      "shortcutForeground": "core-text-muted"
+      "foreground": "text-default",
+      "infoForeground": "text-muted",
+      "shortcutForeground": "text-muted"
     },
 
     "HelpTooltip": {
@@ -954,13 +951,13 @@
     "GotItTooltip": {
       "background": "accent-brand-bg-muted",
       "borderColor": "accent-brand-bg-muted",
-      "foreground": "core-text",
-      "Header.foreground": "core-text",
+      "foreground": "text-default",
+      "Header.foreground": "text-default",
       "stepForeground": "blue-70",
       "secondaryActionForeground": "got-it-text-link",
-      "shortcutForeground": "core-text",
+      "shortcutForeground": "text-default",
       "shortcutBackground": "accent-brand-bg-secondary",
-      "codeForeground": "core-text",
+      "codeForeground": "text-default",
       "codeBackground": "accent-brand-bg-muted",
       "codeBorderColor": "#FFFFFF70",
       "linkForeground": "got-it-text-link",
@@ -971,7 +968,7 @@
       "iconFillColor": "accent-brand-bg-muted",
       "iconBorderColor": "icon-default-over-accent",
       "Button": {
-        "foreground": "core-text",
+        "foreground": "text-default",
         "startBackground": "transparent",
         "endBackground": "transparent",
         "startBorderColor": "#FFFFFF45",
@@ -983,17 +980,17 @@
     "ValidationTooltip": {
       "errorBackground": "accent-error-bg",
       "errorBorderColor": "accent-error-border",
-      "errorForeground": "core-text",
+      "errorForeground": "text-default",
       "warningBackground": "accent-warning-bg",
       "warningBorderColor": "accent-warning-border",
-      "warningForeground": "core-text"
+      "warningForeground": "text-default"
     },
 
     "ToggleButton": {
       "onBackground": "accent-success-bg",
-      "onForeground": "feedback-success-text",
+      "onForeground": "text-success",
       "offBackground": "layer-0-bg",
-      "offForeground": "core-text-secondary",
+      "offForeground": "text-secondary",
       "buttonColor": "accent-neutral-bg-bright",
       "borderColor": "transparent"
     },
@@ -1010,7 +1007,7 @@
         "hoverInactiveBackground": "control-bg-hovered"
       },
       "Button": {
-        "foreground": "core-text-muted",
+        "foreground": "text-muted",
         "selectedForeground": "white",
         "selectedBackground": "control-brand-bg",
         "DragAndDrop" : {
@@ -1181,15 +1178,15 @@
     "Tooltip.Learning": {
       "background": "accent-brand-bg-muted",
       "borderColor": "accent-brand-bg-muted",
-      "foreground": "core-text",
-      "Header.foreground": "core-text",
+      "foreground": "text-default",
+      "Header.foreground": "text-default",
       "stepNumberForeground": "blue-70",
       "secondaryActionForeground": "got-it-text-link",
       "linkForeground": "got-it-text-link",
       "linkUnderlineDefaultColor": "got-it-text-link",
       "linkUnderlineHoveredColor": "got-it-text-link",
       "spanBackground": "accent-brand-bg-secondary",
-      "spanForeground": "core-text",
+      "spanForeground": "text-default",
       "codeBorderColor": "#FFFFFF70",
       "iconFillColor": "accent-brand-bg-muted",
       "iconBorderColor": "icon-default-over-accent"
@@ -1493,12 +1490,12 @@
     },
 
     "LicenseDialog": {
-      "termsAndConditionsForeground": "core-text-secondary",
-      "waitingLabelForeground": "core-text-secondary",
+      "termsAndConditionsForeground": "text-secondary",
+      "waitingLabelForeground": "text-secondary",
       "separatorColor": "container-dialog-border",
       "LicenseList": {
-        "licenseDetailsForeground": "core-text-muted",
-        "licenseIdForeground": "core-text-secondary",
+        "licenseDetailsForeground": "text-muted",
+        "licenseIdForeground": "text-secondary",
         "separatorColor": "container-dialog-border"
       },
       "LicenseServer": {
@@ -1523,8 +1520,8 @@
     },
 
     "MainWindow.Tab": {
-      "foreground": "core-text-muted",
-      "selectedForeground": "core-text",
+      "foreground": "text-muted",
+      "selectedForeground": "text-default",
       "selectedBackground": "container-tool-window-bg",
       "hoverBackground": "#FFFFFF12",
       "separatorColor": "border-transparent",
@@ -1536,7 +1533,7 @@
     "PresentationAssistant": {
       "Bright": {
         "Popup": {
-          "foreground": "core-text-over-accent",
+          "foreground": "text-over-accent",
           "border": "accent-brand-bg-muted"
         },
         "PopupBackground": "accent-brand-bg-muted",
@@ -1544,7 +1541,7 @@
       },
       "Pale": {
         "Popup": {
-          "foreground": "core-text-over-accent",
+          "foreground": "text-over-accent",
           "border": "#393B40"
         },
         "PopupBackground": "#393B40",
@@ -1559,9 +1556,9 @@
         "Snippet": {
           "border": "container-editor-border",
           "MoreLines": {
-            "foreground": "core-text-secondary",
+            "foreground": "text-secondary",
             "background": "container-tool-window-bg",
-            "hoverForeground": "core-text",
+            "hoverForeground": "text-default",
             "hoverBackground": "control-bg-hovered"
           }
         }
@@ -1570,7 +1567,7 @@
         "Snippet": {
           "border": "container-editor-border",
           "MoreLines": {
-            "foreground": "core-text-secondary",
+            "foreground": "text-secondary",
             "background": "container-tool-window-bg",
             "hoverForeground": "text-primary",
             "hoverBackground": "control-bg-hovered"
@@ -1583,10 +1580,10 @@
       "background": "container-popup-bg",
       "currentOverloadBackground": "accent-brand-bg-muted",
       "borderColor": "feedback-border",
-      "foreground": "core-text",
-      "currentParameterForeground": "core-text-over-accent",
-      "disabledForeground": "core-text-secondary",
-      "infoForeground": "core-text-muted",
+      "foreground": "text-default",
+      "currentParameterForeground": "text-bright",
+      "disabledForeground": "text-secondary",
+      "infoForeground": "text-muted",
       "lineSeparatorColor": "feedback-border"
     },
 
