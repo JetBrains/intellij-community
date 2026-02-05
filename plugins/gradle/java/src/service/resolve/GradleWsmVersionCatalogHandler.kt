@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
 import org.jetbrains.plugins.gradle.model.versionCatalogs.GradleVersionCatalogEntity
 import org.jetbrains.plugins.gradle.model.versionCatalogs.versionCatalogs
-import org.jetbrains.plugins.gradle.util.getGradleBuild
+import org.jetbrains.plugins.gradle.util.getRelatedGradleBuild
 
 /**
  * Provides version catalog data collected at Gradle sync and stored in the Workspace Model.
@@ -22,5 +22,5 @@ internal class GradleWsmVersionCatalogHandler : GradleVersionCatalogHandler {
   }
 
   private fun getVersionCatalogEntities(module: Module): List<GradleVersionCatalogEntity> =
-    module.getGradleBuild()?.versionCatalogs ?: emptyList()
+    module.getRelatedGradleBuild()?.versionCatalogs ?: emptyList()
 }

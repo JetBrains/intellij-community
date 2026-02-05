@@ -5,7 +5,15 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.modcommand.*
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.FutureVirtualFile
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModCommandAction
+import com.intellij.modcommand.ModCreateFile
+import com.intellij.modcommand.ModNavigate
+import com.intellij.modcommand.ModNothing
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
@@ -13,7 +21,11 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.openapi.vfs.refreshAndFindVirtualDirectory
 import com.intellij.openapi.vfs.refreshAndFindVirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.asSafely
 import org.gradle.util.GradleVersion
@@ -25,15 +37,19 @@ import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.settingsScript
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_REPOSITORY_HANDLER
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME
-import org.jetbrains.plugins.gradle.util.getGradleBuildPath
 import org.jetbrains.plugins.gradle.util.getGradleVersion
+import org.jetbrains.plugins.gradle.util.getRelatedGradleBuildPath
 import java.nio.file.Path
 import kotlin.io.path.exists
 
@@ -50,7 +66,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionVisitor(private val holder: 
         val gradleVersion = expression.module?.getGradleVersion() ?: GradleVersion.current()
         if (repositoriesParentBlockKind == RepositoriesParentBlockKind.DEPENDENCY && gradleVersion < GradleVersion.version("6.8")) return
 
-        val gradleBuildPath = expression.module?.getGradleBuildPath()
+        val gradleBuildPath = expression.module?.getRelatedGradleBuildPath()
         val settingsFile = gradleBuildPath?.getGradleSettingsPsiFile(holder.project)
         val fix = createPotentialFix(gradleBuildPath, settingsFile, repositoriesParentBlockKind, gradleVersion)
 
@@ -138,7 +154,7 @@ private class CreateSettingsAndMoveRepositoriesAction(
             }
         }
 
-        val gradleBuildPath = element.module?.getGradleBuildPath()?.refreshAndFindVirtualDirectory() ?: return ModNothing()
+        val gradleBuildPath = element.module?.getRelatedGradleBuildPath()?.refreshAndFindVirtualDirectory() ?: return ModNothing()
         val settingsFile = FutureVirtualFile(
             gradleBuildPath,
             KOTLIN_DSL_SETTINGS_FILE_NAME,
