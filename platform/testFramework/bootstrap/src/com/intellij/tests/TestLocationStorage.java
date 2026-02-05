@@ -11,11 +11,15 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.io.InputStream;
+import java.net.JarURLConnection;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.security.CodeSource;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.logging.Logger;
 
 /**
@@ -155,6 +159,33 @@ public final class TestLocationStorage {
     return null;
   }
 
+  private static final String META_INF_PREFIX = "META-INF/";
+  private static final String KOTLIN_MODULE_SUFFIX = ".kotlin_module";
+
+  /**
+   * Extracts module name from META-INF/*.kotlin_module file in the JAR containing the test class.
+   */
+  private static String getModuleNameFromKotlinModule(Class<?> testClass) {
+    URL classUrl = testClass.getResource(testClass.getSimpleName() + ".class");
+    if (classUrl == null || !"jar".equals(classUrl.getProtocol())) {
+      return null;
+    }
+
+    try {
+      JarFile jarFile = ((JarURLConnection)classUrl.openConnection()).getJarFile();
+      return jarFile.stream()
+        .map(JarEntry::getName)
+        .filter(name -> name.startsWith(META_INF_PREFIX) && name.endsWith(KOTLIN_MODULE_SUFFIX))
+        .findFirst()
+        .map(name -> name.substring(META_INF_PREFIX.length(), name.length() - KOTLIN_MODULE_SUFFIX.length()))
+        .orElse(null);
+    }
+    catch (Exception e) {
+      LOG.info("Could not extract module from kotlin_module: " + e.getMessage());
+    }
+    return null;
+  }
+
   public static String getFileName(Class<?> testClass) {
     try {
       String resourcePath = "/" + testClass.getName().replace('.', '/') + ".class";
@@ -242,23 +273,26 @@ public final class TestLocationStorage {
   public static TestLocationInfo getTestLocationInfo(Class<?> testClass) {
     try {
       CodeSource codeSource = testClass.getProtectionDomain().getCodeSource();
+      String moduleName;
 
-      if (codeSource == null || codeSource.getLocation() == null) {
-        LOG.info("No code source for " + testClass.getName());
-        return null;
+      if (codeSource != null && codeSource.getLocation() != null) {
+        Path jarPath = Paths.get(codeSource.getLocation().toURI());
+        moduleName = getModuleName(jarPath);
+      }
+      else {
+        // Fallback for local run (it works only if tests are written in Kotlin):
+        moduleName = getModuleNameFromKotlinModule(testClass);
       }
 
-      Path jarPath = Paths.get(codeSource.getLocation().toURI());
-      String moduleName = getModuleName(jarPath);
       if (moduleName == null) {
-        LOG.info("No module found for " + codeSource.getLocation());
+        LOG.info("No module found for " + testClass.getName());
         return null;
       }
 
       String packagePath = getPackagePath(testClass);
       String fileName = getFileName(testClass);
       if (fileName == null) {
-        LOG.info("No file found for " + codeSource.getLocation());
+        LOG.info("No file found for " + testClass.getName());
         return null;
       }
 
