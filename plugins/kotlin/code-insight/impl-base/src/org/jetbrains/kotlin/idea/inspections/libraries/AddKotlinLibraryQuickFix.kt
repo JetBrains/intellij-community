@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.libraries
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.inspections.libraries
 
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.configuration.KotlinBuildSystemDependencyManager
 import org.jetbrains.kotlin.idea.configuration.isProjectSyncPendingOrInProgress
 
-internal class AddKotlinLibraryQuickFix(
+class AddKotlinLibraryQuickFix(
     private val dependencyManager: KotlinBuildSystemDependencyManager,
     private val libraryDescriptor: ExternalLibraryDescriptor,
     @IntentionName

@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.configuration.KotlinBuildSystemDependencyManage
 import org.jetbrains.kotlin.idea.configuration.KotlinLibraryVersionProvider
 import org.jetbrains.kotlin.idea.configuration.isProjectSyncPendingOrInProgress
 import org.jetbrains.kotlin.idea.configuration.withScope
+import org.jetbrains.kotlin.idea.inspections.libraries.AddKotlinLibraryQuickFix
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtReferenceExpression
