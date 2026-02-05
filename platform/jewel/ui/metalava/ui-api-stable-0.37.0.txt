@@ -963,8 +963,13 @@ package org.jetbrains.jewel.ui.component.styling {
   }
 
   @androidx.compose.runtime.Stable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class BannerMetrics {
-    ctor @KotlinOnly public BannerMetrics(androidx.compose.ui.unit.Dp borderWidth);
+    ctor @KotlinOnly @Deprecated public BannerMetrics(androidx.compose.ui.unit.Dp borderWidth);
+    ctor @KotlinOnly public BannerMetrics(androidx.compose.ui.unit.Dp borderWidth, androidx.compose.foundation.shape.CornerSize cornerSize, androidx.compose.foundation.layout.PaddingValues padding);
+    method public androidx.compose.foundation.shape.CornerSize getCornerSize();
+    method public androidx.compose.foundation.layout.PaddingValues getPadding();
     property public androidx.compose.ui.unit.Dp borderWidth;
+    property public androidx.compose.foundation.shape.CornerSize cornerSize;
+    property public androidx.compose.foundation.layout.PaddingValues padding;
     field public static final org.jetbrains.jewel.ui.component.styling.BannerMetrics.Companion Companion;
   }
 

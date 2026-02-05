@@ -110,7 +110,8 @@ package org.jetbrains.jewel.intui.standalone.bundle {
 package org.jetbrains.jewel.intui.standalone.styling {
 
   public final class IntUIBannerStylingKt {
-    method public static org.jetbrains.jewel.ui.component.styling.BannerMetrics default(org.jetbrains.jewel.ui.component.styling.BannerMetrics.Companion, optional float borderWidth);
+    method @Deprecated public static org.jetbrains.jewel.ui.component.styling.BannerMetrics default(org.jetbrains.jewel.ui.component.styling.BannerMetrics.Companion, optional float borderWidth);
+    method public static org.jetbrains.jewel.ui.component.styling.BannerMetrics default(org.jetbrains.jewel.ui.component.styling.BannerMetrics.Companion, optional float borderWidth, optional androidx.compose.foundation.shape.CornerSize cornerSize, optional androidx.compose.foundation.layout.PaddingValues paddingValues);
     method public static org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultBannerStylesFactory getDefault(org.jetbrains.jewel.ui.component.styling.DefaultBannerStyles.Companion);
     method public static org.jetbrains.jewel.intui.standalone.styling.IntUiInlineBannerStylesFactory getDefault(org.jetbrains.jewel.ui.component.styling.InlineBannerStyles.Companion);
     method public static org.jetbrains.jewel.intui.standalone.styling.IntUiErrorBannerColorFactory getError(org.jetbrains.jewel.ui.component.styling.BannerColors.Companion);
