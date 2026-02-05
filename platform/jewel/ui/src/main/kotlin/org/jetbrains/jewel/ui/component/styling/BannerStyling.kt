@@ -1,11 +1,14 @@
 package org.jetbrains.jewel.ui.component.styling
 
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
 @Stable
@@ -172,19 +175,40 @@ public class BannerColors(public val background: Color, public val border: Color
 
 @Stable
 @GenerateDataFunctions
-public class BannerMetrics(public val borderWidth: Dp) {
+public class BannerMetrics(
+    public val borderWidth: Dp,
+    public val cornerSize: CornerSize,
+    public val padding: PaddingValues,
+) {
+    @Deprecated(
+        "Use the constructor with `cornerSize`  and `padding` parameters",
+        replaceWith = ReplaceWith("BannerMetrics(borderWidth, cornerSize = TODO(), padding = TODO())"),
+        level = DeprecationLevel.HIDDEN,
+    )
+    public constructor(borderWidth: Dp) : this(borderWidth, CornerSize(8.dp), PaddingValues(12.dp))
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
         other as BannerMetrics
 
-        return borderWidth == other.borderWidth
+        if (borderWidth != other.borderWidth) return false
+        if (cornerSize != other.cornerSize) return false
+        if (padding != other.padding) return false
+
+        return true
     }
 
-    override fun hashCode(): Int = borderWidth.hashCode()
+    override fun hashCode(): Int {
+        var result = borderWidth.hashCode()
+        result = 31 * result + cornerSize.hashCode()
+        result = 31 * result + padding.hashCode()
+        return result
+    }
 
-    override fun toString(): String = "BannerMetrics(borderWidth=$borderWidth)"
+    override fun toString(): String =
+        "BannerMetrics(" + "borderWidth=$borderWidth, " + "cornerSize=$cornerSize, " + "padding=$padding" + ")"
 
     public companion object
 }

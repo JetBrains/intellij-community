@@ -983,6 +983,8 @@ f:org.jetbrains.jewel.ui.component.styling.BannerMetrics
 - sf:Companion:org.jetbrains.jewel.ui.component.styling.BannerMetrics$Companion
 - equals(java.lang.Object):Z
 - f:getBorderWidth-D9Ej5fM():F
+- f:getCornerSize():androidx.compose.foundation.shape.CornerSize
+- f:getPadding():androidx.compose.foundation.layout.PaddingValues
 - hashCode():I
 f:org.jetbrains.jewel.ui.component.styling.BannerMetrics$Companion
 f:org.jetbrains.jewel.ui.component.styling.BannerStylingKt
