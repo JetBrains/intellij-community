@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.reactive.ViewableMap
 import org.jetbrains.annotations.ApiStatus
@@ -46,7 +47,7 @@ open class ProjectCodeVisionModel(val project: Project) {
   }
 
   open fun handleLensExtraAction(editor: Editor, range: TextRange, entry: CodeVisionEntry, actionId: String) {
-    if (actionId == HIDE_PROVIDER_ID) {
+    if (actionId == HIDE_PROVIDER_ID && !IdeProductMode.isFrontend) {
       val id = CodeVisionInitializer.getInstance(project).getCodeVisionHost().getProviderById(entry.providerId)?.groupId ?: entry.providerId
       CodeVisionSettings.getInstance().setProviderEnabled(id, false)
       CodeVisionInitializer.getInstance(project).getCodeVisionHost().invalidateProviderSignal.fire(
@@ -54,7 +55,7 @@ open class ProjectCodeVisionModel(val project: Project) {
       return
     }
 
-    if (actionId == HIDE_ALL) {
+    if (actionId == HIDE_ALL && !IdeProductMode.isFrontend) {
       CodeVisionSettings.getInstance().codeVisionEnabled = false
       CodeVisionInitializer.getInstance(project).getCodeVisionHost().invalidateProviderSignal.fire(
         CodeVisionHost.LensInvalidateSignal(null))
