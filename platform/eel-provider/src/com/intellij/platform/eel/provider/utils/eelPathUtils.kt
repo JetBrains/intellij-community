@@ -34,6 +34,7 @@ import com.intellij.platform.eel.fs.WriteOptionsBuilder
 import com.intellij.platform.eel.fs.createTemporaryDirectory
 import com.intellij.platform.eel.fs.createTemporaryFile
 import com.intellij.platform.eel.fs.getPath
+import com.intellij.platform.eel.fs.listDirectoryWithAttrs
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.isPosix
 import com.intellij.platform.eel.isWindows
@@ -1072,9 +1073,34 @@ object EelPathUtils {
   suspend fun directoryOnlySync(
     sourceRoot: EelPath,
     targetRoot: EelPath,
-    targetEelApi: EelApi,
     ignoreCase: Boolean,
   ) {
+    suspend fun listDirectories(
+      path: Path,
+      isLocal: Boolean,
+      eelApi: EelApi,
+    ): List<Path> =
+      if (isLocal) {
+        path.listDirectoryEntries()
+          .filter { it.isDirectory(LinkOption.NOFOLLOW_LINKS) }
+      }
+      else {
+        eelApi.fs.listDirectoryWithAttrs(path.asEelPath())
+          .getOrThrow()
+          .filter {
+            when (it.second.type) {
+              is EelFileInfo.Type.Directory -> true
+              else -> false
+            }
+          }
+          .map { path.resolve(it.first) }
+      }
+        .sortedByDescending { it.pathString }
+
+    val sourceEelApi = sourceRoot.descriptor.toEelApi()
+    val targetEelApi = targetRoot.descriptor.toEelApi()
+    val isSourceLocal = sourceRoot.descriptor === LocalEelDescriptor
+    val isTargetLocal = targetRoot.descriptor === LocalEelDescriptor
     val sourceRoot = sourceRoot.asNioPath()
     val targetRoot = targetRoot.asNioPath()
     val sourceQ = ArrayDeque<Path>()
@@ -1088,16 +1114,11 @@ object EelPathUtils {
         val relativeDirPath = path.relativeTo(sourceRoot)
         val targetDirPath = targetRoot.resolve(relativeDirPath)
 
-        // edge case when a source directory is deleted and replaced by a file with the same name
-        if (targetDirPath.exists()) {
-          Files.delete(targetDirPath)
-        }
+        // edge case when a source file is deleted and replaced by a directory with the same name
+        Files.deleteIfExists(targetDirPath)
+
         Files.createDirectory(targetDirPath)
-        sourceQ.addAll(
-          path.listDirectoryEntries()
-            .filter { it.isDirectory(LinkOption.NOFOLLOW_LINKS) }
-            .sortedByDescending { it.pathString }
-        )
+        sourceQ.addAll(listDirectories(path, isSourceLocal, sourceEelApi))
       }
       else if (sourceQ.isEmpty() && targetQ.isNotEmpty()) {
         val path = targetQ.removeFirst()
@@ -1112,10 +1133,9 @@ object EelPathUtils {
         if (comparison > 0) {
           val dirTargetPath = targetRoot.resolve(sourceRelativeDirPath)
 
-          // edge case when a source directory is deleted and replaced by a file with the same name
-          if (dirTargetPath.exists()) {
-            Files.delete(dirTargetPath)
-          }
+          // edge case when a source file is deleted and replaced by a directory with the same name
+          Files.deleteIfExists(dirTargetPath)
+
           Files.createDirectory(dirTargetPath)
           sourceQ.removeFirst()
         }
@@ -1126,16 +1146,8 @@ object EelPathUtils {
         else {
           val sourcePath = sourceQ.removeFirst()
           val targetPath = targetQ.removeFirst()
-          sourceQ.addAll(
-            sourcePath.listDirectoryEntries()
-              .filter { it.isDirectory(LinkOption.NOFOLLOW_LINKS) }
-              .sortedByDescending { it.pathString }
-          )
-          targetQ.addAll(
-            targetPath.listDirectoryEntries()
-              .filter { it.isDirectory(LinkOption.NOFOLLOW_LINKS) }
-              .sortedByDescending { it.pathString }
-          )
+          sourceQ.addAll(listDirectories(sourcePath, isSourceLocal, sourceEelApi))
+          targetQ.addAll(listDirectories(targetPath, isTargetLocal, targetEelApi))
         }
       }
     }
@@ -1235,7 +1247,7 @@ object EelPathUtils {
             Files.createDirectory(targetRoot)
           }
           withContext(Dispatchers.IO) {
-            directoryOnlySync(sourcePathEel, targetRootEel, targetDescriptor.toEelApi(), false)
+            directoryOnlySync(sourcePathEel, targetRootEel, false)
           }
         }
         sourceAttrs.isRegularFile -> {
