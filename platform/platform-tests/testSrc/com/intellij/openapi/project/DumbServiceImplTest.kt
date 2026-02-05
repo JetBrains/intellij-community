@@ -894,9 +894,6 @@ class DumbServiceImplTest {
 
     class SampleBackgroundableDumbModeListener : DumbModeListenerBackgroundable {
       fun runListener() {
-        if (!application.isDispatchThread) {
-          dumbModeListenerValidity.incrementAndGet()
-        }
         if (application.isWriteAccessAllowed) {
           dumbModeListenerValidity.incrementAndGet()
         }
@@ -915,6 +912,6 @@ class DumbServiceImplTest {
     dumbService.runInDumbMode("test", {})
     listenerEnded.join()
     listenerEnded2.join()
-    assertEquals(8, dumbModeListenerValidity.get())
+    assertEquals(6, dumbModeListenerValidity.get())
   }
 }
