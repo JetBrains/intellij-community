@@ -43,6 +43,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider"/>
+    <applicationService serviceImplementation="com.intellij.mcpserver.impl.McpServerService"/>
+
     <statistics.counterUsagesCollector implementationClass="com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector"/>
     <statistics.validation.customValidationRule implementation="com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector$McpToolNameValidator"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.mcpserver.statistics.McpServerApplicationUsagesCollector"/>

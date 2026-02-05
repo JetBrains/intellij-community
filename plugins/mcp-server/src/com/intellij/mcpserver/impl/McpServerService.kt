@@ -134,8 +134,7 @@ private fun getTracer(): IJTracer =
   else
     IJNoopTracer
 
-@Service(Service.Level.APP)
-class McpServerService(val cs: CoroutineScope) {
+open class McpServerService(val cs: CoroutineScope) {
   enum class AskCommandExecutionMode {
     ASK,
     DONT_ASK,
@@ -266,7 +265,7 @@ class McpServerService(val cs: CoroutineScope) {
            ?: McpSessionOptions(commandExecutionMode = AskCommandExecutionMode.RESPECT_GLOBAL_SETTINGS)
   }
 
-  val port: Int
+  open val port: Int
     get() = (server.value ?: error("MCP Server is not enabled")).engineConfig.connectors.first().port
 
   internal fun resolvedConnectorHost(): String? {
