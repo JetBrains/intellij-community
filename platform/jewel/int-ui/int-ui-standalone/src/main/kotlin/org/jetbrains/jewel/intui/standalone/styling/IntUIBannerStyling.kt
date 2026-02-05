@@ -1,5 +1,7 @@
 package org.jetbrains.jewel.intui.standalone.styling
 
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -183,7 +185,15 @@ public object IntUiInlineBannerStylesFactory {
         InlineBannerStyles(information = information, success = success, warning = warning, error = error)
 }
 
-public fun BannerMetrics.Companion.default(borderWidth: Dp = 1.dp): BannerMetrics = BannerMetrics(borderWidth)
+@Deprecated("Use the `default()` function with `cornerSize` and `paddingValues`", level = DeprecationLevel.HIDDEN)
+public fun BannerMetrics.Companion.default(borderWidth: Dp = 1.dp): BannerMetrics =
+    BannerMetrics(borderWidth, CornerSize(8.dp), PaddingValues(12.dp))
+
+public fun BannerMetrics.Companion.default(
+    borderWidth: Dp = 1.dp,
+    cornerSize: CornerSize = CornerSize(8.dp),
+    paddingValues: PaddingValues = PaddingValues(12.dp),
+): BannerMetrics = BannerMetrics(borderWidth, cornerSize, paddingValues)
 
 // region Inline Information Banner
 public val InlineBannerStyle.Companion.Information: IntUiInlineInformationBannerStyleFactory
