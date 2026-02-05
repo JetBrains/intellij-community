@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.starter
+package org.jetbrains.plugins.terminal.startup
 
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.diagnostic.Logger
@@ -21,23 +21,6 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 internal class TerminalLocalPathTranslator(private val descriptor: EelDescriptor) {
-
-  fun translateEnvValue(
-    envName: String,
-    prevEnvValue: String?,
-    newEnvValue: String,
-    requester: Class<*>,
-  ): String {
-    if (descriptor != LocalEelDescriptor) {
-      if (envName in SINGLE_PATH_ENV_NAMES) {
-        return translateAbsoluteLocalPathStringToRemote(newEnvValue) ?: newEnvValue
-      }
-      if (envName in MULTI_PATH_ENV_NAMES) {
-        return translateMultiPathEnv(envName, prevEnvValue.orEmpty(), newEnvValue, requester) ?: newEnvValue
-      }
-    }
-    return newEnvValue
-  }
 
   /**
    * Translates new path entries to the format understood by the remote.
@@ -90,9 +73,9 @@ internal class TerminalLocalPathTranslator(private val descriptor: EelDescriptor
   }
 
   /**
-   * Translates an absolute path local to IDE to a remote path understood by [descriptor].
+   * Translates an absolute path to a remote path understood by [descriptor].
    *
-   * @param absolutePathString The string representing the absolute path local to IDE.
+   * @param absolutePathString The string representing the absolute path.
    * @return The translated native path within [descriptor], or `null` if
    *         [absolutePathString] is not absolute, or it cannot be translated.
    */
@@ -109,9 +92,9 @@ internal class TerminalLocalPathTranslator(private val descriptor: EelDescriptor
   }
 
   /**
-   * Translates an absolute path local to IDE to a remote path understood by [descriptor].
+   * Translates an absolute path to a remote path understood by [descriptor].
    *
-   * @param absolutePath The absolute path local to IDE.
+   * @param absolutePath The absolute path.
    * @return The translated [EelPath] representing the native path within [descriptor], or `null` if
    *         [absolutePath] is not absolute, or it cannot be translated.
    */

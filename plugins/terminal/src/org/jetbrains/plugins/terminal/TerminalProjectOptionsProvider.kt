@@ -35,7 +35,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
-import org.jetbrains.plugins.terminal.starter.ShellCustomizer
+import org.jetbrains.plugins.terminal.startup.ShellExecOptionsCustomizer
 import java.nio.file.Files
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
@@ -75,7 +75,7 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
 
   val defaultStartingDirectory: String?
     get() {
-      for (customizer in ShellCustomizer.EP_NAME.extensionList) {
+      for (customizer in ShellExecOptionsCustomizer.EP_NAME.extensionList) {
         try {
           val dir = customizer.getStartDirectory(project)
           if (dir != null) {

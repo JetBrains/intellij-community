@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @deprecated use {@link org.jetbrains.plugins.terminal.starter.ShellCustomizer} instead
+ * @deprecated use {@link org.jetbrains.plugins.terminal.startup.ShellExecOptionsCustomizer} instead
  */
 @Deprecated
 public abstract class LocalTerminalCustomizer {

@@ -1,4 +1,4 @@
-package com.intellij.terminal.tests.starter
+package com.intellij.terminal.tests.startup
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.fileLogger
@@ -27,8 +27,10 @@ import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions
 import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner
 import org.jetbrains.plugins.terminal.ShellStartupOptions
-import org.jetbrains.plugins.terminal.starter.ShellCustomizer
-import org.jetbrains.plugins.terminal.starter.ShellExecOptions
+import org.jetbrains.plugins.terminal.startup.MutableShellExecOptions
+import org.jetbrains.plugins.terminal.startup.ShellExecCommandImpl
+import org.jetbrains.plugins.terminal.startup.ShellExecOptions
+import org.jetbrains.plugins.terminal.startup.ShellExecOptionsCustomizer
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.params.ParameterizedClass
@@ -43,7 +45,7 @@ import kotlin.time.Duration.Companion.seconds
  */
 @TestApplicationWithEel(osesMayNotHaveRemoteEels = [OS.WINDOWS, OS.LINUX, OS.MAC])
 @ParameterizedClass
-class ShellCustomizerTest(private val eelHolder: EelHolder) {
+class ShellExecOptionsCustomizerTest(private val eelHolder: EelHolder) {
 
   private val project: Project by projectFixture()
   private val tempDir: Path by tempPathFixture()
@@ -101,20 +103,25 @@ class ShellCustomizerTest(private val eelHolder: EelHolder) {
   }
 
   @Test
-  fun `local dirs appended and prepended by several customizers are translated to remote`(): Unit = timeoutRunBlocking(TIMEOUT) {
+  fun `translated and non-translated paths by several customizers`(): Unit = timeoutRunBlocking(TIMEOUT) {
     val dir1 = tempDir.asDirectory()
     val dir2 = createTmpDir("dir2").asDirectory()
     register(customizer {
       it.prependEntryToPATH(dir1.nioDir)
       it.appendEntryToPATH(dir2.nioDir)
     }, customizer {
+      // these paths are not translated:
       it.setEnvironmentVariable(PATH, joinEntries(it.envs[PATH], "foo", LocalEelDescriptor))
       it.setEnvironmentVariable(PATH, joinEntries("bar", it.envs[PATH], LocalEelDescriptor))
     })
     val result = configureStartupOptions(dir1) {
       it[PATH] = "/path/to/baz"
     }
-    result.assertPathLikeEnv(PATH, "bar", dir1.remoteDir, "/path/to/baz", dir2.remoteDir, "foo")
+    Assertions.assertThat(result.shellExecOptions.envs[PATH]).isEqualTo(
+      "bar" + LocalEelDescriptor.osFamily.pathSeparator + dir1.remoteDir + eelHolder.eel.descriptor.osFamily.pathSeparator +
+      "/path/to/baz" +
+      eelHolder.eel.descriptor.osFamily.pathSeparator + dir2.remoteDir + LocalEelDescriptor.osFamily.pathSeparator + "foo"
+    )
   }
 
   @Test
@@ -168,17 +175,46 @@ class ShellCustomizerTest(private val eelHolder: EelHolder) {
     result.assertSinglePathEnv(JEDITERM_SOURCE, fileToSource)
   }
 
-  private fun customizer(handler: (execOptions: ShellExecOptions) -> Unit): ShellCustomizer {
-    return object : ShellCustomizer {
-      override fun customizeExecOptions(project: Project, shellExecOptions: ShellExecOptions) {
+  @Test
+  fun `modifications to execOptions are reflected immediately by read-only accessors`(): Unit = timeoutRunBlocking(TIMEOUT) {
+    val dir = tempDir.asDirectory()
+    val customEnvName1 = "MY_CUSTOM_ENV_1"
+    val customEnvName2 = "MY_CUSTOM_ENV_2"
+    val newExecCommand = ShellExecCommandImpl(listOf("my-shell", "--myCustomArg"))
+    register(customizer {
+      it.setEnvironmentVariable(customEnvName1, "foo")
+      Assertions.assertThat(it.envs[customEnvName1]).isEqualTo("foo")
+
+      it.setEnvironmentVariableToPath(customEnvName2, dir.nioDir)
+      Assertions.assertThat(it.envs[customEnvName2]).isEqualTo(dir.remoteDir)
+
+      it.appendEntryToPATH(Path.of("bar"))
+      it.appendEntryToPATH(dir.nioDir)
+      Assertions.assertThat(it.envs[PATH]).endsWith(joinEntries("bar", dir.remoteDir, eelHolder.eel.descriptor))
+
+      it.setExecCommand(newExecCommand)
+      Assertions.assertThat(it.execCommand).isEqualTo(newExecCommand)
+    })
+    val result = configureStartupOptions(tempDir.asDirectory()) {
+      it[PATH] = "/path/to/baz"
+    }
+    Assertions.assertThat(result.shellExecOptions.envs[customEnvName1]).isEqualTo("foo")
+    Assertions.assertThat(result.shellExecOptions.envs[customEnvName2]).isEqualTo(dir.remoteDir)
+    result.assertPathLikeEnv(PATH, "/path/to/baz", "bar", dir.remoteDir)
+    Assertions.assertThat(result.shellExecOptions.execCommand).isEqualTo(newExecCommand)
+  }
+
+  private fun customizer(handler: (execOptions: MutableShellExecOptions) -> Unit): ShellExecOptionsCustomizer {
+    return object : ShellExecOptionsCustomizer {
+      override fun customizeExecOptions(project: Project, shellExecOptions: MutableShellExecOptions) {
         handler(shellExecOptions)
       }
     }
   }
 
-  private fun register(vararg customizers: ShellCustomizer) {
+  private fun register(vararg customizers: ShellExecOptionsCustomizer) {
     ExtensionTestUtil.maskExtensions(
-      ShellCustomizer.EP_NAME,
+      ShellExecOptionsCustomizer.EP_NAME,
       customizers.toList(),
       testDisposable
     )
@@ -213,7 +249,7 @@ class ShellCustomizerTest(private val eelHolder: EelHolder) {
     val startupOptions = startupOptionsBuilder.build()
     val terminalRunner = LocalTerminalDirectRunner(project)
     val configuredOptions = terminalRunner.configureStartupOptions(startupOptions)
-    return CustomizationResult(configuredOptions.envVariables)
+    return CustomizationResult(configuredOptions.toExecOptions(workingDir.descriptor))
   }
 
   private class Directory(val nioDir: Path, val eelDir: EelPath, val descriptor: EelDescriptor) {
@@ -221,20 +257,20 @@ class ShellCustomizerTest(private val eelHolder: EelHolder) {
       get() = eelDir.toString()
   }
 
-  private class CustomizationResult(val configuredEnvs: Map<String, String>) {
-    fun getEnvVarValue(envVarName: String): String? = configuredEnvs[envVarName]
+  private class CustomizationResult(val shellExecOptions: ShellExecOptions) {
+    fun getEnvVarValue(envVarName: String): String? = shellExecOptions.envs[envVarName]
   }
 
   private fun CustomizationResult.assertPathLikeEnv(envName: String, vararg expectedEntries: String) {
     val expectedValue = expectedEntries.toList().reduce { result, entries ->
       joinEntries(result, entries, eelHolder.eel.descriptor)
     }
-    Assertions.assertThat(configuredEnvs[envName]).isEqualTo(expectedValue)
+    Assertions.assertThat(shellExecOptions.envs[envName]).isEqualTo(expectedValue)
   }
 
   private fun CustomizationResult.assertSinglePathEnv(envName: String, expectedPath: Path) {
     val expectedValue = expectedPath.asEelPath(eelHolder.eel.descriptor).toString()
-    Assertions.assertThat(configuredEnvs[envName]).isEqualTo(expectedValue)
+    Assertions.assertThat(shellExecOptions.envs[envName]).isEqualTo(expectedValue)
   }
 }
 

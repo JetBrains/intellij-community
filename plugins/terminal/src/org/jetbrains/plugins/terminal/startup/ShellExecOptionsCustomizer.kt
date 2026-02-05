@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.starter
+package org.jetbrains.plugins.terminal.startup
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -8,8 +8,14 @@ import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
+/**
+ * Allows modifying options used to start a shell session.
+ *
+ * Register the implementation as `org.jetbrains.plugins.terminal.shellExecOptionsCustomizer`
+ * extension in `plugin.xml` file.
+ */
 @ApiStatus.Experimental
-interface ShellCustomizer {
+interface ShellExecOptionsCustomizer {
   /**
    * Customizes the environment variables of a new shell session.
    * The method is called on a background thread without a read action.
@@ -18,7 +24,7 @@ interface ShellCustomizer {
    */
   @RequiresBackgroundThread(generateAssertion = false)
   @RequiresReadLockAbsence(generateAssertion = false)
-  fun customizeExecOptions(project: Project, shellExecOptions: ShellExecOptions) {}
+  fun customizeExecOptions(project: Project, shellExecOptions: MutableShellExecOptions) {}
 
   /**
    * Retrieves the starting directory for the given project.
@@ -32,8 +38,7 @@ interface ShellCustomizer {
 
   companion object {
     @ApiStatus.Internal
-    val EP_NAME: ExtensionPointName<ShellCustomizer> =
-      ExtensionPointName("org.jetbrains.plugins.terminal.shellCustomizer")
+    val EP_NAME: ExtensionPointName<ShellExecOptionsCustomizer> =
+      ExtensionPointName("org.jetbrains.plugins.terminal.shellExecOptionsCustomizer")
   }
-
 }

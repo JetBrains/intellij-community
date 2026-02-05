@@ -9,9 +9,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
-import org.jetbrains.plugins.terminal.starter.TerminalLocalPathTranslator
-import org.jetbrains.plugins.terminal.starter.TerminalLocalPathTranslator.Companion.MULTI_PATH_ENV_NAMES
-import org.jetbrains.plugins.terminal.starter.TerminalLocalPathTranslator.Companion.SINGLE_PATH_ENV_NAMES
+import org.jetbrains.plugins.terminal.startup.TerminalLocalPathTranslator
+import org.jetbrains.plugins.terminal.startup.TerminalLocalPathTranslator.Companion.MULTI_PATH_ENV_NAMES
+import org.jetbrains.plugins.terminal.startup.TerminalLocalPathTranslator.Companion.SINGLE_PATH_ENV_NAMES
 
 /**
  * Fixes potentially incorrect modifications to PATH-like environment variables made by
