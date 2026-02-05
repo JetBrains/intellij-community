@@ -2,13 +2,14 @@
 package org.jetbrains.plugins.terminal.starter
 
 import com.intellij.util.execution.ParametersListUtil
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class ShellExecCommandImpl(command: List<String>): ShellExecCommand {
 
-  override val command: List<String> = command.toImmutableList()
+  override val command: ImmutableList<String> = command.toImmutableList()
 
   init {
     require(this.command.isNotEmpty()) { "Shell command cannot be empty" }

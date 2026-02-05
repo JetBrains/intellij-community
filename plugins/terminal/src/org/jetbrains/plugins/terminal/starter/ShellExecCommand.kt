@@ -4,13 +4,13 @@ package org.jetbrains.plugins.terminal.starter
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Represents an immutable shell command.
+ * Represents an immutable command for starting a shell process in the remote environment.
  */
 @ApiStatus.Experimental
-interface ShellExecCommand {
+sealed interface ShellExecCommand {
   /**
-   * The immutable list representing a shell command.
-   * The first element is the executable, followed by its arguments, e.g., `["/bin/zsh", "-l", "-i"]`.
+   * The command to execute, represented as an immutable list.
+   * The first element is the executable path, followed by its arguments, e.g., `["/bin/zsh", "-l", "-i"]`.
    * All elements are in format understood by the remote environment.
    */
   val command: List<String>
