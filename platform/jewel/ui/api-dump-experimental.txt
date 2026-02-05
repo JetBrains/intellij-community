@@ -96,6 +96,14 @@ f:org.jetbrains.jewel.ui.component.search.SpeedSearchableTreeKt
 - *sf:SpeedSearchableTree(org.jetbrains.jewel.ui.component.SpeedSearchScope,org.jetbrains.jewel.foundation.lazy.tree.Tree,kotlin.jvm.functions.Function1,androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.tree.TreeState,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.ui.component.styling.LazyTreeStyle,kotlinx.coroutines.CoroutineDispatcher,kotlin.jvm.functions.Function4,androidx.compose.runtime.Composer,I,I,I):V
 f:org.jetbrains.jewel.ui.component.styling.IconButtonStylingKt
 - *sf:getLocalTransparentIconButtonStyle():androidx.compose.runtime.ProvidableCompositionLocal
+f:org.jetbrains.jewel.ui.icon.IconUtilsKt
+- *sf:tintColor-4MyTwCo(org.jetbrains.icons.api.modifiers.IconModifier,J,I):org.jetbrains.icons.api.modifiers.IconModifier
+- *bs:tintColor-4MyTwCo$default(org.jetbrains.icons.api.modifiers.IconModifier,J,I,I,java.lang.Object):org.jetbrains.icons.api.modifiers.IconModifier
+- *sf:toCompose(org.jetbrains.icons.api.design.BlendMode):I
+- *sf:toCompose(org.jetbrains.icons.api.design.Color):J
+- *sf:toCompose(org.jetbrains.icons.api.filters.ColorFilter):androidx.compose.ui.graphics.ColorFilter
+- *sf:toIconsBlendMode-s9anfk8(I):org.jetbrains.icons.api.design.BlendMode
+- *sf:toIconsColor-8_81llA(J):org.jetbrains.icons.api.design.RGBA
 *f:org.jetbrains.jewel.ui.painter.hints.EmbeddedToInlineCssStyleSvgPatchHint
 - org.jetbrains.jewel.ui.painter.PainterSvgPatchHint
 - sf:$stable:I

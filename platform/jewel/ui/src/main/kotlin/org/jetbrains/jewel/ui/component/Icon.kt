@@ -7,7 +7,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.geometry.Size
@@ -31,9 +35,17 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.decodeToImageBitmap
 import org.jetbrains.compose.resources.decodeToImageVector
 import org.jetbrains.compose.resources.decodeToSvgPainter
+import org.jetbrains.icons.Icon
+import org.jetbrains.icons.design.IconDesigner
+import org.jetbrains.icons.icon
+import org.jetbrains.icons.rendering.IconRendererManager
+import org.jetbrains.icons.rendering.LoadingStrategy
+import org.jetbrains.icons.rendering.createRenderer
+import org.jetbrains.icons.impl.rendering.DefaultImageModifiers
 import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.icon.IconKey
+import org.jetbrains.jewel.ui.icon.RendererBasedIconPainter
 import org.jetbrains.jewel.ui.icon.newUiChecker
 import org.jetbrains.jewel.ui.painter.PainterHint
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
@@ -76,11 +88,51 @@ public fun Icon(
  *   always be provided unless this icon is used for decorative purposes, and does not represent a meaningful action
  *   that a user can take.
  * @param modifier optional [Modifier] for this Icon.
- * @param iconClass The class to use for resolving the icon resource. Defaults to `key.iconClass`.
- * @param tint tint to be applied to the icon. If [Color.Unspecified] is provided, then no tint is applied.
- * @param hint [PainterHint] to be passed to the painter.
+ * @param loadingStrategy specifies if the function should block the thread while loading the icon or show placeholder
+ * or render blank instead.
  */
-@Suppress("ComposableParamOrder") // To fix in JEWEL-929
+@Composable
+public fun Icon(
+    icon: Icon,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    loadingStrategy: LoadingStrategy = LoadingStrategy.BlockThread
+) {
+    val scope = rememberCoroutineScope()
+    val scalingContext = RendererBasedIconPainter.inferScalingContext()
+    var updateIndex by remember { mutableStateOf(0) }
+    val context = IconRendererManager.createRenderingContext(
+        updateFlow = IconRendererManager.createUpdateFlow(scope) { update ->
+            updateIndex = update
+        },
+        defaultImageModifiers = DefaultImageModifiers(
+            isDark = JewelTheme.isDark
+        )
+    )
+    val renderer = remember(icon) {
+        icon.createRenderer(context)
+    }
+    val painter = remember(icon, renderer) {
+        RendererBasedIconPainter(
+            renderer,
+            scaling = scalingContext
+        )
+    }
+    key(updateIndex) {
+        Icon(painter = painter, contentDescription = contentDescription, modifier = modifier)
+    }
+}
+
+@Composable
+public fun Icon(
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    loadingStrategy: LoadingStrategy = LoadingStrategy.BlockThread,
+    designer: IconDesigner.() -> Unit
+) {
+    Icon(icon(designer), contentDescription, modifier, loadingStrategy)
+}
+
 @Composable
 public fun Icon(
     key: IconKey,
@@ -298,8 +350,8 @@ private object ResourceLoader
 
 private fun readResourceBytes(resourcePath: String) =
     checkNotNull(ResourceLoader.javaClass.classLoader.getResourceAsStream(resourcePath)) {
-            "Could not load resource $resourcePath: it does not exist or can't be read."
-        }
+        "Could not load resource $resourcePath: it does not exist or can't be read."
+    }
         .readAllBytes()
 
 private fun Modifier.defaultSizeFor(painter: Painter) =

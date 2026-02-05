@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=androidx.compose.ui.ExperimentalComposeUiApi -Xcontext-parameters -opt-in=androidx.compose.foundation.ExperimentalFoundationApi -opt-in=org.jetbrains.jewel.foundation.ExperimentalJewelApi -opt-in=org.jetbrains.jewel.foundation.InternalJewelApi -Xexplicit-api=strict -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=androidx.compose.ui.ExperimentalComposeUiApi -Xcontext-parameters -opt-in=androidx.compose.foundation.ExperimentalFoundationApi -opt-in=org.jetbrains.jewel.foundation.ExperimentalJewelApi -opt-in=org.jetbrains.jewel.foundation.InternalJewelApi -Xexplicit-api=strict -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -opt-in=org.jetbrains.icons.api.InternalIconsApi -opt-in=org.jetbrains.icons.api.ExperimentalIconsApi" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -82,6 +82,10 @@
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.compose.runtime.desktop" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.icons.api" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.icons.api.rendering" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.icons.api.rendering.lowlevel" />
+    <orderEntry type="module" module-name="intellij.platform.icons.impl" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop.junit" scope="TEST" />
   </component>
 </module>

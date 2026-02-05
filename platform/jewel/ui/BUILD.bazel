@@ -9,6 +9,8 @@ create_kotlinc_options(
     "androidx.compose.foundation.ExperimentalFoundationApi",
     "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
     "org.jetbrains.jewel.foundation.InternalJewelApi",
+    "org.jetbrains.icons.api.InternalIconsApi",
+    "org.jetbrains.icons.api.ExperimentalIconsApi",
   ],
   x_context_parameters = True,
   x_explicit_api_mode = "strict"
@@ -43,12 +45,18 @@ jvm_library(
     "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
     "//libraries/compose-foundation-desktop",
     "//libraries/compose-runtime-desktop",
+    "//platform/icons-api",
+    "//platform/icons-api/rendering",
+    "//platform/icons-api/rendering/lowlevel",
+    "//platform/icons-impl",
   ],
   exports = [
     "//platform/jewel/foundation",
     "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
     "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
     "//libraries/compose-foundation-desktop",
+    "//platform/icons-api",
+    "//platform/icons-api/rendering",
   ],
   plugins = ["@lib//:compose-plugin"]
 )
@@ -72,6 +80,10 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//libraries/compose-runtime-desktop",
     "//libraries/junit4",
+    "//platform/icons-api",
+    "//platform/icons-api/rendering",
+    "//platform/icons-api/rendering/lowlevel",
+    "//platform/icons-impl",
     "//libraries/compose-foundation-desktop-junit",
   ],
   exports = [
@@ -80,6 +92,8 @@ jvm_library(
     "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
     "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
     "//libraries/compose-foundation-desktop",
+    "//platform/icons-api",
+    "//platform/icons-api/rendering",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

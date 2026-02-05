@@ -76,7 +76,7 @@ public fun JewelComposePanel(
             SwingBridgeTheme {
                 CompositionLocalProvider(
                     LocalComponentFoundation provides this@createJewelComposePanel,
-                    LocalPopupRenderer provides JBPopupRenderer,
+                    LocalPopupRenderer provides JBPopupRenderer
                 ) {
                     ComponentDataProviderBridge(jewelPanel, content = content)
                 }

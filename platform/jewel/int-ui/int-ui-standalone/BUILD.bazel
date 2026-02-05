@@ -9,6 +9,7 @@ create_kotlinc_options(
     "androidx.compose.foundation.ExperimentalFoundationApi",
     "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
     "org.jetbrains.jewel.foundation.InternalJewelApi",
+    "org.jetbrains.icons.api.InternalIconsApi",
   ],
   x_context_parameters = True,
   x_explicit_api_mode = "strict"
@@ -37,6 +38,9 @@ jvm_library(
     "//libraries/compose-runtime-desktop",
     "//platform/jewel/foundation",
     "//libraries/jbr",
+    "//platform/icons-api/rendering",
+    "//platform/icons-impl",
+    "@lib//:platform-jewel-int_ui-standalone-jetbrains-kotlinx-serialization-core-jvm",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

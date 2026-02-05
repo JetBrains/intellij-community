@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=androidx.compose.ui.ExperimentalComposeUiApi -Xcontext-parameters -opt-in=androidx.compose.foundation.ExperimentalFoundationApi -opt-in=org.jetbrains.jewel.foundation.ExperimentalJewelApi -opt-in=org.jetbrains.jewel.foundation.InternalJewelApi -Xexplicit-api=strict -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=androidx.compose.ui.ExperimentalComposeUiApi -Xcontext-parameters -opt-in=androidx.compose.foundation.ExperimentalFoundationApi -opt-in=org.jetbrains.jewel.foundation.ExperimentalJewelApi -opt-in=org.jetbrains.jewel.foundation.InternalJewelApi -Xexplicit-api=strict -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -opt-in=org.jetbrains.icons.api.InternalIconsApi" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -41,5 +41,27 @@
     <orderEntry type="module" module-name="intellij.libraries.compose.runtime.desktop" />
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
     <orderEntry type="module" module-name="intellij.libraries.jbr" />
+    <orderEntry type="module" module-name="intellij.platform.icons.api.rendering" />
+    <orderEntry type="module" module-name="intellij.platform.icons.impl" />
+    <orderEntry type="module-library">
+      <library name="jetbrains.kotlinx.serialization.core.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.8.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.8.1/kotlinx-serialization-core-jvm-1.8.1.jar">
+              <sha256sum>3565b6d4d789bf70683c45566944287fc1d8dc75c23d98bd87d01059cc76f2b3</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.8.1/kotlinx-serialization-core-jvm-1.8.1.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.8.1/kotlinx-serialization-core-jvm-1.8.1-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.8.1/kotlinx-serialization-core-jvm-1.8.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>

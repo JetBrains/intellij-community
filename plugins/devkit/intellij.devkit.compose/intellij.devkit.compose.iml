@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -opt-in=androidx.compose.foundation.ExperimentalFoundationApi -opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -P plugin:androidx.compose.compiler.plugins.kotlin:generateFunctionKeyMetaAnnotations=true" />
+          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -opt-in=androidx.compose.foundation.ExperimentalFoundationApi -opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -P plugin:androidx.compose.compiler.plugins.kotlin:generateFunctionKeyMetaAnnotations=true -opt-in=org.jetbrains.icons.api.ExperimentalIconsApi" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -65,5 +65,10 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.gradle" />
+    <orderEntry type="module" module-name="intellij.platform.icons.api.legacyIconSupport" />
+    <orderEntry type="module" module-name="intellij.platform.ide.rpc" />
+    <orderEntry type="module" module-name="fleet.util.core" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
   </component>
 </module>

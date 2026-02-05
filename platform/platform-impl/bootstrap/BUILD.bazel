@@ -46,6 +46,8 @@ jvm_library(
     "//platform/eel-impl",
     "//platform/platform-impl/initial-config-import",
     "//platform/eel-provider",
+    "//platform/icons-impl",
+    "//platform/icons-impl/intellij",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.bootstrap` end

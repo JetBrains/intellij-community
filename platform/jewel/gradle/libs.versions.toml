@@ -17,6 +17,7 @@ kotlin = "2.2.20"
 kotlinpoet = "2.1.0"
 kotlinterGradlePlugin = "5.2.0"
 kotlinxSerialization = "1.8.1"
+kotlinxCoroutines = "1.10.2"
 ktfmtGradlePlugin = "0.23.0"
 metalava = "1.0.0-alpha13"
 jsoup = "1.21.2"
@@ -42,6 +43,8 @@ junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "jun
 junit-platform-engine = { module = "org.junit.platform:junit-platform-engine", version.ref = "junitPlatform" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junitPlatform" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerialization" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 ktor-client-java = { module = "io.ktor:ktor-client-java", version = "3.0.3" }
 metalava = { module = "com.android.tools.metalava:metalava", version.ref = "metalava" }

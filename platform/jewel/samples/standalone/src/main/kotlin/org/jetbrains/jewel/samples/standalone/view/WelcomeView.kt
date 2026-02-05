@@ -41,7 +41,7 @@ internal fun WelcomeView() {
                 .semantics { isTraversalGroup = true },
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        Icon(key = ShowcaseIcons.jewelLogo, contentDescription = null, modifier = Modifier.size(200.dp))
+        Icon(key = ShowcaseIcons.jewelLogoKey, contentDescription = null, modifier = Modifier.size(200.dp))
 
         Text("Meet Jewel", style = JewelTheme.typography.h1TextStyle)
 
@@ -52,7 +52,7 @@ internal fun WelcomeView() {
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                ThemeSelectionChip(IntUiThemes.Dark, "Dark", ShowcaseIcons.themeDark)
+                ThemeSelectionChip(IntUiThemes.Dark, "Dark", ShowcaseIcons.themeDarkKey)
 
                 ThemeSelectionChip(IntUiThemes.Light, "Light", ShowcaseIcons.themeLight)
 

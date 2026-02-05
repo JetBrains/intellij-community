@@ -1,4 +1,5 @@
 androidx/compose/**
 kotlin/jvm/internal/DefaultConstructorMarker
 kotlin/ranges/ClosedFloatingPointRange
+org/jetbrains/icons/api/**
 org/w3c/dom/Element

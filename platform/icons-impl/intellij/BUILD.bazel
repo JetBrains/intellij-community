@@ -1,0 +1,90 @@
+### auto-generated section `build intellij.platform.icons.impl.intellij` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_intellij",
+  api_version = "2.2",
+  language_version = "2.2",
+  opt_in = [
+    "org.jetbrains.icons.api.ExperimentalIconsApi",
+    "org.jetbrains.icons.api.InternalIconsApi",
+    "org.jetbrains.icons.ExperimentalIconsApi",
+    "org.jetbrains.icons.InternalIconsApi",
+  ],
+  x_x_language = []
+)
+
+resourcegroup(
+  name = "intellij_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "intellij",
+  module_name = "intellij.platform.icons.impl.intellij",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":intellij_resources"],
+  kotlinc_opts = ":custom_intellij",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/icons-api",
+    "//platform/icons-api/rendering",
+    "//platform/icons-impl",
+    "//platform/util",
+    "//platform/util:util-ui",
+    "//platform/core-api:core",
+    "//platform/platform-impl/rpc",
+    "//fleet/util/core",
+    "@lib//:platform-icons-impl-intellij-jetbrains-kotlinx-serialization-core-jvm",
+    "//platform/core-impl",
+    "//platform/icons-api/legacy-icon-support",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-ui",
+  ]
+)
+
+jvm_library(
+  name = "intellij_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_intellij",
+  associates = [":intellij"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/icons-api",
+    "//platform/icons-api/rendering",
+    "//platform/icons-impl",
+    "//platform/util",
+    "//platform/util:util-ui",
+    "//platform/core-api:core",
+    "//platform/platform-impl/rpc",
+    "//fleet/util/core",
+    "@lib//:platform-icons-impl-intellij-jetbrains-kotlinx-serialization-core-jvm",
+    "//platform/core-impl",
+    "//libraries/junit5",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/icons-api/legacy-icon-support",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-ui",
+    "//libraries/kotlinx/serialization/json",
+    "@lib//:junit5",
+    "@lib//:junit5Jupiter",
+    "@lib//:assert_j",
+  ]
+)
+### auto-generated section `build intellij.platform.icons.impl.intellij` end
+
+### auto-generated section `test intellij.platform.icons.impl.intellij` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "intellij_test",
+  runtime_deps = [":intellij_test_lib"]
+)
+### auto-generated section `test intellij.platform.icons.impl.intellij` end

@@ -40,6 +40,9 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/util/multiplatform",
     "//platform/eel",
+    "//platform/icons-api",
+    "//platform/icons-api/rendering",
+    "//platform/icons-api/legacy-icon-support",
     ":platform_util_troveCompileOnly_provided",
   ],
   exports = [
@@ -47,6 +50,9 @@ jvm_library(
     "//platform/util-rt",
     "//platform/util/base",
     "//platform/util/multiplatform",
+    "//platform/icons-api",
+    "//platform/icons-api/rendering",
+    "//platform/icons-api/legacy-icon-support",
   ],
   runtime_deps = [
     "//libraries/commons/io",

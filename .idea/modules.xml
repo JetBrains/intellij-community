@@ -1129,6 +1129,12 @@
       <module fileurl="file://$PROJECT_DIR$/platform/platform-frontend/intellij.platform.frontend.iml" filepath="$PROJECT_DIR$/platform/platform-frontend/intellij.platform.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/main/intellij.platform.frontend.main/intellij.platform.frontend.main.iml" filepath="$PROJECT_DIR$/platform/main/intellij.platform.frontend.main/intellij.platform.frontend.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/icons/intellij.platform.icons.iml" filepath="$PROJECT_DIR$/platform/icons/intellij.platform.icons.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/icons-api/intellij.platform.icons.api.iml" filepath="$PROJECT_DIR$/platform/icons-api/intellij.platform.icons.api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/icons-api/legacy-icon-support/intellij.platform.icons.api.legacyIconSupport.iml" filepath="$PROJECT_DIR$/platform/icons-api/legacy-icon-support/intellij.platform.icons.api.legacyIconSupport.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/icons-api/rendering/intellij.platform.icons.api.rendering.iml" filepath="$PROJECT_DIR$/platform/icons-api/rendering/intellij.platform.icons.api.rendering.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/icons-api/rendering/lowlevel/intellij.platform.icons.api.rendering.lowlevel.iml" filepath="$PROJECT_DIR$/platform/icons-api/rendering/lowlevel/intellij.platform.icons.api.rendering.lowlevel.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/icons-impl/intellij.platform.icons.impl.iml" filepath="$PROJECT_DIR$/platform/icons-impl/intellij.platform.icons.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/icons-impl/intellij/intellij.platform.icons.impl.intellij.iml" filepath="$PROJECT_DIR$/platform/icons-impl/intellij/intellij.platform.icons.impl.intellij.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-api/intellij.platform.ide.iml" filepath="$PROJECT_DIR$/platform/platform-api/intellij.platform.ide.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/bootstrap/intellij.platform.ide.bootstrap.iml" filepath="$PROJECT_DIR$/platform/platform-impl/bootstrap/intellij.platform.ide.bootstrap.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/bootstrap/eel/intellij.platform.ide.bootstrap.eel.iml" filepath="$PROJECT_DIR$/platform/platform-impl/bootstrap/eel/intellij.platform.ide.bootstrap.eel.iml" />
@@ -1176,6 +1182,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/instanceContainer/intellij.platform.instanceContainer.iml" filepath="$PROJECT_DIR$/platform/instanceContainer/intellij.platform.instanceContainer.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/instanceContainer/intellij.platform.instanceContainer.tests.iml" filepath="$PROJECT_DIR$/platform/instanceContainer/intellij.platform.instanceContainer.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/jbr/intellij.platform.jbr.iml" filepath="$PROJECT_DIR$/platform/jbr/intellij.platform.jbr.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/jewel/icons/intellij.platform.jewel.icons.iml" filepath="$PROJECT_DIR$/platform/jewel/icons/intellij.platform.jewel.icons.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/jewel/decorated-window/intellij.platform.jewel.decoratedWindow.iml" filepath="$PROJECT_DIR$/platform/jewel/decorated-window/intellij.platform.jewel.decoratedWindow.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/jewel/detekt-plugin/intellij.platform.jewel.detektPlugin.iml" filepath="$PROJECT_DIR$/platform/jewel/detekt-plugin/intellij.platform.jewel.detektPlugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/jewel/foundation/intellij.platform.jewel.foundation.iml" filepath="$PROJECT_DIR$/platform/jewel/foundation/intellij.platform.jewel.foundation.iml" />
