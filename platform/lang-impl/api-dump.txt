@@ -151,6 +151,22 @@ com.intellij.codeInsight.codeVision.settings.CodeVisionGroupSettingProvider
 - getGroupName():java.lang.String
 com.intellij.codeInsight.codeVision.ui.model.CodeVisionPredefinedActionEntry
 - a:onClick(com.intellij.openapi.editor.Editor):V
+f:com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
+- sf:Companion:com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel$Companion
+- sf:HIDE_ALL:java.lang.String
+- sf:HIDE_PROVIDER_ID:java.lang.String
+- sf:MORE_PROVIDER_ID:java.lang.String
+- <init>(com.intellij.openapi.project.Project):V
+- f:getLensIndex(com.intellij.codeInsight.codeVision.CodeVisionEntry):I
+- f:getLensPopupActive():com.jetbrains.rd.util.reactive.Property
+- f:getMaxVisibleLensCount():com.jetbrains.rd.util.reactive.ViewableMap
+- f:getMoreEntry():com.intellij.codeInsight.codeVision.ui.model.AdditionalCodeVisionEntry
+- f:getProject():com.intellij.openapi.project.Project
+- f:handleLensClick(com.intellij.openapi.editor.Editor,com.intellij.openapi.util.TextRange,com.intellij.openapi.editor.Inlay,com.intellij.codeInsight.codeVision.CodeVisionEntry):V
+- f:handleLensExtraAction(com.intellij.openapi.editor.Editor,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.codeVision.CodeVisionEntry,java.lang.String):V
+- f:handleLensRightClick(com.intellij.codeInsight.codeVision.CodeVisionEntry,com.intellij.openapi.editor.Inlay):V
+f:com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
 com.intellij.codeInsight.codeVision.ui.renderers.painters.ICodeVisionEntryBasePainter
 - a:paint(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.markup.TextAttributes,java.awt.Graphics,java.lang.Object,java.awt.Point,com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel$InlayState,Z,com.intellij.codeInsight.codeVision.CodeVisionEntry):V
 - a:size(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel$InlayState,java.lang.Object):java.awt.Dimension
