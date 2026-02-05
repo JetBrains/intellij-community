@@ -232,7 +232,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
             "['file://" + toSelect + "']", ""
       );
     }
-    else if (toSelect == null && PathEnvironmentVariableUtil.isOnPath("xdg-open")) {
+    else if (PathEnvironmentVariableUtil.isOnPath("xdg-open")) {
       spawn("xdg-open", dir);
     }
     else {
