@@ -16,7 +16,7 @@ interface GitRepositoryTagsHolder {
    */
   val state: StateFlow<GitRepositoryTagsState>
 
-  fun reload()
+  fun scheduleReload()
 
   companion object {
     val TAGS_UPDATED: Topic<GitTagsHolderListener> = Topic.create("Git Tags updated", GitTagsHolderListener::class.java)

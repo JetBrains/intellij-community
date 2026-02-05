@@ -56,7 +56,7 @@ internal class GitRepositoryTagsHolderImpl(
     }
   }
 
-  override fun reload() {
+  override fun scheduleReload() {
     updateRequests.tryEmit(Unit)
   }
 
@@ -133,6 +133,6 @@ internal class GitRepositoryTagsHolderFetchHandler : GitFetchHandler {
     fetches: Map<GitRepository, List<GitRemote>>,
     indicator: ProgressIndicator,
   ) {
-    fetches.keys.forEach { repository -> repository.tagsHolder.reload() }
+    fetches.keys.forEach { repository -> repository.tagsHolder.scheduleReload() }
   }
 }
