@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.geometry.Offset
@@ -30,9 +31,13 @@ import androidx.compose.ui.window.rememberPopupPositionProviderAtPosition
 import java.awt.event.InputEvent
 import javax.swing.KeyStroke
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
+import org.jetbrains.jewel.ui.component.styling.LocalPopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
+import org.jetbrains.jewel.ui.component.styling.PopupContainerStyle
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.theme.menuStyle
+import org.jetbrains.jewel.ui.theme.popupContainerStyle
 
 /** Jewel's implementation of [ContextMenuRepresentation] showing standard Swing-like context menu items. */
 public object ContextMenuRepresentation : ContextMenuRepresentation {
@@ -57,6 +62,7 @@ public object ContextMenuRepresentation : ContextMenuRepresentation {
                     true
                 },
                 style = JewelTheme.menuStyle,
+                popupContainerStyle = JewelTheme.popupContainerStyle,
             ) {
                 contextItems(resolvedItems)
             }
@@ -71,6 +77,7 @@ internal fun ContextMenu(
     modifier: Modifier = Modifier,
     focusable: Boolean = true,
     style: MenuStyle = JewelTheme.menuStyle,
+    popupContainerStyle: PopupContainerStyle = JewelTheme.popupContainerStyle,
     content: MenuScope.() -> Unit,
 ) {
     var focusManager: FocusManager? by remember { mutableStateOf(null) }
@@ -78,11 +85,12 @@ internal fun ContextMenu(
     val menuController = remember(onDismissRequest) { DefaultMenuController(onDismissRequest = onDismissRequest) }
     val currentOnDismissRequest by rememberUpdatedState(onDismissRequest)
 
-    Popup(
+    PopupContainer(
+        modifier = modifier,
         popupPositionProvider = rememberPopupPositionProviderAtPosition(position, style.metrics.offset),
         onDismissRequest = { currentOnDismissRequest(InputMode.Touch) },
-        properties = PopupProperties(focusable = focusable),
         onPreviewKeyEvent = { false },
+        popupProperties = PopupProperties(focusable = focusable),
         onKeyEvent = {
             val currentFocusManager = checkNotNull(focusManager) { "FocusManager must not be null" }
             val currentInputModeManager = checkNotNull(inputModeManager) { "InputModeManager must not be null" }
@@ -91,15 +99,21 @@ internal fun ContextMenu(
             menuController.findAndExecuteShortcut(swingKeyStroke)
                 ?: handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuController)
         },
-        cornerSize = style.metrics.cornerSize,
+        useIntrinsicWidth = true,
+        style = popupContainerStyle,
+        horizontalAlignment = Alignment.Start,
     ) {
         @Suppress("AssignedValueIsNeverRead")
         focusManager = LocalFocusManager.current
         @Suppress("AssignedValueIsNeverRead")
         inputModeManager = LocalInputModeManager.current
 
-        CompositionLocalProvider(LocalMenuController provides menuController) {
-            MenuContent(modifier = modifier, content = content)
+        CompositionLocalProvider(
+            LocalMenuController provides menuController,
+            LocalMenuStyle provides style,
+            LocalPopupContainerStyle provides popupContainerStyle,
+        ) {
+            MenuContent(content = content)
         }
     }
 }

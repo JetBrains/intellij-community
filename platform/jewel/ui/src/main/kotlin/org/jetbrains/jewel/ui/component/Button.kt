@@ -966,8 +966,7 @@ private fun SplitButtonImpl(
 
         if (popupVisible && enabled && menuStyle != null) {
             val splitButtonPopupModifier =
-                Modifier.heightIn(max = maxPopupHeight)
-                    .widthIn(min = buttonWidth, max = maxPopupWidth.coerceAtLeast(buttonWidth))
+                Modifier.widthIn(min = buttonWidth, max = maxPopupWidth.coerceAtLeast(buttonWidth))
                     .testTag("Jewel.SplitButton.Popup")
                     .then(popupModifier)
                     .onClick { popupVisible = false }
@@ -981,7 +980,8 @@ private fun SplitButtonImpl(
                             true
                         },
                         horizontalAlignment = Alignment.Start,
-                        style = menuStyle,
+                        maxHeight = maxPopupHeight,
+                        menuStyle = menuStyle,
                         content = secondaryContentMenu,
                     )
                 }
@@ -991,6 +991,7 @@ private fun SplitButtonImpl(
                         modifier = splitButtonPopupModifier,
                         onDismissRequest = { popupVisible = false },
                         horizontalAlignment = Alignment.Start,
+                        maxHeight = maxPopupHeight,
                         content = secondaryContent,
                     )
                 }
