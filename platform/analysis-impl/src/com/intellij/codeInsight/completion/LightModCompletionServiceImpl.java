@@ -88,7 +88,7 @@ public final class LightModCompletionServiceImpl {
       });
     }
     EntryStream.of(sortMap)
-      .mapKeyValue((sorter, classifier) -> classifier.classify(allItems.get(sorter), processingContext))
+      .mapKeyValue((sorter, classifier) -> classifier.classify(allItems.getOrDefault(sorter, List.of()), processingContext))
       .flatMap(items -> StreamEx.of(items.spliterator()))
       .map(item -> ((CompletionItemLookupElement)item).item())
       .forEach(sink);
