@@ -6,17 +6,28 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.getBoundsInRoot
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isPopup
+import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -233,6 +244,42 @@ class ComboBoxTest {
         labelText.value = "small"
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("ComboBox").assertWidthIsEqualTo(100.dp)
+    }
+
+    @Test
+    fun `selected item is reflected when menu reopens after selection`() {
+        val items = listOf("Alpha", "Beta", "Gamma")
+
+        composeRule.setContent {
+            IntUiTheme {
+                var selectedIndex by remember { mutableIntStateOf(0) }
+                MenuComboBox(
+                    labelContent = { Text(items[selectedIndex]) },
+                    content = {
+                        items.forEachIndexed { index, item ->
+                            selectableItem(selected = index == selectedIndex, onClick = { selectedIndex = index }) {
+                                Text(item)
+                            }
+                        }
+                    },
+                )
+            }
+        }
+
+        // Open and click "Beta"
+        composeRule.onNodeWithText("Alpha").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNode(hasText("Beta").and(hasAnyAncestor(isPopup()))).performClick()
+        composeRule.waitForIdle()
+
+        // Reopen the popup
+        composeRule.onNodeWithText("Beta").performClick()
+        composeRule.waitForIdle()
+
+        // Only beta must be selected
+        composeRule.onNode(hasText("Beta").and(hasAnyAncestor(isPopup()))).assertIsSelected()
+        composeRule.onNode(hasText("Alpha").and(hasAnyAncestor(isPopup()))).assert(!isSelected())
+        composeRule.onNode(hasText("Gamma").and(hasAnyAncestor(isPopup()))).assert(!isSelected())
     }
 
     private val popupItems =
