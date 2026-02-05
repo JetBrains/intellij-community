@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
+import com.intellij.idea.TestFor
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.StackOverflowPreventedException
 import com.jetbrains.python.documentation.PythonDocumentationProvider
@@ -1041,6 +1042,14 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
       
       def main() -> Generator[int]:
           yield from expr
+      """)
+  }
+
+  @TestFor(issues = ["PY-87340"])
+  fun testMismatchOfExpectedAndActualTupleSize() {
+    doTest("x", "int", """
+      def check() -> tuple[bool, int, int]:
+          return true, x
       """)
   }
 
