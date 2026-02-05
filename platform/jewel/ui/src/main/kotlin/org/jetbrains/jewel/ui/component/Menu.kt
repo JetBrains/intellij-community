@@ -1,8 +1,6 @@
 package org.jetbrains.jewel.ui.component
 
 import androidx.annotation.VisibleForTesting
-import androidx.compose.foundation.VerticalScrollbar
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.FocusInteraction
 import androidx.compose.foundation.interaction.HoverInteraction
@@ -11,21 +9,14 @@ import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -39,7 +30,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
@@ -59,6 +49,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupPositionProvider
@@ -79,7 +70,6 @@ import org.jetbrains.jewel.foundation.state.SelectableComponentState
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.foundation.theme.LocalTextStyle
-import org.jetbrains.jewel.foundation.theme.OverrideDarkMode
 import org.jetbrains.jewel.ui.LocalMenuItemShortcutHintProvider
 import org.jetbrains.jewel.ui.LocalMenuItemShortcutProvider
 import org.jetbrains.jewel.ui.Orientation
@@ -87,11 +77,12 @@ import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
 import org.jetbrains.jewel.ui.component.styling.MenuItemColors
 import org.jetbrains.jewel.ui.component.styling.MenuItemMetrics
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
+import org.jetbrains.jewel.ui.component.styling.PopupContainerStyle
 import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.painter.hints.Stateful
-import org.jetbrains.jewel.ui.popupShadowAndBorder
 import org.jetbrains.jewel.ui.theme.menuStyle
+import org.jetbrains.jewel.ui.theme.popupContainerStyle
 import org.jetbrains.skiko.hostOs
 
 /**
@@ -100,6 +91,66 @@ import org.jetbrains.skiko.hostOs
  * Provides a floating menu that can be used for context menus, dropdown menus, and other popup menu scenarios. The menu
  * supports keyboard navigation, icons, keybindings, and nested submenus.
  *
+ * When a maxHeight is specified, the menu becomes scrollable and displays a vertical scrollbar.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/popups-and-menus.html)
+ *
+ * **Swing equivalent:** [`JPopupMenu`](https://docs.oracle.com/javase/tutorial/uiswing/components/menu.html#popup)
+ *
+ * @param onDismissRequest Called when the menu should be dismissed, returns true if the dismissal was handled
+ * @param horizontalAlignment The horizontal alignment of the menu relative to its anchor point
+ * @param modifier Modifier to be applied to the menu container
+ * @param maxHeight The maximum height of the menu, beyond which the content becomes scrollable.
+ * @param menuStyle The visual styling configuration for the menu items
+ * @param popupContainerStyle The visual styling configuration for the popup container
+ * @param popupProperties Properties controlling the popup window behavior
+ * @param adContent Optional composable content to display at the bottom of the menu, typically used for hints or tips
+ * @param content The menu content builder using [MenuScope]
+ * @see javax.swing.JPopupMenu
+ */
+@Composable
+public fun PopupMenu(
+    onDismissRequest: (InputMode) -> Boolean,
+    horizontalAlignment: Alignment.Horizontal,
+    modifier: Modifier = Modifier,
+    maxHeight: Dp = Dp.Unspecified,
+    menuStyle: MenuStyle = JewelTheme.menuStyle,
+    popupContainerStyle: PopupContainerStyle = JewelTheme.popupContainerStyle,
+    popupProperties: PopupProperties = PopupProperties(focusable = true),
+    adContent: (@Composable () -> Unit)? = null,
+    content: MenuScope.() -> Unit,
+) {
+    val density = LocalDensity.current
+
+    val popupPositionProvider =
+        remember(menuStyle.metrics.offset, menuStyle.metrics.menuMargin, horizontalAlignment, density) {
+            AnchorVerticalMenuPositionProvider(
+                contentOffset = menuStyle.metrics.offset,
+                contentMargin = menuStyle.metrics.menuMargin,
+                alignment = horizontalAlignment,
+                density = density,
+            )
+        }
+
+    PopupMenu(
+        onDismissRequest,
+        popupPositionProvider,
+        modifier,
+        maxHeight,
+        menuStyle,
+        popupContainerStyle,
+        popupProperties,
+        adContent,
+        content,
+    )
+}
+
+/**
+ * A popup menu component that follows the standard visual styling with customizable content.
+ *
+ * Provides a floating menu that can be used for context menus, dropdown menus, and other popup menu scenarios. The menu
+ * supports keyboard navigation, icons, keybindings, and nested submenus.
+ *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/popups-and-menus.html)
  *
  * **Swing equivalent:** [`JPopupMenu`](https://docs.oracle.com/javase/tutorial/uiswing/components/menu.html#popup)
@@ -114,6 +165,10 @@ import org.jetbrains.skiko.hostOs
  * @see javax.swing.JPopupMenu
  */
 @Composable
+@Deprecated(
+    message = "Use the variant with maxHeight, menuStyle and popupContainerStyle.",
+    level = DeprecationLevel.HIDDEN,
+)
 public fun PopupMenu(
     onDismissRequest: (InputMode) -> Boolean,
     horizontalAlignment: Alignment.Horizontal,
@@ -139,7 +194,7 @@ public fun PopupMenu(
         onDismissRequest = onDismissRequest,
         popupPositionProvider = popupPositionProvider,
         modifier = modifier,
-        style = style,
+        menuStyle = style,
         popupProperties = popupProperties,
         adContent = adContent,
         content = content,
@@ -165,7 +220,10 @@ public fun PopupMenu(
  * @see javax.swing.JPopupMenu
  */
 @Composable
-@Deprecated("Use the variant with adContent.", level = DeprecationLevel.HIDDEN)
+@Deprecated(
+    message = "Use the variant with adContent, maxHeight, menuStyle and popupContainerStyle.",
+    level = DeprecationLevel.HIDDEN,
+)
 public fun PopupMenu(
     onDismissRequest: (InputMode) -> Boolean,
     horizontalAlignment: Alignment.Horizontal,
@@ -190,8 +248,56 @@ public fun PopupMenu(
         onDismissRequest = onDismissRequest,
         popupPositionProvider = popupPositionProvider,
         modifier = modifier,
-        style = style,
+        menuStyle = style,
         popupProperties = popupProperties,
+        content = content,
+    )
+}
+
+/**
+ * A popup menu component that follows the standard visual styling with customizable content.
+ *
+ * Provides a floating menu that can be used for context menus, dropdown menus, and other popup menu scenarios. The menu
+ * supports keyboard navigation, icons, keybindings, and nested submenus.
+ *
+ * When a maxHeight is specified, the menu becomes scrollable and displays a vertical scrollbar.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/popups-and-menus.html)
+ *
+ * **Swing equivalent:** [`JPopupMenu`](https://docs.oracle.com/javase/tutorial/uiswing/components/menu.html#popup)
+ *
+ * @param onDismissRequest Called when the menu should be dismissed, returns true if the dismissal was handled
+ * @param popupPositionProvider Determines the position of the popup menu on the screen.
+ * @param modifier Modifier to be applied to the menu container
+ * @param maxHeight The maximum height of the menu, beyond which the content becomes scrollable.
+ * @param menuStyle The visual styling configuration for the menu items
+ * @param popupContainerStyle The visual styling configuration for the popup container
+ * @param popupProperties Properties controlling the popup window behavior
+ * @param adContent Optional composable content to display at the bottom of the menu, typically used for hints or tips
+ * @param content The menu content builder using [MenuScope]
+ * @see javax.swing.JPopupMenu
+ */
+@Composable
+public fun PopupMenu(
+    onDismissRequest: (InputMode) -> Boolean,
+    popupPositionProvider: PopupPositionProvider,
+    modifier: Modifier = Modifier,
+    maxHeight: Dp = Dp.Unspecified,
+    menuStyle: MenuStyle = JewelTheme.menuStyle,
+    popupContainerStyle: PopupContainerStyle = JewelTheme.popupContainerStyle,
+    popupProperties: PopupProperties = PopupProperties(focusable = true),
+    adContent: (@Composable () -> Unit)? = null,
+    content: MenuScope.() -> Unit,
+) {
+    PopupMenuImpl(
+        onDismissRequest = onDismissRequest,
+        popupPositionProvider = popupPositionProvider,
+        modifier = modifier,
+        maxHeight = maxHeight,
+        menuStyle = menuStyle,
+        popupContainerStyle = popupContainerStyle,
+        popupProperties = popupProperties,
+        adContent = adContent,
         content = content,
     )
 }
@@ -216,6 +322,10 @@ public fun PopupMenu(
  * @see javax.swing.JPopupMenu
  */
 @Composable
+@Deprecated(
+    message = "Use the variant with maxHeight, menuStyle and popupContainerStyle.",
+    level = DeprecationLevel.HIDDEN,
+)
 public fun PopupMenu(
     onDismissRequest: (InputMode) -> Boolean,
     popupPositionProvider: PopupPositionProvider,
@@ -229,7 +339,8 @@ public fun PopupMenu(
         onDismissRequest = onDismissRequest,
         popupPositionProvider = popupPositionProvider,
         modifier = modifier,
-        style = style,
+        maxHeight = Dp.Unspecified,
+        menuStyle = style,
         popupProperties = popupProperties,
         adContent = adContent,
         content = content,
@@ -255,7 +366,10 @@ public fun PopupMenu(
  * @see javax.swing.JPopupMenu
  */
 @Composable
-@Deprecated("Use the variant with adContent.", level = DeprecationLevel.HIDDEN)
+@Deprecated(
+    message = "Use the variant with adContent, maxHeight, menuStyle and popupContainerStyle.",
+    level = DeprecationLevel.HIDDEN,
+)
 public fun PopupMenu(
     onDismissRequest: (InputMode) -> Boolean,
     popupPositionProvider: PopupPositionProvider,
@@ -268,7 +382,7 @@ public fun PopupMenu(
         onDismissRequest = onDismissRequest,
         popupPositionProvider = popupPositionProvider,
         modifier = modifier,
-        style = style,
+        menuStyle = style,
         popupProperties = popupProperties,
         content = content,
     )
@@ -279,7 +393,9 @@ private fun PopupMenuImpl(
     onDismissRequest: (InputMode) -> Boolean,
     popupPositionProvider: PopupPositionProvider,
     modifier: Modifier = Modifier,
-    style: MenuStyle = JewelTheme.menuStyle,
+    maxHeight: Dp = Dp.Unspecified,
+    menuStyle: MenuStyle = JewelTheme.menuStyle,
+    popupContainerStyle: PopupContainerStyle = JewelTheme.popupContainerStyle,
     popupProperties: PopupProperties = PopupProperties(focusable = true),
     adContent: (@Composable () -> Unit)? = null,
     content: MenuScope.() -> Unit,
@@ -288,28 +404,31 @@ private fun PopupMenuImpl(
     var inputModeManager: InputModeManager? by remember { mutableStateOf(null) }
     val menuController = remember(onDismissRequest) { DefaultMenuController(onDismissRequest = onDismissRequest) }
 
-    Popup(
-        popupPositionProvider = popupPositionProvider,
+    PopupContainer(
         onDismissRequest = { onDismissRequest(InputMode.Touch) },
-        properties = popupProperties,
+        horizontalAlignment = Alignment.Start,
+        modifier = modifier,
+        maxHeight = maxHeight,
+        useIntrinsicWidth = true,
+        style = popupContainerStyle,
+        popupProperties = popupProperties,
+        popupPositionProvider = popupPositionProvider,
         onPreviewKeyEvent = { false },
         onKeyEvent = {
-            val currentFocusManager = focusManager ?: return@Popup false
-            val currentInputModeManager = inputModeManager ?: return@Popup false
+            val currentFocusManager = focusManager ?: return@PopupContainer false
+            val currentInputModeManager = inputModeManager ?: return@PopupContainer false
 
             handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuController)
         },
-        cornerSize = style.metrics.cornerSize,
+        adContent = adContent,
     ) {
         @Suppress("AssignedValueIsNeverRead")
         focusManager = LocalFocusManager.current
         @Suppress("AssignedValueIsNeverRead")
         inputModeManager = LocalInputModeManager.current
 
-        OverrideDarkMode(style.isDark) {
-            CompositionLocalProvider(LocalMenuController provides menuController, LocalMenuStyle provides style) {
-                MenuContent(modifier = modifier, adContent = adContent, content = content)
-            }
+        CompositionLocalProvider(LocalMenuController provides menuController, LocalMenuStyle provides menuStyle) {
+            MenuContent(content = content)
         }
     }
 }
@@ -321,7 +440,15 @@ private fun PopupMenuImpl(
 public fun MenuContent(
     modifier: Modifier = Modifier,
     style: MenuStyle = JewelTheme.menuStyle,
-    adContent: (@Composable () -> Unit)? = null,
+    content: MenuScope.() -> Unit,
+) {
+    MenuContentImpl(modifier = modifier, style = style, content = content)
+}
+
+@Composable
+private fun MenuContentImpl(
+    modifier: Modifier = Modifier,
+    style: MenuStyle = JewelTheme.menuStyle,
     content: MenuScope.() -> Unit,
 ) {
     val items by remember(content) { derivedStateOf { content.asList() } }
@@ -337,9 +464,6 @@ public fun MenuContent(
     val localMenuController = LocalMenuController.current
     val localInputModeManager = LocalInputModeManager.current
     val localMenuItemShortcutProvider = LocalMenuItemShortcutProvider.current
-    val scrollState = rememberScrollState()
-    val colors = style.colors
-    val menuShape = RoundedCornerShape(style.metrics.cornerSize)
 
     DisposableEffect(selectableItems, localMenuController, localMenuItemShortcutProvider, localInputModeManager) {
         selectableItems.forEach { item ->
@@ -356,41 +480,18 @@ public fun MenuContent(
         onDispose { localMenuController.clearShortcutActions() }
     }
 
-    Box(
-        modifier =
-            modifier
-                .popupShadowAndBorder(
-                    shape = menuShape,
-                    shadowSize = style.metrics.shadowSize,
-                    shadowColor = colors.shadow,
-                    borderWidth = style.metrics.borderWidth,
-                    borderColor = colors.border,
-                )
-                .background(colors.background, menuShape)
-                .width(IntrinsicSize.Max)
-                .onHover { localMenuController.onHoveredChange(it) }
+    Column(
+        modifier = modifier.padding(style.metrics.contentPadding).onHover { localMenuController.onHoveredChange(it) }
     ) {
-        Column(Modifier.clip(menuShape).verticalScroll(scrollState)) {
-            Column(Modifier.padding(style.metrics.contentPadding)) {
-                var selectedSubMenu by remember { mutableStateOf<SubmenuItem?>(null) }
-                items.forEach { item ->
-                    MenuItem(
-                        item = item,
-                        showIcons = anyItemHasIcon,
-                        showKeybindings = anyItemHasKeybinding,
-                        selectedSubMenu = selectedSubMenu,
-                        setSelectedSubMenu = { selectedSubMenu = it },
-                    )
-                }
-            }
-
-            adContent?.let { PopupAd(modifier = Modifier.fillMaxWidth()) { it() } }
-        }
-
-        Box(modifier = Modifier.matchParentSize()) {
-            VerticalScrollbar(
-                rememberScrollbarAdapter(scrollState),
-                modifier = Modifier.fillMaxHeight().align(Alignment.CenterEnd),
+        var selectedSubMenu by remember { mutableStateOf<SubmenuItem?>(null) }
+        items.forEach { item ->
+            MenuItem(
+                item = item,
+                style = style,
+                showIcons = anyItemHasIcon,
+                showKeybindings = anyItemHasKeybinding,
+                selectedSubMenu = selectedSubMenu,
+                setSelectedSubMenu = { selectedSubMenu = it },
             )
         }
     }
@@ -399,6 +500,7 @@ public fun MenuContent(
 @Composable
 private fun MenuItem(
     item: MenuItem,
+    style: MenuStyle,
     showIcons: Boolean,
     showKeybindings: Boolean,
     selectedSubMenu: SubmenuItem?,
@@ -425,6 +527,7 @@ private fun MenuItem(
                     canShowIcon = showIcons,
                     canShowKeybinding = showKeybindings,
                     enabled = item.isEnabled,
+                    style = style,
                     content = {
                         LaunchedEffect(it.isHovered) { if (it.isHovered) deselectSubmenu() }
                         item.content()
@@ -439,6 +542,7 @@ private fun MenuItem(
                     canShowIcon = showIcons,
                     canShowKeybinding = showKeybindings,
                     enabled = item.isEnabled,
+                    style = style,
                     content = {
                         LaunchedEffect(it.isHovered) { if (it.isHovered) deselectSubmenu() }
                         item.content()
@@ -453,6 +557,7 @@ private fun MenuItem(
                 enabled = item.isEnabled,
                 submenu = item.submenu,
                 iconKey = item.iconKey,
+                style = style,
                 content = {
                     LaunchedEffect(it.isHovered) { if (it.isHovered) selectSubmenu(item) }
                     item.content()
@@ -836,6 +941,7 @@ internal fun MenuItemBase(
                 is PressInteraction.Press -> itemState = itemState.copy(pressed = true)
                 is PressInteraction.Cancel,
                 is PressInteraction.Release -> itemState = itemState.copy(pressed = false)
+
                 is HoverInteraction.Enter -> {
                     itemState = itemState.copy(hovered = true)
                     focusRequester.requestFocus()
@@ -1099,15 +1205,17 @@ internal fun Submenu(
     val menuController =
         remember(parentMenuController, onDismissRequest) { parentMenuController.submenuController(onDismissRequest) }
 
-    Popup(
-        popupPositionProvider = popupPositionProvider,
+    PopupContainer(
         onDismissRequest = { menuController.closeAll(InputMode.Touch, false) },
-        properties = PopupProperties(focusable = true),
+        horizontalAlignment = Alignment.Start,
+        modifier = modifier,
+        useIntrinsicWidth = true,
+        popupProperties = PopupProperties(focusable = true),
+        popupPositionProvider = popupPositionProvider,
         onPreviewKeyEvent = { false },
-        cornerSize = style.metrics.cornerSize,
         onKeyEvent = {
-            val currentFocusManager = focusManager ?: return@Popup false
-            val currentInputModeManager = inputModeManager ?: return@Popup false
+            val currentFocusManager = focusManager ?: return@PopupContainer false
+            val currentInputModeManager = inputModeManager ?: return@PopupContainer false
             handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuController)
         },
     ) {
@@ -1116,9 +1224,7 @@ internal fun Submenu(
         @Suppress("AssignedValueIsNeverRead")
         inputModeManager = LocalInputModeManager.current
 
-        CompositionLocalProvider(LocalMenuController provides menuController) {
-            MenuContent(modifier = modifier, content = content)
-        }
+        CompositionLocalProvider(LocalMenuController provides menuController) { MenuContent(content = content) }
     }
 }
 
