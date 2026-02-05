@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import kotlinx.coroutines.CancellationException
@@ -46,7 +47,9 @@ fun Project.resolveInProject(pathInProject: String, throwWhenOutside: Boolean = 
 }
 
 fun findMostRelevantProjectForRoots(roots: Collection<String>): Project? {
-  return roots.map { Paths.get(URI(it)).normalize() }.firstNotNullOfOrNull { findMostRelevantProject(it) }
+  return roots
+    .map { Paths.get(URI(FileUtilRt.toSystemIndependentName(it))).normalize() }
+    .firstNotNullOfOrNull { findMostRelevantProject(it) }
 }
 
 fun findMostRelevantProject(path: Path): Project? {
@@ -64,7 +67,7 @@ fun findMostRelevantProject(path: Path): Project? {
   // - frontend/common/src  <-- this path passed as `path`
   // here we will have 2 project matches: `frontend/common` and `frontend` and better to prefer `frontend/common`
   val pairs = openProjects.mapNotNull { project ->
-    val openProjectPath = project.basePath?.let { Path(it) }?.normalize() ?: return@mapNotNull null
+    val openProjectPath = project.basePath?.let { Paths.get(URI("file://$it")) }?.normalize() ?: return@mapNotNull null
     if (targetNormalizedPath.startsWith(openProjectPath)) project to path else null
   }.sortedByDescending { it.second.nameCount }
   logger.trace { "Found projects for path $path: ${pairs.joinToString { it.first.basePath ?: "null"}}" }
