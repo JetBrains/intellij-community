@@ -448,9 +448,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       final PsiTypeElement typeElement = factory.createTypeElement(type);
       field.getTypeElement().replace(typeElement);
       field = (PsiField)CodeStyleManager.getInstance(psiManager.getProject()).reformat(field);
-      if (includeInitializer) {
-        field.getInitializer().replace(initializerExpr);
-      }
       return field;
     }
     catch (IncorrectOperationException e) {
@@ -758,11 +755,10 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, destClass.getContainingFile())) return;
 
         ChangeContextUtil.encodeContextInfo(destClass, true);
-
-        myField = mySettings.isIntroduceEnumConstant() ? EnumConstantsUtil.createEnumConstant(destClass, myFieldName, initializer) :
-                  createField(myFieldName, type.getType(), initializer,
-                              initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null,
-                              myParentClass);
+        boolean includeInitializer = initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null;
+        myField = mySettings.isIntroduceEnumConstant()
+                  ? EnumConstantsUtil.createEnumConstant(destClass, myFieldName, initializer)
+                  : createField(myFieldName, type.getType(), initializer, includeInitializer, myParentClass);
 
         setModifiers(myField, mySettings);
         PsiElement finalAnchorElement = null;
@@ -796,6 +792,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           anchorMember = null;
         }
         myField = appendField(initializer, initializerPlace, destClass, myParentClass, myField, anchorMember);
+        if (includeInitializer) {
+          myField.getInitializer().replace(initializer);
+        }
         if (!mySettings.isIntroduceEnumConstant()) {
           VisibilityUtil.fixVisibility(myOccurrences, myField, mySettings.getFieldVisibility());
         }
