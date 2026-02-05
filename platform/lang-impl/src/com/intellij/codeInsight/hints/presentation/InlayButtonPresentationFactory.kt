@@ -3,15 +3,16 @@ package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.hints.InlayPresentationFactory
-import com.intellij.codeInsight.hints.presentation.InlayButtonPresentationFactory.InlayButtonPresentationBuilder.InlayButtonPresentation
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.INLAY_BUTTON_HINT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Cursor
+import java.awt.Graphics2D
 import java.util.EnumSet
 import javax.swing.Icon
 
@@ -151,15 +152,18 @@ open class InlayButtonPresentationFactory(
         withInlayAttributes(border(), factory.defaultAttributesKey), Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
       ),
       left = spacingBetweenComponents
-    )
+    ).wrapWithStorageCheckpoint()
 
     fun buildFocused(): InlayPresentation = factory.delegate.withCursorOnHover(
       withInlayAttributes(border(2), factory.focusedAttributesKey), Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-    )
+    ).wrapWithStorageCheckpoint()
 
     fun buildHovered(): InlayPresentation = factory.delegate.withCursorOnHover(
       withInlayAttributes(border(), factory.hoveredAttributesKey), Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-    )
+    ).wrapWithStorageCheckpoint()
+
+    private fun InlayPresentation.wrapWithStorageCheckpoint(): InlayPresentation =
+      TextMetricsStorageCheckpointPresentation(factory.delegate.textMetricsStorage, this)
 
     private fun withInlayAttributes(base: InlayPresentation, attributes: TextAttributesKey): InlayPresentation {
       return WithAttributesPresentation(base, attributes, factory.editor,
@@ -195,8 +199,6 @@ open class InlayButtonPresentationFactory(
         down = onePixelBorderProvider.down
       )
     }
-
-    internal class InlayButtonPresentation(delegate: InlayPresentation) : StaticDelegatePresentation(delegate)
   }
 }
 
@@ -241,4 +243,17 @@ class RoundCornersInsetValueProvider(
     get() = presentation.height / 2
   override val right: Int
     get() = left * rightCornerRadius / InlayButtonPresentationFactory.DEFAULT_CORNER_RADIUS
+}
+
+@ApiStatus.Internal
+class TextMetricsStorageCheckpointPresentation(
+  private val textMetricsStorage: InlayTextMetricsStorage,
+  delegate: InlayPresentation
+) : StaticDelegatePresentation(delegate) {
+  override fun paint(g: Graphics2D, attributes: TextAttributes) {
+    textMetricsStorage.checkpoint { super.paint(g, attributes) }
+  }
+
+  override val height: Int get() = textMetricsStorage.checkpoint { super.height }
+  override val width: Int get() = textMetricsStorage.checkpoint { super.width }
 }

@@ -39,7 +39,7 @@ import javax.swing.Icon
 import kotlin.math.max
 
 class PresentationFactory(private val editor: Editor) : InlayPresentationFactory {
-  private val textMetricsStorage = InlayHintsUtils.getTextMetricStorage(editor)
+  internal val textMetricsStorage = InlayHintsUtils.getTextMetricStorage(editor)
   private val offsetFromTopProvider = object : InsetValueProvider {
     override val top: Int
       get() = textMetricsStorage.getFontMetrics(true).offsetFromTop()
