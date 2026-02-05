@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.terminal.frontend">
+<idea-plugin visibility="internal">
   <dependencies>
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.inline.completion"/>
