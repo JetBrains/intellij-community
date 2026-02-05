@@ -2,6 +2,7 @@
 package com.intellij.platform.execution.serviceView
 
 import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.dashboard.RunDashboardManagerProxy
 import com.intellij.execution.services.ServiceViewContributor
 import com.intellij.execution.services.ServiceViewManager
 import com.intellij.execution.services.ServiceViewToolWindowDescriptor
@@ -170,9 +171,7 @@ internal class ConfigureServicesDialog(private val project: Project, settings: S
 
   override fun doOKAction() {
     (ServiceViewManager.getInstance(project) as ServiceViewManagerImpl).setExcludedContributors(excludedServicesTree.getServices())
-    ServiceViewCoroutineScopeProvider.getInstance(project).cs.launch {
-      ServiceViewRpc.getInstance().saveConfigurationTypes(project.projectId(), includedServicesTree.getTypes())
-    }
+    RunDashboardManagerProxy.getInstance(project).types = includedServicesTree.getTypes()
     super.doOKAction()
   }
 }
