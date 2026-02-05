@@ -73,7 +73,7 @@ sealed class NativeLibraryExtractor {
 class ModulePacker(
   private val directory: Path,
   private val nativeLibraryExtractor: NativeLibraryExtractor,
-  private val version: String,
+  private val version: String?,
   private val logger: Logger,
   private val shadowedJarSpecs: List<ShadowedJarSpec>,
 ) {
@@ -130,7 +130,10 @@ class ModulePacker(
               path = fileToPack,
               needsScrambling = needsScrambling,
               shadowed = shadowed,
-              target = directory.resolve("${fileToPack.fileName}-$version.jar"),
+              target = when {
+                version != null -> directory.resolve("${fileToPack.fileName}-$version.jar")
+                else -> directory.resolve("${fileToPack.fileName}.jar")
+              },
               logger = logger,
             )
 
@@ -295,7 +298,6 @@ private fun packToImmutableJar(destinationJar: Path, jars: List<Path>, logger: L
       destinationJar.parent.createDirectories()
       writeZipUsingTempFile(destinationJar, packageIndexBuilder = packageIndexBuilder) { zipOut ->
         val uniqueNames = HashMap<String, Path>()
-
         for (jar in jars) {
           readZipFile(jar) { name, dataSupplier ->
             when { // TODO: instead of fixing the FIXMEs, could we instead write a `META-INF/MANIFEST.MF` merger with heuristics and hard failures in case it's not heuristically possible to merge them?
