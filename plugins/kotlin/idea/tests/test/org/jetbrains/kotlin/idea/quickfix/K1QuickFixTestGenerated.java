@@ -13224,9 +13224,14 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/optIn/classUseOptIn.kt");
             }
 
-            @TestMetadata("destructuringDeclaration.kt")
-            public void testDestructuringDeclaration() throws Exception {
-                runTest("testData/quickfix/optIn/destructuringDeclaration.kt");
+            @TestMetadata("destructuringDeclarationOnFunction.kt")
+            public void testDestructuringDeclarationOnFunction() throws Exception {
+                runTest("testData/quickfix/optIn/destructuringDeclarationOnFunction.kt");
+            }
+
+            @TestMetadata("destructuringDeclarationOnStatement.kt")
+            public void testDestructuringDeclarationOnStatement() throws Exception {
+                runTest("testData/quickfix/optIn/destructuringDeclarationOnStatement.kt");
             }
 
             @TestMetadata("existingFileAnnotationWithPackage.kt")
