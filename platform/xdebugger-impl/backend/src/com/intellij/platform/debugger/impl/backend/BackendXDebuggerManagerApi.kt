@@ -321,7 +321,7 @@ fun XDebugSessionImpl.getSessionEventsFlow(
     }
 
     override fun settingsChanged() {
-      rawEvents.trySend { XDebuggerSessionEvent.SettingsChanged }
+      rawEvents.trySend { XDebuggerSessionEvent.SettingsChanged(currentSession.state()) }
     }
 
     override fun settingsChangedFromFrontend() {

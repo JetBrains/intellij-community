@@ -126,7 +126,9 @@ sealed interface XDebuggerSessionEvent {
   ) : EventWithState
 
   @Serializable
-  object SettingsChanged : XDebuggerSessionEvent
+  class SettingsChanged(
+    override val state: XDebugSessionState,
+  ) : EventWithState
 
   @Serializable
   data class BreakpointsMuted(val muted: Boolean) : XDebuggerSessionEvent

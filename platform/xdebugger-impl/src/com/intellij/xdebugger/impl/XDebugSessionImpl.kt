@@ -297,7 +297,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   override fun setPauseActionSupported(isSupported: Boolean) {
+    if (sessionData.isPauseSupported == isSupported) return
     sessionData.isPauseSupported = isSupported
+    myDispatcher.getMulticaster().settingsChanged()
   }
 
   var isReadOnly: Boolean

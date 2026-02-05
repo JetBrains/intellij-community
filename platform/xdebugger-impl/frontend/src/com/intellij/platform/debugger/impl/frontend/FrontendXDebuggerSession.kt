@@ -301,7 +301,9 @@ class FrontendXDebuggerSession(
         currentStackFrame.value = StackFrameUpdate.notifyChanged(newFrame)
       }
       is XDebuggerSessionEvent.BreakpointsMuted -> {}
-      XDebuggerSessionEvent.SettingsChanged -> {}
+      is XDebuggerSessionEvent.SettingsChanged -> {
+        updateState()
+      }
     }
   }
 
