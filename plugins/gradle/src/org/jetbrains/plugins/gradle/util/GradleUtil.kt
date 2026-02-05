@@ -1,10 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.util
 
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityId
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import com.intellij.workspaceModel.ide.toPath
 import org.gradle.util.GradleVersion
@@ -17,19 +15,14 @@ import java.nio.file.Path
  * @return the active Gradle version of the project related to the module, or null if unavailable
  */
 fun Module.getGradleVersion(): GradleVersion? {
-  val rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(this) ?: return null
-  val storage = project.workspaceModel.currentSnapshot
-  val externalProjectEntity = storage.resolve(ExternalProjectEntityId(rootProjectPath)) ?: return null
-  val version = externalProjectEntity.gradleInfo.gradleVersion
+  val externalProject = getRelatedGradleBuild()?.externalProject ?: return null
+  val version = externalProject.gradleInfo.gradleVersion
   return GradleVersion.version(version)
 }
 
-/**
- * @return the root path of the (included) project based on the module.
- */
-fun Module.getGradleBuildPath(): Path? = getGradleBuild()?.url?.toPath()
+fun Module.getRelatedGradleBuildPath(): Path? = getRelatedGradleBuild()?.url?.toPath()
 
-fun Module.getGradleBuild(): GradleBuildEntity? {
+fun Module.getRelatedGradleBuild(): GradleBuildEntity? {
   val moduleEntity = findModuleEntity() ?: return null
   val gradleModuleEntity = moduleEntity.gradleModuleEntity ?: return null
   val storage = project.workspaceModel.currentSnapshot
