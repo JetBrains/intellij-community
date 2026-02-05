@@ -436,17 +436,13 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     if (!isSoftWrappingEnabled()) {
       return false;
     }
-    SoftWrapModel model = editor.getSoftWrapModel();
-    if (!model.isSoftWrappingEnabled()) {
-      return false;
-    }
     int offset = editor.visualPositionToOffset(visual);
     if (offset <= 0) {
       // Never expect to be here, just a defensive programming.
       return false;
     }
 
-    SoftWrap softWrap = model.getSoftWrap(offset);
+    SoftWrap softWrap = getSoftWrap(offset);
     if (softWrap == null) {
       return false;
     }
