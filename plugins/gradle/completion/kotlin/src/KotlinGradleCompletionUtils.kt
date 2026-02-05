@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.KtValueArgumentName
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_NAME
 import java.io.IOException
 
@@ -120,7 +121,7 @@ private fun Char.isAllowedInDependencyCompletion(): Boolean {
  * in a Gradle dependency configuration call (e.g., `implementation("...")`, `api("...")`, etc.)
  */
 internal fun PsiElement.isSingleDependencyArgument(): Boolean =
-    this.isDependencyArgument() && this.argumentsSize == 1
+    this.isDependencyArgument() && this.surroundingArgumentsSize == 1 && (this.argumentName.isEmpty() || this.argumentName == "dependencyNotation")
 
 /**
  * Checks whether the current [PsiElement] is a string literal used as an argument
@@ -129,47 +130,72 @@ internal fun PsiElement.isSingleDependencyArgument(): Boolean =
 internal fun PsiElement.isPositionalOrNamedDependencyArgument(): Boolean {
     if (!this.isDependencyArgument()) return false
 
-    val argumentsSize = this.argumentsSize
+    val argumentsSize = this.surroundingArgumentsSize
+    val argumentName = this.argumentName
+    val namedArgumentNamesOfCoordinates = listOf("group", "name", "version")
 
-    if (argumentsSize == 1 && this.argumentName in setOf("group", "name", "version")) return true
-
-    return argumentsSize in 2..6 // group, name, version, configuration, classifier, ext
+    if (argumentsSize == 1 && argumentName in namedArgumentNamesOfCoordinates) return true
+    if (argumentsSize !in 2..6) return false
+    return argumentName in namedArgumentNamesOfCoordinates || (argumentName.isEmpty() && this.argumentIndex in 0..2)
 }
 
 internal fun PsiElement.isDependencyArgument(dependencyConfigurations: Collection<String>): Boolean {
-    val pattern = psiElement<LeafPsiElement>().withSuperParent(1, KtLiteralStringTemplateEntry::class.java)
+    val patternForRegularStringPart = psiElement<LeafPsiElement>()
+        .withSuperParent(1, KtLiteralStringTemplateEntry::class.java)
         .withSuperParent(2, KtStringTemplateExpression::class.java)
         .withSuperParent(3, KtValueArgument::class.java)
         .withSuperParent(4, psiElement<KtValueArgumentList>())
-        .withSuperParent(5, psiElement<KtCallExpression>().withChild(
+        .withSuperParent(
+            5, psiElement<KtCallExpression>().withChild(
             psiElement<KtNameReferenceExpression>().withText(string().oneOf(dependencyConfigurations))
         ))
 
-    return pattern.accepts(this)
+    val patternForOpenQuote = psiElement<LeafPsiElement>()
+        .withSuperParent(1, KtStringTemplateExpression::class.java)
+        .withSuperParent(2, KtValueArgument::class.java)
+        .withSuperParent(3, psiElement<KtValueArgumentList>())
+        .withSuperParent(
+            4, psiElement<KtCallExpression>().withChild(
+                psiElement<KtNameReferenceExpression>().withText(string().oneOf(dependencyConfigurations))
+            )
+        )
+
+    return patternForRegularStringPart.accepts(this) || patternForOpenQuote.accepts(this)
 }
 
 internal fun PsiElement.isDependencyArgument(): Boolean {
-    val pattern = psiElement<LeafPsiElement>().withSuperParent(1, KtLiteralStringTemplateEntry::class.java)
+    val patternForRegularStringPart = psiElement<LeafPsiElement>()
+        .withSuperParent(1, KtLiteralStringTemplateEntry::class.java)
         .withSuperParent(2, KtStringTemplateExpression::class.java)
         .withSuperParent(3, KtValueArgument::class.java)
         .withSuperParent(4, psiElement<KtValueArgumentList>())
         .withSuperParent(5, psiElement<KtCallExpression>())
 
-    return pattern.accepts(this)
+    val patternForOpenQuote = psiElement<LeafPsiElement>()
+        .withSuperParent(1, KtStringTemplateExpression::class.java)
+        .withSuperParent(2, KtValueArgument::class.java)
+        .withSuperParent(3, psiElement<KtValueArgumentList>())
+        .withSuperParent(4, psiElement<KtCallExpression>())
+
+    return patternForRegularStringPart.accepts(this) || patternForOpenQuote.accepts(this)
 }
 
-private val PsiElement.argumentsSize get(): Int = (this.parent?.parent?.parent?.parent as? KtValueArgumentList)?.arguments?.size ?: 0
+private val PsiElement.surroundingArgumentsSize
+    get(): Int =
+        this.getParentOfType<KtValueArgumentList>(strict = true, stopAt = arrayOf(KtCallExpression::class.java))?.arguments?.size ?: 0
 
 internal val PsiElement.argumentName: String
     get() {
-        val valueArgument = this.parent?.parent?.parent as? KtValueArgument ?: return ""
+        val valueArgument =
+            this.getParentOfType<KtValueArgument>(strict = true, stopAt = arrayOf(KtCallExpression::class.java)) ?: return ""
         val valueArgumentName = valueArgument.children[0] as? KtValueArgumentName ?: return ""
         return valueArgumentName.text
     }
 
 internal val PsiElement.argumentIndex: Int
     get() {
-        val valueArgument = this.parent?.parent?.parent as? KtValueArgument ?: return -1
+        val valueArgument =
+            this.getParentOfType<KtValueArgument>(strict = true, stopAt = arrayOf(KtCallExpression::class.java)) ?: return -1
         val argumentList = valueArgument.parent as? KtValueArgumentList ?: return -1
         return argumentList.arguments.indexOf(valueArgument)
     }
@@ -181,7 +207,7 @@ internal fun PsiElement.getVersionPrefix(): String = getCoordinatePrefix("versio
 internal fun PsiElement.getExcludeArtifactPrefix(): String = getCoordinatePrefix("module", 1)
 
 internal fun PsiElement.getCoordinatePrefix(text: String, index: Int): String {
-    val valueArgument = this.parent?.parent?.parent as? KtValueArgument ?: return ""
+    val valueArgument = this.getParentOfType<KtValueArgument>(strict = true, stopAt = arrayOf(KtCallExpression::class.java)) ?: return ""
     val argumentList = valueArgument.parent as? KtValueArgumentList ?: return ""
     for (arg in argumentList.arguments) {
         val children = arg.children
