@@ -1872,7 +1872,7 @@
                  description="Limit of recent items for search everywhere tabs"/>
 
     <registryKey key="search.everywhere.round.text.field"
-                 defaultValue="false"
+                 defaultValue="true"
                  description="Enables round search text field"/>
 
     <registryKey key="highlighting.passes.cache"
