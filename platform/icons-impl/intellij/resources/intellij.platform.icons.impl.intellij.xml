@@ -1,0 +1,32 @@
+<!-- Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<idea-plugin visibility="internal">
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="fleet.util.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.icons.api"/>
+    <module name="intellij.platform.icons.api.legacyIconSupport"/>
+    <module name="intellij.platform.icons.api.rendering"/>
+    <module name="intellij.platform.icons.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.util.ui"/>
+    <!-- endregion -->
+  </dependencies>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.customIconLayerRendererProvider"
+                    interface="org.jetbrains.icons.impl.intellij.custom.CustomIconLayerRendererProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.customIconLayer"
+                    interface="org.jetbrains.icons.impl.intellij.custom.CustomIconLayerRegistration" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.customImageResourceLoader"
+                    interface="org.jetbrains.icons.impl.intellij.custom.CustomImageResourceLoader" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.customLegacyIconSerializer"
+                    interface="org.jetbrains.icons.impl.intellij.custom.CustomLegacyIconSerializer" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <customIconLayer implementation="org.jetbrains.icons.impl.intellij.rendering.SwingIconLayerRegistration"/>
+    <customLegacyIconSerializer implementation="org.jetbrains.icons.impl.intellij.serializers.CustomCachedImageIconSerializer"/>
+    <customIconLayerRendererProvider implementation="org.jetbrains.icons.impl.intellij.rendering.SwingIconLayerRendererProvider"/>
+  </extensions>
+</idea-plugin>

@@ -1,11 +1,19 @@
 package org.jetbrains.jewel.ui.icon
 
+import org.jetbrains.icons.ExperimentalIconsApi
+import org.jetbrains.icons.design.IconDesigner
+import org.jetbrains.icons.modifiers.IconModifier
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
 public interface IconKey {
     public val iconClass: Class<*>
 
     public fun path(isNewUi: Boolean): String
+}
+
+@ExperimentalIconsApi
+public fun IconDesigner.iconKey(iconKey: IconKey, modifier: IconModifier = IconModifier) {
+    image(iconKey.path(isNewUi = true), iconKey.iconClass.classLoader, modifier)
 }
 
 @GenerateDataFunctions

@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.libraries.hash4j"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.icons.api"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->

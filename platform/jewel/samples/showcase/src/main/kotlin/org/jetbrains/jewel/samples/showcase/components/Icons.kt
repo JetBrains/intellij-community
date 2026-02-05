@@ -24,12 +24,18 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.unit.dp
+import org.jetbrains.icons.design.Circle
+import org.jetbrains.icons.modifiers.IconModifier
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.samples.showcase.ShowcaseIcons
 import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.Image
 import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.icon.badge
+import org.jetbrains.jewel.ui.icon.iconKey
+import org.jetbrains.jewel.ui.icon.size
+import org.jetbrains.jewel.ui.icon.stroke
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.badge.DotBadgeShape
 import org.jetbrains.jewel.ui.painter.hints.Badge
@@ -45,12 +51,12 @@ public fun Icons(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Icon(ShowcaseIcons.jewelLogo, null, Modifier.size(16.dp))
-            Icon(ShowcaseIcons.jewelLogo, "Jewel Logo", Modifier.size(32.dp))
-            Icon(ShowcaseIcons.jewelLogo, "Jewel Logo", Modifier.size(64.dp))
-            Icon(ShowcaseIcons.jewelLogo, "Jewel Logo", Modifier.size(128.dp))
+            Icon(ShowcaseIcons.jewelLogoKey, null, Modifier.size(16.dp))
+            Icon(ShowcaseIcons.jewelLogoKey, "Jewel Logo", Modifier.size(32.dp))
+            Icon(ShowcaseIcons.jewelLogoKey, "Jewel Logo", Modifier.size(64.dp))
+            Icon(ShowcaseIcons.jewelLogoKey, "Jewel Logo", Modifier.size(128.dp))
             Icon(
-                key = ShowcaseIcons.jewelLogo,
+                key = ShowcaseIcons.jewelLogoKey,
                 contentDescription = "Jewel Logo",
                 modifier = Modifier.size(128.dp),
                 colorFilter = ColorFilter.tint(Color.Magenta, BlendMode.Multiply),
@@ -107,6 +113,55 @@ public fun Icons(modifier: Modifier = Modifier) {
         }
 
         Column {
+            Text("Icon Modifiers & Layers: (new api)")
+ 
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+                    Icon(contentDescription = "taskGroup") {
+                        iconKey(AllIconsKeys.Nodes.ConfigFolder)
+                    }
+                }
+                Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+                    Icon(contentDescription = "taskGroup") {
+                        iconKey(AllIconsKeys.Nodes.ConfigFolder)
+                        badge(Color.Red, Circle)
+                    }
+                }
+                val backgroundColor =
+                    if (JewelTheme.isDark) {
+                        JewelTheme.colorPalette.blueOrNull(4) ?: Color(0xFF375FAD)
+                    } else {
+                        JewelTheme.colorPalette.blueOrNull(4) ?: Color(0xFF3574F0)
+                    }
+                Box(
+                    Modifier.size(24.dp).background(backgroundColor, shape = RoundedCornerShape(4.dp)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(contentDescription = "taskGroup") {
+                        iconKey(AllIconsKeys.Nodes.ConfigFolder, modifier = IconModifier.stroke(Color.White))
+                    }
+                }
+                Box(
+                    Modifier.size(24.dp).background(backgroundColor, shape = RoundedCornerShape(4.dp)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(contentDescription = "taskGroup") {
+                        iconKey(AllIconsKeys.Nodes.ConfigFolder, modifier = IconModifier.stroke(Color.White))
+                        badge(Color.Red, Circle)
+                    }
+                }
+                Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+                    Icon(contentDescription = "taskGroup") {
+                        iconKey(AllIconsKeys.Nodes.ConfigFolder, modifier = IconModifier.size(20.dp))
+                    }
+                }
+            }
+        }
+        
+        Column {
             var checked by remember { mutableStateOf(true) }
 
             // See JEWEL-1072
@@ -137,11 +192,11 @@ public fun Icons(modifier: Modifier = Modifier) {
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Image(ShowcaseIcons.jewelLogo, contentDescription = "Jewel Logo", modifier = Modifier.size(96.dp))
+                Image(ShowcaseIcons.jewelLogoKey, contentDescription = "Jewel Logo", modifier = Modifier.size(96.dp))
 
                 // Note: this currently looks identical to the hint-less image due to JEWEL-971
                 Image(
-                    iconKey = ShowcaseIcons.jewelLogo,
+                    iconKey = ShowcaseIcons.jewelLogoKey,
                     contentDescription = "Jewel Logo with hint",
                     hints = arrayOf(Stroke(Color.Red)),
                     modifier = Modifier.size(96.dp),

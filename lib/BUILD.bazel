@@ -18286,6 +18286,21 @@ java_library(
 )
 
 copy_file(
+  name = "org.jetbrains.kotlinx/kotlinx-serialization-core-jvm-1.8.1.jar_copy",
+  src = "@org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_8_1_http//file",
+  out = "org.jetbrains.kotlinx/kotlinx-serialization-core-jvm-1.8.1.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "platform-icons-impl-intellij-jetbrains-kotlinx-serialization-core-jvm",
+  jar = "@org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_8_1_http//file",
+  source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_8_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
   name = "com.pngencoder/pngencoder-0.14.0.jar_copy",
   src = "@com_pngencoder-pngencoder-0_14_0_http//file",
   out = "com.pngencoder/pngencoder-0.14.0.jar",
@@ -18725,6 +18740,13 @@ java_library(
     ":org_jetbrains_kotlin-kotlin-daemon-embeddable-2_0_21_http_import",
     ":org_jetbrains_intellij_deps-trove4j-1_0_20200330_http_import",
   ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "platform-jewel-int_ui-standalone-jetbrains-kotlinx-serialization-core-jvm",
+  jar = "@org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_8_1_http//file",
+  source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_8_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

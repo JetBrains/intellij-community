@@ -46,5 +46,7 @@
     <orderEntry type="module" module-name="intellij.platform.eel.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.initialConfigImport" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
+    <orderEntry type="module" module-name="intellij.platform.icons.impl" />
+    <orderEntry type="module" module-name="intellij.platform.icons.impl.intellij" />
   </component>
 </module>

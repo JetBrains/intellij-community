@@ -1,0 +1,31 @@
+### auto-generated section `build intellij.platform.icons.api.rendering.lowlevel` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_lowlevel",
+  api_version = "2.2",
+  language_version = "2.2",
+  x_x_language = []
+)
+
+resourcegroup(
+  name = "lowlevel_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "lowlevel",
+  module_name = "intellij.platform.icons.api.rendering.lowlevel",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":lowlevel_resources"],
+  kotlinc_opts = ":custom_lowlevel",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/icons-api",
+  ]
+)
+### auto-generated section `build intellij.platform.icons.api.rendering.lowlevel` end
