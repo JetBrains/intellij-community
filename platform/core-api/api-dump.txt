@@ -1745,6 +1745,8 @@ com.intellij.util.QueryExecutor
 com.intellij.util.QueryParameters
 - getProject():com.intellij.openapi.project.Project
 - isQueryValid():Z
+f:com.intellij.util.concurrency.ThreadingAssertions
+- s:softAssertNoReadAccess():V
 com.intellij.util.download.DownloadableFileDescription
 - a:generateFileName(com.intellij.openapi.util.Condition):java.lang.String
 - a:getDefaultFileName():java.lang.String

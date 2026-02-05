@@ -179,6 +179,19 @@ public final class ThreadingAssertions {
   }
 
   /**
+   * Asserts that the current thread has <b>no</b> read access <b>without throwing</b> an exception.
+   *
+   * @see com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
+   */
+  @Obsolete
+  public static void softAssertNoReadAccess() {
+    Application application = ApplicationManager.getApplication();
+    if (application != null && application.isReadAccessAllowed()) {
+      getLogger().error(createThreadAccessException(MUST_NOT_EXECUTE_IN_READ_ACTION));
+    }
+  }
+
+  /**
    * Asserts that the current thread has <b>no</b> read access local to this thread (non-inherited).
    */
   public static void assertNoOwnReadAccess() {

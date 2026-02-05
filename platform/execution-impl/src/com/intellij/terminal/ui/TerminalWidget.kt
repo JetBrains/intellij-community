@@ -78,8 +78,8 @@ interface TerminalWidget : ComponentContainer {
    * so it is prohibited to call it on EDT or under read action.
    */
   @ApiStatus.Experimental
-  @RequiresReadLockAbsence
-  @RequiresBackgroundThread
+  @RequiresReadLockAbsence(generateAssertion = false)
+  @RequiresBackgroundThread(generateAssertion = false)
   fun isCommandRunning(): Boolean {
     return false
   }

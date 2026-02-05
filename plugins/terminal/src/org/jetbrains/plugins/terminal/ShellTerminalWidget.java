@@ -207,8 +207,8 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
    * so it is prohibited to call it on EDT or under read action.
    */
   @Override
-  @RequiresReadLockAbsence
-  @RequiresBackgroundThread
+  @RequiresReadLockAbsence(generateAssertion = false)
+  @RequiresBackgroundThread(generateAssertion = false)
   public boolean hasRunningCommands() throws IllegalStateException {
     TtyConnector connector = getTtyConnector();
     if (connector == null) return false;
