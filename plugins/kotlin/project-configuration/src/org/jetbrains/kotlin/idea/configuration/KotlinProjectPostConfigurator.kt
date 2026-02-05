@@ -14,7 +14,7 @@ interface KotlinProjectPostConfigurator {
     fun isApplicable(module: Module): Boolean
 
     @RequiresWriteLock
-    fun configureModule(module: Module)
+    fun configureModule(module: Module, configurationResultBuilder: ConfigurationResultBuilder)
 
     companion object {
         val EP_NAME: ExtensionPointName<KotlinProjectPostConfigurator> =

@@ -2,10 +2,10 @@
 package org.jetbrains.kotlin.idea.maven.configuration
 
 import com.intellij.openapi.module.Module
-import com.intellij.psi.PsiFile
 import com.intellij.psi.xml.XmlFile
+import org.jetbrains.idea.maven.dom.model.MavenDomPluginExecution
 import org.jetbrains.idea.maven.model.MavenId
-import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.kotlin.idea.configuration.ConfigurationResultBuilder
 import org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProjectConfigurator
 import org.jetbrains.kotlin.idea.maven.KotlinMavenBundle
 import org.jetbrains.kotlin.idea.maven.PomFile
@@ -17,25 +17,26 @@ import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator.Com
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 
 abstract class AbstractMavenKotlinCompilerPluginProjectConfigurator: KotlinCompilerPluginProjectConfigurator {
-    override fun configureModule(module: Module): PsiFile? {
+    override fun configureModule(module: Module, configurationResultBuilder: ConfigurationResultBuilder) {
         val project = module.project
-        val xmlFile = findModulePomFile(module) as? XmlFile ?: return null
+        val xmlFile = findModulePomFile(module) as? XmlFile ?: return
+        configurationResultBuilder.changedFile(xmlFile)
 
-        val pom = PomFile.forFileOrNull(xmlFile) ?: return null
+        val pom = PomFile.forFileOrNull(xmlFile) ?: return
 
-        val mavenProjectsManager = MavenProjectsManager.getInstance(module.project)
-        val mavenProject = mavenProjectsManager.findProject(module) ?: return null
-
-        val kotlinPluginId = kotlinPluginId()
-        val kotlinPlugin =
-            mavenProject.plugins.find { it.mavenId.equals(kotlinPluginId.groupId, kotlinPluginId.artifactId) } ?: return null
+        val kotlinPlugin = pom.findPlugin(kotlinPluginId(null)) ?: return
 
         val execution =
-            kotlinPlugin.executions.firstOrNull { it.goals.any { goalName -> goalName == PomFile.KotlinGoals.Compile } } ?: return null
-        val configurationElement = execution.configurationElement
+            kotlinPlugin.executions.executions.firstOrNull { execution: MavenDomPluginExecution ->
+                execution.goals.goals.any {
+                    it.rawText == PomFile.KotlinGoals.Compile
+                }
+            } ?: return
 
-        val compilerPlugins = configurationElement?.getChild("compilerPlugins")
-        if (compilerPlugins?.children?.any { it.name == "plugin" && it.text == kotlinCompilerPluginId } == true) return null
+        val configurationElement = execution.configuration.ensureTagExists()
+        val compilerPlugins = configurationElement.findSubTags("compilerPlugins").firstOrNull()
+
+        if (compilerPlugins?.findSubTags("plugin")?.firstOrNull { it.value.trimmedText == kotlinCompilerPluginId } != null) return
 
         project.executeWriteCommand(KotlinMavenBundle.message("command.name.configure.0", xmlFile.name), null) {
             pom.addKotlinCompilerPlugin(kotlinCompilerPluginId)?.let { kotlinPlugin ->
@@ -44,7 +45,6 @@ abstract class AbstractMavenKotlinCompilerPluginProjectConfigurator: KotlinCompi
                 }
             }
         }
-        return xmlFile
     }
 
     protected abstract val pluginDependencyMavenId: MavenId?

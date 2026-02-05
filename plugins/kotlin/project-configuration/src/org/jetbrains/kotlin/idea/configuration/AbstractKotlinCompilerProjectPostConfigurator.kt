@@ -30,12 +30,12 @@ abstract class AbstractKotlinCompilerProjectPostConfigurator(protected val kotli
         return module.hasCompilerPluginExtension(filter)
     }
 
-    override fun configureModule(module: Module) {
+    override fun configureModule(module: Module, configurationResultBuilder: ConfigurationResultBuilder) {
         val configurators =
             compilerPluginProjectConfigurators().ifEmpty { return }
 
         for (configurator in configurators) {
-            configurator.configureModule(module)
+            configurator.configureModule(module, configurationResultBuilder)
         }
     }
 }

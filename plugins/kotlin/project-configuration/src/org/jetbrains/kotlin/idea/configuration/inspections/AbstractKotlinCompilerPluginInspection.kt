@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.hasKotlinJvmRuntime
+import org.jetbrains.kotlin.idea.configuration.ConfigurationResultBuilder
 import org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProjectConfigurator
 import org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProjectConfigurator.Companion.compilerPluginProjectConfigurators
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurationService
@@ -95,6 +96,7 @@ abstract class AbstractKotlinCompilerPluginInspection(protected val kotlinCompil
             val configurators =
                 compilerPluginProjectConfigurators().ifEmpty { return }
 
+            val configurationResultBuilder = ConfigurationResultBuilder()
             val configurationService = KotlinProjectConfigurationService.getInstance(project)
             configurationService.coroutineScope.launchTracked {
                 edtWriteAction {
@@ -103,7 +105,7 @@ abstract class AbstractKotlinCompilerPluginInspection(protected val kotlinCompil
                         KotlinProjectConfigurationBundle.message("command.name.configure.kotlin.compiler.plugin.0", kotlinCompilerPluginId)
                     ) {
                         for (configurator in configurators) {
-                            configurator.configureModule(module)
+                            configurator.configureModule(module, configurationResultBuilder)
                         }
                     }
                 }

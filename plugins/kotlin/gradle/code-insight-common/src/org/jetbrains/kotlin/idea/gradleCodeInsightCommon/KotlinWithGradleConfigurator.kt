@@ -3,14 +3,8 @@ package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 
 import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
-import com.intellij.ide.actions.OpenFileAction
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.readAndEdtWriteAction
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
@@ -25,10 +19,6 @@ import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.backend.observation.launchTracked
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.ide.progress.withModalProgress
-import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.gradle.util.GradleVersion
@@ -40,20 +30,20 @@ import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.AutoConfigurationSettings
+import org.jetbrains.kotlin.idea.configuration.BaseKotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.ChangedConfiguratorFiles
+import org.jetbrains.kotlin.idea.configuration.ConfigurationResult
+import org.jetbrains.kotlin.idea.configuration.ConfigurationResultBuilder
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
+import org.jetbrains.kotlin.idea.configuration.KotlinAutoConfigurationNotificationHolder
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurationService
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
-import org.jetbrains.kotlin.idea.configuration.KotlinProjectPostConfigurator
 import org.jetbrains.kotlin.idea.configuration.ModuleName
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
 import org.jetbrains.kotlin.idea.configuration.TargetJvm
 import org.jetbrains.kotlin.idea.configuration.buildSystemType
-import org.jetbrains.kotlin.idea.configuration.checkModuleJvmTargetCompatibility
-import org.jetbrains.kotlin.idea.configuration.getConfigurableModulesWithKotlinFiles
 import org.jetbrains.kotlin.idea.configuration.getJvmTargetNumber
-import org.jetbrains.kotlin.idea.configuration.getKotlinVersionsAndModules
 import org.jetbrains.kotlin.idea.configuration.getRootModule
 import org.jetbrains.kotlin.idea.configuration.getTargetBytecodeVersionFromModule
 import org.jetbrains.kotlin.idea.configuration.hasKotlinPluginEnabled
@@ -61,32 +51,26 @@ import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleConstants.GRADLE_
 import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleConstants.GROUP_ID
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersionOrDefault
-import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersion
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
-import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.projectConfiguration.getJvmStdlibArtifactId
 import org.jetbrains.kotlin.idea.quickfix.AbstractChangeFeatureSupportLevelFix
-import org.jetbrains.kotlin.idea.statistics.KotlinProjectConfigurationError
-import org.jetbrains.kotlin.idea.statistics.KotlinProjectSetupFUSCollector
-import org.jetbrains.kotlin.idea.util.application.executeCommand
+import org.jetbrains.kotlin.idea.statistics.KotlinProjectConfigurationError.ADDING_KOTLIN_VERSION_TO_TOP_LEVEL_BUILD_SCRIPT_FAILED
+import org.jetbrains.kotlin.idea.statistics.KotlinProjectConfigurationError.BUILD_SCRIPT_FOR_MODULE_IS_ABSENT_OR_NOT_WRITABLE
+import org.jetbrains.kotlin.idea.statistics.KotlinProjectConfigurationError.CONFIGURING_OF_MODULE_BUILD_SCRIPT_FAILED
+import org.jetbrains.kotlin.idea.statistics.KotlinProjectConfigurationError.CONFIGURING_OF_TOP_LEVEL_BUILD_SCRIPT_FAILED
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinGradleCompatibilityStore
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 
-abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
+abstract class KotlinWithGradleConfigurator : BaseKotlinProjectConfigurator() {
 
     override fun getStatus(moduleSourceRootGroup: ModuleSourceRootGroup): ConfigureKotlinStatus {
+        val status = super.getStatus(moduleSourceRootGroup)
+        if (status != ConfigureKotlinStatus.CAN_BE_CONFIGURED) return status
+
         val module = moduleSourceRootGroup.baseModule
-        if (!isApplicable(module)) {
-            return ConfigureKotlinStatus.NON_APPLICABLE
-        }
-
-        if (moduleSourceRootGroup.sourceRootModules.all(Module::hasKotlinPluginEnabled)) {
-            return ConfigureKotlinStatus.CONFIGURED
-        }
-
         val (projectBuildFile, topLevelBuildFile) = runReadAction {
             module.getBuildScriptPsiFile() to module.project.getTopLevelBuildScriptPsiFile()
         }
@@ -117,8 +101,6 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                 !module.name.contains("buildSrc")
     }
 
-    protected open fun getMinimumSupportedVersion(): String = "1.0.0"
-
     protected fun PsiFile.isKtDsl(): Boolean = this is KtFile
 
     private fun isFileConfigured(buildScript: PsiFile): Boolean {
@@ -128,102 +110,14 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         }
     }
 
-    @JvmSuppressWildcards
-    override fun configure(project: Project, excludeModules: Collection<Module>) {
-        configureAndGetConfiguredModules(project, excludeModules)
-    }
-
-    override fun queueSyncIfNeeded(project: Project) {
-        KotlinProjectConfigurationService.getInstance(project).queueSync()
-    }
-
     override suspend fun queueSyncAndWaitForProjectToBeConfigured(project: Project) {
         blockingContextScope {
             queueSyncIfNeeded(project)
         }
     }
 
-    @JvmSuppressWildcards
-    override fun configureAndGetConfiguredModules(project: Project, excludeModules: Collection<Module>): Set<Module> {
-        val dialog = ConfigureDialogWithModulesAndVersion(project, this, excludeModules, getMinimumSupportedVersion())
-
-        dialog.show()
-        if (!dialog.isOK) return emptySet()
-        val kotlinVersion = dialog.kotlinVersion ?: return emptySet()
-        val modules = dialog.modulesToConfigure
-
-        KotlinProjectSetupFUSCollector.logChosenKotlinVersion(project, kotlinVersion)
-
-        KotlinProjectSetupFUSCollector.logStartConfigureKt(project)
-        val commandKey = "command.name.configure.kotlin"
-        val (result, collector) = runWithModalProgressBlocking(project, KotlinProjectConfigurationBundle.message(commandKey)) {
-            configureSilently(
-              project = project,
-              modules = modules,
-              kotlinVersionsAndModules = dialog.versionsAndModules,
-              version = IdeKotlinVersion.get(kotlinVersion),
-              modulesAndJvmTargets = dialog.modulesAndJvmTargets,
-              commandKey = commandKey
-            )
-        }
-
-        for (file in result.changedFiles.getChangedFiles()) {
-            OpenFileAction.openFile(file.virtualFile, project)
-        }
-
-        queueSyncIfNeeded(project)
-
-        val configurationService = KotlinProjectConfigurationService.getInstance(project)
-
-        configurationService.coroutineScope.launchTracked {
-            configurationService.awaitSyncFinished()
-
-            configureCompilerPlugins(modules)
-        }
-
-        KotlinGradleAutoConfigurationNotificationHolder.getInstance(project).onManualConfigurationCompleted()
-        collector.showNotification()
-
-        return result.configuredModules
-    }
-
-    private fun configureCompilerPlugins(modules: List<Module>) {
-        val project = modules.firstOrNull()?.project ?: return
-        val rootModule = runReadAction { getRootModule(project) } ?: return
-
-        val effectiveModules = if (modules.contains(rootModule)) {
-            val rootGroup = getConfigurableModulesWithKotlinFiles(project).firstOrNull { it.baseModule == rootModule }
-            modules.filter { it != rootModule } + (rootGroup?.sourceRootModules ?: emptyList())
-        } else {
-            modules
-        }
-
-        effectiveModules.forEach { module ->
-            val configuratorsByModules =
-                KotlinProjectPostConfigurator.EP_NAME.extensionList
-                    .filter {
-                        runReadAction {
-                            it.isApplicable(module)
-                        }
-                    }
-            val configurationService = KotlinProjectConfigurationService.getInstance(project)
-            configurationService.coroutineScope.launchTracked {
-                edtWriteAction {
-                    CommandProcessor.getInstance().executeCommand(
-                        /* project = */ project,
-                        /* runnable = */ Runnable {
-                            configuratorsByModules.forEach { it.configureModule(module) }
-                        },
-                        /* name = */ KotlinProjectConfigurationBundle.message(
-                            "command.name.performing.post.configuration.0",
-                            configuratorsByModules.joinToString(separator = "<br/>") { it.name }),
-                        /* groupId = */ null,
-                        /* undoConfirmationPolicy = */ UndoConfirmationPolicy.REQUEST_CONFIRMATION
-                    )
-                }
-                configurationService.queueSyncIfPossible()
-            }
-        }
+    override fun notificationHolder(project: Project): KotlinAutoConfigurationNotificationHolder {
+        return KotlinGradleAutoConfigurationNotificationHolder.getInstance(project)
     }
 
     private fun Project.isGradleSyncPending(module: Module): Boolean {
@@ -234,7 +128,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         return KotlinProjectConfigurationService.getInstance(this).isSyncInProgress()
     }
 
-    private fun calculateAutoConfigSettingsReadAction(module: Module): AutoConfigurationSettings? {
+    override fun calculateAutoConfigSettingsReadAction(module: Module): AutoConfigurationSettings? {
         val project = module.project
         val baseModule = module.toModuleGroup().baseModule
 
@@ -274,94 +168,14 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         return AutoConfigurationSettings(baseModule, maxKotlinVersion)
     }
 
-    override suspend fun calculateAutoConfigSettings(module: Module): AutoConfigurationSettings? {
-        return readAction {
-            calculateAutoConfigSettingsReadAction(module)
-        }
-    }
-
-    override suspend fun runAutoConfig(settings: AutoConfigurationSettings) {
-        val module = settings.module
-        val project = module.project
-        val moduleVersions = readAction {
-            getKotlinVersionsAndModules(project, this).first
-        }
-        val jvmTargets = readAction {
-            checkModuleJvmTargetCompatibility(listOf(module), settings.kotlinVersion).moduleJvmTargets
-        }
-        KotlinProjectSetupFUSCollector.logStartConfigureKt(project, true)
-        val commandKey = "command.name.configure.kotlin.automatically"
-        val (result, _) = withModalProgress(project, KotlinProjectConfigurationBundle.message(commandKey)) {
-            configureSilently(
-              project = module.project,
-              modules = listOf(module),
-              kotlinVersionsAndModules = moduleVersions,
-              version = settings.kotlinVersion,
-              modulesAndJvmTargets = jvmTargets,
-              commandKey = commandKey,
-              isAutoConfig = true
-            )
-        }
-
-        KotlinGradleAutoConfigurationNotificationHolder.getInstance(project)
-          .showAutoConfiguredNotification(module.name, result.changedFiles.calculateChanges())
-    }
-
-    class ConfigurationResult(
-        val configuredModules: Set<Module>,
-        val changedFiles: ChangedConfiguratorFiles,
-        val error: KotlinProjectConfigurationError?
-    )
-
-    // Expected to be called from a coroutine with a progress reporter
-    private suspend fun configureSilently(
-        project: Project,
-        modules: List<Module>,
-        kotlinVersionsAndModules: Map<String, Map<String, Module>>,
-        version: IdeKotlinVersion,
-        modulesAndJvmTargets: Map<ModuleName, TargetJvm>,
-        commandKey: String,
-        isAutoConfig: Boolean = false
-    ): Pair<ConfigurationResult, NotificationMessageCollector> = reportSequentialProgress { reporter ->
-        reporter.nextStep(endFraction = 30, KotlinProjectConfigurationBundle.message("step.configure.kotlin.preparing"))
-        readAndEdtWriteAction {
-            val collector = NotificationMessageCollector.create(project)
-
-            // First check all the files and abort if something would not work
-            val configureAction =
-                createConfigureWithVersionAction(project, modules, version, collector, kotlinVersionsAndModules, modulesAndJvmTargets)
-            // Now that everything has been read and verified, apply the changes
-            writeAction {
-                reporter.nextStep(endFraction = 100, KotlinProjectConfigurationBundle.message("step.configure.kotlin.writing"))
-                project.executeCommand(KotlinProjectConfigurationBundle.message(commandKey)) {
-                    val configurationResult = configureAction()
-                    if (configurationResult.error != null) {
-                        KotlinProjectSetupFUSCollector.logConfigureKtFailed(project, configurationResult.error)
-                    } else if (configurationResult.configuredModules.isEmpty()) {
-                        KotlinProjectSetupFUSCollector.logConfigureKtFailed(project, KotlinProjectConfigurationError.OTHER)
-                    }
-                    val firstModule = modules.firstOrNull()
-                    if (isAutoConfig && firstModule != null) {
-                        queueSyncIfNeeded(project)
-                    }
-                    val notificationHolder = KotlinGradleAutoConfigurationNotificationHolder.getInstance(project)
-                    addUndoConfigurationListener(project, modules, isAutoConfig, notificationHolder)
-                    configurationResult to collector
-                }
-            }
-        }
-    }
-
-    private fun createConfigureWithVersionAction(
+    override fun createConfigureAction(
         project: Project,
         modulesToConfigure: List<Module>,
         kotlinVersion: IdeKotlinVersion,
         collector: NotificationMessageCollector,
         kotlinVersionsAndModules: Map<String, Map<String, Module>>,
-        modulesAndJvmTargets: Map<ModuleName, TargetJvm> = emptyMap()
-    ): () -> ConfigurationResult {
-        val configuredModules = mutableSetOf<Module>()
-        val changedFiles = ChangedConfiguratorFiles()
+        modulesAndJvmTargets: Map<ModuleName, TargetJvm>
+    ): () -> ConfigurationResultBuilder {
         val topLevelBuildScript = project.getTopLevelBuildScriptPsiFile()
         val modulesWithTheSameKotlin = kotlinVersionsAndModules[kotlinVersion.artifactVersion]
         val modulesToRemoveKotlinVersion = mutableListOf<Module>()
@@ -374,7 +188,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         val definedVersionInPluginSettings = rootModule?.let { getPluginManagementVersion(it) }
         var addVersionToModuleBuildScript = definedVersionInPluginSettings?.parsedVersion != kotlinVersion
 
-        var error: KotlinProjectConfigurationError? = null
+        val resultBuilder = ConfigurationResultBuilder()
 
         if (rootModule != null) {
             val allKotlinModules = kotlinVersionsAndModules.values.flatMap { it.values }
@@ -395,7 +209,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             if (addVersionToSettings) {
                 rootModule.getBuildScriptSettingsPsiFile()?.takeIf { it.canBeConfigured() }?.let {
                     writeActions.add {
-                        if (configureSettingsFile(it, kotlinVersion, changedFiles)) {
+                        if (configureSettingsFile(it, kotlinVersion, resultBuilder.changedFiles)) {
                             // This happens only for JVM, not for Android
                             addVersionToModuleBuildScript = false
                         }
@@ -428,13 +242,15 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                             kotlinVersion,
                             jvmTarget,
                             collector,
-                            changedFiles,
+                            resultBuilder.changedFiles,
                             addVersionToModuleBuildScript
                         )
                         if (configured) {
-                            configuredModules.add(rootModule)
+                            resultBuilder.configuredModule(rootModule)
                         } else {
-                            error = KotlinProjectConfigurationError.CONFIGURING_OF_TOP_LEVEL_BUILD_SCRIPT_FAILED
+                            // TODO: WHY ? see org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator.addElementsToFiles
+                            // it has !isTopLevelProjectFile
+                            resultBuilder.error(CONFIGURING_OF_TOP_LEVEL_BUILD_SCRIPT_FAILED)
                         }
                     }
 
@@ -447,26 +263,24 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                                 kotlinVersion,
                                 jvmTarget,
                                 collector,
-                                changedFiles,
+                                resultBuilder.changedFiles,
                                 addVersionToModuleBuildScript
                             )
                             if (configured) {
-                                configuredModules.add(rootModule)
+                                resultBuilder.configuredModule(rootModule)
                                 // If Kotlin version wasn't added to settings.gradle, then it has just been added to root script
                                 addVersionToModuleBuildScript = false
                             } else {
-                                error = KotlinProjectConfigurationError.ADDING_KOTLIN_VERSION_TO_TOP_LEVEL_BUILD_SCRIPT_FAILED
+                                resultBuilder.error(ADDING_KOTLIN_VERSION_TO_TOP_LEVEL_BUILD_SCRIPT_FAILED)
                             }
                         }
                     }
                 } else {
                     showErrorCantFindBuildGradleFileForModule(project, rootModule)
+
                     return {
-                        ConfigurationResult(
-                            configuredModules,
-                            changedFiles,
-                            KotlinProjectConfigurationError.BUILD_SCRIPT_FOR_MODULE_IS_ABSENT_OR_NOT_WRITABLE
-                        )
+                        resultBuilder
+                            .error(BUILD_SCRIPT_FOR_MODULE_IS_ABSENT_OR_NOT_WRITABLE)
                     }
                 }
             }
@@ -475,7 +289,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         for (module in modulesToRemoveKotlinVersion) {
             module.getBuildScriptPsiFile()?.let {
                 writeActions.add {
-                    removeKotlinVersionFromBuildScript(it, changedFiles)
+                    removeKotlinVersionFromBuildScript(it, resultBuilder)
                 }
             }
         }
@@ -499,35 +313,27 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                         ideKotlinVersion = kotlinVersion,
                         jvmTarget = jvmTarget,
                         collector = collector,
-                        changedFiles = changedFiles,
+                        changedFiles = resultBuilder.changedFiles,
                         addVersion = addVersionToModuleBuildScript
                     )
                     if (configured) {
-                        configuredModules.add(module)
+                        resultBuilder.configuredModule(module)
                     } else {
-                        error = KotlinProjectConfigurationError.CONFIGURING_OF_MODULE_BUILD_SCRIPT_FAILED
+                        resultBuilder.error(CONFIGURING_OF_MODULE_BUILD_SCRIPT_FAILED)
                     }
                 }
             } else {
                 showErrorCantFindBuildGradleFileForModule(project, module)
                 return {
-                    ConfigurationResult(
-                        configuredModules,
-                        changedFiles,
-                        KotlinProjectConfigurationError.BUILD_SCRIPT_FOR_MODULE_IS_ABSENT_OR_NOT_WRITABLE
-                    )
+                    resultBuilder
+                        .error(BUILD_SCRIPT_FOR_MODULE_IS_ABSENT_OR_NOT_WRITABLE)
                 }
             }
         }
 
-        for (file in changedFiles.getChangedFiles()) {
-            file.virtualFile?.let {
-                collector.addMessage(KotlinIdeaGradleBundle.message("text.was.modified", it.path))
-            }
-        }
         return {
             writeActions.forEach { it.invoke() }
-            ConfigurationResult(configuredModules, changedFiles, error)
+            resultBuilder
         }
     }
 
@@ -547,23 +353,22 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         collector: NotificationMessageCollector,
         kotlinVersionsAndModules: Map<String, Map<String, Module>>,
         modulesAndJvmTargets: Map<ModuleName, TargetJvm> = emptyMap()
-    ): ConfigurationResult {
-        return createConfigureWithVersionAction(
+    ): ConfigurationResult =
+        createConfigureAction(
             project = project,
             modulesToConfigure = modulesToConfigure,
             kotlinVersion = kotlinVersion,
             collector = collector,
             kotlinVersionsAndModules = kotlinVersionsAndModules,
             modulesAndJvmTargets = modulesAndJvmTargets
-        ).invoke()
-    }
+        ).invoke().build()
 
     private fun removeKotlinVersionFromBuildScript(
         file: PsiFile,
-        changedFiles: ChangedConfiguratorFiles
+        resultBuilder: ConfigurationResultBuilder
     ) {
         file.project.executeWriteCommand(KotlinIdeaGradleBundle.message("command.name.configure.0", file.name), null) {
-            changedFiles.storeOriginalFileContent(file)
+            resultBuilder.changedFile(file)
             GradleBuildScriptSupport.getManipulator(file).findAndRemoveKotlinVersionFromBuildScript()
             CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(file)
         }
@@ -609,6 +414,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
     protected open fun getJvmTarget(sdk: Sdk?, version: IdeKotlinVersion): String? = null
 
     protected abstract val kotlinPluginName: String
+
     protected abstract fun getKotlinPluginExpression(forKotlinDsl: Boolean): String
 
     protected open fun addElementsToFiles(
