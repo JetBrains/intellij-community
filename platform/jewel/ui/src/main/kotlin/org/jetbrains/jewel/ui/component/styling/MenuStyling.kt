@@ -305,8 +305,6 @@ public class MenuItemColors(
 public class MenuMetrics(
     /** The corner radius of the menu popup. */
     public val cornerSize: CornerSize,
-    /** The outer margin around the menu popup. */
-    public val menuMargin: PaddingValues,
     /** The inner content padding of the menu popup. */
     public val contentPadding: PaddingValues,
     /** The display offset of the menu popup relative to its anchor. */
@@ -320,6 +318,39 @@ public class MenuMetrics(
     /** The size and spacing metrics for submenus. */
     public val submenuMetrics: SubmenuMetrics,
 ) {
+    // Stores the value passed via the deprecated constructor so that existing compiled callers
+    // reading menuStyle.metrics.menuMargin still get back the value they provided, rather than
+    // always seeing PaddingValues(). New code should not set or rely on this field.
+    @Deprecated(
+        message =
+            "Use PopupContainerStyle.metrics.menuMargin instead. " +
+                "This property is retained for binary compatibility only: when constructed via the deprecated " +
+                "constructor it reflects the menuMargin value that was passed in; when constructed via the " +
+                "current constructor it always returns PaddingValues().",
+        level = DeprecationLevel.WARNING,
+    )
+    public var menuMargin: PaddingValues = PaddingValues()
+        private set
+
+    @Deprecated(
+        message =
+            "Please use the constructor without `menuMargin`. Update your code to set the value from this parameter " +
+                "to `PopupContainerStyle.menuMargin` instead.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    public constructor(
+        cornerSize: CornerSize,
+        menuMargin: PaddingValues,
+        contentPadding: PaddingValues,
+        offset: DpOffset,
+        shadowSize: Dp,
+        borderWidth: Dp,
+        itemMetrics: MenuItemMetrics,
+        submenuMetrics: SubmenuMetrics,
+    ) : this(cornerSize, contentPadding, offset, shadowSize, borderWidth, itemMetrics, submenuMetrics) {
+        this.menuMargin = menuMargin
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -327,7 +358,6 @@ public class MenuMetrics(
         other as MenuMetrics
 
         if (cornerSize != other.cornerSize) return false
-        if (menuMargin != other.menuMargin) return false
         if (contentPadding != other.contentPadding) return false
         if (offset != other.offset) return false
         if (shadowSize != other.shadowSize) return false
@@ -340,7 +370,6 @@ public class MenuMetrics(
 
     override fun hashCode(): Int {
         var result = cornerSize.hashCode()
-        result = 31 * result + menuMargin.hashCode()
         result = 31 * result + contentPadding.hashCode()
         result = 31 * result + offset.hashCode()
         result = 31 * result + shadowSize.hashCode()
@@ -353,7 +382,6 @@ public class MenuMetrics(
     override fun toString(): String {
         return "MenuMetrics(" +
             "cornerSize=$cornerSize, " +
-            "menuMargin=$menuMargin, " +
             "contentPadding=$contentPadding, " +
             "offset=$offset, " +
             "shadowSize=$shadowSize, " +

@@ -37,8 +37,8 @@ internal fun readPopupContainerStyle(): PopupContainerStyle {
         metrics =
             PopupContainerMetrics(
                 cornerSize = CornerSize(IdeaPopupMenuUI.CORNER_RADIUS.dp),
-                menuMargin = PaddingValues(),
-                contentPadding = PaddingValues(),
+                menuMargin = PaddingValues(vertical = 6.dp),
+                contentPadding = PaddingValues(vertical = 7.dp, horizontal = 2.dp),
                 offset = DpOffset(0.dp, 2.dp),
                 shadowSize = 12.dp,
                 borderWidth = retrieveIntAsNonNegativeDpOrUnspecified("Popup.borderWidth").takeOrElse { 1.dp },
