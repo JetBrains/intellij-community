@@ -38,25 +38,55 @@ class KotlinAvoidApplyPluginMethodInspectionVisitor(private val holder: Problems
             if (callableId.packageName != FqName(GRADLE_KOTLIN_PACKAGE)) return
         }
 
-        val pluginFixInfo = if (expression.isTopLevel()) getPluginFixInfo(expression) else null
-        val potentialFix = if (pluginFixInfo != null) GradleMoveApplyPluginToPluginsBlockFix(pluginFixInfo) else null
-
         holder.problem(
             expression,
             GradleInspectionBundle.message("inspection.message.avoid.apply.plugin.method.descriptor")
-        ).maybeFix(potentialFix).register()
+        ).maybeFix(createFixIfPossible(expression)).register()
+    }
+
+    private fun createFixIfPossible(expression: KtCallExpression): GradleMoveApplyPluginToPluginsBlockFix? {
+        if (!expression.isTopLevel()) return null
+        val pluginName = extractPluginName(expression) ?: return null
+        val pluginsBlock = expression.containingKtFile.findScriptInitializer("plugins")?.getBlock()
+        if (pluginsBlock == null) {
+            val pluginFixInfo = getPluginFixInfo(pluginName) ?: return null
+            return GradleMoveApplyPluginToPluginsBlockFix(pluginFixInfo)
+        }
+        if (pluginsBlock.containsPlugin(pluginName)) return null
+        val pluginFixInfo = getPluginFixInfo(pluginName) ?: return null
+        return GradleMoveApplyPluginToPluginsBlockFix(pluginFixInfo)
+    }
+
+    private fun KtBlockExpression.containsPlugin(pluginName: String): Boolean {
+        return this.descendantsOfType<KtCallExpression>().any { call ->
+            val callee = call.calleeExpression?.text ?: return@any false
+            when (callee) {
+                "id" -> {
+                    val arg = call.valueArguments.firstOrNull()?.getArgumentExpression() ?: return@any false
+                    arg.evaluateString() == pluginName
+                }
+
+                "kotlin" -> {
+                    val arg = call.valueArguments.firstOrNull()?.getArgumentExpression() ?: return@any false
+                    "org.jetbrains.kotlin.${arg.evaluateString()}" == pluginName
+                }
+
+                else -> false
+            }
+        } || this.children.any { child ->
+            // Check for bare plugin references like java or backtick syntax like `java`
+            val text = child.text.trim()
+            text == pluginName || text == "`$pluginName`"
+        }
     }
 
     private fun KtExpression.isTopLevel() = this.parent is KtScriptInitializer
 
     /**
-     * @return PluginInfo with both name, version and classpath dependency psi element if it's an external plugin,
-     * PluginInfo with only name if it's a core plugin or
-     * null if it's not possible to fix the issue.
+     * @return PluginInfo with name, version, and classpath dependency psi element if it's an external plugin,
+     * PluginInfo with only name if it's a core plugin, or null if it's not possible to fix the issue.
      */
-    private fun getPluginFixInfo(expression: KtCallExpression): PluginFixInfo? {
-        val pluginName = extractPluginName(expression) ?: return null
-
+    private fun getPluginFixInfo(pluginName: String): PluginFixInfo? {
         // no version required if it's a core plugin
         if (GRADLE_CORE_PLUGIN_SHORT_NAMES.contains(pluginName)) {
             return PluginFixInfo(pluginName, null, null)
