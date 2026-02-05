@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.takeOrElse
 import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -683,11 +684,12 @@ internal fun <T : Any> ListComboBoxImpl(
 
     val contentPadding = style.metrics.popupContentPadding
 
+    val currentOnPopupVisibleChange by rememberUpdatedState(onPopupVisibleChange)
     val popupManager = remember {
         PopupManager(
             onPopupVisibleChange = { visible ->
                 resetPreviewSelectedIndex()
-                onPopupVisibleChange(visible)
+                currentOnPopupVisibleChange(visible)
             },
             name = "ListComboBoxPopup",
         )
@@ -786,6 +788,7 @@ internal fun <T : Any> ListComboBoxImpl(
         horizontalPopupAlignment = horizontalPopupAlignment,
         popupStyle = popupStyle,
         popupPositionProvider = popupPositionProvider,
+        popupProperties = PopupProperties(focusable = false),
         labelContent = { labelContent(items.getOrNull(selectedIndex)) },
         popupContent = {
             PopupContent(
