@@ -23,7 +23,7 @@ internal class ComposeShowcaseAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.project != null && PsiUtil.isPluginProject(e.project!!)
+    e.presentation.isEnabledAndVisible = e.project != null // && PsiUtil.isPluginProject(e.project!!)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -31,7 +31,7 @@ internal class ComposeShowcaseAction : DumbAwareAction() {
   }
 }
 
-private class ComposeShowcaseDialog(project: Project?, @NlsSafe dialogTitle: String) :
+private class ComposeShowcaseDialog(val project: Project?, @NlsSafe dialogTitle: String) :
   DialogWrapper(project, null, true, IdeModalityType.MODELESS, false) {
 
   init {

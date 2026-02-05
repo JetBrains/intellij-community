@@ -1,0 +1,213 @@
+com.intellij.platform.icons.DeferredIcon
+- com.intellij.platform.icons.Icon
+- a:getId():com.intellij.platform.icons.IconIdentifier
+- a:getPlaceholder():com.intellij.platform.icons.Icon
+com.intellij.platform.icons.Icon
+com.intellij.platform.icons.IconIdentifier
+f:com.intellij.platform.icons.IconManagerKt
+- sf:deferredIcon(com.intellij.platform.icons.Icon,java.lang.String,java.lang.ClassLoader,kotlin.jvm.functions.Function1):com.intellij.platform.icons.Icon
+- bs:deferredIcon$default(com.intellij.platform.icons.Icon,java.lang.String,java.lang.ClassLoader,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.icons.Icon
+- sf:icon(kotlin.jvm.functions.Function1):com.intellij.platform.icons.Icon
+- sf:imageIcon(java.lang.String,java.lang.ClassLoader,com.intellij.platform.icons.modifiers.IconModifier):com.intellij.platform.icons.Icon
+- bs:imageIcon$default(java.lang.String,java.lang.ClassLoader,com.intellij.platform.icons.modifiers.IconModifier,I,java.lang.Object):com.intellij.platform.icons.Icon
+com.intellij.platform.icons.ImageResourceLocation
+e:com.intellij.platform.icons.design.BlendMode
+- java.lang.Enum
+- sf:Color:com.intellij.platform.icons.design.BlendMode
+- sf:Hue:com.intellij.platform.icons.design.BlendMode
+- sf:Luminosity:com.intellij.platform.icons.design.BlendMode
+- sf:Multiply:com.intellij.platform.icons.design.BlendMode
+- sf:Saturation:com.intellij.platform.icons.design.BlendMode
+- sf:SrcIn:com.intellij.platform.icons.design.BlendMode
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.icons.design.BlendMode
+- s:values():com.intellij.platform.icons.design.BlendMode[]
+com.intellij.platform.icons.design.Circle
+- com.intellij.platform.icons.design.Shape
+- a:getRadius():com.intellij.platform.icons.design.IconUnit
+com.intellij.platform.icons.design.Color
+- sf:Companion:com.intellij.platform.icons.design.Color$Companion
+- a:toHex():java.lang.String
+f:com.intellij.platform.icons.design.Color$Companion
+- f:getTransparent():com.intellij.platform.icons.design.Color
+f:com.intellij.platform.icons.design.ColorKt
+- sf:sRGB(F,F,F,F):com.intellij.platform.icons.design.SRGBColor
+- sf:sRGB(java.lang.String):com.intellij.platform.icons.design.SRGBColor
+com.intellij.platform.icons.design.DisplayPoint
+- com.intellij.platform.icons.design.IconUnit
+- a:getValue():D
+- a:plus(com.intellij.platform.icons.design.DisplayPoint):com.intellij.platform.icons.design.DisplayPoint
+com.intellij.platform.icons.design.IconAlign
+- sf:Companion:com.intellij.platform.icons.design.IconAlign$Companion
+- a:getHorizontalAlign():com.intellij.platform.icons.design.IconHorizontalAlign
+- a:getVerticalAlign():com.intellij.platform.icons.design.IconVerticalAlign
+f:com.intellij.platform.icons.design.IconAlign$Companion
+- f:getBottomCenter():com.intellij.platform.icons.design.IconAlign
+- f:getBottomLeft():com.intellij.platform.icons.design.IconAlign
+- f:getBottomRight():com.intellij.platform.icons.design.IconAlign
+- f:getCenter():com.intellij.platform.icons.design.IconAlign
+- f:getCenterLeft():com.intellij.platform.icons.design.IconAlign
+- f:getCenterRight():com.intellij.platform.icons.design.IconAlign
+- f:getTopCenter():com.intellij.platform.icons.design.IconAlign
+- f:getTopLeft():com.intellij.platform.icons.design.IconAlign
+- f:getTopRight():com.intellij.platform.icons.design.IconAlign
+f:com.intellij.platform.icons.design.IconAlignKt
+- sf:iconAlign(com.intellij.platform.icons.design.IconVerticalAlign,com.intellij.platform.icons.design.IconHorizontalAlign):com.intellij.platform.icons.design.IconAlign
+com.intellij.platform.icons.design.IconAnimationDesigner
+- a:frame(J,kotlin.jvm.functions.Function1):V
+com.intellij.platform.icons.design.IconDesigner
+- a:animation(com.intellij.platform.icons.modifiers.IconModifier,kotlin.jvm.functions.Function1):V
+- bs:animation$default(com.intellij.platform.icons.design.IconDesigner,com.intellij.platform.icons.modifiers.IconModifier,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- a:box(com.intellij.platform.icons.modifiers.IconModifier,kotlin.jvm.functions.Function1):V
+- bs:box$default(com.intellij.platform.icons.design.IconDesigner,com.intellij.platform.icons.modifiers.IconModifier,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- a:column(com.intellij.platform.icons.modifiers.IconModifier,kotlin.jvm.functions.Function1):V
+- bs:column$default(com.intellij.platform.icons.design.IconDesigner,com.intellij.platform.icons.modifiers.IconModifier,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- a:icon(com.intellij.platform.icons.Icon,com.intellij.platform.icons.modifiers.IconModifier):V
+- bs:icon$default(com.intellij.platform.icons.design.IconDesigner,com.intellij.platform.icons.Icon,com.intellij.platform.icons.modifiers.IconModifier,I,java.lang.Object):V
+- a:image(com.intellij.platform.icons.ImageResourceLocation,com.intellij.platform.icons.modifiers.IconModifier):V
+- a:image(java.lang.String,java.lang.ClassLoader,com.intellij.platform.icons.modifiers.IconModifier):V
+- bs:image$default(com.intellij.platform.icons.design.IconDesigner,com.intellij.platform.icons.ImageResourceLocation,com.intellij.platform.icons.modifiers.IconModifier,I,java.lang.Object):V
+- bs:image$default(com.intellij.platform.icons.design.IconDesigner,java.lang.String,java.lang.ClassLoader,com.intellij.platform.icons.modifiers.IconModifier,I,java.lang.Object):V
+- a:row(com.intellij.platform.icons.modifiers.IconModifier,kotlin.jvm.functions.Function1):V
+- bs:row$default(com.intellij.platform.icons.design.IconDesigner,com.intellij.platform.icons.modifiers.IconModifier,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- a:shape(com.intellij.platform.icons.design.Color,com.intellij.platform.icons.design.Shape,com.intellij.platform.icons.modifiers.IconModifier):V
+- bs:shape$default(com.intellij.platform.icons.design.IconDesigner,com.intellij.platform.icons.design.Color,com.intellij.platform.icons.design.Shape,com.intellij.platform.icons.modifiers.IconModifier,I,java.lang.Object):V
+- a:spacer(com.intellij.platform.icons.modifiers.IconModifier):V
+- bs:spacer$default(com.intellij.platform.icons.design.IconDesigner,com.intellij.platform.icons.modifiers.IconModifier,I,java.lang.Object):V
+f:com.intellij.platform.icons.design.IconDesignerKt
+- sf:badge(com.intellij.platform.icons.design.IconDesigner,com.intellij.platform.icons.design.Color,com.intellij.platform.icons.design.Shape,com.intellij.platform.icons.design.IconAlign,com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.modifiers.IconModifier):V
+- bs:badge$default(com.intellij.platform.icons.design.IconDesigner,com.intellij.platform.icons.design.Color,com.intellij.platform.icons.design.Shape,com.intellij.platform.icons.design.IconAlign,com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.modifiers.IconModifier,I,java.lang.Object):V
+e:com.intellij.platform.icons.design.IconHorizontalAlign
+- java.lang.Enum
+- sf:Center:com.intellij.platform.icons.design.IconHorizontalAlign
+- sf:Left:com.intellij.platform.icons.design.IconHorizontalAlign
+- sf:Right:com.intellij.platform.icons.design.IconHorizontalAlign
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.icons.design.IconHorizontalAlign
+- s:values():com.intellij.platform.icons.design.IconHorizontalAlign[]
+com.intellij.platform.icons.design.IconMargin
+- sf:Companion:com.intellij.platform.icons.design.IconMargin$Companion
+- a:getBottom():com.intellij.platform.icons.design.IconUnit
+- a:getLeft():com.intellij.platform.icons.design.IconUnit
+- a:getRight():com.intellij.platform.icons.design.IconUnit
+- a:getTop():com.intellij.platform.icons.design.IconUnit
+f:com.intellij.platform.icons.design.IconMargin$Companion
+- f:getZero():com.intellij.platform.icons.design.IconMargin
+f:com.intellij.platform.icons.design.IconMarginKt
+- sf:iconMargin(com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit):com.intellij.platform.icons.design.IconMargin
+com.intellij.platform.icons.design.IconUnit
+- sf:Companion:com.intellij.platform.icons.design.IconUnit$Companion
+- a:times(I):com.intellij.platform.icons.design.IconUnit
+f:com.intellij.platform.icons.design.IconUnit$Companion
+- f:getZero():com.intellij.platform.icons.design.IconUnit
+f:com.intellij.platform.icons.design.IconUnitsKt
+- sf:getDp(D):com.intellij.platform.icons.design.DisplayPoint
+- sf:getDp(F):com.intellij.platform.icons.design.DisplayPoint
+- sf:getDp(I):com.intellij.platform.icons.design.DisplayPoint
+- sf:getPx(I):com.intellij.platform.icons.design.Pixel
+e:com.intellij.platform.icons.design.IconVerticalAlign
+- java.lang.Enum
+- sf:Bottom:com.intellij.platform.icons.design.IconVerticalAlign
+- sf:Center:com.intellij.platform.icons.design.IconVerticalAlign
+- sf:Top:com.intellij.platform.icons.design.IconVerticalAlign
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.icons.design.IconVerticalAlign
+- s:values():com.intellij.platform.icons.design.IconVerticalAlign[]
+com.intellij.platform.icons.design.Pixel
+- com.intellij.platform.icons.design.IconUnit
+- a:getValue():I
+- a:plus(com.intellij.platform.icons.design.Pixel):com.intellij.platform.icons.design.Pixel
+com.intellij.platform.icons.design.Rectangle
+- com.intellij.platform.icons.design.Shape
+- a:getHeight():com.intellij.platform.icons.design.IconUnit
+- a:getWidth():com.intellij.platform.icons.design.IconUnit
+com.intellij.platform.icons.design.SRGBColor
+- com.intellij.platform.icons.design.Color
+- a:getAlpha():F
+- a:getBlue():F
+- a:getGreen():F
+- a:getRed():F
+com.intellij.platform.icons.design.Shape
+- sf:Companion:com.intellij.platform.icons.design.Shape$Companion
+f:com.intellij.platform.icons.design.Shape$Companion
+f:com.intellij.platform.icons.design.ShapeKt
+- sf:circle(com.intellij.platform.icons.design.IconUnit):com.intellij.platform.icons.design.Circle
+- sf:rectangle(com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit):com.intellij.platform.icons.design.Rectangle
+com.intellij.platform.icons.design.SvgPatcherDesigner
+- a:add(java.lang.String,java.lang.String):V
+- a:filter(java.lang.String,kotlin.jvm.functions.Function1):V
+- a:remove(java.lang.String):V
+- a:removeIfMatches(java.lang.String,java.lang.String):V
+- a:removeUnlessMatches(java.lang.String,java.lang.String):V
+- a:replace(java.lang.String,java.lang.String):V
+- a:replaceIfMatches(java.lang.String,java.lang.String,java.lang.String):V
+- a:replaceUnlessMatches(java.lang.String,java.lang.String,java.lang.String):V
+- a:set(java.lang.String,java.lang.String):V
+com.intellij.platform.icons.filters.ColorFilter
+f:com.intellij.platform.icons.filters.TintColorFilterKt
+- sf:tintColorFilter(com.intellij.platform.icons.design.Color,com.intellij.platform.icons.design.BlendMode):com.intellij.platform.icons.filters.ColorFilter
+- bs:tintColorFilter$default(com.intellij.platform.icons.design.Color,com.intellij.platform.icons.design.BlendMode,I,java.lang.Object):com.intellij.platform.icons.filters.ColorFilter
+com.intellij.platform.icons.layers.IconLayer
+- a:getModifier():com.intellij.platform.icons.modifiers.IconModifier
+f:com.intellij.platform.icons.modifiers.AlignIconModifierKt
+- sf:align(com.intellij.platform.icons.modifiers.IconModifier,com.intellij.platform.icons.design.IconAlign):com.intellij.platform.icons.modifiers.IconModifier
+f:com.intellij.platform.icons.modifiers.AlphaIconModifierKt
+- sf:alpha(com.intellij.platform.icons.modifiers.IconModifier,F):com.intellij.platform.icons.modifiers.IconModifier
+f:com.intellij.platform.icons.modifiers.ColorFilterModifierKt
+- sf:colorFilter(com.intellij.platform.icons.modifiers.IconModifier,com.intellij.platform.icons.filters.ColorFilter):com.intellij.platform.icons.modifiers.IconModifier
+- sf:tintColor(com.intellij.platform.icons.modifiers.IconModifier,com.intellij.platform.icons.design.Color,com.intellij.platform.icons.design.BlendMode):com.intellij.platform.icons.modifiers.IconModifier
+f:com.intellij.platform.icons.modifiers.CutoutMarginModifierKt
+- sf:cutoutMargin(com.intellij.platform.icons.modifiers.IconModifier,com.intellij.platform.icons.design.IconUnit):com.intellij.platform.icons.modifiers.IconModifier
+com.intellij.platform.icons.modifiers.IconModifier
+- sf:Companion:com.intellij.platform.icons.modifiers.IconModifier$Companion
+f:com.intellij.platform.icons.modifiers.IconModifier$Companion
+- com.intellij.platform.icons.modifiers.IconModifier
+f:com.intellij.platform.icons.modifiers.IconModifierKt
+- sf:then(com.intellij.platform.icons.modifiers.IconModifier,com.intellij.platform.icons.modifiers.IconModifier):com.intellij.platform.icons.modifiers.IconModifier
+f:com.intellij.platform.icons.modifiers.MarginIconModifierKt
+- sf:margin(com.intellij.platform.icons.modifiers.IconModifier,com.intellij.platform.icons.design.IconUnit):com.intellij.platform.icons.modifiers.IconModifier
+- sf:margin(com.intellij.platform.icons.modifiers.IconModifier,com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit):com.intellij.platform.icons.modifiers.IconModifier
+- sf:margin(com.intellij.platform.icons.modifiers.IconModifier,com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit):com.intellij.platform.icons.modifiers.IconModifier
+f:com.intellij.platform.icons.modifiers.ScaleModifierKt
+- sf:scale(com.intellij.platform.icons.modifiers.IconModifier,com.intellij.platform.icons.scale.IconScale):com.intellij.platform.icons.modifiers.IconModifier
+f:com.intellij.platform.icons.modifiers.StrokeModifierKt
+- sf:stroke(com.intellij.platform.icons.modifiers.IconModifier,com.intellij.platform.icons.design.Color):com.intellij.platform.icons.modifiers.IconModifier
+f:com.intellij.platform.icons.modifiers.SvgPatcherModifierKt
+- sf:patchSvg(com.intellij.platform.icons.modifiers.IconModifier,com.intellij.platform.icons.patchers.SvgPatcher):com.intellij.platform.icons.modifiers.IconModifier
+- sf:patchSvg(com.intellij.platform.icons.modifiers.IconModifier,kotlin.jvm.functions.Function1):com.intellij.platform.icons.modifiers.IconModifier
+com.intellij.platform.icons.patchers.SvgPatcher
+- a:combineWith(com.intellij.platform.icons.patchers.SvgPatcher):com.intellij.platform.icons.patchers.SvgPatcher
+f:com.intellij.platform.icons.patchers.SvgPatcherKt
+- sf:svgPatcher(kotlin.jvm.functions.Function1):com.intellij.platform.icons.patchers.SvgPatcher
+com.intellij.platform.icons.scale.FactorScale
+- com.intellij.platform.icons.scale.IconScale
+- a:getFactor():D
+com.intellij.platform.icons.scale.FillAreaScale
+- com.intellij.platform.icons.scale.IconScale
+- a:getHeight():com.intellij.platform.icons.design.IconUnit
+- a:getRelative():Z
+- a:getWidth():com.intellij.platform.icons.design.IconUnit
+com.intellij.platform.icons.scale.FitAreaScale
+- com.intellij.platform.icons.scale.IconScale
+- a:getHeight():com.intellij.platform.icons.design.IconUnit
+- a:getRelative():Z
+- a:getWidth():com.intellij.platform.icons.design.IconUnit
+com.intellij.platform.icons.scale.IconScale
+- a:toFactor(F,I,I,F):F
+- bs:toFactor$default(com.intellij.platform.icons.scale.IconScale,F,I,I,F,I,java.lang.Object):F
+f:com.intellij.platform.icons.scale.IconScaleKt
+- sf:factor(D):com.intellij.platform.icons.scale.FactorScale
+- sf:factor(F):com.intellij.platform.icons.scale.FactorScale
+- sf:fillArea(com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit,Z):com.intellij.platform.icons.scale.FillAreaScale
+- bs:fillArea$default(com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit,Z,I,java.lang.Object):com.intellij.platform.icons.scale.FillAreaScale
+- sf:fitArea(com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit,Z):com.intellij.platform.icons.scale.FitAreaScale
+- bs:fitArea$default(com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit,Z,I,java.lang.Object):com.intellij.platform.icons.scale.FitAreaScale
+f:com.intellij.platform.icons.swing.AwtColorKt
+- sf:toAwtColor(com.intellij.platform.icons.design.Color):java.awt.Color
+f:com.intellij.platform.icons.swing.SwingIconKt
+- sf:swingIcon(com.intellij.platform.icons.design.IconDesigner,javax.swing.Icon,com.intellij.platform.icons.modifiers.IconModifier):V
+- bs:swingIcon$default(com.intellij.platform.icons.design.IconDesigner,javax.swing.Icon,com.intellij.platform.icons.modifiers.IconModifier,I,java.lang.Object):V
+- sf:toNewIcon(javax.swing.Icon,com.intellij.platform.icons.modifiers.IconModifier):com.intellij.platform.icons.Icon
+- bs:toNewIcon$default(javax.swing.Icon,com.intellij.platform.icons.modifiers.IconModifier,I,java.lang.Object):com.intellij.platform.icons.Icon
+- sf:toSwingIcon(com.intellij.platform.icons.Icon,com.intellij.platform.icons.scale.IconScale):javax.swing.Icon
+- bs:toSwingIcon$default(com.intellij.platform.icons.Icon,com.intellij.platform.icons.scale.IconScale,I,java.lang.Object):javax.swing.Icon

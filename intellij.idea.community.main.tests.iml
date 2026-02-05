@@ -123,6 +123,7 @@
     <orderEntry type="module" module-name="intellij.platform.eel.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.dependencyUpdater.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jewel.detektPlugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.icons.impl.intellij.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.selfContainedProjects" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.cmd.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.turboComplete.tests" scope="TEST" />

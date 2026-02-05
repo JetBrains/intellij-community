@@ -15,6 +15,21 @@ import java.util.function.Supplier
 import javax.swing.Icon
 
 @Internal
+fun findIconLoaderByPath(path: String, classLoader: ClassLoader): ImageDataLoader {
+  val originalPath = normalizePath(path)
+  val patched = patchIconPath(originalPath, classLoader)
+  val effectivePath = patched?.first ?: originalPath
+  val effectiveClassLoader = patched?.second ?: classLoader
+
+  return ImageDataByPathLoader.createLoader(originalPath = originalPath,
+                    originalClassLoader = effectiveClassLoader,
+                    patched = patched,
+                    path = effectivePath,
+                    classLoader = effectiveClassLoader
+        )
+}
+
+@Internal
 fun findIconByPath(
   @NonNls path: String,
   classLoader: ClassLoader,
@@ -62,14 +77,28 @@ internal class ImageDataByPathLoader private constructor(override val path: Stri
                                                          private val classLoader: ClassLoader,
                                                          private val original: ImageDataByPathLoader?) : ImageDataLoader {
   companion object {
+    internal fun createLoader(originalPath: @NonNls String,
+                            originalClassLoader: ClassLoader,
+                            patched: Pair<String, ClassLoader?>?,
+                            path: String,
+                            classLoader: ClassLoader): ImageDataByPathLoader {
+      val originalLoader = ImageDataByPathLoader(path = originalPath, classLoader = originalClassLoader, original = null)
+      return if (patched == null) originalLoader else ImageDataByPathLoader(path = path, classLoader = classLoader, original = originalLoader)
+    }
+
     internal fun createIcon(originalPath: @NonNls String,
                             originalClassLoader: ClassLoader,
                             patched: Pair<String, ClassLoader?>?,
                             path: String,
                             classLoader: ClassLoader,
                             toolTip: Supplier<String?>? = null): CachedImageIcon {
-      val originalLoader = ImageDataByPathLoader(path = originalPath, classLoader = originalClassLoader, original = null)
-      val loader = if (patched == null) originalLoader else ImageDataByPathLoader(path = path, classLoader = classLoader, original = originalLoader)
+      val loader = createLoader(
+        originalPath,
+        originalClassLoader,
+        patched,
+        path,
+        classLoader
+      )
       return CachedImageIcon(loader = loader, toolTip = toolTip, originalLoader = loader.original ?: loader)
     }
 

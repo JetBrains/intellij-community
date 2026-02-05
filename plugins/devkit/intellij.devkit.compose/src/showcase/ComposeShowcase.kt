@@ -54,6 +54,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers.IO
@@ -128,6 +129,7 @@ internal fun ComposeShowcase() {
           TooltipAreaSimple()
           InfiniteAnimation()
           KodeeShowcase()
+          Icons()
         }
       }
     }

@@ -249,6 +249,9 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
     return hasher.asLong
   }
 
+  /**
+   * Ensure to also change ModuleImageResourceLocation in icons-impl/intellij
+   */
   override fun getPluginAndModuleId(classLoader: ClassLoader): Pair<String, String?> {
     if (classLoader is PluginAwareClassLoader) {
       return classLoader.pluginId.idString to classLoader.moduleId
@@ -258,6 +261,9 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
     }
   }
 
+  /**
+   * Ensure to also change ModuleImageResourceLoader in icons-impl/intellij/rendering
+   */
   override fun getClassLoader(pluginId: String, moduleId: String?): ClassLoader? {
     val plugin = PluginManagerCore.findPlugin(PluginId.getId(pluginId)) ?: return null
     if (moduleId == null) {

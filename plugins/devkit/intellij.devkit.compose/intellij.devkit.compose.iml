@@ -14,7 +14,10 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.3.21-RC2/kotlin-compose-compiler-plugin-2.3.21-RC2.jar</args>
+              <args>
+                <arg>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.3.21-RC2/kotlin-compose-compiler-plugin-2.3.21-RC2.jar</arg>
+                <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
+              </args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
@@ -70,5 +73,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.gradle" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
   </component>
 </module>
