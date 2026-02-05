@@ -23,13 +23,14 @@ internal class OutdatedGradleVersionChecker: GradleExecutionChecker {
     if (isLatestMinorVersionInspectionDisabled(context)) return
     if (isMinorGradleVersionOutdated(currentVersion)) return
 
-    val issue = OutdatedGradleVersionIssue(context, currentVersion)
-    issue.addOpenInspectionSettingsQuickFix(context, "LatestMinorVersion")
+    val issue = OutdatedGradleVersionIssue(context.projectPath, currentVersion)
+    issue.addOpenInspectionSettingsQuickFix("LatestMinorVersion")
 
+    val taskId = context.taskId
     context.listener.onStatusChange(
       ExternalSystemBuildEvent(
-        context.taskId,
-        BuildIssueEventImpl(context.taskId, issue, MessageEvent.Kind.INFO)
+        taskId,
+        BuildIssueEventImpl(taskId, issue, MessageEvent.Kind.INFO)
       )
     )
   }
