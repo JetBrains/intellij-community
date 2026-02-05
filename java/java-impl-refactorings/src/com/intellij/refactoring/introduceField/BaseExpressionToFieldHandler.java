@@ -276,7 +276,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         modifierList.addAfter(annotation, null);
       }
     }
-    JavaCodeStyleManager.getInstance(field.getProject()).shortenClassReferences(field);
   }
 
   public static PsiElement getPhysicalElement(final PsiExpression selectedExpr) {
