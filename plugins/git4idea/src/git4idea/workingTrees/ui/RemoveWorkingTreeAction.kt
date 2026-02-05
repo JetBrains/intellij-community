@@ -96,7 +96,7 @@ internal class RemoveWorkingTreeAction : DumbAwareAction() {
       service<Git>().deleteWorkingTree(project, tree)
     }
     if (commandResult.success()) {
-      repository.workingTreeHolder.reload()
+      repository.workingTreeHolder.scheduleReload()
       VcsNotifier.getInstance(project).notifySuccess(GitNotificationIdsHolder.WORKING_TREE_DELETED,
                                                      "",
                                                      GitBundle.message("Git.WorkingTrees.delete.worktree.success.message",

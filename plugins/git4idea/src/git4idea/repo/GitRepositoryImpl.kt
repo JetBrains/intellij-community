@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -48,7 +49,7 @@ class GitRepositoryImpl private constructor(
   private val resolvedFilesHolder: GitResolvedMergeConflictsFilesHolder
   private val tagHolder: GitTagHolder
   private val tagsHolder: GitRepositoryTagsHolder
-  private val workingTreeHolder: GitWorkingTreeHolder
+  private val workingTreeHolder: GitWorkingTreeHolderImpl
 
   @Volatile
   private var repoInfo: GitRepoInfo
@@ -75,6 +76,9 @@ class GitRepositoryImpl private constructor(
 
     workingTreeHolder = GitWorkingTreeHolderImpl(this)
     repoInfo = readRepoInfo()
+    runBlockingMaybeCancellable {
+      workingTreeHolder.updateState()
+    }
   }
 
   @Deprecated("Deprecated in Java")
@@ -180,6 +184,11 @@ class GitRepositoryImpl private constructor(
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     val previousInfo = repoInfo
     repoInfo = readRepoInfo()
+    if (previousInfo.currentBranch != repoInfo.currentBranch) {
+      runBlockingMaybeCancellable {
+        workingTreeHolder.updateState()
+      }
+    }
     notifyIfRepoChanged(this, previousInfo, repoInfo)
   }
 
@@ -259,7 +268,6 @@ class GitRepositoryImpl private constructor(
         updater.installListeners()
         notifyIfRepoChanged(this, null, initialRepoInfo)
         tagsHolder.reload()
-        workingTreeHolder.reload()
         this.untrackedFilesHolder.invalidate()
         this.resolvedConflictsFilesHolder.invalidate()
       }

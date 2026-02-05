@@ -49,7 +49,7 @@ class MockGitRepository(private val project: Project, private val root: VirtualF
       return workingTrees
     }
 
-    override fun reload() {
+    override fun scheduleReload() {
     }
   }
     @JvmName("workingTreeHolder_") get

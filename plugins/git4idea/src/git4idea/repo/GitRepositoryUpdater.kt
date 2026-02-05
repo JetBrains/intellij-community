@@ -164,7 +164,7 @@ internal class GitRepositoryUpdater(
       refreshRoots(repository.project, listOf(repository.root))
     }
     if (worktreesChanged) {
-      repository.workingTreeHolder.reload()
+      repository.workingTreeHolder.scheduleReload()
     }
   }
 
