@@ -133,7 +133,7 @@ public class MethodEvaluator implements Evaluator {
         List<Method> matchingMethods =
           StreamEx.of(referenceType.methodsByName(myMethodName)).filter(m -> m.argumentTypeNames().size() == args.size()).toList();
         if (matchingMethods.size() == 1) {
-          jdiMethod = matchingMethods.get(0);
+          jdiMethod = matchingMethods.getFirst();
         }
         else if (matchingMethods.size() > 1) {
           jdiMethod = ContainerUtil.find(matchingMethods, m -> matchArgs(m, args));
