@@ -161,7 +161,7 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
 
     private inner class LanguageServiceAccessibleTextPanel : AccessibleJComponent() {
       override fun getAccessibleRole(): AccessibleRole = AccessibleRole.LABEL
-      override fun getAccessibleName(): String = LangBundle.message("language.services.widget")
+      override fun getAccessibleName(): String = LangBundle.message("language.services.widget.button")
     }
   }
 }
