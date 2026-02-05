@@ -75,7 +75,7 @@ public final class ThreadingAssertions {
    */
   public static void assertEventDispatchThread() {
     if (!EDT.isCurrentThreadEdt() && !EDT.isDisableEdtChecks()) {
-      throwThreadAccessException(MUST_EXECUTE_IN_EDT, false);
+      throwThreadRequirementException(MUST_EXECUTE_IN_EDT);
     }
   }
 
@@ -87,7 +87,7 @@ public final class ThreadingAssertions {
   @Obsolete
   public static void softAssertEventDispatchThread() {
     if (!EDT.isCurrentThreadEdt() && !EDT.isDisableEdtChecks()) {
-      getLogger().error(createThreadAccessException(MUST_EXECUTE_IN_EDT));
+      getLogger().error(createThreadRequirementException(MUST_EXECUTE_IN_EDT));
     }
   }
 
@@ -98,7 +98,7 @@ public final class ThreadingAssertions {
    */
   public static void assertBackgroundThread() {
     if (EDT.isCurrentThreadEdt() && !EDT.isDisableEdtChecks()) {
-      throwThreadAccessException(MUST_NOT_EXECUTE_IN_EDT, false);
+      throwThreadRequirementException(MUST_NOT_EXECUTE_IN_EDT);
     }
   }
 
@@ -110,7 +110,7 @@ public final class ThreadingAssertions {
   @Obsolete
   public static void softAssertBackgroundThread() {
     if (EDT.isCurrentThreadEdt() && !EDT.isDisableEdtChecks()) {
-      getLogger().error(createThreadAccessException(MUST_NOT_EXECUTE_IN_EDT));
+      getLogger().error(createThreadRequirementException(MUST_NOT_EXECUTE_IN_EDT));
     }
   }
 
@@ -126,7 +126,7 @@ public final class ThreadingAssertions {
     Application application = ApplicationManager.getApplication();
     if (application != null) {
       if (!application.isReadAccessAllowed()) {
-        throwThreadAccessException(MUST_EXECUTE_IN_READ_ACTION, true);
+        throwThreadAccessException(MUST_EXECUTE_IN_READ_ACTION);
       }
       else {
         trySoftAssertReadAccessWhenLocksAreForbidden(application);
@@ -174,7 +174,7 @@ public final class ThreadingAssertions {
   public static void assertNoReadAccess() {
     Application application = ApplicationManager.getApplication();
     if (application != null && application.isReadAccessAllowed()) {
-      throwThreadAccessException(MUST_NOT_EXECUTE_IN_READ_ACTION, true);
+      throwThreadAccessException(MUST_NOT_EXECUTE_IN_READ_ACTION);
     }
   }
 
@@ -184,7 +184,7 @@ public final class ThreadingAssertions {
   public static void assertNoOwnReadAccess() {
     Application application = ApplicationManager.getApplication();
     if (application != null && application.holdsReadLock()) {
-      throwThreadAccessException(MUST_NOT_EXECUTE_IN_READ_ACTION, true);
+      throwThreadAccessException(MUST_NOT_EXECUTE_IN_READ_ACTION);
     }
   }
 
@@ -214,7 +214,7 @@ public final class ThreadingAssertions {
    * Throw error that current thread hasn't write-intent read access.
    */
   public static void throwWriteIntentReadAccess() {
-    throwThreadAccessException(MUST_EXECUTE_IN_WRITE_INTENT_READ_ACTION, true);
+    throwThreadAccessException(MUST_EXECUTE_IN_WRITE_INTENT_READ_ACTION);
   }
 
   /**
@@ -226,7 +226,7 @@ public final class ThreadingAssertions {
     Application application = ApplicationManager.getApplication();
     if (application != null) {
       if (!application.isWriteAccessAllowed()) {
-        throwThreadAccessException(MUST_EXECUTE_IN_WRITE_ACTION, true);
+        throwThreadAccessException(MUST_EXECUTE_IN_WRITE_ACTION);
       }
       else {
         trySoftAssertWriteAccessWhenLocksAreForbidden(application);
@@ -241,11 +241,9 @@ public final class ThreadingAssertions {
     }
   }
 
-  private static void throwThreadAccessException(@NotNull @NonNls String message, boolean isThreading) {
+  private static void throwThreadAccessException(@NotNull @NonNls String message) {
     RuntimeExceptionWithAttachments exception = createThreadAccessException(message);
-    if (isThreading) {
-      processExceptionWithThreadLocal(exception);
-    }
+    processExceptionWithThreadLocal(exception);
     throw exception;
   }
 
@@ -253,8 +251,20 @@ public final class ThreadingAssertions {
     // Don't suggest Read Action on EDT with coroutines, as it rescheduled code
     boolean skipReadAction = EDT.isCurrentThreadEdt() && ThreadContext.currentThreadContextOrNull() != null;
     return new RuntimeExceptionWithAttachments(
-      message + "; If you access or modify model on EDT consider wrapping your code in WriteIntentReadAction " +
+      message +
+      "; If you access or modify model on EDT consider wrapping your code in WriteIntentReadAction " +
       (skipReadAction ? "" : " or ReadAction") +
+      "; see " + DOCUMENTATION_URL + " for details" + "\n" + getThreadDetails()
+    );
+  }
+
+  private static void throwThreadRequirementException(@NotNull @NonNls String message) {
+    throw createThreadRequirementException(message);
+  }
+
+  private static @NotNull RuntimeExceptionWithAttachments createThreadRequirementException(@NonNls @NotNull String message) {
+    return new RuntimeExceptionWithAttachments(
+      message +
       "; see " + DOCUMENTATION_URL + " for details" + "\n" + getThreadDetails()
     );
   }
