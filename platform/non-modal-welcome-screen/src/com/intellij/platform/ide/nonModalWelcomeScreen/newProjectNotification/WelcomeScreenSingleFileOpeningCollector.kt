@@ -7,34 +7,19 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 internal object WelcomeScreenSingleFileOpeningCollector : CounterUsagesCollector() {
-
   enum class OpeningStrategy {
-     FOLDER,
-     PROJECT,
-   }
+    FOLDER,
+    PROJECT,
+  }
 
   private val GROUP = EventLogGroup("welcome.screen.single.file.opening", 1)
 
   private val fieldOpeningStrategy: EnumEventField<OpeningStrategy> = EventFields.Enum("opening_strategy", OpeningStrategy::class.java)
 
-  private val NOTIFICATION_SUPPRESSED = GROUP.registerEvent(
-    "notification.suppressed",
-  )
-
-  private val NOTIFICATION_SHOWN = GROUP.registerEvent(
-    "notification.shown",
-    fieldOpeningStrategy
-  )
-
-  private val NOTIFICATION_CLOSED = GROUP.registerEvent(
-    "notification.closed",
-    fieldOpeningStrategy
-  )
-
-  private val NOTIFICATION_CLICKED = GROUP.registerEvent(
-    "notification.clicked",
-    fieldOpeningStrategy
-  )
+  private val NOTIFICATION_SUPPRESSED = GROUP.registerEvent("notification.suppressed")
+  private val NOTIFICATION_SHOWN = GROUP.registerEvent("notification.shown", fieldOpeningStrategy)
+  private val NOTIFICATION_CLOSED = GROUP.registerEvent("notification.closed", fieldOpeningStrategy)
+  private val NOTIFICATION_CLICKED = GROUP.registerEvent("notification.clicked", fieldOpeningStrategy)
 
   override fun getGroup(): EventLogGroup = GROUP
 

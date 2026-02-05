@@ -56,7 +56,7 @@ internal fun createMacNativeActionMenu(context: DataContext?,
       logger<Menu>().error(e)
     }
     finally {
-      UILatencyLogger.MAIN_MENU_LATENCY.log(System.currentTimeMillis() - menuPeer.openTimeMs);
+      UILatencyLogger.logMainMenuLatency(System.currentTimeMillis() - menuPeer.openTimeMs);
     }
   }
   menuPeer.listenPresentationChanges(presentation)

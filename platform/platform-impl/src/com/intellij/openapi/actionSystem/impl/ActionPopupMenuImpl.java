@@ -7,7 +7,6 @@ import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.internal.inspector.UiInspectorActionUtil;
 import com.intellij.internal.inspector.UiInspectorUtil;
-import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -159,10 +158,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(Utils.getCachedOnlyDataContext(myContext));
       Language language = psiFile == null ? null : psiFile.getLanguage();
       boolean coldStart = SEEN_ACTION_GROUPS.add(Objects.hash(myGroup, language));
-      UILatencyLogger.ACTION_POPUP_LATENCY.log(EventFields.DurationMs.with(time),
-                                               EventFields.ActionPlace.with(myPlace),
-                                               UILatencyLogger.COLD_START.with(coldStart),
-                                               EventFields.Language.with(language));
+      UILatencyLogger.logActionPopupLatency(time, myPlace, coldStart, language);
     }
 
     @Override

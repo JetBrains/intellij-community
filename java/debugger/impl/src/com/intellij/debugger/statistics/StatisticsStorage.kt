@@ -118,7 +118,7 @@ enum class ThreadDumpStatus {
   PLATFORM_DUMP_EXTENDED_DUMP_DISABLED,
 }
 
-val THREAD_DUMP_TRIGGERING_EXCEPTIONS_TO_LOG = listOf(
+val THREAD_DUMP_TRIGGERING_EXCEPTIONS_TO_LOG: List<String> = listOf(
   "java.io.InterruptedIOException",
   "java.lang.IllegalMonitorStateException",
   "java.sql.SQLTransientConnectionException",

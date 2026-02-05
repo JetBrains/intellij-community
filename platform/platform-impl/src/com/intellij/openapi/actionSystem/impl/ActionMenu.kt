@@ -365,7 +365,7 @@ class ActionMenu constructor(
         fillMenu()
         // NOTE: FUS for OSX system menu is implemented in MacNativeActionMenu
       } else {
-        UILatencyLogger.MAIN_MENU_LATENCY.log(System.currentTimeMillis() - startMs)
+        UILatencyLogger.logMainMenuLatency(System.currentTimeMillis() - startMs)
       }
     }
   }

@@ -19,10 +19,6 @@ import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider.Companion.isWelco
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.createOptionsToOpenDotIdeaOrCreateNewIfNotExists
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenAppScopeHolder
-import com.intellij.platform.ide.nonModalWelcomeScreen.newProjectNotification.WelcomeScreenSingleFileOpeningCollector.logNotificationClosed
-import com.intellij.platform.ide.nonModalWelcomeScreen.newProjectNotification.WelcomeScreenSingleFileOpeningCollector.logNotificationOpenButtonClicked
-import com.intellij.platform.ide.nonModalWelcomeScreen.newProjectNotification.WelcomeScreenSingleFileOpeningCollector.logNotificationShown
-import com.intellij.platform.ide.nonModalWelcomeScreen.newProjectNotification.WelcomeScreenSingleFileOpeningCollector.logNotificationSuppressed
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
@@ -118,12 +114,12 @@ abstract class WelcomeScreenOpenFileNotificationProvider : EditorNotificationPro
     val projectRootInfo = selectProjectRoot(file)
 
     if (projectRootInfo.result == ProjectRootResult.SUPPRESS_NOTIFICATION) {
-      logNotificationSuppressed()
+      WelcomeScreenSingleFileOpeningCollector.logNotificationSuppressed()
 
       return null
     }
 
-    projectRootInfo.result.asOpeningStrategy { logNotificationShown(it) }
+    projectRootInfo.result.asOpeningStrategy { WelcomeScreenSingleFileOpeningCollector.logNotificationShown(it) }
 
     return Function { fileEditor -> createNotificationPanel(project, file, fileEditor, projectRootInfo) }
   }
@@ -151,7 +147,7 @@ abstract class WelcomeScreenOpenFileNotificationProvider : EditorNotificationPro
     }
 
     panel.createActionLabel(buttonLabelText) {
-      projectRootInfo.result.asOpeningStrategy { logNotificationOpenButtonClicked(it) }
+      projectRootInfo.result.asOpeningStrategy { WelcomeScreenSingleFileOpeningCollector.logNotificationOpenButtonClicked(it) }
 
       service<WelcomeScreenProjectCloseHandler>().addFileToCloseOnProjectClose(file)
       WelcomeScreenAppScopeHolder.getInstance().coroutineScope.launch {
@@ -166,7 +162,7 @@ abstract class WelcomeScreenOpenFileNotificationProvider : EditorNotificationPro
       }
     }
     panel.setCloseAction {
-      projectRootInfo.result.asOpeningStrategy { logNotificationClosed(it) }
+      projectRootInfo.result.asOpeningStrategy { WelcomeScreenSingleFileOpeningCollector.logNotificationClosed(it) }
 
       closedNotificationFiles.add(file.path)
       EditorNotifications.getInstance(project).updateNotifications(file)
