@@ -16,7 +16,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.MouseEventHandler;
-import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
@@ -120,13 +119,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       myComponent.add(myRendererPane);
       myComponent.validate();
     }
-    var popup = new MovablePopup(myComponent, myTipComponent);
-    // On Wayland, heavyweight popup might get automatically displaced
-    // by the server if they appear to cross the screen boundary, which
-    // is not what we want in this case.
-    popup.setHeavyWeight(!StartupUiUtil.isWaylandToolkit());
-    myPopup = popup;
-
+    myPopup = new MovablePopup(myComponent, myTipComponent);
 
     MouseEventHandler dispatcher = new MouseEventHandler() {
       @Override
