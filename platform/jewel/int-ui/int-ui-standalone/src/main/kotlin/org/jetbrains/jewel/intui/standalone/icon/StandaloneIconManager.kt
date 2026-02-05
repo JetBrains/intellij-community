@@ -14,9 +14,9 @@ internal class StandaloneIconManager : DefaultIconManager() {
     override fun setDeferredIconScope(scope: CoroutineScope) {
         resolverService = DeferredIconResolverService(scope)
     }
-    
-    override fun getResolverService(): DeferredIconResolverService = resolverService ?: 
-        error("Deferred Icon Resolver service is not initialized")
+
+    override fun getResolverService(): DeferredIconResolverService =
+        resolverService ?: error("Deferred Icon Resolver service is not initialized")
 
     override suspend fun sendDeferredNotifications(id: IconIdentifier, result: IconDescriptor) {
         // Do nothing
