@@ -200,7 +200,7 @@
         "lowDate": "2019-09-19",
         "highDate": "2022-03-19"
       },
-      "doc": "The <strong><code>afterprint</code></strong> event is fired after the associated document has started printing or the print preview has been closed.\nThe <a href=\"$MDN_URL$/Web/API/Window/beforeprint_event\" ><code>beforeprint</code></a> and <code>afterprint</code> events allow pages to change their content before printing starts (perhaps to remove a banner, for example) and then revert those changes after printing has completed. In general, you should prefer the use of a <a href=\"$MDN_URL$/Web/CSS/CSS_media_queries/Using_media_queries#targeting_media_types\"><code>@media print</code></a> CSS at-rule, but it may be necessary to use these events in some cases."
+      "doc": "The <strong><code>afterprint</code></strong> event is fired after the associated document has started printing or the print preview has been closed.\nThe <a href=\"$MDN_URL$/Web/API/Window/beforeprint_event\" ><code>beforeprint</code></a> and <code>afterprint</code> events allow pages to change their content before printing starts (perhaps to remove a banner, for example) and then revert those changes after printing has completed. In general, you should prefer the use of a <a href=\"$MDN_URL$/Web/CSS/Guides/Media_queries/Using#targeting_media_types\"><code>@media print</code></a> CSS at-rule, but it may be necessary to use these events in some cases."
     },
     "afterscriptexecute": {
       "url": "$MDN_URL$/web/api/element/afterscriptexecute_event",
@@ -224,7 +224,7 @@
       "baseline": {
         "level": "NONE"
       },
-      "doc": "The <strong><code>animationcancel</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/CSS_animations\">CSS Animation</a> unexpectedly aborts. In other words, any time it stops running without sending an <a href=\"$MDN_URL$/Web/API/Element/animationend_event\" ><code>animationend</code></a> event. This might happen when the <a href=\"$MDN_URL$/Web/CSS/animation-name\"><code>animation-name</code></a> is changed such that the animation is removed, or when the animating node is hidden using CSS. Therefore, either directly or because any of its containing nodes are hidden.\nAn event handler for this event can be added by setting the <code>onanimationcancel</code> property, or using <a href=\"$MDN_URL$/Web/API/EventTarget/addEventListener\" ><code>addEventListener()</code></a>."
+      "doc": "The <strong><code>animationcancel</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/Guides/Animations\">CSS Animation</a> unexpectedly aborts. In other words, any time it stops running without sending an <a href=\"$MDN_URL$/Web/API/Element/animationend_event\" ><code>animationend</code></a> event. This might happen when the <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/animation-name\"><code>animation-name</code></a> is changed such that the animation is removed, or when the animating node is hidden using CSS. Therefore, either directly or because any of its containing nodes are hidden.\nAn event handler for this event can be added by setting the <code>onanimationcancel</code> property, or using <a href=\"$MDN_URL$/Web/API/EventTarget/addEventListener\" ><code>addEventListener()</code></a>."
     },
     "animationend": {
       "url": "$MDN_URL$/web/api/element/animationend_event",
@@ -246,7 +246,7 @@
         "lowDate": "2019-12-17",
         "highDate": "2022-06-17"
       },
-      "doc": "The <strong><code>animationend</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/CSS_animations\">CSS Animation</a> has completed. If the animation aborts before reaching completion, such as if the element is removed from the DOM or the animation is removed from the element, the <code>animationend</code> event is not fired."
+      "doc": "The <strong><code>animationend</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/Guides/Animations\">CSS Animation</a> has completed. If the animation aborts before reaching completion, such as if the element is removed from the DOM or the animation is removed from the element, the <code>animationend</code> event is not fired."
     },
     "animationiteration": {
       "url": "$MDN_URL$/web/api/element/animationiteration_event",
@@ -268,7 +268,7 @@
         "lowDate": "2019-12-17",
         "highDate": "2022-06-17"
       },
-      "doc": "The <strong><code>animationiteration</code></strong> event is fired when an iteration of a <a href=\"$MDN_URL$/Web/CSS/CSS_animations\">CSS Animation</a> ends, and another one begins. This event does not occur at the same time as the <a href=\"$MDN_URL$/Web/API/Element/animationend_event\" ><code>animationend</code></a> event, and therefore does not occur for animations with an <code>animation-iteration-count</code> of one."
+      "doc": "The <strong><code>animationiteration</code></strong> event is fired when an iteration of a <a href=\"$MDN_URL$/Web/CSS/Guides/Animations\">CSS Animation</a> ends, and another one begins. This event does not occur at the same time as the <a href=\"$MDN_URL$/Web/API/Element/animationend_event\" ><code>animationend</code></a> event, and therefore does not occur for animations with an <code>animation-iteration-count</code> of one."
     },
     "animationstart": {
       "url": "$MDN_URL$/web/api/element/animationstart_event",
@@ -290,7 +290,7 @@
         "lowDate": "2019-12-17",
         "highDate": "2022-06-17"
       },
-      "doc": "The <strong><code>animationstart</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/CSS_animations\">CSS Animation</a> has started. If there is an <a href=\"$MDN_URL$/Web/CSS/animation-delay\"><code>animation-delay</code></a>, this event will fire once the delay period has expired. A negative delay will cause the event to fire with an <a href=\"$MDN_URL$/Web/API/AnimationEvent/elapsedTime\" ><code>elapsedTime</code></a> equal to the absolute value of the delay (and, correspondingly, the animation will begin playing at that time index into the sequence)."
+      "doc": "The <strong><code>animationstart</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/Guides/Animations\">CSS Animation</a> has started. If there is an <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/animation-delay\"><code>animation-delay</code></a>, this event will fire once the delay period has expired. A negative delay will cause the event to fire with an <a href=\"$MDN_URL$/Web/API/AnimationEvent/elapsedTime\" ><code>elapsedTime</code></a> equal to the absolute value of the delay (and, correspondingly, the animation will begin playing at that time index into the sequence)."
     },
     "appinstalled": {
       "url": "$MDN_URL$/web/api/window/appinstalled_event",
@@ -424,7 +424,7 @@
         "lowDate": "2019-09-19",
         "highDate": "2022-03-19"
       },
-      "doc": "The <strong><code>beforeprint</code></strong> event is fired when the associated document is about to be printed or previewed for printing.\nThe <a href=\"$MDN_URL$/Web/API/Window/afterprint_event\" ><code>afterprint</code></a> and <code>beforeprint</code> events allow pages to change their content before printing starts (perhaps to remove a banner, for example) and then revert those changes after printing has completed. In general, you should prefer the use of a <a href=\"$MDN_URL$/Web/CSS/CSS_media_queries/Using_media_queries#targeting_media_types\"><code>@media print</code></a> CSS at-rule, but it may be necessary to use these events in some cases."
+      "doc": "The <strong><code>beforeprint</code></strong> event is fired when the associated document is about to be printed or previewed for printing.\nThe <a href=\"$MDN_URL$/Web/API/Window/afterprint_event\" ><code>afterprint</code></a> and <code>beforeprint</code> events allow pages to change their content before printing starts (perhaps to remove a banner, for example) and then revert those changes after printing has completed. In general, you should prefer the use of a <a href=\"$MDN_URL$/Web/CSS/Guides/Media_queries/Using#targeting_media_types\"><code>@media print</code></a> CSS at-rule, but it may be necessary to use these events in some cases."
     },
     "beforescriptexecute": {
       "url": "$MDN_URL$/web/api/element/beforescriptexecute_event",
@@ -465,10 +465,13 @@
         "Edge": "79",
         "Firefox": "93",
         "FirefoxAndroid": "93",
-        "Opera": "22"
+        "Opera": "22",
+        "Safari": "26.2",
+        "SafariIOS": "26.2"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2025-12-12"
       },
       "doc": "The <strong><code>beginEvent</code></strong> event of the <a href=\"$MDN_URL$/Web/API/SVGAnimationElement\"><code>SVGAnimationElement</code></a> interface is fired when the element local timeline begins to play. It will be raised each time the element begins the active duration (i.e., when it restarts, but not when it repeats).\nIt may be raised both in the course of normal (i.e., scheduled or interactive) timeline play, as well as in the case that the element was begun with a DOM method.\nThis event is not cancelable and does not bubble."
     },
@@ -576,7 +579,7 @@
         "lowDate": "2022-03-14",
         "highDate": "2024-09-14"
       },
-      "doc": "The <strong><code>cancel</code></strong> event fires on a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/dialog\"><code>&lt;dialog&gt;</code></a> element when the user instructs the browser that they wish to dismiss the current open dialog. The browser fires this event when the user presses the <kbd>Esc</kbd> key.\nThis event is cancelable but can not bubble.\nWhen a <code>&lt;dialog&gt;</code> is dismissed with the <kbd>Esc</kbd> key, both the <code>cancel</code> and <a href=\"$MDN_URL$/Web/API/HTMLDialogElement/close_event\" ><code>close</code></a> events are fired."
+      "doc": "The <strong><code>cancel</code></strong> event fires on a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/dialog\"><code>&lt;dialog&gt;</code></a> element when the user triggers a close request.\nThe <code>cancel</code> event handler can be used to override the default behavior on receiving a close request, and prevent the dialog from closing.\nIf the default behavior is not prevented, the dialog will close and fire a <a href=\"$MDN_URL$/Web/API/HTMLDialogElement/close_event\" ><code>close</code></a> event.\nClose requests might be triggered by:\nThis event is cancelable and does not bubble."
     },
     "canplay": {
       "url": "$MDN_URL$/web/api/htmlmediaelement/canplay_event",
@@ -1392,13 +1395,17 @@
         "StandardTrack"
       ],
       "compatibility": {
+        "Chrome": "143",
+        "ChromeAndroid": "143",
+        "Edge": "143",
         "Firefox": "89",
         "FirefoxAndroid": "89",
         "Safari": "16",
         "SafariIOS": "16"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2025-12-05"
       },
       "doc": "The <code>gamepadconnected</code> event is fired when the browser detects that a gamepad has been connected or the first time a button/axis of the gamepad is used.\nThe event will not fire if disallowed by the document's <a href=\"$MDN_URL$/Web/HTTP/Reference/Headers/Permissions-Policy/gamepad\"><code>gamepad</code></a> <a href=\"$MDN_URL$/Web/HTTP/Guides/Permissions_Policy\">Permissions Policy</a>.\nThis event is not cancelable and does not bubble."
     },
@@ -1408,13 +1415,17 @@
         "StandardTrack"
       ],
       "compatibility": {
+        "Chrome": "143",
+        "ChromeAndroid": "143",
+        "Edge": "143",
         "Firefox": "89",
         "FirefoxAndroid": "89",
         "Safari": "16",
         "SafariIOS": "16"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2025-12-05"
       },
       "doc": "The <code>gamepaddisconnected</code> event is fired when the browser detects that a gamepad has been disconnected.\nThe event will not fire if disallowed by the document's <a href=\"$MDN_URL$/Web/HTTP/Reference/Headers/Permissions-Policy/gamepad\"><code>gamepad</code></a> <a href=\"$MDN_URL$/Web/HTTP/Guides/Permissions_Policy\">Permissions Policy</a>.\nThis event is not cancelable and does not bubble."
     },
@@ -2577,7 +2588,7 @@
         "lowDate": "2020-07-28",
         "highDate": "2023-01-28"
       },
-      "doc": "The <code>pointermove</code> event is fired when a pointer changes coordinates, and the pointer has not been <a href=\"$MDN_URL$/Web/API/Element/pointercancel_event\">canceled</a> by a browser <a href=\"$MDN_URL$/Web/CSS/touch-action\">touch-action</a>. It's very similar to the <a href=\"$MDN_URL$/Web/API/Element/mousemove_event\" ><code>mousemove</code></a> event, but with more features.\nThese events happen whether or not any pointer buttons are pressed. They can fire at a very high rate, depends on how fast the user moves the pointer, how fast the machine is, what other tasks and processes are happening, etc."
+      "doc": "The <code>pointermove</code> event is fired when a pointer changes coordinates, and the pointer has not been <a href=\"$MDN_URL$/Web/API/Element/pointercancel_event\">canceled</a> by a browser <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/touch-action\">touch-action</a>. It's very similar to the <a href=\"$MDN_URL$/Web/API/Element/mousemove_event\" ><code>mousemove</code></a> event, but with more features.\nThese events happen whether or not any pointer buttons are pressed. They can fire at a very high rate, depends on how fast the user moves the pointer, how fast the machine is, what other tasks and processes are happening, etc."
     },
     "pointerout": {
       "url": "$MDN_URL$/web/api/element/pointerout_event",
@@ -2824,10 +2835,13 @@
         "Edge": "79",
         "Firefox": "93",
         "FirefoxAndroid": "93",
-        "Opera": "22"
+        "Opera": "22",
+        "Safari": "26.2",
+        "SafariIOS": "26.2"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2025-12-12"
       },
       "doc": "The <strong><code>repeatEvent</code></strong> event of the <a href=\"$MDN_URL$/Web/API/SVGAnimationElement\"><code>SVGAnimationElement</code></a> interface is fired when the element's local timeline repeats. It will be fired each time the element repeats, after the first iteration.\nThis event is not cancelable and does not bubble."
     },
@@ -3588,7 +3602,7 @@
         "lowDate": "2020-11-19",
         "highDate": "2023-05-19"
       },
-      "doc": "The <strong><code>transitioncancel</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/CSS_transitions/Using_CSS_transitions\">CSS transition</a> is canceled."
+      "doc": "The <strong><code>transitioncancel</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/Guides/Transitions/Using\">CSS transition</a> is canceled."
     },
     "transitionend": {
       "url": "$MDN_URL$/web/api/element/transitionend_event",
@@ -3610,7 +3624,7 @@
         "lowDate": "2018-10-02",
         "highDate": "2021-04-02"
       },
-      "doc": "The <strong><code>transitionend</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/CSS_transitions/Using_CSS_transitions\">CSS transition</a> has completed. In the case where a transition is removed before completion, such as if the <a href=\"$MDN_URL$/Web/CSS/transition-property\"><code>transition-property</code></a> is removed or <a href=\"$MDN_URL$/Web/CSS/display\"><code>display</code></a> is set to <code>none</code>, then the event will not be generated.\nThe <code>transitionend</code> event is fired in both directions - as it finishes transitioning to the transitioned state, and when it fully reverts to the default or non-transitioned state. If there is no transition delay or duration, if both are 0s or neither is declared, there is no transition, and none of the transition events are fired. If the <code>transitioncancel</code> event is fired, the <code>transitionend</code> event will not fire.\nThis event is not cancelable."
+      "doc": "The <strong><code>transitionend</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/Guides/Transitions/Using\">CSS transition</a> has completed. In the case where a transition is removed before completion, such as if the <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/transition-property\"><code>transition-property</code></a> is removed or <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/display\"><code>display</code></a> is set to <code>none</code>, then the event will not be generated.\nThe <code>transitionend</code> event is fired in both directions - as it finishes transitioning to the transitioned state, and when it fully reverts to the default or non-transitioned state. If there is no transition delay or duration, if both are 0s or neither is declared, there is no transition, and none of the transition events are fired. If the <code>transitioncancel</code> event is fired, the <code>transitionend</code> event will not fire.\nThis event is not cancelable."
     },
     "transitionrun": {
       "url": "$MDN_URL$/web/api/element/transitionrun_event",
@@ -3632,7 +3646,7 @@
         "lowDate": "2020-03-24",
         "highDate": "2022-09-24"
       },
-      "doc": "The <strong><code>transitionrun</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/CSS_transitions/Using_CSS_transitions\">CSS transition</a> is first created, i.e., before any <a href=\"$MDN_URL$/Web/CSS/transition-delay\"><code>transition-delay</code></a> has begun.\nThis event is not cancelable."
+      "doc": "The <strong><code>transitionrun</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/Guides/Transitions/Using\">CSS transition</a> is first created, i.e., before any <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/transition-delay\"><code>transition-delay</code></a> has begun.\nThis event is not cancelable."
     },
     "transitionstart": {
       "url": "$MDN_URL$/web/api/element/transitionstart_event",
@@ -3654,7 +3668,7 @@
         "lowDate": "2020-03-24",
         "highDate": "2022-09-24"
       },
-      "doc": "The <strong><code>transitionstart</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/CSS_transitions/Using_CSS_transitions\">CSS transition</a> has actually started, i.e., after any <a href=\"$MDN_URL$/Web/CSS/transition-delay\"><code>transition-delay</code></a> has ended.\nThis event is not cancelable."
+      "doc": "The <strong><code>transitionstart</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/Guides/Transitions/Using\">CSS transition</a> has actually started, i.e., after any <a href=\"$MDN_URL$/Web/CSS/Reference/Properties/transition-delay\"><code>transition-delay</code></a> has ended.\nThis event is not cancelable."
     },
     "unhandledrejection": {
       "url": "$MDN_URL$/web/api/window/unhandledrejection_event",
@@ -3677,8 +3691,7 @@
     "unload": {
       "url": "$MDN_URL$/web/api/window/unload_event",
       "status": [
-        "StandardTrack",
-        "Deprecated"
+        "StandardTrack"
       ],
       "compatibility": {
         "Chrome": "",
