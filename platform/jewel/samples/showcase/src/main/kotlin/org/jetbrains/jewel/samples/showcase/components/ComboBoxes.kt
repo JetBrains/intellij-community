@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.input.rememberTextFieldState
@@ -32,15 +33,19 @@ import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.EditableComboBox
 import org.jetbrains.jewel.ui.component.EditableListComboBox
 import org.jetbrains.jewel.ui.component.GroupHeader
+import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.ListComboBox
+import org.jetbrains.jewel.ui.component.MenuComboBox
 import org.jetbrains.jewel.ui.component.PopupManager
 import org.jetbrains.jewel.ui.component.SimpleListItem
 import org.jetbrains.jewel.ui.component.SpeedSearchArea
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.search.SpeedSearchableComboBox
+import org.jetbrains.jewel.ui.component.separator
 import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
+import org.jetbrains.jewel.ui.theme.comboBoxStyle
 
 private val stringItems =
     listOf(
@@ -89,6 +94,9 @@ public fun ComboBoxes(modifier: Modifier = Modifier) {
 
         GroupHeader("Custom combo box content")
         CustomComboBoxes()
+
+        GroupHeader("Menu combo box (dropdown with menu items)")
+        MenuComboBoxes()
 
         GroupHeader("Dynamic content")
         DynamicListComboBox()
@@ -312,6 +320,135 @@ private fun CustomComboBoxes() {
                         state.edit { replace(0, originalText.length, stringItems[newItemIndex]) }
                         popupManager.setPopupVisible(false)
                     }
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun MenuComboBoxes() {
+    val comboBoxStyle = JewelTheme.comboBoxStyle
+
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.weight(1f).widthIn(min = 125.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Simple menu items")
+            var selectedItem by remember { mutableIntStateOf(0) }
+
+            MenuComboBox(
+                labelContent = {
+                    Text(
+                        text = stringItems[selectedItem],
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = JewelTheme.defaultTextStyle,
+                        modifier = Modifier.padding(comboBoxStyle.metrics.contentPadding),
+                    )
+                },
+                modifier = Modifier.widthIn(max = 200.dp).fillMaxWidth(),
+                content = {
+                    stringItems.forEachIndexed { index, item ->
+                        selectableItem(selected = false, onClick = { selectedItem = index }) { Text(item) }
+                    }
+                },
+            )
+        }
+
+        Column(Modifier.weight(1f).widthIn(min = 125.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("With icons and separators")
+            var selectedLanguage by remember { mutableIntStateOf(0) }
+
+            MenuComboBox(
+                labelContent = {
+                    Row(
+                        modifier = Modifier.padding(comboBoxStyle.metrics.contentPadding),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            key = languageOptions[selectedLanguage].icon,
+                            contentDescription = languageOptions[selectedLanguage].name,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Text(
+                            text = languageOptions[selectedLanguage].name,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                },
+                modifier = Modifier.widthIn(max = 200.dp).fillMaxWidth(),
+                content = {
+                    languageOptions.take(3).forEachIndexed { index, lang ->
+                        selectableItem(selected = false, onClick = { selectedLanguage = index }, iconKey = lang.icon) {
+                            Text(lang.name)
+                        }
+                    }
+                    separator()
+                    languageOptions.drop(3).forEachIndexed { index, lang ->
+                        val actualIndex = index + 3
+                        selectableItem(
+                            selected = false,
+                            onClick = { selectedLanguage = actualIndex },
+                            iconKey = lang.icon,
+                        ) {
+                            Text(lang.name)
+                        }
+                    }
+                },
+            )
+        }
+
+        Column(Modifier.weight(1f).widthIn(min = 125.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("With submenu")
+            var selectedAction by remember { mutableIntStateOf(0) }
+            val actions = listOf("New File", "New Folder", "Copy", "Paste", "Delete")
+
+            MenuComboBox(
+                labelContent = {
+                    Text(
+                        text = actions[selectedAction],
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(comboBoxStyle.metrics.contentPadding),
+                    )
+                },
+                modifier = Modifier.widthIn(max = 200.dp).fillMaxWidth(),
+                content = {
+                    submenu(
+                        submenu = {
+                            selectableItem(selected = false, onClick = { selectedAction = 0 }) { Text(actions[0]) }
+                            selectableItem(selected = false, onClick = { selectedAction = 1 }) { Text(actions[1]) }
+                        }
+                    ) {
+                        Text("New...")
+                    }
+                    separator()
+                    selectableItem(selected = false, onClick = { selectedAction = 2 }) { Text(actions[2]) }
+                    selectableItem(selected = false, onClick = { selectedAction = 3 }) { Text(actions[3]) }
+                    separator()
+                    selectableItem(selected = false, onClick = { selectedAction = 4 }) { Text(actions[4]) }
+                },
+            )
+        }
+
+        Column(Modifier.weight(1f).widthIn(min = 125.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Disabled")
+
+            MenuComboBox(
+                labelContent = {
+                    Text(
+                        text = "Disabled",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(comboBoxStyle.metrics.contentPadding),
+                    )
+                },
+                modifier = Modifier.widthIn(max = 200.dp).fillMaxWidth(),
+                enabled = false,
+                content = {
+                    selectableItem(selected = false, onClick = {}) { Text("Item 1") }
+                    selectableItem(selected = false, onClick = {}) { Text("Item 2") }
                 },
             )
         }

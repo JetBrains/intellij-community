@@ -488,6 +488,7 @@ f:org.jetbrains.jewel.ui.component.ListItemState
 - hashCode():I
 - f:isActive():Z
 - f:isSelected():Z
+f:org.jetbrains.jewel.ui.component.MenuComboBoxKt
 org.jetbrains.jewel.ui.component.MenuController
 - a:clearShortcutActions():V
 - a:close-iuPiT84(I):Z
@@ -536,9 +537,11 @@ f:org.jetbrains.jewel.ui.component.MenuKt
 - sf:MenuSeparator(androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.MenuItemMetrics,org.jetbrains.jewel.ui.component.styling.MenuItemColors,androidx.compose.runtime.Composer,I,I):V
 - sf:MenuSubmenuItem(androidx.compose.ui.Modifier,Z,Z,org.jetbrains.jewel.ui.icon.IconKey,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.MenuStyle,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - bsf:PopupMenu(kotlin.jvm.functions.Function1,androidx.compose.ui.Alignment$Horizontal,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.MenuStyle,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I):V
-- sf:PopupMenu(kotlin.jvm.functions.Function1,androidx.compose.ui.Alignment$Horizontal,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.MenuStyle,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I):V
+- bsf:PopupMenu(kotlin.jvm.functions.Function1,androidx.compose.ui.Alignment$Horizontal,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.MenuStyle,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I):V
 - bsf:PopupMenu(kotlin.jvm.functions.Function1,androidx.compose.ui.window.PopupPositionProvider,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.MenuStyle,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I):V
-- sf:PopupMenu(kotlin.jvm.functions.Function1,androidx.compose.ui.window.PopupPositionProvider,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.MenuStyle,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I):V
+- bsf:PopupMenu(kotlin.jvm.functions.Function1,androidx.compose.ui.window.PopupPositionProvider,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.MenuStyle,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I):V
+- sf:PopupMenu-_-WMjBM(kotlin.jvm.functions.Function1,androidx.compose.ui.Alignment$Horizontal,androidx.compose.ui.Modifier,F,org.jetbrains.jewel.ui.component.styling.MenuStyle,org.jetbrains.jewel.ui.component.styling.PopupContainerStyle,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I):V
+- sf:PopupMenu-_-WMjBM(kotlin.jvm.functions.Function1,androidx.compose.ui.window.PopupPositionProvider,androidx.compose.ui.Modifier,F,org.jetbrains.jewel.ui.component.styling.MenuStyle,org.jetbrains.jewel.ui.component.styling.PopupContainerStyle,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I):V
 - sf:items(org.jetbrains.jewel.ui.component.MenuScope,I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function3):V
 - sf:items(org.jetbrains.jewel.ui.component.MenuScope,java.util.List,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function3):V
 - sf:separator(org.jetbrains.jewel.ui.component.MenuScope):V
@@ -566,7 +569,8 @@ f:org.jetbrains.jewel.ui.component.PopupAdKt
 - sf:PopupAd(androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.PopupAdStyle,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.PopupContainerKt
 - bsf:PopupContainer(kotlin.jvm.functions.Function0,androidx.compose.ui.Alignment$Horizontal,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.PopupContainerStyle,androidx.compose.ui.window.PopupProperties,androidx.compose.ui.window.PopupPositionProvider,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
-- sf:PopupContainer(kotlin.jvm.functions.Function0,androidx.compose.ui.Alignment$Horizontal,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.PopupContainerStyle,androidx.compose.ui.window.PopupProperties,androidx.compose.ui.window.PopupPositionProvider,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
+- bsf:PopupContainer(kotlin.jvm.functions.Function0,androidx.compose.ui.Alignment$Horizontal,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.PopupContainerStyle,androidx.compose.ui.window.PopupProperties,androidx.compose.ui.window.PopupPositionProvider,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
+- sf:PopupContainer-05tvjtU(kotlin.jvm.functions.Function0,androidx.compose.ui.Alignment$Horizontal,androidx.compose.ui.Modifier,Z,F,org.jetbrains.jewel.ui.component.styling.PopupContainerStyle,androidx.compose.ui.window.PopupProperties,androidx.compose.ui.window.PopupPositionProvider,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I,I):V
 f:org.jetbrains.jewel.ui.component.PopupKt
 - sf:Popup(androidx.compose.ui.window.PopupPositionProvider,androidx.compose.foundation.shape.CornerSize,kotlin.jvm.functions.Function0,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:Popup(androidx.compose.ui.window.PopupPositionProvider,kotlin.jvm.functions.Function0,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V

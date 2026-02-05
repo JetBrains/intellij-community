@@ -58,17 +58,28 @@ import org.jetbrains.jewel.ui.theme.dropdownStyle
  * A composable that implements a combo box with a dropdown menu, allowing users to select an option from a (small,
  * finite) list of actions or choices.
  *
- * Dropdown APIs are temporary and will be reimplemented in a future release to address usability and accessibility
- * concerns (see JEWEL-1029).
+ * **This component is deprecated.** Use [MenuComboBox] instead, which provides a more robust and modern implementation
+ * built on top of the [ComboBox] infrastructure.
  *
  * For a dropdown with a large list of items, consider using [ListComboBox] or [EditableListComboBox]. For an editable
  * combobox, use [EditableComboBox] or [EditableListComboBox].
  *
+ * @see MenuComboBox
  * @see ComboBox
  * @see ListComboBox
  * @see EditableComboBox
  * @see EditableListComboBox
  */
+@Deprecated(
+    message =
+        "Use MenuComboBox instead for a more robust implementation with better keyboard navigation and accessibility",
+    replaceWith =
+        ReplaceWith(
+            "MenuComboBox(labelContent = content, modifier = modifier, enabled = enabled, outline = outline, items = menuContent)",
+            "org.jetbrains.jewel.ui.component.MenuComboBox",
+        ),
+    level = DeprecationLevel.WARNING,
+)
 @Suppress("ComposableParamOrder")
 @ExperimentalJewelApi
 @ApiStatus.Experimental
@@ -180,7 +191,7 @@ public fun Dropdown(
                     menuModifier
                         .focusProperties { canFocus = true }
                         .defaultMinSize(minWidth = with(density) { componentWidth.toDp() }),
-                style = style.menuStyle,
+                menuStyle = style.menuStyle,
                 horizontalAlignment = Alignment.Start,
                 content = menuContent,
             )

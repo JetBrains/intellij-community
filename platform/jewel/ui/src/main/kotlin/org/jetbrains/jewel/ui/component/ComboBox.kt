@@ -232,6 +232,81 @@ public fun ComboBox(
     onArrowUpPress: () -> Unit = {},
     popupManager: PopupManager = remember { PopupManager() },
 ) {
+    ComboBox(
+        labelContent = labelContent,
+        popupContent = popupContent,
+        modifier = modifier,
+        popupModifier = popupModifier,
+        enabled = enabled,
+        outline = outline,
+        maxPopupHeight = maxPopupHeight,
+        maxPopupWidth = maxPopupWidth,
+        interactionSource = interactionSource,
+        style = style,
+        onArrowDownPress = onArrowDownPress,
+        onArrowUpPress = onArrowUpPress,
+        popupManager = popupManager,
+        popupProperties = PopupProperties(focusable = false),
+        onPopupKeyEvent = null,
+        useIntrinsicPopupWidth = false,
+    )
+}
+
+/**
+ * A dropdown component that displays custom content in the label area and a popup with custom content.
+ *
+ * This component provides a standard dropdown UI with customizable label content. When clicked, it displays a popup
+ * with customizable content. Supports keyboard navigation, focus management, and various visual states.
+ *
+ * This version of ComboBox allows for complete customization of the label area through a composable function.
+ *
+ * This variant includes additional parameters for controlling popup behavior, keyboard events, and width measurement.
+ *
+ * It is **strongly** recommended to provide a fixed width for the component, by using modifiers such as `width`,
+ * `weight`, `fillMaxWidth`, etc. If the component does not have a fixed width, it will size itself based on the label
+ * content. This means the width of the component will change based on the selected item's label.
+ *
+ * @param labelContent Composable content for the label area of the combo box
+ * @param popupContent Composable content for the popup
+ * @param popupProperties Properties controlling the popup window behavior (focusability, dismissal behavior, etc.)
+ * @param onPopupKeyEvent Optional callback for handling key events in the popup
+ * @param useIntrinsicPopupWidth Whether to use intrinsic width measurement for the popup. Set to true when popup
+ *   content needs to size to its widest item (e.g., MenuContent). Set to false (default) when content contains
+ *   SubcomposeLayout-based components (LazyColumn, LazyRow, etc.) which don't support intrinsic measurements
+ * @param modifier Modifier to be applied to the combo box
+ * @param popupModifier Modifier to be applied to the popup
+ * @param enabled Controls whether the combo box can be interacted with
+ * @param outline The outline style to be applied to the combo box
+ * @param maxPopupHeight The maximum height of the popup. If it's unspecified, it will allow the content to grow as
+ *   needed
+ * @param maxPopupWidth The maximum width of the popup. If it's unspecified, it will allow the content to grow as needed
+ * @param interactionSource Source of interactions for this combo box
+ * @param style The visual styling configuration for the combo box
+ * @param onArrowDownPress Called when the down arrow key is pressed while the popup is visible
+ * @param onArrowUpPress Called when the up arrow key is pressed while the popup is visible
+ * @param popupManager Manager for controlling the popup visibility state
+ */
+@ApiStatus.Experimental
+@ExperimentalJewelApi
+@Composable
+public fun ComboBox(
+    labelContent: @Composable (() -> Unit),
+    popupContent: @Composable (() -> Unit),
+    popupProperties: PopupProperties,
+    onPopupKeyEvent: ((androidx.compose.ui.input.key.KeyEvent) -> Boolean)?,
+    useIntrinsicPopupWidth: Boolean,
+    modifier: Modifier = Modifier,
+    popupModifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    outline: Outline = Outline.None,
+    maxPopupHeight: Dp = Dp.Unspecified,
+    maxPopupWidth: Dp = Dp.Unspecified,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: ComboBoxStyle = JewelTheme.comboBoxStyle,
+    onArrowDownPress: () -> Unit = {},
+    onArrowUpPress: () -> Unit = {},
+    popupManager: PopupManager = remember { PopupManager() },
+) {
     ComboBoxImpl(
         labelContent = labelContent,
         popupContent = popupContent,
@@ -246,6 +321,9 @@ public fun ComboBox(
         onArrowDownPress = onArrowDownPress,
         onArrowUpPress = onArrowUpPress,
         popupManager = popupManager,
+        popupProperties = popupProperties,
+        onPopupKeyEvent = onPopupKeyEvent,
+        useIntrinsicPopupWidth = useIntrinsicPopupWidth,
     )
 }
 
@@ -273,6 +351,9 @@ internal fun ComboBoxImpl(
             alignment = horizontalPopupAlignment,
             density = LocalDensity.current,
         ),
+    popupProperties: PopupProperties = PopupProperties(focusable = false),
+    onPopupKeyEvent: ((androidx.compose.ui.input.key.KeyEvent) -> Boolean)? = null,
+    useIntrinsicPopupWidth: Boolean = false,
 ) {
     var chevronHovered by remember { mutableStateOf(false) }
 
@@ -401,9 +482,11 @@ internal fun ComboBoxImpl(
                             .then(popupModifier)
                             .onClick { popupManager.setPopupVisible(false) },
                     horizontalAlignment = horizontalPopupAlignment,
-                    popupProperties = PopupProperties(focusable = false),
+                    useIntrinsicWidth = useIntrinsicPopupWidth,
+                    popupProperties = popupProperties,
                     style = popupStyle,
                     popupPositionProvider = popupPositionProvider,
+                    onKeyEvent = onPopupKeyEvent,
                     content = popupContent,
                 )
             }
