@@ -17,7 +17,6 @@ import git4idea.GitTag
 import git4idea.GitWorkingTree
 import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.actions.branch.GitBranchActionsUtil
-import git4idea.actions.ref.GitSingleRefAction.Companion.getWorkingTreeWithRef
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
@@ -88,23 +87,13 @@ abstract class GitSingleRefAction<T : GitReference>(
     }
 
     /**
-     * Only local branches are checked for working trees.
-     * Tags are immutable and therefore may be easily used in multiple working trees simultaneously.
-     *
-     * See also [getWorkingTreeWithRef]
+     * @return true if there is at least one repository having a working tree (excluding the repository itself) with the given reference checked out.
      */
-    internal fun isCurrentRefInAnyRepoOrWorkingTree(
-      ref: GitReference,
-      repositories: List<GitRepository>,
-      checkOnlyNonCurrentWorkingTrees: Boolean = false,
-    ): Boolean {
-      if (!GitWorkingTreesUtil.isWorkingTreesFeatureEnabled() || ref !is GitLocalBranch) {
-        return isCurrentRefInAnyRepo(ref, repositories)
-      }
-
-      return repositories.any { repository ->
-        getWorkingTreeWithRef(ref, repository, checkOnlyNonCurrentWorkingTrees) != null
-      }
+    fun isCurrentRefInAnyOtherWorkingTree(ref: GitReference, repositories: List<GitRepository>): Boolean {
+      // Only local branches are checked for working trees.
+      // Tags are immutable and therefore may be easily used in multiple working trees simultaneously.
+      return if (!GitWorkingTreesUtil.isWorkingTreesFeatureEnabled() || ref !is GitLocalBranch) false
+      else repositories.any { repository -> getWorkingTreeWithRef(ref, repository, true) != null }
     }
 
     /**

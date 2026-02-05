@@ -16,11 +16,11 @@ import git4idea.repo.GitRepository
 class GitCheckoutAction
   : GitSingleRefAction<GitReference>(GitBundle.messagePointer("branches.checkout")) {
 
-  override fun isEnabledForRef(ref: GitReference, repositories: List<GitRepository>): Boolean {
-    if (ref !is GitBranch && ref !is GitTag) return false
-
-    if (isCurrentRefInAnyRepoOrWorkingTree(ref, repositories, checkOnlyNonCurrentWorkingTrees = true)) return false
-    return if (isCurrentRefInAnyRepo(ref, repositories)) repositories.diverged() else true
+  override fun isEnabledForRef(ref: GitReference, repositories: List<GitRepository>): Boolean = when {
+    ref !is GitBranch && ref !is GitTag -> false
+    isCurrentRefInAnyOtherWorkingTree(ref, repositories) -> false
+    isCurrentRefInAnyRepo(ref, repositories) -> repositories.diverged()
+    else -> true
   }
 
   override fun actionPerformed(e: AnActionEvent, project: Project, repositories: List<GitRepository>, reference: GitReference) {
