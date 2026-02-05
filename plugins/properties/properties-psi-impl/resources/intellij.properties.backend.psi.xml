@@ -1,8 +1,9 @@
 <idea-plugin visibility="public">
   <dependencies>
-    <plugin id="com.intellij.modules.lang"/>
     <plugin id="com.intellij.modules.xml"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.backend"/>
     <module name="intellij.properties"/>
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>

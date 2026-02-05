@@ -1,9 +1,10 @@
 <idea-plugin visibility="public">
   <dependencies>
-    <plugin id="com.intellij.modules.lang"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="Git4Idea"/>
     <module name="intellij.platform.collaborationTools"/>
     <module name="intellij.platform.collaborationTools.auth"/>
+    <!-- endregion -->
   </dependencies>
 
   <resource-bundle>messages.GithubBundle</resource-bundle>
