@@ -24,7 +24,15 @@ class CriDiagnosticAction : AnAction(), DumbAware {
             appendLine("=== Kotlin CRI Diagnostics ===")
             appendLine()
 
-            val dirtyModules = KotlinCompilerReferenceIndexService.getInstanceIfEnabled(project)?.dirtyModules() ?: emptySet()
+            val kotlinCompilerReferenceIndexService = KotlinCompilerReferenceIndexService.getInstanceIfEnabled(project) ?: run {
+                appendLine("Kotlin Compiler Reference Index is disabled")
+                return@buildString
+            }
+
+            val dirtyModules = kotlinCompilerReferenceIndexService.dirtyModules() ?: run {
+                appendLine("Kotlin CRI storage is not yet initialized")
+                return@buildString
+            }
 
             appendLine("Dirty Modules (${dirtyModules.size}):")
             if (dirtyModules.isEmpty()) {
