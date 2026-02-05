@@ -52,7 +52,6 @@ import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder.EffectDes
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
@@ -789,7 +788,7 @@ public final class EditorPainter implements TextDrawingCallback {
       if (attributes == null) return;
 
       paintBackground(attributes.getBackgroundColor(), x, y, width, height);
-      if (shouldUseNewSelection() && mySelectionLinePainter.isInSelection(x, y, width)) {
+      if (shouldUseNewSelection() && mySelectionLinePainter.isLineInSelection(x, y, width)) {
         mySelectionLinePainter.paintSelection(new Rectangle2D.Float(x, y, width, height));
       }
     }

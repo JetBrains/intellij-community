@@ -360,11 +360,9 @@ internal class SelectionLinePainter(
     return customFoldRegionsFor(visualLine).isNotEmpty() || caretSelectionsForLine(visualLine).hasSelectionEnd(false, block.bottomRight.x)
   }
 
-  fun isInSelection(x: Float, y: Int, width: Float): Boolean {
+  fun isLineInSelection(x: Float, y: Int, width: Float): Boolean {
     val line = yToVisualLine(y)
-    val lineStart = visualLineToY(line)
-
-    if (y !in lineStart..lineStart + lineHeight) return false
+    if (y != visualLineToY(line)) return false
 
     val selection = caretSelectionsForLine(line).selectionContaining(x.toDouble()) ?: return false
     return selection.contains((x + width).toDouble())

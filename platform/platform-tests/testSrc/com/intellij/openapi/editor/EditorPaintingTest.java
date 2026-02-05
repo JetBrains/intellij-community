@@ -161,11 +161,12 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   }
 
   private void runTestBlockInlaysWithSelection() throws Exception {
-    initText("line 1\nline 2\n");
+    initText("line 1\nline 2\na");
     addBlockInlay(getEditor().getDocument().getLineStartOffset(0));
     addBlockInlay(getEditor().getDocument().getLineStartOffset(1));
     executeAction(IdeActions.ACTION_EDITOR_TEXT_END);
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION);
     checkResult();
   }
 
@@ -177,6 +178,17 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   public void testBlockInlaysWithNewSelection() throws Exception {
     setNewSelectionEnabled(true);
     runTestBlockInlaysWithSelection();
+  }
+
+  public void testBlockInlaysWithNewSelection2() throws Exception {
+    setNewSelectionEnabled(true);
+
+    initText("line 1\nline 2\n");
+    addBlockInlay(getEditor().getDocument().getLineStartOffset(0));
+    addBlockInlay(getEditor().getDocument().getLineStartOffset(1));
+    executeAction(IdeActions.ACTION_EDITOR_TEXT_END);
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
+    checkResult();
   }
 
   public void testBlockInlaysAboveWithNewSelection() throws Exception {
@@ -192,7 +204,7 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   }
 
   private void runTestMarginIsShownOverSelectionInBlockInlayRange() throws Exception {
-    initText("  \n");
+    initText("  \n ");
     addBlockInlay(0);
     executeAction(IdeActions.ACTION_SELECT_ALL);
     getEditor().getSettings().setRightMargin(1);
