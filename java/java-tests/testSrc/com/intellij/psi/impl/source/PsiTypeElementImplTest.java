@@ -65,97 +65,128 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
   }
 
   private void doTestAddingAnnotationToTypeAtCaret(String classFile) {
-    configureFromFileWithMyAnnotationAdded(classFile);
+    configureFromFileWithAnnotationsAdded(classFile);
     PsiTypeElement typeElement = getPsiTypeElementAtCaret();
-    WriteAction.run(() -> typeElement.addAnnotation("MyAnnotation"));
-    assertTypeAnnotations(typeElement.getType(), "MyAnnotation");
+    WriteAction.run(() -> typeElement.addAnnotation("A"));
+    assertTypeAnnotations(typeElement.getType(), "A");
   }
 
   public void testTypeUseAnnotationOnMethodThatReturnsSimpleTypeIsAppliedToThatType() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
-          @MyAnnotation public <caret>String foo() { return null; }
+          @A public <T> @B <caret>String foo() { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "MyAnnotation");
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A", "B");
+  }
+
+  public void testTypeUseAnnotationOnMethodThatReturnsNestedTypeQualifiedWithOuterTypeIsNotAppliedToNestedType() {
+    configureFromFileWithAnnotationsAdded(
+      """
+        class AClass {
+          class Nested {}
+          @A public <T> @B AClass.<caret>Nested foo() { return null; }
+        }
+        """);
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+  }
+
+  public void testTypeUseAnnotationOnMethodThatReturnsFullyQualifiedTypeIsNotAppliedToThatType() {
+    configureFromFileWithAnnotationsAdded(
+      """
+        class AClass {
+          @A public <T> @B java.lang.<caret>String foo() { return null; }
+        }
+        """);
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
   }
 
   public void testTypeUseAnnotationOnMethodThatReturnsArrayTypeIsAppliedToArrayComponent() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
-          @MyAnnotation public <caret>String[] foo() { return null; }
+          @A public <T> @B <caret>String[] foo() { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "MyAnnotation");
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A", "B");
+  }
+
+  public void testTypeUseAnnotationOnMethodThatReturnsArrayTypeWithQualifiedComponentIsNotAppliedToArrayComponent() {
+    configureFromFileWithAnnotationsAdded(
+      """
+        class AClass {
+          @A public <T> @B java.lang.<caret>String[] foo() { return null; }
+        }
+        """);
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
   }
 
   public void testTypeUseAnnotationOnMethodThatReturnsArrayTypeIsNotAppliedToArrayType() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
-          @MyAnnotation public String[<caret>] foo() { return null; }
+          @A public <T> @B String[<caret>] foo() { return null; }
         }
         """);
     assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
   }
 
   public void testTypeUseAnnotationOnMethodThatReturnsArrayOfGenericTypeIsAppliedToArrayComponent() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
-          @MyAnnotation public <caret>List<String>[] foo() { return null; }
+          @A public <T> @B <caret>List<String>[] foo() { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "MyAnnotation");
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A", "B");
   }
 
   public void testTypeUseAnnotationOnMethodThatReturnsArrayOfGenericTypeIsNotAppliedToArrayType() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
-          @MyAnnotation public List<String>[<caret>] foo() { return null; }
+          @A public <T> @B List<String>[<caret>] foo() { return null; }
         }
         """);
     assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
   }
 
   public void testTypeUseAnnotationOnMethodThatReturnsMultidimensionalArrayTypeIsAppliedToArrayComponent() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
-          @MyAnnotation public <caret>String[][][] foo() { return null; }
+          @A public <T> @B <caret>String[][][] foo() { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "MyAnnotation");
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A", "B");
   }
 
   public void testTypeUseAnnotationOnMethodThatReturnsMultidimensionalArrayTypeIsNotAppliedToArrayType() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
-          @MyAnnotation public String[][][<caret>] foo() { return null; }
+          @A public <T> @B String[][][<caret>] foo() { return null; }
         }
         """);
     assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
   }
 
   public void testTypeUseAnnotationOnMethodThatReturnsGenericTypeIsAppliedToThatType() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
-          @MyAnnotation public <caret>List<String> foo() { return null; }
+          @A public <T> @B <caret>List<String> foo() { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "MyAnnotation");
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A", "B");
   }
 
   public void testTypeUseAnnotationOnMethodThatReturnsGenericTypeIsNotAppliedToThatTypeComponentType() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
-          @MyAnnotation public List< <caret>String> foo() { return null; }
+          @A public <T> @B List< <caret>String> foo() { return null; }
         }
         """);
     assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
@@ -163,175 +194,237 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
 
 
   public void testTypeUseAnnotationOnMethodThatReturnsNestedGenericTypeIsAppliedToOuterType() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
-          @MyAnnotation public <caret>List<List<String>> foo() { return null; }
+          @A public <T> @B <caret>List<List<String>> foo() { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "MyAnnotation");
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A", "B");
   }
 
   public void testTypeUseAnnotationOnMethodThatReturnsNestedGenericTypeIsNotAppliedToInnerType() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
-          @MyAnnotation public List< <caret>List<String>> foo() { return null; }
+          @A public <T> @B List< <caret>List<String>> foo() { return null; }
         }
         """);
     assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
   }
 
   public void testTypeUseAnnotationOnMethodThatReturnsNestedGenericTypeIsNotAppliedToInnermostType() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
-          @MyAnnotation public List<List< <caret>String>> foo() { return null; }
+          @A public <T> @B List<List< <caret>String>> foo() { return null; }
         }
         """);
     assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
   }
 
   public void testTypeUseAnnotationOnMethodThatReturnsPrimitiveTypeIsAppliedToThatType() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
-          @MyAnnotation public <caret>int foo() { return 0; }
+          @A public <T> @B <caret>int foo() { return 0; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "MyAnnotation");
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A", "B");
   }
 
   public void testTypeUseAnnotationOnMethodThatReturnsPrimitiveArrayTypeIsAppliedToArrayComponent() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
-          @MyAnnotation public <caret>int[] foo() { return null; }
+          @A public <T> @B <caret>int[] foo() { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "MyAnnotation");
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A", "B");
   }
 
   public void testTypeUseAnnotationOnMethodThatReturnsPrimitiveArrayTypeIsNotAppliedToArrayType() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
-          @MyAnnotation public int[<caret>] foo() { return null; }
+          @A public <T> @B int[<caret>] foo() { return null; }
         }
         """);
     assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
   }
 
   public void testTypeUseAnnotationOnParameterWhichTypeIsSimpleTypeIsAppliedToThatType() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
-          public void foo(@MyAnnotation <caret>String param) {}
+          public void foo(@A <caret>String param) {}
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "MyAnnotation");
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A");
+  }
+
+  public void testTypeUseAnnotationOnParameterWhichTypeIsNestedTypeQualifiedWithOuterTypeIsNotAppliedToNestedType() {
+    configureFromFileWithAnnotationsAdded(
+      """
+        class AClass {
+          class Nested {}
+          public void foo(@MyAnnotation AClass.<caret>Nested param) {}
+        }
+        """);
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+  }
+
+  public void testTypeUseAnnotationOnParameterWhichTypeIsFullyQualifiedIsNotAppliedToThatType() {
+    configureFromFileWithAnnotationsAdded(
+      """
+        class AClass {
+          public void foo(@MyAnnotation java.lang.<caret>String param) {}
+        }
+        """);
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
   }
 
   public void testTypeUseAnnotationOnParameterWhichTypeIsArrayTypeIsAppliedToArrayComponent() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
-          public void foo(@MyAnnotation <caret>String[] array) { return null; }
+          public void foo(@A <caret>String[] array) { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "MyAnnotation");
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A");
+  }
+
+  public void testTypeUseAnnotationOnParameterWhichTypeIsArrayTypeWithQualifiedComponentIsNotAppliedToArrayComponent() {
+    configureFromFileWithAnnotationsAdded(
+      """
+        class AClass {
+          public void foo(@MyAnnotation java.lang.<caret>String[] array) { return null; }
+        }
+        """);
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
   }
 
   public void testTypeUseAnnotationOnParameterWhichTypeIsArrayTypeIsNotAppliedToArrayType() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
-          public void foo(@MyAnnotation String[<caret>] array) { return null; }
+          public void foo(@A String[<caret>] array) { return null; }
         }
         """);
     assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
   }
 
   public void testTypeUseAnnotationOnParameterWhichTypeIsVarargIsAppliedToArrayComponent() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
-          public void foo(@MyAnnotation <caret>String... array) { return null; }
+          public void foo(@A <caret>String... array) { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "MyAnnotation");
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A");
   }
 
   public void testTypeUseAnnotationOnParameterWhichTypeIsVarargIsNotAppliedToArrayType() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
-          public void foo(@MyAnnotation String..<caret>. array) { return null; }
+          public void foo(@A String..<caret>. array) { return null; }
         }
         """);
     assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
   }
 
   public void testTypeUseAnnotationOnFieldWhichTypeIsSimpleTypeIsAppliedToThatType() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
-          private @MyAnnotation <caret>String field;
+          private @A <caret>String field;
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "MyAnnotation");
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A");
+  }
+
+  public void testTypeUseAnnotationOnFieldWhichTypeIsNestedTypeQualifiedWithOuterTypeIsNotAppliedToThatType() {
+    configureFromFileWithAnnotationsAdded(
+      """
+        class AClass {
+          class Nested {}
+          private @MyAnnotation AClass.<caret>Nested field;
+        }
+        """);
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+  }
+
+  public void testTypeUseAnnotationOnFieldWhichTypeIsFullyQualifiedIsNotAppliedToThatType() {
+    configureFromFileWithAnnotationsAdded(
+      """
+        class AClass {
+          private @MyAnnotation java.lang.<caret>String field;
+        }
+        """);
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
   }
 
   public void testTypeUseAnnotationOnFieldWhichTypeIsArrayTypeIsAppliedToArrayComponent() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
-          private @MyAnnotation <caret>String[] array;
+          private @A <caret>String[] array;
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "MyAnnotation");
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A");
+  }
+
+  public void testTypeUseAnnotationOnFieldWhichTypeIsArrayTypeWithQualifiedComponentIsNotAppliedToArrayComponent() {
+    configureFromFileWithAnnotationsAdded(
+      """
+        class AClass {
+          private @MyAnnotation java.lang.<caret>String[] array;
+        }
+        """);
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
   }
 
   public void testTypeUseAnnotationOnFieldWhichTypeIsArrayTypeIsNotAppliedToArrayType() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
-          private @MyAnnotation String[<caret>] array;
+          private @A String[<caret>] array;
         }
         """);
     assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
   }
 
   public void testTypeUseAnnotationOnVariableWhichTypeIsSimpleTypeIsAppliedToThatType() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
           void foo() {
-            @MyAnnotation <caret>String variable;
+            @A <caret>String variable;
           }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "MyAnnotation");
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A");
   }
 
   public void testTypeUseAnnotationOnVariableWhichTypeIsArrayTypeIsAppliedToArrayComponent() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
           void foo() {
-            @MyAnnotation <caret>String[] array;
+            @A <caret>String[] array;
           }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "MyAnnotation");
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A");
   }
 
   public void testTypeUseAnnotationOnVariableWhichTypeIsArrayTypeIsNotAppliedToArrayType() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
           void foo() {
-            @MyAnnotation String[<caret>] array;
+            @A String[<caret>] array;
           }
         }
         """);
@@ -339,26 +432,26 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testTypeUseAnnotationOnMultiCatchIsAppliedToFirstException() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
           public void foo() {
             try {
-            } catch (@MyAnnotation <caret>EOFException | FileNotFoundException | ObjectStreamException e) {
+            } catch (@A <caret>EOFException | FileNotFoundException | ObjectStreamException e) {
             }
           }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "MyAnnotation");
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A");
   }
 
   public void testTypeUseAnnotationOnMultiCatchIsNotAppliedToMiddleException() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
           public void foo() {
             try {
-            } catch (@MyAnnotation EOFException | <caret>FileNotFoundException | ObjectStreamException e) {
+            } catch (@A EOFException | <caret>FileNotFoundException | ObjectStreamException e) {
             }
           }
         }
@@ -367,12 +460,12 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testTypeUseAnnotationOnMultiCatchIsNotAppliedToLastException() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
           public void foo() {
             try {
-            } catch (@MyAnnotation EOFException | FileNotFoundException | <caret>ObjectStreamException e) {
+            } catch (@A EOFException | FileNotFoundException | <caret>ObjectStreamException e) {
             }
           }
         }
@@ -381,17 +474,17 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testTypeUseAnnotationOnSingleCatchIsAppliedToException() {
-    configureFromFileWithMyAnnotationAdded(
+    configureFromFileWithAnnotationsAdded(
       """
         class AClass {
           public void foo() {
             try {
-            } catch (@MyAnnotation <caret>EOFException e) {
+            } catch (@A <caret>EOFException e) {
             }
           }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "MyAnnotation");
+    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A");
   }
 
   private static void assertTypeAnnotations(PsiType psiType, String... annotation) {
@@ -413,7 +506,7 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
     return psiElement;
   }
 
-  private void configureFromFileWithMyAnnotationAdded(String classFile) {
+  private void configureFromFileWithAnnotationsAdded(String classFile) {
     configureFromFileText(
       "AClass.java",
       """
@@ -424,7 +517,9 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
         import java.util.List;
         
         @Target(ElementType.TYPE_USE)
-        public @interface MyAnnotation {}
+        public @interface A {}
+        @Target(ElementType.TYPE_USE)
+        public @interface B {}
         
         """ + classFile
     );

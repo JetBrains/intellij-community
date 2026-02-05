@@ -147,7 +147,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       }
       else if (child instanceof PsiJavaCodeReferenceElement) {
         assert type == null : this;
-        type = new PsiClassReferenceType(getReferenceComputable((PsiJavaCodeReferenceElement)child), null, createProvider(annotations));
+        type = getPsiClassReferenceType((PsiJavaCodeReferenceElement)child, createProvider(annotations));
       }
       else if (PsiUtil.isJavaToken(child, JavaTokenType.LBRACKET)) {
         assert type != null : this;
@@ -222,6 +222,12 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     if (modifierList == null) return type;
     PsiAnnotation[] annotations = modifierList.getAnnotations();
     if (annotations.length == 0) return type;
+    if (type instanceof PsiClassReferenceType) {
+      PsiJavaCodeReferenceElement innermost = getInnermostComponentReferenceElement();
+      if (innermost != null && innermost.isQualified()) {
+        return ((PsiClassReferenceType)type).withAddedQualifierAnnotations(annotations);
+      }
+    }
     return JavaSharedImplUtil.annotate(type, modifierList, annotations);
   }
 
@@ -235,7 +241,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
         return (PsiModifierListOwner)parent;
       }
     }
-    if (isDeepestComponentInsideArrayType(parent) || isFirstExceptionTypeInsideMultiCatch(parent)) {
+    if (isArrayTypeElement(parent) || isFirstExceptionTypeInsideMultiCatch(parent)) {
       return ObjectUtils.tryCast(getNonDummyContext(parent), PsiModifierListOwner.class);
     }
     return null;
@@ -256,7 +262,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
            && PsiTreeUtil.findSiblingForward(this, JavaTokenType.OR, null) != null;
   }
 
-  private static boolean isDeepestComponentInsideArrayType(PsiElement parent) {
+  private static boolean isArrayTypeElement(PsiElement parent) {
     return parent instanceof PsiTypeElement
            && PsiUtil.isJavaToken(parent.getLastChild(), TokenSet.create(JavaTokenType.RBRACKET, JavaTokenType.ELLIPSIS));
   }
@@ -322,6 +328,18 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   public boolean isInferredType() {
     return PsiUtil.isJavaToken(getFirstChild(), JavaTokenType.VAR_KEYWORD) ||
            PsiAugmentProvider.isInferredType(this);
+  }
+
+  private static @NotNull PsiType getPsiClassReferenceType(PsiJavaCodeReferenceElement psiJavaCodeReferenceElement,
+                                                           TypeAnnotationProvider provider) {
+    if (psiJavaCodeReferenceElement.isQualified()) {
+      return new PsiClassReferenceType(
+        getReferenceComputable(psiJavaCodeReferenceElement), null, TypeAnnotationProvider.EMPTY, provider);
+    }
+    else {
+      return new PsiClassReferenceType(
+        getReferenceComputable(psiJavaCodeReferenceElement), null, provider, TypeAnnotationProvider.EMPTY);
+    }
   }
 
   private static @NotNull ClassReferencePointer getReferenceComputable(@NotNull PsiJavaCodeReferenceElement ref) {

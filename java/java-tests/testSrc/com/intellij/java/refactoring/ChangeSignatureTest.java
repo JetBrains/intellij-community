@@ -701,7 +701,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   }
 
   public void testAddReturnAnnotation() {
-    doTest(null, null, "@org.jetbrains.annotations.NotNull java.lang.String", method -> new ParameterInfoImpl[0], false);
+    doTest(null, null, "java.lang.@org.jetbrains.annotations.NotNull String", method -> new ParameterInfoImpl[0], false);
   }
 
   public void testMultilineJavadoc() { // IDEA-281568

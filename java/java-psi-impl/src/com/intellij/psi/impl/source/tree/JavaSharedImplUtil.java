@@ -286,6 +286,12 @@ public final class JavaSharedImplUtil {
     variable.addAfter(initializer, eq.getPsi());
   }
 
+  public static @NotNull TypeAnnotationProvider filteringTypeAnnotationProvider(@NotNull PsiAnnotation @NotNull [] candidates,
+                                                                                @NotNull TypeAnnotationProvider originalProvider) {
+    if (candidates.length == 0) return originalProvider;
+    return new FilteringTypeAnnotationProvider(candidates, originalProvider);
+  }
+
   private static final class FilteringTypeAnnotationProvider implements TypeAnnotationProvider {
     private final PsiAnnotation[] myCandidates;
     private final TypeAnnotationProvider myOriginalProvider;
