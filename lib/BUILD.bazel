@@ -66,9 +66,9 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_import")
 
 copy_file(
-  name = "com.fasterxml/aalto-xml-1.3.3.jar_copy",
-  src = "@com_fasterxml-aalto-xml-1_3_3_http//file",
-  out = "com.fasterxml/aalto-xml-1.3.3.jar",
+  name = "com.fasterxml/aalto-xml-1.3.4.jar_copy",
+  src = "@com_fasterxml-aalto-xml-1_3_4_http//file",
+  out = "com.fasterxml/aalto-xml-1.3.4.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -84,16 +84,16 @@ copy_file(
 java_library(
   name = "aalto-xml",
   exports = [
-    ":com_fasterxml-aalto-xml-1_3_3_http_import",
+    ":com_fasterxml-aalto-xml-1_3_4_http_import",
     ":org_codehaus_woodstox-stax2-api-4_2_2_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "com_fasterxml-aalto-xml-1_3_3_http_import",
-  jar = "@com_fasterxml-aalto-xml-1_3_3_http//file",
-  source_jar = "@com_fasterxml-aalto-xml-1_3_3-sources_http//file"
+  name = "com_fasterxml-aalto-xml-1_3_4_http_import",
+  jar = "@com_fasterxml-aalto-xml-1_3_4_http//file",
+  source_jar = "@com_fasterxml-aalto-xml-1_3_4-sources_http//file"
 )
 
 jvm_import(
@@ -678,40 +678,40 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.bouncycastle/bcpg-jdk18on-1.81.jar_copy",
-  src = "@org_bouncycastle-bcpg-jdk18on-1_81_http//file",
-  out = "org.bouncycastle/bcpg-jdk18on-1.81.jar",
+  name = "org.bouncycastle/bcpg-jdk18on-1.83.jar_copy",
+  src = "@org_bouncycastle-bcpg-jdk18on-1_83_http//file",
+  out = "org.bouncycastle/bcpg-jdk18on-1.83.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "bouncy-castle-pgp",
-  jar = "@org_bouncycastle-bcpg-jdk18on-1_81_http//file",
-  source_jar = "@org_bouncycastle-bcpg-jdk18on-1_81-sources_http//file",
+  jar = "@org_bouncycastle-bcpg-jdk18on-1_83_http//file",
+  source_jar = "@org_bouncycastle-bcpg-jdk18on-1_83-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.bouncycastle/bcpkix-jdk18on-1.81.jar_copy",
-  src = "@org_bouncycastle-bcpkix-jdk18on-1_81_http//file",
-  out = "org.bouncycastle/bcpkix-jdk18on-1.81.jar",
+  name = "org.bouncycastle/bcpkix-jdk18on-1.83.jar_copy",
+  src = "@org_bouncycastle-bcpkix-jdk18on-1_83_http//file",
+  out = "org.bouncycastle/bcpkix-jdk18on-1.83.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.bouncycastle/bcutil-jdk18on-1.81.jar_copy",
-  src = "@org_bouncycastle-bcutil-jdk18on-1_81_http//file",
-  out = "org.bouncycastle/bcutil-jdk18on-1.81.jar",
+  name = "org.bouncycastle/bcutil-jdk18on-1.83.jar_copy",
+  src = "@org_bouncycastle-bcutil-jdk18on-1_83_http//file",
+  out = "org.bouncycastle/bcutil-jdk18on-1.83.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.bouncycastle/bcprov-jdk18on-1.81.jar_copy",
-  src = "@org_bouncycastle-bcprov-jdk18on-1_81_http//file",
-  out = "org.bouncycastle/bcprov-jdk18on-1.81.jar",
+  name = "org.bouncycastle/bcprov-jdk18on-1.83.jar_copy",
+  src = "@org_bouncycastle-bcprov-jdk18on-1_83_http//file",
+  out = "org.bouncycastle/bcprov-jdk18on-1.83.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -719,29 +719,29 @@ copy_file(
 java_library(
   name = "bouncy-castle-provider",
   exports = [
-    ":org_bouncycastle-bcpkix-jdk18on-1_81_http_import",
-    ":org_bouncycastle-bcutil-jdk18on-1_81_http_import",
-    ":org_bouncycastle-bcprov-jdk18on-1_81_http_import",
+    ":org_bouncycastle-bcpkix-jdk18on-1_83_http_import",
+    ":org_bouncycastle-bcutil-jdk18on-1_83_http_import",
+    ":org_bouncycastle-bcprov-jdk18on-1_83_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_bouncycastle-bcpkix-jdk18on-1_81_http_import",
-  jar = "@org_bouncycastle-bcpkix-jdk18on-1_81_http//file",
-  source_jar = "@org_bouncycastle-bcpkix-jdk18on-1_81-sources_http//file"
+  name = "org_bouncycastle-bcpkix-jdk18on-1_83_http_import",
+  jar = "@org_bouncycastle-bcpkix-jdk18on-1_83_http//file",
+  source_jar = "@org_bouncycastle-bcpkix-jdk18on-1_83-sources_http//file"
 )
 
 jvm_import(
-  name = "org_bouncycastle-bcutil-jdk18on-1_81_http_import",
-  jar = "@org_bouncycastle-bcutil-jdk18on-1_81_http//file",
-  source_jar = "@org_bouncycastle-bcutil-jdk18on-1_81-sources_http//file"
+  name = "org_bouncycastle-bcutil-jdk18on-1_83_http_import",
+  jar = "@org_bouncycastle-bcutil-jdk18on-1_83_http//file",
+  source_jar = "@org_bouncycastle-bcutil-jdk18on-1_83-sources_http//file"
 )
 
 jvm_import(
-  name = "org_bouncycastle-bcprov-jdk18on-1_81_http_import",
-  jar = "@org_bouncycastle-bcprov-jdk18on-1_81_http//file",
-  source_jar = "@org_bouncycastle-bcprov-jdk18on-1_81-sources_http//file"
+  name = "org_bouncycastle-bcprov-jdk18on-1_83_http_import",
+  jar = "@org_bouncycastle-bcprov-jdk18on-1_83_http//file",
+  source_jar = "@org_bouncycastle-bcprov-jdk18on-1_83-sources_http//file"
 )
 
 copy_file(
@@ -760,9 +760,9 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.github.ben-manes.caffeine/caffeine-3.2.2.jar_copy",
-  src = "@com_github_ben-manes_caffeine-caffeine-3_2_2_http//file",
-  out = "com.github.ben-manes.caffeine/caffeine-3.2.2.jar",
+  name = "com.github.ben-manes.caffeine/caffeine-3.2.3.jar_copy",
+  src = "@com_github_ben-manes_caffeine-caffeine-3_2_3_http//file",
+  out = "com.github.ben-manes.caffeine/caffeine-3.2.3.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -776,9 +776,9 @@ copy_file(
 )
 
 copy_file(
-  name = "com.google.errorprone/error_prone_annotations-2.40.0.jar_copy",
-  src = "@com_google_errorprone-error_prone_annotations-2_40_0_http//file",
-  out = "com.google.errorprone/error_prone_annotations-2.40.0.jar",
+  name = "com.google.errorprone/error_prone_annotations-2.43.0.jar_copy",
+  src = "@com_google_errorprone-error_prone_annotations-2_43_0_http//file",
+  out = "com.google.errorprone/error_prone_annotations-2.43.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -786,17 +786,17 @@ copy_file(
 java_library(
   name = "caffeine",
   exports = [
-    ":com_github_ben-manes_caffeine-caffeine-3_2_2_http_import",
+    ":com_github_ben-manes_caffeine-caffeine-3_2_3_http_import",
     ":org_jspecify-jspecify-1_0_0_http_import",
-    ":com_google_errorprone-error_prone_annotations-2_40_0_http_import",
+    ":com_google_errorprone-error_prone_annotations-2_43_0_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "com_github_ben-manes_caffeine-caffeine-3_2_2_http_import",
-  jar = "@com_github_ben-manes_caffeine-caffeine-3_2_2_http//file",
-  source_jar = "@com_github_ben-manes_caffeine-caffeine-3_2_2-sources_http//file"
+  name = "com_github_ben-manes_caffeine-caffeine-3_2_3_http_import",
+  jar = "@com_github_ben-manes_caffeine-caffeine-3_2_3_http//file",
+  source_jar = "@com_github_ben-manes_caffeine-caffeine-3_2_3-sources_http//file"
 )
 
 jvm_import(
@@ -806,9 +806,9 @@ jvm_import(
 )
 
 jvm_import(
-  name = "com_google_errorprone-error_prone_annotations-2_40_0_http_import",
-  jar = "@com_google_errorprone-error_prone_annotations-2_40_0_http//file",
-  source_jar = "@com_google_errorprone-error_prone_annotations-2_40_0-sources_http//file"
+  name = "com_google_errorprone-error_prone_annotations-2_43_0_http_import",
+  jar = "@com_google_errorprone-error_prone_annotations-2_43_0_http//file",
+  source_jar = "@com_google_errorprone-error_prone_annotations-2_43_0-sources_http//file"
 )
 
 copy_file(
@@ -6110,24 +6110,24 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.google.code.gson/gson-2.13.1.jar_copy",
-  src = "@com_google_code_gson-gson-2_13_1_http//file",
-  out = "com.google.code.gson/gson-2.13.1.jar",
+  name = "com.google.code.gson/gson-2.13.2.jar_copy",
+  src = "@com_google_code_gson-gson-2_13_2_http//file",
+  out = "com.google.code.gson/gson-2.13.2.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "gson",
-  jar = "@com_google_code_gson-gson-2_13_1_http//file",
-  source_jar = "@com_google_code_gson-gson-2_13_1-sources_http//file",
+  jar = "@com_google_code_gson-gson-2_13_2_http//file",
+  source_jar = "@com_google_code_gson-gson-2_13_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "com.google.guava/guava-33.4.8-jre.jar_copy",
-  src = "@com_google_guava-guava-33_4_8-jre_http//file",
-  out = "com.google.guava/guava-33.4.8-jre.jar",
+  name = "com.google.guava/guava-33.5.0-jre.jar_copy",
+  src = "@com_google_guava-guava-33_5_0-jre_http//file",
+  out = "com.google.guava/guava-33.5.0-jre.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -6143,16 +6143,16 @@ copy_file(
 java_library(
   name = "guava",
   exports = [
-    ":com_google_guava-guava-33_4_8-jre_http_import",
+    ":com_google_guava-guava-33_5_0-jre_http_import",
     ":com_google_guava-failureaccess-1_0_3_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "com_google_guava-guava-33_4_8-jre_http_import",
-  jar = "@com_google_guava-guava-33_4_8-jre_http//file",
-  source_jar = "@com_google_guava-guava-33_4_8-jre-sources_http//file"
+  name = "com_google_guava-guava-33_5_0-jre_http_import",
+  jar = "@com_google_guava-guava-33_5_0-jre_http//file",
+  source_jar = "@com_google_guava-guava-33_5_0-jre-sources_http//file"
 )
 
 jvm_import(
@@ -11335,17 +11335,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.dynatrace.hash4j/hash4j-0.26.0.jar_copy",
-  src = "@com_dynatrace_hash4j-hash4j-0_26_0_http//file",
-  out = "com.dynatrace.hash4j/hash4j-0.26.0.jar",
+  name = "com.dynatrace.hash4j/hash4j-0.29.0.jar_copy",
+  src = "@com_dynatrace_hash4j-hash4j-0_29_0_http//file",
+  out = "com.dynatrace.hash4j/hash4j-0.29.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "libraries-hash4j-hash4j",
-  jar = "@com_dynatrace_hash4j-hash4j-0_26_0_http//file",
-  source_jar = "@com_dynatrace_hash4j-hash4j-0_26_0-sources_http//file",
+  jar = "@com_dynatrace_hash4j-hash4j-0_29_0_http//file",
+  source_jar = "@com_dynatrace_hash4j-hash4j-0_29_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -11395,17 +11395,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.amazon.ion/ion-java-1.11.10.jar_copy",
-  src = "@com_amazon_ion-ion-java-1_11_10_http//file",
-  out = "com.amazon.ion/ion-java-1.11.10.jar",
+  name = "com.amazon.ion/ion-java-1.11.11.jar_copy",
+  src = "@com_amazon_ion-ion-java-1_11_11_http//file",
+  out = "com.amazon.ion/ion-java-1.11.11.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "libraries-ion-ion",
-  jar = "@com_amazon_ion-ion-java-1_11_10_http//file",
-  source_jar = "@com_amazon_ion-ion-java-1_11_10-sources_http//file",
+  jar = "@com_amazon_ion-ion-java-1_11_11_http//file",
+  source_jar = "@com_amazon_ion-ion-java-1_11_11-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -15859,14 +15859,6 @@ copy_file(
   name = "org.apache.maven.resolver/maven-resolver-spi-2.0.13.jar_copy",
   src = "@org_apache_maven_resolver-maven-resolver-spi-2_0_13_http//file",
   out = "org.apache.maven.resolver/maven-resolver-spi-2.0.13.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "com.google.code.gson/gson-2.13.2.jar_copy",
-  src = "@com_google_code_gson-gson-2_13_2_http//file",
-  out = "com.google.code.gson/gson-2.13.2.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
