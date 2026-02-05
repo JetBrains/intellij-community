@@ -38,6 +38,8 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy;
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.psi.PsiField;
 import com.intellij.util.CoroutineScopeKt;
 import com.intellij.util.EventDispatcher;
@@ -60,8 +62,6 @@ import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager;
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
-import com.intellij.xdebugger.impl.proxy.MonolithBreakpointProxyKt;
 import com.jetbrains.jdi.EventRequestManagerImpl;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ThreadReference;
@@ -166,12 +166,13 @@ public class BreakpointManager {
   public void editBreakpoint(final Breakpoint breakpoint, final Editor editor) {
     DebuggerInvocationUtil.invokeLaterAnyModality(myProject, () -> {
       XBreakpoint xBreakpoint = breakpoint.myXBreakpoint;
-      if (xBreakpoint instanceof XLineBreakpointImpl<?> xLineBreakpoint) {
-        RangeHighlighter highlighter = xLineBreakpoint.getHighlighter();
+      var breakpointProxy = XDebuggerEntityConverter.asProxy(xBreakpoint);
+      if (breakpointProxy instanceof XLineBreakpointProxy lineBreakpointProxy) {
+        RangeHighlighter highlighter = lineBreakpointProxy.getHighlighter();
         if (highlighter != null) {
           GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
           if (renderer != null) {
-            EditBreakpointAction.HANDLER.editBreakpoint(myProject, editor, MonolithBreakpointProxyKt.asProxy(xLineBreakpoint), renderer);
+            EditBreakpointAction.HANDLER.editBreakpoint(myProject, editor, lineBreakpointProxy, renderer);
           }
         }
       }

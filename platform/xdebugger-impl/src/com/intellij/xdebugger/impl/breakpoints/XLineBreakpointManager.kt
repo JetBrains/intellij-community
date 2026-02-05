@@ -49,6 +49,7 @@ import com.intellij.platform.debugger.impl.shared.proxy.XLightLineBreakpointProx
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
@@ -65,7 +66,6 @@ import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction
 import com.intellij.xdebugger.impl.proxy.MonolithLineBreakpointProxy
-import com.intellij.xdebugger.impl.proxy.asProxy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
@@ -157,7 +157,10 @@ class XLineBreakpointManager(
 
   @Deprecated("Use {@link #registerBreakpoint(XLineBreakpointProxy, boolean)} instead")
   fun registerBreakpoint(breakpoint: XLineBreakpointImpl<*>, initUI: Boolean) {
-    registerBreakpoint(breakpoint.asProxy(), initUI)
+    val proxy = XDebuggerEntityConverter.asProxy(breakpoint) as? XLineBreakpointProxy
+    if (proxy != null) {
+      registerBreakpoint(proxy, initUI)
+    }
   }
 
   fun registerBreakpoint(breakpoint: XLineBreakpointProxy, initUI: Boolean) {
@@ -266,9 +269,9 @@ class XLineBreakpointManager(
 
   @JvmOverloads
   fun queueBreakpointUpdate(slave: XBreakpoint<*>?, callOnUpdate: Runnable? = null) {
-    if (slave is XLineBreakpointImpl<*>) {
-      queueBreakpointUpdate(slave.asProxy(), callOnUpdate)
-    }
+    if (slave == null) return
+    val proxy = XDebuggerEntityConverter.asProxy(slave) as? XLineBreakpointProxy ?: return
+    queueBreakpointUpdate(proxy, callOnUpdate)
   }
 
   @Deprecated("Use queueBreakpointUpdateCallback(XLightLineBreakpointProxy, Runnable)")

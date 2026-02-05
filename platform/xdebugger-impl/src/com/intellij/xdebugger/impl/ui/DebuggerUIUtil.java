@@ -43,6 +43,7 @@ import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.LightVirtualFile;
@@ -65,7 +66,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueModifier;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
@@ -98,7 +98,6 @@ import java.awt.event.HierarchyEvent;
 import java.awt.event.MouseEvent;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
-import static com.intellij.xdebugger.impl.proxy.MonolithBreakpointProxyKt.asProxy;
 
 public final class DebuggerUIUtil {
   public static final @NonNls String FULL_VALUE_POPUP_DIMENSION_KEY = "XDebugger.FullValuePopup";
@@ -270,8 +269,9 @@ public final class DebuggerUIUtil {
                                                   final JComponent component,
                                                   final boolean showAllOptions,
                                                   final @NotNull XBreakpoint breakpoint) {
-    if (breakpoint instanceof XBreakpointBase<?, ?, ?> breakpointBase) {
-      showXBreakpointEditorBalloon(project, point, component, showAllOptions, asProxy(breakpointBase));
+    XBreakpointProxy breakpointProxy = XDebuggerEntityConverter.asProxy(breakpoint);
+    if (breakpointProxy != null) {
+      showXBreakpointEditorBalloon(project, point, component, showAllOptions, breakpointProxy);
     }
   }
 
@@ -291,8 +291,9 @@ public final class DebuggerUIUtil {
                                                   final boolean showActionOptions,
                                                   final boolean showAllOptions,
                                                   final @NotNull XBreakpoint breakpoint) {
-    if (breakpoint instanceof XBreakpointBase<?, ?, ?> breakpointBase) {
-      showXBreakpointEditorBalloon(project, point, component, showActionOptions, showAllOptions, asProxy(breakpointBase));
+    XBreakpointProxy breakpointProxy = XDebuggerEntityConverter.asProxy(breakpoint);
+    if (breakpointProxy != null) {
+      showXBreakpointEditorBalloon(project, point, component, showActionOptions, showAllOptions, breakpointProxy);
     }
   }
 
@@ -358,8 +359,8 @@ public final class DebuggerUIUtil {
     project.getMessageBus().connect(disposable).subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<>() {
       @Override
       public void breakpointRemoved(@NotNull XBreakpoint<?> removedBreakpoint) {
-        if (removedBreakpoint instanceof XBreakpointBase<?, ?, ?> breakpointBase &&
-            asProxy(breakpointBase).equals(breakpoint)) {
+        XBreakpointProxy removedBreakpointProxy = XDebuggerEntityConverter.asProxy(removedBreakpoint);
+        if (removedBreakpointProxy != null && removedBreakpointProxy.equals(breakpoint)) {
           balloon.hide();
         }
       }

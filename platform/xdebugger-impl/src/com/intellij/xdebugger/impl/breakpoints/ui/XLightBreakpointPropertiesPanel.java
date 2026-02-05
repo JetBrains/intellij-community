@@ -50,8 +50,6 @@ import java.awt.event.FocusEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.xdebugger.impl.proxy.MonolithBreakpointProxyKt.asProxy;
-
 @ApiStatus.Internal
 public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Delegate {
   public static final String CONDITION_HISTORY_ID = "breakpointCondition";
@@ -145,7 +143,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
   public XLightBreakpointPropertiesPanel(Project project, XBreakpointManager breakpointManager, XBreakpointBase breakpoint,
                                          boolean showActionOptions, boolean showAllOptions, boolean isEditorBalloon) {
     this(project, MonolithBreakpointManagerKt.asProxy((XBreakpointManagerImpl)breakpointManager),
-         asProxy(breakpoint), showActionOptions, showAllOptions, isEditorBalloon);
+         XDebuggerEntityConverter.asProxy(breakpoint), showActionOptions, showAllOptions, isEditorBalloon);
   }
 
   private final @NotNull XBreakpointManagerProxy myBreakpointManager;

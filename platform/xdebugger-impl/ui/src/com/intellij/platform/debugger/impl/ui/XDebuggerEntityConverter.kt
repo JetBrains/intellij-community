@@ -4,6 +4,7 @@ package com.intellij.platform.debugger.impl.ui
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId
 import com.intellij.platform.debugger.impl.rpc.XValueId
 import com.intellij.platform.debugger.impl.shared.XDebuggerMonolithAccessPoint
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.breakpoints.XBreakpoint
@@ -83,5 +84,31 @@ object XDebuggerEntityConverter {
   @JvmStatic
   fun getBreakpoint(breakpointId: XBreakpointId): XBreakpoint<*>? {
     return XDebuggerMonolithAccessPoint.find { it.getBreakpoint(breakpointId) }
+  }
+
+  /**
+   * For a given [XBreakpoint] returns the corresponding [XBreakpointId].
+   *
+   * Returns `null` if the breakpoint is not a backend implementation instance.
+   *
+   * Use this method to convert breakpoints to IDs for UI operations.
+   */
+  @ApiStatus.Internal
+  @JvmStatic
+  fun getBreakpointId(breakpoint: XBreakpoint<*>): XBreakpointId? {
+    return XDebuggerMonolithAccessPoint.find { it.getBreakpointId(breakpoint) }
+  }
+
+  /**
+   * For a given [XBreakpoint] returns the corresponding [XBreakpointProxy].
+   *
+   * Returns `null` if the breakpoint is not a backend implementation instance.
+   *
+   * Use this method to convert breakpoints to proxies for UI operations.
+   */
+  @ApiStatus.Internal
+  @JvmStatic
+  fun asProxy(breakpoint: XBreakpoint<*>): XBreakpointProxy? {
+    return XDebuggerMonolithAccessPoint.find { it.asProxy(breakpoint) }
   }
 }

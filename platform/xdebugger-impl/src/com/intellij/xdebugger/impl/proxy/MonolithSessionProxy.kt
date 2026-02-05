@@ -350,4 +350,12 @@ internal class XDebuggerMonolithAccessPointImpl : XDebuggerMonolithAccessPoint {
   override fun getBreakpoint(breakpointId: XBreakpointId): XBreakpoint<*>? {
     return breakpointId.findValue()
   }
+
+  override fun getBreakpointId(breakpoint: XBreakpoint<*>): XBreakpointId? {
+    return (breakpoint as? XBreakpointBase<*, *, *>)?.breakpointId
+  }
+
+  override fun asProxy(breakpoint: XBreakpoint<*>): XBreakpointProxy? {
+    return (breakpoint as? XBreakpointBase<*, *, *>)?.asProxy()
+  }
 }

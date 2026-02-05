@@ -4,6 +4,7 @@ package com.intellij.platform.debugger.impl.shared
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId
 import com.intellij.platform.debugger.impl.rpc.XValueId
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.breakpoints.XBreakpoint
@@ -19,6 +20,8 @@ interface XDebuggerMonolithAccessPoint {
   fun getValue(valueId: XValueId): XValue?
   fun getBreakpointType(typeId: String): XBreakpointType<*, *>?
   fun getBreakpoint(breakpointId: XBreakpointId): XBreakpoint<*>?
+  fun getBreakpointId(breakpoint: XBreakpoint<*>): XBreakpointId?
+  fun asProxy(breakpoint: XBreakpoint<*>): XBreakpointProxy?
 
   companion object {
     internal val EP_NAME = ExtensionPointName<XDebuggerMonolithAccessPoint>("com.intellij.xdebugger.monolithAccessPoint")
