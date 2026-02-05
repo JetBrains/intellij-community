@@ -578,6 +578,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ChangeVisibilityFixFactories.superCallFromPublicInline)
         registerFactory(ChangeVisibilityFixFactories.protectedCallFromPublicInlineError)
         registerFactory(ChangeVisibilityFixFactories.nonPublicCallFromPublicInline)
+        registerFactory(ChangeVisibilityFixFactories.explicitFieldVisibilityMustBeLessPermissive)
     }
 
     private val other = KtQuickFixesListBuilder.registerPsiQuickFix {

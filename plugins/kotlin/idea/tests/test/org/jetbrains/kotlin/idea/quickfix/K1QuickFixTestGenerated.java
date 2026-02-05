@@ -10664,6 +10664,21 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("explicitBackingFieldToInternal.kt")
+            public void testExplicitBackingFieldToInternal() throws Exception {
+                runTest("testData/quickfix/increaseVisibility/explicitBackingFieldToInternal.kt");
+            }
+
+            @TestMetadata("explicitBackingFieldToProtected.kt")
+            public void testExplicitBackingFieldToProtected() throws Exception {
+                runTest("testData/quickfix/increaseVisibility/explicitBackingFieldToProtected.kt");
+            }
+
+            @TestMetadata("explicitBackingFieldToPublic.kt")
+            public void testExplicitBackingFieldToPublic() throws Exception {
+                runTest("testData/quickfix/increaseVisibility/explicitBackingFieldToPublic.kt");
+            }
+
             @TestMetadata("exposedParameterType.kt")
             public void testExposedParameterType() throws Exception {
                 runTest("testData/quickfix/increaseVisibility/exposedParameterType.kt");

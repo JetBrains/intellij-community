@@ -212,6 +212,17 @@ internal object ChangeVisibilityFixFactories {
             )
         }
 
+    val explicitFieldVisibilityMustBeLessPermissive =
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ExplicitFieldVisibilityMustBeLessPermissive ->
+            val property = diagnostic.psi
+            val propertySymbol = property.symbol
+            listOfNotNull(
+                createFixToTargetVisibility(propertySymbol, property, Visibilities.Protected),
+                createFixToTargetVisibility(propertySymbol, property, Visibilities.Internal),
+                createFixToTargetVisibility(propertySymbol, property, Visibilities.Public),
+            )
+        }
+
     private fun createFixForNoExplicitVisibilityInApiMode(
         element: KtDeclaration,
     ): List<ChangeVisibilityModCommandAction> {

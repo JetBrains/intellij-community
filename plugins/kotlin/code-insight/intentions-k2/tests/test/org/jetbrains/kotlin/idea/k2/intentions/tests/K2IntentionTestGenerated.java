@@ -7381,6 +7381,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("explicitFieldVisibilityMustBeLessPermissive.kt")
+            public void testExplicitFieldVisibilityMustBeLessPermissive() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/internal/explicitFieldVisibilityMustBeLessPermissive.kt");
+            }
+
             @TestMetadata("hasJvmFieldInInterfaceCompanion.kt")
             public void testHasJvmFieldInInterfaceCompanion() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/changeVisibility/internal/hasJvmFieldInInterfaceCompanion.kt");
@@ -7704,6 +7709,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/constructorParameter.kt");
             }
 
+            @TestMetadata("explicitFieldVisibilityMustBeLessPermissive.kt")
+            public void testExplicitFieldVisibilityMustBeLessPermissive() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/explicitFieldVisibilityMustBeLessPermissive.kt");
+            }
+
             @TestMetadata("noModifier.kt")
             public void testNoModifier() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/noModifier.kt");
@@ -7806,6 +7816,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             @TestMetadata("destructuringPropertyException.kt")
             public void testDestructuringPropertyException() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/changeVisibility/public/destructuringPropertyException.kt");
+            }
+
+            @TestMetadata("explicitFieldVisibilityMustBeLessPermissive.kt")
+            public void testExplicitFieldVisibilityMustBeLessPermissive() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/public/explicitFieldVisibilityMustBeLessPermissive.kt");
             }
 
             @TestMetadata("notForSealedPrimaryConstructor.kt")
