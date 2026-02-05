@@ -54,6 +54,7 @@ jvm_library(
     "//plugins/kotlin/j2k/shared/tests:tests_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//platform/core-ui",
   ],
   runtime_deps = [":tests"]
 )

@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.idea.actions.JavaToKotlinAction
+import org.jetbrains.kotlin.idea.actions.JavaToKotlinActionHandler
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -154,8 +154,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
 
 
         runWithModalProgressBlocking(project, "") {
-
-            JavaToKotlinAction.Handler.convertFiles(
+            JavaToKotlinActionHandler.convertFiles(
                 listOf(file),
                 project,
                 module,
