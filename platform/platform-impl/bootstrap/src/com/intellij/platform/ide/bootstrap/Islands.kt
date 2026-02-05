@@ -11,6 +11,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.Dispatchers
@@ -24,7 +25,8 @@ suspend fun applyIslandsTheme(afterImportSettings: Boolean) {
     return
   }
 
-  if (System.getProperty("platform.experiment.ab.manual.option", "") == "control.option") {
+  if (System.getProperty("platform.experiment.ab.manual.option", "") == "control.option"
+      || ExperimentalUI.switchedFromClassicToIslands == true) {
     return
   }
 

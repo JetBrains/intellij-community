@@ -10,12 +10,10 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
-import com.intellij.ide.ui.MainMenuDisplayMode
 import com.intellij.ide.ui.NotPatchedIconRegistry
 import com.intellij.ide.ui.NotRoamableUiSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
-import com.intellij.ide.ui.laf.isDefaultForTheme
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
@@ -25,14 +23,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.IconPathPatcher
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
-import com.intellij.util.PlatformUtils
-import com.intellij.util.system.OS
 import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOG: Logger
@@ -170,57 +165,12 @@ private class ExperimentalUIImpl : ExperimentalUI() {
  */
 private class ExperimentalUiAppLifecycleListener : AppLifecycleListener {
 
-  override fun appFrameCreated(commandLineArgs: List<String?>) {
-    if (ExperimentalUI.switchedFromClassicToIslandsInSession) {
-      LOG.info("Islands switching: settings updating")
-
-      ExperimentalUI.switchedFromClassicToIslandsInSession = false
-      ExperimentalUI.SHOW_NEW_UI_ONBOARDING_ON_START = true
-
-      val settings = UISettings.getInstance()
-      if (!PlatformUtils.isDataGrip() && OS.CURRENT != OS.macOS) {
-        settings.mainMenuDisplayMode = MainMenuDisplayMode.MERGED_WITH_MAIN_TOOLBAR
-      }
-      settings.compactMode = true
-      settings.fireUISettingsChanged()
-
-      if (PlatformUtils.isRider()) {
-        switchSchemeToDefaultIfNeeded("Islands Light", "Rider Light")
-        switchSchemeToDefaultIfNeeded("Islands Dark", "Rider Dark")
-      }
-      else {
-        // There is no Intellij Light theme in new UI
-        switchSchemeToDefaultIfNeeded("Islands Dark", "Darcula")
-      }
-    }
-  }
-
   override fun appStarted() {
     (ExperimentalUI.getInstance() as? ExperimentalUIImpl)?.appStarted()
   }
 
   override fun appClosing() {
     (ExperimentalUI.getInstance() as? ExperimentalUIImpl)?.appClosing()
-  }
-
-  private fun switchSchemeToDefaultIfNeeded(expectedLafId: String, expectedScheme: String) {
-    val lookAndFeel = LafManager.getInstance().getCurrentUIThemeLookAndFeel()
-    if (lookAndFeel.id != expectedLafId) {
-      return
-    }
-
-    val editorColorsManager = EditorColorsManager.getInstance() as EditorColorsManagerImpl
-    if (editorColorsManager.globalScheme.name != Scheme.EDITABLE_COPY_PREFIX + expectedScheme) {
-      return
-    }
-
-    for (scheme in editorColorsManager.allSchemes) {
-      if (scheme.isDefaultForTheme(lookAndFeel)) {
-        editorColorsManager.setGlobalScheme(scheme, true)
-
-        return
-      }
-    }
   }
 }
 

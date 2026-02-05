@@ -3,16 +3,27 @@ package com.intellij.platform.ide.bootstrap
 
 import com.intellij.ide.plugins.DisabledPluginsState
 import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.MainMenuDisplayMode
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.laf.isDefaultForTheme
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.util.buildNsUnawareJdom
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PlatformUtils
+import com.intellij.util.system.OS
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.nio.file.NoSuchFileException
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
@@ -24,8 +35,6 @@ private val LOG = logger<ClassicUiToIslandsMigration>()
  * * com.intellij.platform.ide.bootstrap.ConfigKt.enableNewUi
  * * [ExperimentalUI.forcedSwitchedUi]
  * * [ExperimentalUI.SHOW_NEW_UI_ONBOARDING_ON_START]
- * * [ExperimentalUI.switchedFromClassicToIslandsInSession]
- * * [ExperimentalUI.switchedFromClassicToIslandsLafMigration]
  * * [ExperimentalUI.cleanUpClassicUIFromDisabled]
  */
 internal object ClassicUiToIslandsMigration {
@@ -38,6 +47,9 @@ internal object ClassicUiToIslandsMigration {
    * Remove the classic UI from the disabled plugins file if there is no classic UI plugin installed
    */
   private val cleanUpClassicUIFromDisabledPlugins = AtomicBoolean(false)
+
+  @Volatile
+  private var switchedFromClassicToIslandsInSession: Boolean = false
 
   private val classicUiPluginId: PluginId
     get() = PluginId.getId("com.intellij.classic.ui")
@@ -63,8 +75,7 @@ internal object ClassicUiToIslandsMigration {
       else {
         LOG.info("Switching is needed and has been initiated")
 
-        ExperimentalUI.switchedFromClassicToIslandsInSession = true
-        ExperimentalUI.switchedFromClassicToIslandsLafMigration = true
+        switchedFromClassicToIslandsInSession = true
         EarlyAccessRegistryManager.setAndFlush(mapOf("ide.experimental.ui" to "true", ExperimentalUI.SWITCHED_FROM_CLASSIC_TO_ISLANDS to "true"))
 
         // We don't know yet if the classic UI is installed, therefore, always disable the plugin
@@ -76,6 +87,58 @@ internal object ClassicUiToIslandsMigration {
     }
     catch (e: Throwable) {
       logDeferred.await().error(e)
+    }
+  }
+
+  suspend fun migrateSchemeAndUiSettingsIfNeeded() {
+    if (!switchedFromClassicToIslandsInSession) {
+      return
+    }
+
+    LOG.info("Islands switching: settings and scheme updating")
+
+    switchedFromClassicToIslandsInSession = false
+    ExperimentalUI.SHOW_NEW_UI_ONBOARDING_ON_START = true
+
+    withContext(Dispatchers.EDT) {
+      val settings = UISettings.getInstance()
+      if (!PlatformUtils.isDataGrip() && OS.CURRENT != OS.macOS) {
+        settings.mainMenuDisplayMode = MainMenuDisplayMode.MERGED_WITH_MAIN_TOOLBAR
+      }
+
+      settings.compactMode = true
+      settings.fireUISettingsChanged()
+
+      if (PlatformUtils.isRider()) {
+        switchSchemeToDefaultIfNeeded("Islands Light", "Rider Light")
+        switchSchemeToDefaultIfNeeded("Islands Dark", "Rider Dark")
+      }
+      else {
+        // There is no Intellij Light theme in new UI
+        switchSchemeToDefaultIfNeeded("Islands Dark", "Darcula")
+      }
+    }
+
+    return
+  }
+
+  private fun switchSchemeToDefaultIfNeeded(expectedLafId: String, expectedScheme: String) {
+    val lookAndFeel = LafManager.getInstance().getCurrentUIThemeLookAndFeel()
+    if (lookAndFeel.id != expectedLafId) {
+      return
+    }
+
+    val editorColorsManager = EditorColorsManager.getInstance() as EditorColorsManagerImpl
+    if (editorColorsManager.globalScheme.name != Scheme.EDITABLE_COPY_PREFIX + expectedScheme) {
+      return
+    }
+
+    for (scheme in editorColorsManager.allSchemes) {
+      if (scheme.isDefaultForTheme(lookAndFeel)) {
+        editorColorsManager.setGlobalScheme(scheme, true)
+
+        return
+      }
     }
   }
 
