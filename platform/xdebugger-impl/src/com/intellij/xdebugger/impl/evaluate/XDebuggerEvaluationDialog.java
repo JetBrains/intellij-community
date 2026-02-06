@@ -33,7 +33,7 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -167,7 +167,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
     myTreePanel.getTree().expandNodesOnLoad(XDebuggerEvaluationDialog::isFirstChild);
 
-    EvaluationMode mode = XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().getEvaluationDialogMode();
+    EvaluationMode mode = XDebuggerSettingsManager.getInstance().getGeneralSettings().getEvaluationDialogMode();
     if (mode == EvaluationMode.CODE_FRAGMENT && !isCodeFragmentEvaluationSupported) {
       mode = EvaluationMode.EXPRESSION;
     }
@@ -426,7 +426,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       XExpression text = getInputEditor().getExpression();
       EvaluationMode newMode = (myMode == EvaluationMode.EXPRESSION) ? EvaluationMode.CODE_FRAGMENT : EvaluationMode.EXPRESSION;
       // remember only on user selection
-      XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().setEvaluationDialogMode(newMode);
+      XDebuggerSettingsManager.getInstance().getGeneralSettings().setEvaluationDialogMode(newMode);
       DebuggerEvaluationStatisticsCollector.MODE_SWITCH.log(myProject, newMode);
       switchToMode(newMode, text);
     }

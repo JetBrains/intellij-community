@@ -5,6 +5,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.util.SmartList;
 import com.intellij.xdebugger.settings.DebuggerConfigurableProvider;
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -18,13 +19,13 @@ final class XDebuggerConfigurableProvider extends DebuggerConfigurableProvider {
       list.add(new DebuggerGeneralConfigurable());
     }
 
-    XDebuggerSettingManagerImpl.getInstanceImpl().forEachSettings(settings -> {
+    XDebuggerSettingsManager.getInstance().forEachSettings(settings -> {
       //noinspection unchecked
       list.addAll(settings.createConfigurables(category));
     });
 
     if (category == DebuggerSettingsCategory.ROOT) {
-      XDebuggerSettingManagerImpl.getInstanceImpl().forEachSettings(settings -> {
+      XDebuggerSettingsManager.getInstance().forEachSettings(settings -> {
         Configurable configurable = settings.createConfigurable();
         if (configurable != null) {
           list.add(configurable);
@@ -41,7 +42,7 @@ final class XDebuggerConfigurableProvider extends DebuggerConfigurableProvider {
 
   @Override
   public boolean isTargetedToProduct(@NotNull Configurable configurable) {
-    if (XDebuggerSettingManagerImpl.getInstanceImpl().findFirstSettings(settings -> settings.isTargetedToProduct(configurable)) != null) {
+    if (XDebuggerSettingsManager.getInstance().findFirstSettings(settings -> settings.isTargetedToProduct(configurable)) != null) {
         return true;
     }
     return super.isTargetedToProduct(configurable);

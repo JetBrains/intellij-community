@@ -56,7 +56,7 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.*;
 import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.xdebugger.impl.messages.XDebuggerImplBundle;
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -329,7 +329,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
         if (!myProject.isDisposed() &&
             !ApplicationManager.getApplication().isUnitTestMode() &&
-            XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isHideDebuggerOnProcessTermination()) {
+            XDebuggerSettingsManager.getInstance().getGeneralSettings().isHideDebuggerOnProcessTermination()) {
           RunContentManager.getInstance(myProject).hideRunContent(DefaultDebugExecutor.getDebugExecutorInstance(),
                                                                   getRunContentDescriptor());
         }
@@ -665,7 +665,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     // user attractions should only be made if event happens independently (e.g. program paused/suspended)
     // and should not be made when user steps in the code
     if (!pausedByUser) return;
-    if (XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isShowDebuggerOnBreakpoint()) {
+    if (XDebuggerSettingsManager.getInstance().getGeneralSettings().isShowDebuggerOnBreakpoint()) {
       toFront(true, null);
     }
 

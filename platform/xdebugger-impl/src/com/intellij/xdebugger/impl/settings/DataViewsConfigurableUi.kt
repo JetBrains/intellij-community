@@ -13,6 +13,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerBundle
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JFormattedTextField
 
@@ -27,7 +28,7 @@ class DataViewsConfigurableUi {
   private var valueTooltipDelayTextField = JFormattedTextField()
 
   private val panel = panel {
-    val settings = XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings
+    val settings = XDebuggerSettingsManager.getInstance().dataViewSettings
 
     row {
       checkBox(XDebuggerBundle.message("setting.sort.alphabetically.label"))
@@ -72,6 +73,6 @@ class DataViewsConfigurableUi {
 
   private fun getValueTooltipDelay(textField: JFormattedTextField): Int {
     val value = textField.value
-    return if (value is Number) value.toInt() else StringUtilRt.parseInt(value as String?, XDebuggerDataViewSettings.DEFAULT_VALUE_TOOLTIP_DELAY)
+    return if (value is Number) value.toInt() else StringUtilRt.parseInt(value as String?, XDebuggerSettingsManager.DataViewSettings.DEFAULT_VALUE_TOOLTIP_DELAY)
   }
 }

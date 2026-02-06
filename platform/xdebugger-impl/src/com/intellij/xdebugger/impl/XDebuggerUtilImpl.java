@@ -9,9 +9,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -21,10 +19,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DoNotAskOption;
@@ -40,11 +36,11 @@ import com.intellij.platform.debugger.impl.shared.XDebuggerUtilImplShared;
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange;
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointInstallationInfo;
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy;
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDocumentManager;
@@ -82,7 +78,6 @@ import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueContainer;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
@@ -94,7 +89,6 @@ import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
-import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import kotlin.Unit;
@@ -127,9 +121,6 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   private static final Logger LOG = Logger.getInstance(XDebuggerUtilImpl.class);
   
   private static final Ref<Boolean> SHOW_BREAKPOINT_AD = new Ref<>(true);
-
-  public static final DataKey<Integer> LINE_NUMBER = DataKey.create("x.debugger.line.number");
-  public static final DataKey<Integer> OFFSET = DataKey.create("x.debugger.offset");
 
   @Override
   public XLineBreakpointType<?>[] getLineBreakpointTypes() {
@@ -781,32 +772,12 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return new XBreakpointFileGroupingRule<>();
   }
 
+  /**
+   * @deprecated Use {@link DebuggerUIUtil#getCaretPosition(DataContext)} instead.
+   */
+  @Deprecated
   public static @Nullable XSourcePosition getCaretPosition(@NotNull Project project, DataContext context) {
-    Editor editor = getEditor(project, context);
-    if (editor == null) return null;
-
-    Integer lineNumber = LINE_NUMBER.getData(context);
-    if (lineNumber != null) {
-      return XSourcePositionImpl.create(editor.getVirtualFile(), lineNumber);
-    }
-    Integer offsetFromDataContext = OFFSET.getData(context);
-    if (offsetFromDataContext != null) {
-      return XSourcePositionImpl.createByOffset(editor.getVirtualFile(), offsetFromDataContext);
-    }
-
-    final Document document = editor.getDocument();
-    int offset = editor.getCaretModel().getOffset();
-    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    return XSourcePositionImpl.createByOffset(file, offset);
-  }
-
-  public static @Nullable Editor getEditor(@NotNull Project project, DataContext context) {
-    Editor editor = CommonDataKeys.EDITOR.getData(context);
-    if (editor == null) {
-      @Nullable FileEditor fileEditor = context.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR);
-      return fileEditor instanceof TextEditor textEditor ? textEditor.getEditor() : null;
-    }
-    return editor;
+    return DebuggerUIUtil.getCaretPosition(context);
   }
 
   @Override

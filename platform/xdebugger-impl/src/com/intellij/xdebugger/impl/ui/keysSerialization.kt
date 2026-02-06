@@ -12,28 +12,28 @@ import kotlinx.serialization.builtins.ListSerializer
 
 internal class RunContentDescriptorKeySerializer : CustomDataContextSerializer<RunContentDescriptorIdImpl> {
   override val key: DataKey<RunContentDescriptorIdImpl>
-    get() = SplitDebuggerUIUtil.SPLIT_RUN_CONTENT_DESCRIPTOR_KEY
+    get() = SplitDebuggerDataKeys.SPLIT_RUN_CONTENT_DESCRIPTOR_KEY
   override val serializer: KSerializer<RunContentDescriptorIdImpl>
     get() = RunContentDescriptorIdImpl.serializer()
 }
 
 internal class ExecutionEnvironmentKeySerializer : CustomDataContextSerializer<ExecutionEnvironmentId> {
   override val key: DataKey<ExecutionEnvironmentId>
-    get() = SplitDebuggerUIUtil.SPLIT_EXECUTION_ENVIRONMENT_KEY
+    get() = SplitDebuggerDataKeys.SPLIT_EXECUTION_ENVIRONMENT_KEY
   override val serializer: KSerializer<ExecutionEnvironmentId>
     get() = ExecutionEnvironmentId.serializer()
 }
 
 internal class XDebuggerTreeSelectedValuesSerializer : CustomDataContextSerializer<List<XDebuggerTreeSelectedValueId>> {
   override val key: DataKey<List<XDebuggerTreeSelectedValueId>>
-    get() = SplitDebuggerUIUtil.SPLIT_SELECTED_VALUES_KEY
+    get() = SplitDebuggerDataKeys.SPLIT_SELECTED_VALUES_KEY
   override val serializer: KSerializer<List<XDebuggerTreeSelectedValueId>>
     get() = ListSerializer(XDebuggerTreeSelectedValueId.serializer())
 }
 
 internal class XDebuggerTreeSelectedStacksSerializer : CustomDataContextSerializer<List<XExecutionStackId>> {
   override val key: DataKey<List<XExecutionStackId>>
-    get() = SplitDebuggerUIUtil.SPLIT_SELECTED_STACKS_KEY
+    get() = SplitDebuggerDataKeys.SPLIT_SELECTED_STACKS_KEY
   override val serializer: KSerializer<List<XExecutionStackId>>
     get() = ListSerializer(XExecutionStackId.serializer())
 }

@@ -20,8 +20,6 @@ import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 
 @Tag("data-views")
 public class XDebuggerDataViewSettings implements XDebuggerSettingsManager.DataViewSettings {
-  static final int DEFAULT_VALUE_TOOLTIP_DELAY = 700;
-
   private boolean mySortValues;
 
   private boolean autoExpressions = true;
@@ -38,6 +36,7 @@ public class XDebuggerDataViewSettings implements XDebuggerSettingsManager.DataV
     return mySortValues;
   }
 
+  @Override
   public void setSortValues(boolean sortValues) {
     mySortValues = sortValues;
   }
@@ -47,6 +46,7 @@ public class XDebuggerDataViewSettings implements XDebuggerSettingsManager.DataV
     return valueLookupDelay;
   }
 
+  @Override
   public void setValueLookupDelay(int value) {
     valueLookupDelay = value;
   }
@@ -56,6 +56,7 @@ public class XDebuggerDataViewSettings implements XDebuggerSettingsManager.DataV
     return autoExpressions;
   }
 
+  @Override
   public void setAutoExpressions(boolean autoExpressions) {
     this.autoExpressions = autoExpressions;
   }
@@ -65,6 +66,7 @@ public class XDebuggerDataViewSettings implements XDebuggerSettingsManager.DataV
     return showLibraryStackFrames;
   }
 
+  @Override
   public void setShowLibraryStackFrames(boolean value) {
     showLibraryStackFrames = value;
   }
@@ -74,6 +76,7 @@ public class XDebuggerDataViewSettings implements XDebuggerSettingsManager.DataV
     return showValuesInline;
   }
 
+  @Override
   public void setShowValuesInline(boolean showValuesInline) {
     this.showValuesInline = showValuesInline;
   }

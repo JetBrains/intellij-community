@@ -46,7 +46,7 @@ import com.intellij.xdebugger.impl.collection.visualizer.XDebuggerNodeLinkAction
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import com.intellij.xdebugger.impl.ui.SplitDebuggerUIUtil;
+import com.intellij.xdebugger.impl.ui.SplitDebuggerDataKeys;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
@@ -407,7 +407,7 @@ public class XDebuggerTree extends DnDAwareTree implements UiCompatibleDataProvi
         return new XDebuggerTreeSelectedValueId(xValueId, node.getName(), node);
       })
       .toList();
-    sink.set(SplitDebuggerUIUtil.SPLIT_SELECTED_VALUES_KEY, xValueIdsList);
+    sink.set(SplitDebuggerDataKeys.SPLIT_SELECTED_VALUES_KEY, xValueIdsList);
 
     sink.set(SELECTED_NODES, List.of(selection));
   }

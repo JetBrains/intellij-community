@@ -19,11 +19,11 @@ import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
 import com.intellij.util.SmartList;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.DebuggerSupport;
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XEditorSourcePosition;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.actions.handlers.XToggleLineBreakpointActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -79,7 +79,7 @@ public class ToggleLineBreakpointAction extends XDebuggerActionBase implements D
   }
 
   public static @NotNull Collection<XEditorSourcePosition> getAllPositionsForBreakpoints(@NotNull Project project, DataContext context) {
-    Editor editor = XDebuggerUtilImpl.getEditor(project, context);
+    Editor editor = DebuggerUIUtil.getEditor(context);
     if (editor == null) {
       return Collections.emptyList();
     }

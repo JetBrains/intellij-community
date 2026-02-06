@@ -2,8 +2,10 @@ package com.intellij.xdebugger.impl.util
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.ApiStatus
 
-internal class SequentialDisposables(parent: Disposable? = null) : Disposable {
+@ApiStatus.Internal
+class SequentialDisposables(parent: Disposable? = null) : Disposable {
   private var myCurrentDisposable: Disposable? = null
 
   init {

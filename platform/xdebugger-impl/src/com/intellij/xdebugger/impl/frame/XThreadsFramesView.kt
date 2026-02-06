@@ -28,9 +28,7 @@ import com.intellij.xdebugger.impl.util.SequentialDisposables
 import com.intellij.xdebugger.impl.util.isNotAlive
 import com.intellij.xdebugger.impl.util.onTermination
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.BorderLayout
 import java.awt.Component
@@ -580,14 +578,4 @@ class XThreadsFramesView(tabDisposable: Disposable, private val sessionProxy: XD
       }
     }
   }
-}
-
-@ApiStatus.Experimental
-@Internal
-interface XDebuggerDescriptionComponentProvider {
-  val currentDescriptionComponent: MutableStateFlow<JComponent?>
-
-  fun onExecutionStackSelected(stack: XExecutionStack, sessionProxy: XDebugSessionProxy)
-
-  fun clear()
 }

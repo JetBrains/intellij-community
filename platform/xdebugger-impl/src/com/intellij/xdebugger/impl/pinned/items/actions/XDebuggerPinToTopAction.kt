@@ -18,6 +18,7 @@ import com.intellij.xdebugger.impl.pinned.items.canBePinned
 import com.intellij.xdebugger.impl.pinned.items.getPinInfo
 import com.intellij.xdebugger.impl.pinned.items.isPinned
 import com.intellij.xdebugger.impl.pinned.items.parentPinToTopValue
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSplitActionBase
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
@@ -96,5 +97,5 @@ private fun performImpl(project: Project, node: XValueNodeImpl) {
   }
   node.parentPinToTopValue?.onChildPinned(pinNode, pinInfo)
 
-  XDebuggerUtilImpl.rebuildTreeAndViews(node.tree)
+  DebuggerUIUtil.rebuildTreeAndViews(node.tree)
 }

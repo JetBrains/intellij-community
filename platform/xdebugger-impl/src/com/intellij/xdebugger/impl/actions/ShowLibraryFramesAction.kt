@@ -12,9 +12,8 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.xdebugger.XDebuggerBundle
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -54,12 +53,12 @@ internal class ShowLibraryFramesAction : DumbAwareToggleAction(), SplitDebuggerA
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {
-    return !XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isShowLibraryStackFrames
+    return !XDebuggerSettingsManager.getInstance().dataViewSettings.isShowLibraryStackFrames
   }
 
   override fun setSelected(e: AnActionEvent, enabled: Boolean) {
     // update on frontend optimistically
-    XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isShowLibraryStackFrames = !enabled
+    XDebuggerSettingsManager.getInstance().dataViewSettings.isShowLibraryStackFrames = !enabled
     val project = e.project ?: return
     saveSettingsForRemoteDevelopment(e.coroutineScope, project)
     e.project?.service<ShowLibraryFramesActionCoroutineScope>()?.toggle(!enabled)
@@ -97,7 +96,7 @@ internal class ShowLibraryFramesActionCoroutineScope(private val project: Projec
   init {
     cs.launch {
       toggleFlow.debounce(30.milliseconds).collectLatest {
-        XDebuggerUtilImpl.rebuildAllSessionsViews(project)
+        DebuggerUIUtil.rebuildAllSessionsViews(project)
       }
     }
   }

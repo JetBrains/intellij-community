@@ -12,12 +12,13 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.dsl.builder.toBooleanProperty
 import com.intellij.xdebugger.XDebuggerBundle
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager
 
 internal class DebuggerGeneralConfigurable : BoundSearchableConfigurable("", "debugger.general") {
 
 
   override fun createPanel(): DialogPanel {
-    val settings = XDebuggerSettingManagerImpl.getInstanceImpl().generalSettings
+    val settings = XDebuggerSettingsManager.getInstance().generalSettings
 
     return panel {
       lateinit var showDebugWindow: Cell<JBCheckBox>

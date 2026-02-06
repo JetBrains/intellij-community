@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.shared.XDebuggerUtilImplShared
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -17,7 +18,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.EDT
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -122,12 +123,12 @@ internal class ExecutionPositionNavigator(
       navigatable
     }
     else {
-      XDebuggerUtilImpl.createOpenFileDescriptor(project, sourcePosition)
+      XDebuggerUtilImplShared.createOpenFileDescriptor(project, sourcePosition)
     }
   }
 
   private fun scrollType(): ScrollType {
-    if (XDebuggerSettingManagerImpl.getInstanceImpl().generalSettings.isScrollToCenter) return ScrollType.CENTER
+    if (XDebuggerSettingsManager.getInstance().generalSettings.isScrollToCenter) return ScrollType.CENTER
     return if (isTopFrame) ScrollType.MAKE_VISIBLE else ScrollType.CENTER
   }
 }

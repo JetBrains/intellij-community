@@ -323,6 +323,10 @@ private class XDebugSessionProxyKeeper {
   }
 }
 
+/**
+ * For internal use only. Use [com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter.asProxy] in other modules.
+ * @see com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter.asProxy
+ */
 internal fun XDebugSession.asProxy(): XDebugSessionProxy =
   project.service<XDebugSessionProxyKeeper>().getOrCreateProxy(this)
 

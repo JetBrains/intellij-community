@@ -60,6 +60,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -344,7 +345,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
 
     val initIsCompleted = Mutex(true)
     val targetComponent = ToolbarUtils.createTargetComponent(editor) { sink ->
-      sink[XDebuggerUtilImpl.LINE_NUMBER] = lineNumber
+      sink[DebuggerUIUtil.LINE_NUMBER] = lineNumber
     }
     val toolbarImpl = createImmediatelyUpdatedToolbar(group, ActionPlaces.EDITOR_HINT, targetComponent, true) {
       initIsCompleted.unlock()

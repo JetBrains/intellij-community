@@ -13,7 +13,7 @@ import com.intellij.ui.popup.list.GroupedItemsListRenderer
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XExecutionStack.AdditionalDisplayInfo
-import com.intellij.xdebugger.impl.ui.SplitDebuggerUIUtil
+import com.intellij.xdebugger.impl.ui.SplitDebuggerDataKeys
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Component
@@ -77,7 +77,7 @@ class XDebuggerThreadsList(
     val xDebugManagerProxy = getInstance()
     val xExecutionStackId = xDebugManagerProxy.getXExecutionStackId(selection)
     if (xExecutionStackId != null) {
-      sink[SplitDebuggerUIUtil.SPLIT_SELECTED_STACKS_KEY] = listOf(xExecutionStackId)
+      sink[SplitDebuggerDataKeys.SPLIT_SELECTED_STACKS_KEY] = listOf(xExecutionStackId)
     }
     sink[XExecutionStack.SELECTED_STACKS] = listOf(selection)
   }
