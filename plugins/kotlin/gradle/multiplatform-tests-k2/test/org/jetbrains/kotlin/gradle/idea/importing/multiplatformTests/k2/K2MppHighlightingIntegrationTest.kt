@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImp
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.GradleProjectsPublishingTestsFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
@@ -53,7 +54,11 @@ class K2MppHighlightingIntegrationTest : AbstractKotlinMppGradleImportingTest() 
     @Test
     @PluginTargetVersions(pluginVersion = "1.9.20+")
     fun testForwardDeclarations() {
-        doTest()
+        doTest {
+            // Added for investigation of KTIJ-37466
+            // TODO: remove after investigation of flaky test failings
+            onlyCheckers(OrderEntriesChecker, GradleProjectsPublishingTestsFeature, HighlightingChecker)
+        }
     }
 
     @Test
