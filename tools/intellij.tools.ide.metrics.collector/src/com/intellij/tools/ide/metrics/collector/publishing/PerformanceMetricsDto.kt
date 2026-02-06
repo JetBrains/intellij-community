@@ -25,6 +25,7 @@ data class IJPerfMetricsDto<T: Number>(
   val buildDate: String,
   val methodName: String,
   val mode: String = "",
+  val owner: String,
   val metrics: List<ApplicationMetricDto<T>>,
 ) {
   companion object {
@@ -40,7 +41,8 @@ data class IJPerfMetricsDto<T: Number>(
       metrics: Collection<PerformanceMetrics.Metric>,
       generated: String = ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME),
       mode: String = "",
-    ) = create(projectName, projectURL, projectDescription, methodName, buildNumber, metrics.map { it.toJson() }, generated, mode)
+      owner: String,
+    ) = create(projectName, projectURL, projectDescription, methodName, buildNumber, metrics.map { it.toJson() }, generated, mode, owner)
 
     @JvmStatic
     fun <T: Number> create(
@@ -52,6 +54,7 @@ data class IJPerfMetricsDto<T: Number>(
       metrics: List<ApplicationMetricDto<T>>,
       generated: String = ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME),
       mode: String = "",
+      owner: String,
     ) = IJPerfMetricsDto(
       version = VERSION,
       generated = generated,
@@ -63,7 +66,8 @@ data class IJPerfMetricsDto<T: Number>(
       metrics = metrics,
       methodName = methodName,
       projectDescription = projectDescription,
-      mode = mode
+      mode = mode,
+      owner = owner
     )
   }
 }

@@ -42,6 +42,7 @@ class IntellijPerfJsonReportGenerator(
                 methodName = "",
                 buildNumber = BuildNumber.currentVersion(),
                 metrics = globalPerfMetrics + openTelemetryMetrics,
+                owner = "",
         )
 
       reportFile.writeText(gson.toJson(metricsDto))

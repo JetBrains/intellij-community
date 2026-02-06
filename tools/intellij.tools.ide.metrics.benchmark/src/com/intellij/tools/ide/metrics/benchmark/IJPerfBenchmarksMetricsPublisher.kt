@@ -84,7 +84,8 @@ internal class IJPerfBenchmarksMetricsPublisher {
         projectDescription = "",
         methodName = uniqueTestIdentifier,
         buildNumber = BuildNumber.currentVersion(),
-        metrics = metrics
+        metrics = metrics,
+        owner = ""
       )
     }
 
