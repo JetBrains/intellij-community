@@ -158,15 +158,13 @@ public final class LibraryScopeCache {
 
       var libraries = index.findContainingLibraries(virtualFile);
       var currentSnapshot = WorkspaceModel.getInstance(myProject).getCurrentSnapshot();
-      LibraryEntity lib = null;
       List<Module> modulesLibraryUsedIn = new ArrayList<>();
-
       var exportedDependentsGraph = ModuleExportedDependenciesGraph.getInstance(myProject).exportedDependentsGraph();
       for (var library: libraries) {
-        lib = library;
         modulesLibraryUsedIn.addAll(findModulesWithLibraryId(library.getSymbolicId(), currentSnapshot, exportedDependentsGraph));
       }
 
+      LibraryEntity lib = ContainerUtil.getFirstItem(libraries);
       if (lib != null) {
         var roots = lib.getRoots().stream()
           .map(LibraryRoot::getUrl)
@@ -340,18 +338,15 @@ public final class LibraryScopeCache {
 
   private void addModulesInheritingProjectSdk(SdkId sdkId, ImmutableEntityStorage currentSnapshot, Set<Module> result) {
     var projectSdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
-    if (projectSdk == null || !projectSdk.getName().equals(sdkId.getName())) {
+    if (projectSdk == null || (!projectSdk.getName().equals(sdkId.getName()) && !projectSdk.getSdkType().getName().equals(sdkId.getType()))) {
       return;
     }
 
     for (var moduleEntity : SequencesKt.toList(currentSnapshot.entities(ModuleEntity.class))) {
-      for (var dep : moduleEntity.getDependencies()) {
-        if (dep instanceof InheritedSdkDependency) {
-          var moduleBridge = ModuleBridges.findModule(moduleEntity, currentSnapshot);
-          if (moduleBridge != null) {
-            result.add(moduleBridge);
-          }
-          break;
+      if (ContainerUtil.exists(moduleEntity.getDependencies(), dep -> dep instanceof InheritedSdkDependency)) {
+        var moduleBridge = ModuleBridges.findModule(moduleEntity, currentSnapshot);
+        if (moduleBridge != null) {
+          result.add(moduleBridge);
         }
       }
     }
