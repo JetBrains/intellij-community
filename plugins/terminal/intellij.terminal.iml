@@ -67,15 +67,15 @@
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module-library">
       <library name="terminal-completion-db-with-extensions" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.terminal:completion-db-with-extensions:0.5.0">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.terminal:completion-db-with-extensions:0.7.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/terminal/completion-db-with-extensions/0.5.0/completion-db-with-extensions-0.5.0.jar">
-              <sha256sum>c92b8e860be7195d184ff7e29aac2b8d6fe09003921271a3174a5a443eb6a887</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/terminal/completion-db-with-extensions/0.7.0/completion-db-with-extensions-0.7.0.jar">
+              <sha256sum>e6c3f413c2893e2b76f8de02f55f6b04e52b164379c951819c5dc5fb33dae68f</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/terminal/completion-db-with-extensions/0.5.0/completion-db-with-extensions-0.5.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/terminal/completion-db-with-extensions/0.7.0/completion-db-with-extensions-0.7.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

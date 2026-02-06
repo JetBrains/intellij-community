@@ -15491,24 +15491,24 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_terminal-completion-spec-0_4_0_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/terminal/completion-spec/0.4.0/completion-spec-0.4.0.jar",
-  sha256 = "ddc6f43ff83efb9ac3d61db3f8ec7b74326b780323bf2b49383a75b6c5756397",
-  downloaded_file_path = "completion-spec-0.4.0.jar"
+  name = "org_jetbrains_terminal-completion-spec-0_7_0_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/terminal/completion-spec/0.7.0/completion-spec-0.7.0.jar",
+  sha256 = "4b2c31d6c1d9436bc469df128b0a86ab5792fc6371e15bf4d7cf36c3f8ece2f6",
+  downloaded_file_path = "completion-spec-0.7.0.jar"
 )
 
 http_file(
-  name = "org_jetbrains_terminal-completion-spec-0_4_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/terminal/completion-spec/0.4.0/completion-spec-0.4.0-sources.jar",
-  sha256 = "b09f2498d8e932936532a2685b042ca9940c981e146dc3809f3bece85fe1fd17",
-  downloaded_file_path = "completion-spec-0.4.0-sources.jar"
+  name = "org_jetbrains_terminal-completion-spec-0_7_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/terminal/completion-spec/0.7.0/completion-spec-0.7.0-sources.jar",
+  sha256 = "6942dc0580c947d2596d35e61c686afedd481bf708022c9dc599a5d36f36724b",
+  downloaded_file_path = "completion-spec-0.7.0-sources.jar"
 )
 
 http_file(
-  name = "org_jetbrains_terminal-completion-db-with-extensions-0_5_0_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/terminal/completion-db-with-extensions/0.5.0/completion-db-with-extensions-0.5.0.jar",
-  sha256 = "c92b8e860be7195d184ff7e29aac2b8d6fe09003921271a3174a5a443eb6a887",
-  downloaded_file_path = "completion-db-with-extensions-0.5.0.jar"
+  name = "org_jetbrains_terminal-completion-db-with-extensions-0_7_0_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/terminal/completion-db-with-extensions/0.7.0/completion-db-with-extensions-0.7.0.jar",
+  sha256 = "e6c3f413c2893e2b76f8de02f55f6b04e52b164379c951819c5dc5fb33dae68f",
+  downloaded_file_path = "completion-db-with-extensions-0.7.0.jar"
 )
 
 http_file(

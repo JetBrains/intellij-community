@@ -19463,31 +19463,31 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.terminal/completion-spec-0.4.0.jar_copy",
-  src = "@org_jetbrains_terminal-completion-spec-0_4_0_http//file",
-  out = "org.jetbrains.terminal/completion-spec-0.4.0.jar",
+  name = "org.jetbrains.terminal/completion-spec-0.7.0.jar_copy",
+  src = "@org_jetbrains_terminal-completion-spec-0_7_0_http//file",
+  out = "org.jetbrains.terminal/completion-spec-0.7.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "terminal-completion-terminal-completion-spec",
-  jar = "@org_jetbrains_terminal-completion-spec-0_4_0_http//file",
-  source_jar = "@org_jetbrains_terminal-completion-spec-0_4_0-sources_http//file",
+  jar = "@org_jetbrains_terminal-completion-spec-0_7_0_http//file",
+  source_jar = "@org_jetbrains_terminal-completion-spec-0_7_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "org.jetbrains.terminal/completion-db-with-extensions-0.5.0.jar_copy",
-  src = "@org_jetbrains_terminal-completion-db-with-extensions-0_5_0_http//file",
-  out = "org.jetbrains.terminal/completion-db-with-extensions-0.5.0.jar",
+  name = "org.jetbrains.terminal/completion-db-with-extensions-0.7.0.jar_copy",
+  src = "@org_jetbrains_terminal-completion-db-with-extensions-0_7_0_http//file",
+  out = "org.jetbrains.terminal/completion-db-with-extensions-0.7.0.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "terminal-terminal-completion-db-with-extensions",
-  jar = "@org_jetbrains_terminal-completion-db-with-extensions-0_5_0_http//file",
+  jar = "@org_jetbrains_terminal-completion-db-with-extensions-0_7_0_http//file",
   visibility = ["//visibility:public"]
 )
 
