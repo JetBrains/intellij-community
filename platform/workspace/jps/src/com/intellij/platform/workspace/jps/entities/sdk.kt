@@ -53,4 +53,11 @@ fun MutableEntityStorage.modifySdkEntity(
 
 data class SdkRoot(val url: VirtualFileUrl, val type: SdkRootTypeId) : Serializable
 
-data class SdkRootTypeId(val name: @NonNls String) : Serializable
+data class SdkRootTypeId(val name: @NonNls String) : Serializable {
+  companion object {
+    @JvmField
+    val CLASSES: SdkRootTypeId = SdkRootTypeId("classPath")
+    @JvmField
+    val SOURCES: SdkRootTypeId = SdkRootTypeId("sourcePath")
+  }
+}

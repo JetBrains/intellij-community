@@ -13,7 +13,6 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.registry.Registry;
@@ -29,6 +28,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import com.intellij.platform.workspace.jps.entities.SdkEntity;
 import com.intellij.platform.workspace.jps.entities.SdkId;
 import com.intellij.platform.workspace.jps.entities.SdkRoot;
+import com.intellij.platform.workspace.jps.entities.SdkRootTypeId;
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -37,7 +37,6 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.Graph;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleExportedDependenciesGraph;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImplKt;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridges;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.ApiStatus;
@@ -197,18 +196,16 @@ public final class LibraryScopeCache {
     final String name = sdkEntity.getName();
     GlobalSearchScope scope = mySdkScopes.get(name);
     if (scope == null) {
-      String sdkSourcesRootTypeName = SdkBridgeImplKt.getCustomName(OrderRootType.SOURCES);
-      String sdkClassesRootTypeName = SdkBridgeImplKt.getCustomName(OrderRootType.CLASSES);
       var roots = sdkEntity.getRoots();
 
       var sources = roots.stream()
-        .filter(root -> Objects.equals(root.getType().getName(), sdkSourcesRootTypeName))
+        .filter(root -> Objects.equals(root.getType(), SdkRootTypeId.SOURCES))
         .map(SdkRoot::getUrl)
         .map(VirtualFileUrls::getVirtualFile)
         .toArray(VirtualFile[]::new);
 
       var classes = roots.stream()
-        .filter(root -> Objects.equals(root.getType().getName(), sdkClassesRootTypeName))
+        .filter(root -> Objects.equals(root.getType(), SdkRootTypeId.CLASSES))
         .map(SdkRoot::getUrl)
         .map(VirtualFileUrls::getVirtualFile)
         .toArray(VirtualFile[]::new);
