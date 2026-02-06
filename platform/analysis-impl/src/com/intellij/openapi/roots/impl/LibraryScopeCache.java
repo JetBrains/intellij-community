@@ -20,7 +20,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.workspace.VirtualFileUrls;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
-import com.intellij.platform.workspace.jps.entities.ExtensionsKt;
 import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency;
 import com.intellij.platform.workspace.jps.entities.LibraryDependency;
 import com.intellij.platform.workspace.jps.entities.LibraryEntity;
@@ -36,6 +35,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.graph.Graph;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleExportedDependenciesGraph;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImplKt;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridges;
 import kotlin.sequences.SequencesKt;
@@ -160,9 +161,10 @@ public final class LibraryScopeCache {
       LibraryEntity lib = null;
       List<Module> modulesLibraryUsedIn = new ArrayList<>();
 
+      var exportedDependentsGraph = ModuleExportedDependenciesGraph.getInstance(myProject).exportedDependentsGraph();
       for (var library: libraries) {
         lib = library;
-        modulesLibraryUsedIn.addAll(modulesWithLibraryId(library.getSymbolicId(), currentSnapshot));
+        modulesLibraryUsedIn.addAll(findModulesWithLibraryId(library.getSymbolicId(), currentSnapshot, exportedDependentsGraph));
       }
 
       if (lib != null) {
@@ -271,8 +273,9 @@ public final class LibraryScopeCache {
       }
 
       Set<Module> modulesWithLibrary = new HashSet<>();
+      var exportedDependentsGraph = ModuleExportedDependenciesGraph.getInstance(myProject).exportedDependentsGraph();
       for (var library : libraries) {
-        modulesWithLibrary.addAll(modulesWithLibraryId(library.getSymbolicId(), currentSnapshot));
+        modulesWithLibrary.addAll(findModulesWithLibraryId(library.getSymbolicId(), currentSnapshot, exportedDependentsGraph));
       }
       modulesWithLibrary.addAll(index.getModulesForFile(virtualFile, false));
 
@@ -354,25 +357,17 @@ public final class LibraryScopeCache {
     }
   }
 
-  private static Set<Module> modulesWithLibraryId(LibraryId libraryId, ImmutableEntityStorage currentSnapshot) {
-    Set<Module> modulesWithLibrary = new HashSet<>();
+  private static Set<Module> findModulesWithLibraryId(LibraryId libraryId, ImmutableEntityStorage currentSnapshot, Graph<ModuleEntity> exportedDependentsGraph) {
+    Set<ModuleEntity> modulesWithLibrary = new HashSet<>();
     var ownerModules = SequencesKt.toList(currentSnapshot.referrers(libraryId, ModuleEntity.class));
+
     for (var module : ownerModules) {
-      var moduleBridge = ModuleBridges.findModule(module, currentSnapshot);
-      if (moduleBridge != null) {
-        modulesWithLibrary.add(moduleBridge);
-      }
+      modulesWithLibrary.add(module);
       if (exportsLibrary(module, libraryId)) {
-        var transitiveModules = ExtensionsKt.collectTransitivelyDependentModules(module, currentSnapshot);
-        for (var depModule : transitiveModules) {
-          var depModuleBridge = ModuleBridges.findModule(depModule, currentSnapshot);
-          if (depModuleBridge != null) {
-            modulesWithLibrary.add(depModuleBridge);
-          }
-        }
+        exportedDependentsGraph.getIn(module).forEachRemaining(modulesWithLibrary::add);
       }
     }
-    return modulesWithLibrary;
+    return ContainerUtil.map2Set(modulesWithLibrary, (moduleEntity) -> ModuleBridges.findModule(moduleEntity, currentSnapshot));
   }
 
   private static boolean exportsLibrary(ModuleEntity module, LibraryId libraryId) {
