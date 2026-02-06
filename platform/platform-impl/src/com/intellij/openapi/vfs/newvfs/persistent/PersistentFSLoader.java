@@ -7,7 +7,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.content.CompressingAlgo;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.content.ContentHashEnumeratorOverDurableEnumerator;
-import com.intellij.openapi.vfs.newvfs.persistent.mapped.content.ContentStorageAdapter;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.content.VFSContentStorageOverMMappedFile;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
@@ -17,23 +16,18 @@ import com.intellij.platform.util.io.storages.blobstorage.StreamlinedBlobStorage
 import com.intellij.platform.util.io.storages.enumerator.DurableStringEnumerator;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.DataEnumerator;
 import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.PageCacheUtils;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
 import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
-import com.intellij.util.io.storage.RefCountingContentStorage;
-import com.intellij.util.io.storage.RefCountingContentStorageImpl;
 import com.intellij.util.io.storage.VFSContentStorage;
-import com.intellij.util.io.storage.lf.RefCountingContentStorageImplLF;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -51,7 +45,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.Flags.FLAGS_DEFRAGMENTATION_REQUESTED;
@@ -66,7 +59,6 @@ import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorC
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.SCHEDULED_REBUILD;
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.UNRECOGNIZED;
 import static com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory.IfNotPageAligned.EXPAND_FILE;
-import static com.intellij.util.io.storage.CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.joining;
 
@@ -550,44 +542,23 @@ public final class PersistentFSLoader {
 
   public @NotNull VFSContentStorage createContentStorage(@NotNull Path contentsHashesFile,
                                                          @NotNull Path contentsFile) throws IOException {
-    if (FSRecordsImpl.USE_CONTENT_STORAGE_OVER_MMAPPED_FILE) {
-      //Use larger pages: content storage is usually quite big.
-      int pageSize = 64 * IOUtil.MiB;
+    //Use larger pages: content storage is usually quite big.
+    int pageSize = 64 * IOUtil.MiB;
 
-      if (pageSize <= PersistentFSConstants.MAX_FILE_LENGTH_TO_CACHE) {
-        //pageSize is an upper limit on record size for AppendOnlyLogOverMMappedFile:
-        LOG.warn("ContentStorage.pageSize(=" + pageSize + ") " +
-                 "must be > PersistentFSConstants.MAX_FILE_LENGTH_TO_CACHE(=" + PersistentFSConstants.MAX_FILE_LENGTH_TO_CACHE + "b), " +
-                 "otherwise large content can't fit");
-      }
-      CompressingAlgo compressionAlgo = switch (FSRecordsImpl.COMPRESSION_ALGO) {
-        case "zip" -> new CompressingAlgo.ZipAlgo(FSRecordsImpl.COMPRESS_CONTENT_IF_LARGER_THAN);
-        case "lz4" -> new CompressingAlgo.Lz4Algo(FSRecordsImpl.COMPRESS_CONTENT_IF_LARGER_THAN);
-        //"none"
-        default -> new CompressingAlgo.NoCompressionAlgo();
-      };
-      LOG.info("VFS uses content storage over memory-mapped file, with compression algo: " + compressionAlgo);
-      return new VFSContentStorageOverMMappedFile(contentsFile, pageSize, compressionAlgo);
+    if (pageSize <= PersistentFSConstants.MAX_FILE_LENGTH_TO_CACHE) {
+      //pageSize is an upper limit on record size for AppendOnlyLogOverMMappedFile:
+      LOG.warn("ContentStorage.pageSize(=" + pageSize + ") " +
+               "must be > PersistentFSConstants.MAX_FILE_LENGTH_TO_CACHE(=" + PersistentFSConstants.MAX_FILE_LENGTH_TO_CACHE + "b), " +
+               "otherwise large content can't fit");
     }
-
-    RefCountingContentStorage contentStorage;
-    ExecutorService storingPool = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FSRecords Content Write Pool");
-    boolean useContentHashes = true;
-    if (FSRecordsImpl.USE_CONTENT_STORAGE_OVER_NEW_FILE_PAGE_CACHE && PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
-      LOG.info("VFS uses content storage over new FilePageCache");
-      //FiXME RC: now we create storage over new FilePageCache, but protected by the same global lock used by all storages
-      //          atop of old page-cache! Which is dummy, since content storage is independent, and could have at least
-      //          its own RWLock!
-      contentStorage = new RefCountingContentStorageImplLF(contentsFile, FIVE_PERCENT_FOR_GROWTH, storingPool, useContentHashes);
-    }
-    else {
-      LOG.info("VFS uses content storage over regular FilePageCache");
-      contentStorage = new RefCountingContentStorageImpl(contentsFile, FIVE_PERCENT_FOR_GROWTH, storingPool, useContentHashes);
-    }
-    return new ContentStorageAdapter(
-      contentStorage,
-      () -> openContentHashEnumeratorOrCreateEmpty(contentsHashesFile)
-    );
+    CompressingAlgo compressionAlgo = switch (FSRecordsImpl.COMPRESSION_ALGO) {
+      case "zip" -> new CompressingAlgo.ZipAlgo(FSRecordsImpl.COMPRESS_CONTENT_IF_LARGER_THAN);
+      case "lz4" -> new CompressingAlgo.Lz4Algo(FSRecordsImpl.COMPRESS_CONTENT_IF_LARGER_THAN);
+      //"none"
+      default -> new CompressingAlgo.NoCompressionAlgo();
+    };
+    LOG.info("VFS uses content storage over memory-mapped file, with compression algo: " + compressionAlgo);
+    return new VFSContentStorageOverMMappedFile(contentsFile, pageSize, compressionAlgo);
   }
 
 

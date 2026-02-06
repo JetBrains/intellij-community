@@ -4519,14 +4519,6 @@ com.intellij.util.io.storage.RecordDataOutput
 - java.io.DataOutput
 - a:close():V
 - a:getRecordId():I
-com.intellij.util.io.storage.RefCountingContentStorage
-- com.intellij.util.io.CleanableStorage
-- com.intellij.util.io.storage.IStorage
-- a:acquireNewRecord():I
-- a:acquireRecord(I):V
-- a:getRecordsCount():I
-- a:getRefCount(I):I
-- a:releaseRecord(I):V
 c:com.intellij.util.io.storage.Storage
 - com.intellij.util.io.storage.IStorage
 - <init>(java.nio.file.Path):V
