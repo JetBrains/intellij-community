@@ -1548,6 +1548,9 @@
     <codeInsight.codeVisionProvider implementation="com.intellij.refactoring.rename.RenameCodeVisionProvider"/>
     <config.codeVisionGroupSettingProvider implementation="com.intellij.refactoring.rename.RenameCodeVisionSettingProvider"/>
 
+    <statistics.validation.customValidationRule implementation="com.intellij.ide.ColorValidationRule"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.ProjectWindowCustimizerUsagesCollector"/>
+
     <applicationService serviceImplementation="com.intellij.internal.DebugAttachDetector" headlessImplementation="" preload="true"/>
 
     <projectService serviceInterface="com.intellij.ui.EditorNotifications" open="true" serviceImplementation="com.intellij.ui.EditorNotificationsImpl"

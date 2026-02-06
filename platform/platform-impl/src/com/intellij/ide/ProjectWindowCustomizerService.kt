@@ -8,6 +8,12 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
+import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind
@@ -275,6 +281,7 @@ class ProjectWindowCustomizerService : Disposable {
 
     // Save calculated colors and clear customized colors for the project
     setAssociatedColorsIndex(colorStorage, index)
+    ProjectWindowCustimizerUsagesCollector.addIconAndGradientEvent(null, null, index, false, false)
 
     return index
   }
@@ -302,7 +309,7 @@ class ProjectWindowCustomizerService : Disposable {
     }
 
     val iconMainColor = IconUtil.mainColor(icon)
-    setCustomProjectColor(project, iconMainColor)
+    setCustomProjectColor(project, iconMainColor, true)
 
     return true
   }
@@ -311,6 +318,7 @@ class ProjectWindowCustomizerService : Disposable {
   fun setAssociatedColorsIndex(project: Project, index: Int) {
     val storage = storageFor(project) ?: return
     setAssociatedColorsIndex(storage, index)
+    ProjectWindowCustimizerUsagesCollector.addIconAndGradientEvent(project, null, index, true, false)
   }
 
   private fun setAssociatedColorsIndex(colorStorage: ProjectColorStorage, index: Int) {
@@ -320,8 +328,13 @@ class ProjectWindowCustomizerService : Disposable {
 
   @Internal
   fun setCustomProjectColor(project: Project, color: Color?) {
+    setCustomProjectColor(project, color, false)
+  }
+
+  private fun setCustomProjectColor(project: Project, color: Color?, fromIcon: Boolean) {
     val storage = storageFor(project) ?: return
     setCustomProjectColor(storage, color)
+    ProjectWindowCustimizerUsagesCollector.addIconAndGradientEvent(project, color, -1, !fromIcon, fromIcon)
   }
 
   private fun setCustomProjectColor(colorStorage: ProjectColorStorage, color: Color?) {
@@ -640,5 +653,56 @@ private class RecentProjectColorStorage(override val projectPath: Path): Project
 
   private fun getInfo(recentProjectManager: RecentProjectsManagerBase): RecentProjectColorInfo? {
     return recentProjectManager.getProjectMetaInfo(projectPath)?.colorInfo
+  }
+}
+
+private val colorValues = listOf("amber", "rust", "olive", "sky", "cobalt", "plum", "violet", "ocean", "grass", "custom")
+
+internal class ColorValidationRule : CustomValidationRule() {
+  override fun getRuleId(): String = "project_color_id"
+
+  override fun doValidate(data: String, context: EventContext): ValidationResultType {
+    if (colorValues.contains(data)) {
+      return ValidationResultType.ACCEPTED
+    }
+    return ValidationResultType.REJECTED
+  }
+}
+
+internal object ProjectWindowCustimizerUsagesCollector : CounterUsagesCollector() {
+  private val colorField = EventFields.StringValidatedByCustomRule("color", ColorValidationRule::class.java)
+  private val userSelectedField = EventFields.Boolean("userSelected")
+  private val themeField = EventFields.String("theme", listOf("light", "dark"))
+  private val iconField = EventFields.Boolean("customIcon")
+
+  private val useGroup = EventLogGroup("project.window.custimizer.use", 1)
+
+  private val iconAndGradient =
+    useGroup.registerVarargEvent("project.icon.and.gradient", colorField, userSelectedField, themeField, iconField)
+
+  override fun getGroup(): EventLogGroup = useGroup
+
+  internal fun addIconAndGradientEvent(project: Project?, color: Color?, index: Int, userSelected: Boolean, fromIcon: Boolean) {
+    val colorValue = if (color == null) {
+      if (index >= 0 && index < colorValues.size) {
+        colorValues[index]
+      }
+      else {
+        "custom"
+      }
+    }
+    else {
+      "custom"
+    }
+
+    val theme = if (JBColor.isBright()) "light" else "dark"
+
+    val icon = fromIcon || project != null && RecentProjectsManagerBase.getInstanceEx().hasCustomIcon(project)
+
+    iconAndGradient.log(project,
+                        colorField.with(colorValue),
+                        userSelectedField.with(userSelected),
+                        themeField.with(theme),
+                        iconField.with(icon))
   }
 }
