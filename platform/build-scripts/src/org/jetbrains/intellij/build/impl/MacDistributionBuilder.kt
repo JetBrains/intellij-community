@@ -279,6 +279,7 @@ class MacDistributionBuilder(
     val resourcesDistDir = macDistDir.resolve("Resources")
     copyFile(icnsPath, resourcesDistDir.resolve(targetIcnsFileName))
 
+    @Suppress("DEPRECATION")
     val alternativeIcon = customizer.icnsPathForAlternativeIconForEAP?.takeIf { context.applicationInfo.isEAP } ?: customizer.icnsPathForAlternativeIcon
     if (alternativeIcon != null) {
       copyFile(alternativeIcon, resourcesDistDir.resolve("custom.icns"))

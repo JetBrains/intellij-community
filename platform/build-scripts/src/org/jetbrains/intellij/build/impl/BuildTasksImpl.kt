@@ -636,7 +636,9 @@ private suspend fun checkProductProperties(context: BuildContext) {
     }
     checkPaths(listOf(macCustomizer.icnsPath), "productProperties.macCustomizer.icnsPath")
     checkPaths(listOfNotNull(macCustomizer.icnsPathForEAP), "productProperties.macCustomizer.icnsPathForEAP")
+    @Suppress("DEPRECATION")
     checkPaths(listOfNotNull(macCustomizer.icnsPathForAlternativeIcon), "productProperties.macCustomizer.icnsPathForAlternativeIcon")
+    @Suppress("DEPRECATION")
     checkPaths(
       listOfNotNull(macCustomizer.icnsPathForAlternativeIconForEAP),
       "productProperties.macCustomizer.icnsPathForAlternativeIconForEAP"
