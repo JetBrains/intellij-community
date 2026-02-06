@@ -12,7 +12,7 @@ import kotlinx.serialization.json.encodeToJsonElement
 @Serializable
 data class SmoothCaretUsageData(
   val isAnimatedCaret: Boolean,
-  @get:NlsSafe val caretEasing: String,
+  @param:NlsSafe val caretEasing: String,
   val smoothCaretBlinking: Boolean,
   val systemInfo: CommonFeedbackSystemData,
 ) : SystemDataJsonSerializable {

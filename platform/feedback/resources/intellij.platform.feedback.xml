@@ -67,7 +67,6 @@
               internal="true"/>
       <action id="Editor.ShowSmoothCaretFeedbackNotification"
               class="com.intellij.platform.feedback.editor.smoothcaret.ShowSmoothCaretFeedbackNotificationAction"
-              text="Show Smooth Caret Feedback Notification"
               internal="true"/>
       <add-to-group group-id="Internal.UI" anchor="last"/>
     </group>
