@@ -47,6 +47,8 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
     "//libraries/kotlinx/serialization/json",
     "@lib//:junit5",
   ]

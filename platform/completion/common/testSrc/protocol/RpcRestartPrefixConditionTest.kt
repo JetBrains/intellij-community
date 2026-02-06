@@ -2,20 +2,21 @@
 package com.intellij.platform.completion.common.protocol
 
 import com.intellij.patterns.StandardPatterns
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
-import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertNotNull
 
 /**
  * Tests for [RpcRestartPrefixCondition] serialization and deserialization.
  *
- * Tests use converters directly to create descriptors from patterns, avoiding the need for
- * extension points while still testing the full conversion pipeline.
+ * Tests use [toRpc] to convert patterns to RPC format, validating the full conversion pipeline
+ * including extension point-based converter selection.
  */
+@TestApplication
 class RpcRestartPrefixConditionTest {
 
   // ============================================================================
@@ -33,234 +34,182 @@ class RpcRestartPrefixConditionTest {
   }
 
   // ============================================================================
-  // Tests for full pattern → converter → descriptor → fromRpc roundtrip
+  // Tests for full pattern -> toRpc -> fromRpc roundtrip
   // ============================================================================
 
   @Test
-  fun `test AlwaysTrue roundtrip via converter`() {
+  fun `test AlwaysTrue roundtrip via toRpc`() {
     val original = StandardPatterns.string()
-    val converter = AlwaysTrueConditionConverter()
-    val descriptor = converter.toDescriptor(original)
+    val rpc = original.toRpc()
 
-    assertNotNull(descriptor)
-    assertInstanceOf(AlwaysTrueDescriptor::class.java, descriptor)
+    assertSerializedDescriptor<AlwaysTrueDescriptor>(rpc)
 
-    val rpc = RpcRestartPrefixCondition.Serialized(descriptor!!)
     val reconstructed = rpc.fromRpc()
-
     assertTrue(reconstructed.accepts("any string"))
     assertTrue(reconstructed.accepts(""))
   }
 
   @Test
-  fun `test LongerThan roundtrip via converter`() {
+  fun `test LongerThan roundtrip via toRpc`() {
     val original = StandardPatterns.string().longerThan(5)
-    val converter = LongerThanConditionConverter()
-    val descriptor = converter.toDescriptor(original)
+    val rpc = original.toRpc()
 
-    assertNotNull(descriptor)
-    assertInstanceOf(LongerThanDescriptor::class.java, descriptor)
-    assertEquals(5, (descriptor as LongerThanDescriptor).minLength)
+    val descriptor = assertSerializedDescriptor<LongerThanDescriptor>(rpc)
+    assertEquals(5, descriptor.minLength)
 
-    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
-
     for (input in listOf("", "a", "ab", "abc", "abcd", "abcde", "abcdef")) {
       assertEquals(original.accepts(input), reconstructed.accepts(input), "Mismatch for '$input'")
     }
   }
 
   @Test
-  fun `test ShorterThan roundtrip via converter`() {
+  fun `test ShorterThan roundtrip via toRpc`() {
     val original = StandardPatterns.string().shorterThan(3)
-    val converter = ShorterThanConditionConverter()
-    val descriptor = converter.toDescriptor(original)
+    val rpc = original.toRpc()
 
-    assertNotNull(descriptor)
-    assertInstanceOf(ShorterThanDescriptor::class.java, descriptor)
-    assertEquals(3, (descriptor as ShorterThanDescriptor).maxLength)
+    val descriptor = assertSerializedDescriptor<ShorterThanDescriptor>(rpc)
+    assertEquals(3, descriptor.maxLength)
 
-    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
-
     for (input in listOf("", "a", "ab", "abc", "abcd")) {
       assertEquals(original.accepts(input), reconstructed.accepts(input), "Mismatch for '$input'")
     }
   }
 
   @Test
-  fun `test WithLength roundtrip via converter`() {
+  fun `test WithLength roundtrip via toRpc`() {
     val original = StandardPatterns.string().withLength(5)
-    val converter = WithLengthConditionConverter()
-    val descriptor = converter.toDescriptor(original)
+    val rpc = original.toRpc()
 
-    assertNotNull(descriptor)
-    assertInstanceOf(WithLengthDescriptor::class.java, descriptor)
-    assertEquals(5, (descriptor as WithLengthDescriptor).length)
+    val descriptor = assertSerializedDescriptor<WithLengthDescriptor>(rpc)
+    assertEquals(5, descriptor.length)
 
-    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
-
     for (input in listOf("", "a", "1234", "12345", "123456")) {
       assertEquals(original.accepts(input), reconstructed.accepts(input), "Mismatch for '$input'")
     }
   }
 
   @Test
-  fun `test StartsWith roundtrip via converter`() {
+  fun `test StartsWith roundtrip via toRpc`() {
     val original = StandardPatterns.string().startsWith("foo")
-    val converter = StartsWithConditionConverter()
-    val descriptor = converter.toDescriptor(original)
+    val rpc = original.toRpc()
 
-    assertNotNull(descriptor)
-    assertInstanceOf(StartsWithDescriptor::class.java, descriptor)
-    assertEquals("foo", (descriptor as StartsWithDescriptor).prefix)
+    val descriptor = assertSerializedDescriptor<StartsWithDescriptor>(rpc)
+    assertEquals("foo", descriptor.prefix)
 
-    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
-
     for (input in listOf("", "foo", "foobar", "barfoo", "FOO")) {
       assertEquals(original.accepts(input), reconstructed.accepts(input), "Mismatch for '$input'")
     }
   }
 
   @Test
-  fun `test EndsWith roundtrip via converter`() {
+  fun `test EndsWith roundtrip via toRpc`() {
     val original = StandardPatterns.string().endsWith("-")
-    val converter = EndsWithConditionConverter()
-    val descriptor = converter.toDescriptor(original)
+    val rpc = original.toRpc()
 
-    assertNotNull(descriptor)
-    assertInstanceOf(EndsWithDescriptor::class.java, descriptor)
-    assertEquals("-", (descriptor as EndsWithDescriptor).suffix)
+    val descriptor = assertSerializedDescriptor<EndsWithDescriptor>(rpc)
+    assertEquals("-", descriptor.suffix)
 
-    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
-
     for (input in listOf("", "-", "foo-", "-foo", "foo")) {
       assertEquals(original.accepts(input), reconstructed.accepts(input), "Mismatch for '$input'")
     }
   }
 
   @Test
-  fun `test Contains roundtrip via converter`() {
+  fun `test Contains roundtrip via toRpc`() {
     val original = StandardPatterns.string().contains("bar")
-    val converter = ContainsConditionConverter()
-    val descriptor = converter.toDescriptor(original)
+    val rpc = original.toRpc()
 
-    assertNotNull(descriptor)
-    assertInstanceOf(ContainsDescriptor::class.java, descriptor)
-    assertEquals("bar", (descriptor as ContainsDescriptor).substring)
+    val descriptor = assertSerializedDescriptor<ContainsDescriptor>(rpc)
+    assertEquals("bar", descriptor.substring)
 
-    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
-
     for (input in listOf("", "bar", "foobar", "barbaz", "baz")) {
       assertEquals(original.accepts(input), reconstructed.accepts(input), "Mismatch for '$input'")
     }
   }
 
   @Test
-  fun `test Matches roundtrip via converter`() {
+  fun `test Matches roundtrip via toRpc`() {
     val original = StandardPatterns.string().matches("foo.*bar")
-    val converter = MatchesConditionConverter()
-    val descriptor = converter.toDescriptor(original)
+    val rpc = original.toRpc()
 
-    assertNotNull(descriptor)
-    assertInstanceOf(MatchesDescriptor::class.java, descriptor)
-    assertEquals("foo.*bar", (descriptor as MatchesDescriptor).regex)
+    val descriptor = assertSerializedDescriptor<MatchesDescriptor>(rpc)
+    assertEquals("foo.*bar", descriptor.regex)
 
-    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
-
     for (input in listOf("", "foobar", "foo123bar", "barfoo", "foobaz")) {
       assertEquals(original.accepts(input), reconstructed.accepts(input), "Mismatch for '$input'")
     }
   }
 
   @Test
-  fun `test OneOf roundtrip via converter`() {
+  fun `test OneOf roundtrip via toRpc`() {
     val original = StandardPatterns.string().oneOf("get", "set")
-    val converter = OneOfConditionConverter()
-    val descriptor = converter.toDescriptor(original)
+    val rpc = original.toRpc()
 
-    assertNotNull(descriptor)
-    assertInstanceOf(OneOfDescriptor::class.java, descriptor)
-    assertEquals(listOf("get", "set"), (descriptor as OneOfDescriptor).values)
+    val descriptor = assertSerializedDescriptor<OneOfDescriptor>(rpc)
+    assertEquals(listOf("get", "set"), descriptor.values)
 
-    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
-
     for (input in listOf("", "get", "set", "GET", "put", "getter")) {
       assertEquals(original.accepts(input), reconstructed.accepts(input), "Mismatch for '$input'")
     }
   }
 
   @Test
-  fun `test OneOfIgnoreCase roundtrip via converter`() {
+  fun `test OneOfIgnoreCase roundtrip via toRpc`() {
     val original = StandardPatterns.string().oneOfIgnoreCase("GET", "SET")
-    val converter = OneOfIgnoreCaseConditionConverter()
-    val descriptor = converter.toDescriptor(original)
+    val rpc = original.toRpc()
 
-    assertNotNull(descriptor)
-    assertInstanceOf(OneOfIgnoreCaseDescriptor::class.java, descriptor)
-    assertEquals(listOf("GET", "SET"), (descriptor as OneOfIgnoreCaseDescriptor).values)
+    val descriptor = assertSerializedDescriptor<OneOfIgnoreCaseDescriptor>(rpc)
+    assertEquals(listOf("GET", "SET"), descriptor.values)
 
-    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
-
     for (input in listOf("", "get", "GET", "Get", "set", "SET", "Set", "put")) {
       assertEquals(original.accepts(input), reconstructed.accepts(input), "Mismatch for '$input'")
     }
   }
 
   @Test
-  fun `test EqualTo roundtrip via converter`() {
+  fun `test EqualTo roundtrip via toRpc`() {
     val original = StandardPatterns.string().equalTo("exact")
-    val converter = EqualToConditionConverter()
-    val descriptor = converter.toDescriptor(original)
+    val rpc = original.toRpc()
 
-    assertNotNull(descriptor)
-    assertInstanceOf(EqualToDescriptor::class.java, descriptor)
-    assertEquals("exact", (descriptor as EqualToDescriptor).value)
+    val descriptor = assertSerializedDescriptor<EqualToDescriptor>(rpc)
+    assertEquals("exact", descriptor.value)
 
-    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
-
     for (input in listOf("", "exact", "EXACT", "exacty", "exac")) {
       assertEquals(original.accepts(input), reconstructed.accepts(input), "Mismatch for '$input'")
     }
   }
 
   @Test
-  fun `test EndsWithUppercaseLetter roundtrip via converter`() {
+  fun `test EndsWithUppercaseLetter roundtrip via toRpc`() {
     val original = StandardPatterns.string().endsWithUppercaseLetter()
-    val converter = EndsWithUppercaseLetterConditionConverter()
-    val descriptor = converter.toDescriptor(original)
+    val rpc = original.toRpc()
 
-    assertNotNull(descriptor)
-    assertInstanceOf(EndsWithUppercaseLetterDescriptor::class.java, descriptor)
+    assertSerializedDescriptor<EndsWithUppercaseLetterDescriptor>(rpc)
 
-    val rpc = RpcRestartPrefixCondition.Serialized(descriptor!!)
     val reconstructed = rpc.fromRpc()
-
     for (input in listOf("", "a", "A", "abc", "abC", "ABC", "ab1", "ab!", "getA", "getAbc")) {
       assertEquals(original.accepts(input), reconstructed.accepts(input), "Mismatch for '$input'")
     }
   }
 
   @Test
-  fun `test AfterNonJavaIdentifierPart roundtrip via converter`() {
+  fun `test AfterNonJavaIdentifierPart roundtrip via toRpc`() {
     val original = StandardPatterns.string().afterNonJavaIdentifierPart()
-    val converter = AfterNonJavaIdentifierPartConditionConverter()
-    val descriptor = converter.toDescriptor(original)
+    val rpc = original.toRpc()
 
-    assertNotNull(descriptor)
-    assertInstanceOf(AfterNonJavaIdentifierPartDescriptor::class.java, descriptor)
+    assertSerializedDescriptor<AfterNonJavaIdentifierPartDescriptor>(rpc)
 
-    val rpc = RpcRestartPrefixCondition.Serialized(descriptor!!)
     val reconstructed = rpc.fromRpc()
-
     // Pattern matches when: length > 1 AND second-to-last char is NOT a Java identifier part
     for (input in listOf(
       "",       // too short - false
@@ -279,42 +228,33 @@ class RpcRestartPrefixConditionTest {
   }
 
   @Test
-  fun `test Or descriptor roundtrip`() {
-    // OrPatternConverter uses extension points for inner patterns, so we test the descriptor directly
-    val descriptor = OrDescriptor(listOf(
-      EndsWithDescriptor("-"),
-      EndsWithDescriptor("_")
-    ))
-
+  fun `test Or roundtrip via toRpc`() {
     val original = StandardPatterns.or(
       StandardPatterns.string().endsWith("-"),
       StandardPatterns.string().endsWith("_")
     )
+    val rpc = original.toRpc()
 
+    val descriptor = assertSerializedDescriptor<OrDescriptor>(rpc)
     assertEquals(2, descriptor.conditions.size)
     assertInstanceOf(EndsWithDescriptor::class.java, descriptor.conditions[0])
     assertInstanceOf(EndsWithDescriptor::class.java, descriptor.conditions[1])
 
-    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
-
     for (input in listOf("", "foo-", "bar_", "baz", "-", "_")) {
       assertEquals(original.accepts(input), reconstructed.accepts(input), "Mismatch for '$input'")
     }
   }
 
   @Test
-  fun `test Not descriptor roundtrip`() {
-    // NotPatternConverter uses extension points for inner pattern, so we test the descriptor directly
-    val descriptor = NotDescriptor(StartsWithDescriptor("x"))
-
+  fun `test Not roundtrip via toRpc`() {
     val original = StandardPatterns.not(StandardPatterns.string().startsWith("x"))
+    val rpc = original.toRpc()
 
+    val descriptor = assertSerializedDescriptor<NotDescriptor>(rpc)
     assertInstanceOf(StartsWithDescriptor::class.java, descriptor.condition)
 
-    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
-
     for (input in listOf("", "foo", "xfoo", "x", "X")) {
       assertEquals(original.accepts(input), reconstructed.accepts(input), "Mismatch for '$input'")
     }
@@ -325,95 +265,86 @@ class RpcRestartPrefixConditionTest {
   // ============================================================================
 
   @Test
-  fun `test nested Or with multiple conditions roundtrip`() {
-    // For nested patterns, we need to manually build the descriptor since converters
-    // use the extension point for inner patterns
-    val descriptor = OrDescriptor(listOf(
-      StartsWithDescriptor("get"),
-      StartsWithDescriptor("set"),
-      StartsWithDescriptor("is")
-    ))
-
+  fun `test nested Or with multiple conditions roundtrip via toRpc`() {
     val original = StandardPatterns.or(
       StandardPatterns.string().startsWith("get"),
       StandardPatterns.string().startsWith("set"),
       StandardPatterns.string().startsWith("is")
     )
+    val rpc = original.toRpc()
 
-    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
+    val descriptor = assertSerializedDescriptor<OrDescriptor>(rpc)
+    assertEquals(3, descriptor.conditions.size)
+
     val reconstructed = rpc.fromRpc()
-
     for (input in listOf("", "getValue", "setValue", "isEnabled", "doSomething")) {
       assertEquals(original.accepts(input), reconstructed.accepts(input), "Mismatch for '$input'")
     }
   }
 
   @Test
-  fun `test Not with LongerThan roundtrip`() {
-    val descriptor = NotDescriptor(LongerThanDescriptor(5))
-
+  fun `test Not with LongerThan roundtrip via toRpc`() {
     val original = StandardPatterns.not(StandardPatterns.string().longerThan(5))
+    val rpc = original.toRpc()
 
-    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
+    val descriptor = assertSerializedDescriptor<NotDescriptor>(rpc)
+    assertInstanceOf(LongerThanDescriptor::class.java, descriptor.condition)
+
     val reconstructed = rpc.fromRpc()
-
     for (input in listOf("", "a", "abcde", "abcdef", "abcdefg")) {
       assertEquals(original.accepts(input), reconstructed.accepts(input), "Mismatch for '$input'")
     }
   }
 
   @Test
-  fun `test And descriptor roundtrip`() {
-    val descriptor = AndDescriptor(AlwaysTrueDescriptor, EndsWithDescriptor("-"))
+  fun `test And roundtrip via toRpc`() {
     val original = StandardPatterns.string().and(StandardPatterns.string().endsWith("-"))
+    val rpc = original.toRpc()
 
-    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
+    val descriptor = assertSerializedDescriptor<AndDescriptor>(rpc)
+    assertInstanceOf(AlwaysTrueDescriptor::class.java, descriptor.base)
+    assertInstanceOf(EndsWithDescriptor::class.java, descriptor.combined)
+
     val reconstructed = rpc.fromRpc()
-
     for (input in listOf("", "a", "a-", "-", "test-", "test")) {
       assertEquals(original.accepts(input), reconstructed.accepts(input), "Mismatch for '$input'")
     }
   }
 
   @Test
-  fun `test And with afterNonJavaIdentifierPart and Or roundtrip`() {
+  fun `test And with afterNonJavaIdentifierPart and Or roundtrip via toRpc`() {
     // This is the pattern used by endsWithOneOf()
-    val descriptor = AndDescriptor(
-      AfterNonJavaIdentifierPartDescriptor,
-      OrDescriptor(listOf(EndsWithDescriptor("abc"), EndsWithDescriptor("def")))
-    )
-
     val original = StandardPatterns.string()
       .afterNonJavaIdentifierPart()
       .and(StandardPatterns.or(
         StandardPatterns.string().endsWith("abc"),
         StandardPatterns.string().endsWith("def")
       ))
+    val rpc = original.toRpc()
 
-    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
+    val descriptor = assertSerializedDescriptor<AndDescriptor>(rpc)
+    assertInstanceOf(AfterNonJavaIdentifierPartDescriptor::class.java, descriptor.base)
+    assertInstanceOf(OrDescriptor::class.java, descriptor.combined)
+
     val reconstructed = rpc.fromRpc()
-
     for (input in listOf("", "a", " abc", ".def", "xabc", "x.abc", " x")) {
       assertEquals(original.accepts(input), reconstructed.accepts(input), "Mismatch for '$input'")
     }
   }
 
   @Test
-  fun `test endsWithOneOf pattern roundtrip`() {
+  fun `test endsWithOneOf pattern roundtrip via toRpc`() {
     // endsWithOneOf internally uses: .and(StandardPatterns.or(endsWith patterns...))
-    // Build descriptor manually (converter uses extension points which need app context)
-    val descriptor = AndDescriptor(
-      AfterNonJavaIdentifierPartDescriptor,
-      OrDescriptor(listOf(EndsWithDescriptor("key1"), EndsWithDescriptor("key2")))
-    )
-
     val original = StandardPatterns.string()
       .afterNonJavaIdentifierPart()
       .endsWithOneOf(listOf("key1", "key2"))
+    val rpc = original.toRpc()
 
-    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
+    val descriptor = assertSerializedDescriptor<AndDescriptor>(rpc)
+    assertInstanceOf(AfterNonJavaIdentifierPartDescriptor::class.java, descriptor.base)
+    assertInstanceOf(OrDescriptor::class.java, descriptor.combined)
+
     val reconstructed = rpc.fromRpc()
-
     for (input in listOf("", "key1", " key1", ".key2", "xkey1", "x.key1")) {
       assertEquals(original.accepts(input), reconstructed.accepts(input), "Mismatch for '$input'")
     }
@@ -424,26 +355,29 @@ class RpcRestartPrefixConditionTest {
   // ============================================================================
 
   @Test
-  fun `test LongerThan converter rejects pattern with multiple conditions`() {
+  fun `test pattern with multiple incompatible conditions returns AlwaysTrue`() {
+    // A pattern that no single converter can handle should fall back to AlwaysTrue
+    // (This tests the fallback behavior when no converter matches)
     val pattern = StandardPatterns.string().longerThan(5).shorterThan(10)
-    val converter = LongerThanConditionConverter()
+    val rpc = pattern.toRpc()
 
-    assertNull(converter.toDescriptor(pattern), "Converter should reject patterns with multiple conditions")
+    // Since no single converter handles this combination, it falls back to AlwaysTrue
+    assertInstanceOf(RpcRestartPrefixCondition.AlwaysTrue::class.java, rpc)
   }
 
-  @Test
-  fun `test StartsWith converter rejects EndsWith pattern`() {
-    val pattern = StandardPatterns.string().endsWith("foo")
-    val converter = StartsWithConditionConverter()
+  // ============================================================================
+  // Helper methods
+  // ============================================================================
 
-    assertNull(converter.toDescriptor(pattern), "Converter should reject incompatible patterns")
-  }
-
-  @Test
-  fun `test AlwaysTrue converter rejects pattern with conditions`() {
-    val pattern = StandardPatterns.string().longerThan(3)
-    val converter = AlwaysTrueConditionConverter()
-
-    assertNull(converter.toDescriptor(pattern), "Converter should reject patterns with conditions")
+  private inline fun <reified T> assertSerializedDescriptor(rpc: RpcRestartPrefixCondition): T {
+    assertInstanceOf(RpcRestartPrefixCondition.Serialized::class.java, rpc,
+                     "Expected RpcRestartPrefixCondition.Serialized but got ${rpc::class.simpleName}")
+    val serialized = rpc as RpcRestartPrefixCondition.Serialized
+    val descriptor = serialized.descriptor
+    assertNotNull(descriptor, "Descriptor should not be null")
+    assertInstanceOf(T::class.java, descriptor,
+                     "Expected ${T::class.simpleName} but got ${descriptor::class.simpleName}")
+    @Suppress("UNCHECKED_CAST")
+    return descriptor as T
   }
 }
