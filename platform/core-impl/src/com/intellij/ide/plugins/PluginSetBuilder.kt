@@ -416,7 +416,8 @@ private val pluginModuleVisibilityCheck by lazy {
   when (System.getProperty("intellij.platform.plugin.modules.check.visibility")) {
     "warning" -> PluginModuleVisibilityCheckOption.REPORT_WARNING
     "error" -> PluginModuleVisibilityCheckOption.REPORT_ERROR
-    else -> PluginModuleVisibilityCheckOption.DISABLED
+    "disabled" -> PluginModuleVisibilityCheckOption.DISABLED
+    else -> PluginModuleVisibilityCheckOption.REPORT_WARNING
   }
 }
 
