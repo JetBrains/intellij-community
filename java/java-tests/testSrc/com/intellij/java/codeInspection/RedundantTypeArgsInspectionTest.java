@@ -53,4 +53,8 @@ public class RedundantTypeArgsInspectionTest extends LightDaemonAnalyzerTestCase
   public void testTooManyArguments() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_17, () -> doTest());
   }
+
+  public void testNonGeneric() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> doTest());
+  }
 }
