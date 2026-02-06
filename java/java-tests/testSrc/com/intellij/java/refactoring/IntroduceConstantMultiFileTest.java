@@ -6,10 +6,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.LightMultiFileTestCase;
-import com.intellij.testFramework.HeavyPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
-@HeavyPlatformTestCase.WrapInCommand
 public class IntroduceConstantMultiFileTest extends LightMultiFileTestCase {
   @Override
   protected @NotNull String getTestDataPath() {
