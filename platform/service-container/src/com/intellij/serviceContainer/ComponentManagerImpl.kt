@@ -25,6 +25,7 @@ import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.extensions.*
+import com.intellij.openapi.extensions.impl.ExtensionPointDeferredListenersNotification
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.impl.createExtensionPoints
@@ -316,7 +317,7 @@ abstract class ComponentManagerImpl(
   open fun registerComponents(
     modules: List<IdeaPluginDescriptorImpl>,
     app: Application?,
-    listenerCallbacks: MutableList<in Runnable>? = null,
+    listenerCallbacks: MutableList<ExtensionPointDeferredListenersNotification>? = null,
   ) {
     val activityNamePrefix = activityNamePrefix()
 

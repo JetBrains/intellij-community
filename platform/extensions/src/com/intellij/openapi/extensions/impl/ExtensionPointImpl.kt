@@ -847,7 +847,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
   @Synchronized
   fun registerExtensions(descriptors: List<ExtensionDescriptor>,
                          pluginDescriptor: PluginDescriptor,
-                         listenerCallbacks: MutableList<in Runnable>?) {
+                         listenerCallbacks: MutableList<ExtensionPointDeferredListenersNotification>?) {
     adaptersAreSorted = false
 
     val oldAdapters = adapters
@@ -891,7 +891,9 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
       break
     }
 
-    listenerCallbacks.add { notifyListeners(isRemoved = false, adapters = addedAdapters, listeners = listeners) }
+    listenerCallbacks.add(ExtensionPointDeferredListenersNotification(this) {
+      notifyListeners(isRemoved = false, adapters = addedAdapters, listeners = listeners)
+    })
   }
 
   @TestOnly

@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.impl.ExtensionPointDeferredListenersNotification
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.throwAlreadyDisposedError
 import kotlinx.coroutines.CoroutineScope
@@ -64,7 +65,7 @@ abstract class ClientAwareComponentManager: ComponentManagerImpl {
   final override fun registerComponents(
     modules: List<IdeaPluginDescriptorImpl>,
     app: Application?,
-    listenerCallbacks: MutableList<in Runnable>?
+    listenerCallbacks: MutableList<ExtensionPointDeferredListenersNotification>?
   ) {
     super.registerComponents(modules = modules,
                              app = app,

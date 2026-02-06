@@ -133,7 +133,11 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
     }
   }
 
-  fun registerExtensions(extensions: Map<String, List<ExtensionDescriptor>>, pluginDescriptor: PluginDescriptor, listenerCallbacks: MutableList<in Runnable>?) {
+  fun registerExtensions(
+    extensions: Map<String, List<ExtensionDescriptor>>,
+    pluginDescriptor: PluginDescriptor,
+    listenerCallbacks: MutableList<ExtensionPointDeferredListenersNotification>?,
+  ) {
     for ((descriptors, point) in intersectMaps(extensions, nameToPointMap)) {
       point.registerExtensions(descriptors, pluginDescriptor = pluginDescriptor, listenerCallbacks)
     }
