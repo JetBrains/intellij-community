@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.completion.common.protocol
 
-import com.intellij.codeInsight.completion.serialization.FrontendFriendlyPrefixConditionSerializer
-import com.intellij.codeInsight.completion.serialization.PrefixConditionDescriptor
+import com.intellij.codeInsight.completion.serialization.FrontendFriendlyRestartPrefixConditionSerializer
+import com.intellij.codeInsight.completion.serialization.RestartPrefixConditionDescriptor
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.StandardPatterns
 import com.intellij.platform.completion.common.ccLogger
@@ -13,19 +13,19 @@ import kotlinx.serialization.Serializable
  *
  * Conditions are serialized using the extension point `com.intellij.completion.frontendFriendlyPrefixCondition`.
  * Common patterns like [StandardPatterns.string], string().longerThan(), string().endsWith(), etc. are supported
- * out of the box. Custom patterns can be added by registering implementations of [PrefixConditionDescriptor]
+ * out of the box. Custom patterns can be added by registering implementations of [RestartPrefixConditionDescriptor]
  * and [com.intellij.codeInsight.completion.serialization.PrefixConditionDescriptorConverter].
  *
- * @see FrontendFriendlyPrefixConditionSerializer
- * @see PrefixConditionDescriptor
+ * @see FrontendFriendlyRestartPrefixConditionSerializer
+ * @see RestartPrefixConditionDescriptor
  */
 @Serializable
-sealed interface RpcPrefixCondition {
+sealed interface RpcRestartPrefixCondition {
   /**
    * Unconditional true - matches any prefix. Used for [StandardPatterns.string] with no conditions.
    */
   @Serializable
-  object AlwaysTrue : RpcPrefixCondition
+  object AlwaysTrue : RpcRestartPrefixCondition
 
   /**
    * A serialized condition using the extension point-based serialization.
@@ -33,9 +33,9 @@ sealed interface RpcPrefixCondition {
    */
   @Serializable
   data class Serialized(
-    @Serializable(with = FrontendFriendlyPrefixConditionSerializer::class)
-    val descriptor: PrefixConditionDescriptor
-  ) : RpcPrefixCondition {
+    @Serializable(with = FrontendFriendlyRestartPrefixConditionSerializer::class)
+    val descriptor: RestartPrefixConditionDescriptor
+  ) : RpcRestartPrefixCondition {
     override fun toString(): String = buildToString("Serialized") {
       field("descriptor", descriptor)
     }
@@ -47,7 +47,7 @@ sealed interface RpcPrefixCondition {
    * @deprecated Use [Serialized] with [EqualToDescriptor] instead.
    */
   @Serializable
-  class EqualsTo(val value: String) : RpcPrefixCondition {
+  class EqualsTo(val value: String) : RpcRestartPrefixCondition {
     override fun toString(): String = buildToString("EqualsTo") {
       field("value", value)
     }
@@ -55,42 +55,42 @@ sealed interface RpcPrefixCondition {
 }
 
 /**
- * Converts an [ElementPattern]<String> to an [RpcPrefixCondition] for serialization.
+ * Converts an [ElementPattern]<String> to an [RpcRestartPrefixCondition] for serialization.
  *
  * The conversion uses the extension point `com.intellij.completion.frontendFriendlyPrefixCondition`
- * to find a suitable serializer. If no serializer is found, falls back to [RpcPrefixCondition.AlwaysTrue]
+ * to find a suitable serializer. If no serializer is found, falls back to [RpcRestartPrefixCondition.AlwaysTrue]
  * with a warning.
  *
  * Supported patterns include:
- * - [StandardPatterns.string] (no conditions) → [RpcPrefixCondition.AlwaysTrue]
+ * - [StandardPatterns.string] (no conditions) → [RpcRestartPrefixCondition.AlwaysTrue]
  * - string().longerThan(n), string().shorterThan(n), string().withLength(n)
  * - string().startsWith(s), string().endsWith(s), string().contains(s)
  * - string().matches(regex), string().oneOf(...), string().equalTo(s)
  * - [StandardPatterns.or], [StandardPatterns.not]
  */
-fun ElementPattern<String>.toRpc(): RpcPrefixCondition {
+fun ElementPattern<String>.toRpc(): RpcRestartPrefixCondition {
   // Try to serialize via extension point
-  val descriptor = FrontendFriendlyPrefixConditionSerializer.toDescriptor(this)
+  val descriptor = FrontendFriendlyRestartPrefixConditionSerializer.toDescriptor(this)
   if (descriptor != null) {
-    return RpcPrefixCondition.Serialized(descriptor)
+    return RpcRestartPrefixCondition.Serialized(descriptor)
   }
 
   // Fallback for base string() pattern (should be handled by AlwaysTrueConditionConverter, but just in case)
   if (this == StandardPatterns.string()) {
-    return RpcPrefixCondition.AlwaysTrue
+    return RpcRestartPrefixCondition.AlwaysTrue
   }
 
   ccLogger.warn("Unsupported prefix condition: $this", Throwable())
-  return RpcPrefixCondition.AlwaysTrue
+  return RpcRestartPrefixCondition.AlwaysTrue
 }
 
 /**
- * Converts an [RpcPrefixCondition] back to an [ElementPattern]<String>.
+ * Converts an [RpcRestartPrefixCondition] back to an [ElementPattern]<String>.
  */
-fun RpcPrefixCondition.fromRpc(): ElementPattern<String> {
+fun RpcRestartPrefixCondition.fromRpc(): ElementPattern<String> {
   return when (this) {
-    is RpcPrefixCondition.AlwaysTrue -> StandardPatterns.string()
-    is RpcPrefixCondition.Serialized -> descriptor.recreatePattern()
-    is RpcPrefixCondition.EqualsTo -> StandardPatterns.string().equalTo(value) // Legacy support
+    is RpcRestartPrefixCondition.AlwaysTrue -> StandardPatterns.string()
+    is RpcRestartPrefixCondition.Serialized -> descriptor.recreatePattern()
+    is RpcRestartPrefixCondition.EqualsTo -> StandardPatterns.string().equalTo(value) // Legacy support
   }
 }

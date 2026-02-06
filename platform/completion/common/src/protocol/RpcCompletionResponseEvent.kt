@@ -73,7 +73,7 @@ sealed interface RpcCompletionResponseEvent {
 
   @Serializable
   data class AddWatchedPrefix(
-    val condition: RpcPrefixCondition,
+      val condition: RpcRestartPrefixCondition,
   ) : RpcCompletionResponseEvent {
     override fun toString(): String = buildToString("AddWatchedPrefix") {
       field("condition", condition)

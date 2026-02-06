@@ -13,13 +13,13 @@ import org.jetbrains.annotations.ApiStatus
  * Implementations must be annotated with `@Serializable`
  * and registered via the `com.intellij.completion.frontendFriendlyPrefixCondition` extension point.
  *
- * @see FrontendFriendlyPrefixConditionSerializer
+ * @see FrontendFriendlyRestartPrefixConditionSerializer
  * @see ElementPattern
  * @see com.intellij.patterns.StringPattern
  */
 @ApiStatus.Internal //TODO IJPL-207762 mark experimental
-@Serializable(with = FrontendFriendlyPrefixConditionSerializer::class)
-interface PrefixConditionDescriptor {
+@Serializable(with = FrontendFriendlyRestartPrefixConditionSerializer::class)
+interface RestartPrefixConditionDescriptor {
 
   /** Recreates the original `ElementPattern<String>` from the serialized descriptor. */
   fun recreatePattern(): ElementPattern<String>
@@ -31,7 +31,7 @@ interface PrefixConditionDescriptor {
  * Implementations should be registered via the `com.intellij.completion.frontendFriendlyPrefixCondition`
  * extension point with the `converter` attribute.
  *
- * @see PrefixConditionDescriptor
+ * @see RestartPrefixConditionDescriptor
  */
 @ApiStatus.Internal //TODO IJPL-207762 mark experimental
-interface PrefixConditionDescriptorConverter<Pattern : ElementPattern<String>> : DescriptorConverter<Pattern, PrefixConditionDescriptor>
+interface PrefixConditionDescriptorConverter<Pattern : ElementPattern<String>> : DescriptorConverter<Pattern, RestartPrefixConditionDescriptor>

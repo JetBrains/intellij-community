@@ -8,20 +8,20 @@ import com.intellij.patterns.ElementPattern
 import org.jetbrains.annotations.ApiStatus
 
 private val EP_NAME = ExtensionPointName<ExtensionPointSerializerBean>(
-  "com.intellij.completion.frontendFriendlyPrefixCondition"
+  "com.intellij.completion.frontendFriendlyRestartPrefixCondition"
 )
 
 /**
  * Serializer for [ElementPattern]<String> conditions used in prefix restart logic.
  *
  * Uses the extension point `com.intellij.completion.frontendFriendlyPrefixCondition` to
- * dispatch serialization to the appropriate [PrefixConditionDescriptor] implementation.
+ * dispatch serialization to the appropriate [RestartPrefixConditionDescriptor] implementation.
  *
- * @see PrefixConditionDescriptor
+ * @see RestartPrefixConditionDescriptor
  * @see PrefixConditionDescriptorConverter
  */
 @ApiStatus.Internal //TODO IJPL-207762 mark experimental
-object FrontendFriendlyPrefixConditionSerializer : ExtensionPointSerializer<ElementPattern<String>, PrefixConditionDescriptor>(
+object FrontendFriendlyRestartPrefixConditionSerializer : ExtensionPointSerializer<ElementPattern<String>, RestartPrefixConditionDescriptor>(
   EP_NAME,
-  PrefixConditionDescriptor::class
+  RestartPrefixConditionDescriptor::class
 )

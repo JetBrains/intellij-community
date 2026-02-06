@@ -11,12 +11,12 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 
 /**
- * Tests for [RpcPrefixCondition] serialization and deserialization.
+ * Tests for [RpcRestartPrefixCondition] serialization and deserialization.
  *
  * Tests use converters directly to create descriptors from patterns, avoiding the need for
  * extension points while still testing the full conversion pipeline.
  */
-class RpcPrefixConditionTest {
+class RpcRestartPrefixConditionTest {
 
   // ============================================================================
   // Tests for legacy support
@@ -25,7 +25,7 @@ class RpcPrefixConditionTest {
   @Test
   fun `test legacy EqualsTo fromRpc support`() {
     // Test backward compatibility with legacy EqualsTo class
-    val legacyCondition = RpcPrefixCondition.EqualsTo("test")
+    val legacyCondition = RpcRestartPrefixCondition.EqualsTo("test")
     val pattern = legacyCondition.fromRpc()
 
     assertTrue(pattern.accepts("test"), "'test' should match EqualsTo('test')")
@@ -45,7 +45,7 @@ class RpcPrefixConditionTest {
     assertNotNull(descriptor)
     assertInstanceOf(AlwaysTrueDescriptor::class.java, descriptor)
 
-    val rpc = RpcPrefixCondition.Serialized(descriptor!!)
+    val rpc = RpcRestartPrefixCondition.Serialized(descriptor!!)
     val reconstructed = rpc.fromRpc()
 
     assertTrue(reconstructed.accepts("any string"))
@@ -62,7 +62,7 @@ class RpcPrefixConditionTest {
     assertInstanceOf(LongerThanDescriptor::class.java, descriptor)
     assertEquals(5, (descriptor as LongerThanDescriptor).minLength)
 
-    val rpc = RpcPrefixCondition.Serialized(descriptor)
+    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
 
     for (input in listOf("", "a", "ab", "abc", "abcd", "abcde", "abcdef")) {
@@ -80,7 +80,7 @@ class RpcPrefixConditionTest {
     assertInstanceOf(ShorterThanDescriptor::class.java, descriptor)
     assertEquals(3, (descriptor as ShorterThanDescriptor).maxLength)
 
-    val rpc = RpcPrefixCondition.Serialized(descriptor)
+    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
 
     for (input in listOf("", "a", "ab", "abc", "abcd")) {
@@ -98,7 +98,7 @@ class RpcPrefixConditionTest {
     assertInstanceOf(WithLengthDescriptor::class.java, descriptor)
     assertEquals(5, (descriptor as WithLengthDescriptor).length)
 
-    val rpc = RpcPrefixCondition.Serialized(descriptor)
+    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
 
     for (input in listOf("", "a", "1234", "12345", "123456")) {
@@ -116,7 +116,7 @@ class RpcPrefixConditionTest {
     assertInstanceOf(StartsWithDescriptor::class.java, descriptor)
     assertEquals("foo", (descriptor as StartsWithDescriptor).prefix)
 
-    val rpc = RpcPrefixCondition.Serialized(descriptor)
+    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
 
     for (input in listOf("", "foo", "foobar", "barfoo", "FOO")) {
@@ -134,7 +134,7 @@ class RpcPrefixConditionTest {
     assertInstanceOf(EndsWithDescriptor::class.java, descriptor)
     assertEquals("-", (descriptor as EndsWithDescriptor).suffix)
 
-    val rpc = RpcPrefixCondition.Serialized(descriptor)
+    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
 
     for (input in listOf("", "-", "foo-", "-foo", "foo")) {
@@ -152,7 +152,7 @@ class RpcPrefixConditionTest {
     assertInstanceOf(ContainsDescriptor::class.java, descriptor)
     assertEquals("bar", (descriptor as ContainsDescriptor).substring)
 
-    val rpc = RpcPrefixCondition.Serialized(descriptor)
+    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
 
     for (input in listOf("", "bar", "foobar", "barbaz", "baz")) {
@@ -170,7 +170,7 @@ class RpcPrefixConditionTest {
     assertInstanceOf(MatchesDescriptor::class.java, descriptor)
     assertEquals("foo.*bar", (descriptor as MatchesDescriptor).regex)
 
-    val rpc = RpcPrefixCondition.Serialized(descriptor)
+    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
 
     for (input in listOf("", "foobar", "foo123bar", "barfoo", "foobaz")) {
@@ -188,7 +188,7 @@ class RpcPrefixConditionTest {
     assertInstanceOf(OneOfDescriptor::class.java, descriptor)
     assertEquals(listOf("get", "set"), (descriptor as OneOfDescriptor).values)
 
-    val rpc = RpcPrefixCondition.Serialized(descriptor)
+    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
 
     for (input in listOf("", "get", "set", "GET", "put", "getter")) {
@@ -206,7 +206,7 @@ class RpcPrefixConditionTest {
     assertInstanceOf(OneOfIgnoreCaseDescriptor::class.java, descriptor)
     assertEquals(listOf("GET", "SET"), (descriptor as OneOfIgnoreCaseDescriptor).values)
 
-    val rpc = RpcPrefixCondition.Serialized(descriptor)
+    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
 
     for (input in listOf("", "get", "GET", "Get", "set", "SET", "Set", "put")) {
@@ -224,7 +224,7 @@ class RpcPrefixConditionTest {
     assertInstanceOf(EqualToDescriptor::class.java, descriptor)
     assertEquals("exact", (descriptor as EqualToDescriptor).value)
 
-    val rpc = RpcPrefixCondition.Serialized(descriptor)
+    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
 
     for (input in listOf("", "exact", "EXACT", "exacty", "exac")) {
@@ -241,7 +241,7 @@ class RpcPrefixConditionTest {
     assertNotNull(descriptor)
     assertInstanceOf(EndsWithUppercaseLetterDescriptor::class.java, descriptor)
 
-    val rpc = RpcPrefixCondition.Serialized(descriptor!!)
+    val rpc = RpcRestartPrefixCondition.Serialized(descriptor!!)
     val reconstructed = rpc.fromRpc()
 
     for (input in listOf("", "a", "A", "abc", "abC", "ABC", "ab1", "ab!", "getA", "getAbc")) {
@@ -258,7 +258,7 @@ class RpcPrefixConditionTest {
     assertNotNull(descriptor)
     assertInstanceOf(AfterNonJavaIdentifierPartDescriptor::class.java, descriptor)
 
-    val rpc = RpcPrefixCondition.Serialized(descriptor!!)
+    val rpc = RpcRestartPrefixCondition.Serialized(descriptor!!)
     val reconstructed = rpc.fromRpc()
 
     // Pattern matches when: length > 1 AND second-to-last char is NOT a Java identifier part
@@ -295,7 +295,7 @@ class RpcPrefixConditionTest {
     assertInstanceOf(EndsWithDescriptor::class.java, descriptor.conditions[0])
     assertInstanceOf(EndsWithDescriptor::class.java, descriptor.conditions[1])
 
-    val rpc = RpcPrefixCondition.Serialized(descriptor)
+    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
 
     for (input in listOf("", "foo-", "bar_", "baz", "-", "_")) {
@@ -312,7 +312,7 @@ class RpcPrefixConditionTest {
 
     assertInstanceOf(StartsWithDescriptor::class.java, descriptor.condition)
 
-    val rpc = RpcPrefixCondition.Serialized(descriptor)
+    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
 
     for (input in listOf("", "foo", "xfoo", "x", "X")) {
@@ -340,7 +340,7 @@ class RpcPrefixConditionTest {
       StandardPatterns.string().startsWith("is")
     )
 
-    val rpc = RpcPrefixCondition.Serialized(descriptor)
+    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
 
     for (input in listOf("", "getValue", "setValue", "isEnabled", "doSomething")) {
@@ -354,7 +354,7 @@ class RpcPrefixConditionTest {
 
     val original = StandardPatterns.not(StandardPatterns.string().longerThan(5))
 
-    val rpc = RpcPrefixCondition.Serialized(descriptor)
+    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
 
     for (input in listOf("", "a", "abcde", "abcdef", "abcdefg")) {
@@ -367,7 +367,7 @@ class RpcPrefixConditionTest {
     val descriptor = AndDescriptor(AlwaysTrueDescriptor, EndsWithDescriptor("-"))
     val original = StandardPatterns.string().and(StandardPatterns.string().endsWith("-"))
 
-    val rpc = RpcPrefixCondition.Serialized(descriptor)
+    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
 
     for (input in listOf("", "a", "a-", "-", "test-", "test")) {
@@ -390,7 +390,7 @@ class RpcPrefixConditionTest {
         StandardPatterns.string().endsWith("def")
       ))
 
-    val rpc = RpcPrefixCondition.Serialized(descriptor)
+    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
 
     for (input in listOf("", "a", " abc", ".def", "xabc", "x.abc", " x")) {
@@ -411,7 +411,7 @@ class RpcPrefixConditionTest {
       .afterNonJavaIdentifierPart()
       .endsWithOneOf(listOf("key1", "key2"))
 
-    val rpc = RpcPrefixCondition.Serialized(descriptor)
+    val rpc = RpcRestartPrefixCondition.Serialized(descriptor)
     val reconstructed = rpc.fromRpc()
 
     for (input in listOf("", "key1", " key1", ".key2", "xkey1", "x.key1")) {

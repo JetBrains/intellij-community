@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.completion.common.protocol
 
-import com.intellij.codeInsight.completion.serialization.FrontendFriendlyPrefixConditionSerializer
-import com.intellij.codeInsight.completion.serialization.PrefixConditionDescriptor
+import com.intellij.codeInsight.completion.serialization.FrontendFriendlyRestartPrefixConditionSerializer
+import com.intellij.codeInsight.completion.serialization.RestartPrefixConditionDescriptor
 import com.intellij.codeInsight.completion.serialization.PrefixConditionDescriptorConverter
 import com.intellij.patterns.CaseInsensitiveValuePatternCondition
 import com.intellij.patterns.ElementPattern
@@ -20,14 +20,14 @@ import kotlinx.serialization.Serializable
 // ============================================================================
 
 class AlwaysTrueConditionConverter : PrefixConditionDescriptorConverter<StringPattern> {
-  override fun toDescriptor(target: StringPattern): PrefixConditionDescriptor? {
+  override fun toDescriptor(target: StringPattern): RestartPrefixConditionDescriptor? {
     // Only match the base string() pattern with no conditions
     return if (target == StandardPatterns.string()) AlwaysTrueDescriptor else null
   }
 }
 
 @Serializable
-object AlwaysTrueDescriptor : PrefixConditionDescriptor {
+object AlwaysTrueDescriptor : RestartPrefixConditionDescriptor {
   override fun recreatePattern(): ElementPattern<String> = StandardPatterns.string()
 }
 
@@ -36,14 +36,14 @@ object AlwaysTrueDescriptor : PrefixConditionDescriptor {
 // ============================================================================
 
 class LongerThanConditionConverter : PrefixConditionDescriptorConverter<StringPattern> {
-  override fun toDescriptor(target: StringPattern): PrefixConditionDescriptor? {
+  override fun toDescriptor(target: StringPattern): RestartPrefixConditionDescriptor? {
     val condition = target.condition.conditions.singleOrNull() as? StringPattern.LongerThanCondition ?: return null
     return LongerThanDescriptor(condition.minLength)
   }
 }
 
 @Serializable
-data class LongerThanDescriptor(val minLength: Int) : PrefixConditionDescriptor {
+data class LongerThanDescriptor(val minLength: Int) : RestartPrefixConditionDescriptor {
   override fun recreatePattern(): ElementPattern<String> = StandardPatterns.string().longerThan(minLength)
 }
 
@@ -52,14 +52,14 @@ data class LongerThanDescriptor(val minLength: Int) : PrefixConditionDescriptor 
 // ============================================================================
 
 class ShorterThanConditionConverter : PrefixConditionDescriptorConverter<StringPattern> {
-  override fun toDescriptor(target: StringPattern): PrefixConditionDescriptor? {
+  override fun toDescriptor(target: StringPattern): RestartPrefixConditionDescriptor? {
     val condition = target.condition.conditions.singleOrNull() as? StringPattern.ShorterThanCondition ?: return null
     return ShorterThanDescriptor(condition.maxLength)
   }
 }
 
 @Serializable
-data class ShorterThanDescriptor(val maxLength: Int) : PrefixConditionDescriptor {
+data class ShorterThanDescriptor(val maxLength: Int) : RestartPrefixConditionDescriptor {
   override fun recreatePattern(): ElementPattern<String> = StandardPatterns.string().shorterThan(maxLength)
 }
 
@@ -68,14 +68,14 @@ data class ShorterThanDescriptor(val maxLength: Int) : PrefixConditionDescriptor
 // ============================================================================
 
 class WithLengthConditionConverter : PrefixConditionDescriptorConverter<StringPattern> {
-  override fun toDescriptor(target: StringPattern): PrefixConditionDescriptor? {
+  override fun toDescriptor(target: StringPattern): RestartPrefixConditionDescriptor? {
     val condition = target.condition.conditions.singleOrNull() as? StringPattern.WithLengthCondition ?: return null
     return WithLengthDescriptor(condition.length)
   }
 }
 
 @Serializable
-data class WithLengthDescriptor(val length: Int) : PrefixConditionDescriptor {
+data class WithLengthDescriptor(val length: Int) : RestartPrefixConditionDescriptor {
   override fun recreatePattern(): ElementPattern<String> = StandardPatterns.string().withLength(length)
 }
 
@@ -84,14 +84,14 @@ data class WithLengthDescriptor(val length: Int) : PrefixConditionDescriptor {
 // ============================================================================
 
 class StartsWithConditionConverter : PrefixConditionDescriptorConverter<StringPattern> {
-  override fun toDescriptor(target: StringPattern): PrefixConditionDescriptor? {
+  override fun toDescriptor(target: StringPattern): RestartPrefixConditionDescriptor? {
     val condition = target.condition.conditions.singleOrNull() as? StringPattern.StartsWithCondition ?: return null
     return StartsWithDescriptor(condition.prefix)
   }
 }
 
 @Serializable
-data class StartsWithDescriptor(val prefix: String) : PrefixConditionDescriptor {
+data class StartsWithDescriptor(val prefix: String) : RestartPrefixConditionDescriptor {
   override fun recreatePattern(): ElementPattern<String> = StandardPatterns.string().startsWith(prefix)
 }
 
@@ -100,14 +100,14 @@ data class StartsWithDescriptor(val prefix: String) : PrefixConditionDescriptor 
 // ============================================================================
 
 class EndsWithConditionConverter : PrefixConditionDescriptorConverter<StringPattern> {
-  override fun toDescriptor(target: StringPattern): PrefixConditionDescriptor? {
+  override fun toDescriptor(target: StringPattern): RestartPrefixConditionDescriptor? {
     val condition = target.condition.conditions.singleOrNull() as? StringPattern.EndsWithCondition ?: return null
     return EndsWithDescriptor(condition.suffix)
   }
 }
 
 @Serializable
-data class EndsWithDescriptor(val suffix: String) : PrefixConditionDescriptor {
+data class EndsWithDescriptor(val suffix: String) : RestartPrefixConditionDescriptor {
   override fun recreatePattern(): ElementPattern<String> = StandardPatterns.string().endsWith(suffix)
 }
 
@@ -116,14 +116,14 @@ data class EndsWithDescriptor(val suffix: String) : PrefixConditionDescriptor {
 // ============================================================================
 
 class ContainsConditionConverter : PrefixConditionDescriptorConverter<StringPattern> {
-  override fun toDescriptor(target: StringPattern): PrefixConditionDescriptor? {
+  override fun toDescriptor(target: StringPattern): RestartPrefixConditionDescriptor? {
     val condition = target.condition.conditions.singleOrNull() as? StringPattern.ContainsCondition ?: return null
     return ContainsDescriptor(condition.substring)
   }
 }
 
 @Serializable
-data class ContainsDescriptor(val substring: String) : PrefixConditionDescriptor {
+data class ContainsDescriptor(val substring: String) : RestartPrefixConditionDescriptor {
   override fun recreatePattern(): ElementPattern<String> = StandardPatterns.string().contains(substring)
 }
 
@@ -132,14 +132,14 @@ data class ContainsDescriptor(val substring: String) : PrefixConditionDescriptor
 // ============================================================================
 
 class MatchesConditionConverter : PrefixConditionDescriptorConverter<StringPattern> {
-  override fun toDescriptor(target: StringPattern): PrefixConditionDescriptor? {
+  override fun toDescriptor(target: StringPattern): RestartPrefixConditionDescriptor? {
     val condition = target.condition.conditions.singleOrNull() as? StringPattern.MatchesCondition ?: return null
     return MatchesDescriptor(condition.regex)
   }
 }
 
 @Serializable
-data class MatchesDescriptor(val regex: String) : PrefixConditionDescriptor {
+data class MatchesDescriptor(val regex: String) : RestartPrefixConditionDescriptor {
   override fun recreatePattern(): ElementPattern<String> = StandardPatterns.string().matches(regex)
 }
 
@@ -148,7 +148,7 @@ data class MatchesDescriptor(val regex: String) : PrefixConditionDescriptor {
 // ============================================================================
 
 class OneOfConditionConverter : PrefixConditionDescriptorConverter<StringPattern> {
-  override fun toDescriptor(target: StringPattern): PrefixConditionDescriptor? {
+  override fun toDescriptor(target: StringPattern): RestartPrefixConditionDescriptor? {
     val condition = target.condition.conditions.singleOrNull() as? ValuePatternCondition<*> ?: return null
     if (condition.debugMethodName != "oneOf") return null
     @Suppress("UNCHECKED_CAST")
@@ -158,7 +158,7 @@ class OneOfConditionConverter : PrefixConditionDescriptorConverter<StringPattern
 }
 
 @Serializable
-data class OneOfDescriptor(val values: List<String>) : PrefixConditionDescriptor {
+data class OneOfDescriptor(val values: List<String>) : RestartPrefixConditionDescriptor {
   override fun recreatePattern(): ElementPattern<String> = StandardPatterns.string().oneOf(values)
 }
 
@@ -167,14 +167,14 @@ data class OneOfDescriptor(val values: List<String>) : PrefixConditionDescriptor
 // ============================================================================
 
 class OneOfIgnoreCaseConditionConverter : PrefixConditionDescriptorConverter<StringPattern> {
-  override fun toDescriptor(target: StringPattern): PrefixConditionDescriptor? {
+  override fun toDescriptor(target: StringPattern): RestartPrefixConditionDescriptor? {
     val condition = target.condition.conditions.singleOrNull() as? CaseInsensitiveValuePatternCondition ?: return null
     return OneOfIgnoreCaseDescriptor(condition.values.toList())
   }
 }
 
 @Serializable
-data class OneOfIgnoreCaseDescriptor(val values: List<String>) : PrefixConditionDescriptor {
+data class OneOfIgnoreCaseDescriptor(val values: List<String>) : RestartPrefixConditionDescriptor {
   override fun recreatePattern(): ElementPattern<String> = StandardPatterns.string().oneOfIgnoreCase(*values.toTypedArray())
 }
 
@@ -183,7 +183,7 @@ data class OneOfIgnoreCaseDescriptor(val values: List<String>) : PrefixCondition
 // ============================================================================
 
 class OrPatternConverter : PrefixConditionDescriptorConverter<ElementPattern<String>> {
-  override fun toDescriptor(target: ElementPattern<String>): PrefixConditionDescriptor? {
+  override fun toDescriptor(target: ElementPattern<String>): RestartPrefixConditionDescriptor? {
     val capture = target as? ObjectPattern.Capture<*> ?: return null
     val initial = capture.condition.initialCondition as? InitialPatternConditionPlus ?: return null
     val patterns = initial.patterns
@@ -196,7 +196,7 @@ class OrPatternConverter : PrefixConditionDescriptorConverter<ElementPattern<Str
 
     val descriptors = patterns.mapNotNull {
       @Suppress("UNCHECKED_CAST")
-      FrontendFriendlyPrefixConditionSerializer.toDescriptor(it as ElementPattern<String>)
+      FrontendFriendlyRestartPrefixConditionSerializer.toDescriptor(it as ElementPattern<String>)
     }
     if (descriptors.size != patterns.size) return null
 
@@ -205,7 +205,7 @@ class OrPatternConverter : PrefixConditionDescriptorConverter<ElementPattern<Str
 }
 
 @Serializable
-data class OrDescriptor(val conditions: List<PrefixConditionDescriptor>) : PrefixConditionDescriptor {
+data class OrDescriptor(val conditions: List<RestartPrefixConditionDescriptor>) : RestartPrefixConditionDescriptor {
   override fun recreatePattern(): ElementPattern<String> =
     StandardPatterns.or(*conditions.map { it.recreatePattern() }.toTypedArray())
 }
@@ -215,7 +215,7 @@ data class OrDescriptor(val conditions: List<PrefixConditionDescriptor>) : Prefi
 // ============================================================================
 
 class NotPatternConverter : PrefixConditionDescriptorConverter<ElementPattern<String>> {
-  override fun toDescriptor(target: ElementPattern<String>): PrefixConditionDescriptor? {
+  override fun toDescriptor(target: ElementPattern<String>): RestartPrefixConditionDescriptor? {
     val capture = target as? ObjectPattern.Capture<*> ?: return null
     val initial = capture.condition.initialCondition as? InitialPatternConditionPlus ?: return null
     val patterns = initial.patterns
@@ -226,15 +226,15 @@ class NotPatternConverter : PrefixConditionDescriptorConverter<ElementPattern<St
     if (!debugStr.startsWith("not(")) return null
 
     @Suppress("UNCHECKED_CAST")
-    val descriptor = FrontendFriendlyPrefixConditionSerializer.toDescriptor(patterns[0] as ElementPattern<String>)
-      ?: return null
+    val descriptor = FrontendFriendlyRestartPrefixConditionSerializer.toDescriptor(patterns[0] as ElementPattern<String>)
+                     ?: return null
 
     return NotDescriptor(descriptor)
   }
 }
 
 @Serializable
-data class NotDescriptor(val condition: PrefixConditionDescriptor) : PrefixConditionDescriptor {
+data class NotDescriptor(val condition: RestartPrefixConditionDescriptor) : RestartPrefixConditionDescriptor {
   override fun recreatePattern(): ElementPattern<String> =
     StandardPatterns.not(condition.recreatePattern())
 }
@@ -244,7 +244,7 @@ data class NotDescriptor(val condition: PrefixConditionDescriptor) : PrefixCondi
 // ============================================================================
 
 class EqualToConditionConverter : PrefixConditionDescriptorConverter<StringPattern> {
-  override fun toDescriptor(target: StringPattern): PrefixConditionDescriptor? {
+  override fun toDescriptor(target: StringPattern): RestartPrefixConditionDescriptor? {
     val condition = target.condition.conditions.singleOrNull() as? ValuePatternCondition<*> ?: return null
     if (condition.debugMethodName != "equalTo") return null
     val value = condition.values.singleOrNull() as? String ?: return null
@@ -253,7 +253,7 @@ class EqualToConditionConverter : PrefixConditionDescriptorConverter<StringPatte
 }
 
 @Serializable
-data class EqualToDescriptor(val value: String) : PrefixConditionDescriptor {
+data class EqualToDescriptor(val value: String) : RestartPrefixConditionDescriptor {
   override fun recreatePattern(): ElementPattern<String> = StandardPatterns.string().equalTo(value)
 }
 
@@ -262,14 +262,14 @@ data class EqualToDescriptor(val value: String) : PrefixConditionDescriptor {
 // ============================================================================
 
 class EndsWithUppercaseLetterConditionConverter : PrefixConditionDescriptorConverter<StringPattern> {
-  override fun toDescriptor(target: StringPattern): PrefixConditionDescriptor? {
+  override fun toDescriptor(target: StringPattern): RestartPrefixConditionDescriptor? {
     target.condition.conditions.singleOrNull() as? StringPattern.EndsWithUppercaseLetterCondition ?: return null
     return EndsWithUppercaseLetterDescriptor
   }
 }
 
 @Serializable
-object EndsWithUppercaseLetterDescriptor : PrefixConditionDescriptor {
+object EndsWithUppercaseLetterDescriptor : RestartPrefixConditionDescriptor {
   override fun recreatePattern(): ElementPattern<String> = StandardPatterns.string().endsWithUppercaseLetter()
 }
 
@@ -278,14 +278,14 @@ object EndsWithUppercaseLetterDescriptor : PrefixConditionDescriptor {
 // ============================================================================
 
 class AfterNonJavaIdentifierPartConditionConverter : PrefixConditionDescriptorConverter<StringPattern> {
-  override fun toDescriptor(target: StringPattern): PrefixConditionDescriptor? {
+  override fun toDescriptor(target: StringPattern): RestartPrefixConditionDescriptor? {
     target.condition.conditions.singleOrNull() as? StringPattern.AfterNonJavaIdentifierPartCondition ?: return null
     return AfterNonJavaIdentifierPartDescriptor
   }
 }
 
 @Serializable
-object AfterNonJavaIdentifierPartDescriptor : PrefixConditionDescriptor {
+object AfterNonJavaIdentifierPartDescriptor : RestartPrefixConditionDescriptor {
   override fun recreatePattern(): ElementPattern<String> = StandardPatterns.string().afterNonJavaIdentifierPart()
 }
 
@@ -294,7 +294,7 @@ object AfterNonJavaIdentifierPartDescriptor : PrefixConditionDescriptor {
 // ============================================================================
 
 class AndPatternConverter : PrefixConditionDescriptorConverter<StringPattern> {
-  override fun toDescriptor(target: StringPattern): PrefixConditionDescriptor? {
+  override fun toDescriptor(target: StringPattern): RestartPrefixConditionDescriptor? {
     val conditions = target.condition.conditions
     if (conditions.isEmpty()) return null
 
@@ -306,8 +306,8 @@ class AndPatternConverter : PrefixConditionDescriptorConverter<StringPattern> {
     // Get the wrapped pattern from and()
     @Suppress("UNCHECKED_CAST")
     val wrappedPattern = andCondition.valuePattern as? ElementPattern<String> ?: return null
-    val wrappedDescriptor = FrontendFriendlyPrefixConditionSerializer.toDescriptor(wrappedPattern)
-      ?: return null
+    val wrappedDescriptor = FrontendFriendlyRestartPrefixConditionSerializer.toDescriptor(wrappedPattern)
+                            ?: return null
 
     // Get base pattern conditions (without the and)
     val baseConditions = conditions.dropLast(1)
@@ -325,7 +325,7 @@ class AndPatternConverter : PrefixConditionDescriptorConverter<StringPattern> {
 
   // TODO rework, this is a temporary solution until we have a proper way to handle multiple conditions
   //      it should support arbitrary conditions
-  private fun getDescriptorForSingleCondition(condition: PatternCondition<*>): PrefixConditionDescriptor? {
+  private fun getDescriptorForSingleCondition(condition: PatternCondition<*>): RestartPrefixConditionDescriptor? {
     return when (condition) {
       is StringPattern.LongerThanCondition -> LongerThanDescriptor(condition.minLength)
       is StringPattern.ShorterThanCondition -> ShorterThanDescriptor(condition.maxLength)
@@ -342,9 +342,9 @@ class AndPatternConverter : PrefixConditionDescriptorConverter<StringPattern> {
 
 @Serializable
 data class AndDescriptor(
-  val base: PrefixConditionDescriptor,
-  val combined: PrefixConditionDescriptor
-) : PrefixConditionDescriptor {
+  val base: RestartPrefixConditionDescriptor,
+  val combined: RestartPrefixConditionDescriptor
+) : RestartPrefixConditionDescriptor {
   override fun recreatePattern(): ElementPattern<String> {
     val basePattern = base.recreatePattern()
     val combinedPattern = combined.recreatePattern()

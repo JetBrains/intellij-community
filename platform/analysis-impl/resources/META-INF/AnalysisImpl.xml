@@ -31,9 +31,9 @@
       <with attribute="descriptor" implements="com.intellij.codeInsight.completion.serialization.PrefixMatcherDescriptor"/>
       <with attribute="converter" implements="com.intellij.codeInsight.completion.serialization.PrefixMatcherDescriptorConverter"/>
     </extensionPoint>
-    <extensionPoint name="completion.frontendFriendlyPrefixCondition" beanClass="com.intellij.codeInsight.serialization.ExtensionPointSerializerBean" dynamic="true">
+    <extensionPoint name="completion.frontendFriendlyRestartPrefixCondition" beanClass="com.intellij.codeInsight.serialization.ExtensionPointSerializerBean" dynamic="true">
       <with attribute="target" implements="com.intellij.patterns.ElementPattern"/>
-      <with attribute="descriptor" implements="com.intellij.codeInsight.completion.serialization.PrefixConditionDescriptor"/>
+      <with attribute="descriptor" implements="com.intellij.codeInsight.completion.serialization.RestartPrefixConditionDescriptor"/>
       <with attribute="converter" implements="com.intellij.codeInsight.completion.serialization.PrefixConditionDescriptorConverter"/>
     </extensionPoint>
   </extensionPoints>
