@@ -13,6 +13,8 @@ import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.plugins.testPluginSrc.IJPL207058.DefaultService
 import com.intellij.ide.plugins.testPluginSrc.IJPL207058.ServiceInterface
 import com.intellij.ide.plugins.testPluginSrc.IJPL207058.module.OverriddenService
+import com.intellij.ide.plugins.testPluginSrc.IJPL233642.FooCore
+import com.intellij.ide.plugins.testPluginSrc.IJPL233642.FooCoreAppActivity
 import com.intellij.ide.plugins.testPluginSrc.bar.BarAction
 import com.intellij.ide.plugins.testPluginSrc.bar.BarService
 import com.intellij.ide.plugins.testPluginSrc.foo.FooAction
@@ -1045,6 +1047,44 @@ class DynamicPluginsTest {
           check(service<MyRegistryAccessor>().invocations == 1)
         }
       }
+    }
+  }
+
+  @Test
+  fun `IJPL-233642 registry access of key from same plugin with multiple modules`() {
+    val fooPath = pluginsDir.resolve("foo")
+    plugin("foo") {
+      content {
+        module("foo.core", loadingRule = ModuleLoadingRuleValue.EMBEDDED) {
+          isSeparateJar = true
+          extensions("""
+            <postStartupActivity implementation="${FooCoreAppActivity::class.qualifiedName!!}"/>
+          """.trimIndent())
+          includePackageClassFiles<FooCoreAppActivity>()
+        }
+        module("foo.acp", loadingRule = ModuleLoadingRuleValue.OPTIONAL) {
+          dependencies {
+            module("foo.core")
+          }
+          isSeparateJar = true
+          extensions("""
+            <registryKey defaultValue="true"
+                 description="Foo foo"
+                 key="foo.module.registry.key"/>
+          """.trimIndent())
+        }
+      }
+    }.buildDir(fooPath)
+    StartupManagerImpl.addActivityEpListener(projectRule.project)
+    val foo = loadDescriptorInTest(fooPath)
+    val fooCore = foo.contentModules.first { it.moduleId.name == "foo.core" }
+    try {
+      assertThat(DynamicPlugins.loadPlugins(listOf(foo), null)).isTrue
+      val coreClass = application.getService(fooCore.loadClassInsideSelf<FooCore>()) as PluginTestHandle
+      coreClass.test()
+    }
+    finally {
+      assertThat(DynamicPlugins.unloadPlugins(listOf(foo), null)).isTrue
     }
   }
 
