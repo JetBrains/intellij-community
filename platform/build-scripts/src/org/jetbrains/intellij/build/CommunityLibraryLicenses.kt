@@ -394,6 +394,10 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/gradle/gradle/blob/master/LICENSE")
       .suppliedByOrganizations("Gradle Inc."),
 
+    LibraryLicense(libraryName = "Gradle Tooling API", url = "https://gradle.org/")
+      .apache("https://github.com/gradle/gradle/blob/master/LICENSE")
+      .suppliedByOrganizations("Gradle Inc."),
+
     LibraryLicense("GraphQL Java", version = LibraryLicense.CUSTOM_REVISION, attachedTo = "intellij.graphql", url = "https://github.com/graphql-java/graphql-java")
       .mit("https://github.com/graphql-java/graphql-java/blob/master/LICENSE.md"),
 
