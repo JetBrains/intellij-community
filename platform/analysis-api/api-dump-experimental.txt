@@ -266,12 +266,6 @@ com.intellij.modcommand.ModPsiUpdater
 - f:hashCode():I
 - newValue():java.lang.Object
 - oldValue():java.lang.Object
-*a:com.intellij.modcommand.PsiUpdateModCommandAction
-- com.intellij.modcommand.PsiBasedModCommandAction
-- p:<init>(com.intellij.psi.PsiElement):V
-- p:<init>(java.lang.Class):V
-- pa:invoke(com.intellij.modcommand.ActionContext,com.intellij.psi.PsiElement,com.intellij.modcommand.ModPsiUpdater):V
-- pf:perform(com.intellij.modcommand.ActionContext,com.intellij.psi.PsiElement):com.intellij.modcommand.ModCommand
 *:com.intellij.modcompletion.ModCompletionItem
 - sf:DEFAULT_INSERTION_CONTEXT:com.intellij.modcompletion.ModCompletionItem$InsertionContext
 - additionalLookupStrings():java.util.Set

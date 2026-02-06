@@ -733,6 +733,12 @@ e:com.intellij.modcommand.Presentation$HighlightingKind
 - sf:DELETED_RANGE:com.intellij.modcommand.Presentation$HighlightingKind
 - s:valueOf(java.lang.String):com.intellij.modcommand.Presentation$HighlightingKind
 - s:values():com.intellij.modcommand.Presentation$HighlightingKind[]
+a:com.intellij.modcommand.PsiUpdateModCommandAction
+- com.intellij.modcommand.PsiBasedModCommandAction
+- p:<init>(com.intellij.psi.PsiElement):V
+- p:<init>(java.lang.Class):V
+- pa:invoke(com.intellij.modcommand.ActionContext,com.intellij.psi.PsiElement,com.intellij.modcommand.ModPsiUpdater):V
+- pf:perform(com.intellij.modcommand.ActionContext,com.intellij.psi.PsiElement):com.intellij.modcommand.ModCommand
 com.intellij.openapi.actionSystem.ShortcutProvider
 - a:getShortcut():com.intellij.openapi.actionSystem.ShortcutSet
 com.intellij.openapi.application.WriteActionAware
