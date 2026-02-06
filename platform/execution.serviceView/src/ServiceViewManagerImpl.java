@@ -613,7 +613,8 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
         }
 
         ServiceViewItem fileItem = myModel.findItem(
-          item -> !(item instanceof ServiceModel.ServiceNode),
+          item -> (!(item instanceof ServiceModel.ServiceNode) ||
+                   item.getViewDescriptor() instanceof ServiceViewLocatableDescriptor),
           fileCondition
         );
         if (fileItem != null) {
