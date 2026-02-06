@@ -77,7 +77,7 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
     get() {
       for (customizer in ShellExecOptionsCustomizer.EP_NAME.extensionList) {
         try {
-          val dir = customizer.getStartDirectory(project)
+          val dir = customizer.getDefaultStartWorkingDirectory(project)
           if (dir != null) {
             return dir.toString()
           }

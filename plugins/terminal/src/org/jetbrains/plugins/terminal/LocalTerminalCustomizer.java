@@ -10,13 +10,15 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.runner.TerminalCustomizerLocalPathTranslator;
+import org.jetbrains.plugins.terminal.startup.MutableShellExecOptions;
+import org.jetbrains.plugins.terminal.startup.ShellExecOptionsCustomizer;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 /**
- * @deprecated use {@link org.jetbrains.plugins.terminal.startup.ShellExecOptionsCustomizer} instead
+ * @deprecated use {@link ShellExecOptionsCustomizer} instead
  */
 @Deprecated
 public abstract class LocalTerminalCustomizer {
@@ -24,6 +26,7 @@ public abstract class LocalTerminalCustomizer {
     ExtensionPointName.create("org.jetbrains.plugins.terminal.localTerminalCustomizer");
 
   /**
+   * @deprecated use {@link ShellExecOptionsCustomizer#customizeExecOptions(Project, MutableShellExecOptions)} instead
    * May alter the command to be run in terminal and/or adjust starting environment. <p/>
    * Please note that environment variables are local to the remote {@code eelDescriptor}.
    * For example, it should contain {@code /path/to/dir} instead of
@@ -56,6 +59,7 @@ public abstract class LocalTerminalCustomizer {
    * See the {@code bash-integration.bash} script
    * for more information on how to alter the execution process.
    */
+  @Deprecated
   public @NotNull List<String> customizeCommandAndEnvironment(
     @NotNull Project project,
     @Nullable String workingDirectory,
@@ -108,8 +112,10 @@ public abstract class LocalTerminalCustomizer {
   }
 
   /**
+   * @deprecated use {@link ShellExecOptionsCustomizer#getDefaultStartWorkingDirectory(Project)} instead
    * @return path to the directory to run the terminal in or null if default directory should be used
    */
+  @Deprecated
   protected @Nullable String getDefaultFolder(@NotNull Project project) {
     return null;
   }
