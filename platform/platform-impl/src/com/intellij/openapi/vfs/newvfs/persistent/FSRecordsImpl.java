@@ -186,8 +186,8 @@ public final class FSRecordsImpl implements Closeable {
     int mainVFSFormatVersion = 65;
     //@formatter:off (nextMask better be aligned)
     return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.storageImplementation().getId()), /* acceptable range is [0..255] */ 8,
-           nextMask(false, //former [!USE_CONTENT_STORAGE_OVER_MMAPPED_FILE=false] free to reuse
-           nextMask(IOUtil.useNativeByteOrderForByteBuffers(), // TODO RC: memory-mapped storages ignore that property
+           nextMask(false, // former [!USE_CONTENT_STORAGE_OVER_MMAPPED_FILE=false] free to reuse
+           nextMask(true,  // former useNativeByteOrderForByteBuffers() (memory-mapped storages all use native byte order)
            nextMask(false, // former USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE, free to re-use
            nextMask(true,  // former 'inline attributes', feel free to re-use
            nextMask(getBooleanProperty(FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER, false),
