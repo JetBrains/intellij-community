@@ -56,6 +56,7 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 public class XDebuggerEvaluationDialog extends DialogWrapper {
@@ -72,7 +73,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private EvaluationMode myMode;
   private XSourcePosition mySourcePosition;
   private final SwitchModeAction mySwitchModeAction;
-  private boolean myIsEvaluating = false;
+  private final AtomicBoolean mySkipRefresh = new AtomicBoolean(false);
 
   /**
    * Use {@link XDebuggerEvaluationDialog#XDebuggerEvaluationDialog(XDebugSessionProxy, XDebuggerEditorsProvider, XExpression, XSourcePosition, boolean)} instead
@@ -201,14 +202,12 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
       @Override
       public void settingsChanged() {
-        if (myIsEvaluating) { // filter out rebuildViews after our own evaluation
-          myIsEvaluating = false;
+        if (mySkipRefresh.getAndSet(false)) { // filter out rebuildViews after our own evaluation
           return;
         }
         ApplicationManager.getApplication().invokeLater(() -> {
           XDebuggerEditorBase inputEditor = getInputEditor();
-          // recreate document to support value marks update
-          inputEditor.setExpression(inputEditor.getExpression());
+          inputEditor.rebuildDocument();
           if (myTreePanel.getTree().getRoot() instanceof EvaluatingExpressionRootNode rootNode) {
             rootNode.rebuild();
           }
@@ -411,7 +410,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
   public void evaluationDone() {
     if (mySession == null) return;
-    myIsEvaluating = true;
+    mySkipRefresh.set(true);
     mySession.rebuildViews();
   }
 

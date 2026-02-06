@@ -229,7 +229,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
   public void setContext(@Nullable PsiElement context) {
     if (myContext != context) {
       myContext = context;
-      setExpression(getExpression());
+      rebuildDocument();
     }
   }
 
@@ -258,6 +258,14 @@ public abstract class XDebuggerEditorBase implements Expandable {
   }
 
   protected abstract void doSetText(XExpression text);
+
+  /**
+   * Triggers inner document rebuild with the latest context preserving the same expression.
+   * For example, to use the updated marked objects in code completion.
+   */
+  public void rebuildDocument() {
+    setExpression(getExpression());
+  }
 
   public void setExpression(@Nullable XExpression text) {
     if (text == null) {

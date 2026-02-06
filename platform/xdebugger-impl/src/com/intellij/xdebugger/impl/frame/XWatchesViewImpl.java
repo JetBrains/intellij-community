@@ -362,9 +362,8 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       myRootNode.removeResultNode();
     }
     else {
-      // recreate document to support value marks update
       if (myEvaluateComboBox != null) {
-        myEvaluateComboBox.setExpression(myEvaluateComboBox.getExpression());
+        myEvaluateComboBox.rebuildDocument();
       }
     }
   }
