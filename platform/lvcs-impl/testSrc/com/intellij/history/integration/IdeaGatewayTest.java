@@ -168,8 +168,6 @@ public class IdeaGatewayTest extends IntegrationTestCase {
     // WHEN - THEN
     assertTrue(myGateway.isVersioned(sourceDirectory));
     assertTrue(myGateway.isVersioned(sourceFile));
-    assertTrue(myGateway.isVersioned(sourceDirectory, true));
-    assertTrue(myGateway.isVersioned(sourceFile, true));
   }
 
   public void testScratchFileVersionedOnlyWhenCallerDontCareAboutContentRoot() {
@@ -184,7 +182,6 @@ public class IdeaGatewayTest extends IntegrationTestCase {
 
     // WHEN - THEN
     assertTrue(myGateway.isVersioned(scratchFile));
-    assertFalse(myGateway.isVersioned(scratchFile, true));
   }
 
   public void testFileNotVersionedWhenHasSpecificName() throws Exception {
@@ -198,7 +195,6 @@ public class IdeaGatewayTest extends IntegrationTestCase {
     // WHEN - THEN
     ignoredFiles.forEach(file -> {
       assertFalse(myGateway.isVersioned(file));
-      assertFalse(myGateway.isVersioned(file, true));
     });
   }
 
@@ -212,8 +208,6 @@ public class IdeaGatewayTest extends IntegrationTestCase {
     // WHEN - THEN
     assertFalse(myGateway.isVersioned(excludedDirectory));
     assertFalse(myGateway.isVersioned(fileInExcludedDirectory));
-    assertFalse(myGateway.isVersioned(excludedDirectory, true));
-    assertFalse(myGateway.isVersioned(fileInExcludedDirectory, true));
   }
 
   public void testFileNotVersionedWhenGloballyIgnored() throws Exception {
@@ -229,8 +223,6 @@ public class IdeaGatewayTest extends IntegrationTestCase {
       // WHEN - THEN
       assertTrue(myGateway.isVersioned(resourcesDirectory));
       assertFalse(myGateway.isVersioned(ignoredFile));
-      assertTrue(myGateway.isVersioned(resourcesDirectory, true));
-      assertFalse(myGateway.isVersioned(ignoredFile, true));
     } finally {
       WriteAction.runAndWait(() -> fileTypeManager.setIgnoredFilesList(originalIgnoredFileList));
     }
@@ -256,7 +248,6 @@ public class IdeaGatewayTest extends IntegrationTestCase {
     // WHEN - THEN
     assertSize(2, ProjectManagerEx.getInstanceEx().getOpenProjects());
     assertFalse(myGateway.isVersioned(fileInIgnoredDirectory));
-    assertFalse(myGateway.isVersioned(fileInIgnoredDirectory, true));
   }
 
   public void testFileVersionedInOptimizedPath() throws Exception {
@@ -269,7 +260,6 @@ public class IdeaGatewayTest extends IntegrationTestCase {
     // WHEN - THEN
     assertEmpty(ProjectManagerEx.getInstanceEx().getOpenProjects());
     assertTrue(myGateway.isVersioned(fileOutsideContentRoot));
-    assertFalse(myGateway.isVersioned(fileOutsideContentRoot, true));
   }
 
   public static @NotNull String getAllPaths(@NotNull RootEntry rootEntry) {

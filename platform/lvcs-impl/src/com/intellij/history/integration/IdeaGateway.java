@@ -54,10 +54,6 @@ public class IdeaGateway {
   }
 
   public boolean isVersioned(@NotNull VirtualFile f) {
-    return isVersioned(f, false);
-  }
-
-  public boolean isVersioned(@NotNull VirtualFile f, boolean shouldBeUnderAnyContentRoot) {
     if (VersionManagingFileSystem.isDisabled(f)) {
       return false;
     }
@@ -79,44 +75,33 @@ public class IdeaGateway {
 
     // optimisation: FileTypeManager.isFileIgnored(f) will be checked inside ProjectFileIndex.isUnderIgnored()
     if (numberOfOpenProjects == 0) {
-      if (shouldBeUnderAnyContentRoot) return false; // there is no project, so the file can't be in content
       if (FileTypeManager.getInstance().isFileIgnored(f)) return false;
 
       return true;
     }
 
-    boolean underAnyProjectContentRoot = false;
-    for (int i = 0; i < numberOfOpenProjects; ++i) {
-      ProjectFileIndex projectFileIndex = versionedFilterData.myProjectFileIndices.get(i);
-      boolean isProjectRelated = isProjectRelated(projectFileIndex, f);
+    boolean underAnyProject = false;
+    for (ProjectFileIndex projectFileIndex : versionedFilterData.myProjectFileIndices) {
+      boolean isProjectRelated = projectFileIndex.isInProjectOrExcluded(f) || projectFileIndex.isUnderIgnored(f);
       // isIsContent returns true when the file or directory is under the content root of the project,
       // AND is not excluded or ignored
       if (isProjectRelated && projectFileIndex.isInContent(f)) {
         // File is under the content root and isn't ignored/excluded. Track it in LVCS.
         return true;
       }
-      underAnyProjectContentRoot |= isProjectRelated;
+      underAnyProject |= isProjectRelated;
     }
 
-    if (underAnyProjectContentRoot) {
-      // File is under the content root of at least one project, but it is ignored/excluded by all these projects.
+    if (underAnyProject) {
+      // File does not belong to any content root, but it is excluded by one or more projects.
       // Do not track it in LVCS.
       return false;
     }
-    else if (shouldBeUnderAnyContentRoot) {
-      // At this moment the file isn't under any content root, and callsite asks us only for files that
-      // are under any content root. Do not track it in LVCS.
-      return false;
-    }
     else {
-      // File isn't under the content root of any project, call-site doesn't care if it is.
+      // File is outside all the projects. Let's track it anyway because a user may edit some external files or scratch files.
       // Check only if the file matches any ignored pattern.
       return !FileTypeManager.getInstance().isFileIgnored(f);
     }
-  }
-
-  static boolean isProjectRelated(ProjectFileIndex projectFileIndex, VirtualFile file) {
-    return projectFileIndex.isInProjectOrExcluded(file) || projectFileIndex.isUnderIgnored(file);
   }
 
   public @NotNull String getPathOrUrl(@NotNull VirtualFile file) {

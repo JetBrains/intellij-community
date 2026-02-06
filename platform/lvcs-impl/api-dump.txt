@@ -313,7 +313,6 @@ c:com.intellij.history.integration.IdeaGateway
 - getPathOrUrl(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - ps:getVersionedFilterData():com.intellij.history.integration.IdeaGateway$VersionedFilterData
 - isVersioned(com.intellij.openapi.vfs.VirtualFile):Z
-- isVersioned(com.intellij.openapi.vfs.VirtualFile,Z):Z
 - s:iterateDBChildren(com.intellij.openapi.vfs.VirtualFile):java.lang.Iterable
 - s:loadAndIterateChildren(com.intellij.openapi.vfs.VirtualFile):java.lang.Iterable
 - registerUnsavedDocuments(com.intellij.history.core.LocalHistoryFacade):V
