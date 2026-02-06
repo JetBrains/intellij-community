@@ -12,7 +12,6 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils
-import com.jetbrains.python.packaging.setupPy.SetupPyManager
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
@@ -22,6 +21,11 @@ import com.jetbrains.python.sdk.configuration.PyProjectTomlConfigurationExtensio
 import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector
 import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.VirtualEnvResult
 import com.jetbrains.python.sdk.configuration.prepareSdkCreator
+import com.jetbrains.python.packaging.setupPy.SetupPyHelpers.SETUP_PY
+import com.jetbrains.python.sdk.configuration.*
+import com.intellij.openapi.application.readAction
+
+internal val PY_REQ_TOOL_ID = ToolId("requirements.txt")
 
 internal class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExtension {
 
@@ -34,8 +38,8 @@ internal class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigur
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension? = null
 
-  private fun checkManageableEnv(module: Module): EnvCheckerResult {
-    val configFile = getRequirementsTxtOrSetupPy(module) ?: return EnvCheckerResult.CannotConfigure
+  private suspend fun checkManageableEnv(module: Module): EnvCheckerResult {
+    val configFile = readAction { getRequirementsTxtOrSetupPy(module) } ?: return EnvCheckerResult.CannotConfigure
     return EnvCheckerResult.EnvNotFound(PyBundle.message("sdk.create.venv.suggestion", configFile.name))
   }
 
@@ -43,14 +47,14 @@ internal class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigur
     val sdk = createVenvAndSdk(ModuleOrProject.ModuleAndProject(module)).getOr { return it }
     PySdkConfigurationCollector.logVirtualEnv(module.project, VirtualEnvResult.CREATED)
 
-    val requirementsTxtOrSetupPyFile = getRequirementsTxtOrSetupPy(module)
+    val requirementsTxtOrSetupPyFile = readAction { getRequirementsTxtOrSetupPy(module) }
     if (requirementsTxtOrSetupPyFile == null) {
       PySdkConfigurationCollector.logVirtualEnv(module.project, VirtualEnvResult.DEPS_NOT_FOUND)
       thisLogger().warn("File with dependencies is not found")
       return PyResult.success(sdk)
     }
 
-    val isRequirements = requirementsTxtOrSetupPyFile.name != SetupPyManager.SETUP_PY
+    val isRequirements = requirementsTxtOrSetupPyFile.name != SETUP_PY
 
     if (isRequirements) {
       PythonRequirementTxtSdkUtils.saveRequirementsTxtPath(module.project, sdk, requirementsTxtOrSetupPyFile.toNioPath())
@@ -61,5 +65,4 @@ internal class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigur
 
   private fun getRequirementsTxtOrSetupPy(module: Module) =
     PyPackageUtil.findRequirementsTxt(module) ?: PyPackageUtil.findSetupPy(module)?.virtualFile
-
 }

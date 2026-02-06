@@ -371,7 +371,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   suspend fun refreshInstalledPackages() {
     val context = sdkContext ?: return
 
-    val declaredPackages = context.manager.extractDependencies()?.getOr {
+    val declaredPackages = context.manager.extractDependenciesCached()?.getOr {
       withContext(Dispatchers.EDT) {
         val errorMessage = context.manager.syncErrorMessage() ?: return@withContext
         showErrorNode(errorMessage.descriptionMessage, errorMessage.fixCommandMessage) {
@@ -381,8 +381,10 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       return
     } ?: emptyList()
 
+    val declaredPackageNames = declaredPackages.map { it.name }.toSet()
+
     withContext(Dispatchers.Default) {
-      val installedDeclaredPackages = findInstalledDeclaredPackages(context, declaredPackages)
+      val installedDeclaredPackages = findInstalledDeclaredPackages(context, declaredPackageNames)
       val treeExtractor = PythonPackageRequirementsTreeExtractor.forSdk(context.sdk)
 
       val packagesWithDependencies = if (treeExtractor != null) {
@@ -406,9 +408,9 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     }
   }
 
-  private suspend fun findInstalledDeclaredPackages(context: SdkContext, declaredPackages: List<PythonPackage>): List<PythonPackage> =
+  private suspend fun findInstalledDeclaredPackages(context: SdkContext, declaredPackageNames: Set<String>): List<PythonPackage> =
     context.manager.listInstalledPackages().filter {
-      it.name in declaredPackages.map { pkg -> pkg.name }
+      it.name in declaredPackageNames
     }
 
   private suspend fun processPackagesWithRequirementsTree(

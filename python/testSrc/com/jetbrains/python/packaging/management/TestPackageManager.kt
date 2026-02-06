@@ -1,18 +1,24 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.management
 
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiManager
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.jetbrains.python.packaging.conda.environmentYml.CondaEnvironmentYmlManager
-import com.jetbrains.python.packaging.dependencies.PythonDependenciesManager
-import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementsTxtManager
-import com.jetbrains.python.packaging.setupPy.SetupPyManager
+import com.jetbrains.python.packaging.common.toPythonPackage
+import com.jetbrains.python.packaging.common.toPythonPackages
+import com.jetbrains.python.packaging.conda.environmentYml.format.CondaEnvironmentYmlParser
+import com.jetbrains.python.packaging.setupPy.SetupPyHelpers
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.sdk.associatedModuleDir
 import org.jetbrains.annotations.TestOnly
 
 @TestOnly
@@ -30,15 +36,6 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
       .withPackageNames(packageNames)
       .withPackageDetails(packageDetails)
       .withRepoPackagesVersions(packageVersions)
-
-  override fun getDependencyManager(): PythonDependenciesManager? {
-    val data = sdk.getUserData(REQUIREMENTS_PROVIDER_KEY) ?: return null
-    return when (data) {
-      RequirementsProviderType.REQUIREMENTS_TXT -> PythonRequirementsTxtManager.getInstance(project, sdk)
-      RequirementsProviderType.SETUP_PY -> SetupPyManager.getInstance(project, sdk)
-      RequirementsProviderType.ENVIRONMENT_YML -> CondaEnvironmentYmlManager.getInstance(project, sdk)
-    }
-  }
 
   override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> {
     return PyResult.success(emptyList())
@@ -80,6 +77,59 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
 
   override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> {
     return PyResult.success(installedPackages)
+  }
+
+  override fun getDependencyFile(): VirtualFile? {
+    val providerType = sdk.getUserData(REQUIREMENTS_PROVIDER_KEY) ?: return null
+    val moduleDir = sdk.associatedModuleDir ?: return null
+
+    return when (providerType) {
+      RequirementsProviderType.REQUIREMENTS_TXT -> moduleDir.findChild("requirements.txt")
+      RequirementsProviderType.SETUP_PY -> moduleDir.findChild("setup.py")
+      RequirementsProviderType.ENVIRONMENT_YML -> moduleDir.findChild("environment.yml")
+    }
+  }
+
+  override suspend fun extractDependencies(): PyResult<List<PythonPackage>>? {
+    val providerType = sdk.getUserData(REQUIREMENTS_PROVIDER_KEY) ?: return null
+    val moduleDir = sdk.associatedModuleDir ?: return null
+
+    return when (providerType) {
+      RequirementsProviderType.REQUIREMENTS_TXT -> {
+        val requirementsFile = moduleDir.findChild("requirements.txt") ?: return null
+        extractFromRequirementsTxt(requirementsFile)
+      }
+      RequirementsProviderType.SETUP_PY -> {
+        val setupPyFile = moduleDir.findChild("setup.py") ?: return null
+        extractFromSetupPy(setupPyFile)
+      }
+      RequirementsProviderType.ENVIRONMENT_YML -> {
+        val environmentYmlFile = moduleDir.findChild("environment.yml") ?: return null
+        extractFromEnvironmentYml(environmentYmlFile)
+      }
+    }
+  }
+
+  private suspend fun extractFromRequirementsTxt(file: VirtualFile): PyResult<List<PythonPackage>> {
+    val requirements = readAction {
+      PyRequirementParser.fromFile(file)
+    }
+    return PyResult.success(requirements.mapNotNull { requirement -> requirement.toPythonPackage() })
+  }
+
+  private suspend fun extractFromSetupPy(file: VirtualFile): PyResult<List<PythonPackage>>? {
+    val requirements = readAction {
+      val pyFile = PsiManager.getInstance(project).findFile(file) as? PyFile ?: return@readAction null
+      SetupPyHelpers.parseSetupPy(pyFile)
+    } ?: return null
+    return PyResult.success(requirements.mapNotNull { requirement -> requirement.toPythonPackage() })
+  }
+
+  private suspend fun extractFromEnvironmentYml(file: VirtualFile): PyResult<List<PythonPackage>>? {
+    val requirements = readAction {
+      CondaEnvironmentYmlParser.fromFile(file)
+    } ?: return null
+    return PyResult.success(requirements.toPythonPackages())
   }
 
   private fun findPackageByName(name: String): PythonPackage? {

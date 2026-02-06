@@ -307,7 +307,8 @@ val Sdk.associatedModuleNioPath: Path?
 
 private val SDK_ERROR_REPORTED = Key.create<Boolean>("pySdkErrorReported")
 
-internal val Sdk.associatedModuleDir: VirtualFile?
+@get:Internal
+val Sdk.associatedModuleDir: VirtualFile?
   get() {
     val nioPath = associatedModuleNioPath ?: return null
     return VirtualFileManager.getInstance().findFileByNioPath(nioPath) ?: TempFileSystem.getInstance().findFileByNioFile(nioPath)

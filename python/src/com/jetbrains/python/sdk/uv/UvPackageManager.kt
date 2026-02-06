@@ -4,10 +4,12 @@ package com.jetbrains.python.sdk.uv
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.cancelOnDispose
+import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
+import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
@@ -16,11 +18,14 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManager.Companion.PackageManagerErrorMessage
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
+import com.jetbrains.python.packaging.management.resolvePyProjectToml
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -143,6 +148,23 @@ internal class UvPackageManager(project: Project, sdk: Sdk, uvLowLevelDeferred: 
       }
       reloadPackages().mapSuccess { }
     }
+  }
+
+  override fun getDependencyFile(): VirtualFile? {
+    val uvWorkingDirectory = (sdk.sdkAdditionalData as? UvSdkAdditionalData)?.uvWorkingDirectory ?: return null
+    return resolvePyProjectToml(uvWorkingDirectory)
+  }
+
+  override suspend fun addDependencyImpl(requirement: PyRequirement): Boolean = withContext(Dispatchers.IO) {
+    val specification = repositoryManager.findPackageSpecification(requirement) ?: return@withContext false
+    
+    val request = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(listOf(specification))
+
+    withUv { uv ->
+        uv.addDependency(request, emptyList())
+    }.getOr { return@withContext false }
+
+    return@withContext true
   }
 }
 

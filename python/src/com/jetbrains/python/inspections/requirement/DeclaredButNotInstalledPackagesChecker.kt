@@ -5,18 +5,20 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VfsUtil
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.common.toRequirements
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.extractDependenciesAsync
 import com.jetbrains.python.psi.PyUtil
 
 class DeclaredButNotInstalledPackagesChecker(
   val ignoredPackages: Collection<String>,
 ) {
   fun findUnsatisfiedRequirements(module: Module, manager: PythonPackageManager): List<PyRequirement> {
-    val requirements = manager.getDependencyManager()?.getDependencies() ?: return emptyList()
+    val requirements = manager.extractDependenciesAsync() ?: return emptyList()
     val installedPackages = manager.listInstalledPackagesSnapshot()
     val modulePackages = collectPackagesInModule(module)
 
-    return requirements.filter { requirement ->
+    return requirements.toRequirements().filter { requirement ->
       isRequirementUnsatisfied(requirement, installedPackages, modulePackages)
     }
   }

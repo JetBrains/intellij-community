@@ -11,18 +11,23 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.onFailure
+import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.jetbrains.python.packaging.conda.environmentYml.CondaEnvironmentYmlManager
-import com.jetbrains.python.packaging.dependencies.PythonDependenciesManager
+import com.jetbrains.python.packaging.common.toPythonPackages
+import com.jetbrains.python.packaging.conda.environmentYml.CondaEnvironmentYmlSdkUtils
+import com.jetbrains.python.packaging.conda.environmentYml.format.CondaEnvironmentYmlParser
+import com.jetbrains.python.packaging.conda.environmentYml.format.EnvironmentYmlModifier
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerEngine
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.pip.PipPackageManagerEngine
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 
 class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   override val repositoryManager: PythonRepositoryManager = CondaRepositoryManger(project, sdk).also {
@@ -32,13 +37,8 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
   private val condaPackageEngine = CondaPackageManagerEngine(sdk)
   private val pipPackageEngine = PipPackageManagerEngine(project, sdk)
 
-  override fun getDependencyManager(): PythonDependenciesManager {
-    return CondaEnvironmentYmlManager.getInstance(project, sdk)
-  }
-
   override suspend fun syncCommand(): PyResult<Unit> {
-    val requirementsFile = getDependencyManager().getDependenciesFile()
-                           ?: return PyResult.localizedError(PyBundle.message("python.sdk.conda.requirements.file.not.found"))
+    val requirementsFile = getDependencyFile() ?: return PyResult.localizedError(PyBundle.message("python.sdk.conda.requirements.file.not.found"))
     return updateEnv(requirementsFile)
   }
 
@@ -147,5 +147,22 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
       condaPackageEngine
     else
       pipPackageEngine
+  }
+
+  override suspend fun extractDependencies(): PyResult<List<PythonPackage>>? {
+    val envFile = getDependencyFile() ?: return null
+    val requirements = withContext(Dispatchers.IO) {
+      CondaEnvironmentYmlParser.fromFile (envFile)
+    }  ?: return null
+    return PyResult.success(requirements.toPythonPackages())
+  }
+
+  override fun getDependencyFile(): VirtualFile? {
+    return CondaEnvironmentYmlSdkUtils.findFile(sdk)
+  }
+
+  override suspend fun addDependencyImpl(requirement: PyRequirement): Boolean {
+    val envFile = getDependencyFile() ?: return false
+    return EnvironmentYmlModifier.addRequirement(project, envFile, requirement.presentableText)
   }
 }

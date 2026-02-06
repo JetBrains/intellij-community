@@ -12,7 +12,9 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.extensions.getSdk
 import com.jetbrains.python.packaging.PyPIPackageCache
 import com.jetbrains.python.packaging.PyPackageName
+import com.jetbrains.python.packaging.common.toRequirements
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.extractDependenciesAsync
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
@@ -48,7 +50,7 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
       val sdk = module.getSdk() ?: continue
       if (!PythonSdkUtil.isPythonSdk(sdk)) continue
       val usageData = getPythonSpecificInfo(sdk)
-      val requirements = PythonPackageManager.forSdk(project, sdk).getDependencyManager()?.getDependencies().orEmpty()
+      val requirements = PythonPackageManager.forSdk(project, sdk).extractDependenciesAsync()?.toRequirements().orEmpty()
       requirements
         .filter { pypiPackages.containsPackage(it.name) }
         .forEach { req ->
