@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -9,10 +9,13 @@ import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.BatchQuickFix;
+import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionEngine;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.lang.LangBundle;
@@ -22,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -29,13 +33,16 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 @ApiStatus.Internal
@@ -110,7 +117,25 @@ public final class CleanupInspectionIntention implements IntentionAction, HighPr
     try {
       return ReadAction.nonBlocking(() -> ProgressManager.getInstance().runProcess(() -> {
         InspectionManager inspectionManager = InspectionManager.getInstance(project);
-        return InspectionEngine.runInspectionOnFile(targetFile, myToolWrapper, inspectionManager.createNewGlobalContext());
+        GlobalInspectionContext context = inspectionManager.createNewGlobalContext();
+        String id = myToolWrapper.getMainToolId();
+        List<LocalInspectionToolWrapper> wrappers;
+        if (id != null && myToolWrapper instanceof LocalInspectionToolWrapper local) {
+          InspectionProfileImpl profile = ((GlobalInspectionContextBase)context).getCurrentProfile();
+          LocalInspectionToolWrapper mainTool = (LocalInspectionToolWrapper)profile.getToolById(id, targetFile);
+          wrappers = mainTool != null ? List.of(local, mainTool) : List.of(local);
+          List<ProblemDescriptor> found = Collections.synchronizedList(new ArrayList<>());
+          Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
+            InspectionEngine.inspectEx(wrappers, targetFile, targetFile.getTextRange(), targetFile.getTextRange(),
+                                       false, false, true, new EmptyProgressIndicator(), PairProcessor.alwaysTrue());
+          for (List<ProblemDescriptor> value : map.values()) {
+            found.addAll(value);
+          }
+          return found;
+        }
+        else {
+          return InspectionEngine.runInspectionOnFile(targetFile, myToolWrapper, context);
+        }
       }, new DaemonProgressIndicator())).submit(AppExecutorUtil.getAppExecutorService()).get();
     }
     catch (InterruptedException | ExecutionException e) {
