@@ -637,5 +637,16 @@ public final class TreeRuleChecker {
     public @NotNull TreeProblem copyWithProblemFixes(@NotNull List<ProblemFix> fixes) {
       return new TreeProblem(copyWithFixes(getSource(), fixes), getRule(), getText(), match, customFixes);
     }
+
+    @Override
+    public @NotNull GrazieProblem copyWithHighlighting(ai.grazie.text.@NotNull TextRange @NotNull [] always,
+                                                       ai.grazie.text.@NotNull TextRange @NotNull [] onHover) {
+      return new TreeProblem(copyWithHighlighting(getSource(), always, onHover), getRule(), getText(), match, customFixes);
+    }
+
+    @Override
+    public @NotNull GrazieProblem copyWithInfoAndMessage(Problem.@NotNull KindInfo info, @NotNull String message) {
+      return new TreeProblem(copyWithInfoAndMessage(getSource(), info, message), getRule(), getText(), match, customFixes);
+    }
   }
 }

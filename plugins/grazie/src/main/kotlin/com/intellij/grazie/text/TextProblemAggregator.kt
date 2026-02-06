@@ -4,6 +4,7 @@ import ai.grazie.gec.model.CorrectionServiceType
 import ai.grazie.gec.model.CorrectionServiceType.MLEC
 import ai.grazie.gec.model.CorrectionServiceType.OTHER
 import ai.grazie.gec.model.CorrectionServiceType.RULE
+import ai.grazie.gec.model.problem.Problem
 import ai.grazie.gec.model.problem.ProblemAggregator
 import ai.grazie.gec.model.problem.ProblemFix
 import ai.grazie.gec.model.problem.concedeToOtherGrammarCheckers
@@ -23,8 +24,9 @@ object TextProblemAggregator : ProblemAggregator<TextProblem>() {
     return if (problem.rule.globalId.startsWith(MlecChecker.Constants.MLEC_RULE_PREFIX)) MLEC else RULE
   }
 
+  override fun kindInfo(problem: TextProblem): Problem.KindInfo = mapGrazieProblem(problem) { it.source.info }
+  override fun message(problem: TextProblem): String = mapGrazieProblem(problem) { it.source.message }
   override fun isSpellingProblem(problem: TextProblem): Boolean = problem.isSpellingProblem
-
   override fun highlightingRanges(problem: TextProblem): List<TextRange> = problem.highlightRanges.map { it.aiRange() }
 
   override fun fixes(problem: TextProblem): List<ProblemFix> {
@@ -37,6 +39,12 @@ object TextProblemAggregator : ProblemAggregator<TextProblem>() {
     return problem.copyWithProblemFixes(fixes)
   }
 
+  override fun withHighlighting(problem: TextProblem, always: Array<TextRange>, onHover: Array<TextRange>): TextProblem =
+    mapGrazieProblem(problem) { it.copyWithHighlighting(always, onHover) }
+
+  override fun withInfoAndMessage(problem: TextProblem, info: Problem.KindInfo, message: String): TextProblem =
+    mapGrazieProblem(problem) { it.copyWithInfoAndMessage(info, message) }
+
   override fun problemPriority(problem: TextProblem): Int {
     val concedeToOtherCheckers = concedeToOtherGrammarCheckers(problem)
     val service = service(problem)
@@ -47,5 +55,9 @@ object TextProblemAggregator : ProblemAggregator<TextProblem>() {
     if (service == MLEC) return 20
     if (service == RULE && !styleLike) return 10
     return 0
+  }
+
+  private fun <T> mapGrazieProblem(problem: TextProblem, mapping: (GrazieProblem) -> T): T {
+    if (problem is GrazieProblem) return mapping(problem) else throw IllegalArgumentException("Method is supported only for Grazie problems")
   }
 }
