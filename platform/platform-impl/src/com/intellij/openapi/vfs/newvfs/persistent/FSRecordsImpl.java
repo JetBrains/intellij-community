@@ -182,8 +182,8 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   public static int currentImplementationVersion() {
-    //bumped main version (63 -> 64) because AppendOnlyLog ids assignment algo changed
-    int mainVFSFormatVersion = 64;
+    //bumped main version (64 -> 65) because 'names.dat.mmap' -> 'names.dat' renaming
+    int mainVFSFormatVersion = 65;
     //@formatter:off (nextMask better be aligned)
     return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.storageImplementation().getId()), /* acceptable range is [0..255] */ 8,
            nextMask(false, //former [!USE_CONTENT_STORAGE_OVER_MMAPPED_FILE=false] free to reuse

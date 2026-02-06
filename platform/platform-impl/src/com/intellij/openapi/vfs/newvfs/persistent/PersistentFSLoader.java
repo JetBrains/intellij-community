@@ -530,10 +530,7 @@ public final class PersistentFSLoader {
 
   private @NotNull ScannableDataEnumeratorEx<String> createFileNamesEnumerator(@NotNull Path namesFile) throws IOException {
     LOG.info("VFS uses names enumerator over mmapped file");
-    //MAYBE RC: remove .mmap suffix, and use namesFile directly? Suffix was needed during transition from regular to mmapped impls,
-    //          and long unused
-    Path namesPathEx = Path.of(namesFile + ".mmap");
-    return DurableStringEnumerator.openAsync(namesPathEx, executorService::async);
+    return DurableStringEnumerator.openAsync(namesFile, executorService::async);
   }
 
   public @NotNull VFSContentStorage createContentStorage(@NotNull Path contentsFile) throws IOException {
