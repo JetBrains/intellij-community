@@ -256,7 +256,7 @@ public class CoreApplicationEnvironment {
     if (!extensionPoints.isEmpty()) {
       areaImpl.registerExtensionPoints(extensionPoints, descriptor);
     }
-    descriptor.registerExtensions(areaImpl.getNameToPointMap(), null);
+    areaImpl.registerExtensions(descriptor.getExtensions(), descriptor, null);
   }
 
   public @NotNull CoreLocalFileSystem getLocalFileSystem() {
