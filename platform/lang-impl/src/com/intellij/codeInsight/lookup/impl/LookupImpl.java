@@ -848,13 +848,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
           offset = LookupUtil.insertLookupInDocumentWindowIfNeeded(project, editor, caretOffset, prefixLength, lookupString);
         }
         catch (AssertionError ae) {
-          @SuppressWarnings("RedundantTypeArguments") // type argument is needed to suppress incorrent nullability issue
-          String classes = StreamEx
-            .<LookupElement>iterate(item, Objects::nonNull, i -> {
-              return i instanceof LookupElementDecorator ? ((LookupElementDecorator<?>)i).getDelegate() : null;
-            })
-            .map(le -> le.getClass().getName()).joining(" -> ");
-          LOG.error("When completing " + item + " (" + classes + ")", ae);
+          reportErrorAfterInsert(item, ae);
           return;
         }
         editor.getCaretModel().moveToOffset(offset);
@@ -863,6 +857,16 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     });
 
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+  }
+
+  private static void reportErrorAfterInsert(@NotNull LookupElement item, @NotNull AssertionError ae) {
+    @SuppressWarnings("RedundantTypeArguments") // type argument is needed to suppress incorrent nullability issue
+    String classes = StreamEx
+      .<LookupElement>iterate(item, Objects::nonNull, i -> {
+        return i instanceof LookupElementDecorator ? ((LookupElementDecorator<?>)i).getDelegate() : null;
+      })
+      .map(le -> le.getClass().getName()).joining(" -> ");
+    LOG.error("When completing " + item + " (" + classes + ")", ae);
   }
 
   @Override
@@ -943,7 +947,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       return false;
     }
 
-    return WriteIntentReadAction.compute((Computable<Boolean>)() -> {
+    return WriteIntentReadAction.compute(() -> {
       LookupUsageTracker.trackLookup(myCreatedTimestamp, this);
       return doShowLookup();
     });
