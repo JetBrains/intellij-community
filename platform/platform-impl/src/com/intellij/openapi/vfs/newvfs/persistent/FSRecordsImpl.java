@@ -118,9 +118,6 @@ public final class FSRecordsImpl implements Closeable {
   private static final boolean USE_MRU_FILE_NAME_CACHE = "mru".equals(NAME_CACHE_IMPL);
 
 
-  private static final String CONTENT_HASH_IMPL = System.getProperty("vfs.content-hash-storage.impl", "over-mmapped-file");
-  public static final boolean USE_CONTENT_HASH_STORAGE_OVER_MMAPPED_FILE = "over-mmapped-file".equals(CONTENT_HASH_IMPL);
-
   /**
    * Cutoff for VFSContentStorage: file content larger than this threshold store with compression.
    * Range 4k-8k seems to be optimal, gauged by experiments on IntelliJ source tree:  with such thresholds only

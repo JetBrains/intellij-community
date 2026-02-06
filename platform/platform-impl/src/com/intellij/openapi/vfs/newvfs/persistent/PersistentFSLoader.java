@@ -6,7 +6,6 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.content.CompressingAlgo;
-import com.intellij.openapi.vfs.newvfs.persistent.mapped.content.ContentHashEnumeratorOverDurableEnumerator;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.content.VFSContentStorageOverMMappedFile;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
@@ -17,7 +16,6 @@ import com.intellij.platform.util.io.storages.enumerator.DurableStringEnumerator
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.DataEnumerator;
 import com.intellij.util.io.IOUtil;
@@ -127,7 +125,6 @@ public final class PersistentFSLoader {
   public final @NotNull Path namesFile;
   public final @NotNull Path attributesFile;
   public final @NotNull Path contentsFile;
-  public final @NotNull Path contentsHashesFile;
   public final @NotNull Path recordsFile;
   public final @NotNull Path enumeratedAttributesFile;
 
@@ -165,7 +162,6 @@ public final class PersistentFSLoader {
     namesFile = persistentFSPaths.storagePath("names");
     attributesFile = persistentFSPaths.storagePath("attributes");
     contentsFile = persistentFSPaths.storagePath("content");
-    contentsHashesFile = persistentFSPaths.storagePath("contentHashes");
     enumeratedAttributesFile = persistentFSPaths.storagePath("attributes_enums");
 
     corruptionMarkerFile = persistentFSPaths.getCorruptionMarkerFile();
@@ -187,7 +183,7 @@ public final class PersistentFSLoader {
     CompletableFuture<VFSAttributesStorage> attributesStorageFuture =
       executorService.async(() -> createAttributesStorage(attributesFile));
     CompletableFuture<VFSContentStorage> contentsStorageFuture =
-      executorService.async(() -> createContentStorage(contentsHashesFile, contentsFile));
+      executorService.async(() -> createContentStorage(contentsFile));
     CompletableFuture<PersistentFSRecordsStorage> recordsStorageFuture = executorService.async(() -> createRecordsStorage(recordsFile));
 
     //TODO RC: if !REUSE_DELETED_FILE_IDS -> check recordsStorage.maxAllocatedID() -> rebuild VFS if maxID >~ MAX_INT/2
@@ -540,8 +536,7 @@ public final class PersistentFSLoader {
     return DurableStringEnumerator.openAsync(namesPathEx, executorService::async);
   }
 
-  public @NotNull VFSContentStorage createContentStorage(@NotNull Path contentsHashesFile,
-                                                         @NotNull Path contentsFile) throws IOException {
+  public @NotNull VFSContentStorage createContentStorage(@NotNull Path contentsFile) throws IOException {
     //Use larger pages: content storage is usually quite big.
     int pageSize = 64 * IOUtil.MiB;
 
@@ -559,33 +554,6 @@ public final class PersistentFSLoader {
     };
     LOG.info("VFS uses content storage over memory-mapped file, with compression algo: " + compressionAlgo);
     return new VFSContentStorageOverMMappedFile(contentsFile, pageSize, compressionAlgo);
-  }
-
-
-  private static @NotNull ContentHashEnumerator openContentHashEnumeratorOrCreateEmpty(@NotNull Path contentsHashesFile)
-    throws IOException {
-    try {
-      return openContentHashEnumerator(contentsHashesFile);
-    }
-    catch (IOException e) {
-      //No need to fail here: just clean contentHashes, and open empty -- content hashes could be re-build
-      // by contentStorage data
-      LOG.warn("ContentHashEnumerator is broken -- clean it, hope it will be recovered from ContentStorage later on. " +
-               "Cause: " + e.getMessage());
-      IOUtil.deleteAllFilesStartingWith(contentsHashesFile);
-      return openContentHashEnumerator(contentsHashesFile);
-    }
-  }
-
-  private static @NotNull ContentHashEnumerator openContentHashEnumerator(@NotNull Path contentsHashesFile) throws IOException {
-    if (FSRecordsImpl.USE_CONTENT_HASH_STORAGE_OVER_MMAPPED_FILE) {
-      LOG.info("VFS uses content hash storage over mmapped file");
-      return ContentHashEnumeratorOverDurableEnumerator.open(contentsHashesFile);
-    }
-    else {
-      LOG.info("VFS uses content hash storage over regular FilePageCache");
-      return ContentHashEnumerator.open(contentsHashesFile, PERSISTENT_FS_STORAGE_CONTEXT);
-    }
   }
 
   public @NotNull PersistentFSRecordsStorage createRecordsStorage(@NotNull Path recordsFile) throws IOException {
@@ -722,9 +690,9 @@ public final class PersistentFSLoader {
     String remainingProblemsList = problemsDuringLoad.isEmpty() ?
                                    "no problems" :
                                    problemsDuringLoad.stream()
-                                     .map(VFSInitException::category)
-                                     .map(Object::toString)
-                                     .collect(joining());
+                                   .map(VFSInitException::category)
+                                   .map(Object::toString)
+                                   .collect(joining());
 
     LOG.warn("[VFS load problem]: " +
              recoveredProblemsList + " recovered, " +
