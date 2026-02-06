@@ -7,6 +7,7 @@ import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBro
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.idea.AppMode
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.application.ApplicationManager
@@ -68,7 +69,6 @@ import com.intellij.ui.layout.selectedValueIs
 import com.intellij.ui.layout.selectedValueMatches
 import com.intellij.ui.render.fontInfoRenderer
 import com.intellij.util.PathUtil
-import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.system.OS
 import com.intellij.util.ui.initOnShow
@@ -96,7 +96,6 @@ import java.awt.Component
 import java.awt.event.ActionListener
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
 import javax.swing.JTextField
@@ -394,16 +393,10 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
           checkBox(message("settings.override.ide.shortcuts"))
             .bindSelected(optionsProvider::overrideIdeShortcuts)
           cell(ActionLink(message("settings.configure.terminal.keybindings"), ActionListener { e ->
-            val settings = DataManager.getInstance().getDataContext(e.getSource() as ActionLink?).getData(Settings.KEY)
-            if (settings != null) {
-              val configurable = settings.find("preferences.keymap")
-              settings.select(configurable, "Terminal").doWhenDone(Runnable {
-                // Remove once https://youtrack.jetbrains.com/issue/IDEA-212247 is fixed
-                EdtExecutorService.getScheduledExecutorInstance().schedule(Runnable {
-                  settings.select(configurable, "Terminal")
-                }, 100, TimeUnit.MILLISECONDS)
-              })
-            }
+            // A hack: open the Keymap page and select the completion action (it is the first in the list of Terminal actions)
+            // Other ways of filtering the Keymap actions tree don't work reliably.
+            val dataContext = DataManager.getInstance().getDataContext(e.getSource() as? ActionLink)
+            openKeymapPageAndSelectAction(dataContext, "Terminal.CommandCompletion.Invoke")
           }).apply { toolTipText = message("settings.keymap.plugins.terminal") })
         }
         row {
@@ -728,12 +721,17 @@ private fun Panel.actionShortcutComboboxWithEnabledCheckbox(
 
 private fun Row.changeActionShortcutLink(actionId: String): Cell<ActionLink> {
   return link(message("terminal.command.completion.shortcut.change")) {
-    val allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(it.source as Component))
-    val keymapPanel = allSettings?.find(KeymapPanel::class.java)
-    if (keymapPanel != null) {
-      allSettings.select(keymapPanel).doWhenDone {
-        keymapPanel.selectAction(actionId)
-      }
+    val dataContext = DataManager.getInstance().getDataContext(it.source as Component)
+    openKeymapPageAndSelectAction(dataContext, actionId)
+  }
+}
+
+private fun openKeymapPageAndSelectAction(dataContext: DataContext, actionId: String) {
+  val allSettings = Settings.KEY.getData(dataContext)
+  val keymapPanel = allSettings?.find(KeymapPanel::class.java)
+  if (keymapPanel != null) {
+    allSettings.select(keymapPanel).doWhenDone {
+      keymapPanel.selectAction(actionId)
     }
   }
 }
