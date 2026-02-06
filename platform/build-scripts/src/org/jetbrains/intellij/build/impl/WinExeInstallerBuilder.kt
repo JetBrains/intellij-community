@@ -196,7 +196,7 @@ private suspend fun prepareConfigurationFiles(nsiConfDir: Path, uninstallerFileN
 
   Files.writeString(nsiConfDir.resolve("config.nsi"), $$"""
     !define INSTALLER_ARCH $${expectedArch}
-    !define IMAGES_LOCATION "$${customizer.installerImagesPath!!}"
+    !define IMAGES_LOCATION "$${customizer.installerImagesPath ?: context.productProperties.imagesDirectoryPath!!}"
 
     !define MANUFACTURER "$${appInfo.shortCompanyName}"
     !define MUI_PRODUCT "$${customizer.getFullNameIncludingEdition(appInfo)}"

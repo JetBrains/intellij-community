@@ -340,7 +340,7 @@ open class MacDistributionCustomizer {
    *
    * Reference: [Apple Icon Image Format](https://en.wikipedia.org/wiki/Apple_Icon_Image_format).
    */
-  lateinit var icnsPath: Path
+  var icnsPath: Path? = null
 
   /**
    * Path to an .icns file for EAP builds (if `null`, [icnsPath] will be used).
@@ -376,7 +376,7 @@ open class MacDistributionCustomizer {
   /**
    * Path to an image which will be injected into the .dmg file.
    */
-  lateinit var dmgImagePath: Path
+  var dmgImagePath: Path? = null
 
   /**
    * The minimum version of macOS where the product is allowed to be installed.

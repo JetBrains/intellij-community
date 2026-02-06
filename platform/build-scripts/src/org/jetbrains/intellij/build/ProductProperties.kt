@@ -75,6 +75,30 @@ abstract class ProductProperties {
   var mainClassName: String = "com.intellij.idea.Main"
 
   /**
+   * Path to a directory containing images which will be used in the product's distribution. This property can be used instead of providing paths to individual files in
+   * [WindowsCustomizerBuilder], [MacCustomizerBuilder] and [LinuxCustomizerBuilder].
+   *
+   * The directory should contain the following files:
+   * * `linux/product_128.png`: a 128x128 PNG file which will be used for the product launcher in Linux distribution (replaces [LinuxCustomizerBuilder.iconPngPath]);
+   * * `linux/product_128_EAP.png`: a 128x128 PNG file which will be used for the product launcher in Linux distribution for EAP builds (replaces [LinuxCustomizerBuilder.iconPngPath]).
+   * * `mac/dmg_background.tiff`: a TIFF file which will be used as a background image in a DMG file for macOS distribution (replaces [MacCustomizerBuilder.dmgImagePath]);
+   * * `mac/dmg_background_EAP.tiff`: a TIFF file which will be used as a background image in a DMG file for macOS distribution (replaces [MacCustomizerBuilder.dmgImagePathForEAP]);
+   * * `mac/product.icns`: an icns file which will be used for the product bundle in macOS distribution (replaces [MacCustomizerBuilder.icnsPath]);
+   * * `mac/product_EAP.icns`: an icns file which will be used for the product bundle in macOS distribution for EAP builds (replaces [MacCustomizerBuilder.icnsPathForEAP]);
+   * * `win/headerlogo.bmp`: a 150x57 BMP image which will be shown at the header of the Windows installer window (replaces [WindowsCustomizerBuilder.installerImagesPath]);
+   * * `win/install.ico`: a 16x16 icon file for the Windows installer (replaces [WindowsCustomizerBuilder.installerImagesPath]);
+   * * `win/logo.bmp`: a 164x314 BMP image which will be shown on the left side of the Windows installer window (replaces [WindowsCustomizerBuilder.installerImagesPath]);
+   * * `win/product.ico`: a 16x16 ico file which will be used for the product launcher in Windows distribution (replaces [WindowsCustomizerBuilder.icoPath]);
+   * * `win/product_EAP.ico`: a 16x16 ico file which will be used for the product launcher in Windows distribution for EAP builds (replaces [WindowsCustomizerBuilder.icoPathForEAP]);
+   * * `win/uninstall.ico`: a 16x16 icon file for the Windows uninstaller (replaces [WindowsCustomizerBuilder.installerImagesPath]);
+   *
+   * Files with `_EAP` suffix are optional, if they are absent, the variant without `_EAP` will be used.
+   *
+   * Files without `_EAP` suffix must be present to produce an installation for the corresponding OS.
+   */
+  var imagesDirectoryPath: Path? = null
+
+  /**
    * Paths to directories containing images specified by 'logo/@url' and 'icon/@ico' attributes in ApplicationInfo.xml file.
    * <br>
    * todo get rid of this and make sure that these resources are located in [applicationInfoModule] instead

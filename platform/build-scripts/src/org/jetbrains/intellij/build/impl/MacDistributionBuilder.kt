@@ -7,7 +7,6 @@ import com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
 import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -57,6 +56,7 @@ import java.util.zip.Deflater
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteRecursively
+import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
@@ -275,7 +275,7 @@ class MacDistributionBuilder(
     MachOUuid(copy, customizer, context).patch()
     copyFile(licensePath, macDistDir.resolve("license/launcher-third-party-libraries.html"))
 
-    val icnsPath = customizer.icnsPathForEAP?.takeIf { context.applicationInfo.isEAP } ?: customizer.icnsPath
+    val icnsPath = locateIcnsForMacApp(customizer, context)
     val resourcesDistDir = macDistDir.resolve("Resources")
     copyFile(icnsPath, resourcesDistDir.resolve(targetIcnsFileName))
 
@@ -666,7 +666,7 @@ class MacDistributionBuilder(
     NioFiles.deleteRecursively(tempDir)
     Files.createDirectories(tempDir)
     val dmgImageCopy = tempDir.resolve("${context.fullBuildNumber}.png")
-    Files.copy((if (context.applicationInfo.isEAP) customizer.dmgImagePathForEAP else null) ?: customizer.dmgImagePath, dmgImageCopy)
+    Files.copy(locateDmgImageForMacApp(customizer, context), dmgImageCopy)
     val scriptsDir = context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts")
     Files.copy(scriptsDir.resolve("makedmg.sh"), tempDir.resolve("makedmg.sh"), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
     NioFiles.setExecutable(tempDir.resolve("makedmg.sh"))

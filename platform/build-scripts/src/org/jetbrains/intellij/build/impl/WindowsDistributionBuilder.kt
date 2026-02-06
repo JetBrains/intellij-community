@@ -94,7 +94,8 @@ internal class WindowsDistributionBuilder(
 
       Files.writeString(distBinDir.resolve(PROPERTIES_FILE_NAME), StringUtilRt.convertLineSeparators(ideaProperties!!, "\r\n"))
 
-      Files.copy(computeIcoPath(context), distBinDir.resolve("${context.productProperties.baseFileName}.ico"), StandardCopyOption.REPLACE_EXISTING)
+      val icoFile = locateIcoFileForWindowsLauncher(customizer, context)
+      Files.copy(icoFile, distBinDir.resolve("${context.productProperties.baseFileName}.ico"), StandardCopyOption.REPLACE_EXISTING)
 
       if (customizer.includeBatchLaunchers) {
         generateScripts(distBinDir, arch, context)
@@ -338,7 +339,7 @@ internal class WindowsDistributionBuilder(
       val appInfo = context.applicationInfo
       val executableBaseName = "${context.productProperties.baseFileName}64"
       val launcherPropertiesPath = context.paths.tempDir.resolve("launcher-${arch.dirName}.properties")
-      val icoFile = computeIcoPath(context)
+      val icoFile = locateIcoFileForWindowsLauncher(customizer, context)
 
       val productVersion = context.buildNumber.replace(".SNAPSHOT", ".0") + ".0".repeat(3 - context.buildNumber.count { it == '.' })
       val launcherProperties = listOf(
@@ -471,13 +472,6 @@ internal class WindowsDistributionBuilder(
         NioFiles.deleteRecursively(tempExe)
       }
     }
-  }
-
-  private fun computeIcoPath(context: BuildContext): Path {
-    val customizer = context.windowsDistributionCustomizer!!
-    val icoPath = (if (context.applicationInfo.isEAP) customizer.icoPathForEAP else null) ?: customizer.icoPath
-    requireNotNull(icoPath) { "`WindowsDistributionCustomizer#icoPath` must be set" }
-    return icoPath
   }
 
   private fun writeWindowsVmOptions(distBinDir: Path, context: BuildContext): Path {

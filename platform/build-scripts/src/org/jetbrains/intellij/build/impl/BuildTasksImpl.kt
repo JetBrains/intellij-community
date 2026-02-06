@@ -67,8 +67,8 @@ import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.intellij.build.zipSourcesOfModules
-import java.nio.file.FileVisitResult
 import java.nio.file.FileSystems
+import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -590,6 +590,11 @@ private suspend fun checkProductProperties(context: BuildContext) {
   checkProductLayout(context)
 
   val properties = context.productProperties
+  val imagesDirectoryPath = properties.imagesDirectoryPath
+  if (imagesDirectoryPath != null) {
+    checkPaths(listOf(imagesDirectoryPath), "productProperties.imagesDirectoryPath")
+    verifyThatProductImageFilesExist(imagesDirectoryPath, context)
+  }
   checkPaths(properties.brandingResourcePaths, "productProperties.brandingResourcePaths")
   checkPaths(properties.additionalIDEPropertiesFilePaths, "productProperties.additionalIDEPropertiesFilePaths")
   checkPaths(properties.additionalDirectoriesWithLicenses, "productProperties.additionalDirectoriesWithLicenses")
@@ -634,7 +639,7 @@ private suspend fun checkProductProperties(context: BuildContext) {
     checkNotNull(macCustomizer.bundleIdentifier) {
       "Mandatory property '${"productProperties.macCustomizer.bundleIdentifier"}' is not specified"
     }
-    checkPaths(listOf(macCustomizer.icnsPath), "productProperties.macCustomizer.icnsPath")
+    checkPaths(listOfNotNull(macCustomizer.icnsPath), "productProperties.macCustomizer.icnsPath")
     checkPaths(listOfNotNull(macCustomizer.icnsPathForEAP), "productProperties.macCustomizer.icnsPathForEAP")
     @Suppress("DEPRECATION")
     checkPaths(listOfNotNull(macCustomizer.icnsPathForAlternativeIcon), "productProperties.macCustomizer.icnsPathForAlternativeIcon")
@@ -644,7 +649,7 @@ private suspend fun checkProductProperties(context: BuildContext) {
       "productProperties.macCustomizer.icnsPathForAlternativeIconForEAP"
     )
     context.executeStep(spanBuilder("check .dmg images"), BuildOptions.MAC_DMG_STEP) {
-      checkPaths(listOf(macCustomizer.dmgImagePath), "productProperties.macCustomizer.dmgImagePath")
+      checkPaths(listOfNotNull(macCustomizer.dmgImagePath), "productProperties.macCustomizer.dmgImagePath")
       checkPaths(listOfNotNull(macCustomizer.dmgImagePathForEAP), "productProperties.macCustomizer.dmgImagePathForEAP")
     }
   }

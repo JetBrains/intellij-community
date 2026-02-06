@@ -5,7 +5,6 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
 import com.intellij.platform.runtime.product.ProductMode
 import io.opentelemetry.api.trace.Span
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -61,7 +60,7 @@ class LinuxDistributionBuilder(
   override val targetLibcImpl: LinuxLibcImpl,
   private val context: BuildContext,
 ) : OsSpecificDistributionBuilder {
-  private val iconPngPath = (if (context.applicationInfo.isEAP) customizer.iconPngPathForEAP else null) ?: customizer.iconPngPath
+  private val iconPngPath = locateIconForLinuxLauncher(customizer, context)
 
   override val targetOs: OsFamily
     get() = OsFamily.LINUX
