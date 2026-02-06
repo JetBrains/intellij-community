@@ -41,7 +41,7 @@ data class IJPerfMetricsDto<T: Number>(
       metrics: Collection<PerformanceMetrics.Metric>,
       generated: String = ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME),
       mode: String = "",
-      owner: String,
+      owner: String = "",
     ) = create(projectName, projectURL, projectDescription, methodName, buildNumber, metrics.map { it.toJson() }, generated, mode, owner)
 
     @JvmStatic
