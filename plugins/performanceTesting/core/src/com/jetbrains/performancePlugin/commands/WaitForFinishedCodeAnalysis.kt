@@ -54,6 +54,7 @@ import java.util.concurrent.TimeoutException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.measureTime
 
 private val FileEditor.description: String
   get() = "${hashCode()} ${javaClass} ${toString()}"
@@ -84,7 +85,10 @@ class WaitForFinishedCodeAnalysis(text: String, line: Int) : PerformanceCommandC
 
   override suspend fun doExecute(context: PlaybackContext) {
     LOG.info("WaitForFinishedCodeAnalysis started its execution")
-    context.project.service<CodeAnalysisStateListener>().waitAnalysisToFinish()
+    val duration = measureTime {
+      context.project.service<CodeAnalysisStateListener>().waitAnalysisToFinish()
+    }
+    LOG.info("WaitForFinishedCodeAnalysis finished in ${duration.inWholeMilliseconds} ms")
   }
 
   override fun getName(): String {
