@@ -19,7 +19,7 @@
     <remote-repository>
       <option name="id" value="kotlin-ide-plugin-deps" />
       <option name="name" value="kotlin-ide-plugin-deps" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies" />
+      <option name="url" value="https://packages.jetbrains.team/maven/p/kt/kotlin-ide-plugin-dependencies" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="GraziePlatform" />
