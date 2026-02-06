@@ -86,26 +86,23 @@ public final class CleanupInspectionIntention implements IntentionAction, HighPr
     PsiFile targetFile = myPsiFile == null ? psiFile : myPsiFile;
     if (targetFile == null) return null;
     InjectedLanguageManager manager = InjectedLanguageManager.getInstance(targetFile.getProject());
-    boolean injected = manager.isInjectedFragment(targetFile);
-    List<ProblemDescriptor> descriptions;
-    if (injected) {
-      descriptions = new ArrayList<>();
+    List<ProblemDescriptor> descriptors;
+    if (manager.isInjectedFragment(targetFile)) {
+      descriptors = new ArrayList<>();
       PsiFile topLevelFile = manager.getTopLevelFile(targetFile);
       PsiTreeUtil.processElements(topLevelFile, PsiLanguageInjectionHost.class, host ->  {
-        manager.enumerateEx(host, topLevelFile, false, (injectedPsi, places) -> {
-          descriptions.addAll(getDescriptors(project, injectedPsi));
-        });
+        manager.enumerateEx(host, topLevelFile, false, (injectedPsi, places) -> descriptors.addAll(getDescriptors(project, injectedPsi)));
         return true;
       });
     }
     else {
-      descriptions = getDescriptors(project, targetFile);
+      descriptors = getDescriptors(project, targetFile);
     }
 
     String message = null;
-    if (!descriptions.isEmpty() && FileModificationService.getInstance().preparePsiElementForWrite(targetFile)) {
+    if (!descriptors.isEmpty() && FileModificationService.getInstance().preparePsiElementForWrite(targetFile)) {
       AbstractPerformFixesTask fixesTask = CleanupInspectionUtil.getInstance()
-        .applyFixes(project, LangBundle.message("apply.fixes"), descriptions, ReportingClassSubstitutor.getClassToReport(myQuickfix), 
+        .applyFixes(project, LangBundle.message("apply.fixes"), descriptors, ReportingClassSubstitutor.getClassToReport(myQuickfix),
                     myQuickfix.startInWriteAction());
 
       message = fixesTask.getResultMessage(myText);
