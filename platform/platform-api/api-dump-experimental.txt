@@ -79,6 +79,15 @@ c:com.intellij.openapi.actionSystem.ex.ComboBoxAction$ComboBoxButton
 - *p:doShiftClick():V
 f:com.intellij.openapi.actionSystem.remoting.PermissionsKt
 - *sf:getOwner():com.intellij.platform.ide.core.permissions.Permission
+*f:com.intellij.openapi.client.ClientSystemInfo
+- *sf:Companion:com.intellij.openapi.client.ClientSystemInfo$Companion
+- sf:isMac():Z
+- sf:isWaylandToolkit():Z
+- sf:isWindows():Z
+*f:com.intellij.openapi.client.ClientSystemInfo$Companion
+- f:isMac():Z
+- f:isWaylandToolkit():Z
+- f:isWindows():Z
 com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 - com.intellij.openapi.fileEditor.FileEditorProvider
 - com.intellij.openapi.project.DumbAware

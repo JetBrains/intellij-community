@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware
 import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator.decorateTextIfNeeded
 import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader.getDarkIcon
@@ -47,7 +48,6 @@ import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.EdtScheduler
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -397,7 +397,7 @@ class ActionMenu constructor(
 
   override fun getPopupMenuOrigin(): Point {
     val result = super.getPopupMenuOrigin()
-    if (!StartupUiUtil.isWaylandToolkit() || parent !is JPopupMenu) return result
+    if (!ClientSystemInfo.isWaylandToolkit() || parent !is JPopupMenu) return result
     correctPopupMenuPositionForWayland(result)
     return result
   }

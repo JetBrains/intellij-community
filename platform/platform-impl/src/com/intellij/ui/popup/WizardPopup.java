@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.application.WriteIntentReadAction;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -31,7 +32,6 @@ import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.wayland.WaylandUtilKt;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.TimerUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
@@ -396,7 +396,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
     private static @Nullable Integer computeNotBiggerHeight(@NotNull Dimension ofContent, @Nullable Component focusOwner) {
       @Nullable Integer screenHeight = null;
-      if (StartupUiUtil.isWaylandToolkit()) {
+      if (ClientSystemInfo.isWaylandToolkit()) {
         screenHeight = WaylandUtilKt.getFakeScreenHeight(focusOwner);
       }
       else {

@@ -38,6 +38,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -470,7 +471,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
 
     myCancelKeyEnabled = cancelKeyEnabled;
     myLocateByContent = locateByContent;
-    myLocateWithinScreen = placeWithinScreenBounds && !StartupUiUtil.isWaylandToolkit();
+    myLocateWithinScreen = placeWithinScreenBounds && !ClientSystemInfo.isWaylandToolkit();
     myAlpha = alpha;
     myMaskProvider = maskProvider;
     myInStack = inStack;
@@ -1377,7 +1378,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
       LOG.warn(sb.toString());
     }
     Rectangle original = new Rectangle(targetBounds);
-    if (StartupUiUtil.isWaylandToolkit()) {
+    if (ClientSystemInfo.isWaylandToolkit()) {
       var hadToFit = fitSizeToScreen(targetBounds, screen);
       if (hadToFit && LOG.isDebugEnabled()) {
         LOG.debug("Target bounds after resizing to fit the screen: " + targetBounds);
@@ -1427,7 +1428,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
       popupOwner = root.getRootPane();
       LOG.debug("popup owner fixed for JDK cache");
     }
-    if (StartupUiUtil.isWaylandToolkit()) {
+    if (ClientSystemInfo.isWaylandToolkit()) {
       // In Wayland, popup's owner must be a toplevel, i.e., a window or another popup that is also a window:
       popupOwner = SwingUtilities.getRoot(popupOwner);
       targetBounds.setLocation(getLocationRelativeToParent(targetBounds, (Window) popupOwner));
@@ -1573,7 +1574,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
 
     PopupLocationTracker.register(this);
 
-    if (StartupUiUtil.isWaylandToolkit()) {
+    if (ClientSystemInfo.isWaylandToolkit()) {
       var hadToFit = fitSizeToScreen(bounds, screen);
       if (hadToFit && LOG.isDebugEnabled()) {
         LOG.debug("Popup shown larger than the screen, adjusted: " + targetBounds);
@@ -1835,7 +1836,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
   }
 
   private static void fitToVisibleArea(Rectangle targetBounds) {
-    if (StartupUiUtil.isWaylandToolkit()) return; // Wrt screen edges, only the Wayland server can reliably position popups
+    if (ClientSystemInfo.isWaylandToolkit()) return; // Wrt screen edges, only the Wayland server can reliably position popups
 
     Point topLeft = new Point(targetBounds.x, targetBounds.y);
     Point bottomRight = new Point((int)targetBounds.getMaxX(), (int)targetBounds.getMaxY());
@@ -2105,7 +2106,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
     final Window wnd = popup.getWindow();
     assert wnd != null;
 
-    if (StartupUiUtil.isWaylandToolkit() && wnd.getType() == Window.Type.POPUP && myOwner != null) {
+    if (ClientSystemInfo.isWaylandToolkit() && wnd.getType() == Window.Type.POPUP && myOwner != null) {
       Rectangle newBounds = wnd.getBounds();
       newBounds.setLocation(p.getScreenPoint());
       Component parent = SwingUtilities.getRoot(myOwner);
@@ -2580,7 +2581,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
         size = window.getPreferredSize();
       }
 
-      if (StartupUiUtil.isWaylandToolkit() && useScreenLocation
+      if (ClientSystemInfo.isWaylandToolkit() && useScreenLocation
           && myPopup.getWindow().getType() == Window.Type.POPUP
           && myOwner != null) {
         // The location is in the screen coordinates, but popups need to be positioned relative to their parent
@@ -3125,7 +3126,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
   }
 
   private static boolean shouldUseTrueWaylandPopups() {
-    return StartupUiUtil.isWaylandToolkit() && Registry.is("wayland.true.popups", false);
+    return ClientSystemInfo.isWaylandToolkit() && Registry.is("wayland.true.popups", false);
   }
 
   @Override

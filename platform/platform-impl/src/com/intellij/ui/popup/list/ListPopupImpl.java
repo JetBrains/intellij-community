@@ -52,7 +52,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import kotlin.Unit;
@@ -670,7 +669,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     if (!UiInterceptors.tryIntercept(myChild)) {
       // Intercept child popup in tests because it is impossible to calculate location on screen there
       var childLocation = new Point(container.getLocationOnScreen().x + container.getWidth() - STEP_X_PADDING, y);
-      if (StartupUiUtil.isWaylandToolkit()) {
+      if (ClientSystemInfo.isWaylandToolkit()) {
         SwingUtilities.convertPointFromScreen(childLocation, container);
         var childBounds = new Rectangle(childLocation, myChild.getPreferredContentSize());
         WaylandUtilKt.moveToFitChildPopupX(childBounds, container);

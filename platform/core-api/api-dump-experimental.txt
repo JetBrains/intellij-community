@@ -224,17 +224,6 @@ a:com.intellij.openapi.application.ReadAction
 - *s:computeThrowable(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - *s:run(java.lang.Runnable):V
 - *s:runThrowable(com.intellij.util.ThrowableRunnable):V
-*f:com.intellij.openapi.client.ClientSystemInfo
-- *sf:Companion:com.intellij.openapi.client.ClientSystemInfo$Companion
-- f:getMacClient():java.lang.Boolean
-- f:getWindowsClient():java.lang.Boolean
-- sf:isMac():Z
-- sf:isWindows():Z
-- f:setMacClient(java.lang.Boolean):V
-- f:setWindowsClient(java.lang.Boolean):V
-*f:com.intellij.openapi.client.ClientSystemInfo$Companion
-- f:isMac():Z
-- f:isWindows():Z
 a:com.intellij.openapi.command.CommandProcessor
 - *a:allowMergeGlobalCommands(java.lang.Runnable):V
 - *a:executeCommand(com.intellij.openapi.project.Project,java.lang.Runnable,java.lang.String,java.lang.Object,com.intellij.openapi.command.UndoConfirmationPolicy,Z,com.intellij.openapi.editor.Document):V

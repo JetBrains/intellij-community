@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.ColorUtil;
@@ -15,7 +16,6 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.wayland.WaylandUtilKt;
 import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
@@ -382,7 +382,7 @@ public class JBPopupMenu extends JPopupMenu {
       }
       if (configuration == null) return Short.MAX_VALUE;
       Rectangle screenRectangle = ScreenUtil.getScreenRectangle(configuration);
-      if (StartupUiUtil.isWaylandToolkit()) {
+      if (ClientSystemInfo.isWaylandToolkit()) {
         var screenHeight = WaylandUtilKt.getFakeScreenHeight(invoker);
         if (screenHeight != null) {
           screenRectangle.height = screenHeight;
