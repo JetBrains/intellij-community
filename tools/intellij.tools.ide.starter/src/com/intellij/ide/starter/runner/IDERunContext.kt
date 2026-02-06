@@ -379,7 +379,7 @@ data class IDERunContext(
       logOutput("Will not record screen for a backend of remote dev")
       return
     }
-    val screenRecorder = IDEScreenRecorder(this)
+    val screenRecorder = IDEScreenRecorder.create(this)
     EventsBus.subscribeOnce(IDEScreenRecorder::class.java) { _: IdeLaunchEvent ->
       screenRecorder.start()
     }
