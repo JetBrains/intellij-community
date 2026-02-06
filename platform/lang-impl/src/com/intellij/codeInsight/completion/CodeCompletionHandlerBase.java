@@ -150,12 +150,12 @@ public class CodeCompletionHandlerBase {
                                               @NotNull OffsetMap offsetMap,
                                               @NotNull OffsetsInFile hostOffsets,
                                               @NotNull Editor editor,
-                                              int initialOffset) {
+                                              int caretOffset) {
     WatchingInsertionContext context = null;
     try {
       StatisticsUpdate update = StatisticsUpdate.collectStatisticChanges(item);
       context = insertItemHonorBlockSelection(
-        item, lookupElements, completionChar, update, offsetMap, editor, initialOffset, hostOffsets,
+        item, lookupElements, completionChar, update, offsetMap, editor, caretOffset, hostOffsets,
         Objects.requireNonNull(editor.getProject()), null
       );
       update.trackStatistics(context);
