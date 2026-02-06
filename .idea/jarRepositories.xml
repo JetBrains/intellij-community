@@ -17,11 +17,6 @@
       <option name="url" value="https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2" />
     </remote-repository>
     <remote-repository>
-      <option name="id" value="kotlin-ide-plugin-deps" />
-      <option name="name" value="kotlin-ide-plugin-deps" />
-      <option name="url" value="https://packages.jetbrains.team/maven/p/kt/kotlin-ide-plugin-dependencies" />
-    </remote-repository>
-    <remote-repository>
       <option name="id" value="GraziePlatform" />
       <option name="name" value="GraziePlatform" />
       <option name="url" value="https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public" />
