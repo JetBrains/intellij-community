@@ -385,8 +385,8 @@
       "successBorderColor": "accent-success-border-muted",
       "infoBackground": "accent-brand-bg-muted",
       "infoBorderColor": "accent-brand-border-muted",
-      "underlineArc": 12,
-      "underlineArc.compact": 8
+      "arc": 12,
+      "arc.compact": 8
     },
 
     "InlineBanner": {

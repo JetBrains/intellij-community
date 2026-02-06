@@ -4156,7 +4156,7 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$Banner
 - sf:WARNING_BACKGROUND:java.awt.Color
 - sf:WARNING_BORDER_COLOR:java.awt.Color
 - <init>():V
-- s:underlineArc():com.intellij.util.ui.JBValue
+- s:arc():com.intellij.util.ui.JBValue
 f:com.intellij.util.ui.JBUI$CurrentTheme$BigPopup
 - sf:LIST_SETTINGS_BACKGROUND:java.awt.Color
 - <init>():V

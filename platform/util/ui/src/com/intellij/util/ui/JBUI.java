@@ -436,8 +436,8 @@ public final class JBUI {
 
       public static final Color FOREGROUND = JBColor.namedColor("Banner.foreground", 0x0, 0xDFE1E5);
 
-      public static @NotNull JBValue underlineArc() {
-        return new JBValue.UIInteger("Banner.underlineArc", 12);
+      public static @NotNull JBValue arc() {
+        return new JBValue.UIInteger("Banner.arc", 12);
       }
     }
 

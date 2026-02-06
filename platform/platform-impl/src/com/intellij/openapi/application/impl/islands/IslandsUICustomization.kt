@@ -808,7 +808,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
         val y = rect.y + insets.top - h
         val width = rect.width - 2 * w
         val height = rect.height - (insets.top - h) - (insets.bottom - h)
-        val arc = JBUI.CurrentTheme.Banner.underlineArc().float.toDouble()
+        val arc = JBUI.CurrentTheme.Banner.arc().float.toDouble()
 
         RectanglePainter2D.FILL.paint(g, x, y, width, height, arc, LinePainter2D.StrokeType.CENTERED, 1.0, RenderingHints.VALUE_ANTIALIAS_ON)
 
