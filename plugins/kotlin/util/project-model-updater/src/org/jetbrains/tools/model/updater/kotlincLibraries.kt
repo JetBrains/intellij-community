@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.tools.model.updater
 
 import org.jetbrains.tools.model.updater.GeneratorPreferences.ArtifactMode
@@ -10,7 +10,7 @@ internal const val BOOTSTRAP_VERSION = "2.2.255-dev-255"
 // see .idea/jarRepositories.xml
 private val KOTLIN_IDE_DEPS_REPOSITORY = JpsRemoteRepository(
     "kotlin-ide-plugin-deps",
-    "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies"
+    "https://packages.jetbrains.team/maven/p/kt/kotlin-ide-plugin-dependencies"
 )
 
 private class ArtifactCoordinates(private val originalVersion: String, val mode: ArtifactMode) {
