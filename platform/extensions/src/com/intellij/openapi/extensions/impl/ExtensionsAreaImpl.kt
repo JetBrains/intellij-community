@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -129,6 +130,12 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
                                     pluginDescriptor = pluginDescriptor,
                                     isInterface = interfaceClassName != null,
                                     dynamic = dynamic)
+    }
+  }
+
+  fun registerExtensions(extensions: Map<String, List<ExtensionDescriptor>>, pluginDescriptor: PluginDescriptor, listenerCallbacks: MutableList<in Runnable>?) {
+    for ((descriptors, point) in intersectMaps(extensions, nameToPointMap)) {
+      point.registerExtensions(descriptors, pluginDescriptor = pluginDescriptor, listenerCallbacks)
     }
   }
 
@@ -310,3 +317,16 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
   override fun toString(): String = componentManager.toString()
 }
 
+private fun <K, V1, V2> intersectMaps(first: Map<K, V1>, second: Map<K, V2>): Sequence<Pair<V1, V2>> {
+  // Make sure we iterate the smaller map
+  return if (first.size < second.size) {
+    first.asSequence().mapNotNull { (key, firstValue) ->
+      second[key]?.let { secondValue -> firstValue to secondValue }
+    }
+  }
+  else {
+    second.asSequence().mapNotNull { (key, secondValue) ->
+      first[key]?.let { firstValue -> firstValue to secondValue }
+    }
+  }
+}

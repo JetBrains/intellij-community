@@ -100,13 +100,6 @@ sealed class IdeaPluginDescriptorImpl(
     raw = subBuilder.build(),
     descriptorPath = descriptorPath
   )
-
-  @Internal
-  fun registerExtensions(nameToPoint: Map<String, ExtensionPointImpl<*>>, listenerCallbacks: MutableList<in Runnable>?) {
-    for ((descriptors, point) in intersectMaps(extensions, nameToPoint)) {
-      point.registerExtensions(descriptors, pluginDescriptor = this, listenerCallbacks)
-    }
-  }
 }
 
 internal fun logUnexpectedElement(descriptor: IdeaPluginDescriptor, elementName: String) {
@@ -497,20 +490,6 @@ private fun convertExtensions(rawMap: Map<String, List<ExtensionElement>>): Map<
     catch (e: Throwable) {
       LOG.error(e)
       null
-    }
-  }
-}
-
-private fun <K, V1, V2> intersectMaps(first: Map<K, V1>, second: Map<K, V2>): Sequence<Pair<V1, V2>> {
-  // Make sure we iterate the smaller map
-  return if (first.size < second.size) {
-    first.asSequence().mapNotNull { (key, firstValue) ->
-      second[key]?.let { secondValue -> firstValue to secondValue }
-    }
-  }
-  else {
-    second.asSequence().mapNotNull { (key, secondValue) ->
-      first[key]?.let { firstValue -> firstValue to secondValue }
     }
   }
 }
