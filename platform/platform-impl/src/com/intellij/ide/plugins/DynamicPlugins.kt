@@ -1094,6 +1094,12 @@ object DynamicPlugins {
 
         PluginManagerCore.setPluginSet(pluginSet)
 
+        if (System.getProperty("revert.IJPL233642", "false") != "true") {
+          listenerCallbacks.sortBy {
+            // put all registryKey EP listeners before anything else FIXME IJPL-233642
+            if (it.ep.name == "com.intellij.registryKey") -1 else 0
+          }
+        }
         listenerCallbacks.forEach {
           it.notify.run()
         }
