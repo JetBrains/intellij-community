@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -30,10 +32,15 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.InlineBanner
 import com.intellij.ui.JBColor
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
@@ -51,6 +58,7 @@ import org.jetbrains.jewel.bridge.retrieveEditorColorScheme
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.DefaultInformationBanner
+import org.jetbrains.jewel.ui.component.DefaultSplitButton
 import org.jetbrains.jewel.ui.component.EditableListComboBox
 import org.jetbrains.jewel.ui.component.ExternalLink
 import org.jetbrains.jewel.ui.component.Icon
@@ -58,6 +66,7 @@ import org.jetbrains.jewel.ui.component.InformationDefaultBanner
 import org.jetbrains.jewel.ui.component.InlineInformationBanner
 import org.jetbrains.jewel.ui.component.ListComboBox
 import org.jetbrains.jewel.ui.component.OutlinedButton
+import org.jetbrains.jewel.ui.component.OutlinedSplitButton
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextArea
 import org.jetbrains.jewel.ui.component.TextField
@@ -66,6 +75,7 @@ import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.theme.textAreaStyle
 import org.jetbrains.jewel.ui.typography
 import java.awt.Dimension
+import java.awt.MouseInfo
 import javax.swing.BoxLayout
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JLabel
@@ -230,6 +240,62 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
         .align(AlignY.CENTER)
         .applyToComponent { putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, true) }
       compose { DefaultButton({}) { Text("Default Compose Button") } }
+
+      compose {
+        var showDefaultSplitButtonPopup by remember { mutableStateOf(false) }
+        var activeDefaultSplitButtonPopup by remember { mutableStateOf<JBPopup?>(null) }
+
+        DefaultSplitButton(
+          onClick = {},
+          expanded = showDefaultSplitButtonPopup,
+          onExpandedChange = { showDefaultSplitButtonPopup = it },
+        ) { Text("Default Split Button w/ JBPopup") }
+
+        LaunchedEffect(showDefaultSplitButtonPopup) {
+          if (showDefaultSplitButtonPopup) {
+            val mouseLocation = MouseInfo.getPointerInfo().location
+            val popup = JBPopupFactory.getInstance().createMessage(DevkitComposeBundle.message("jewel.compose.popup.example"))
+            popup.addListener(object : JBPopupListener {
+              override fun onClosed(event: LightweightWindowEvent) {
+                showDefaultSplitButtonPopup = false
+              }
+            })
+            activeDefaultSplitButtonPopup = popup
+            popup.show(RelativePoint.fromScreen(mouseLocation))
+          } else {
+            activeDefaultSplitButtonPopup?.cancel()
+            activeDefaultSplitButtonPopup = null
+          }
+        }
+      }
+
+      compose {
+        var showOutlinedSplitButtonPopup by remember { mutableStateOf(false) }
+        var activeOutlinedSplitButtonPopup by remember { mutableStateOf<JBPopup?>(null) }
+
+        OutlinedSplitButton(
+          onClick = {},
+          expanded = showOutlinedSplitButtonPopup,
+          onExpandedChange = { showOutlinedSplitButtonPopup = it },
+        ) { Text("Outlined Split Button w/ JBPopup") }
+
+        LaunchedEffect(showOutlinedSplitButtonPopup) {
+          if (showOutlinedSplitButtonPopup) {
+            val mouseLocation = MouseInfo.getPointerInfo().location
+            val popup = JBPopupFactory.getInstance().createMessage(DevkitComposeBundle.message("jewel.compose.popup.another.example"))
+            popup.addListener(object : JBPopupListener {
+              override fun onClosed(event: LightweightWindowEvent) {
+                showOutlinedSplitButtonPopup = false
+              }
+            })
+            activeOutlinedSplitButtonPopup = popup
+            popup.show(RelativePoint.fromScreen(mouseLocation))
+          } else {
+            activeOutlinedSplitButtonPopup?.cancel()
+            activeOutlinedSplitButtonPopup = null
+          }
+        }
+      }
     }
       .layout(RowLayout.PARENT_GRID)
   }
