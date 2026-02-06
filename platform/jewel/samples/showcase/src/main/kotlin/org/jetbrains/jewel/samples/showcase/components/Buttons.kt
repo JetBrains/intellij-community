@@ -2,6 +2,8 @@
 
 package org.jetbrains.jewel.samples.showcase.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -22,8 +25,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.round
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.ui.component.ActionButton
@@ -52,6 +63,7 @@ import org.jetbrains.jewel.ui.painter.badge.DotBadgeShape
 import org.jetbrains.jewel.ui.painter.hints.Badge
 import org.jetbrains.jewel.ui.painter.hints.Selected
 import org.jetbrains.jewel.ui.painter.hints.Stroke
+import org.jetbrains.jewel.ui.theme.defaultSplitButtonStyle
 import org.jetbrains.jewel.ui.theme.outlinedSplitButtonStyle
 import org.jetbrains.jewel.ui.theme.transparentIconButtonStyle
 
@@ -379,6 +391,44 @@ private fun SplitButtons() {
                     buildSubmenus(emptyList())
                 },
             )
+
+            var showComposePopup by remember { mutableStateOf(false) }
+            var buttonSize by remember { mutableStateOf(IntSize.Zero) }
+            var buttonPosition by remember { mutableStateOf(IntOffset.Zero) }
+            val buttonExpandedOutline =
+                with(LocalDensity.current) {
+                    JewelTheme.defaultSplitButtonStyle.button.metrics.focusOutlineExpand.roundToPx()
+                }
+            Box {
+                DefaultSplitButton(
+                    modifier =
+                        Modifier.onGloballyPositioned { coordinates ->
+                            buttonSize = coordinates.size
+                            buttonPosition = coordinates.positionInParent().round()
+                        },
+                    onClick = {},
+                    secondaryOnClick = { showComposePopup = true },
+                    content = { SingleLineText("Split button w/ Compose Popup") },
+                )
+                if (showComposePopup) {
+                    Popup(
+                        offset =
+                            IntOffset(buttonPosition.x, buttonPosition.y + buttonSize.height + buttonExpandedOutline),
+                        onDismissRequest = { showComposePopup = false },
+                        properties = PopupProperties(),
+                    ) {
+                        Box(
+                            modifier =
+                                Modifier.background(JewelTheme.globalColors.panelBackground, RoundedCornerShape(8.dp))
+                                    .border(3.dp, JewelTheme.globalColors.outlines.warning, RoundedCornerShape(8.dp))
+                                    .padding(16.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text("Compose Popup")
+                        }
+                    }
+                }
+            }
 
             Tooltip(
                 tooltip = {

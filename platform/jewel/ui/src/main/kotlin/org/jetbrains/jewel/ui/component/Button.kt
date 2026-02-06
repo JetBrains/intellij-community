@@ -480,6 +480,61 @@ public fun DefaultSplitButton(
 }
 
 /**
+ * A split button combining a primary action WITHOUT a dropdown menu, using the default visual style.
+ *
+ * Provides two interactive areas: the main button area for the primary action and a chevron section that will only
+ * invoke the `secondaryClick` callback.
+ *
+ * **IMPORTANT:** This overload does NOT manage any popup/dropdown. You are responsible for handling the lifecycle,
+ * positioning, and disposal of any UI you wish to show when `secondaryOnClick` is invoked. Use this when you need
+ * custom popup behavior (e.g., JBPopupFactory in Bridge or Compose Popup) instead of relying on Jewel's own Popup.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/split-button.html)
+ *
+ * **Usage example:**
+ * [`Buttons.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/standalone/src/main/kotlin/org/jetbrains/jewel/samples/standalone/view/component/Buttons.kt)
+ *
+ * **Swing equivalent:**
+ * [`JBOptionButton`](https://github.com/JetBrains/intellij-community/tree/idea/243.22562.145/platform/platform-api/src/com/intellij/ui/components/JBOptionButton.kt)
+ *
+ * @param onClick Will be called when the user clicks the main button area
+ * @param modifier Modifier to be applied to the button
+ * @param enabled Controls the enabled state of the button. When false, the button will not be clickable
+ * @param interactionSource An optional [MutableInteractionSource] for observing and emitting [Interaction]s for this
+ *   button
+ * @param style The visual styling configuration for the split button including colors, metrics and layout parameters
+ * @param textStyle The typography style to be applied to the button's text content
+ * @param menuStyle The visual styling configuration for the dropdown menu
+ * @param secondaryOnClick Will be called when the user clicks the dropdown/chevron section
+ * @param content The content to be displayed in the main button area
+ * @see com.intellij.ui.components.JBOptionButton
+ */
+@Composable
+public fun DefaultSplitButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: SplitButtonStyle = JewelTheme.defaultSplitButtonStyle,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
+    secondaryOnClick: () -> Unit = {},
+    content: @Composable () -> Unit,
+) {
+    SplitButtonImpl(
+        onClick = onClick,
+        secondaryOnClick = secondaryOnClick,
+        enabled = enabled,
+        interactionSource = interactionSource,
+        style = style,
+        textStyle = textStyle,
+        menuStyle = null,
+        isDefault = true,
+        modifier = modifier,
+        content = content,
+    )
+}
+
+/**
  * A split button combining a primary action with a dropdown menu, using the default visual style.
  *
  * Provides two interactive areas: the main button area for the primary action and a chevron section that opens a
@@ -672,7 +727,7 @@ private fun SplitButtonImpl(
     interactionSource: MutableInteractionSource,
     style: SplitButtonStyle,
     textStyle: TextStyle,
-    menuStyle: MenuStyle,
+    menuStyle: MenuStyle?,
     isDefault: Boolean,
     modifier: Modifier = Modifier,
     popupModifier: Modifier = Modifier,
@@ -737,7 +792,7 @@ private fun SplitButtonImpl(
             },
         )
 
-        if (popupVisible && enabled) {
+        if (popupVisible && enabled && menuStyle != null) {
             val splitButtonPopupModifier =
                 Modifier.heightIn(max = maxPopupHeight)
                     .widthIn(min = buttonWidth, max = maxPopupWidth.coerceAtLeast(buttonWidth))

@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -30,8 +32,10 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.JBColor
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
@@ -48,6 +52,7 @@ import org.jetbrains.jewel.bridge.JewelComposePanel
 import org.jetbrains.jewel.bridge.retrieveEditorColorScheme
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.DefaultButton
+import org.jetbrains.jewel.ui.component.DefaultSplitButton
 import org.jetbrains.jewel.ui.component.EditableListComboBox
 import org.jetbrains.jewel.ui.component.ExternalLink
 import org.jetbrains.jewel.ui.component.Icon
@@ -60,6 +65,7 @@ import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.theme.textAreaStyle
 import org.jetbrains.jewel.ui.typography
+import java.awt.MouseInfo
 import javax.swing.BoxLayout
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JLabel
@@ -146,6 +152,29 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
         .align(AlignY.CENTER)
         .applyToComponent { putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, true) }
       compose { DefaultButton({}) { Text("Default Compose Button") } }
+
+      compose {
+        var showPopup by remember { mutableStateOf(false) }
+
+        DefaultSplitButton(
+          onClick = {},
+          secondaryOnClick = {
+            showPopup = !showPopup
+          },
+        ) {
+          Text("Default Compose Button")
+        }
+
+        LaunchedEffect(showPopup) {
+          if (showPopup) {
+            val mouseLocation = MouseInfo.getPointerInfo().location
+            JBPopupFactory.getInstance()
+              .createMessage("Hi! This is an example")
+              .show(RelativePoint.fromScreen(mouseLocation))
+            showPopup = false
+          }
+        }
+      }
     }
       .layout(RowLayout.PARENT_GRID)
   }
