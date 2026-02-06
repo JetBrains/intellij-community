@@ -3,6 +3,7 @@ package com.intellij.history.integration
 
 import com.intellij.history.ActivityId
 import com.intellij.history.core.LocalHistoryFacade
+import com.intellij.history.integration.IdeaGateway.isProjectRelated
 import com.intellij.history.integration.LocalHistoryImpl.Companion.getInstanceImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.CommandEvent
@@ -63,7 +64,7 @@ internal class LocalHistoryEventDispatcher(private val facade: LocalHistoryFacad
     val projectIndexes = IdeaGateway.getVersionedFilterData().myProjectFileIndices
     var containingProjectIndex: ProjectFileIndex? = null
     for (projectIndex in projectIndexes) {
-      val isProjectRelated = projectIndex.isInProjectOrExcluded(dir) || projectIndex.isUnderIgnored(dir)
+      val isProjectRelated = isProjectRelated(projectIndex, dir)
       if (!isProjectRelated) continue
       if (containingProjectIndex != null) return false // more than 1 project contains this dir
 
