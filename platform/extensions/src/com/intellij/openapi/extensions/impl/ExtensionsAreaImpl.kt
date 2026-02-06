@@ -125,6 +125,12 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
     }
   }
 
+  fun registerExtensions(extensions: Map<String, List<ExtensionDescriptor>>, pluginDescriptor: PluginDescriptor, listenerCallbacks: MutableList<in Runnable>?) {
+    for ((descriptors, point) in intersectMaps(extensions, nameToPointMap)) {
+      point.registerExtensions(descriptors, pluginDescriptor = pluginDescriptor, listenerCallbacks)
+    }
+  }
+
   fun unregisterExtensions(extensionPointName: String,
                            pluginDescriptor: PluginDescriptor,
                            priorityListenerCallbacks: MutableList<in Runnable>,
@@ -292,8 +298,8 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
     val extensionPoint = getExtensionPointIfRegistered<Any>(extensionPointName) ?: return
     extensionPoint.reset()
     synchronized(lock) {
-    extensionPoints = extensionPoints.without(extensionPointName)
-      }
+      extensionPoints = extensionPoints.without(extensionPointName)
+    }
   }
 
   override fun hasExtensionPoint(extensionPointName: String): Boolean = extensionPoints.containsKey(extensionPointName)
@@ -303,3 +309,16 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
   override fun toString(): String = componentManager.toString()
 }
 
+private fun <K, V1, V2> intersectMaps(first: Map<K, V1>, second: Map<K, V2>): Sequence<Pair<V1, V2>> {
+  // Make sure we iterate the smaller map
+  return if (first.size < second.size) {
+    first.asSequence().mapNotNull { (key, firstValue) ->
+      second[key]?.let { secondValue -> firstValue to secondValue }
+    }
+  }
+  else {
+    second.asSequence().mapNotNull { (key, secondValue) ->
+      first[key]?.let { firstValue -> firstValue to secondValue }
+    }
+  }
+}
