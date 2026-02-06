@@ -186,18 +186,10 @@ public final class FSRecordsImpl implements Closeable {
     int mainVFSFormatVersion = 65;
     //@formatter:off (nextMask better be aligned)
     return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.storageImplementation().getId()), /* acceptable range is [0..255] */ 8,
-           nextMask(false, // former [!USE_CONTENT_STORAGE_OVER_MMAPPED_FILE=false] free to reuse
-           nextMask(true,  // former useNativeByteOrderForByteBuffers() (memory-mapped storages all use native byte order)
-           nextMask(false, // former USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE, free to re-use
-           nextMask(true,  // former 'inline attributes', feel free to re-use
            nextMask(getBooleanProperty(FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER, false),
-           nextMask(true,  // former USE_ATTRIBUTES_OVER_MMAPPED_FILE, free to re-use
-           nextMask(true,  // former USE_SMALL_ATTR_TABLE, feel free to re-use
-           nextMask(true,  // former PersistentHashMapValueStorage.COMPRESSION_ENABLED, feel free to re-use
-           nextMask(false, // former FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS, feel free to re-use
-           nextMask(ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),
-           nextMask(true,  // former USE_FAST_NAMES_IMPLEMENTATION, free to reuse
-           nextMask(true   /* former USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION, free to reuse */, 0)))))))))))));
+           nextMask(ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(), 0
+           //22 bits are free to use for any configurable VFS property of which VFS binary format/file layout depends
+           )));
     //@formatter:on
   }
 
