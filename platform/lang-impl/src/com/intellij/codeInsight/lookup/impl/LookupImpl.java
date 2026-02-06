@@ -81,7 +81,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -197,14 +196,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private int myGuardedChanges;
 
   /**
-   * `myArranger` is the arranger that is used for collecting items.
+   * `myArranger` is the arranger used for collecting items.
    * Can be changed by calling {@link #setArranger} from any thread.
-   * Changing arranger usually means that completion process is updated (e.g., prefix changed, completion type changed, etc.)
+   * Changing arranger usually means that the completion process is updated (e.g., prefix changed, the completion type changed, etc.)
    */
   private volatile @NotNull LookupArranger myArranger;
 
   /**
-   * An arranger that is used for rendering. It's synchronized (i.e. replaced) with {@link #myArranger} during rendering.
+   * An arranger that is used for rendering. It's synchronized (i.e., replaced) with {@link #myArranger} during rendering.
    * See {@link #checkReused()}.
    * Accessed on EDT only. Note though, that {@link #myArranger} is usually the same instance, but it is accessed on any thread.
    */
@@ -249,7 +248,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     list.setBorder(null);
 
     // a new top level frame just got the focus. This is important to prevent screen readers
-    // from announcing the title of the top level frame when the list is shown (or hidden),
+    // from announcing the title of the top-level frame when the list is shown (or hidden),
     // as they usually do when a new top-level frame receives the focus.
     // This is not relevant on Mac. This breaks JBR a11y on Mac.
     if (SystemInfoRt.isWindows) {
@@ -345,7 +344,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   /**
-   * let LookupImpl know that user changed selected element
+   * let LookupImpl know that the user changed the selected element
    * @see #isSelectionTouched()
    */
   public void markSelectionTouched() {
@@ -421,7 +420,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void scheduleItemUpdate(@NotNull LookupElement item) {
-    // this check significantly affects perfomance with enabled assertions
+    // this check significantly affects performance with enabled assertions
     if (LOG.isTraceEnabled()) {
       LOG.assertTrue(getItems().contains(item), "Item isn't present in lookup");
     }
@@ -663,8 +662,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return false;
   }
 
-  //some items may have passed to myArranger from CompletionProgressIndicator for an older prefix
-  //these items won't be cleared during appending a new prefix (mayCheckReused = false)
+  //some items may have passed to myArranger from CompletionProgressIndicator for an older prefix.
+  //these items won't be cleared during appending a new prefix (mayCheckReused = false),
   //so these 'out of dated' items which were matched against an old prefix, should be now matched against the new, updated lookup prefix.
   private void clearIfLookupAndArrangerPrefixesMatch() {
     boolean isCompletionArranger = myArranger instanceof CompletionLookupArrangerImpl;
@@ -860,7 +859,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   private static void reportErrorAfterInsert(@NotNull LookupElement item, @NotNull AssertionError ae) {
-    @SuppressWarnings("RedundantTypeArguments") // type argument is needed to suppress incorrent nullability issue
+    @SuppressWarnings("RedundantTypeArguments") // type argument is needed to suppress incorrect nullability issue
     String classes = StreamEx
       .<LookupElement>iterate(item, Objects::nonNull, i -> {
         return i instanceof LookupElementDecorator ? ((LookupElementDecorator<?>)i).getDelegate() : null;
@@ -982,13 +981,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       list.setFocusable(true);
       setFocusRequestor(list);
 
+      @SuppressWarnings("removal")
       AnActionEvent actionEvent =
         AnActionEvent.createFromDataContext(ActionPlaces.EDITOR_POPUP, null, ((EditorImpl)editor).getDataContext());
       delegateActionToEditor(IdeActions.ACTION_EDITOR_BACKSPACE, null, actionEvent);
       delegateActionToEditor(IdeActions.ACTION_EDITOR_ESCAPE, null, actionEvent);
       delegateActionToEditor(IdeActions.ACTION_EDITOR_TAB, () -> new ChooseItemAction.Replacing(), actionEvent);
       delegateActionToEditor(IdeActions.ACTION_EDITOR_ENTER,
-        /* e.g. rename popup comes initially unfocused */
+        /* e.g., rename popup comes initially unfocused */
                              () -> getLookupFocusDegree() == LookupFocusDegree.UNFOCUSED
                                    ? new NextVariableAction()
                                    : new ChooseItemAction.FocusedOnly(),
@@ -1129,8 +1129,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
           AnAction completeAction = ActionManager.getInstance().getAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM);
           // the execution is wrapped into a command inside EditorAction
           if (completeAction != null && editor instanceof EditorEx) {
-            AnActionEvent dataContext = AnActionEvent.createFromDataContext(
-              ActionPlaces.UNKNOWN, null, ((EditorEx)editor).getDataContext());
+            @SuppressWarnings("removal")
+            AnActionEvent dataContext =
+              AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, ((EditorEx)editor).getDataContext());
             ActionUtil.performAction(completeAction, dataContext);
           }
           else {
@@ -1482,7 +1483,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   /**
-   * @param mayCheckReused   pass {@code true} if you want refresh because lookup is reused for another completion process (e.g., prefix has changed, completion type has changed, etc.)
+   * @param mayCheckReused   pass {@code true} if you want refresh because lookup is reused for another completion process (e.g., prefix has changed, the completion type has changed, etc.)
    * @param onExplicitAction the method is called on explicit user action
    */
   public void refreshUi(boolean mayCheckReused, boolean onExplicitAction) {
