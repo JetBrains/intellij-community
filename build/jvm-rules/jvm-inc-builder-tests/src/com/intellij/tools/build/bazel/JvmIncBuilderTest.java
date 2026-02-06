@@ -22,6 +22,46 @@ public class JvmIncBuilderTest extends BazelIncBuildTest {
   }
 
   @Test
+  public void testAffectMutuallyDependentSourcesOnErrors() throws Exception {
+    performTest("kotlin/affectMutuallyDependentSourcesOnErrors").assertSuccessful();
+  }
+
+  @Test
+  public void testAffectMutuallyDependentSourcesOnErrors_prop() throws Exception {
+    performTest("kotlin/affectMutuallyDependentSourcesOnErrors_prop").assertSuccessful();
+  }
+
+  @Test
+  public void testAffectMutuallyDependentSourcesOnErrors2() throws Exception {
+    performTest("kotlin/affectMutuallyDependentSourcesOnErrors2").assertSuccessful();
+  }
+
+  @Test
+  public void testAffectMutuallyDependentSourcesOnErrors2_prop() throws Exception {
+    performTest("kotlin/affectMutuallyDependentSourcesOnErrors2_prop").assertSuccessful();
+  }
+
+  @Test
+  public void testAffectMutuallyDependentSourcesOnErrors3() throws Exception {
+    performTest("kotlin/affectMutuallyDependentSourcesOnErrors3").assertSuccessful();
+  }
+
+  @Test
+  public void testAffectMutuallyDependentSourcesOnErrors3_prop() throws Exception {
+    performTest("kotlin/affectMutuallyDependentSourcesOnErrors3_prop").assertSuccessful();
+  }
+
+  @Test
+  public void testAffectMutuallyDependentSourcesOnErrors4() throws Exception {
+    performTest("kotlin/affectMutuallyDependentSourcesOnErrors4").assertFailure();
+  }
+
+  @Test
+  public void testAffectMutuallyDependentSourcesOnErrors4_prop() throws Exception {
+    performTest("kotlin/affectMutuallyDependentSourcesOnErrors4_prop").assertFailure();
+  }
+
+  @Test
   public void testAssignFieldFromSubclassAcrossTargets() throws Exception {
     performTest("java/assignFieldFromSubclassAcrossTargets").assertFailure();
   }

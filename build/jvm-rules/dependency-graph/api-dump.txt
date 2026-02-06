@@ -146,6 +146,7 @@ org.jetbrains.jps.dependency.NodeBuilder
 - a:addUsage(org.jetbrains.jps.dependency.Usage):V
 - a:getReferenceID():org.jetbrains.jps.dependency.ReferenceID
 - a:getResult():org.jetbrains.jps.dependency.Node
+- a:setHasImplicitTypes():V
 org.jetbrains.jps.dependency.NodeSource
 - org.jetbrains.jps.dependency.ExternalizableGraphElement
 - a:equals(java.lang.Object):Z

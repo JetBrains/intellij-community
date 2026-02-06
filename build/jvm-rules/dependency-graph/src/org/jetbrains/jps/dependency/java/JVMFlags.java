@@ -12,6 +12,7 @@ public final class JVMFlags {
   private static final int GENERATED_MASK = 0x4000000;
   private static final int SEALED_MASK = 0x8000000;
   private static final int LIBRARY_MASK = 0x10000000;
+  private static final int IMPLICIT_TYPES_MASK = 0x20000000;
 
   private final int myFlags;
 
@@ -37,6 +38,10 @@ public final class JVMFlags {
 
   public JVMFlags deriveIsLibrary() {
     return new JVMFlags(myFlags | LIBRARY_MASK);
+  }
+
+  public JVMFlags deriveContainsImplicitTypes() {
+    return new JVMFlags(myFlags | IMPLICIT_TYPES_MASK);
   }
 
   public JVMFlags deriveAdded(JVMFlags past) {
@@ -177,6 +182,10 @@ public final class JVMFlags {
 
   public boolean isLibrary() {
     return isSet(LIBRARY_MASK);
+  }
+
+  public boolean hasImplicitTypes() {
+    return isSet(IMPLICIT_TYPES_MASK);
   }
 
   public boolean isAllSet(JVMFlags flags) {

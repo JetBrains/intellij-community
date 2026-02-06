@@ -43,4 +43,10 @@ public interface CompilerDataSink {
   default void registerUsage(NodeSource source, Usage usage) {
   }
 
+  /**
+   * Marks a node source as containing declarations with implicit types referenceable from other files
+   */
+  default void registerImplicitTypes(NodeSource source) {
+  }
+
 }

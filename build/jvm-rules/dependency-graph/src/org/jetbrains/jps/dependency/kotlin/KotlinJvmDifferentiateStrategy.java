@@ -16,6 +16,7 @@ import kotlin.metadata.jvm.JvmMethodSignature;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.BackDependencyIndex;
+import org.jetbrains.jps.dependency.Delta;
 import org.jetbrains.jps.dependency.DifferentiateContext;
 import org.jetbrains.jps.dependency.Graph;
 import org.jetbrains.jps.dependency.Node;
@@ -42,25 +43,30 @@ import org.jetbrains.jps.util.Pair;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static org.jetbrains.jps.util.Iterators.asIterable;
+import static org.jetbrains.jps.util.Iterators.asIterator;
 import static org.jetbrains.jps.util.Iterators.collect;
 import static org.jetbrains.jps.util.Iterators.contains;
 import static org.jetbrains.jps.util.Iterators.filter;
 import static org.jetbrains.jps.util.Iterators.find;
 import static org.jetbrains.jps.util.Iterators.flat;
 import static org.jetbrains.jps.util.Iterators.isEmpty;
+import static org.jetbrains.jps.util.Iterators.lazyIterator;
 import static org.jetbrains.jps.util.Iterators.map;
+import static org.jetbrains.jps.util.Iterators.recurse;
 import static org.jetbrains.jps.util.Iterators.unique;
 
 /**
@@ -658,8 +664,44 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
         affectMemberLookupUsages(context, jvmClass, alias.getName(), present, cache);
       }
     }
-    
+
+    if (!isEmpty(nodes)) {
+      Graph graph = context.getGraph();
+      Delta delta = context.getDelta();
+      Iterable<NodeSource> compiledSources = delta.getSources();
+      Iterable<NodeSource> sourcesWithErrors = filter(delta.getBaseSources(), s -> !contains(compiledSources, s)); // all sources for which no output has been registered
+
+      Set<@NotNull ReferenceID> modifiedNodes = collect(flat(map(delta.getBaseSources(), src -> map(graph.getNodes(src), Node::getReferenceID))), new HashSet<>());
+      for (NodeSource errSrc : sourcesWithErrors) {
+        affectMutualDependentSources(context, errSrc, modifiedNodes, present);
+      }
+    }
+
     return true;
+  }
+
+  // Handle dependencies between source files like {a.kt -> b.kt -> ... -> a.kt}.
+  // if a.kt is modified and has been compiled with errors, all sources forming the cycle are marked for recompilation,
+  private void affectMutualDependentSources(DifferentiateContext context, NodeSource errSrc, Set<@NotNull ReferenceID> modifiedNodes, Utils present) {
+    Graph graph = context.getGraph();
+    Predicate<? super NodeSource> belongsToCurrentChunk = context.getParams().belongsToCurrentCompilationChunk();
+    Function<ReferenceID, Iterable<ReferenceID>> getDependentNodes = nodeID ->
+      unique(
+        map(
+          filter(
+            flat(map(filter(graph.getDependingNodes(nodeID), depId -> !modifiedNodes.contains(depId) && !isEmpty(filter(graph.getSources(depId), belongsToCurrentChunk))), depId -> present.getNodes(depId, JvmClass.class))),
+            depCls -> depCls.getFlags().hasImplicitTypes()
+          ),
+          JVMClassNode::getReferenceID
+        )
+      );
+
+    for (JvmClass errNode : graph.getNodes(errSrc, JvmClass.class)) {
+      for (ReferenceID dependent : recurse(errNode.getReferenceID(), getDependentNodes, false)) {
+        debug(context, "Node " + dependent + " contains implicit types in its public API" );
+        affectNodeSources(context, dependent, "Source "+ errSrc.toString() + " compiled with errors or yielded no output on initial compilation round; affecting mutually dependent source ", present);
+      }
+    }
   }
 
   @Override
@@ -846,6 +888,93 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
   private boolean affectConflictingTypeAliasDeclarations(DifferentiateContext context, JvmNodeReferenceID typeAliasId, Utils utils) {
     BackDependencyIndex aliasIndex = Objects.requireNonNull(context.getGraph().getIndex(TypealiasesIndex.NAME));
     return affectNodeSourcesIfNotCompiled(context, aliasIndex.getDependencies(typeAliasId), utils, "Possible conflict with an equally named type alias in the same compilation chunk; Scheduling for recompilation sources: ");
+  }
+
+  private static class PathElement<T> {
+    public final @Nullable PathElement<T> parent;
+    public final T item;
+
+    PathElement(@Nullable PathElement<T> parent, T item) {
+      this.parent = parent;
+      this.item = item;
+    }
+
+    boolean isPathEndMarker() {
+      return false;
+    }
+
+    PathElement<T> asEndMarker() {
+      return new PathElement<>(parent, item) {
+        @Override
+        boolean isPathEndMarker() {
+          return true;
+        }
+      };
+    }
+
+    @NotNull Iterator<PathElement<T>> getPathIterator() {
+      return new Iterator<>() {
+        private PathElement<T> next = PathElement.this;
+        @Override
+        public boolean hasNext() {
+          return next != null;
+        }
+
+        @Override
+        public PathElement<T> next() {
+          PathElement<T> rv = next;
+          if (rv == null) {
+            throw new NoSuchElementException();
+          }
+          next = next.parent;
+          return rv;
+        }
+      };
+    }
+  }
+
+  private static <T> Iterable<PathElement<T>> enumeratePathsDepth(final T fromItem, final Function<? super T, ? extends Iterable<? extends T>> step, Predicate<? super T> stopTraversalCond) {
+    return new Iterable<>() {
+      @NotNull
+      @Override
+      public Iterator<PathElement<T>> iterator() {
+        return new Object() {
+          private final Set<T> currentPathItems = new HashSet<>();
+
+          private Iterator<PathElement<T>> recurse(PathElement<T> pe) {
+            if (!currentPathItems.add(pe.item)) {
+              // already visited, do not cycle
+              return Collections.emptyIterator();
+            }
+
+            if (stopTraversalCond.test(pe.item)) {
+              currentPathItems.remove(pe.item);
+              return asIterator(pe);
+            }
+
+            Iterator<PathElement<T>> nextLevel = lazyIterator(() -> map(step.apply(pe.item), next -> new PathElement<>(pe, next)).iterator());
+            return flat(
+              asIterator(pe),
+              flat(
+                flat(map(nextLevel, this::recurse)),
+                asIterator(pe.asEndMarker())
+              )
+            );
+          }
+
+          Iterator<PathElement<T>> traverse(T item) {
+            return filter(recurse(new PathElement<>(null, item)), pe -> {
+              if (pe.isPathEndMarker()) {
+                currentPathItems.remove(pe.item);
+                return false;
+              }
+              return true;
+            });
+          }
+
+        }.traverse(fromItem);
+      }
+    };
   }
 
 }

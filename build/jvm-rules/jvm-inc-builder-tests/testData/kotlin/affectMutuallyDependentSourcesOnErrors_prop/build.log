@@ -1,0 +1,20 @@
+================ Step #1 =================
+Cleaning output files:
+  AKt.class
+  META-INF/kotlin_affectMutuallyDependentSourcesOnErrors_prop-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/affectMutuallyDependentSourcesOnErrors_prop/a/a.kt
+End of files
+Cleaning output files:
+  BKt.class
+  CKt.class
+  META-INF/kotlin_affectMutuallyDependentSourcesOnErrors_prop-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/affectMutuallyDependentSourcesOnErrors_prop/a/a.kt
+  kotlin/affectMutuallyDependentSourcesOnErrors_prop/a/b.kt
+  kotlin/affectMutuallyDependentSourcesOnErrors_prop/a/c.kt
+End of files
+------------------------------------------
+Exit code: OK

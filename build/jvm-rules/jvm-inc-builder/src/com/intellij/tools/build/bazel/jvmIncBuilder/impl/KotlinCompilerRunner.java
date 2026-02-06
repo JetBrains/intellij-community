@@ -10,6 +10,7 @@ import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.fir.ImplicitTypeTrackerPluginRegistrar;
 import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.NodeSourcePathMapper;
 import org.jetbrains.jps.dependency.java.LookupNameUsage;
@@ -67,6 +68,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
   private InlineConstTrackerImpl inlineConstTracker;
   private EnumWhenTrackerImpl enumWhenTracker;
   private ImportTrackerImpl importTracker;
+  private ImplicitTypeDependencyTracker inferredTypeTracker;
   private final @NotNull Map<@NotNull String, @NotNull PluginClasspathConfig> myPluginIdToPluginClasspath = new HashMap<>();
   private final @NotNull Map<@NotNull String, List<CliOptionValue>> myInternalPluginIdToOptions = new HashMap<>();
   private final List<String> myJavaSources;
@@ -217,6 +219,8 @@ public class KotlinCompilerRunner implements CompilerRunner {
       processInlineConstTracker(inlineConstTracker, outputClass, out);
       processBothEnumWhenAndImportTrackers(enumWhenTracker, importTracker, outputClass, out);
     }
+
+    processInferredTypeTracker(inferredTypeTracker, out);
   }
 
 
@@ -283,6 +287,15 @@ public class KotlinCompilerRunner implements CompilerRunner {
     }
   }
 
+  private void processInferredTypeTracker(ImplicitTypeDependencyTracker tracker, OutputSink callback) {
+    // Mark files that have public API declarations with inferred types depending on external definitions.
+    // These files need special handling during incremental compilation.
+    for (String sourceFilePath : tracker.getAffectedFiles()) {
+      NodeSource source = myPathMapper.toNodeSource(sourceFilePath);
+      callback.registerImplicitTypes(source);
+    }
+  }
+
   private Services buildServices(String moduleName, IncrementalCache cacheImpl, VirtualFile outputRoot) {
     Services.Builder builder = new Services.Builder();
     lookupTracker = new LookupTrackerImpl(LookupTracker.DO_NOTHING.INSTANCE);
@@ -310,6 +323,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
 
   private @NotNull Function1<? super @NotNull CompilerConfiguration, @NotNull Unit> createCompilerConfigurationUpdater(VirtualFile outputRoot) throws IOException {
     var abiConsumer = createAbiOutputConsumer(myStorageManager.getAbiOutputBuilder());
+    inferredTypeTracker = new ImplicitTypeDependencyTracker();
     return configuration -> {
       List<ContentRoot> contentRootList = new ArrayList<>();
       contentRootList.add(new VirtualJvmClasspathRoot(outputRoot, false, true));
@@ -326,6 +340,12 @@ public class KotlinCompilerRunner implements CompilerRunner {
         }
         return Unit.INSTANCE;
       });
+
+      // Register the inferred type dependency tracker extension
+      configuration.add(
+        CompilerPluginRegistrar.Companion.getCOMPILER_PLUGIN_REGISTRARS(),
+        new ImplicitTypeTrackerPluginRegistrar(inferredTypeTracker)
+      );
 
       return Unit.INSTANCE;
     };
@@ -444,6 +464,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
     if (inlineConstTracker == null) nullTrackers.add("inline const tracker");
     if (enumWhenTracker == null) nullTrackers.add("enum-when tracker");
     if (importTracker == null) nullTrackers.add("import tracker");
+    if (inferredTypeTracker == null) nullTrackers.add("inferred type tracker");
 
     if (!nullTrackers.isEmpty()) {
       throw new IllegalStateException(
