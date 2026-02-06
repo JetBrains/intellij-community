@@ -32,10 +32,17 @@ class DeclaredButNotInstalledPackagesChecker(
       return false
     }
 
-    val isSatisfiedInInstalled = installedPackages.any { it.name == requirement.name }
-    val isSatisfiedInModule = modulePackages.any { it.name == requirement.name }
+    val isSatisfiedInInstalled = isSatisfied(requirement, installedPackages)
+    val isSatisfiedInModule = isSatisfied(requirement, modulePackages)
 
     return !isSatisfiedInInstalled && !isSatisfiedInModule
+  }
+
+  private fun isSatisfied(requirement: PyRequirement, packages: List<PythonPackage>): Boolean {
+    val matchingPackage = packages.find { it.name == requirement.name } ?: return false
+    return requirement.versionSpecs.isEmpty() || requirement.versionSpecs.all { spec ->
+      spec.matches(matchingPackage.version)
+    }
   }
 
   private fun collectPackagesInModule(module: Module): List<PythonPackage> {
