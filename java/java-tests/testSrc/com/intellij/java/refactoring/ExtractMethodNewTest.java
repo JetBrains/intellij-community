@@ -1733,6 +1733,31 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  public void testNullableAnnotationNotTypeUse() throws Exception {
+    final NullableNotNullManager nullManager = NullableNotNullManager.getInstance(getProject());
+
+    final List<String> nullables = nullManager.getNullables();
+    final List<String> notNulls = nullManager.getNotNulls();
+    final String defaultNullable = nullManager.getDefaultNullable();
+    final String defaultNotNull = nullManager.getDefaultNotNull();
+    try {
+      String nullable = "com.test.Nullable";
+      String notNull = "com.test.NotNull";
+      nullManager.setNullables(nullable);
+      nullManager.setNotNulls(notNull);
+      nullManager.setDefaultNullable(nullable);
+      nullManager.setDefaultNotNull(notNull);
+
+      doTest();
+    }
+    finally {
+      nullManager.setNullables(ArrayUtilRt.toStringArray(nullables));
+      nullManager.setNotNulls(ArrayUtilRt.toStringArray(notNulls));
+      nullManager.setDefaultNullable(defaultNullable);
+      nullManager.setDefaultNotNull(defaultNotNull);
+    }
+  }
+
   private void doTestDisabledParam() throws PrepareFailedException {
     final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
