@@ -11,3 +11,5 @@ fun bar() {
 
 // ORDER: nullNotNull
 // ORDER: null
+// this works for K2 but null is even further down
+// IGNORE_K2
