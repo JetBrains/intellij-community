@@ -216,13 +216,12 @@ class IndexUpdateRunner(
                 ensureActive()
               }
             }
-            //FIXME RC: for profiling, remove afterwards
             catch (e: Throwable) {
-              LOG.info("Coroutine $workerNo finished exceptionally", e)
+              LOG.warn("Coroutine $workerNo finished exceptionally", e)
               throw e
             }
             finally {
-              LOG.info("Coroutine $workerNo finished gracefully")
+              LOG.debug("Coroutine $workerNo finished gracefully")
             }
           }
         }
