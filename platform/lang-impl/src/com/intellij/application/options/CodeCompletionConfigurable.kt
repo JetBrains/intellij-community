@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBRadioButton
+import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RightGap
