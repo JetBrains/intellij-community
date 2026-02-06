@@ -17,6 +17,13 @@ import com.intellij.openapi.util.Key as UserDataKey
 internal val SYNC_STORAGE_SNAPSHOT_BEFORE_DATA_SERVICES =
   UserDataKey.create<ImmutableEntityStorage>("SYNC_STORAGE_SNAPSHOT_BEFORE_DATA_SERVICES")
 
+/**
+ * This data service removes entities created by [org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor] extensions.
+ * This removal ensures that the results of sync match the current Data Services implementation. <br/>
+ * When all or most of the data services are re-implemented as [org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor],
+ * this extension will be removed.
+ * This is a temporary, internal API for migration purposes.
+ */
 @ApiStatus.Internal
 class GradleBridgeProjectDataService : AbstractProjectDataService<GradleBridgeData, Unit>() {
 

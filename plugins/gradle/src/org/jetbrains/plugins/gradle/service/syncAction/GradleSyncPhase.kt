@@ -48,6 +48,11 @@ sealed interface GradleSyncPhase : Comparable<GradleSyncPhase> {
     }
   }
 
+  /**
+   * The phase corresponding to IntelliJ Platform data services execution.
+   * This is a temporary, internal API for migration purposes.
+   */
+  @ApiStatus.Internal
   sealed interface DataServices: GradleSyncPhase
 
   companion object {
@@ -191,6 +196,11 @@ private data object GradleBaseScriptSyncPhase: GradleSyncPhase.BaseScript {
   }
 }
 
+/**
+ * The implementation of the phase corresponding to IntelliJ Platform data services execution.
+ * This is a temporary, internal API for migration purposes.
+ */
+@ApiStatus.Internal
 private class GradleDataServicesSyncPhase: GradleSyncPhase.DataServices {
 
   override val name: String = "DATA_SERVICES"
