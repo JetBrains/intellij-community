@@ -75,7 +75,7 @@ internal class EditorCaretRepaintService(coroutineScope: CoroutineScope) {
   }
 
   private suspend fun blink(editor: EditorImpl) {
-    if (Registry.`is`("editor.smooth.caret.blinking")) {
+    if (editor.settings.isSmoothCaretBlinking) {
       blinkSmooth(editor)
     } else {
       blinkNormal(editor)

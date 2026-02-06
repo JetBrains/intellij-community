@@ -150,6 +150,7 @@ class EditorSettingsState(private val editor: EditorImpl?,
                                                CustomOutValueModifier { if (editor != null && editor.isColumnMode) true else it })
   var myIsCaretBlinking: Boolean by property { EditorSettingsExternalizable.getInstance().isBlinkCaret }
   var myCaretBlinkingPeriod: Int by property { EditorSettingsExternalizable.getInstance().blinkPeriod }
+  var myIsSmoothCaretBlinking: Boolean by property { EditorSettingsExternalizable.getInstance().isSmoothBlinkCaret }
   var myIsRightMarginShown: Boolean by property(EditorSettingsExternalizable.getInstance().isRightMarginShown) {
     if (editor != null && rightMargin == CodeStyleConstraints.MAX_RIGHT_MARGIN) false
     else EditorSettingsExternalizable.getInstance().isRightMarginShown
@@ -253,6 +254,7 @@ class EditorSettingsState(private val editor: EditorImpl?,
             EditorSettingsExternalizable.PropNames.PROP_IS_CARET_INSIDE_TABS -> refresh(::myIsCaretInsideTabs)
             EditorSettingsExternalizable.PropNames.PROP_IS_CARET_BLINKING -> refresh(::myIsCaretBlinking)
             EditorSettingsExternalizable.PropNames.PROP_CARET_BLINKING_PERIOD -> refresh(::myCaretBlinkingPeriod)
+            EditorSettingsExternalizable.PropNames.PROP_IS_SMOOTH_CARET_BLINKING -> refresh(::myIsSmoothCaretBlinking)
             EditorSettingsExternalizable.PropNames.PROP_IS_RIGHT_MARGIN_SHOWN -> refresh(::myIsRightMarginShown)
 
             EditorSettingsExternalizable.PropNames.PROP_VERTICAL_SCROLL_OFFSET -> refresh(::myVerticalScrollOffset)

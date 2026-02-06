@@ -3182,6 +3182,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCurrentDragIsSubstantial = true;
   }
 
+  void restartCaretBlinking() {
+    synchronized (caretRepaintService) {
+      caretRepaintService.restart();
+    }
+  }
+
   void updateCaretCursor() {
     myUpdateCursor = true;
     if (myCaretCursor.myIsShown) {

@@ -38,6 +38,7 @@ private val model:EditorSettingsExternalizable
   get() = EditorSettingsExternalizable.getInstance()
 
 private val myCbBlinkCaret                            get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.caret.blinking.ms"), model::isBlinkCaret, model::setBlinkCaret)
+private val myCbSmoothBlinkCaret                      get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.smooth.caret.blinking"), model::isSmoothBlinkCaret, model::setSmoothBlinkCaret)
 private val myCbBlockCursor                           get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.block.caret"), model::isBlockCursor, model::setBlockCursor)
 private val myCbFullLineHeightCursor                  get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.full.line.height.caret"), model::isFullLineHeightCursor, model::setFullLineHeightCursor)
 private val myCbAnimatedCaret                         get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.animated.caret"), model::isAnimatedCaret, model::setAnimatedCaret)
@@ -75,6 +76,9 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
           .bindIntText(model::getBlinkPeriod, model::setBlinkPeriod)
           .columns(5)
           .enabledIf(cbBlinkCaret.selected)
+      }
+      row {
+        checkBox(myCbSmoothBlinkCaret)
       }
       row {
         checkBox(myCbBlockCursor)

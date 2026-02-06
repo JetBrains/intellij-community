@@ -143,6 +143,8 @@ f:com.intellij.openapi.actionSystem.Presentation
 com.intellij.openapi.editor.EditorSettings
 - *a:getCaretEasing():com.intellij.openapi.editor.EditorSettings$CaretEasing
 - *a:isAnimatedCaret():Z
+- *a:isSmoothCaretBlinking():Z
+- *a:setSmoothCaretBlinking(Z):V
 *e:com.intellij.openapi.editor.EditorSettings$CaretEasing
 - java.lang.Enum
 - sf:EASE:com.intellij.openapi.editor.EditorSettings$CaretEasing

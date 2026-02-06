@@ -6,14 +6,18 @@ c:com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 - com.intellij.openapi.components.PersistentStateComponent
 - *:getCaretEasing():com.intellij.openapi.editor.EditorSettings$CaretEasing
 - *:isAnimatedCaret():Z
+- *:isSmoothBlinkCaret():Z
 - *:setAnimatedCaret(Z):V
 - *:setCaretEasing(com.intellij.openapi.editor.EditorSettings$CaretEasing):V
+- *:setSmoothBlinkCaret(Z):V
 f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OptionSet
 - *:CARET_EASING:com.intellij.openapi.editor.EditorSettings$CaretEasing
 - *:IS_ANIMATED_CARET:Z
+- *:IS_SMOOTH_CARET_BLINKING:Z
 f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$PropNames
 - *sf:PROP_CARET_EASING:java.lang.String
 - *sf:PROP_IS_ANIMATED_CARET:java.lang.String
+- *sf:PROP_IS_SMOOTH_CARET_BLINKING:java.lang.String
 com.intellij.openapi.fileEditor.impl.EditorTabColorProvider
 - com.intellij.openapi.project.PossiblyDumbAware
 - *:getEditorTabForegroundColor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.editor.colors.ColorKey

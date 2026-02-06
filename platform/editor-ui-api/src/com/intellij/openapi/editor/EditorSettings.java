@@ -126,6 +126,11 @@ public interface EditorSettings {
   int getCaretBlinkPeriod();
   void setCaretBlinkPeriod(int blinkPeriod);
 
+  @ApiStatus.Experimental
+  boolean isSmoothCaretBlinking();
+  @ApiStatus.Experimental
+  void setSmoothCaretBlinking(boolean smoothCaretBlinking);
+
   boolean isBlockCursor();
   void setBlockCursor(boolean blockCursor);
 

@@ -144,6 +144,10 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
           editor?.contentComponent?.repaint()
         }
 
+        if (propertyName == state::myIsSmoothCaretBlinking.name) {
+          editor?.restartCaretBlinking()
+        }
+
         if (propertyName == state::myStickyLinesShownForLanguage.name) {
           editor?.stickyLinesForLangChanged(event)
         }
@@ -522,6 +526,14 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
 
   override fun setCaretBlinkPeriod(blinkPeriod: Int) {
     state.myCaretBlinkingPeriod = blinkPeriod
+  }
+
+  override fun isSmoothCaretBlinking(): Boolean {
+    return state.myIsSmoothCaretBlinking
+  }
+
+  override fun setSmoothCaretBlinking(`val`: Boolean) {
+    state.myIsSmoothCaretBlinking = `val`
   }
 
   override fun isDndEnabled(): Boolean {
