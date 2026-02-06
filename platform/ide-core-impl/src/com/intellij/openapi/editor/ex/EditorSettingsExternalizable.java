@@ -75,7 +75,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean SHOW_INTENTION_BULB = true;
     public boolean IS_CARET_BLINKING = true;
     public int CARET_BLINKING_PERIOD = BLINKING_RANGE.initial;
-    @ApiStatus.Experimental public boolean IS_SMOOTH_CARET_BLINKING = false;
+    @ApiStatus.Experimental public boolean IS_SMOOTH_CARET_BLINKING = true;
     public boolean IS_RIGHT_MARGIN_SHOWN = true;
     public boolean ARE_LINE_NUMBERS_SHOWN = true;
     public @NotNull EditorSettings.LineNumerationType LINE_NUMERATION = EditorSettings.LineNumerationType.ABSOLUTE;
@@ -95,7 +95,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
     public boolean IS_BLOCK_CURSOR = false;
     public boolean IS_FULL_LINE_HEIGHT_CURSOR = false;
-    @ApiStatus.Experimental public boolean IS_ANIMATED_CARET = false;
+    @ApiStatus.Experimental public boolean IS_ANIMATED_CARET = true;
     @ApiStatus.Experimental public @NotNull EditorSettings.CaretEasing CARET_EASING = EditorSettings.CaretEasing.NINJA;
     public boolean IS_HIGHLIGHT_SELECTION_OCCURRENCES = true;
     public boolean IS_WHITESPACES_SHOWN = false;
