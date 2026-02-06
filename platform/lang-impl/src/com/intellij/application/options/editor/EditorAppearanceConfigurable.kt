@@ -69,8 +69,9 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
   override fun createPanel(): DialogPanel {
     val model = EditorSettingsExternalizable.getInstance()
     return panel {
+      var cbBlinkCaret: Cell<JBCheckBox>? = null
       row {
-        val cbBlinkCaret = checkBox(myCbBlinkCaret)
+        cbBlinkCaret = checkBox(myCbBlinkCaret)
           .gap(RightGap.SMALL)
         intTextField(range = EditorSettingsExternalizable.BLINKING_RANGE.asRange(), keyboardStep = 100)
           .bindIntText(model::getBlinkPeriod, model::setBlinkPeriod)
@@ -79,7 +80,7 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
       }
       row {
         checkBox(myCbSmoothBlinkCaret)
-      }
+      }.enabledIf(cbBlinkCaret!!.selected)
       row {
         checkBox(myCbBlockCursor)
       }
