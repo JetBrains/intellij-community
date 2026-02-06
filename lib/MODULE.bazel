@@ -9506,17 +9506,17 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_pty4j-pty4j-0_13_11_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/pty4j/pty4j/0.13.11/pty4j-0.13.11.jar",
-  sha256 = "0329ee5520f3b0177a0b2bdefac3c4c69cc9d3915e4f210a8bf39be7ab3887c8",
-  downloaded_file_path = "pty4j-0.13.11.jar"
+  name = "org_jetbrains_pty4j-pty4j-0_13_12_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/pty4j/pty4j/0.13.12/pty4j-0.13.12.jar",
+  sha256 = "da86078dafc3c4e4e3a497981df9794e5d9ed081963ad9561d0e69657f2475d4",
+  downloaded_file_path = "pty4j-0.13.12.jar"
 )
 
 http_file(
-  name = "org_jetbrains_pty4j-pty4j-0_13_11-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/pty4j/pty4j/0.13.11/pty4j-0.13.11-sources.jar",
-  sha256 = "2591a26e203388e16da81be0e169e91d847899e7b357ab856cb8603e1d3f7116",
-  downloaded_file_path = "pty4j-0.13.11-sources.jar"
+  name = "org_jetbrains_pty4j-pty4j-0_13_12-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/pty4j/pty4j/0.13.12/pty4j-0.13.12-sources.jar",
+  sha256 = "96885ed48ab86e14f55f2d9b68816e4afd19e3dd92fa55034c6389fe11392599",
+  downloaded_file_path = "pty4j-0.13.12-sources.jar"
 )
 
 http_file(

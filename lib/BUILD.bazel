@@ -11933,17 +11933,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.pty4j/pty4j-0.13.11.jar_copy",
-  src = "@org_jetbrains_pty4j-pty4j-0_13_11_http//file",
-  out = "org.jetbrains.pty4j/pty4j-0.13.11.jar",
+  name = "org.jetbrains.pty4j/pty4j-0.13.12.jar_copy",
+  src = "@org_jetbrains_pty4j-pty4j-0_13_12_http//file",
+  out = "org.jetbrains.pty4j/pty4j-0.13.12.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "libraries-pty4j-pty4j",
-  jar = "@org_jetbrains_pty4j-pty4j-0_13_11_http//file",
-  source_jar = "@org_jetbrains_pty4j-pty4j-0_13_11-sources_http//file",
+  jar = "@org_jetbrains_pty4j-pty4j-0_13_12_http//file",
+  source_jar = "@org_jetbrains_pty4j-pty4j-0_13_12-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
