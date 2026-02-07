@@ -35,14 +35,14 @@ import static com.intellij.platform.util.io.storages.durablemap.DurableMapFactor
 import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.IGNORE_AND_HOPE_FOR_THE_BEST;
 
 /**
- * FIXME this implementation is an experiment -- quick-n-dirty prototype for a 'appendable DurableMap over memory-mapped files',
- * to test performance and viability. It is not a good implementation, nor good API design: implementation is mostly copy-pasted
- * from {@link DurableMapOverAppendOnlyLog}, API -- from {@link AppendablePersistentMap}.
+ * TODO this implementation is an experiment -- a prototype for an 'appendable DurableMap over memory-mapped files',
+ * to test performance and viability in application to Indexes -- which is why the API is mostly shaped by
+ * {@link AppendablePersistentMap}, used in Indexes now.
+ * <p/>
+ * It works, and has a good performance, but the API design could be better. Use on your own risk.
  */
 @ApiStatus.Internal
 public class DurableMapOverBlobStorage<K, V> implements DurableMap<K, V>, Unmappable {
-
-  public static final int DATA_FORMAT_VERSION = 1;
 
   private final StreamlinedBlobStorage keyValuesStorage;
   private final DurableIntToMultiIntMap keyHashToIdMap;
