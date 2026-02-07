@@ -106,14 +106,25 @@ class ActionDelegateConfigImporter: ConfigurationHandler {
     val config = configuration.find("delegateActions") as? Map<String, *> ?: return
 
     val projectPath = projectData?.linkedExternalProjectPath ?: return
-    val projectSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(projectPath) ?: return
+    val gradleSettings = GradleSettings.getInstance(project)
+    val oldSettings = gradleSettings.getLinkedProjectSettings(projectPath) ?: return
+
+    // Clone and apply new settings.
+    val newSettings = oldSettings.clone()
 
     consumeIfCast(config["delegateBuildRunToGradle"], java.lang.Boolean::class.java) {
-      projectSettings.delegatedBuild = it.booleanValue()
+      newSettings.delegatedBuild = it.booleanValue()
     }
     consumeIfCast(config["testRunner"], String::class.java) {
-      projectSettings.testRunner = (TEST_RUNNER_MAP[it] ?: return@consumeIfCast)
+      newSettings.testRunner = (TEST_RUNNER_MAP[it] ?: return@consumeIfCast)
     }
+
+    // Set linked project settings to simulate UI change, otherwise module outputs won't be updated.
+    gradleSettings.linkedProjectsSettings = gradleSettings.linkedProjectsSettings
+      .map { entry ->
+        if (entry.externalProjectPath == newSettings.externalProjectPath) newSettings
+        else entry
+      }
   }
 
   companion object {
