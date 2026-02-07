@@ -319,11 +319,34 @@ public class GitImpl extends GitImplBase {
                                             boolean detach,
                                             boolean withReset,
                                             GitLineHandlerListener @NotNull ... listeners) {
+    return checkout(repository, reference, newBranch, force, detach, withReset, false, listeners);
+  }
+
+  /**
+   * {@code git checkout <reference>} <br/>
+   * {@code git checkout -b <newBranch> <reference>} <br/>
+   * or withReset<br/>
+   * {@code git checkout -B <newBranch> <reference>} <br/>
+   * or ignoreOtherWorktrees<br/>
+   * {@code git checkout --ignore-other-worktrees <reference>}
+   */
+  @Override
+  public @NotNull GitCommandResult checkout(@NotNull GitRepository repository,
+                                            @NotNull String reference,
+                                            @Nullable String newBranch,
+                                            boolean force,
+                                            boolean detach,
+                                            boolean withReset,
+                                            boolean ignoreOtherWorktrees,
+                                            GitLineHandlerListener @NotNull ... listeners) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT);
     h.setSilent(false);
     h.setStdoutSuppressed(false);
     if (force) {
       h.addParameters("--force");
+    }
+    if (ignoreOtherWorktrees) {
+      h.addParameters("--ignore-other-worktrees");
     }
     if (newBranch == null) { // simply checkout
       h.addParameters(detach ? reference + "^0" : reference); // we could use `--detach` here, but it is supported only since 1.7.5.
