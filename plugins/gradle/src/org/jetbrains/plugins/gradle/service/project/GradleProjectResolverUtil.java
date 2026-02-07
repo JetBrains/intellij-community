@@ -32,6 +32,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.platform.workspace.jps.entities.ModuleId;
 import com.intellij.platform.workspace.storage.EntityStorage;
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SmartList;
@@ -239,6 +240,27 @@ public final class GradleProjectResolverUtil {
                                                @NotNull ExternalProject externalProject,
                                                @Nullable String sourceSetName,
                                                @NotNull ProjectResolverContext resolverCtx) {
+    if (resolverCtx.isPhasedSyncEnabled()) {
+      if (sourceSetName == null) {
+        return getHolderModuleName(
+          resolverCtx,
+          gradleModule.getGradleProject().getProjectIdentifier().getBuildIdentifier().getRootDir().toPath(),
+          // Build name is derived from the root project's name
+          getRootProject(gradleModule.getGradleProject()).getName(),
+          externalProject
+        );
+      } else {
+        return resolveSourceSetModuleName(
+          resolverCtx,
+          gradleModule.getGradleProject().getProjectIdentifier().getBuildIdentifier().getRootDir().toPath(),
+          // Build name is derived from the root project's name
+          getRootProject(gradleModule.getGradleProject()).getName(),
+          externalProject,
+          sourceSetName
+        );
+      }
+    }
+
     String delimiter;
     StringBuilder moduleName = new StringBuilder();
     String rootName = gradleModule.getProject().getName();
@@ -281,10 +303,24 @@ public final class GradleProjectResolverUtil {
     // TODO: replace with GradleLightProject#identityPath
     @NotNull ExternalProject externalProject
   ) {
+    return getHolderModuleName(
+      context,
+      projectModel.getBuild().getBuildIdentifier().getRootDir().toPath(),
+      projectModel.getBuild().getName(),
+      externalProject
+    );
+  }
+
+  private static @NotNull String getHolderModuleName(
+    @NotNull ProjectResolverContext context,
+    @NotNull Path buildPath,
+    @NotNull String buildName,
+    // TODO: replace with GradleLightProject#identityPath
+    @NotNull ExternalProject externalProject
+  ) {
     var rootBuildPath = context.getRootBuild().getBuildIdentifier().getRootDir().toPath();
     var rootBuildName = context.getRootBuild().getName();
-    var buildPath = projectModel.getBuild().getBuildIdentifier().getRootDir().toPath();
-    var buildName = projectModel.getBuild().getName();
+
     var identityPath = externalProject.getIdentityPath();
 
     var moduleName = Strings.trimStart(identityPath, ":");
@@ -325,16 +361,32 @@ public final class GradleProjectResolverUtil {
     @NotNull ExternalProject externalProject,
     @NotNull String sourceSetName
   ) {
-    var holderModuleName = getHolderModuleName(context, projectModel, externalProject);
-    var sourceSetModuleName = holderModuleName + "." + escapeModuleNameElement(sourceSetName);
-
+    var sourceSetModuleName = resolveSourceSetModuleName(
+      context,
+      projectModel.getBuild().getBuildIdentifier().getRootDir().toPath(),
+      projectModel.getBuild().getName(),
+      externalProject,
+      sourceSetName
+    );
     if (storage.contains(new ModuleId(sourceSetModuleName))) {
       // Related issue: IDEA-169388
       // The user can create the 'test' holder module that conflicts with the `test` source set module.
       return sourceSetModuleName + "~1";
+    } else {
+      return sourceSetModuleName;
     }
+  }
 
-    return sourceSetModuleName;
+  private static @NotNull String resolveSourceSetModuleName(
+    @NotNull ProjectResolverContext context,
+    @NotNull Path buildPath,
+    @NotNull String buildName,
+    // TODO: replace with GradleLightProject#identityPath
+    @NotNull ExternalProject externalProject,
+    @NotNull String sourceSetName
+  ) {
+    var holderModuleName = getHolderModuleName(context, buildPath, buildName, externalProject);
+    return holderModuleName + "." + escapeModuleNameElement(sourceSetName);
   }
 
   /**
