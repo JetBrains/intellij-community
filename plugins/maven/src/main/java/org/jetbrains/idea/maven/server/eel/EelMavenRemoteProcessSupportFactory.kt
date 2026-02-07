@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.server.eel
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
@@ -17,7 +16,6 @@ import org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory.MavenRem
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory
 import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector
 import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector.trigger
-import java.nio.file.Paths
 import kotlin.io.path.Path
 
 class EelMavenRemoteProcessSupportFactory : MavenRemoteProcessSupportFactory {
@@ -56,9 +54,8 @@ class EelRemotePathTransformFactory : RemotePathTransformerFactory {
 
       override fun toIdePath(remotePath: String): String {
         if (remotePath.isEmpty()) return remotePath
-        val canonicalPath = Paths.get(remotePath).toCanonicalPath()
         return runCatching {
-          val eelPath = eel.fs.getPath(canonicalPath)
+          val eelPath = eel.fs.getPath(remotePath)
           val fullyQualifiedPath = eelPath.asNioPath()
           return@runCatching fullyQualifiedPath.toString()
         }.getOrNull() ?: remotePath
