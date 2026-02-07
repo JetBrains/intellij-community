@@ -45,19 +45,19 @@ public abstract class ApplicationCommandLineState<T extends
     final JavaParameters params = new JavaParameters();
     T configuration = getConfiguration();
 
-    params.setMainClass(ReadAction.compute(() -> myConfiguration.getRunClass()));
+    params.setMainClass(ReadAction.compute(() -> configuration.getRunClass()));
     String mainClass = params.getMainClass();
     try {
-      JavaParametersUtil.configureConfiguration(params, myConfiguration);
+      JavaParametersUtil.configureConfiguration(params, configuration);
     }
     catch (ProgramParametersConfigurator.ParametersConfiguratorException e) {
       throw new ExecutionException(e);
     }
 
-    final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
+    final JavaRunConfigurationModule module = configuration.getConfigurationModule();
     try {
       ReadAction.nonBlocking((Callable<Void>)() -> {
-        final String jreHome = getTargetEnvironmentRequest() == null && myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
+        final String jreHome = getTargetEnvironmentRequest() == null && configuration.isAlternativeJrePathEnabled() ? configuration.getAlternativeJrePath() : null;
         if (module.getModule() != null) {
           DumbService.getInstance(module.getProject()).runWithAlternativeResolveEnabled(() -> {
             if (mainClass == null) {
