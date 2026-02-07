@@ -64,22 +64,13 @@ public final class RedundantTypeArgsInspection extends GenericsInspectionToolBas
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
-        final PsiType[] typeArguments = expression.getTypeArguments();
-        if (typeArguments.length > 0) {
-          checkCallExpression(expression.getMethodExpression(), typeArguments, expression, inspectionManager, problems, isOnTheFly);
-        }
+        checkCallExpression(expression, inspectionManager, problems, isOnTheFly);
       }
 
       @Override
       public void visitNewExpression(@NotNull PsiNewExpression expression) {
         super.visitNewExpression(expression);
-        final PsiType[] typeArguments = expression.getTypeArguments();
-        if (typeArguments.length > 0) {
-          final PsiJavaCodeReferenceElement classReference = expression.getClassReference();
-          if (classReference != null) {
-            checkCallExpression(classReference, typeArguments, expression, inspectionManager, problems, isOnTheFly);
-          }
-        }
+        checkCallExpression(expression, inspectionManager, problems, isOnTheFly);
       }
 
       @Override
@@ -93,11 +84,11 @@ public final class RedundantTypeArgsInspection extends GenericsInspectionToolBas
     return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
-  private static void checkCallExpression(final PsiJavaCodeReferenceElement reference,
-                                          final PsiType[] typeArguments,
-                                          PsiCallExpression expression,
+  private static void checkCallExpression(PsiCallExpression expression,
                                           final InspectionManager inspectionManager,
                                           final List<? super ProblemDescriptor> problems, boolean isOnTheFly) {
+    final PsiType[] typeArguments = expression.getTypeArguments();
+    if (typeArguments.length == 0) return;
     PsiExpressionList argumentList = expression.getArgumentList();
     if (argumentList == null) return;
     PsiReferenceParameterList typeArgumentList = expression.getTypeArgumentList();
@@ -106,27 +97,24 @@ public final class RedundantTypeArgsInspection extends GenericsInspectionToolBas
         return;
       }
     }
-    final JavaResolveResult resolveResult = reference.advancedResolve(false);
-
-    final PsiElement element = resolveResult.getElement();
-    if (element instanceof PsiMethod method && resolveResult.isValidResult()) {
-      final PsiTypeParameter[] typeParameters = method.getTypeParameters();
-      if (typeParameters.length > 0 &&
-          JavacQuirksInspectionVisitor.isSuspicious(expression.getArgumentList().getExpressions(), method)) {
-        return;
-      }
-      if (typeParameters.length == typeArguments.length &&
-          PsiDiamondTypeUtil.areTypeArgumentsRedundant(typeArguments, expression, false, method, typeParameters) ||
-          typeParameters.length == 0) {
-        String key = typeParameters.length == 0 ? "inspection.redundant.type.no.generics.problem.descriptor"
-                                                : "inspection.redundant.type.problem.descriptor";
-        final ProblemDescriptor descriptor =
-          inspectionManager.createProblemDescriptor(typeArgumentList,
-                                                    JavaAnalysisBundle.message(key),
-                                                    ourQuickFixAction,
-                                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
-        problems.add(descriptor);
-      }
+    final PsiMethod method = expression.resolveMethod();
+    if (method == null) return;
+    final PsiTypeParameter[] typeParameters = method.getTypeParameters();
+    if (typeParameters.length > 0 &&
+        JavacQuirksInspectionVisitor.isSuspicious(expression.getArgumentList().getExpressions(), method)) {
+      return;
+    }
+    if (typeParameters.length == typeArguments.length &&
+        PsiDiamondTypeUtil.areTypeArgumentsRedundant(typeArguments, expression, false, method, typeParameters) ||
+        typeParameters.length == 0) {
+      String key = typeParameters.length == 0 ? "inspection.redundant.type.no.generics.problem.descriptor"
+                                              : "inspection.redundant.type.problem.descriptor";
+      final ProblemDescriptor descriptor =
+        inspectionManager.createProblemDescriptor(typeArgumentList,
+                                                  JavaAnalysisBundle.message(key),
+                                                  ourQuickFixAction,
+                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
+      problems.add(descriptor);
     }
   }
 
