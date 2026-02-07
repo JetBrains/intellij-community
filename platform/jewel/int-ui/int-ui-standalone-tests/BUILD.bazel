@@ -42,6 +42,10 @@ jvm_library(
     "@lib//:kotlin-test",
     "@lib//:junit5",
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/test",
+    "//platform/jewel/ui",
+    "//platform/jewel/ui:ui_test_lib",
   ],
   runtime_deps = [":jewel-intUi-standalone-tests"]
 )

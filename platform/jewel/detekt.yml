@@ -58,6 +58,7 @@ coroutines:
 
 exceptions:
   active: true
+  excludes: [ '**/test/**', '**/androidTest/**', '**/*.Test.kt', '**/*.Spec.kt', '**/*.Spek.kt' ]
   NotImplementedDeclaration:
     active: true
   ObjectExtendsThrowable:

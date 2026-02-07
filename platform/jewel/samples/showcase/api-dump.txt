@@ -6,6 +6,7 @@ f:org.jetbrains.jewel.samples.showcase.ShowcaseIcons
 - f:getJewelLogo():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getMarkdown():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getSunny():org.jetbrains.jewel.ui.icon.PathIconKey
+- f:getTerminal():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getThemeDark():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getThemeLight():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getThemeLightWithLightHeader():org.jetbrains.jewel.ui.icon.PathIconKey
