@@ -273,7 +273,8 @@ class McpServerService(val cs: CoroutineScope) {
       }
       else {
         // reuse old or start new
-        return@update currentServer ?: startServer(McpServerSettings.getInstance().state.mcpServerPort, authCheck = false)
+        val settings = McpServerSettings.getInstance()
+        return@update currentServer ?: startServer(settings.state.mcpServerPort, authCheck = false).also(::persistResolvedPort)
       }
     }
   }
@@ -286,13 +287,16 @@ class McpServerService(val cs: CoroutineScope) {
   }
 
   private fun startGlobalServerIfEnabled(): EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>? {
-    if (!McpServerSettings.getInstance().state.enableMcpServer) return null
-    val server = startServer(McpServerSettings.getInstance().state.mcpServerPort, authCheck = false)
+    val settings = McpServerSettings.getInstance()
+    if (!settings.state.enableMcpServer) return null
+    return startServer(settings.state.mcpServerPort, authCheck = false).also(::persistResolvedPort)
+  }
+
+  private fun persistResolvedPort(server: EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>) {
     cs.launch {
       // save to settings can be done asynchronously
       McpServerSettings.getInstance().state.mcpServerPort = server.engine.resolvedConnectors().first().port
     }
-    return server
   }
 
   private fun startServer(desiredPort: Int, authCheck: Boolean): EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration> {
@@ -320,7 +324,7 @@ class McpServerService(val cs: CoroutineScope) {
       }
     })
 
-    return cs.embeddedServer(CIO, host = "127.0.0.1", port = freePort) {
+    return embeddedServer(CIO, host = "127.0.0.1", port = freePort) {
       installHostValidation()
       installHttpRequestPropagation()
 
