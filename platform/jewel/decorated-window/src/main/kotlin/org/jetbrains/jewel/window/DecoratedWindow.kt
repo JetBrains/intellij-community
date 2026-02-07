@@ -44,6 +44,7 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.standalone.window.Window
 import org.jetbrains.jewel.window.styling.DecoratedWindowStyle
 import org.jetbrains.jewel.window.utils.DesktopPlatform
+import org.jetbrains.jewel.window.utils.ClientRegion
 
 @Suppress("ModifierMissing")
 @Composable
@@ -279,7 +280,12 @@ public value class DecoratedWindowState(public val state: ULong) {
     }
 }
 
-internal data class TitleBarInfo(val title: String, val icon: Painter?)
+internal data class TitleBarInfo(
+    val title: String,
+    val icon: Painter?
+) {
+    val clientRegions: HashMap<String, ClientRegion> = hashMapOf()
+}
 
 internal val LocalTitleBarInfo: ProvidableCompositionLocal<TitleBarInfo> = compositionLocalOf {
     error("LocalTitleBarInfo not provided, TitleBar must be used in DecoratedWindow")
