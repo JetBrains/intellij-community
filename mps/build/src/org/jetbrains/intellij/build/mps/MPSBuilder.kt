@@ -1,14 +1,21 @@
 package org.jetbrains.intellij.build.mps
 
-import kotlin.io.path.exists
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.CompilationTasks
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.NativeBinaryDownloader
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.ProprietaryBuildTools
+import org.jetbrains.intellij.build.createBuildTasks
 import org.jetbrains.intellij.build.fus.FeatureUsageStatisticsProperties
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import kotlin.io.path.exists
 
 class MPSBuilder {
 

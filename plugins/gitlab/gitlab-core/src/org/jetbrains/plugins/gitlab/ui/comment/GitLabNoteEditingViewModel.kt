@@ -34,7 +34,7 @@ import org.jetbrains.plugins.gitlab.upload.GitLabUploadFileUtil
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.awt.Image
 import java.nio.file.Path
-import java.util.*
+import java.util.UUID
 import javax.swing.Action
 
 interface GitLabCodeReviewSubmittableTextViewModel : CodeReviewSubmittableTextViewModel {

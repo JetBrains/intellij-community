@@ -52,7 +52,8 @@ import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditingViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModelWithAdjustablePosition
 import org.jetbrains.plugins.gitlab.ui.comment.onDoneIn
 import java.time.Instant.EPOCH
-import java.util.*
+import java.util.Date
+import java.util.TreeSet
 
 private typealias DiscussionsFlow = StateFlow<ComputedResult<Collection<GitLabMergeRequestDiscussionViewModel>>>
 private typealias DraftNotesFlow = StateFlow<ComputedResult<Collection<GitLabMergeRequestStandaloneDraftNoteViewModelBase>>>

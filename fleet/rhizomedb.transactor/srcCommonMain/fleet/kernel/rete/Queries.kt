@@ -6,7 +6,6 @@ import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.Entity
 import com.jetbrains.rhizomedb.EntityAttribute
 import com.jetbrains.rhizomedb.EntityType
-import com.jetbrains.rhizomedb.all
 import com.jetbrains.rhizomedb.entity
 import com.jetbrains.rhizomedb.fromIndexValue
 import com.jetbrains.rhizomedb.get
