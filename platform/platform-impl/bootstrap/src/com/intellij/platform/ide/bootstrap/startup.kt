@@ -135,6 +135,10 @@ fun startApplication(
   val isHeadless = AppMode.isHeadless()
 
   val lockSystemDirsJob = scope.launch {
+    // Adding startup delay to account for restart process, if existing IDE instance is exiting 
+    // Ref: https://youtrack.jetbrains.com/issue/IJPL-179219, https://youtrack.jetbrains.com/issue/IJPL-185318 
+    delay(2000)
+    
     // the "import-needed" check must be performed strictly before IDE directories are locked
     configImportNeededDeferred.join()
     span("system dirs locking") {
