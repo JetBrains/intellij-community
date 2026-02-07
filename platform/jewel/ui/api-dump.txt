@@ -475,8 +475,10 @@ f:org.jetbrains.jewel.ui.component.LinkState$Companion
 - f:of-oSacjZw(Z,Z,Z,Z,Z,Z):J
 - bs:of-oSacjZw$default(org.jetbrains.jewel.ui.component.LinkState$Companion,Z,Z,Z,Z,Z,Z,I,java.lang.Object):J
 f:org.jetbrains.jewel.ui.component.ListComboBoxKt
+- sf:EditableListComboBox-uuZZ4FU(java.util.List,I,kotlin.jvm.functions.Function1,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,androidx.compose.runtime.Composer,I,I,I):V
 - sf:EditableListComboBox-vg_4TgI(java.util.List,I,kotlin.jvm.functions.Function1,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,F,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,androidx.compose.runtime.Composer,I,I,I):V
 - bsf:EditableListComboBox-xzYpEKs(java.util.List,I,kotlin.jvm.functions.Function1,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,androidx.compose.runtime.Composer,I,I,I):V
+- sf:ListComboBox-uuZZ4FU(java.util.List,I,kotlin.jvm.functions.Function1,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,androidx.compose.runtime.Composer,I,I,I):V
 - sf:ListComboBox-vg_4TgI(java.util.List,I,kotlin.jvm.functions.Function1,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,F,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,androidx.compose.runtime.Composer,I,I,I):V
 - bsf:ListComboBox-xzYpEKs(java.util.List,I,kotlin.jvm.functions.Function1,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,androidx.compose.runtime.Composer,I,I,I):V
 - sf:selectedItemIndex(org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,java.util.List,kotlin.jvm.functions.Function2):I
@@ -1189,12 +1191,14 @@ f:org.jetbrains.jewel.ui.component.styling.ComboBoxIcons$Companion
 f:org.jetbrains.jewel.ui.component.styling.ComboBoxMetrics
 - sf:$stable:I
 - sf:Companion:org.jetbrains.jewel.ui.component.styling.ComboBoxMetrics$Companion
+- b:<init>(J,J,androidx.compose.foundation.shape.CornerSize,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.layout.PaddingValues,F,F,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - equals(java.lang.Object):Z
 - f:getArrowAreaSize-MYxV2XQ():J
 - f:getBorderWidth-D9Ej5fM():F
 - f:getContentPadding():androidx.compose.foundation.layout.PaddingValues
 - f:getCornerSize():androidx.compose.foundation.shape.CornerSize
 - f:getMaxPopupHeight-D9Ej5fM():F
+- f:getMaxPopupRowCount():I
 - f:getMinSize-MYxV2XQ():J
 - f:getPopupContentPadding():androidx.compose.foundation.layout.PaddingValues
 - hashCode():I
