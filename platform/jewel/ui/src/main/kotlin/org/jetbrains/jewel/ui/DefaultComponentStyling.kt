@@ -8,6 +8,7 @@ import androidx.compose.runtime.Stable
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.component.ContextMenuRepresentation
 import org.jetbrains.jewel.ui.component.TextContextMenu
+import org.jetbrains.jewel.ui.component.styling.BadgeStyles
 import org.jetbrains.jewel.ui.component.styling.ButtonStyle
 import org.jetbrains.jewel.ui.component.styling.CheckboxStyle
 import org.jetbrains.jewel.ui.component.styling.ChipStyle
@@ -22,6 +23,7 @@ import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
 import org.jetbrains.jewel.ui.component.styling.InlineBannerStyles
 import org.jetbrains.jewel.ui.component.styling.LazyTreeStyle
 import org.jetbrains.jewel.ui.component.styling.LinkStyle
+import org.jetbrains.jewel.ui.component.styling.LocalBadgeStyle
 import org.jetbrains.jewel.ui.component.styling.LocalCheckboxStyle
 import org.jetbrains.jewel.ui.component.styling.LocalChipStyle
 import org.jetbrains.jewel.ui.component.styling.LocalCircularProgressStyle
@@ -75,6 +77,7 @@ import org.jetbrains.jewel.ui.component.styling.TabStyle
 import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
+import org.jetbrains.jewel.ui.component.styling.fallbackBadgeStyle
 import org.jetbrains.jewel.ui.component.styling.fallbackPopupAdStyle
 import org.jetbrains.jewel.ui.component.styling.fallbackSearchMatchStyle
 import org.jetbrains.jewel.ui.component.styling.fallbackSpeedSearchStyle
@@ -118,8 +121,87 @@ public class DefaultComponentStyling(
     public val speedSearchStyle: SpeedSearchStyle,
     public val searchMatchStyle: SearchMatchStyle,
     public val popupAdStyle: PopupAdStyle,
+    public val badgeStyle: BadgeStyles,
 ) : ComponentStyling {
-    @Deprecated("Use the variant with popupAdStyle.", level = DeprecationLevel.HIDDEN)
+    @Deprecated("Use the variant with badgeStyle.", level = DeprecationLevel.HIDDEN)
+    public constructor(
+        checkboxStyle: CheckboxStyle,
+        chipStyle: ChipStyle,
+        circularProgressStyle: CircularProgressStyle,
+        defaultBannerStyle: DefaultBannerStyles,
+        comboBoxStyle: ComboBoxStyle,
+        defaultButtonStyle: ButtonStyle,
+        defaultDropdownStyle: DropdownStyle,
+        defaultSplitButtonStyle: SplitButtonStyle,
+        defaultTabStyle: TabStyle,
+        dividerStyle: DividerStyle,
+        editorTabStyle: TabStyle,
+        groupHeaderStyle: GroupHeaderStyle,
+        horizontalProgressBarStyle: HorizontalProgressBarStyle,
+        iconButtonStyle: IconButtonStyle,
+        transparentIconButtonStyle: IconButtonStyle,
+        inlineBannerStyle: InlineBannerStyles,
+        lazyTreeStyle: LazyTreeStyle,
+        linkStyle: LinkStyle,
+        menuStyle: MenuStyle,
+        outlinedButtonStyle: ButtonStyle,
+        popupContainerStyle: PopupContainerStyle,
+        outlinedSplitButtonStyle: SplitButtonStyle,
+        radioButtonStyle: RadioButtonStyle,
+        scrollbarStyle: ScrollbarStyle,
+        segmentedControlButtonStyle: SegmentedControlButtonStyle,
+        segmentedControlStyle: SegmentedControlStyle,
+        selectableLazyColumnStyle: SelectableLazyColumnStyle,
+        simpleListItemStyle: SimpleListItemStyle,
+        sliderStyle: SliderStyle,
+        textAreaStyle: TextAreaStyle,
+        textFieldStyle: TextFieldStyle,
+        tooltipStyle: TooltipStyle,
+        undecoratedDropdownStyle: DropdownStyle,
+        speedSearchStyle: SpeedSearchStyle,
+        searchMatchStyle: SearchMatchStyle,
+        popupAdStyle: PopupAdStyle,
+    ) : this(
+        checkboxStyle,
+        chipStyle,
+        circularProgressStyle,
+        defaultBannerStyle,
+        comboBoxStyle,
+        defaultButtonStyle,
+        defaultDropdownStyle,
+        defaultSplitButtonStyle,
+        defaultTabStyle,
+        dividerStyle,
+        editorTabStyle,
+        groupHeaderStyle,
+        horizontalProgressBarStyle,
+        iconButtonStyle,
+        transparentIconButtonStyle,
+        inlineBannerStyle,
+        lazyTreeStyle,
+        linkStyle,
+        menuStyle,
+        outlinedButtonStyle,
+        popupContainerStyle,
+        outlinedSplitButtonStyle,
+        radioButtonStyle,
+        scrollbarStyle,
+        segmentedControlButtonStyle,
+        segmentedControlStyle,
+        selectableLazyColumnStyle,
+        simpleListItemStyle,
+        sliderStyle,
+        textAreaStyle,
+        textFieldStyle,
+        tooltipStyle,
+        undecoratedDropdownStyle,
+        speedSearchStyle,
+        searchMatchStyle,
+        popupAdStyle,
+        fallbackBadgeStyle(),
+    )
+
+    @Deprecated("Use the variant with badgeStyle.", level = DeprecationLevel.HIDDEN)
     public constructor(
         checkboxStyle: CheckboxStyle,
         chipStyle: ChipStyle,
@@ -193,9 +275,10 @@ public class DefaultComponentStyling(
         speedSearchStyle,
         searchMatchStyle,
         fallbackPopupAdStyle(),
+        fallbackBadgeStyle(),
     )
 
-    @Deprecated("Use the variant with speedSearchStyle.", level = DeprecationLevel.HIDDEN)
+    @Deprecated("Use the variant with badgeStyle.", level = DeprecationLevel.HIDDEN)
     public constructor(
         checkboxStyle: CheckboxStyle,
         chipStyle: ChipStyle,
@@ -267,9 +350,10 @@ public class DefaultComponentStyling(
         fallbackSpeedSearchStyle(),
         fallbackSearchMatchStyle(),
         fallbackPopupAdStyle(),
+        fallbackBadgeStyle(),
     )
 
-    @Deprecated("Use the variant with transparentIconButtonStyle.", level = DeprecationLevel.HIDDEN)
+    @Deprecated("Use the variant with badgeStyle.", level = DeprecationLevel.HIDDEN)
     public constructor(
         checkboxStyle: CheckboxStyle,
         chipStyle: ChipStyle,
@@ -340,6 +424,7 @@ public class DefaultComponentStyling(
         fallbackSpeedSearchStyle(),
         fallbackSearchMatchStyle(),
         fallbackPopupAdStyle(),
+        fallbackBadgeStyle(),
     )
 
     @Composable
@@ -383,6 +468,7 @@ public class DefaultComponentStyling(
             LocalSpeedSearchStyle provides speedSearchStyle,
             LocalSearchMatchStyle provides searchMatchStyle,
             LocalPopupAdStyle provides popupAdStyle,
+            LocalBadgeStyle provides badgeStyle,
         )
 
     override fun equals(other: Any?): Boolean {
@@ -427,6 +513,7 @@ public class DefaultComponentStyling(
         if (speedSearchStyle != other.speedSearchStyle) return false
         if (searchMatchStyle != other.searchMatchStyle) return false
         if (popupAdStyle != other.popupAdStyle) return false
+        if (badgeStyle != other.badgeStyle) return false
 
         return true
     }
@@ -468,6 +555,7 @@ public class DefaultComponentStyling(
         result = 31 * result + speedSearchStyle.hashCode()
         result = 31 * result + searchMatchStyle.hashCode()
         result = 31 * result + popupAdStyle.hashCode()
+        result = 31 * result + badgeStyle.hashCode()
         return result
     }
 
@@ -508,6 +596,7 @@ public class DefaultComponentStyling(
             "undecoratedDropdownStyle=$undecoratedDropdownStyle, " +
             "speedSearchStyle=$speedSearchStyle, " +
             "searchMatchStyle=$searchMatchStyle," +
-            "popupAdStyle=$popupAdStyle" +
+            "popupAdStyle=$popupAdStyle, " +
+            "badgeStyle=$badgeStyle" +
             ")"
 }
