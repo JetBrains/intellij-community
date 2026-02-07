@@ -4,8 +4,11 @@ package com.intellij.platform.feedback.editor.smoothcaret
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
+import java.util.function.Supplier
 
-class ShowSmoothCaretFeedbackNotificationAction : DumbAwareAction() {
+@Suppress("ActionPresentationInstantiatedInCtor")
+class ShowSmoothCaretFeedbackNotificationAction :
+    DumbAwareAction(Supplier { SmoothCaretFeedbackBundle.message("action.Editor.ShowSmoothCaretFeedbackNotification.text") }) {
   
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
