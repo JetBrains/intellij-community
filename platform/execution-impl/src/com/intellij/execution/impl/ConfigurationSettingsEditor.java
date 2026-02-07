@@ -2,6 +2,7 @@
 
 package com.intellij.execution.impl;
 
+import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -29,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +58,7 @@ public final class ConfigurationSettingsEditor extends CompositeSettingsEditor<R
   private final Map<ProgramRunner, List<SettingsEditor>> myRunner2UnwrappedEditors = new HashMap<>();
   private RunnersEditorComponent myRunnersComponent;
   private final RunConfiguration myConfiguration;
+  private final RunnerAndConfigurationSettings myOriginalSettings;
   private final SettingsEditor<RunConfiguration> myConfigurationEditor;
   private SettingsEditorGroup<RunnerAndConfigurationSettings> myCompound;
   private GroupSettingsBuilder<RunnerAndConfigurationSettings> myGroupSettingsBuilder;
@@ -219,20 +222,25 @@ public final class ConfigurationSettingsEditor extends CompositeSettingsEditor<R
     myConfigurationEditor = configurationEditor;
     myConfigurationEditor.addSettingsEditorListener(editor -> fireEditorStateChanged());
     Disposer.register(this, myConfigurationEditor);
+    myOriginalSettings = settings;
     myConfiguration = settings.getConfiguration();
   }
 
   @Override
   public @NotNull RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
-    RunnerAndConfigurationSettings settings = getFactory().create();
-    settings.setName(myConfiguration.getName());
+    RunnerAndConfigurationSettingsImpl snapshot = (RunnerAndConfigurationSettingsImpl) getFactory().create();
+    Element originalXml = ((SerializableScheme) myOriginalSettings).writeScheme();
+    boolean inDotIdea = myOriginalSettings.isStoredInDotIdeaFolder();
+    String arbitraryPath = myOriginalSettings.getPathIfStoredInArbitraryFileInProject();
+    snapshot.readExternal(originalXml, inDotIdea, arbitraryPath);
+
     if (myConfigurationEditor instanceof CheckableRunConfigurationEditor) {
-      ((CheckableRunConfigurationEditor)myConfigurationEditor).checkEditorData(settings.getConfiguration());
+      ((CheckableRunConfigurationEditor)myConfigurationEditor).checkEditorData(snapshot.getConfiguration());
     }
     else {
-      applyTo(settings);
+      applyTo(snapshot);
     }
-    return settings;
+    return snapshot;
   }
 
   boolean supportsSnapshots() {
