@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -243,4 +244,38 @@ public val LocalDefaultButtonStyle: ProvidableCompositionLocal<ButtonStyle> = st
 
 public val LocalOutlinedButtonStyle: ProvidableCompositionLocal<ButtonStyle> = staticCompositionLocalOf {
     error("No outlined ButtonStyle provided. Have you forgotten the theme?")
+}
+
+public val LocalDefaultSlimButtonStyle: ProvidableCompositionLocal<ButtonStyle> = staticCompositionLocalOf {
+    error("No default slim ButtonStyle provided. Have you forgotten the theme?")
+}
+
+public val LocalOutlinedSlimButtonStyle: ProvidableCompositionLocal<ButtonStyle> = staticCompositionLocalOf {
+    error("No outlined slim ButtonStyle provided. Have you forgotten the theme?")
+}
+
+/** Creating a fallback style for compatibility with older versions. */
+internal fun fallbackDefaultSlimButtonStyle(colors: ButtonColors): ButtonStyle {
+    val metrics =
+        ButtonMetrics(
+            cornerSize = CornerSize(4.dp),
+            padding = PaddingValues(horizontal = 12.dp, vertical = 2.dp),
+            minSize = DpSize(60.dp, 24.dp),
+            borderWidth = 1.dp,
+            focusOutlineExpand = 1.5.dp,
+        )
+    return ButtonStyle(colors, metrics, Stroke.Alignment.Center)
+}
+
+/** Creating a fallback style for compatibility with older versions. */
+internal fun fallbackOutlinedSlimButtonStyle(colors: ButtonColors): ButtonStyle {
+    val metrics =
+        ButtonMetrics(
+            cornerSize = CornerSize(4.dp),
+            padding = PaddingValues(horizontal = 12.dp, vertical = 2.dp),
+            minSize = DpSize(60.dp, 24.dp),
+            borderWidth = 1.dp,
+            focusOutlineExpand = Dp.Unspecified,
+        )
+    return ButtonStyle(colors, metrics, Stroke.Alignment.Center)
 }

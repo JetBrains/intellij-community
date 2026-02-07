@@ -214,3 +214,63 @@ public fun ButtonMetrics.Companion.outlined(
     borderWidth: Dp = 1.dp,
     focusOutlineExpand: Dp = Dp.Unspecified,
 ): ButtonMetrics = ButtonMetrics(cornerSize, padding, minSize, borderWidth, focusOutlineExpand)
+
+public val ButtonStyle.Companion.Slim: IntUiSlimButtonStyleFactory
+    get() = IntUiSlimButtonStyleFactory
+
+public object IntUiSlimButtonStyleFactory {
+    public val Default: IntUiSlimDefaultButtonStyleFactory
+        get() = IntUiSlimDefaultButtonStyleFactory
+
+    public val Outlined: IntUiSlimOutlinedButtonStyleFactory
+        get() = IntUiSlimOutlinedButtonStyleFactory
+}
+
+public object IntUiSlimDefaultButtonStyleFactory {
+    public fun light(
+        colors: ButtonColors = ButtonColors.Default.light(),
+        metrics: ButtonMetrics = ButtonMetrics.Slim.default(),
+        focusOutlineAlignment: Stroke.Alignment = Stroke.Alignment.Center,
+    ): ButtonStyle = ButtonStyle(colors, metrics, focusOutlineAlignment)
+
+    public fun dark(
+        colors: ButtonColors = ButtonColors.Default.dark(),
+        metrics: ButtonMetrics = ButtonMetrics.Slim.default(),
+        focusOutlineAlignment: Stroke.Alignment = Stroke.Alignment.Center,
+    ): ButtonStyle = ButtonStyle(colors, metrics, focusOutlineAlignment)
+}
+
+public object IntUiSlimOutlinedButtonStyleFactory {
+    public fun light(
+        colors: ButtonColors = ButtonColors.Outlined.light(),
+        metrics: ButtonMetrics = ButtonMetrics.Slim.outlined(),
+        focusOutlineAlignment: Stroke.Alignment = Stroke.Alignment.Center,
+    ): ButtonStyle = ButtonStyle(colors, metrics, focusOutlineAlignment)
+
+    public fun dark(
+        colors: ButtonColors = ButtonColors.Outlined.dark(),
+        metrics: ButtonMetrics = ButtonMetrics.Slim.outlined(),
+        focusOutlineAlignment: Stroke.Alignment = Stroke.Alignment.Center,
+    ): ButtonStyle = ButtonStyle(colors, metrics, focusOutlineAlignment)
+}
+
+public val ButtonMetrics.Companion.Slim: IntUiSlimButtonMetricsFactory
+    get() = IntUiSlimButtonMetricsFactory
+
+public object IntUiSlimButtonMetricsFactory {
+    public fun default(
+        cornerSize: CornerSize = CornerSize(4.dp),
+        padding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 2.dp),
+        minSize: DpSize = DpSize(60.dp, 24.dp),
+        borderWidth: Dp = 1.dp,
+        focusOutlineExpand: Dp = 1.5.dp,
+    ): ButtonMetrics = ButtonMetrics(cornerSize, padding, minSize, borderWidth, focusOutlineExpand)
+
+    public fun outlined(
+        cornerSize: CornerSize = CornerSize(4.dp),
+        padding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 2.dp),
+        minSize: DpSize = DpSize(60.dp, 24.dp),
+        borderWidth: Dp = 1.dp,
+        focusOutlineExpand: Dp = Dp.Unspecified,
+    ): ButtonMetrics = ButtonMetrics(cornerSize, padding, minSize, borderWidth, focusOutlineExpand)
+}
