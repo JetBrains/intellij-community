@@ -32,6 +32,11 @@ public class MainWrapper {
 
 
   public static void main(String[] args) throws IOException {
+    if (Boolean.getBoolean("idea.kotlin.plugin.use.k1")) {
+      //noinspection UseOfSystemOutOrSystemErr
+      System.err.println("Android Studio no longer supports Kotlin K1 mode; system property idea.kotlin.plugin.use.k1 will be ignored");
+      System.clearProperty("idea.kotlin.plugin.use.k1");
+    }
     if (Boolean.getBoolean(USE_RAMDISK)) {
       removeDanglingRamdiskSymlink();
     }
